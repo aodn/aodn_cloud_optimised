@@ -2,9 +2,9 @@ name: aodn_cloud_optimised
 
 on:
   push:
-    branches: [ master ]
+    branches: [ main ]
   pull_request:
-    branches: [ master ]
+    branches: [ main ]
 
 jobs:
   build-linux:
