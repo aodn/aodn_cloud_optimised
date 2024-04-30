@@ -1,0 +1,5 @@
+{
+  "BUCKET_RAW_DEFAULT": "imos-data",
+  "BUCKET_OPTIMISED_DEFAULT": "imos-data-lab-optimised",
+  "ROOT_PREFIX_CLOUD_OPTIMISED_PATH": "parquet/loz_test"
+}

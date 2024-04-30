@@ -1,0 +1,128 @@
+{
+    "dataset_name": "srs_l3s_1d_dn",
+    "logger_name": "srs_l3s_1d_dn",
+    "cloud_optimised_format": "zarr",
+    "metadata_uuid": "",
+    "dimensions": {
+      "time": {"name": "time",
+               "chunk": 10,
+               "rechunk": true},
+      "latitude": {"name": "lat",
+                   "chunk": 1000},
+      "longitude": {"name": "lon",
+                    "chunk": 1000}
+      },
+    "var_template_shape": "sea_surface_temperature",
+    "vars_to_drop_no_common_dimension": ["lat", "lon"],
+    "schema": {
+      "lon": {"type": "float32"},
+      "lat": {"type": "float32"},
+      "time": {"type": "datetime64[ns]"},
+      "sea_surface_temperature": {"type": "float32"},
+      "sea_surface_temperature_day_night": {"type": "float32"},
+      "sst_dtime": {"type": "float64"},
+      "dt_analysis": {"type": "float32"},
+      "wind_speed": {"type": "float32"},
+      "wind_speed_dtime_from_sst": {"type": "float32"},
+      "sea_ice_fraction": {"type": "float32"},
+      "sea_ice_fraction_dtime_from_sst": {"type": "float32"},
+      "satellite_zenith_angle": {"type": "float32"},
+      "l2p_flags": {"type": "float32"},
+      "quality_level": {"type": "float32"},
+      "sses_bias": {"type": "float32"},
+      "sses_standard_deviation": {"type": "float32"},
+      "sses_count": {"type": "float32"},
+      "sst_count": {"type": "float32"},
+      "sst_mean": {"type": "float32"},
+      "sst_standard_deviation": {"type": "float32"}
+    },
+    "dataset_gattrs": {
+        "title": "Temperature logger"
+    },
+    "aws_opendata_registry": {
+    "Name": "",
+    "Description": "",
+    "Documentation": "",
+    "Contact": "",
+    "ManagedBy": "",
+    "UpdateFrequency": "",
+    "Tags": [],
+    "License": "",
+    "Resources": [
+      {
+        "Description": "",
+        "ARN": "",
+        "Region": "",
+        "Type": "",
+        "Explore": []
+      },
+      {
+        "Description": "",
+        "ARN": "",
+        "Region": "",
+        "Type": ""
+      },
+      {
+        "Description": "",
+        "ARN": "",
+        "Region": "",
+        "Type": ""
+      },
+      {
+        "Description": "",
+        "ARN": "",
+        "Region": "",
+        "Type": ""
+      }
+    ],
+    "DataAtWork": {
+      "Tutorials": [
+        {
+          "Title": "",
+          "URL": "",
+          "Services": "",
+          "AuthorName": "",
+          "AuthorURL": ""
+        },
+        {
+          "Title": "",
+          "URL": "",
+          "AuthorName": "",
+          "AuthorURL": ""
+        },
+        {
+          "Title": "",
+          "URL": "",
+          "AuthorName": "",
+          "AuthorURL": ""
+        }
+      ],
+      "Tools & Applications": [
+        {
+          "Title": "",
+          "URL": "",
+          "AuthorName": "",
+          "AuthorURL": ""
+        },
+        {
+          "Title": "",
+          "URL": "",
+          "AuthorName": "",
+          "AuthorURL": ""
+        }
+      ],
+      "Publications": [
+        {
+          "Title": "",
+          "URL": "",
+          "AuthorName": ""
+        },
+        {
+          "Title": "",
+          "URL": "",
+          "AuthorName": ""
+        }
+      ]
+    }
+  }
+}

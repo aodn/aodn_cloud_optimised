@@ -1,0 +1,262 @@
+{
+  "dataset_name": "aatams_acoustic_tagging",
+  "logger_name": "aatams_acoustic_tagging",
+  "cloud_optimised_format": "parquet",
+  "metadata_uuid": "4a97bd11-e821-4682-8b20-cb69201f3223",
+  "gattrs_to_variables": [],
+  "partition_keys": ["transmitter_id", "timestamp", "polygon"],
+  "pandas_read_csv_config": {
+    "delimiter": ";",
+    "header": 0,
+    "index_col": "detection_timestamp",
+    "parse_dates": [
+      "detection_timestamp"
+    ],
+    "na_values": [
+      "N/A",
+      "NaN"
+    ],
+    "encoding": "utf-8"
+  },
+  "time_extent": {
+    "time": "detection_timestamp",
+    "partition_timestamp_period": "M"
+  },
+  "spatial_extent": {
+    "lat": "latitude",
+    "lon": "longitude",
+    "spatial_resolution": 5
+  },
+  "schema": {
+    "detection_timestamp": {
+      "type": "timestamp[ns]",
+      "standard_name": "time",
+      "long_name": "",
+      "units": "s",
+      "comments": ""
+    },
+    "transmitter_id": {
+      "type": "string",
+      "standard_name": "",
+      "long_name": "",
+      "units": "",
+      "comments": ""
+    },
+    "installation_name": {
+      "type": "string",
+      "standard_name": "",
+      "long_name": "",
+      "units": "",
+      "comments": ""
+    },
+    "station_name": {
+      "type": "string",
+      "standard_name": "",
+      "long_name": "",
+      "units": "",
+      "comments": ""
+    },
+    "receiver_name": {
+      "type": "string",
+      "standard_name": "",
+      "long_name": "",
+      "units": "",
+      "comments": ""
+    },
+    "latitude": {
+      "type": "double",
+      "standard_name": "",
+      "long_name": "",
+      "units": "",
+      "comments": ""
+    },
+    "longitude": {
+      "type": "double",
+      "standard_name": "",
+      "long_name": "",
+      "units": "",
+      "comments": ""
+    },
+    "sensor_value": {
+      "type": "double",
+      "standard_name": "",
+      "long_name": "",
+      "units": "",
+      "comments": ""
+    },
+    "sensor_unit": {
+      "type": "string",
+      "standard_name": "",
+      "long_name": "",
+      "units": "",
+      "comments": ""
+    },
+    "FDA_QC": {
+      "type": "float",
+      "standard_name": "",
+      "long_name": "",
+      "units": "",
+      "comments": ""
+    },
+    "Velocity_QC": {
+      "type": "float",
+      "standard_name": "",
+      "long_name": "",
+      "units": "",
+      "comments": ""
+    },
+    "Distance_QC": {
+      "type": "float",
+      "standard_name": "",
+      "long_name": "",
+      "units": "",
+      "comments": ""
+    },
+    "DetectionDistribution_QC": {
+      "type": "float",
+      "standard_name": "",
+      "long_name": "",
+      "units": "",
+      "comments": ""
+    },
+    "DistanceRelease_QC": {
+      "type": "double",
+      "standard_name": "",
+      "long_name": "",
+      "units": "",
+      "comments": ""
+    },
+    "ReleaseDate_QC": {
+      "type": "float",
+      "standard_name": "",
+      "long_name": "",
+      "units": "",
+      "comments": ""
+    },
+    "ReleaseLocation_QC": {
+      "type": "float",
+      "standard_name": "",
+      "long_name": "",
+      "units": "",
+      "comments": ""
+    },
+    "Detection_QC": {
+      "type": "float",
+      "standard_name": "",
+      "long_name": "",
+      "units": "",
+      "comments": ""
+    },
+    "filename": {
+      "type": "string",
+      "standard_name": "",
+      "long_name": "",
+      "units": "",
+      "comments": ""
+    },
+    "timestamp": {
+      "type": "int64",
+      "standard_name": "",
+      "long_name": "",
+      "units": "",
+      "comments": ""
+    },
+    "polygon": {
+      "type": "string",
+      "standard_name": "",
+      "long_name": "",
+      "units": "",
+      "comments": ""
+    }
+  },
+  "dataset_gattrs": {
+    "title": "AATAMS ACOUSTIC"
+  },
+  "force_old_pq_del": true,
+  "aws_opendata_registry": {
+    "Name": "",
+    "Description": "",
+    "Documentation": "",
+    "Contact": "",
+    "ManagedBy": "",
+    "UpdateFrequency": "",
+    "Tags": [],
+    "License": "",
+    "Resources": [
+      {
+        "Description": "",
+        "ARN": "",
+        "Region": "",
+        "Type": "",
+        "Explore": []
+      },
+      {
+        "Description": "",
+        "ARN": "",
+        "Region": "",
+        "Type": ""
+      },
+      {
+        "Description": "",
+        "ARN": "",
+        "Region": "",
+        "Type": ""
+      },
+      {
+        "Description": "",
+        "ARN": "",
+        "Region": "",
+        "Type": ""
+      }
+    ],
+    "DataAtWork": {
+      "Tutorials": [
+        {
+          "Title": "",
+          "URL": "",
+          "Services": "",
+          "AuthorName": "",
+          "AuthorURL": ""
+        },
+        {
+          "Title": "",
+          "URL": "",
+          "AuthorName": "",
+          "AuthorURL": ""
+        },
+        {
+          "Title": "",
+          "URL": "",
+          "AuthorName": "",
+          "AuthorURL": ""
+        }
+      ],
+      "Tools & Applications": [
+        {
+          "Title": "",
+          "URL": "",
+          "AuthorName": "",
+          "AuthorURL": ""
+        },
+        {
+          "Title": "",
+          "URL": "",
+          "AuthorName": "",
+          "AuthorURL": ""
+        }
+      ],
+      "Publications": [
+        {
+          "Title": "",
+          "URL": "",
+          "AuthorName": ""
+        },
+        {
+          "Title": "",
+          "URL": "",
+          "AuthorName": ""
+        }
+      ]
+    }
+  }
+}

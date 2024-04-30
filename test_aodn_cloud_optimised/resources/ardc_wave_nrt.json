@@ -1,0 +1,126 @@
+{
+    "dataset_name": "ardc_wave_nrt",
+    "logger_name": "ardc_wave_nrt",
+    "cloud_optimised_format": "parquet",
+    "metadata_uuid": "2807f3aa-4db0-4924-b64b-354ae8c10b58",
+    "gattrs_to_variables" : ["site_name", "water_depth", "wmo_id"],
+    "partition_keys": ["site_name", "timestamp", "polygon"],
+    "time_extent": {
+        "time": "TIME",
+        "partition_timestamp_period": "M"
+    },
+    "spatial_extent": {
+        "lat": "LATITUDE",
+        "lon": "LONGITUDE",
+        "spatial_resolution": 5
+    },
+    "schema" : {
+      "timeSeries": {"type": "int32"},
+      "LATITUDE": {"type": "double"},
+      "LONGITUDE": {"type": "double"},
+      "WHTH": {"type": "float"},
+      "WPMH": {"type": "float"},
+      "WMXH": {"type": "float"},
+      "WPPE": {"type": "float"},
+      "WPDI": {"type": "float"},
+      "WPDS": {"type": "float"},
+      "WAVE_quality_control": {"type": "float"},
+      "water_depth": {"type": "int64"},
+      "wmo_id": {"type": "string"},
+      "timestamp": {"type": "int64"},
+      "polygon": {"type": "string"},
+      "site_name": {"type": "string"},
+      "filename": {"type": "string"},
+      "TIME": {"type": "timestamp[ns]"}
+    },
+    "dataset_gattrs": {
+        "title": "ARDC"
+    },
+    "force_old_pq_del": true,
+    "aws_opendata_registry": {
+      "Name": "",
+      "Description": "",
+      "Documentation": "",
+      "Contact": "",
+      "ManagedBy": "",
+      "UpdateFrequency": "",
+      "Tags": [],
+      "License": "",
+      "Resources": [
+        {
+          "Description": "",
+          "ARN": "",
+          "Region": "",
+          "Type": "",
+          "Explore": []
+        },
+        {
+          "Description": "",
+          "ARN": "",
+          "Region": "",
+          "Type": ""
+        },
+        {
+          "Description": "",
+          "ARN": "",
+          "Region": "",
+          "Type": ""
+        },
+        {
+          "Description": "",
+          "ARN": "",
+          "Region": "",
+          "Type": ""
+        }
+      ],
+      "DataAtWork": {
+        "Tutorials": [
+          {
+            "Title": "",
+            "URL": "",
+            "Services": "",
+            "AuthorName": "",
+            "AuthorURL": ""
+          },
+          {
+            "Title": "",
+            "URL": "",
+            "AuthorName": "",
+            "AuthorURL": ""
+          },
+          {
+            "Title": "",
+            "URL": "",
+            "AuthorName": "",
+            "AuthorURL": ""
+          }
+        ],
+        "Tools & Applications": [
+          {
+            "Title": "",
+            "URL": "",
+            "AuthorName": "",
+            "AuthorURL": ""
+          },
+          {
+            "Title": "",
+            "URL": "",
+            "AuthorName": "",
+            "AuthorURL": ""
+          }
+        ],
+        "Publications": [
+          {
+            "Title": "",
+            "URL": "",
+            "AuthorName": ""
+          },
+          {
+            "Title": "",
+            "URL": "",
+            "AuthorName": ""
+          }
+        ]
+      }
+    }
+}

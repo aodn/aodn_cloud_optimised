@@ -1,0 +1,232 @@
+{
+  "dataset_name": "soop_xbt_nrt",
+  "logger_name": "soop_xbt_nrt",
+  "cloud_optimised_format": "parquet",
+  "metadata_uuid": "35234913-aa3c-48ec-b9a4-77f822f66ef8",
+  "gattrs_to_variables": [
+    "XBT_line",
+    "ship_name",
+    "Callsign",
+    "imo_number"
+  ],
+  "partition_keys": [
+    "XBT_line",
+    "timestamp",
+    "polygon"
+  ],
+  "time_extent": {
+    "time": "TIME",
+    "partition_timestamp_period": "M"
+  },
+  "spatial_extent": {
+    "lat": "LATITUDE",
+    "lon": "LONGITUDE",
+    "spatial_resolution": 5
+  },
+  "schema": {
+    "TIME": {
+      "type": "timestamp[ns]",
+      "standard_name": "time",
+      "long_name": "time",
+      "axis": "T",
+      "valid_min": 0.0,
+      "valid_max": 90000.0
+    },
+    "LATITUDE": {
+      "type": "double",
+      "standard_name": "latitude",
+      "long_name": "latitude",
+      "units": "degrees_north",
+      "axis": "Y",
+      "valid_min": -90.0,
+      "valid_max": 90.0,
+      "reference_datum": "WGS84 coordinate reference system"
+    },
+    "LONGITUDE": {
+      "type": "double",
+      "standard_name": "longitude",
+      "long_name": "longitude",
+      "units": "degrees_east",
+      "axis": "X",
+      "valid_min": -180.0,
+      "valid_max": 180.0,
+      "reference_datum": "WGS84 coordinate reference system"
+    },
+    "DEPTH": {
+      "type": "double",
+      "axis": "Z",
+      "long_name": "depth",
+      "positive": "down",
+      "reference_datum": "sea surface",
+      "standard_name": "depth",
+      "units": "m",
+      "ancillary_variables": "DEPTH_quality_control",
+      "valid_max": 12000.0,
+      "valid_min": -5.0,
+      "fallrate_equation_coefficient_a": 6.691,
+      "fallrate_equation_coefficient_b": -2.25
+    },
+    "DEPTH_quality_control": {
+      "type": "float",
+      "standard_name": "depth status_flag",
+      "long_name": "quality flag for sea_water_temperature",
+      "quality_control_conventions": "BUFR GTSPP standard flags",
+      "valid_min": 0,
+      "valid_max": 9,
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        8,
+        9,
+        15
+      ],
+      "flag_meanings": "Unqualified Correct_value_all_checks_passed Probably_good_but_value_inconsistent_with_statistics_differ_from_climatology Probably_bad_spike_gradient_etc_if_other_tests_passed Bad_value_impossible_value_out_of_scale_vertical_instability_constant_profile Value_modified_during_quality_control Interpolated_value Good_for_operational_use_caution_check_literature_for_other_uses Missing_value"
+    },
+    "TEMP": {
+      "type": "double",
+      "standard_name": "sea_water_temperature",
+      "long_name": "sea_water_temperature",
+      "units": "Celsius",
+      "ancillary_variables": "TEMP_quality_control",
+      "valid_min": 5.0,
+      "valid_max": 30.0
+    },
+    "TEMP_quality_control": {
+      "type": "float",
+      "standard_name": "sea_water_temperature status_flag",
+      "long_name": "quality flag for depth",
+      "quality_control_conventions": "BUFR GTSPP standard flags",
+      "valid_min": 0,
+      "valid_max": 9,
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        8,
+        9,
+        15
+      ],
+      "flag_meanings": "Unqualified Correct_value_all_checks_passed Probably_good_but_value_inconsistent_with_statistics_differ_from_climatology Probably_bad_spike_gradient_etc_if_other_tests_passed Bad_value_impossible_value_out_of_scale_vertical_instability_constant_profile Value_modified_during_quality_control Interpolated_value Good_for_operational_use_caution_check_literature_for_other_uses Missing_value"
+    },
+    "imo_number": {
+      "type": "int32"
+    },
+    "timestamp": {
+      "type": "int64"
+    },
+    "polygon": {
+      "type": "string"
+    },
+    "XBT_line": {
+      "type": "string"
+    },
+    "ship_name": {
+      "type": "string"
+    },
+    "Callsign": {
+      "type": "string"
+    },
+    "filename": {
+      "type": "string"
+    }
+  },
+  "dataset_gattrs": {
+    "title": "Upper Ocean Thermal Data collected using XBT (expendable bathythermographs)",
+    "principal_investigator": "Cowley, Rebecca",
+    "principal_investigator_email": "rebecca.cowley@csiro.au"
+  },
+  "force_old_pq_del": true,
+  "aws_opendata_registry": {
+    "Name": "SOOP XBT NRT",
+    "Description": "",
+    "Documentation": "https://catalogue.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/35234913-aa3c-48ec-b9a4-77f822f66ef8",
+    "Contact": "",
+    "ManagedBy": "",
+    "UpdateFrequency": "",
+    "Tags": [],
+    "License": "",
+    "Resources": [
+      {
+        "Description": "",
+        "ARN": "",
+        "Region": "",
+        "Type": "",
+        "Explore": []
+      },
+      {
+        "Description": "",
+        "ARN": "",
+        "Region": "",
+        "Type": ""
+      },
+      {
+        "Description": "",
+        "ARN": "",
+        "Region": "",
+        "Type": ""
+      },
+      {
+        "Description": "",
+        "ARN": "",
+        "Region": "",
+        "Type": ""
+      }
+    ],
+    "DataAtWork": {
+      "Tutorials": [
+        {
+          "Title": "",
+          "URL": "",
+          "Services": "",
+          "AuthorName": "",
+          "AuthorURL": ""
+        },
+        {
+          "Title": "",
+          "URL": "",
+          "AuthorName": "",
+          "AuthorURL": ""
+        },
+        {
+          "Title": "",
+          "URL": "",
+          "AuthorName": "",
+          "AuthorURL": ""
+        }
+      ],
+      "Tools & Applications": [
+        {
+          "Title": "",
+          "URL": "",
+          "AuthorName": "",
+          "AuthorURL": ""
+        },
+        {
+          "Title": "",
+          "URL": "",
+          "AuthorName": "",
+          "AuthorURL": ""
+        }
+      ],
+      "Publications": [
+        {
+          "Title": "IMOS - SOOP Expendable Bathythermographs (XBT) Research Group - XBT real-time data",
+          "URL": "https://catalogue.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/35234913-aa3c-48ec-b9a4-77f822f66ef8",
+          "AuthorName": ""
+        },
+        {
+          "Title": "",
+          "URL": "",
+          "AuthorName": ""
+        }
+      ]
+    }
+  }
+}

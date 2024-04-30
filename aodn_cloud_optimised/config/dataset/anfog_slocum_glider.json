@@ -1,0 +1,1064 @@
+{
+  "dataset_name": "anfog_slocum_glider",
+  "logger_name": "anfog_slocum_glider",
+  "cloud_optimised_format": "parquet",
+  "metadata_uuid": "a681fdba-c6d9-44ab-90b9-113b0ed03536",
+  "gattrs_to_variables": [
+    "deployment_code"
+  ],
+  "partition_keys": [
+    "deployment_code",
+    "timestamp",
+    "polygon"
+  ],
+  "time_extent": {
+    "time": "TIME",
+    "partition_timestamp_period": "Q"
+  },
+  "spatial_extent": {
+    "lat": "LATITUDE",
+    "lon": "LONGITUDE",
+    "spatial_resolution": 5
+  },
+  "schema": {
+    "PLATFORM": {
+      "type": "string",
+      "trans_system_id": "Irridium",
+      "positioning_system": "GPS",
+      "platform_type": "Slocum G2",
+      "platform_maker": "Teledyne Webb Research",
+      "firmware_version_navigation": 7.1,
+      "firmware_version_science": 7.1,
+      "glider_serial_no": "416",
+      "battery_type": "Alkaline",
+      "glider_owner": "CSIRO",
+      "operating_institution": "ANFOG",
+      "long_name": "platform informations"
+    },
+    "DEPLOYMENT": {
+      "type": "string",
+      "deployment_start_date": "2015-10-21-T05:00:02Z",
+      "deployment_start_latitude": -18.9373,
+      "deployment_start_longitude": 146.881,
+      "deployment_start_technician": "Gregor, Rob",
+      "deployment_end_date": "2015-10-27-T01:56:23Z",
+      "deployment_end_latitude": -19.2358,
+      "deployment_end_longitude": 147.5188,
+      "deployment_end_status": "recovered",
+      "deployment_pilot": "pilot, CSIRO",
+      "long_name": "deployment informations"
+    },
+    "SENSOR1": {
+      "type": "string",
+      "sensor_type": "CTD",
+      "sensor_maker": "Seabird",
+      "sensor_model": "GPCTD",
+      "sensor_serial_no": "9117",
+      "sensor_calibration_date": "2013-09-17",
+      "sensor_parameters": "TEMP, CNDC, PRES, PSAL",
+      "long_name": "sensor1 informations"
+    },
+    "SENSOR2": {
+      "type": "string",
+      "sensor_type": "ECO Puck",
+      "sensor_maker": "Wetlabs",
+      "sensor_model": "FLBBCDSLC",
+      "sensor_serial_no": "3345",
+      "sensor_calibration_date": "2013-10-07",
+      "sensor_parameters": "CPHL, CDOM, VBSC",
+      "long_name": "sensor2 informations"
+    },
+    "SENSOR3": {
+      "type": "string",
+      "sensor_type": "oxygen sensor",
+      "sensor_maker": "Aanderaa",
+      "sensor_model": "OXY4831_WPHASE",
+      "sensor_serial_no": "249",
+      "sensor_calibration_date": "2013-09-20",
+      "sensor_parameters": "DOX1, DOX2",
+      "long_name": "sensor3 informations"
+    },
+    "SENSOR4": {
+      "type": "string",
+      "sensor_type": "SUNAV2",
+      "sensor_maker": "SAtlantic",
+      "sensor_model": "SUNAV2",
+      "sensor_serial_no": "349",
+      "sensor_calibration_date": "2014-05-05",
+      "sensor_parameters": "NITRATE",
+      "long_name": "sensor4 informations"
+    },
+    "LATITUDE": {
+      "type": "double",
+      "standard_name": "latitude",
+      "long_name": "latitude",
+      "units": "degrees_north",
+      "axis": "Y",
+      "valid_min": -90.0,
+      "valid_max": 90.0,
+      "comment": "obtained from GPS fixes",
+      "reference_datum": "geographical coordinates, WGS84 projection",
+      "ancillary_variables": "LATITUDE_quality_control",
+      "observation_type": "measured",
+      "quality_control_set": 1
+    },
+    "LATITUDE_quality_control": {
+      "type": "float",
+      "standard_name": "latitude status_flag",
+      "long_name": "quality control flag for latitude",
+      "quality_control_set": 1,
+      "valid_min": 0,
+      "valid_max": 9,
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
+      "quality_control_conventions": "IMOS standard set using the IODE flags"
+    },
+    "LONGITUDE": {
+      "type": "double",
+      "standard_name": "longitude",
+      "long_name": "longitude",
+      "units": "degrees_east",
+      "valid_min": -180.0,
+      "valid_max": 180.0,
+      "comment": "obtained from GPS fixes",
+      "reference_datum": "geographical coordinates, WGS84 projection",
+      "ancillary_variables": "LONGITUDE_quality_control",
+      "observation_type": "measured",
+      "quality_control_set": 1,
+      "axis": "X"
+    },
+    "LONGITUDE_quality_control": {
+      "type": "float",
+      "standard_name": "longitude status_flag",
+      "long_name": "quality control flag for longitude",
+      "quality_control_set": 1,
+      "valid_min": 0,
+      "valid_max": 9,
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
+      "quality_control_conventions": "IMOS standard set using the IODE flags"
+    },
+    "TIME": {
+      "type": "timestamp[ns]",
+      "standard_name": "time",
+      "long_name": "time from the CTD",
+      "axis": "T",
+      "valid_min": 0.0,
+      "valid_max": 90000.0,
+      "ancillary_variables": "TIME_quality_control",
+      "observation_type": "measured",
+      "quality_control_set": 1
+    },
+    "TIME_quality_control": {
+      "type": "float",
+      "standard_name": "time status_flag",
+      "long_name": "quality control flag for time from the CTD",
+      "quality_control_set": 1,
+      "valid_min": 0,
+      "valid_max": 9,
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
+      "quality_control_conventions": "IMOS standard set using the IODE flags"
+    },
+    "HEAD": {
+      "type": "double",
+      "long_name": "vehicle_heading",
+      "units": "Degrees",
+      "valid_min": 0.0,
+      "valid_max": 360.0,
+      "comment": "Vehicle heading in degrees, clockwise from magnetic north.",
+      "ancillary_variables": "HEAD_quality_control",
+      "observation_type": "measured",
+      "quality_control_set": 1
+    },
+    "HEAD_quality_control": {
+      "type": "float",
+      "long_name": "quality control flag for vehicle_heading",
+      "quality_control_set": 1,
+      "valid_min": 0,
+      "valid_max": 9,
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
+      "quality_control_conventions": "IMOS standard set using the IODE flags"
+    },
+    "UCUR": {
+      "type": "double",
+      "standard_name": "eastward_sea_water_velocity",
+      "long_name": "eastward_sea_water_velocity",
+      "units": "m s-1",
+      "valid_min": -10.0,
+      "valid_max": 10.0,
+      "comment": "Average eastward velocity of the seawater over all the water that the glider travels through between surfacing. The values are rough estimates derived from engineering parameters.",
+      "ancillary_variables": "UCUR_quality_control",
+      "observation_type": "computed",
+      "quality_control_set": 1
+    },
+    "UCUR_quality_control": {
+      "type": "float",
+      "standard_name": "eastward_sea_water_velocity status_flag",
+      "long_name": "quality control flag for eastward_sea_water_velocity",
+      "quality_control_set": 1,
+      "valid_min": 0,
+      "valid_max": 9,
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
+      "quality_control_conventions": "IMOS standard set using the IODE flags"
+    },
+    "VCUR": {
+      "type": "double",
+      "standard_name": "northward_sea_water_velocity",
+      "long_name": "northward_sea_water_velocity",
+      "units": "m s-1",
+      "valid_min": -10.0,
+      "valid_max": 10.0,
+      "comment": "Average northward velocity of the seawater over all the water that the glider travels through between surfacing. The values are rough estimates derived from engineering parameters.",
+      "ancillary_variables": "VCUR_quality_control",
+      "observation_type": "computed",
+      "quality_control_set": 1
+    },
+    "VCUR_quality_control": {
+      "type": "float",
+      "standard_name": "northward_sea_water_velocity status_flag",
+      "long_name": "quality control flag for northward_sea_water_velocity",
+      "quality_control_set": 1,
+      "valid_min": 0,
+      "valid_max": 9,
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
+      "quality_control_conventions": "IMOS standard set using the IODE flags"
+    },
+    "UCUR_GPS": {
+      "type": "double",
+      "long_name": "eastward_surface_sea_water_velocity",
+      "units": "m s-1",
+      "valid_min": -10.0,
+      "valid_max": 10.0,
+      "comment": "Eastward surface sea-water velocity, calculated from parked glider drift between GPS fixes.",
+      "observation_type": "computed",
+      "quality_control_set": 1,
+      "ancillary_variables": "UCUR_GPS_quality_control"
+    },
+    "UCUR_GPS_quality_control": {
+      "type": "float",
+      "long_name": "quality control flag for eastward_surface_sea_water_velocity",
+      "quality_control_set": 1,
+      "valid_min": 0,
+      "valid_max": 9,
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
+      "quality_control_conventions": "IMOS standard set using the IODE flags"
+    },
+    "VCUR_GPS": {
+      "type": "double",
+      "long_name": "northward_surface_sea_water_velocity",
+      "units": "m s-1",
+      "valid_min": -10.0,
+      "valid_max": 10.0,
+      "comment": "Northward surface sea-water velocity, calculated from parked glider drift between GPS fixes.",
+      "ancillary_variables": "VCUR_GPS_quality_control",
+      "observation_type": "computed",
+      "quality_control_set": 1
+    },
+    "VCUR_GPS_quality_control": {
+      "type": "float",
+      "long_name": "quality control flag for northward_surface_sea_water_velocity",
+      "quality_control_set": 1,
+      "valid_min": 0,
+      "valid_max": 9,
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
+      "quality_control_conventions": "IMOS standard set using the IODE flags"
+    },
+    "PHASE": {
+      "type": "float",
+      "long_name": "glider_trajectory_phase_code",
+      "valid_min": 0,
+      "valid_max": 6,
+      "comment": "Phase of the trajectory at that time, defined following EGO (see table 9 in the EGO user manual v1.1). Values used: 0 for surface drifting, 1 for descending profile, 4 for ascending profile, 3 for inflexion. Computed using a script based on depth rate",
+      "observation_type": "computed",
+      "quality_control_set": 1,
+      "units": "1",
+      "ancillary_variables": "PHASE_quality_control PROFILE"
+    },
+    "PHASE_quality_control": {
+      "type": "float",
+      "long_name": "quality control flag for glider_trajectory_phase_code",
+      "quality_control_set": 1,
+      "valid_min": 0,
+      "valid_max": 9,
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
+      "quality_control_conventions": "IMOS standard set using the IODE flags"
+    },
+    "PROFILE": {
+      "type": "double",
+      "long_name": "glider_trajectory_profile_number",
+      "valid_min": 0,
+      "valid_max": 900000,
+      "comment": "The profile number is 1, and is increased at each phase change. It is set to 0 when the glider is at surface (PHASE=0) or during inflexion (PHASE=3) or if the profile is too short (less than 10 pressure measurements). Computed using a script based on depth rate",
+      "observation_type": "computed",
+      "quality_control_set": 1,
+      "units": "1",
+      "ancillary_variables": "PROFILE_quality_control PHASE"
+    },
+    "PROFILE_quality_control": {
+      "type": "float",
+      "long_name": "quality control flag for glider_trajectory_profile_number",
+      "quality_control_set": 1,
+      "valid_min": 0,
+      "valid_max": 9,
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
+      "quality_control_conventions": "IMOS standard set using the IODE flags"
+    },
+    "PRES": {
+      "type": "double",
+      "standard_name": "sea_water_pressure",
+      "long_name": "sea_water_pressure",
+      "units": "dbar",
+      "valid_min": -5.0,
+      "valid_max": 1100.0,
+      "comment": "pressure measured by the CTD",
+      "ancillary_variables": "PRES_quality_control",
+      "observation_type": "measured",
+      "quality_control_set": 1,
+      "quality_control_indicator": 1.0
+    },
+    "PRES_quality_control": {
+      "type": "float",
+      "standard_name": "sea_water_pressure status_flag",
+      "long_name": "quality control flag for sea_water_pressure",
+      "quality_control_set": 1,
+      "valid_min": 0,
+      "valid_max": 9,
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
+      "quality_control_conventions": "IMOS standard set using the IODE flags"
+    },
+    "DEPTH": {
+      "type": "double",
+      "standard_name": "depth",
+      "long_name": "depth",
+      "units": "m",
+      "valid_min": -5.0,
+      "valid_max": 1000.0,
+      "positive": "down",
+      "axis": "Z",
+      "reference_datum": "sea-surface",
+      "ancillary_variables": "DEPTH_quality_control",
+      "observation_type": "computed",
+      "quality_control_set": 1,
+      "comment": "Depth computed using the Gibbs-SeaWater toolbox (TEOS-10) v3.02, from latitude and relative pressure measurements",
+      "quality_control_indicator": 1.0
+    },
+    "DEPTH_quality_control": {
+      "type": "float",
+      "standard_name": "depth status_flag",
+      "long_name": "quality control flag for depth",
+      "quality_control_set": 1,
+      "valid_min": 0,
+      "valid_max": 9,
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
+      "quality_control_conventions": "IMOS standard set using the IODE flags"
+    },
+    "TEMP": {
+      "type": "double",
+      "standard_name": "sea_water_temperature",
+      "long_name": "sea_water_temperature",
+      "units": "Celsius",
+      "valid_min": -2.5,
+      "valid_max": 40.0,
+      "ancillary_variables": "TEMP_quality_control",
+      "observation_type": "measured",
+      "quality_control_set": 1,
+      "comment": "Data have been corrected for sensor time response. Uncorrected data are available in the FV00 file associated with this mission. "
+    },
+    "TEMP_quality_control": {
+      "type": "float",
+      "standard_name": "sea_water_temperature status_flag",
+      "long_name": "quality control flag for sea_water_temperature",
+      "quality_control_set": 1,
+      "valid_min": 0,
+      "valid_max": 9,
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
+      "quality_control_conventions": "IMOS standard set using the IODE flags"
+    },
+    "CNDC": {
+      "type": "double",
+      "standard_name": "sea_water_electrical_conductivity",
+      "long_name": "sea_water_electrical_conductivity",
+      "units": "S m-1",
+      "valid_min": 0.0,
+      "valid_max": 60.0,
+      "observation_type": "measured",
+      "ancillary_variables": "CNDC_quality_control",
+      "quality_control_set": 1,
+      "comment": "Data have been corrected for sensor time response. Uncorrected data are available in the FV00 file associated with this mission. "
+    },
+    "CNDC_quality_control": {
+      "type": "float",
+      "standard_name": "sea_water_electrical_conductivity status_flag",
+      "long_name": "quality control flag for sea_water_electrical_conductivity",
+      "quality_control_set": 1,
+      "valid_min": 0,
+      "valid_max": 9,
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
+      "quality_control_conventions": "IMOS standard set using the IODE flags"
+    },
+    "PSAL": {
+      "type": "double",
+      "standard_name": "sea_water_salinity",
+      "long_name": "sea_water_salinity",
+      "valid_min": 2.0,
+      "valid_max": 41.0,
+      "ancillary_variables": "PSAL_quality_control",
+      "observation_type": "computed",
+      "quality_control_set": 1,
+      "comment": "practical salinity computed using the Gibbs-SeaWater toolbox (TEOS-10) v3.02 from temperature, conductivity and relative pressure measurements. Users are cautioned that spikes predominantly occuring at the base of the mixed layer result from thermal inertia issues and may remain although correction have been applied.Temperature data have been corrected for sensor time response. A thermal lag correction has been applied. Conductivity data have been corrected for sensor time response. ",
+      "units": "1e-3"
+    },
+    "PSAL_quality_control": {
+      "type": "float",
+      "standard_name": "sea_water_salinity status_flag",
+      "long_name": "quality control flag for sea_water_salinity",
+      "quality_control_set": 1,
+      "valid_min": 0,
+      "valid_max": 9,
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
+      "quality_control_conventions": "IMOS standard set using the IODE flags"
+    },
+    "DOX2": {
+      "type": "double",
+      "standard_name": "moles_of_oxygen_per_unit_mass_in_sea_water",
+      "long_name": "moles_of_oxygen_per_unit_mass_in_sea_water",
+      "units": "umol kg-1",
+      "valid_min": 0.0,
+      "valid_max": 650.0,
+      "ancillary_variables": "DOX2_quality_control",
+      "observation_type": "computed",
+      "quality_control_set": 1,
+      "comment": "mole concentration per unit mass computed as the mole concentration per litre divided by the potential density. Glider output. Data computed internally from phase measurements using the Optode temperature and calibration coefficients. Data should be used with caution."
+    },
+    "DOX2_quality_control": {
+      "type": "float",
+      "standard_name": "moles_of_oxygen_per_unit_mass_in_sea_water status_flag",
+      "long_name": "quality control flag for moles_of_oxygen_per_unit_mass_in_sea_water",
+      "quality_control_set": 1,
+      "valid_min": 0,
+      "valid_max": 9,
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
+      "quality_control_conventions": "IMOS standard set using the IODE flags"
+    },
+    "DOX1": {
+      "type": "double",
+      "standard_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water",
+      "long_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water",
+      "units": "umol l-1",
+      "valid_min": 0.0,
+      "valid_max": 650.0,
+      "ancillary_variables": "DOX1_quality_control",
+      "observation_type": "computed",
+      "quality_control_set": 1,
+      "comment": "Glider output. Data computed internally from phase measurements using the Optode temperature and calibration coefficients. Data should be used with caution. (Need to multiply by 0.0223916 to get values in ml/L). "
+    },
+    "DOX1_quality_control": {
+      "type": "float",
+      "standard_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water status_flag",
+      "long_name": "quality control flag for mole_concentration_of_dissolved_molecular_oxygen_in_sea_water",
+      "quality_control_set": 1,
+      "valid_min": 0,
+      "valid_max": 9,
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
+      "quality_control_conventions": "IMOS standard set using the IODE flags"
+    },
+    "CPHL": {
+      "type": "double",
+      "standard_name": "mass_concentration_of_chlorophyll_in_sea_water",
+      "long_name": "mass_concentration_of_chlorophyll_in_sea_water",
+      "units": "mg m-3",
+      "valid_min": 0.0,
+      "valid_max": 100.0,
+      "ancillary_variables": "CPHL_quality_control",
+      "observation_type": "computed",
+      "quality_control_set": 1,
+      "comment": "Data have been corrected to account for a suspected shift in Dark Count value since the calibration that lead to many negative values. Uncorrected data are available in the FV00 file associated with this mission. "
+    },
+    "CPHL_quality_control": {
+      "type": "float",
+      "standard_name": "mass_concentration_of_chlorophyll_in_sea_water status_flag",
+      "long_name": "quality control flag for mass_concentration_of_chlorophyll_in_sea_water",
+      "quality_control_set": 1,
+      "valid_min": 0,
+      "valid_max": 9,
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
+      "quality_control_conventions": "IMOS standard set using the IODE flags"
+    },
+    "CDOM": {
+      "type": "double",
+      "long_name": "concentration_of_coloured_dissolved_organic_matter",
+      "valid_min": 0.0,
+      "valid_max": 400.0,
+      "ancillary_variables": "CDOM_quality_control",
+      "observation_type": "computed",
+      "quality_control_set": 1,
+      "comment": "Data have been corrected to account for a suspected shift in Dark Count value since the calibration that lead to many negative values. Uncorrected data are available in the FV00 file associated with this mission. ",
+      "units": "1e-9"
+    },
+    "CDOM_quality_control": {
+      "type": "float",
+      "long_name": "quality control flag for concentration_of_coloured_dissolved_organic_matter",
+      "quality_control_set": 1,
+      "valid_min": 0,
+      "valid_max": 9,
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
+      "quality_control_conventions": "IMOS standard set using the IODE flags"
+    },
+    "VBSC": {
+      "type": "double",
+      "long_name": "volumetric_backscatter_coefficient",
+      "units": "m-1 sr-1",
+      "valid_min": 0.0,
+      "valid_max": 0.1,
+      "ancillary_variables": "VBSC_quality_control",
+      "observation_type": "computed",
+      "quality_control_set": 1,
+      "comment": "concentration computed from the measured raw values in counts and the calibration coefficients stored in the associate FV00 NetCDF file"
+    },
+    "VBSC_quality_control": {
+      "type": "float",
+      "long_name": "quality control flag for volumetric_backscatter_coefficient",
+      "quality_control_set": 1,
+      "valid_min": 0,
+      "valid_max": 9,
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
+      "quality_control_conventions": "IMOS standard set using the IODE flags"
+    },
+    "NTRA": {
+      "type": "double",
+      "long_name": "concentration_of_nitrate_in_seawater",
+      "units": "umol l-1",
+      "valid_min": 0.0,
+      "valid_max": 25.0,
+      "comment": "uncorrected raw optical nitrate in micromolar",
+      "observation_type": "measured",
+      "ancillary_variables": "NTRA_quality_control",
+      "quality_control_set": 1,
+      "standard_name": "mole_concentration_of_nitrate_in_sea_water"
+    },
+    "NTRA_quality_control": {
+      "type": "float",
+      "long_name": "quality control flag for concentration_of_nitrate_in_seawater",
+      "quality_control_set": 1,
+      "valid_min": 0,
+      "valid_max": 9,
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
+      "standard_name": "mole_concentration_of_nitrate_in_sea_water status_flag",
+      "quality_control_conventions": "IMOS standard set using the IODE flags"
+    },
+    "IRRAD443": {
+      "type": "double",
+      "long_name": "downwelling_spectral_irradiance_in_sea_water_beam1",
+      "units": "uW cm-2 nm-1",
+      "valid_min": 0.0,
+      "valid_max": 1000.0,
+      "ancillary_variables": "IRRAD443_quality_control",
+      "observation_type": "computed",
+      "quality_control_set": 1,
+      "comment": "The real wavelength for this beam is 443.52 nm. Irradiance data have been corrected to account for suspected shift in Dark Count values since the calibration, that lead to many negative values. Uncorrected data are available in the FV00 file associated with this mission. "
+    },
+    "IRRAD443_quality_control": {
+      "type": "float",
+      "long_name": "quality control flag for downwelling_spectral_irradiance_in_sea_water_beam1",
+      "quality_control_set": 1,
+      "valid_min": 0,
+      "valid_max": 9,
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
+      "quality_control_conventions": "IMOS standard set using the IODE flags"
+    },
+    "IRRAD490": {
+      "type": "double",
+      "long_name": "downwelling_spectral_irradiance_in_sea_water_beam2",
+      "units": "uW cm-2 nm-1",
+      "valid_min": 0.0,
+      "valid_max": 1000.0,
+      "ancillary_variables": "IRRAD490_quality_control",
+      "observation_type": "computed",
+      "quality_control_set": 1,
+      "comment": "The real wavelength for this beam is 489.59 nm. Irradiance data have been corrected to account for suspected shift in Dark Count values since the calibration, that lead to many negative values. Uncorrected data are available in the FV00 file associated with this mission. "
+    },
+    "IRRAD490_quality_control": {
+      "type": "float",
+      "long_name": "quality control flag for downwelling_spectral_irradiance_in_sea_water_beam2",
+      "quality_control_set": 1,
+      "valid_min": 0,
+      "valid_max": 9,
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
+      "quality_control_conventions": "IMOS standard set using the IODE flags"
+    },
+    "IRRAD555": {
+      "type": "double",
+      "long_name": "downwelling_spectral_irradiance_in_sea_water_beam3",
+      "units": "uW cm-2 nm-1",
+      "valid_min": 0.0,
+      "valid_max": 1000.0,
+      "ancillary_variables": "IRRAD555_quality_control",
+      "observation_type": "computed",
+      "quality_control_set": 1,
+      "comment": "The real wavelength for this beam is 554.77 nm. Irradiance data have been corrected to account for suspected shift in Dark Count values since the calibration, that lead to many negative values. Uncorrected data are available in the FV00 file associated with this mission. "
+    },
+    "IRRAD555_quality_control": {
+      "type": "float",
+      "long_name": "quality control flag for downwelling_spectral_irradiance_in_sea_water_beam3",
+      "quality_control_set": 1,
+      "valid_min": 0,
+      "valid_max": 9,
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
+      "quality_control_conventions": "IMOS standard set using the IODE flags"
+    },
+    "IRRAD670": {
+      "type": "double",
+      "long_name": "downwelling_spectral_irradiance_in_sea_water_beam4",
+      "units": "uW cm-2 nm-1",
+      "valid_min": 0.0,
+      "valid_max": 1000.0,
+      "ancillary_variables": "IRRAD670_quality_control",
+      "observation_type": "computed",
+      "quality_control_set": 1,
+      "comment": "The real wavelength for this beam is 664.89 nm. Irradiance data have been corrected to account for suspected shift in Dark Count values since the calibration, that lead to many negative values. Uncorrected data are available in the FV00 file associated with this mission. "
+    },
+    "IRRAD670_quality_control": {
+      "type": "float",
+      "long_name": "quality control flag for downwelling_spectral_irradiance_in_sea_water_beam4",
+      "quality_control_set": 1,
+      "valid_min": 0,
+      "valid_max": 9,
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
+      "quality_control_conventions": "IMOS standard set using the IODE flags"
+    },
+    "BBP": {
+      "type": "double",
+      "long_name": "particle_backscattering_coefficient",
+      "units": "m-1",
+      "valid_min": 0.0,
+      "valid_max": 1.0,
+      "ancillary_variables": "BBP_quality_control",
+      "observation_type": "computed",
+      "quality_control_set": 1.0,
+      "comment": "Computed using a Xp factor = 1.1 and backscatter from seawater from Zhang (2009) code"
+    },
+    "BBP_quality_control": {
+      "type": "int32",
+      "long_name": "quality control flag for particle_backscattering_coefficient",
+      "FillValue": 99,
+      "valid_min": 0,
+      "valid_max": 9,
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "observation_type": "computed",
+      "quality_control_set": 1,
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
+      "quality_control_conventions": "IMOS standard set using the IODE flags"
+    },
+    "filename": {
+      "type": "string"
+    },
+    "timestamp": {
+      "type": "int64"
+    },
+    "polygon": {
+      "type": "string"
+    },
+    "deployment_code": {
+      "type": "string"
+    }
+  },
+  "dataset_gattrs": {
+    "title": "ANFOG glider"
+  },
+  "force_old_pq_del": true,
+  "aws_opendata_registry": {
+    "Name": "",
+    "Description": "",
+    "Documentation": "",
+    "Contact": "",
+    "ManagedBy": "",
+    "UpdateFrequency": "",
+    "Tags": [],
+    "License": "",
+    "Resources": [
+      {
+        "Description": "",
+        "ARN": "",
+        "Region": "",
+        "Type": "",
+        "Explore": []
+      },
+      {
+        "Description": "",
+        "ARN": "",
+        "Region": "",
+        "Type": ""
+      },
+      {
+        "Description": "",
+        "ARN": "",
+        "Region": "",
+        "Type": ""
+      },
+      {
+        "Description": "",
+        "ARN": "",
+        "Region": "",
+        "Type": ""
+      }
+    ],
+    "DataAtWork": {
+      "Tutorials": [
+        {
+          "Title": "",
+          "URL": "",
+          "Services": "",
+          "AuthorName": "",
+          "AuthorURL": ""
+        },
+        {
+          "Title": "",
+          "URL": "",
+          "AuthorName": "",
+          "AuthorURL": ""
+        },
+        {
+          "Title": "",
+          "URL": "",
+          "AuthorName": "",
+          "AuthorURL": ""
+        }
+      ],
+      "Tools & Applications": [
+        {
+          "Title": "",
+          "URL": "",
+          "AuthorName": "",
+          "AuthorURL": ""
+        },
+        {
+          "Title": "",
+          "URL": "",
+          "AuthorName": "",
+          "AuthorURL": ""
+        }
+      ],
+      "Publications": [
+        {
+          "Title": "",
+          "URL": "",
+          "AuthorName": ""
+        },
+        {
+          "Title": "",
+          "URL": "",
+          "AuthorName": ""
+        }
+      ]
+    }
+  }
+}

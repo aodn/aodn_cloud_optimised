@@ -1,0 +1,27 @@
+# Usage:
+# export AWS_PROFILE=nonproduction-admin && conda env create --file=environment.yml
+# export AWS_PROFILE=nonproduction-admin && conda env update --file=environment.yml
+
+name: AodnCloudOptimised
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - notebook
+  - h5py
+  - scipy
+  - pip
+  - pip:
+    - netcdf4
+    - boto3
+    - jupyterlab
+    - matplotlib
+    - pandas
+    - shapely
+    - geopandas
+    - pyarrow==15.0.0
+    - rechunker
+    - s3fs
+    - yaml
+    - xarray[complete]

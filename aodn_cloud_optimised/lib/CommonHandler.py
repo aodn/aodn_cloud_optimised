@@ -1,0 +1,302 @@
+import os
+import tempfile
+import timeit
+from typing import List
+
+import boto3
+import netCDF4
+import xarray as xr
+import yaml
+from jsonschema import validate, ValidationError
+
+from .config import load_variable_from_config, load_dataset_config
+from .logging import get_logger
+
+
+class CommonHandler:
+    def __init__(self, **kwargs):
+        """
+        Initialise the CommonHandler object.
+
+        Args:
+            **kwargs: Additional keyword arguments.
+                raw_bucket_name (str, optional[config]): Name of the raw bucket.
+                optimised_bucket_name (str, optional[config]): Name of the optimised bucket.
+                root_prefix_cloud_optimised_path (str, optional[config]): Root Prefix path of the location of cloud optimised files
+                input_object_key (str): Key of the input object.
+                force_old_pq_del (bool, optional[config]): Force the deletion of existing cloud optimised files(slow) (default=False)
+
+        """
+        self.start_time = timeit.default_timer()
+        self.temp_dir = tempfile.TemporaryDirectory()
+
+        self.raw_bucket_name = kwargs.get('raw_bucket_name',
+                                          load_variable_from_config('BUCKET_RAW_DEFAULT'))
+        self.optimised_bucket_name = kwargs.get('optimised_bucket_name',
+                                                load_variable_from_config('BUCKET_OPTIMISED_DEFAULT'))
+        self.root_prefix_cloud_optimised_path = kwargs.get('root_prefix_cloud_optimised_path',
+                                                           load_variable_from_config('ROOT_PREFIX_CLOUD_OPTIMISED_PATH'))
+
+        self.input_object_key = kwargs.get('input_object_key', None)
+
+        self.dataset_config = kwargs.get('dataset_config')
+
+        self.cloud_optimised_format = self.dataset_config.get('cloud_optimised_format')
+
+        self.dataset_name = self.dataset_config['dataset_name']
+
+        self.schema = self.dataset_config.get('schema')
+
+        logger_name = self.dataset_config.get("logger_name", "generic")
+        self.logger = get_logger(logger_name)
+
+        cloud_optimised_format = self.dataset_config.get("cloud_optimised_format")
+        self.cloud_optimised_output_path = f"s3://{os.path.join(self.optimised_bucket_name, self.root_prefix_cloud_optimised_path, self.dataset_name + '.' + cloud_optimised_format)}/"
+
+        if self.input_object_key is not None:
+            self.filename = os.path.basename(self.input_object_key)
+            self.tmp_input_file = self.get_s3_raw_obj()
+        else:
+            self.logger.error("No input object given")
+            raise ValueError
+
+    def validate_json(self, json_validation_path):
+        """
+        Validate the JSON configuration of a dataset against a specified pyarrow_schema.
+        This method uses a predefined pyarrow_schema loaded from a JSON file to validate the dataset configuration.
+
+        Parameters:
+            json_validation_path:
+            self (object): The current instance of the class containing the dataset configuration.
+
+        Raises:
+            ValueError: If the dataset configuration fails validation against the pyarrow_schema.
+
+        Example:
+            Assuming `self.dataset_config` contains the dataset configuration JSON:
+            ```
+            dataset_validator = DatasetValidator()
+            try:
+                dataset_validator.validate_json()
+            except ValueError as e:
+                print(f"Validation error: {e}")
+            ```
+
+        Schema Loading:
+            The pyarrow_schema is loaded from a JSON file using `importlib.resources.path`.
+            Ensure the pyarrow_schema file (`schema_validation_parquet.json`) is accessible within the
+            `aodn_cloud_optimised.config.dataset` package.
+
+        Validation Process:
+            - The method attempts to validate `self.dataset_config` against the loaded pyarrow_schema.
+            - If validation is successful, it logs an info message indicating success.
+            - If validation fails, it raises a `ValueError` with details of the validation error.
+        """
+        schema = load_dataset_config(json_validation_path)
+        try:
+            validate(instance=self.dataset_config, schema=schema)
+            self.logger.info("JSON configuration for dataset: Validation successful.")
+        except ValidationError as e:
+            raise ValueError(f"JSON configuration for dataset: Validation failed: {e}")
+
+    def is_valid_netcdf(self, nc_file_path):
+        """
+        Check if a file is a valid NetCDF file.
+
+        Parameters:
+        - file_path (str): The path to the NetCDF file.
+
+        Returns:
+        - bool: True if the file is a valid NetCDF file, False otherwise.
+        """
+        if not self.input_object_key.endswith('.nc'):
+            self.logger.error(f"{self.filename}: Not valid NetCDF file. Not ending with .nc")
+            raise ValueError
+
+        try:
+            netCDF4.Dataset(nc_file_path)
+            return True
+        except Exception as e:
+            self.logger.error(f"{self.filename}: Not valid NetCDF file: {e}.")
+            raise TypeError
+
+    def get_s3_raw_obj(self) -> str:
+        """
+        Download an S3 object from the raw bucket to a temporary file.
+
+        :return: Local filepath of the temporary file.
+        :rtype: str
+        """
+
+        s3 = boto3.client('s3')
+
+        # Construct the full path for the temporary file
+        temp_file_path = os.path.join(self.temp_dir.name, os.path.basename(self.input_object_key))
+
+        # Download the S3 object to the temporary file
+        s3.download_file(self.raw_bucket_name, self.input_object_key, temp_file_path)
+
+        self.logger.info(f"{self.filename}: Downloading {self.input_object_key} object from {self.raw_bucket_name} bucket")
+        return temp_file_path
+
+    @staticmethod
+    def is_open_ds(ds: xr.Dataset) -> bool:
+        """
+        Check if an xarray Dataset is open.
+
+        Args:
+            ds (xarray.Dataset): The xarray Dataset to check.
+
+        Returns:
+            bool: True if the Dataset is open, False otherwise.
+        """
+        try:
+            # Try to access an attribute or method of the Dataset
+            ds.attrs
+            return True  # If no error is raised, the Dataset is not closed
+        except RuntimeError:
+            return False  # If a RuntimeError is raised, the Dataset is closed
+
+    def push_metadata_aws_registry(self) -> None:
+        """
+        Pushes metadata to the AWS OpenData Registry.
+
+        If the 'aws_opendata_registry' key is missing from the dataset configuration, a warning is logged.
+        Otherwise, the metadata is extracted from the 'aws_opendata_registry' key, converted to YAML format,
+        and uploaded to the specified S3 bucket.
+
+        Returns:
+            None
+        """
+        if "aws_opendata_registry" not in self.dataset_config:
+            self.logger.warning("Missing dataset configuration to populate AWS OpenData Registry")
+        else:
+            aws_registry_config = self.dataset_config["aws_opendata_registry"]
+            yaml_data = yaml.dump(aws_registry_config)
+
+            s3 = boto3.client('s3')
+
+            key = os.path.join(self.root_prefix_cloud_optimised_path, self.dataset_name + '.yaml')
+            # Upload the YAML data to S3
+            s3.put_object(
+                Bucket=self.optimised_bucket_name,
+                Key=key,
+                Body=yaml_data.encode('utf-8')
+            )
+            self.logger.info(f"Push AWS Registry file to: {os.path.join(self.root_prefix_cloud_optimised_path, self.dataset_name + '.yaml')}")
+
+    def postprocess(self, ds: xr.Dataset) -> None:
+        """
+        Clean up resources used during data processing.
+
+        Args:
+            ds (xarray.Dataset): The xarray Dataset to clean up.
+
+        Returns:
+            None
+        """
+        if self.is_open_ds(ds):
+            ds.close()
+
+        if os.path.exists(self.tmp_input_file):
+            os.remove(self.tmp_input_file)
+        if os.path.exists(self.temp_dir.name):
+            self.temp_dir.cleanup()
+
+        self.logger.handlers.clear()
+
+
+def _get_generic_handler_class(dataset_config):
+    from .GenericParquetHandler import GenericHandler as parquet_handler
+    from .GenericZarrHandler import GenericHandler as zarr_handler
+    cloud_optimised_format = dataset_config.get("cloud_optimised_format", None)
+
+    if cloud_optimised_format == 'zarr':
+        handler_class = zarr_handler
+    elif cloud_optimised_format == 'parquet':
+        handler_class = parquet_handler
+    else:
+        return ValueError
+
+    return handler_class
+
+
+def cloud_optimised_creation(obj_key: str, dataset_config, **kwargs) -> None:
+    """
+    Create Cloud Optimised files for a specific object key in an S3 bucket.
+
+    Args:
+        obj_key (str): The object key (file path) of the NetCDF file to process.
+        dataset_config (dictionary): dataset configuration. Check config/dataset_template.json for example
+        **kwargs: Additional keyword arguments for customization.
+            handler_class (class, optional): Handler class for cloud optimised  creation (default is GenericHandler).
+            force_old_pq_del (bool, optional): Whether to force deletion of old Parquet files (default is False).
+
+    Returns:
+        None
+    """
+    handler_class = kwargs.get('handler_class', None)
+
+    # loading the right handler based on configuration
+    if handler_class is None:
+        handler_class = _get_generic_handler_class(dataset_config)
+
+    handler_reprocess_arg = kwargs.get('handler_reprocess_arg', None)
+
+    # Creating an instance of the specified class with the provided arguments
+    handler_instance = handler_class(input_object_key=obj_key,
+                                     dataset_config=dataset_config,
+                                     reprocess=handler_reprocess_arg
+                                     )
+
+    handler_instance.to_cloud_optimised()
+
+
+def cloud_optimised_creation_loop(obj_ls: List[str], dataset_config: dict, **kwargs) -> None:
+    """
+    Iterate through a list of file paths and create Cloud Optimised files for each file.
+
+    Args:
+        obj_ls (List[str]): List of file paths to process.
+        dataset_config (dictionary): dataset configuration. Check config/dataset_template.json for example
+        **kwargs: Additional keyword arguments for customization.
+            handler_class (class, optional): Handler class for cloud optimised creation.
+            force_old_pq_del (bool, optional): Whether to force deletion of old Parquet files (default is False).
+
+    Returns:
+        None
+    """
+
+    handler_class = kwargs.get('handler_class', None)
+
+    # loading the right handler based on configuration
+    if handler_class is None:
+        handler_class = _get_generic_handler_class(dataset_config)
+
+    handler_reprocess_arg = kwargs.get('reprocess', None)
+
+    logger_name = dataset_config.get("logger_name", "generic")
+    logger = get_logger(logger_name)
+
+    start_whole_processing = timeit.default_timer()
+    i = 1
+    for f in obj_ls:
+
+        logger.info(f'{f}: start processing')
+
+        start_time = timeit.default_timer()
+        try:
+            cloud_optimised_creation(f,
+                                     dataset_config,
+                                     handler_class=handler_class,
+                                     handler_reprocess_arg=handler_reprocess_arg)
+            time_spent = (timeit.default_timer() - start_time)
+
+            logger.info(f'{i}/{len(obj_ls)}: {f} Cloud Optimised file completed in {time_spent}s')
+        except Exception as e:
+            logger.error(f'{i}/{len(obj_ls)} issue with {f}: {e}')
+
+        i += 1
+
+    time_spent_processing = (timeit.default_timer() - start_whole_processing)
+    logger.info(f'Whole dataset completed in {time_spent_processing}s')

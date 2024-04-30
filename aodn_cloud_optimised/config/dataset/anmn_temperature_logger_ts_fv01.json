@@ -1,0 +1,265 @@
+{
+  "dataset_name": "anmn_temperature_logger_ts_fv01",
+  "logger_name": "anmn_temperature_logger_ts_fv01",
+  "cloud_optimised_format": "parquet",
+  "metadata_uuid": "7e13b5f3-4a70-4e31-9e95-335efa491c5c",
+  "gattrs_to_variables": [
+    "site_code"
+  ],
+  "partition_keys": [
+    "site_code",
+    "timestamp",
+    "polygon"
+  ],
+  "time_extent": {
+    "time": "TIME",
+    "partition_timestamp_period": "Q"
+  },
+  "spatial_extent": {
+    "lat": "LATITUDE",
+    "lon": "LONGITUDE",
+    "spatial_resolution": 5
+  },
+  "schema": {
+    "TIME": {
+      "type": "timestamp[ns]",
+      "standard_name": "time",
+      "long_name": "time",
+      "axis": "T",
+      "valid_min": 0.0,
+      "valid_max": 90000.0,
+      "comment": "timeOffsetPP: TIME values and time_coverage_start/end global attributes have been applied the following offset : -10 hours."
+    },
+    "TIMESERIES": {
+      "type": "int32",
+      "long_name": "unique_identifier_for_each_timeseries_feature_instance_in_this_file",
+      "cf_role": "timeseries_id"
+    },
+    "LATITUDE": {
+      "type": "double",
+      "standard_name": "latitude",
+      "long_name": "latitude",
+      "units": "degrees_north",
+      "axis": "Y",
+      "reference_datum": "WGS84 coordinate reference system",
+      "valid_min": -90.0,
+      "valid_max": 90.0
+    },
+    "LONGITUDE": {
+      "type": "double",
+      "standard_name": "longitude",
+      "long_name": "longitude",
+      "units": "degrees_east",
+      "axis": "X",
+      "reference_datum": "WGS84 coordinate reference system",
+      "valid_min": -180.0,
+      "valid_max": 180.0
+    },
+    "NOMINAL_DEPTH": {
+      "type": "float",
+      "standard_name": "depth",
+      "long_name": "nominal depth",
+      "units": "m",
+      "axis": "Z",
+      "positive": "down",
+      "reference_datum": "sea surface",
+      "valid_min": -5.0,
+      "valid_max": 12000.0
+    },
+    "TEMP": {
+      "type": "float",
+      "standard_name": "sea_water_temperature",
+      "long_name": "sea_water_temperature",
+      "units": "degrees_Celsius",
+      "valid_min": -2.5,
+      "valid_max": 40.0,
+      "ancillary_variables": "TEMP_quality_control"
+    },
+    "TEMP_quality_control": {
+      "type": "float",
+      "long_name": "quality flag for sea_water_temperature",
+      "standard_name": "sea_water_temperature status_flag",
+      "quality_control_conventions": "IMOS standard flags",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
+      "quality_control_global": "A"
+    },
+    "PRES": {
+      "type": "float",
+      "standard_name": "sea_water_pressure",
+      "long_name": "sea_water_pressure",
+      "units": "dbar",
+      "valid_min": -5.0,
+      "valid_max": 12000.0,
+      "ancillary_variables": "PRES_quality_control"
+    },
+    "PRES_quality_control": {
+      "type": "float",
+      "long_name": "quality flag for sea_water_pressure",
+      "standard_name": "sea_water_pressure status_flag",
+      "quality_control_conventions": "IMOS standard flags",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
+      "quality_control_global": "A"
+    },
+    "DEPTH": {
+      "type": "float",
+      "standard_name": "depth",
+      "long_name": "actual depth",
+      "units": "m",
+      "reference_datum": "sea surface",
+      "positive": "down",
+      "valid_min": -5.0,
+      "valid_max": 12000.0,
+      "comment": "depthPP: Depth computed using the Gibbs-SeaWater toolbox (TEOS-10) v3.05 from latitude and absolute pressure measurements to which a nominal value for atmospheric pressure (10.1325 dbar) has been substracted.",
+      "ancillary_variables": "DEPTH_quality_control"
+    },
+    "DEPTH_quality_control": {
+      "type": "float",
+      "long_name": "quality flag for depth",
+      "standard_name": "depth status_flag",
+      "quality_control_conventions": "IMOS standard flags",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
+      "quality_control_global": "A"
+    },
+    "timestamp": {
+      "type": "int64"
+    },
+    "polygon": {
+      "type": "string"
+    },
+    "site_code": {
+      "type": "string"
+    },
+    "filename": {
+      "type": "string"
+    }
+  },
+  "dataset_gattrs": {
+    "title": "Temperature logger"
+  },
+  "force_old_pq_del": true,
+  "aws_opendata_registry": {
+    "Name": "ANMN Temperature logger",
+    "Description": "",
+    "Documentation": "https://catalogue.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/7e13b5f3-4a70-4e31-9e95-335efa491c5c",
+    "Contact": "",
+    "ManagedBy": "",
+    "UpdateFrequency": "",
+    "Tags": [],
+    "License": "",
+    "Resources": [
+      {
+        "Description": "",
+        "ARN": "",
+        "Region": "",
+        "Type": "",
+        "Explore": []
+      },
+      {
+        "Description": "",
+        "ARN": "",
+        "Region": "",
+        "Type": ""
+      },
+      {
+        "Description": "",
+        "ARN": "",
+        "Region": "",
+        "Type": ""
+      },
+      {
+        "Description": "",
+        "ARN": "",
+        "Region": "",
+        "Type": ""
+      }
+    ],
+    "DataAtWork": {
+      "Tutorials": [
+        {
+          "Title": "",
+          "URL": "",
+          "Services": "",
+          "AuthorName": "",
+          "AuthorURL": ""
+        },
+        {
+          "Title": "",
+          "URL": "",
+          "AuthorName": "",
+          "AuthorURL": ""
+        },
+        {
+          "Title": "",
+          "URL": "",
+          "AuthorName": "",
+          "AuthorURL": ""
+        }
+      ],
+      "Tools & Applications": [
+        {
+          "Title": "",
+          "URL": "",
+          "AuthorName": "",
+          "AuthorURL": ""
+        },
+        {
+          "Title": "",
+          "URL": "",
+          "AuthorName": "",
+          "AuthorURL": ""
+        }
+      ],
+      "Publications": [
+        {
+          "Title": "IMOS - Australian National Mooring Network (ANMN) Facility - Temperature and salinity time-series",
+          "URL": "https://catalogue.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/7e13b5f3-4a70-4e31-9e95-335efa491c5c",
+          "AuthorName": ""
+        },
+        {
+          "Title": "",
+          "URL": "",
+          "AuthorName": ""
+        }
+      ]
+    }
+  }
+}

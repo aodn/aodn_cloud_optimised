@@ -1,0 +1,191 @@
+{
+    // (Required) The name of the parquet dataset as it will appear on S3
+    "dataset_name": "dataset_template",
+
+    "cloud_optimised_format": "parquet",
+
+    // (Optional) The associated geonetwork metadata record uuid
+    "metadata_uuid": "b12b3-123bb-iijww",
+
+    // (Optional) The name of the logging file, default to generic if not provided
+    "logger_name": "my_log",
+
+    // (Optional) A list NetCDF Global Attributes to be converted into variables. !! They need to appear in the pyarrow_schema definition below
+    "gattrs_to_variables" : ["XBT_line", "ship_name", "Callsign", "imo_number"],
+
+    // (Required) The parquet partition keys
+    // if a global attribute is used as a partition key, it needs to appear in the gattrs_to_variables list
+    // timestamp and polygon partition names will trigger some functions to create new variables used to facilitate
+    // geospatial queries in parquet. They also need to be available in the pyarrow_schema definition (see below)
+    "partition_keys": ["XBT_line", "timestamp", "polygon"],
+
+    // (Optional) The timestamp period to choose. M(month), 'Y' (year), 'Q' (quaterly) ... see
+    // https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#timeseries-period-aliases
+    // The "smaller" it is, the more parquet objects will be created, slowing down queries
+    // TODO: add the time_varname as an optional parameter
+    "partition_timestamp_period": "M",
+
+    // (Optional) Specify the lat and lon variables as well as the spatial resolution in degrees of a dataset to create the
+    // geom/polygon partition key
+    "spatial_extent": {
+        "lat":  "LATITUDE",
+        "lon": "LONGITUDE",
+        "spatial_resolution": 5
+    },
+
+    // (Optional) pandas.csv_read config. Only useful for input files as CSV to specify the optional arguments of pandas.read_csv
+    // https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_csv.html
+    // below is a non-comprehensive list of optional arguments. All arguments available in the read_csv method can be used
+    "pandas_read_csv_config": {
+        "delimiter": ";",
+        "header": 0,
+        "index_col": "detection_timestamp",
+        "parse_dates": [
+          "detection_timestamp"
+        ],
+        "na_values": [
+          "N/A",
+          "NaN"
+        ],
+        "encoding": "utf-8"
+      },
+
+    // (Required) The dataset pyarrow_schema, including the gattrs_to_variables created above. filename needs to be created,
+    // as well as the different dimensions or partition keys such as polygon and timestamp
+    "schema" : [
+        "timeSeries: int32",
+        "LATITUDE: double",
+        "LONGITUDE: double",
+        "DEPTH: float",
+        "DEPTH_quality_control: float",
+        "TEMP: float",
+        "TEMP_quality_control: float",
+        "imo_number: int32",
+        "timestamp: int64",
+        "polygon: string",
+        "XBT_line: string",
+        "ship_name: string",
+        "Callsign: string",
+        "filename: string",
+        "TIME: timestamp[ns]"
+    ],
+
+    // (Required) The dataset pyarrow_schema Alternatively, the pyarrow_schema can also be a dictionary defined as below. The code will
+    // automatically recognise the used format. This format allows to add variable attributes, useful for converting CSV
+    // files into parquet. Those attributes will be created into the parquet metadata side car file
+    "schema": {
+      "detection_timestamp": {
+        "type": "timestamp[ns]",
+        "standard_name": "time",
+        "long_name": "",
+        "units": "s",
+        "comments": ""
+      },
+      "transmitter_id": {
+        "type": "string",
+        "standard_name": "",
+        "long_name": "",
+        "units": "",
+        "comments": ""
+      }
+    },
+
+    // (Optional) A list of global attributes to add to the parquet metadata sidecar files such as
+    // common global attributes from NetCDF files belonging to the same dataset
+    "dataset_gattrs": {
+        "title": "test"
+    },
+
+    // (Optional) When creating a new parquet file(s), force the search via boto S3 of existing parquet files already created,
+    // regardless of their old partition keys and content as long as they have the original filename in common
+    "force_old_pq_del": true,
+
+     // (Optional) A dictionary used to create the AWS opendata registry YAML file
+     // see https://github.com/awslabs/open-data-registry
+    "aws_opendata_registry": {
+        "Name": "",
+        "Description": "",
+        "Documentation": "",
+        "Contact": "",
+        "ManagedBy": "",
+        "UpdateFrequency": "",
+        "Tags": [],
+        "License": "",
+        "Resources": [
+          {
+            "Description": "",
+            "ARN": "",
+            "Region": "",
+            "Type": "",
+            "Explore": []
+          },
+          {
+            "Description": "",
+            "ARN": "",
+            "Region": "",
+            "Type": ""
+          },
+          {
+            "Description": "",
+            "ARN": "",
+            "Region": "",
+            "Type": ""
+          },
+          {
+            "Description": "",
+            "ARN": "",
+            "Region": "",
+            "Type": ""
+          }
+        ],
+        "DataAtWork": {
+          "Tutorials": [
+            {
+              "Title": "",
+              "URL": "",
+              "Services": "",
+              "AuthorName": "",
+              "AuthorURL": ""
+            },
+            {
+              "Title": "",
+              "URL": "",
+              "AuthorName": "",
+              "AuthorURL": ""
+            },
+            {
+              "Title": "",
+              "URL": "",
+              "AuthorName": "",
+              "AuthorURL": ""
+            }
+          ],
+          "Tools & Applications": [
+            {
+              "Title": "",
+              "URL": "",
+              "AuthorName": "",
+              "AuthorURL": ""
+            },
+            {
+              "Title": "",
+              "URL": "",
+              "AuthorName": "",
+              "AuthorURL": ""
+            }
+          ],
+          "Publications": [
+            {
+              "Title": "",
+              "URL": "",
+              "AuthorName": ""
+            },
+            {
+              "Title": "",
+              "URL": "",
+              "AuthorName": ""
+            }
+          ]
+        }
+      }
+}

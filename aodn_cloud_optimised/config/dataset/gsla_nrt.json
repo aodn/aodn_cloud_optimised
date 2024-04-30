@@ -1,0 +1,201 @@
+{
+  "dataset_name": "gsla_nrt",
+  "logger_name": "gsla_nrt",
+  "cloud_optimised_format": "zarr",
+  "metadata_uuid": "",
+  "dimensions": {
+    "time": {
+      "name": "TIME",
+      "chunk": 5,
+      "rechunk": true
+    },
+    "latitude": {
+      "name": "LATITUDE",
+      "chunk": 351
+    },
+    "longitude": {
+      "name": "LONGITUDE",
+      "chunk": 641
+    }
+  },
+  "var_template_shape": "UCUR",
+  "vars_to_drop_no_common_dimension": [
+    "LATITUDE",
+    "LONGITUDE"
+  ],
+  "schema": {
+    "TIME": {
+      "type": "datetime64[ns]",
+      "axis": "T",
+      "long_name": "analysis time",
+      "standard_name": "time",
+      "coordinate_type": "TIME"
+    },
+    "LONGITUDE": {
+      "type": "double",
+      "axis": "X",
+      "long_name": "longitude",
+      "modulo": 360.0,
+      "projection": "geographic",
+      "reference_datum": "geographical coordinates, WGS84 projection",
+      "standard_name": "longitude",
+      "units": "degrees_east",
+      "valid_max": 360.0,
+      "valid_min": 0.0,
+      "coordinate_type": "X"
+    },
+    "LATITUDE": {
+      "type": "double",
+      "axis": "Y",
+      "long_name": "latitude",
+      "projection": "geographic",
+      "reference_datum": "geographical coordinates, WGS84 projection",
+      "standard_name": "latitude",
+      "units": "degrees_north",
+      "valid_max": 60.0,
+      "valid_min": -60.0,
+      "coordinate_type": "Y"
+    },
+    "start_time": {
+      "type": "datetime64[ns]",
+      "long_name": "start time of data window",
+      "coordinate_type": "TIME"
+    },
+    "end_time": {
+      "type": "timestamp[ns]",
+      "long_name": "end time of data window",
+      "coordinate_type": "TIME"
+    },
+    "GSLA": {
+      "type": "float",
+      "description": "Altimeter and tidegauge estimates of adjusted sea level anomaly mapped onto a grid using optimal interpolation (OI). For details of  the temporal and spatial covariance functions of the OI see the Reference. The anomaly field is mapped because the geoid is not known to sufficient precision, obliging us to remove the time-mean from all sea level observations. Sea level minus the tides and inverse barometer (IB) response, rather than total sea level, is mapped because it is the quantity from which geostrophic velocities can be estimated, and because total sea level has too much high-frequency energy to be mapped from altimeter data anyway.  To de-alias the altimeter data, we have subtracted the estimates provided by the space agencies of the various high frequency signals, evaluated at the sub-satellite point, as well as applying all the recommended corrections. The altimeters are individually edited for outliers, filtered along-track (see Reference for details) and de-biased by ensuring that the mean over the last month in the Australasian region closely tracks the reference (Jason-class) mission. Sub-tidal, IB-corrected estimates of coastal sea level are included in the OI by mapping the adjusted, de-tided tidegauge data onto a line of points along  the coast. The de-tiding uses a running-mean average. The IB adjustment is based on the Bureau of Meteorology atmospheric pressure analysis.",
+      "long_name": "gridded (adjusted) sea level anomaly",
+      "standard_name": "sea_surface_height_above_mean_sea_level",
+      "units": "m"
+    },
+    "GSL": {
+      "type": "float",
+      "description": "GSLA + OFAM3 mean dynamic height",
+      "long_name": "gridded (adjusted) sea level",
+      "standard_name": "sea_surface_height_above_geoid",
+      "units": "m"
+    },
+    "UCUR": {
+      "type": "float",
+      "description": "eastward geostrophic velocity derived from GSLA + UCUR_MEAN",
+      "long_name": "total eastward geostrophic velocity",
+      "standard_name": "surface_geostrophic_eastward_sea_water_velocity",
+      "units": "m/s"
+    },
+    "VCUR": {
+      "type": "float",
+      "description": "northward geostrophic velocity derived from GSLA + VCUR_MEAN",
+      "long_name": "total northward geostrophic velocity",
+      "standard_name": "surface_geostrophic_northward_sea_water_velocity",
+      "units": "m/s"
+    },
+    "UCUR_MEAN": {
+      "type": "float",
+      "description": "Mean velocity obtained from the 18year average of surface velocities from the OFAM3 spinup run, a non-data-assimilating version of the 0.1 degree Bluelink Model with atmospheric forcing from ERA Interim",
+      "long_name": "OFAM3 mean eastward geostrophic velocity",
+      "standard_name": "surface_geostrophic_eastward_sea_water_velocity",
+      "units": "m/s"
+    },
+    "VCUR_MEAN": {
+      "type": "float",
+      "description": "Mean velocity obtained from the 18year average of surface velocities from the OFAM3 spinup run, a non-data-assimilating version of the 0.1 degree Bluelink Model with atmospheric forcing from ERA Interim",
+      "long_name": "OFAM3 mean northward geostrophic velocity",
+      "standard_name": "surface_geostrophic_northward_sea_water_velocity",
+      "units": "m/s"
+    }
+  },
+  "dataset_gattrs": {
+    "title": "Ocean Current"
+  },
+  "aws_opendata_registry": {
+    "Name": "",
+    "Description": "",
+    "Documentation": "",
+    "Contact": "",
+    "ManagedBy": "",
+    "UpdateFrequency": "",
+    "Tags": [],
+    "License": "",
+    "Resources": [
+      {
+        "Description": "",
+        "ARN": "",
+        "Region": "",
+        "Type": "",
+        "Explore": []
+      },
+      {
+        "Description": "",
+        "ARN": "",
+        "Region": "",
+        "Type": ""
+      },
+      {
+        "Description": "",
+        "ARN": "",
+        "Region": "",
+        "Type": ""
+      },
+      {
+        "Description": "",
+        "ARN": "",
+        "Region": "",
+        "Type": ""
+      }
+    ],
+    "DataAtWork": {
+      "Tutorials": [
+        {
+          "Title": "",
+          "URL": "",
+          "Services": "",
+          "AuthorName": "",
+          "AuthorURL": ""
+        },
+        {
+          "Title": "",
+          "URL": "",
+          "AuthorName": "",
+          "AuthorURL": ""
+        },
+        {
+          "Title": "",
+          "URL": "",
+          "AuthorName": "",
+          "AuthorURL": ""
+        }
+      ],
+      "Tools & Applications": [
+        {
+          "Title": "",
+          "URL": "",
+          "AuthorName": "",
+          "AuthorURL": ""
+        },
+        {
+          "Title": "",
+          "URL": "",
+          "AuthorName": "",
+          "AuthorURL": ""
+        }
+      ],
+      "Publications": [
+        {
+          "Title": "",
+          "URL": "",
+          "AuthorName": ""
+        },
+        {
+          "Title": "",
+          "URL": "",
+          "AuthorName": ""
+        }
+      ]
+    }
+  }
+}

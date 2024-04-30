@@ -1,0 +1,122 @@
+{
+    "dataset_name": "acorn_gridded_qc_turq",
+    "logger_name": "acorn_gridded_qc_turq",
+    "cloud_optimised_format": "zarr",
+    "metadata_uuid": "",
+    "dimensions": {
+        "time": {"name": "TIME",
+                 "chunk": 1500,
+                 "rechunk": true},
+        "latitude": {"name": "J",
+                     "chunk": 60},
+        "longitude": {"name": "I",
+                      "chunk": 59}
+    },
+    "var_template_shape": "UCUR",
+    "vars_to_drop_no_common_dimension": ["I", "J", "LATITUDE", "LONGITUDE", "GDOP"],
+    "schema": {
+      "TIME": {"type": "datetime64[ns]"},
+      "I": {"type": "int32"},
+      "J": {"type": "int32"},
+      "LATITUDE": {"type": "float64"},
+      "LONGITUDE": {"type": "float64"},
+      "GDOP": {"type": "float32"},
+      "UCUR": {"type": "float32"},
+      "VCUR": {"type": "float32"},
+      "UCUR_sd": {"type": "float32"},
+      "VCUR_sd": {"type": "float32"},
+      "NOBS1": {"type": "float32"},
+      "NOBS2": {"type": "float32"},
+      "UCUR_quality_control": {"type": "float32"},
+      "VCUR_quality_control": {"type": "float32"}
+    },
+    "dataset_gattrs": {
+        "title": "Temperature logger"
+    },
+    "aws_opendata_registry": {
+    "Name": "",
+    "Description": "",
+    "Documentation": "",
+    "Contact": "",
+    "ManagedBy": "",
+    "UpdateFrequency": "",
+    "Tags": [],
+    "License": "",
+    "Resources": [
+      {
+        "Description": "",
+        "ARN": "",
+        "Region": "",
+        "Type": "",
+        "Explore": []
+      },
+      {
+        "Description": "",
+        "ARN": "",
+        "Region": "",
+        "Type": ""
+      },
+      {
+        "Description": "",
+        "ARN": "",
+        "Region": "",
+        "Type": ""
+      },
+      {
+        "Description": "",
+        "ARN": "",
+        "Region": "",
+        "Type": ""
+      }
+    ],
+    "DataAtWork": {
+      "Tutorials": [
+        {
+          "Title": "",
+          "URL": "",
+          "Services": "",
+          "AuthorName": "",
+          "AuthorURL": ""
+        },
+        {
+          "Title": "",
+          "URL": "",
+          "AuthorName": "",
+          "AuthorURL": ""
+        },
+        {
+          "Title": "",
+          "URL": "",
+          "AuthorName": "",
+          "AuthorURL": ""
+        }
+      ],
+      "Tools & Applications": [
+        {
+          "Title": "",
+          "URL": "",
+          "AuthorName": "",
+          "AuthorURL": ""
+        },
+        {
+          "Title": "",
+          "URL": "",
+          "AuthorName": "",
+          "AuthorURL": ""
+        }
+      ],
+      "Publications": [
+        {
+          "Title": "",
+          "URL": "",
+          "AuthorName": ""
+        },
+        {
+          "Title": "",
+          "URL": "",
+          "AuthorName": ""
+        }
+      ]
+    }
+  }
+}

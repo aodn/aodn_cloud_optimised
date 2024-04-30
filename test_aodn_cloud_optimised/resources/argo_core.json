@@ -1,0 +1,482 @@
+{
+  "dataset_name": "argo_core",
+  "logger_name": "argo_core",
+  "cloud_optimised_format": "parquet",
+  "metadata_uuid": "4402cb50-e20a-44ee-93e6-4728259250d2",
+  "gattrs_to_variables": [],
+  "partition_keys": [
+    "timestamp",
+    "PLATFORM_NUMBER",
+    "polygon"
+  ],
+  "time_extent": {
+    "time": "JULD",
+    "partition_timestamp_period": "Y"
+  },
+  "spatial_extent": {
+    "lat": "LATITUDE",
+    "lon": "LONGITUDE",
+    "spatial_resolution": 5
+  },
+  "schema": {
+    "DATA_TYPE": {
+      "type": "string",
+      "long_name": "Data type",
+      "conventions": "Argo reference table 1"
+    },
+    "FORMAT_VERSION": {
+      "type": "string",
+      "long_name": "File format version"
+    },
+    "HANDBOOK_VERSION": {
+      "type": "string",
+      "long_name": "Data handbook version"
+    },
+    "REFERENCE_DATE_TIME": {
+      "type": "string",
+      "long_name": "Date of reference for Julian days",
+      "conventions": "YYYYMMDDHHMISS"
+    },
+    "DATE_CREATION": {
+      "type": "string",
+      "long_name": "Date of file creation",
+      "conventions": "YYYYMMDDHHMISS"
+    },
+    "DATE_UPDATE": {
+      "type": "string",
+      "long_name": "Date of update of this file",
+      "conventions": "YYYYMMDDHHMISS"
+    },
+    "PLATFORM_NUMBER": {
+      "type": "string",
+      "long_name": "Float unique identifier",
+      "conventions": "WMO float identifier : A9IIIII"
+    },
+    "PROJECT_NAME": {
+      "type": "string",
+      "long_name": "Name of the project"
+    },
+    "PI_NAME": {
+      "type": "string",
+      "long_name": "Name of the principal investigator"
+    },
+    "STATION_PARAMETERS": {
+      "type": "string",
+      "long_name": "List of available parameters for the station",
+      "conventions": "Argo reference table 3"
+    },
+    "CYCLE_NUMBER": {
+      "type": "double",
+      "long_name": "Float cycle number",
+      "conventions": "0...N, 0 : launch cycle (if exists), 1 : first complete cycle"
+    },
+    "DIRECTION": {
+      "type": "string",
+      "long_name": "Direction of the station profiles",
+      "conventions": "A: ascending profiles, D: descending profiles"
+    },
+    "DATA_CENTRE": {
+      "type": "string",
+      "long_name": "Data centre in charge of float data processing",
+      "conventions": "Argo reference table 4"
+    },
+    "DC_REFERENCE": {
+      "type": "string",
+      "long_name": "Station unique identifier in data centre",
+      "conventions": "Data centre convention"
+    },
+    "DATA_STATE_INDICATOR": {
+      "type": "string",
+      "long_name": "Degree of processing the data have passed through",
+      "conventions": "Argo reference table 6"
+    },
+    "DATA_MODE": {
+      "type": "string",
+      "long_name": "Delayed mode or real time data",
+      "conventions": "R : real time; D : delayed mode; A : real time with adjustment"
+    },
+    "PLATFORM_TYPE": {
+      "type": "string",
+      "long_name": "Type of float",
+      "conventions": "Argo reference table 23"
+    },
+    "FLOAT_SERIAL_NO": {
+      "type": "string",
+      "long_name": "Serial number of the float"
+    },
+    "FIRMWARE_VERSION": {
+      "type": "string",
+      "long_name": "Instrument firmware version"
+    },
+    "WMO_INST_TYPE": {
+      "type": "string",
+      "long_name": "Coded instrument type",
+      "conventions": "Argo reference table 8"
+    },
+    "JULD": {
+      "type": "timestamp[ns]",
+      "long_name": "Julian day (UTC) of the station relative to REFERENCE_DATE_TIME",
+      "standard_name": "time",
+      "conventions": "Relative julian days with decimal part (as parts of day)",
+      "resolution": 0.0,
+      "axis": "T"
+    },
+    "JULD_QC": {
+      "type": "string",
+      "long_name": "Quality on date and time",
+      "conventions": "Argo reference table 2"
+    },
+    "JULD_LOCATION": {
+      "type": "timestamp[ns]",
+      "long_name": "Julian day (UTC) of the location relative to REFERENCE_DATE_TIME",
+      "conventions": "Relative julian days with decimal part (as parts of day)",
+      "resolution": 0.0
+    },
+    "LATITUDE": {
+      "type": "double",
+      "long_name": "Latitude of the station, best estimate",
+      "standard_name": "latitude",
+      "units": "degree_north",
+      "valid_min": -90.0,
+      "valid_max": 90.0,
+      "axis": "Y"
+    },
+    "LONGITUDE": {
+      "type": "double",
+      "long_name": "Longitude of the station, best estimate",
+      "standard_name": "longitude",
+      "units": "degree_east",
+      "valid_min": -180.0,
+      "valid_max": 180.0,
+      "axis": "X"
+    },
+    "POSITION_QC": {
+      "type": "string",
+      "long_name": "Quality on position (latitude and longitude)",
+      "conventions": "Argo reference table 2"
+    },
+    "POSITIONING_SYSTEM": {
+      "type": "string",
+      "long_name": "Positioning system"
+    },
+    "PROFILE_PRES_QC": {
+      "type": "string",
+      "long_name": "Global quality flag of PRES profile",
+      "conventions": "Argo reference table 2a"
+    },
+    "PROFILE_TEMP_QC": {
+      "type": "string",
+      "long_name": "Global quality flag of TEMP profile",
+      "conventions": "Argo reference table 2a"
+    },
+    "PROFILE_PSAL_QC": {
+      "type": "string",
+      "long_name": "Global quality flag of PSAL profile",
+      "conventions": "Argo reference table 2a"
+    },
+    "VERTICAL_SAMPLING_SCHEME": {
+      "type": "string",
+      "long_name": "Vertical sampling scheme",
+      "conventions": "Argo reference table 16"
+    },
+    "CONFIG_MISSION_NUMBER": {
+      "type": "double",
+      "long_name": "Unique number denoting the missions performed by the float",
+      "conventions": "1...N, 1 : first complete mission"
+    },
+    "PRES": {
+      "type": "float",
+      "long_name": "Sea water pressure, equals 0 at sea-level",
+      "standard_name": "sea_water_pressure",
+      "units": "decibar",
+      "valid_min": 0.0,
+      "valid_max": 12000.0,
+      "C_format": "%7.1f",
+      "FORTRAN_format": "F7.1",
+      "resolution": 1.0,
+      "axis": "Z"
+    },
+    "PRES_QC": {
+      "type": "string",
+      "long_name": "quality flag",
+      "conventions": "Argo reference table 2"
+    },
+    "PRES_ADJUSTED": {
+      "type": "float",
+      "long_name": "Sea water pressure, equals 0 at sea-level",
+      "standard_name": "sea_water_pressure",
+      "units": "decibar",
+      "valid_min": 0.0,
+      "valid_max": 12000.0,
+      "C_format": "%7.1f",
+      "FORTRAN_format": "F7.1",
+      "resolution": 1.0,
+      "axis": "Z"
+    },
+    "PRES_ADJUSTED_QC": {
+      "type": "string",
+      "long_name": "quality flag",
+      "conventions": "Argo reference table 2"
+    },
+    "PRES_ADJUSTED_ERROR": {
+      "type": "float",
+      "long_name": "Contains the error on the adjusted values as determined by the delayed mode QC process",
+      "units": "decibar",
+      "C_format": "%7.1f",
+      "FORTRAN_format": "F7.1",
+      "resolution": 1.0
+    },
+    "TEMP": {
+      "type": "float",
+      "long_name": "Sea temperature in-situ ITS-90 scale",
+      "standard_name": "sea_water_temperature",
+      "units": "degree_Celsius",
+      "valid_min": -2.5,
+      "valid_max": 40.0,
+      "C_format": "%9.3f",
+      "FORTRAN_format": "F9.3",
+      "resolution": 0.0010000000474974513
+    },
+    "TEMP_QC": {
+      "type": "string",
+      "long_name": "quality flag",
+      "conventions": "Argo reference table 2"
+    },
+    "TEMP_ADJUSTED": {
+      "type": "float",
+      "long_name": "Sea temperature in-situ ITS-90 scale",
+      "standard_name": "sea_water_temperature",
+      "units": "degree_Celsius",
+      "valid_min": -2.5,
+      "valid_max": 40.0,
+      "C_format": "%9.3f",
+      "FORTRAN_format": "F9.3",
+      "resolution": 0.0010000000474974513
+    },
+    "TEMP_ADJUSTED_QC": {
+      "type": "string",
+      "long_name": "quality flag",
+      "conventions": "Argo reference table 2"
+    },
+    "TEMP_ADJUSTED_ERROR": {
+      "type": "float",
+      "long_name": "Contains the error on the adjusted values as determined by the delayed mode QC process",
+      "units": "degree_Celsius",
+      "C_format": "%9.3f",
+      "FORTRAN_format": "F9.3",
+      "resolution": 0.0010000000474974513
+    },
+    "PSAL": {
+      "type": "float",
+      "long_name": "Practical salinity",
+      "standard_name": "sea_water_salinity",
+      "units": "psu",
+      "valid_min": 2.0,
+      "valid_max": 41.0,
+      "C_format": "%9.3f",
+      "FORTRAN_format": "F9.3",
+      "resolution": 0.0010000000474974513
+    },
+    "PSAL_QC": {
+      "type": "string",
+      "long_name": "quality flag",
+      "conventions": "Argo reference table 2"
+    },
+    "PSAL_ADJUSTED_QC": {
+      "type": "string",
+      "long_name": "quality flag",
+      "conventions": "Argo reference table 2"
+    },
+    "PSAL_ADJUSTED_ERROR": {
+      "type": "float",
+      "long_name": "Contains the error on the adjusted values as determined by the delayed mode QC process",
+      "units": "psu",
+      "C_format": "%9.3f",
+      "FORTRAN_format": "F9.3",
+      "resolution": 0.0010000000474974513
+    },
+    "PARAMETER": {
+      "type": "string",
+      "long_name": "List of parameters with calibration information",
+      "conventions": "Argo reference table 3"
+    },
+    "SCIENTIFIC_CALIB_EQUATION": {
+      "type": "string",
+      "long_name": "Calibration equation for this parameter"
+    },
+    "SCIENTIFIC_CALIB_COEFFICIENT": {
+      "type": "string",
+      "long_name": "Calibration coefficients for this equation"
+    },
+    "SCIENTIFIC_CALIB_COMMENT": {
+      "type": "string",
+      "long_name": "Comment applying to this parameter calibration"
+    },
+    "SCIENTIFIC_CALIB_DATE": {
+      "type": "string",
+      "long_name": "Date of calibration",
+      "conventions": "YYYYMMDDHHMISS"
+    },
+    "HISTORY_INSTITUTION": {
+      "type": "string",
+      "long_name": "Institution which performed action",
+      "conventions": "Argo reference table 4"
+    },
+    "HISTORY_STEP": {
+      "type": "string",
+      "long_name": "Step in data processing",
+      "conventions": "Argo reference table 12"
+    },
+    "HISTORY_SOFTWARE": {
+      "type": "string",
+      "long_name": "Name of software which performed action",
+      "conventions": "Institution dependent"
+    },
+    "HISTORY_SOFTWARE_RELEASE": {
+      "type": "string",
+      "long_name": "Version/release of software which performed action",
+      "conventions": "Institution dependent"
+    },
+    "HISTORY_REFERENCE": {
+      "type": "string",
+      "long_name": "Reference of database",
+      "conventions": "Institution dependent"
+    },
+    "HISTORY_DATE": {
+      "type": "string",
+      "long_name": "Date the history record was created",
+      "conventions": "YYYYMMDDHHMISS"
+    },
+    "HISTORY_ACTION": {
+      "type": "string",
+      "long_name": "Action performed on data",
+      "conventions": "Argo reference table 7"
+    },
+    "HISTORY_PARAMETER": {
+      "type": "string",
+      "long_name": "Station parameter action is performed on",
+      "conventions": "Argo reference table 3"
+    },
+    "HISTORY_START_PRES": {
+      "type": "float",
+      "long_name": "Start pressure action applied on",
+      "units": "decibar"
+    },
+    "HISTORY_STOP_PRES": {
+      "type": "float",
+      "long_name": "Stop pressure action applied on",
+      "units": "decibar"
+    },
+    "HISTORY_PREVIOUS_VALUE": {
+      "type": "float",
+      "long_name": "Parameter/Flag previous value before action"
+    },
+    "HISTORY_QCTEST": {
+      "type": "string",
+      "long_name": "Documentation of tests performed, tests failed (in hex form)",
+      "conventions": "Write tests performed when ACTION=QCP$; tests failed when ACTION=QCF$"
+    },
+    "filename": {
+      "type": "string"
+    },
+    "timestamp": {
+      "type": "int64"
+    },
+    "polygon": {
+      "type": "string"
+    },
+    "DATA_CENTRE": {
+      "type": "string"
+    }
+  },
+  "dataset_gattrs": {
+    "title": "Argo Core"
+  },
+  "force_old_pq_del": false,
+  "aws_opendata_registry": {
+    "Name": "Argo Core",
+    "Description": "",
+    "Documentation": "https://catalogue.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/4402cb50-e20a-44ee-93e6-4728259250d2",
+    "Contact": "",
+    "ManagedBy": "",
+    "UpdateFrequency": "",
+    "Tags": [],
+    "License": "",
+    "Resources": [
+      {
+        "Description": "",
+        "ARN": "",
+        "Region": "",
+        "Type": "",
+        "Explore": []
+      },
+      {
+        "Description": "",
+        "ARN": "",
+        "Region": "",
+        "Type": ""
+      },
+      {
+        "Description": "",
+        "ARN": "",
+        "Region": "",
+        "Type": ""
+      },
+      {
+        "Description": "",
+        "ARN": "",
+        "Region": "",
+        "Type": ""
+      }
+    ],
+    "DataAtWork": {
+      "Tutorials": [
+        {
+          "Title": "",
+          "URL": "",
+          "Services": "",
+          "AuthorName": "",
+          "AuthorURL": ""
+        },
+        {
+          "Title": "",
+          "URL": "",
+          "AuthorName": "",
+          "AuthorURL": ""
+        },
+        {
+          "Title": "",
+          "URL": "",
+          "AuthorName": "",
+          "AuthorURL": ""
+        }
+      ],
+      "Tools & Applications": [
+        {
+          "Title": "",
+          "URL": "",
+          "AuthorName": "",
+          "AuthorURL": ""
+        },
+        {
+          "Title": "",
+          "URL": "",
+          "AuthorName": "",
+          "AuthorURL": ""
+        }
+      ],
+      "Publications": [
+        {
+          "Title": "IMOS - Argo",
+          "URL": "https://catalogue.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/4402cb50-e20a-44ee-93e6-4728259250d2",
+          "AuthorName": ""
+        },
+        {
+          "Title": "",
+          "URL": "",
+          "AuthorName": ""
+        }
+      ]
+    }
+  }
+}
