@@ -25,3 +25,4 @@ dependencies:
     - s3fs
     - yaml
     - xarray[complete]
+    - zarr
