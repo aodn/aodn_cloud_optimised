@@ -20,7 +20,7 @@ dependencies:
     - pandas
     - shapely
     - geopandas
-    - pyarrow==15.0.2
+    - pyarrow==16.0.0
     - rechunker
     - s3fs
     - xarray[complete]

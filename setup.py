@@ -19,7 +19,7 @@ INSTALL_REQUIRES = [
     'h5py',
     'scipy',
     'boto3',
-    'pyarrow==15.0.2',
+    'pyarrow==16.0.0',
     'rechunker',
     's3fs',
     'shapely',
