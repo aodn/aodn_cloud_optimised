@@ -3,6 +3,7 @@ import yaml
 import os
 import importlib.resources
 from collections import OrderedDict
+from importlib.resources import path
 
 
 def load_variable_from_file(file_path, variable_name) -> str:
@@ -24,10 +25,9 @@ def load_variable_from_file(file_path, variable_name) -> str:
 
 
 def load_variable_from_config(variable_name) -> str:
-    # Construct the path to common.py relative to the current directory
-    common_config_path = str(importlib.resources.path("aodn_cloud_optimised.config", "common.json"))
-
-    return load_variable_from_file(common_config_path, variable_name)
+    # Obtain the file path using the context manager
+    with path("aodn_cloud_optimised.config", "common.json") as common_config_path:
+        return load_variable_from_file(str(common_config_path), variable_name)
 
 
 def load_dataset_config(config_path) -> dict:
