@@ -15,13 +15,16 @@ INSTALL_REQUIRES = [
     'numpy',
     'pandas',
     'python-dateutil',
+    'jsonschema',
     'h5py',
     'scipy',
     'boto3',
-    'pyarrow==15.0.0',
+    'pyarrow==15.0.2',
+    'rechunker',
     's3fs',
     'shapely',
     'xarray[complete]',
+    'zarr'
 ]
 
 PACKAGE_DATA = {
@@ -79,7 +82,7 @@ setup(
     tests_require=TESTS_REQUIRE,
     extras_require=EXTRAS_REQUIRE,
     zip_safe=False,
-    python_requires='>=3.8',
+    python_requires='==3.10.14',
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',

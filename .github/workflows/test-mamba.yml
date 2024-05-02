@@ -1,0 +1,50 @@
+name: aodn_cloud_optimised mamba
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -el {0}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'true'
+
+      - name: Set up Miniconda
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          activate-environment: AodnCloudOptimised
+          environment-file: environment.yml
+
+      - name: Install dependencies
+        shell: bash -el {0}
+        run: |
+          conda install --yes mamba
+          mamba env update --name AodnCloudOptimised --file environment.yml
+
+      - name: Activate Conda environment
+        shell: bash -el {0}
+        run: |
+          conda init
+          conda activate AodnCloudOptimised
+
+      - name: Run pytest and coverage
+        run: |
+          pytest
+          coverage run -m pytest
+          coverage report --fail-under=60
+          coverage xml -o coverage.xml
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v2
+        with:
+          name: coverage-report
+          path: coverage.xml

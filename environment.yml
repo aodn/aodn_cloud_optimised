@@ -7,7 +7,7 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - python=3.10
+  - python=3.10.14
   - notebook
   - h5py
   - scipy
@@ -20,9 +20,8 @@ dependencies:
     - pandas
     - shapely
     - geopandas
-    - pyarrow==15.0.0
+    - pyarrow==15.0.2
     - rechunker
     - s3fs
-    - yaml
     - xarray[complete]
     - zarr
