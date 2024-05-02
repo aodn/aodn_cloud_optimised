@@ -277,7 +277,7 @@ def get_schema_metadata(dname):
             The keys are metadata keys (decoded from bytes to UTF-8 strings),
             and the values are metadata values (parsed from JSON strings to Python objects).
     """
-    parquet_meta = pa.parquet.read_schema(os.path.join(dname + '_common_metadata'))
+    parquet_meta = pa.parquet.read_schema(os.path.join(dname, '_common_metadata'))
     # horrible ... but got to be done. The dictionary of metadata has to be a dictionnary with byte keys and byte values.
     # meaning that we can't have nested dictionaries ...
     decoded_meta = {key.decode('utf-8'): json.loads(value.decode('utf-8').replace("'", '"')) for key, value in
