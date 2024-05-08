@@ -140,7 +140,8 @@
   "dataset_gattrs": {
     "title": "Upper Ocean Thermal Data collected using XBT (expendable bathythermographs)",
     "principal_investigator": "Cowley, Rebecca",
-    "principal_investigator_email": "rebecca.cowley@csiro.au"
+    "principal_investigator_email": "rebecca.cowley@csiro.au",
+    "featureType": "profile"
   },
   "force_old_pq_del": true,
   "aws_opendata_registry": {

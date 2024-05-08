@@ -38,6 +38,7 @@ SCRIPTS = [
     'aodn_cloud_optimised/bin/acorn_gridded_qc_turq.py',
     'aodn_cloud_optimised/bin/anfog_to_parquet.py',
     'aodn_cloud_optimised/bin/anmn_ctd_to_parquet.py',
+    'aodn_cloud_optimised/bin/anmn_hourly_timeseries.py',
     'aodn_cloud_optimised/bin/anmn_aqualogger_to_parquet.py',
     'aodn_cloud_optimised/bin/ardc_wave_to_parquet.py',
     'aodn_cloud_optimised/bin/argo_to_parquet.py',

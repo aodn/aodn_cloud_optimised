@@ -2,12 +2,10 @@ import importlib.resources
 import json
 import os
 import re
-import tempfile
 import timeit
 from typing import List, Tuple, Generator
 
 import boto3
-import netCDF4
 import numpy as np
 import pandas as pd
 import pyarrow as pa
@@ -15,11 +13,8 @@ import pyarrow.parquet as pq
 import traceback
 import xarray as xr
 import yaml
-from jsonschema import validate, ValidationError
 from shapely.geometry import Point, Polygon
 
-from .config import load_variable_from_config, load_dataset_config
-from .logging import get_logger
 from .schema import create_pyarrow_schema, generate_json_schema_var_from_netcdf
 
 from .CommonHandler import CommonHandler
