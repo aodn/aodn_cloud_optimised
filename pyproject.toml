@@ -1,0 +1,73 @@
+[build-system]
+requires = ["poetry-core>1.0.0", "wheel"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+name = "aodn-cloud-optimised"
+version = "0.1.0"
+description = "Cloud optimised data formats for IMOS NetCDF files and CSVs."
+authors = ["lbesnard <laurent.besnard@utas.edu.au>"]
+license = "GNU General Public License v3.0"
+readme = "README.md"
+keywords = ["cloud", "data", "NetCDF", "CSV", "Zarr", "Parquet"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+
+[tool.poetry.urls]
+"Source code" = "https://github.com/aodn/aodn_cloud_optimised"
+
+
+[tool.poetry.dependencies]
+python = "==3.10.14"
+netCDF4 = ">=1.6.5"
+numpy = ">=1.26.4"
+pandas = ">=2.2.2"
+python-dateutil = ">=2.9.0"
+jsonschema = ">=4.22.0"
+h5py = ">=3.11.0"
+h5netcdf = "==1.3.0"
+scipy = ">=1.13.0"
+boto3 = ">=1.34.100"
+pyarrow = "==16.0.0"
+rechunker = ">=0.5.2"
+s3fs = ">=2024.3.1"
+shapely = ">=2.0.4"
+xarray = { version = ">=2024.3.0", extras = ["complete"] }
+zarr = ">=2.18.0"
+
+[tool.poetry.extras]
+testing = ["pytest", "ipython", "ipdb"]
+interactive = ["pytest", "ipython", "ipdb"]
+
+
+[tool.poetry.scripts]
+aatams_acoustic_tagging = "aodn_cloud_optimised.bin.aatams_acoustic_tagging:main"
+acorn_gridded_qc_turq = "aodn_cloud_optimised.bin.acorn_gridded_qc_turq:main"
+anfog_to_parquet = "aodn_cloud_optimised.bin.anfog_to_parquet:main"
+anmn_ctd_to_parquet = "aodn_cloud_optimised.bin.anmn_ctd_to_parquet:main"
+anmn_hourly_timeseries = "aodn_cloud_optimised.bin.anmn_hourly_timeseries:main"
+anmn_aqualogger_to_parquet = "aodn_cloud_optimised.bin.anmn_aqualogger_to_parquet:main"
+ardc_wave_to_parquet = "aodn_cloud_optimised.bin.ardc_wave_to_parquet:main"
+argo_to_parquet = "aodn_cloud_optimised.bin.argo_to_parquet:main"
+gsla_nrt_to_zarr = "aodn_cloud_optimised.bin.gsla_nrt_to_zarr:main"
+soop_xbt_nrt_to_parquet = "aodn_cloud_optimised.bin.soop_xbt_nrt_to_parquet:main"
+srs_oc_ljco_to_parquet = "aodn_cloud_optimised.bin.srs_oc_ljco_to_parquet:main"
+srs_l3s_1d_dn_to_zarr = "aodn_cloud_optimised.bin.srs_l3s_1d_dn_to_zarr:main"
+
+
+#[tool.poetry.include]
+#data = ["aodn_cloud_optimised/config/*.json", "aodn_cloud_optimised/config/dataset/*.json"]
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.2.1"
+coverage = "^7.5.3"
+
