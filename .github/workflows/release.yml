@@ -90,10 +90,26 @@ jobs:
       - name: Push version bump
         run: |
           git push origin HEAD:main
+
+      - name: Delete existing tag (if any)
+        run: |
+          git tag -d v${{ env.new_version }} || true
+          git push origin :refs/tags/v${{ env.new_version }} || true
+
+      - name: Create and push new tag
+        run: |
           git tag -a v${{ env.new_version }} -m "Release v${{ env.new_version }}"
           git push origin v${{ env.new_version }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+#      - name: Push version bump
+        #run: |
+          #git push origin HEAD:main
+          #git tag -a v${{ env.new_version }} -m "Release v${{ env.new_version }}"
+          #git push origin v${{ env.new_version }}
+        #env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       #- name: Push version bump
         #run: |
           #git tag -a v${{ env.new_version }} -m "Release v${{ env.new_version }}"
