@@ -50,25 +50,6 @@
         "encoding": "utf-8"
       },
 
-    // (Required) The dataset pyarrow_schema, including the gattrs_to_variables created above. filename needs to be created,
-    // as well as the different dimensions or partition keys such as polygon and timestamp
-    "schema" : [
-        "timeSeries: int32",
-        "LATITUDE: double",
-        "LONGITUDE: double",
-        "DEPTH: float",
-        "DEPTH_quality_control: float",
-        "TEMP: float",
-        "TEMP_quality_control: float",
-        "imo_number: int32",
-        "timestamp: int64",
-        "polygon: string",
-        "XBT_line: string",
-        "ship_name: string",
-        "Callsign: string",
-        "filename: string",
-        "TIME: timestamp[ns]"
-    ],
 
     // (Required) The dataset pyarrow_schema Alternatively, the pyarrow_schema can also be a dictionary defined as below. The code will
     // automatically recognise the used format. This format allows to add variable attributes, useful for converting CSV
