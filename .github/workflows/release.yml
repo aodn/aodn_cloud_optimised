@@ -70,29 +70,28 @@ jobs:
             dist/*.whl
             dist/*.tar.gz
 
+      # Configure git for committing version bump
       - name: Configure git for committing version bump
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
+      # Bump version
       - name: Bump version
         id: bump_version
         run: |
           NEW_VERSION=$(poetry version patch | awk '{print $NF}')
           echo "New version: $NEW_VERSION"
           echo "new_version=$NEW_VERSION" >> $GITHUB_ENV
-          git commit -am "Bump version to $NEW_VERSION"
+          git add pyproject.toml
+          git commit -m "Bump version to $NEW_VERSION"
 
+      # Push version bump
       - name: Push version bump
         run: |
-          # Check out the main branch explicitly
-          git checkout main
-
-          # Tag the release
+          DEFAULT_BRANCH=$(git symbolic-ref refs/remotes/origin/HEAD | sed 's@^refs/remotes/origin/@@')
+          git checkout $DEFAULT_BRANCH
           git tag -a v${{ env.new_version }} -m "Release v${{ env.new_version }}"
-
-          # Push the tag
-          git push --follow-tags
+          git push origin $DEFAULT_BRANCH --tags
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
