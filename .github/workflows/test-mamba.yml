@@ -1,4 +1,4 @@
-name: aodn_cloud_optimised mamba environment testing
+name: mamba environment testing
 
 on:
   push:

@@ -1,4 +1,4 @@
-name: aodn_cloud_optimised package build
+name: package build
 
 on:
   push:
