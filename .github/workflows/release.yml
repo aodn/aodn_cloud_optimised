@@ -85,7 +85,13 @@ jobs:
 
       - name: Push version bump
         run: |
+          # Check out the main branch explicitly
+          git checkout main
+
+          # Tag the release
           git tag -a v${{ env.new_version }} -m "Release v${{ env.new_version }}"
+
+          # Push the tag
           git push --follow-tags
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
