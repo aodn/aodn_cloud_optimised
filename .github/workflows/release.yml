@@ -62,13 +62,13 @@ jobs:
       - name: Build package
         run: poetry build
 
-      - name: Upload builds
-        uses: actions/upload-artifact@v4
-        with:
-          name: built-binary
-          path: |
-            dist/*.whl
-            dist/*.tar.gz
+#      - name: Upload builds
+        #uses: actions/upload-artifact@v4
+        #with:
+          #name: built-binary
+          #path: |
+            #dist/*.whl
+            #dist/*.tar.gz
 
       # Configure git for committing version bump
       - name: Configure git for committing version bump
@@ -96,5 +96,15 @@ jobs:
           fi
           git tag -a v${{ env.new_version }} -m "Release v${{ env.new_version }}"
           git push origin ${{ env.default_branch }} --tags
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install GitHub CLI
+        run: |
+          sudo apt-get install gh
+
+      - name: Upload assets to release
+        run: |
+          gh release upload v${{ env.new_version }} dist/*.whl dist/*.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
