@@ -1,8 +1,8 @@
 # Usage:
-# export AWS_PROFILE=nonproduction-admin && conda env create --file=environment.yml
-# export AWS_PROFILE=nonproduction-admin && conda env update --file=environment.yml
+# export AWS_PROFILE=nonproduction-admin && mamba env create --file=environment.yml
+# export AWS_PROFILE=nonproduction-admin && mamba env update --file=environment.yml
 
-name: AodnCloudOptimised
+name: AodnCloudOptimised3
 channels:
   - conda-forge
   - defaults
@@ -13,15 +13,5 @@ dependencies:
   - scipy
   - pip
   - pip:
-    - netcdf4
-    - boto3
-    - jupyterlab
-    - matplotlib
-    - pandas
-    - shapely
-    - geopandas
-    - pyarrow==16.0.0
-    - rechunker
-    - s3fs
-    - xarray[complete]
-    - zarr
+    - poetry
+    - -r requirements.txt

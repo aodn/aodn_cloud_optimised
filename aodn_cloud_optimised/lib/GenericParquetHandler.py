@@ -2,12 +2,10 @@ import importlib.resources
 import json
 import os
 import re
-import tempfile
 import timeit
 from typing import List, Tuple, Generator
 
 import boto3
-import netCDF4
 import numpy as np
 import pandas as pd
 import pyarrow as pa
@@ -15,11 +13,8 @@ import pyarrow.parquet as pq
 import traceback
 import xarray as xr
 import yaml
-from jsonschema import validate, ValidationError
 from shapely.geometry import Point, Polygon
 
-from .config import load_variable_from_config, load_dataset_config
-from .logging import get_logger
 from .schema import create_pyarrow_schema, generate_json_schema_var_from_netcdf
 
 from .CommonHandler import CommonHandler
@@ -50,6 +45,8 @@ class GenericHandler(CommonHandler):
         self.partition_period = self.dataset_config["time_extent"].get('partition_timestamp_period', 'M')
 
         self.pyarrow_schema = create_pyarrow_schema(self.dataset_config['schema'])
+
+        self.attributes_list_to_check = ['units', 'standard_name', 'reference_datum']
 
     def preprocess_data_csv(self, csv_fp) -> Generator[Tuple[pd.DataFrame, xr.Dataset], None, None]:
         """
@@ -123,8 +120,11 @@ class GenericHandler(CommonHandler):
             with xr.open_dataset(netcdf_fp) as ds:
                 # Convert xarray to pandas DataFrame
                 df = ds.to_dataframe()
-
-                yield df, ds
+                # TODO: call check function on variable attributes
+                if self.check_var_attributes(ds):
+                    yield df, ds
+                else:
+                    self.logger.error('NetCDF file is not consistent with the pre-defined schema')
 
     def preprocess_data(self, fp) -> Generator[Tuple[pd.DataFrame, xr.Dataset], None, None]:
         if fp.endswith('.nc'):
@@ -385,6 +385,56 @@ class GenericHandler(CommonHandler):
     #
     #     return tbl
 
+    def check_var_attributes(self, ds):
+        """
+           Validate the attributes of each variable in an xarray Dataset against a predefined schema.
+
+           This method checks if each variable in the provided xarray Dataset `ds` contains a specific set of attributes
+           and verifies that the values of these attributes match the expected values defined in the `dataset_config` schema.
+           If any attribute does not match the expected value, a ValueError is raised. If a variable is missing from the
+           `dataset_config`, a warning is logged.
+
+           Parameters:
+           ds (xarray.Dataset): The dataset to be validated.
+
+           Raises:
+           ValueError: If an attribute value does not match the expected value as defined in the schema.
+           KeyError: If an expected attribute is missing from a variable.
+
+           Returns:
+           bool: True if all attributes are validated successfully.
+
+           Notes:
+           - The method uses a predefined list of mandatory attributes (`self.attributes_list_to_check`) that are expected
+             to be present and consistent across the dataset.
+           - The schema containing the expected attribute values for each variable is provided via `self.dataset_config`.
+           - If a variable is missing from the `dataset_config`, a warning is logged.
+        """
+
+        errors = 0
+        for var_name in ds.variables:
+            # Iterate over each attribute in the list of mandatory attributes which should never change across a dataset
+            for attr in self.attributes_list_to_check:
+                # Iterate over the var_name attributes
+                if attr in ds[var_name].attrs:
+                    if var_name in self.dataset_config.get('schema'):
+                        # check if an attribute exist in the dataset_config for a specific variable, and compare their similarity
+                        if attr in self.dataset_config.get('schema')[var_name]:
+                            expected_attr = self.dataset_config.get('schema')[var_name][attr]
+                            file_attr = getattr(ds[var_name], attr)
+
+                            if expected_attr != file_attr:
+                                self.logger.error(
+                                    f"Attribute '{attr}' for variable '{var_name}' does not match: expected '{expected_attr}', found '{file_attr}'")
+                                errors+=1
+                    else:
+                        self.logger.warning(f'{var_name} is missing from the dataset_config. Please amend')
+
+        if errors > 0:
+            return False
+        else:
+            return True
+
     def publish_cloud_optimised(self, df: pd.DataFrame, ds: xr.Dataset,) -> None:
         """
         Create a parquet file containing data only.
@@ -483,7 +533,7 @@ class GenericHandler(CommonHandler):
                             )
         self.logger.info(f"{self.filename}: Parquet files successfully created in {self.cloud_optimised_output_path} \n")
 
-        self._add_metadata_sidecar()#pdf, ds)
+        self._add_metadata_sidecar()
 
     def _add_metadata_sidecar(self) -> None:
         """
