@@ -38,7 +38,6 @@ jobs:
 
       - name: Run pytest and coverage
         run: |
-          pytest
           coverage run -m pytest
           coverage report --fail-under=60
           coverage xml -o coverage.xml

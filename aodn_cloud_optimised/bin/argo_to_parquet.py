@@ -7,7 +7,7 @@ from aodn_cloud_optimised.lib.config import load_variable_from_config, load_data
 from aodn_cloud_optimised.lib.s3Tools import s3_ls
 
 
-if __name__ == "__main__":
+def main():
 
     dataset_config = load_dataset_config(str(importlib.resources.path("aodn_cloud_optimised.config.dataset", "argo_core.json")))
 
@@ -34,3 +34,7 @@ if __name__ == "__main__":
         cloud_optimised_creation_loop(argo_core_ls,
                                       dataset_config=dataset_config,
                                       handler_class=ArgoHandler)
+
+
+if __name__ == "__main__":
+    main()
