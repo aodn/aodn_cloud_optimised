@@ -5,7 +5,8 @@ from aodn_cloud_optimised.lib.CommonHandler import cloud_optimised_creation_loop
 from aodn_cloud_optimised.lib.config import load_variable_from_config, load_dataset_config
 from aodn_cloud_optimised.lib.s3Tools import s3_ls
 
-if __name__ == "__main__":
+
+def main():
 
     BUCKET_RAW_DEFAULT = load_variable_from_config('BUCKET_RAW_DEFAULT')
 
@@ -21,3 +22,7 @@ if __name__ == "__main__":
 
     cloud_optimised_creation_loop(ctd_ts_fv01_ls,
                                   dataset_config=dataset_config)
+
+
+if __name__ == "__main__":
+    main()

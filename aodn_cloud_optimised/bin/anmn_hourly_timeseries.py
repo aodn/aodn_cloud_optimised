@@ -6,7 +6,8 @@ from aodn_cloud_optimised.lib.config import load_variable_from_config, load_data
 from aodn_cloud_optimised.lib.s3Tools import s3_ls
 from aodn_cloud_optimised.lib.AnmnHourlyTsHandler import AnmnHourlyTsHandler
 
-if __name__ == "__main__":
+
+def main():
 
     BUCKET_RAW_DEFAULT = load_variable_from_config('BUCKET_RAW_DEFAULT')
 
@@ -22,3 +23,7 @@ if __name__ == "__main__":
     cloud_optimised_creation_loop(nc_obj_ls,
                                   dataset_config=dataset_config,
                                   handler_class=AnmnHourlyTsHandler)
+
+
+if __name__ == "__main__":
+    main()
