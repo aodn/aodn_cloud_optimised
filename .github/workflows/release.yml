@@ -62,6 +62,14 @@ jobs:
       - name: Build package
         run: poetry build
 
+      - name: Upload builds
+        uses: actions/upload-artifact@v4
+        with:
+          name: built-binary
+          path: |
+            dist/*.whl
+            dist/*.tar.gz
+
       - name: Configure git for committing version bump
         run: |
           git config --global user.name "github-actions[bot]"
@@ -70,7 +78,7 @@ jobs:
       - name: Bump version
         id: bump_version
         run: |
-          NEW_VERSION=$(poetry version patch | awk '{print $2}')
+          NEW_VERSION=$(poetry version patch | awk '{print $NF}')
           echo "New version: $NEW_VERSION"
           echo "new_version=$NEW_VERSION" >> $GITHUB_ENV
           git commit -am "Bump version to $NEW_VERSION"
