@@ -62,15 +62,7 @@ jobs:
       - name: Build package
         run: poetry build
 
-#      - name: Upload builds
-        #uses: actions/upload-artifact@v4
-        #with:
-          #name: built-binary
-          #path: |
-            #dist/*.whl
-            #dist/*.tar.gz
-
-      # Configure git for committing version bump
+       # Configure git for committing version bump
       - name: Configure git for committing version bump
         run: |
           git config --global user.name "github-actions[bot]"
@@ -85,7 +77,6 @@ jobs:
           echo "new_version=$NEW_VERSION" >> $GITHUB_ENV
           git add pyproject.toml
           git commit -m "Bump version to $NEW_VERSION"
-
 
       - name: Push version bump
         run: |
@@ -103,37 +94,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-#      - name: Push version bump
-        #run: |
-          #git push origin HEAD:main
-          #git tag -a v${{ env.new_version }} -m "Release v${{ env.new_version }}"
-          #git push origin v${{ env.new_version }}
-        #env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #- name: Push version bump
-        #run: |
-          #git tag -a v${{ env.new_version }} -m "Release v${{ env.new_version }}"
-          #git push origin HEAD:main --follow-tags
-        #env:
-      #    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-#      # Push version bump
-      #- name: Push version bump
-        #run: |
-          #git checkout ${{ env.default_branch }}
-          #if git tag -l "v${{ env.new_version }}"; then
-            #git tag -d "v${{ env.new_version }}"
-            #git push origin :refs/tags/v${{ env.new_version }}
-          #fi
-          #git tag -a v${{ env.new_version }} -m "Release v${{ env.new_version }}"
-          #git push origin ${{ env.default_branch }} --tags
-        #env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Install GitHub CLI
         run: |
           sudo apt-get install gh
-
 
       - name: Create GitHub release
         run: |
