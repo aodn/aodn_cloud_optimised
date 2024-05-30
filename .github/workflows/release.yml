@@ -89,10 +89,17 @@ jobs:
 
       - name: Push version bump
         run: |
+          git push origin HEAD:main
           git tag -a v${{ env.new_version }} -m "Release v${{ env.new_version }}"
-          git push origin HEAD:main --follow-tags
+          git push origin v${{ env.new_version }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #- name: Push version bump
+        #run: |
+          #git tag -a v${{ env.new_version }} -m "Release v${{ env.new_version }}"
+          #git push origin HEAD:main --follow-tags
+        #env:
+      #    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 #      # Push version bump
       #- name: Push version bump
