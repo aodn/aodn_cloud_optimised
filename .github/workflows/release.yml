@@ -89,9 +89,12 @@ jobs:
       # Push version bump
       - name: Push version bump
         run: |
-          DEFAULT_BRANCH=$(git symbolic-ref refs/remotes/origin/HEAD | sed 's@^refs/remotes/origin/@@')
-          git checkout $DEFAULT_BRANCH
+          git checkout ${{ env.default_branch }}
+          if git tag -l "v${{ env.new_version }}"; then
+            git tag -d "v${{ env.new_version }}"
+            git push origin :refs/tags/v${{ env.new_version }}
+          fi
           git tag -a v${{ env.new_version }} -m "Release v${{ env.new_version }}"
-          git push origin $DEFAULT_BRANCH --tags
+          git push origin ${{ env.default_branch }} --tags
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
