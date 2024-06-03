@@ -97,10 +97,10 @@ See [documentation](README_add_new_dataset.md) to learn how to add a new dataset
 # Notebooks
 
 Notebooks exist under 
-https://github.com/aodn/architecturereview/blob/main/cloud-optimised/cloud-optimised-team/parquet/notebooks/
+https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/
 
-For each new dataset, it is a good practice to use the provided template ```cloud-optimised/cloud-optimised-team/parquet/notebooks/template.ipynb```
+For each new dataset, it is a good practice to use the provided template ```notebooks/template.ipynb```
 and create a new notebook.
 
 These notebooks use a common library of python functions to help with creating the geo-spatial filters:
-```cloud-optimised/cloud-optimised-team/parquet/notebooks/parquet_queries.py```
+```notebooks/parquet_queries.py```

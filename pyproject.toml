@@ -71,3 +71,6 @@ srs_l3s_1d_dn_to_zarr = "aodn_cloud_optimised.bin.srs_l3s_1d_dn_to_zarr:main"
 pytest = "^8.2.1"
 coverage = "^7.5.3"
 
+[tool.pre_commit]
+version = "2.3.0"
+config = ".pre-commit-config.yaml"
