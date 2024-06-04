@@ -36,7 +36,7 @@ AWS SSO to push files to S3
 | Create AWS OpenData Registry Yaml                                                              | Done   |
 | Config file JSON validation against schema                                                     | Done   |
 | Create polygon variable to facilite geometry queries | Done   |
-   
+
 ## Zarr Features
 | Feature                                                                | Status | Comment                                                                            |
 |------------------------------------------------------------------------|--------|------------------------------------------------------------------------------------|
@@ -96,7 +96,7 @@ See [documentation](README_add_new_dataset.md) to learn how to add a new dataset
 
 # Notebooks
 
-Notebooks exist under 
+Notebooks exist under
 https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/
 
 For each new dataset, it is a good practice to use the provided template ```notebooks/template.ipynb```

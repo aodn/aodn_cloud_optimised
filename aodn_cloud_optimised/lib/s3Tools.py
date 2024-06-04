@@ -1,7 +1,7 @@
 import boto3
 
 
-def s3_ls(bucket, prefix, suffix='.nc') -> list:
+def s3_ls(bucket, prefix, suffix=".nc") -> list:
     """
     Return a list of object keys under a specific prefix in the specified S3 bucket
     with the specified suffix.
@@ -14,17 +14,17 @@ def s3_ls(bucket, prefix, suffix='.nc') -> list:
     Returns:
         list[str]: A list of object keys under the specified prefix and with the specified suffix.
     """
-    s3 = boto3.client('s3')
+    s3 = boto3.client("s3")
 
-    paginator = s3.get_paginator('list_objects_v2')
+    paginator = s3.get_paginator("list_objects_v2")
     pages = paginator.paginate(Bucket=bucket, Prefix=prefix)
 
     s3_obj = []
 
     for page in pages:
-        for object in page['Contents']:
-            if object['Key'].endswith(suffix):
-                s3_obj.append(object['Key'])
+        for object in page["Contents"]:
+            if object["Key"].endswith(suffix):
+                s3_obj.append(object["Key"])
 
     s3.close()
     return s3_obj

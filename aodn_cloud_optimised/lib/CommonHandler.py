@@ -30,22 +30,27 @@ class CommonHandler:
         self.start_time = timeit.default_timer()
         self.temp_dir = tempfile.TemporaryDirectory()
 
-        self.raw_bucket_name = kwargs.get('raw_bucket_name',
-                                          load_variable_from_config('BUCKET_RAW_DEFAULT'))
-        self.optimised_bucket_name = kwargs.get('optimised_bucket_name',
-                                                load_variable_from_config('BUCKET_OPTIMISED_DEFAULT'))
-        self.root_prefix_cloud_optimised_path = kwargs.get('root_prefix_cloud_optimised_path',
-                                                           load_variable_from_config('ROOT_PREFIX_CLOUD_OPTIMISED_PATH'))
+        self.raw_bucket_name = kwargs.get(
+            "raw_bucket_name", load_variable_from_config("BUCKET_RAW_DEFAULT")
+        )
+        self.optimised_bucket_name = kwargs.get(
+            "optimised_bucket_name",
+            load_variable_from_config("BUCKET_OPTIMISED_DEFAULT"),
+        )
+        self.root_prefix_cloud_optimised_path = kwargs.get(
+            "root_prefix_cloud_optimised_path",
+            load_variable_from_config("ROOT_PREFIX_CLOUD_OPTIMISED_PATH"),
+        )
 
-        self.input_object_key = kwargs.get('input_object_key', None)
+        self.input_object_key = kwargs.get("input_object_key", None)
 
-        self.dataset_config = kwargs.get('dataset_config')
+        self.dataset_config = kwargs.get("dataset_config")
 
-        self.cloud_optimised_format = self.dataset_config.get('cloud_optimised_format')
+        self.cloud_optimised_format = self.dataset_config.get("cloud_optimised_format")
 
-        self.dataset_name = self.dataset_config['dataset_name']
+        self.dataset_name = self.dataset_config["dataset_name"]
 
-        self.schema = self.dataset_config.get('schema')
+        self.schema = self.dataset_config.get("schema")
 
         logger_name = self.dataset_config.get("logger_name", "generic")
         self.logger = get_logger(logger_name)
@@ -109,8 +114,10 @@ class CommonHandler:
         Returns:
         - bool: True if the file is a valid NetCDF file, False otherwise.
         """
-        if not self.input_object_key.endswith('.nc'):
-            self.logger.error(f"{self.filename}: Not valid NetCDF file. Not ending with .nc")
+        if not self.input_object_key.endswith(".nc"):
+            self.logger.error(
+                f"{self.filename}: Not valid NetCDF file. Not ending with .nc"
+            )
             raise ValueError
 
         try:
@@ -128,15 +135,19 @@ class CommonHandler:
         :rtype: str
         """
 
-        s3 = boto3.client('s3')
+        s3 = boto3.client("s3")
 
         # Construct the full path for the temporary file
-        temp_file_path = os.path.join(self.temp_dir.name, os.path.basename(self.input_object_key))
+        temp_file_path = os.path.join(
+            self.temp_dir.name, os.path.basename(self.input_object_key)
+        )
 
         # Download the S3 object to the temporary file
         s3.download_file(self.raw_bucket_name, self.input_object_key, temp_file_path)
 
-        self.logger.info(f"{self.filename}: Downloading {self.input_object_key} object from {self.raw_bucket_name} bucket")
+        self.logger.info(
+            f"{self.filename}: Downloading {self.input_object_key} object from {self.raw_bucket_name} bucket"
+        )
         return temp_file_path
 
     @staticmethod
@@ -169,21 +180,27 @@ class CommonHandler:
             None
         """
         if "aws_opendata_registry" not in self.dataset_config:
-            self.logger.warning("Missing dataset configuration to populate AWS OpenData Registry")
+            self.logger.warning(
+                "Missing dataset configuration to populate AWS OpenData Registry"
+            )
         else:
             aws_registry_config = self.dataset_config["aws_opendata_registry"]
             yaml_data = yaml.dump(aws_registry_config)
 
-            s3 = boto3.client('s3')
+            s3 = boto3.client("s3")
 
-            key = os.path.join(self.root_prefix_cloud_optimised_path, self.dataset_name + '.yaml')
+            key = os.path.join(
+                self.root_prefix_cloud_optimised_path, self.dataset_name + ".yaml"
+            )
             # Upload the YAML data to S3
             s3.put_object(
                 Bucket=self.optimised_bucket_name,
                 Key=key,
-                Body=yaml_data.encode('utf-8')
+                Body=yaml_data.encode("utf-8"),
             )
-            self.logger.info(f"Push AWS Registry file to: {os.path.join(self.root_prefix_cloud_optimised_path, self.dataset_name + '.yaml')}")
+            self.logger.info(
+                f"Push AWS Registry file to: {os.path.join(self.root_prefix_cloud_optimised_path, self.dataset_name + '.yaml')}"
+            )
 
     def postprocess(self, ds: xr.Dataset) -> None:
         """
@@ -209,11 +226,12 @@ class CommonHandler:
 def _get_generic_handler_class(dataset_config):
     from .GenericParquetHandler import GenericHandler as parquet_handler
     from .GenericZarrHandler import GenericHandler as zarr_handler
+
     cloud_optimised_format = dataset_config.get("cloud_optimised_format", None)
 
-    if cloud_optimised_format == 'zarr':
+    if cloud_optimised_format == "zarr":
         handler_class = zarr_handler
-    elif cloud_optimised_format == 'parquet':
+    elif cloud_optimised_format == "parquet":
         handler_class = parquet_handler
     else:
         return ValueError
@@ -235,24 +253,27 @@ def cloud_optimised_creation(obj_key: str, dataset_config, **kwargs) -> None:
     Returns:
         None
     """
-    handler_class = kwargs.get('handler_class', None)
+    handler_class = kwargs.get("handler_class", None)
 
     # loading the right handler based on configuration
     if handler_class is None:
         handler_class = _get_generic_handler_class(dataset_config)
 
-    handler_reprocess_arg = kwargs.get('handler_reprocess_arg', None)
+    handler_reprocess_arg = kwargs.get("handler_reprocess_arg", None)
 
     # Creating an instance of the specified class with the provided arguments
-    handler_instance = handler_class(input_object_key=obj_key,
-                                     dataset_config=dataset_config,
-                                     reprocess=handler_reprocess_arg
-                                     )
+    handler_instance = handler_class(
+        input_object_key=obj_key,
+        dataset_config=dataset_config,
+        reprocess=handler_reprocess_arg,
+    )
 
     handler_instance.to_cloud_optimised()
 
 
-def cloud_optimised_creation_loop(obj_ls: List[str], dataset_config: dict, **kwargs) -> None:
+def cloud_optimised_creation_loop(
+    obj_ls: List[str], dataset_config: dict, **kwargs
+) -> None:
     """
     Iterate through a list of file paths and create Cloud Optimised files for each file.
 
@@ -267,13 +288,13 @@ def cloud_optimised_creation_loop(obj_ls: List[str], dataset_config: dict, **kwa
         None
     """
 
-    handler_class = kwargs.get('handler_class', None)
+    handler_class = kwargs.get("handler_class", None)
 
     # loading the right handler based on configuration
     if handler_class is None:
         handler_class = _get_generic_handler_class(dataset_config)
 
-    handler_reprocess_arg = kwargs.get('reprocess', None)
+    handler_reprocess_arg = kwargs.get("reprocess", None)
 
     logger_name = dataset_config.get("logger_name", "generic")
     logger = get_logger(logger_name)
@@ -282,21 +303,25 @@ def cloud_optimised_creation_loop(obj_ls: List[str], dataset_config: dict, **kwa
     i = 1
     for f in obj_ls:
 
-        logger.info(f'{f}: start processing')
+        logger.info(f"{f}: start processing")
 
         start_time = timeit.default_timer()
         try:
-            cloud_optimised_creation(f,
-                                     dataset_config,
-                                     handler_class=handler_class,
-                                     handler_reprocess_arg=handler_reprocess_arg)
-            time_spent = (timeit.default_timer() - start_time)
+            cloud_optimised_creation(
+                f,
+                dataset_config,
+                handler_class=handler_class,
+                handler_reprocess_arg=handler_reprocess_arg,
+            )
+            time_spent = timeit.default_timer() - start_time
 
-            logger.info(f'{i}/{len(obj_ls)}: {f} Cloud Optimised file completed in {time_spent}s')
+            logger.info(
+                f"{i}/{len(obj_ls)}: {f} Cloud Optimised file completed in {time_spent}s"
+            )
         except Exception as e:
-            logger.error(f'{i}/{len(obj_ls)} issue with {f}: {e}')
+            logger.error(f"{i}/{len(obj_ls)} issue with {f}: {e}")
 
         i += 1
 
-    time_spent_processing = (timeit.default_timer() - start_whole_processing)
-    logger.info(f'Whole dataset completed in {time_spent_processing}s')
+    time_spent_processing = timeit.default_timer() - start_whole_processing
+    logger.info(f"Whole dataset completed in {time_spent_processing}s")

@@ -1,5 +1,5 @@
-This module aims to be generic enough so that adding a new IMOS dataset is driven through a json config file. 
-For more complicated dataset, such as Argo for example, it's also possible to create a specific handler which would 
+This module aims to be generic enough so that adding a new IMOS dataset is driven through a json config file.
+For more complicated dataset, such as Argo for example, it's also possible to create a specific handler which would
 inherit with ```Super()``` all of the methods for the ```aodn_cloud_optimised.lib.GenericParquetHandler.GenericHandler``` class.
 
 The main choice left to create a cloud optimised dataset with this module is to decide to either use the **Apache Parquet**
@@ -34,7 +34,7 @@ While developing the aodn_cloud_optimised, it became clear that for both zarr an
 In this section, we're demonstrating how to create the full schema from a NetCDF file as an example, so that each variable
 is defined, with its variable attributes and the type.
 
-The following snippet creates the required schema from a random NetCDF. ```generate_json_schema_from_s3_netcdf``` will output the schema into a json file in a temporary file. 
+The following snippet creates the required schema from a random NetCDF. ```generate_json_schema_from_s3_netcdf``` will output the schema into a json file in a temporary file.
 
 ```python
 import os
@@ -145,14 +145,14 @@ the parquet dataset, the logs will output the json info to be added into the con
 
 ### Global attributes as variables
 Some NetCDF global attributes may have to be converted into variables so that users/API can filter the data based on these
-values. 
+values.
 
 In the following example, ```deployment_code``` is a global attribute that we want to have as a variable. It is then added
 in the ```gattrs_to_variables```. **However**, this needs to also be present in the schema definition
 so that:
 
 ```json
-...  
+...
   "gattrs_to_variables": [
     "deployment_code"
   ],
@@ -165,7 +165,7 @@ so that:
 ```
 
 ### Filename as variable
-The IMOS/AODN data (re)processing is very file oriented. In order to reprocess data and delete the old matching data, 
+The IMOS/AODN data (re)processing is very file oriented. In order to reprocess data and delete the old matching data,
 the original filename is stored as a variable. It is required to add it in the schema definition:
 
 ```json
@@ -188,14 +188,14 @@ The following information needs to be added in the relevant sections:
 ```json
   "partition_keys": [
     "timestamp",
-    ...    
+    ...
   ],
   "time_extent": {
     "time": "TIME",
     "partition_timestamp_period": "Q"
   },
   "schema":
-    ...    
+    ...
     "timestamp": {
       "type": "int64"
     },
@@ -243,7 +243,7 @@ Force search for existing parquet files to delete when creating new ones. This c
   "force_old_pq_del": true
 ```
 
-### AWS OpenData registry 
+### AWS OpenData registry
 In order to publicise the dataset on the OpenData Registry, add the following to the config. A ```yaml``` file will be
 created/updated alongside the parquet dataset.
 
@@ -405,8 +405,8 @@ The name of a variable which will be used as a template to create missing variab
 
 ```
 
-### Variables to drop 
-when setting `region` explicitly in to_zarr() method, all variables in the dataset to write must have at least one 
+### Variables to drop
+when setting `region` explicitly in to_zarr() method, all variables in the dataset to write must have at least one
 dimension in common with the region's dimensions ['TIME'].
 We need to remove the variables from the dataset which fall into this condition:
 ```json
@@ -417,7 +417,5 @@ We need to remove the variables from the dataset which fall into this condition:
 
 See same section above. As for parquet
 
-### AWS OpenData registry 
+### AWS OpenData registry
 See same section above. As for parquet
-
-
