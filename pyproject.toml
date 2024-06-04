@@ -44,9 +44,15 @@ shapely = ">=2.0.4"
 xarray = { version = ">=2024.3.0", extras = ["complete"] }
 zarr = ">=2.18.0"
 
-[tool.poetry.extras]
-testing = ["pytest", "ipython", "ipdb"]
-interactive = ["pytest", "ipython", "ipdb"]
+[tool.poetry.dev-dependencies]
+pytest = "^8.2.1"
+ipdb = "^0.13"
+ipython = "^7.5.3"
+
+
+#[tool.poetry.extras]
+#testing = ["pytest", "ipython", "ipdb"]
+#interactive = ["pytest", "ipython", "ipdb"]
 
 
 [tool.poetry.scripts]
@@ -63,13 +69,13 @@ soop_xbt_nrt_to_parquet = "aodn_cloud_optimised.bin.soop_xbt_nrt_to_parquet:main
 srs_oc_ljco_to_parquet = "aodn_cloud_optimised.bin.srs_oc_ljco_to_parquet:main"
 srs_l3s_1d_dn_to_zarr = "aodn_cloud_optimised.bin.srs_l3s_1d_dn_to_zarr:main"
 
-
 #[tool.poetry.include]
 #data = ["aodn_cloud_optimised/config/*.json", "aodn_cloud_optimised/config/dataset/*.json"]
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.2.1"
 coverage = "^7.5.3"
+pre-commit = "^3.7.1"
 
 [tool.pre_commit]
 version = "2.3.0"
