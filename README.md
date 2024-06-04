@@ -21,8 +21,18 @@ Requirements:
 mamba env create --file=environment.yml
 mamba activate CloudOptimisedParquet
 
-poetry install
+poetry install --with dev
 ```
+### Update dependencies
+
+1. Update manually the pyproject.toml file with the required package versions
+2. run
+```bash
+poetry update
+```
+to update the poetry.lock file. Commit the changes to poetry.lock
+
+
 # Requirements
 AWS SSO to push files to S3
 

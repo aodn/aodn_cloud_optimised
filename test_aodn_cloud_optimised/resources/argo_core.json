@@ -384,9 +384,6 @@
     },
     "polygon": {
       "type": "string"
-    },
-    "DATA_CENTRE": {
-      "type": "string"
     }
   },
   "dataset_gattrs": {
