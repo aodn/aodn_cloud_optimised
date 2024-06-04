@@ -5,12 +5,23 @@ A tool to convert IMOS NetCDF files and CSV into Cloud Optimised format (Zarr/Pa
 
 
 # Installation
+## Users
+Requirements:
+* python >= 3.10.14
+
+```bash
+curl -s https://raw.githubusercontent.com/aodn/aodn_cloud_optimised/main/install.sh | bash
+```
+
+## Development
+Requirements:
+* Mamba from miniforge3: https://github.com/conda-forge/miniforge
+
 ```bash
 mamba env create --file=environment.yml
 mamba activate CloudOptimisedParquet
 
-pip install -e .  # development (edit mode)
-pip install . # prod
+poetry install
 ```
 # Requirements
 AWS SSO to push files to S3
