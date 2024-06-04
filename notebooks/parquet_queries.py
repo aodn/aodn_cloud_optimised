@@ -21,15 +21,15 @@ from shapely.geometry import Polygon, MultiPolygon
 def query_unique_value(dataset: pq.ParquetDataset, partition: str) -> set:
     """Query the unique values of a specified partition name from a ParquetDataset.
 
-     Args:
-         dataset (pyarrow.parquet.ParquetDataset): The ParquetDataset to query.
-         partition (str): The name of the partition to query on.
+    Args:
+        dataset (pyarrow.parquet.ParquetDataset): The ParquetDataset to query.
+        partition (str): The name of the partition to query on.
 
-     Returns:
-         set[str]: A set containing the unique values of the specified partition.
-     """
+    Returns:
+        set[str]: A set containing the unique values of the specified partition.
+    """
     unique_values = set()
-    pattern = re.compile(f'.*/{partition}=([^/]*)/')
+    pattern = re.compile(f".*/{partition}=([^/]*)/")
     for p in dataset.fragments:
         value = re.match(pattern, p.path).group(1)
         unique_values.add(value)
@@ -50,14 +50,18 @@ def get_temporal_extent(parquet_ds):
                The first element is the datetime corresponding to the minimum timestamp value,
                and the second element is the datetime corresponding to the maximum timestamp value.
     """
-    unique_timestamps = query_unique_value(parquet_ds, 'timestamp')
+    unique_timestamps = query_unique_value(parquet_ds, "timestamp")
     unique_timestamps = np.array([np.int64(string) for string in unique_timestamps])
     unique_timestamps = np.sort(unique_timestamps)
 
-    return datetime.fromtimestamp(unique_timestamps.min()), datetime.fromtimestamp(unique_timestamps.max())
+    return datetime.fromtimestamp(unique_timestamps.min()), datetime.fromtimestamp(
+        unique_timestamps.max()
+    )
 
 
-def get_timestamps_boundary_values(parquet_ds: pq.ParquetDataset, date_start: str, date_end: str):
+def get_timestamps_boundary_values(
+    parquet_ds: pq.ParquetDataset, date_start: str, date_end: str
+):
     """
     Get the boundary values of timestamps from a Parquet dataset based on the specified date range.
 
@@ -73,7 +77,7 @@ def get_timestamps_boundary_values(parquet_ds: pq.ParquetDataset, date_start: st
     """
 
     # Get the unique partition values of timestamp available in the parquet dataset
-    unique_timestamps = query_unique_value(parquet_ds, 'timestamp')
+    unique_timestamps = query_unique_value(parquet_ds, "timestamp")
     unique_timestamps = np.array([np.int64(string) for string in unique_timestamps])
     unique_timestamps = np.sort(unique_timestamps)
 
@@ -116,30 +120,39 @@ def create_bbox_filter(parquet_ds, **kwargs):
     Example:
         filter_expr = create_bbox_filter(parquet_ds, lon_min=-180, lon_max=180, lat_min=-90, lat_max=90)
     """
-    lon_min = kwargs.get('lon_min')
-    lon_max = kwargs.get('lon_max')
-    lat_min = kwargs.get('lat_min')
-    lat_max = kwargs.get('lat_max')
+    lon_min = kwargs.get("lon_min")
+    lon_max = kwargs.get("lon_max")
+    lat_min = kwargs.get("lat_min")
+    lat_max = kwargs.get("lat_max")
 
-    lat_varname = kwargs.get('lat_varname', "LATITUDE")
-    lon_varname = kwargs.get('lon_varname', "LONGITUDE")
+    lat_varname = kwargs.get("lat_varname", "LATITUDE")
+    lon_varname = kwargs.get("lon_varname", "LONGITUDE")
 
     if None in (lon_min, lon_max, lat_min, lat_max):
         raise ValueError("Bounding box coordinates must be provided.")
 
-    bounding_box = [(lon_min, lat_max), (lon_max, lat_max), (lon_max, lat_min), (lon_min, lat_min)]
+    bounding_box = [
+        (lon_min, lat_max),
+        (lon_max, lat_max),
+        (lon_max, lat_min),
+        (lon_min, lat_min),
+    ]
     bounding_box_polygon = Polygon(bounding_box)
 
-    polygon_partitions = query_unique_value(parquet_ds, 'polygon')
+    polygon_partitions = query_unique_value(parquet_ds, "polygon")
     wkb_list = list(polygon_partitions)
 
     polygon_set = set(map(lambda x: wkb.loads(bytes.fromhex(x)), wkb_list))
     polygon_array_partitions = np.array(list(polygon_set))
 
-    results = [polygon.intersects(bounding_box_polygon) for polygon in polygon_array_partitions]
+    results = [
+        polygon.intersects(bounding_box_polygon) for polygon in polygon_array_partitions
+    ]
 
     # Filter polygon_array_partitions based on results
-    intersecting_polygons = [polygon for polygon, result in zip(polygon_array_partitions, results) if result]
+    intersecting_polygons = [
+        polygon for polygon, result in zip(polygon_array_partitions, results) if result
+    ]
 
     if intersecting_polygons == []:
         raise ValueError("No data for given bounding box. Amend lat/lon values ")
@@ -149,7 +162,7 @@ def create_bbox_filter(parquet_ds, **kwargs):
 
     expression = None
     for wkb_polygon in wkb_list:
-        sub_expr = pc.field('polygon') == wkb_polygon
+        sub_expr = pc.field("polygon") == wkb_polygon
         if type(expression) != pc.Expression:
             expression = sub_expr
         else:
@@ -183,23 +196,25 @@ def create_time_filter(parquet_ds, **kwargs):
     Example:
         filter_expr = create_time_filter(parquet_ds, date_start='2023-01-01', date_end='2023-12-31')
     """
-    date_start = kwargs.get('date_start')
-    date_end = kwargs.get('date_end')
-    time_varname = kwargs.get('time_varname', "TIME")
+    date_start = kwargs.get("date_start")
+    date_end = kwargs.get("date_end")
+    time_varname = kwargs.get("time_varname", "TIME")
 
     if None in (date_start, date_end):
         raise ValueError("Start and end dates must be provided.")
 
-    timestamp_start, timestamp_end = get_timestamps_boundary_values(parquet_ds, date_start, date_end)
+    timestamp_start, timestamp_end = get_timestamps_boundary_values(
+        parquet_ds, date_start, date_end
+    )
 
-    expr1 = pc.field('timestamp') >= np.int64(timestamp_start)
-    expr2 = pc.field('timestamp') <= np.int64(timestamp_end)
+    expr1 = pc.field("timestamp") >= np.int64(timestamp_start)
+    expr2 = pc.field("timestamp") <= np.int64(timestamp_end)
 
     # ARGO Specifiq:
     if "TIME" in parquet_ds.schema.names:
-        time_varname = 'TIME'
+        time_varname = "TIME"
     elif "JULD" in parquet_ds.schema.names:
-        time_varname = 'JULD'
+        time_varname = "JULD"
 
     expr3 = pc.field(time_varname) >= pd.to_datetime(date_start)
     expr4 = pc.field(time_varname) <= pd.to_datetime(date_end)
@@ -221,7 +236,7 @@ def get_spatial_extent(parquet_ds: pq.ParquetDataset) -> MultiPolygon:
         shapely.geometry.MultiPolygon: A multi-polygon representing the spatial extent.
     """
     # Retrieve unique polygon partitions
-    polygon_partitions = query_unique_value(parquet_ds, 'polygon')
+    polygon_partitions = query_unique_value(parquet_ds, "polygon")
 
     # Convert WKB hex strings to Shapely geometries and create a set of unique polygons
     wkb_list = list(polygon_partitions)
@@ -257,7 +272,7 @@ def plot_spatial_extent(parquet_ds):
     gdf = gpd.GeoDataFrame(geometry=[multi_polygon])
 
     # Plot the MultiPolygon with customized color and transparency
-    gdf.plot(color='red', alpha=0.5)  # Adjust color and alpha as needed
+    gdf.plot(color="red", alpha=0.5)  # Adjust color and alpha as needed
 
     # Show the plot
     plt.show()
@@ -277,9 +292,11 @@ def get_schema_metadata(dname):
             The keys are metadata keys (decoded from bytes to UTF-8 strings),
             and the values are metadata values (parsed from JSON strings to Python objects).
     """
-    parquet_meta = pa.parquet.read_schema(os.path.join(dname, '_common_metadata'))
+    parquet_meta = pa.parquet.read_schema(os.path.join(dname, "_common_metadata"))
     # horrible ... but got to be done. The dictionary of metadata has to be a dictionnary with byte keys and byte values.
     # meaning that we can't have nested dictionaries ...
-    decoded_meta = {key.decode('utf-8'): json.loads(value.decode('utf-8').replace("'", '"')) for key, value in
-                    parquet_meta.metadata.items()}
+    decoded_meta = {
+        key.decode("utf-8"): json.loads(value.decode("utf-8").replace("'", '"'))
+        for key, value in parquet_meta.metadata.items()
+    }
     return decoded_meta

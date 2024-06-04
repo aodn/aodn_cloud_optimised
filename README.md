@@ -5,12 +5,23 @@ A tool to convert IMOS NetCDF files and CSV into Cloud Optimised format (Zarr/Pa
 
 
 # Installation
+## Users
+Requirements:
+* python >= 3.10.14
+
+```bash
+curl -s https://raw.githubusercontent.com/aodn/aodn_cloud_optimised/main/install.sh | bash
+```
+
+## Development
+Requirements:
+* Mamba from miniforge3: https://github.com/conda-forge/miniforge
+
 ```bash
 mamba env create --file=environment.yml
 mamba activate CloudOptimisedParquet
 
-pip install -e .  # development (edit mode)
-pip install . # prod
+poetry install
 ```
 # Requirements
 AWS SSO to push files to S3
@@ -36,7 +47,7 @@ AWS SSO to push files to S3
 | Create AWS OpenData Registry Yaml                                                              | Done   |
 | Config file JSON validation against schema                                                     | Done   |
 | Create polygon variable to facilite geometry queries | Done   |
-   
+
 ## Zarr Features
 | Feature                                                                | Status | Comment                                                                            |
 |------------------------------------------------------------------------|--------|------------------------------------------------------------------------------------|
@@ -96,11 +107,11 @@ See [documentation](README_add_new_dataset.md) to learn how to add a new dataset
 
 # Notebooks
 
-Notebooks exist under 
-https://github.com/aodn/architecturereview/blob/main/cloud-optimised/cloud-optimised-team/parquet/notebooks/
+Notebooks exist under
+https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/
 
-For each new dataset, it is a good practice to use the provided template ```cloud-optimised/cloud-optimised-team/parquet/notebooks/template.ipynb```
+For each new dataset, it is a good practice to use the provided template ```notebooks/template.ipynb```
 and create a new notebook.
 
 These notebooks use a common library of python functions to help with creating the geo-spatial filters:
-```cloud-optimised/cloud-optimised-team/parquet/notebooks/parquet_queries.py```
+```notebooks/parquet_queries.py```
