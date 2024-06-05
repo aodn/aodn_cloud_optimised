@@ -42,8 +42,13 @@ jobs:
           coverage report --fail-under=60
           coverage xml -o coverage.xml
 
-      - name: Upload coverage report
-        uses: actions/upload-artifact@v2
+#      - name: Upload coverage report
+        #uses: actions/upload-artifact@v2
+        #with:
+          #name: coverage-report
+#          path: coverage.xml
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v4.0.1
         with:
-          name: coverage-report
+          token: ${{ secrets.CODECOV_TOKEN }}
           path: coverage.xml
