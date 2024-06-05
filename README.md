@@ -1,8 +1,18 @@
 # AODN Cloud Optimised Conversion
 
-A tool to convert IMOS NetCDF files and CSV into Cloud Optimised format (Zarr/Parquet)
+![Build Status](https://github.com/aodn/aodn_cloud_optimised/actions/workflows/build.yml/badge.svg)
+![Test Status](https://github.com/aodn/aodn_cloud_optimised/actions/workflows/test-mamba.yml/badge.svg)
+![Release](https://img.shields.io/github/v/release/aodn/aodn_cloud_optimised.svg)
+[![codecov](https://codecov.io/gh/aodn/aodn_cloud_optimised/branch/main/graph/badge.svg)](https://codecov.io/gh/aodn/aodn_cloud_optimised/branch/main)
 
+A tool designed to convert IMOS NetCDF files and CSV into Cloud Optimised formats such as Zarr and Parquet
 
+## Key Features
+
+* Conversion of a dataset with YAML Configuration: Convert tabular data (CSV or NetCDF) to Parquet and gridded data to Zarr using YAML configuration files only.
+* Preservation of NetCDF Metadata: Maintain NetCDF global attributes metadata
+* Improve Querying of Cloud Optimised data by Geographical Bounding box and Time Slice: Create geometry polygon and time slice partitions for Parquet dataset, facilitating efficient data querying by time and geographical bounding box.
+* Data Reprocessing: Easily reprocess NetCDF files into Zarr and Parquet formats
 
 # Installation
 ## Users
