@@ -7,6 +7,7 @@ import boto3
 import netCDF4
 import xarray as xr
 import yaml
+from dask.distributed import Client, LocalCluster, wait
 from jsonschema import validate, ValidationError
 
 from .config import load_variable_from_config, load_dataset_config
@@ -331,12 +332,26 @@ def cloud_optimised_creation_loop(
     logger_name = dataset_config.get("logger_name", "generic")
     logger = get_logger(logger_name)
 
+    # Attempt to create a Coiled cluster
+    try:
+        from coiled import Cluster
+
+        cluster = Cluster(
+            n_workers=[0, 6], scheduler_vm_types="t3.medium", allow_ingress_from="me"
+        )
+        client = Client(cluster)
+    except Exception as e:
+        logger.warning(
+            f"Could not create Coiled cluster: {e}. Falling back to local cluster."
+        )
+        # Create a local Dask cluster as a fallback
+        cluster = LocalCluster()
+        client = Client(cluster)
+
     start_whole_processing = timeit.default_timer()
-    i = 1
-    for f in obj_ls:
 
-        logger.info(f"{f}: start processing")
-
+    # Define the task function to be executed in parallel
+    def task(f, i):
         start_time = timeit.default_timer()
         try:
             cloud_optimised_creation(
@@ -347,14 +362,20 @@ def cloud_optimised_creation_loop(
                 **filtered_kwargs,
             )
             time_spent = timeit.default_timer() - start_time
-
             logger.info(
                 f"{i}/{len(obj_ls)}: {f} Cloud Optimised file completed in {time_spent}s"
             )
         except Exception as e:
             logger.error(f"{i}/{len(obj_ls)} issue with {f}: {e}")
 
-        i += 1
+    # Submit tasks to the Dask cluster
+    futures = [client.submit(task, f, i) for i, f in enumerate(obj_ls, start=1)]
+
+    # Wait for all futures to complete
+    wait(futures)
 
     time_spent_processing = timeit.default_timer() - start_whole_processing
     logger.info(f"Whole dataset completed in {time_spent_processing}s")
+
+    client.close()
+    cluster.close()
