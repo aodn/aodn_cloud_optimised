@@ -35,6 +35,7 @@ jobs:
         run: |
           conda init
           conda activate AodnCloudOptimised
+          poetry install --no-interaction
 
       - name: Run pytest and coverage
         run: |
