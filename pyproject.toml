@@ -43,6 +43,7 @@ s3fs = ">=2024.3.1"
 shapely = ">=2.0.4"
 xarray = { version = ">=2024.3.0", extras = ["complete"] }
 zarr = ">=2.18.0"
+geopandas = ">=0.14.4"
 
 [tool.poetry.dev-dependencies]
 pytest = "^8.2.1"
@@ -80,3 +81,7 @@ pre-commit = "^3.7.1"
 [tool.pre_commit]
 version = "2.3.0"
 config = ".pre-commit-config.yaml"
+
+[tool.pytest.ini_options]
+# Other pytest settings can go here
+addopts = "--ignore=integration_testing"

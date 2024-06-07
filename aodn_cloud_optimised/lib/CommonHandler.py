@@ -261,12 +261,25 @@ def cloud_optimised_creation(obj_key: str, dataset_config, **kwargs) -> None:
 
     handler_reprocess_arg = kwargs.get("handler_reprocess_arg", None)
 
+    kwargs_handler_class = {
+        "raw_bucket_name": kwargs.get(
+            "raw_bucket_name", load_variable_from_config("BUCKET_RAW_DEFAULT")
+        ),
+        "optimised_bucket_name": kwargs.get(
+            "optimised_bucket_name",
+            load_variable_from_config("BUCKET_OPTIMISED_DEFAULT"),
+        ),
+        "root_prefix_cloud_optimised_path": kwargs.get(
+            "root_prefix_cloud_optimised_path",
+            load_variable_from_config("ROOT_PREFIX_CLOUD_OPTIMISED_PATH"),
+        ),
+        "input_object_key": obj_key,
+        "dataset_config": dataset_config,
+        "reprocess": handler_reprocess_arg,
+    }
+
     # Creating an instance of the specified class with the provided arguments
-    handler_instance = handler_class(
-        input_object_key=obj_key,
-        dataset_config=dataset_config,
-        reprocess=handler_reprocess_arg,
-    )
+    handler_instance = handler_class(**kwargs_handler_class)
 
     handler_instance.to_cloud_optimised()
 
@@ -296,6 +309,25 @@ def cloud_optimised_creation_loop(
 
     handler_reprocess_arg = kwargs.get("reprocess", None)
 
+    # Create the kwargs_handler_class dictionary, to be used as list of arguments to call cloud_optimised_creation -> handler_class
+    # when values need to be overwritten
+    kwargs_handler_class = {
+        "raw_bucket_name": kwargs.get(
+            "raw_bucket_name", load_variable_from_config("BUCKET_RAW_DEFAULT")
+        ),
+        "optimised_bucket_name": kwargs.get(
+            "optimised_bucket_name",
+            load_variable_from_config("BUCKET_OPTIMISED_DEFAULT"),
+        ),
+        "root_prefix_cloud_optimised_path": kwargs.get(
+            "root_prefix_cloud_optimised_path",
+            load_variable_from_config("ROOT_PREFIX_CLOUD_OPTIMISED_PATH"),
+        ),
+    }
+
+    # Filter out None values
+    filtered_kwargs = {k: v for k, v in kwargs_handler_class.items() if v is not None}
+
     logger_name = dataset_config.get("logger_name", "generic")
     logger = get_logger(logger_name)
 
@@ -312,6 +344,7 @@ def cloud_optimised_creation_loop(
                 dataset_config,
                 handler_class=handler_class,
                 handler_reprocess_arg=handler_reprocess_arg,
+                **filtered_kwargs,
             )
             time_spent = timeit.default_timer() - start_time
 
