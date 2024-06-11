@@ -19,7 +19,6 @@ def main():
         + s3_ls(BUCKET_RAW_DEFAULT, "Bureau_of_Meteorology/WAVE-BUOYS/REALTIME/")
         + s3_ls(BUCKET_RAW_DEFAULT, "Deakin_University/WAVE-BUOYS/REALTIME")
     )
-
     dataset_config = load_dataset_config(
         str(
             importlib.resources.path(

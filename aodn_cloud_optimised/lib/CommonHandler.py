@@ -336,13 +336,19 @@ def cloud_optimised_creation_loop(
     try:
         from coiled import Cluster
 
-        if dataset_config.get("cloud_optimised_format", "parquet"):
+        if dataset_config.get("cloud_optimised_format") == "parquet":
             cluster = Cluster(
-                n_workers=[0, 6], scheduler_vm_types="t3.large", allow_ingress_from="me"
+                n_workers=[0, 12],
+                scheduler_vm_types="t3.small",
+                worker_vm_types="t3.medium",
+                allow_ingress_from="me",
             )
-        elif dataset_config.get("cloud_optimised_format", "zarr"):
+        elif dataset_config.get("cloud_optimised_format") == "zarr":
             cluster = Cluster(
-                n_workers=[0, 1], scheduler_vm_types="t3.large", allow_ingress_from="me"
+                n_workers=1,
+                scheduler_vm_types="t3.medium",
+                worker_vm_types="m6i.xlarge",
+                allow_ingress_from="me",
             )
 
         client = Client(cluster)
@@ -375,11 +381,26 @@ def cloud_optimised_creation_loop(
         except Exception as e:
             logger.error(f"{i}/{len(obj_ls)} issue with {f}: {e}")
 
-    # Submit tasks to the Dask cluster
+    # Parallel Execution with List Comprehension
     futures = [client.submit(task, f, i) for i, f in enumerate(obj_ls, start=1)]
 
     # Wait for all futures to complete
     wait(futures)
+
+    # #Submit tasks to the Dask cluster
+    # if dataset_config.get("cloud_optimised_format") == 'parquet':
+    #
+    #     # Parallel Execution with List Comprehension
+    #     futures = [client.submit(task, f, i) for i, f in enumerate(obj_ls, start=1)]
+    #
+    #     # Wait for all futures to complete
+    #     wait(futures)
+    #
+    # elif dataset_config.get("cloud_optimised_format") == 'zarr':
+    #     # Submit tasks to the Dask cluster sequentially
+    #     for i, f in enumerate(obj_ls, start=1):
+    #         future = client.submit(task, f, i)
+    #         result = future.result()  # Sequential Execution with future.result()
 
     time_spent_processing = timeit.default_timer() - start_whole_processing
     logger.info(f"Whole dataset completed in {time_spent_processing}s")

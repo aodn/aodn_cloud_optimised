@@ -14,6 +14,7 @@ import zarr
 from dask.diagnostics import ProgressBar
 from dask.distributed import worker_client
 from dask.distributed import Client
+from dask.distributed import Lock, get_client
 
 from rechunker import rechunk
 
@@ -57,6 +58,21 @@ class GenericHandler(CommonHandler):
             self.dimensions["latitude"]["name"]: self.dimensions["latitude"]["chunk"],
             self.dimensions["longitude"]["name"]: self.dimensions["longitude"]["chunk"],
         }
+
+        # Attempt to get the Dask client
+        try:
+            dask_client = get_client()  # Get the Dask client
+        except ValueError:
+            dask_client = None  # Set to None if no Dask client is found
+
+        if dask_client:
+            self.lock = (
+                Lock()
+            )  # Create a Dask Lock object, to avoid corruption of writting zarr objects in parallel
+            self.logger.info("Setting up a Cluster Dask Lock to avoid Zarr corruption")
+        else:
+            self.lock = None  # Set to None if no Dask cluster is found
+            self.logger.warning("No cluster lock to setup")
 
     def check_file_already_processed(self) -> bool:
         """
@@ -242,6 +258,7 @@ class GenericHandler(CommonHandler):
 
         ds = ds.chunk(chunks=self.chunks)
 
+        # Acquire the lock before writing to the Zarr dataset
         # first file of the dataset (overwrite)
         if self.reprocess:
             self.logger.warning(
@@ -320,7 +337,23 @@ class GenericHandler(CommonHandler):
 
         try:
             ds = self.preprocess()
-            self.publish_cloud_optimised(ds)
+
+            # Attempt to acquire the lock
+            if self.lock:
+                if self.lock.acquire(blocking=False):
+                    try:
+                        # Critical section - perform operations protected by the lock
+                        self.publish_cloud_optimised(ds)
+                    finally:
+                        # Release the lock in a finally block to ensure it's always released
+                        self.lock.release()
+                else:
+                    # The lock is already held by another process, handle accordingly
+                    self.logger.warning("Lock is already held by another process")
+            else:
+                # No Dask cluster lock available, proceed without locking
+                self.publish_cloud_optimised(ds)
+
             self.push_metadata_aws_registry()
 
             time_spent = timeit.default_timer() - self.start_time
