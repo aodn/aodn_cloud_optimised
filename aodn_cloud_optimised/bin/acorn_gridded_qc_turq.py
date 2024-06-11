@@ -14,7 +14,7 @@ from aodn_cloud_optimised.lib.s3Tools import s3_ls
 def main():
     BUCKET_RAW_DEFAULT = load_variable_from_config("BUCKET_RAW_DEFAULT")
     nc_obj_ls = s3_ls(
-        BUCKET_RAW_DEFAULT, "IMOS/ACORN/gridded_1h-avg-current-map_QC/TURQ/2023"
+        BUCKET_RAW_DEFAULT, "IMOS/ACORN/gridded_1h-avg-current-map_QC/TURQ/2024"
     )
 
     dataset_config = load_dataset_config(
@@ -25,7 +25,7 @@ def main():
         )
     )
 
-    # First zarr creation
+    # First zarr creation - remove all previous objects
     cloud_optimised_creation_loop(
         [nc_obj_ls[0]], dataset_config=dataset_config, reprocess=True
     )

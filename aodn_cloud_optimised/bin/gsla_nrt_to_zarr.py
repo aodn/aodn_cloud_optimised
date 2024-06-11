@@ -12,7 +12,7 @@ from aodn_cloud_optimised.lib.s3Tools import s3_ls
 
 def main():
     BUCKET_RAW_DEFAULT = load_variable_from_config("BUCKET_RAW_DEFAULT")
-    nc_obj_ls = s3_ls(BUCKET_RAW_DEFAULT, "IMOS/OceanCurrent/GSLA/NRT/2024")
+    nc_obj_ls = s3_ls(BUCKET_RAW_DEFAULT, "IMOS/OceanCurrent/GSLA/NRT")
 
     dataset_config = load_dataset_config(
         str(
@@ -21,20 +21,20 @@ def main():
             )
         )
     )
-    # cloud_optimised_creation_loop([nc_obj_ls[0]],
-    #                              dataset_config=dataset_config,
-    #                              reprocess=True
-    #                              )
+    cloud_optimised_creation_loop(
+        [nc_obj_ls[0]], dataset_config=dataset_config, reprocess=True
+    )
 
-    # cloud_optimised_creation_loop(nc_obj_ls[1:],
-    #                              dataset_config=dataset_config,
-    #                              )
+    cloud_optimised_creation_loop(
+        nc_obj_ls[1:],
+        dataset_config=dataset_config,
+    )
 
     # rechunking
-    GenericHandler(
-        input_object_key=nc_obj_ls[0],
-        dataset_config=dataset_config,
-    ).rechunk()
+    # GenericHandler(
+    #    input_object_key=nc_obj_ls[0],
+    #    dataset_config=dataset_config,
+    # ).rechunk()
 
     if __name__ == "__main__":
         main()

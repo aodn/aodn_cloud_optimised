@@ -2,6 +2,10 @@
     "dataset_name": "acorn_gridded_qc_turq",
     "logger_name": "acorn_gridded_qc_turq",
     "cloud_optimised_format": "zarr",
+    "cluster_config" : {
+      "n_workers": [0, 6],
+      "scheduler_vm_types": "t3.medium"
+    },
     "metadata_uuid": "",
     "dimensions": {
         "time": {"name": "TIME",

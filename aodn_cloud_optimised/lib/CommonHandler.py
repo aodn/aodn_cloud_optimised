@@ -336,10 +336,17 @@ def cloud_optimised_creation_loop(
     try:
         from coiled import Cluster
 
-        cluster = Cluster(
-            n_workers=[0, 6], scheduler_vm_types="t3.medium", allow_ingress_from="me"
-        )
+        if dataset_config.get("cloud_optimised_format", "parquet"):
+            cluster = Cluster(
+                n_workers=[0, 6], scheduler_vm_types="t3.large", allow_ingress_from="me"
+            )
+        elif dataset_config.get("cloud_optimised_format", "zarr"):
+            cluster = Cluster(
+                n_workers=[0, 1], scheduler_vm_types="t3.large", allow_ingress_from="me"
+            )
+
         client = Client(cluster)
+
     except Exception as e:
         logger.warning(
             f"Could not create Coiled cluster: {e}. Falling back to local cluster."
