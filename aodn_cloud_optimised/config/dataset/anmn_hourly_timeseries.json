@@ -823,13 +823,14 @@
     }
   },
   "dataset_gattrs": {
-    "title": "Long time series Hourly Aggregated product: all available non-velocity variables at NRSMAI between 2008-04-11T11:00:00Z and 2023-11-05T03:00:00Z"
+    "title": "ANMN hourly timeseries",
+    "featureType": "timeSeries"
   },
   "force_old_pq_del": true,
   "aws_opendata_registry": {
-    "Name": "",
+    "Name": "ANMN hourly timeseries",
     "Description": "",
-    "Documentation": "",
+    "Documentation": "https://catalogue.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/7b901002-b1dc-46c3-89f2-b4951cedca48",
     "Contact": "",
     "ManagedBy": "",
     "UpdateFrequency": "",
@@ -900,8 +901,8 @@
       ],
       "Publications": [
         {
-          "Title": "",
-          "URL": "",
+          "Title": "IMOS - Australian National Mooring Network (ANMN) - CTD Profiles",
+          "URL": "https://catalogue.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/7b901002-b1dc-46c3-89f2-b4951cedca48",
           "AuthorName": ""
         },
         {
