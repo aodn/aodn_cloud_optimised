@@ -1,17 +1,48 @@
 # AODN Cloud Optimised Conversion
 
-A tool to convert IMOS NetCDF files and CSV into Cloud Optimised format (Zarr/Parquet)
+![Build Status](https://github.com/aodn/aodn_cloud_optimised/actions/workflows/build.yml/badge.svg)
+![Test Status](https://github.com/aodn/aodn_cloud_optimised/actions/workflows/test-mamba.yml/badge.svg)
+![Release](https://img.shields.io/github/v/release/aodn/aodn_cloud_optimised.svg)
+[![codecov](https://codecov.io/gh/aodn/aodn_cloud_optimised/branch/main/graph/badge.svg)](https://codecov.io/gh/aodn/aodn_cloud_optimised/branch/main)
 
+A tool designed to convert IMOS NetCDF files and CSV into Cloud Optimised formats such as Zarr and Parquet
 
+## Key Features
+
+* Conversion of a dataset with YAML Configuration: Convert tabular data (CSV or NetCDF) to Parquet and gridded data to Zarr using YAML configuration files only.
+* Preservation of NetCDF Metadata: Maintain NetCDF global attributes metadata
+* Improve Querying of Cloud Optimised data by Geographical Bounding box and Time Slice: Create geometry polygon and time slice partitions for Parquet dataset, facilitating efficient data querying by time and geographical bounding box.
+* Data Reprocessing: Easily reprocess NetCDF files into Zarr and Parquet formats
 
 # Installation
+## Users
+Requirements:
+* python >= 3.10.14
+
+```bash
+curl -s https://raw.githubusercontent.com/aodn/aodn_cloud_optimised/main/install.sh | bash
+```
+
+## Development
+Requirements:
+* Mamba from miniforge3: https://github.com/conda-forge/miniforge
+
 ```bash
 mamba env create --file=environment.yml
 mamba activate CloudOptimisedParquet
 
-pip install -e .  # development (edit mode)
-pip install . # prod
+poetry install --with dev
 ```
+### Update dependencies
+
+1. Update manually the pyproject.toml file with the required package versions
+2. run
+```bash
+poetry update
+```
+to update the poetry.lock file. Commit the changes to poetry.lock
+
+
 # Requirements
 AWS SSO to push files to S3
 
@@ -36,7 +67,7 @@ AWS SSO to push files to S3
 | Create AWS OpenData Registry Yaml                                                              | Done   |
 | Config file JSON validation against schema                                                     | Done   |
 | Create polygon variable to facilite geometry queries | Done   |
-   
+
 ## Zarr Features
 | Feature                                                                | Status | Comment                                                                            |
 |------------------------------------------------------------------------|--------|------------------------------------------------------------------------------------|
@@ -96,11 +127,11 @@ See [documentation](README_add_new_dataset.md) to learn how to add a new dataset
 
 # Notebooks
 
-Notebooks exist under 
-https://github.com/aodn/architecturereview/blob/main/cloud-optimised/cloud-optimised-team/parquet/notebooks/
+Notebooks exist under
+https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/
 
-For each new dataset, it is a good practice to use the provided template ```cloud-optimised/cloud-optimised-team/parquet/notebooks/template.ipynb```
+For each new dataset, it is a good practice to use the provided template ```notebooks/template.ipynb```
 and create a new notebook.
 
 These notebooks use a common library of python functions to help with creating the geo-spatial filters:
-```cloud-optimised/cloud-optimised-team/parquet/notebooks/parquet_queries.py```
+```notebooks/parquet_queries.py```

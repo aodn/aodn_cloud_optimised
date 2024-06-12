@@ -9,6 +9,7 @@ import numpy as np
 import s3fs
 import xarray as xr
 import zarr
+
 # from dask import distributed
 from dask.diagnostics import ProgressBar
 from dask.distributed import worker_client
@@ -33,18 +34,29 @@ class GenericHandler(CommonHandler):
         """
         super().__init__(**kwargs)
 
+        json_validation_path = str(
+            importlib.resources.path(
+                "aodn_cloud_optimised.config", "schema_validation_zarr.json"
+            )
+        )
+        self.validate_json(
+            json_validation_path
+        )  # we cannot validate the json config until self.dataset_config and self.logger are set
 
-        json_validation_path = str(importlib.resources.path("aodn_cloud_optimised.config", "schema_validation_zarr.json"))
-        self.validate_json(json_validation_path)  # we cannot validate the json config until self.dataset_config and self.logger are set
+        self.reprocess = kwargs.get(
+            "reprocess", None
+        )  # setting to True will recreate the zarr from scratch at every run!
 
-        self.reprocess = kwargs.get('reprocess', None) #setting to True will recreate the zarr from scratch at every run!
+        self.dimensions = self.dataset_config.get("dimensions")
+        self.rechunk_drop_vars = kwargs.get("rechunk_drop_vars", None)
+        self.vars_to_drop_no_common_dimension = self.dataset_config.get(
+            "vars_to_drop_no_common_dimension", None
+        )
 
-        self.dimensions = self.dataset_config.get('dimensions')
-        self.rechunk_drop_vars = kwargs.get('rechunk_drop_vars', None)
-        self.vars_to_drop_no_common_dimension = self.dataset_config.get('vars_to_drop_no_common_dimension', None)
-
-        self.chunks = {self.dimensions["latitude"]["name"]: self.dimensions["latitude"]["chunk"],
-                       self.dimensions["longitude"]["name"]: self.dimensions["longitude"]["chunk"]}
+        self.chunks = {
+            self.dimensions["latitude"]["name"]: self.dimensions["latitude"]["chunk"],
+            self.dimensions["longitude"]["name"]: self.dimensions["longitude"]["chunk"],
+        }
 
     def check_file_already_processed(self) -> bool:
         """
@@ -58,17 +70,24 @@ class GenericHandler(CommonHandler):
             - True if the filename has already been integrated.
             - False if the filename has not been integrated yet.
         """
-        self.logger.info(f"{self.filename}: Checking if input NetCDF has already been ingested into Zarr dataset")
+        self.logger.info(
+            f"{self.filename}: Checking if input NetCDF has already been ingested into Zarr dataset"
+        )
 
         # Load existing zarr dataset
         try:
-            ds = xr.open_zarr(fsspec.get_mapper(self.cloud_optimised_output_path, anon=True), consolidated=True)
+            ds = xr.open_zarr(
+                fsspec.get_mapper(self.cloud_optimised_output_path, anon=True),
+                consolidated=True,
+            )
         except Exception as e:
-            self.logger.warning(f'Zarr dataset does not exist')
+            self.logger.warning(f"Zarr dataset does not exist")
             return False
 
         # Locate values of time indexes where new filename has possibly been already downloaded
-        idx = ds.indexes[self.dimensions["time"]["name"]].where(ds.filename == self.filename)
+        idx = ds.indexes[self.dimensions["time"]["name"]].where(
+            ds.filename == self.filename
+        )
         not_nan_mask = ~idx.isna()  # ~np.isnan(idx)
 
         # Use numpy.where to get the indices where the values are not NaN
@@ -104,7 +123,8 @@ class GenericHandler(CommonHandler):
 
         # Add a new dimension 'filename' with a filename value
         ds = ds.assign(
-            filename=((self.dimensions["time"]["name"],), [filename]))  # add new filename variable with time dimension
+            filename=((self.dimensions["time"]["name"],), [filename])
+        )  # add new filename variable with time dimension
 
         var_required = self.schema.copy()
         var_required.pop(self.dimensions["time"]["name"])
@@ -115,49 +135,66 @@ class GenericHandler(CommonHandler):
         var_template_shape = self.dataset_config.get("var_template_shape")
 
         import warnings
+
         try:
             warnings.filterwarnings("error", category=RuntimeWarning)
             nan_array = np.full(ds[var_template_shape].shape, np.nan, dtype=np.float64)
             # the following commented line returned some RuntimeWarnings every now and then.
-            #nan_array = np.empty(
+            # nan_array = np.empty(
             #    ds[var_template_shape].shape) * np.nan  # np.full_like( (1, 4500, 6000), np.nan, dtype=object)
         except RuntimeWarning as rw:
             raise TypeError
 
         for variable_name in var_required:
-            datatype = var_required[variable_name].get('type')
+            datatype = var_required[variable_name].get("type")
 
             # if variable doesn't exist
             if variable_name not in ds:
-                self.logger.warning(f'{self.filename}: add missing {variable_name} to xarray dataset')
+                self.logger.warning(
+                    f"{self.filename}: add missing {variable_name} to xarray dataset"
+                )
 
                 # check the type of the variable (numerical of string)
                 if np.issubdtype(datatype, np.number):
                     # Add the missing variable  to the dataset
-                    ds[variable_name] = ((self.dimensions["time"]["name"],
-                                          self.dimensions["latitude"]["name"],
-                                          self.dimensions["longitude"]["name"]),
-                                         nan_array)
+                    ds[variable_name] = (
+                        (
+                            self.dimensions["time"]["name"],
+                            self.dimensions["latitude"]["name"],
+                            self.dimensions["longitude"]["name"],
+                        ),
+                        nan_array,
+                    )
 
                 else:
                     # for strings variables, it's quite likely that the variables don't have any dimensions associated.
                     # This can be an issue to know which datapoint is associated to which string value.
                     # In this case we might have to repeat the string the times of ('TIME')
-                    ds[variable_name] = ((self.dimensions["time"]["name"],), empty_string_array)
+                    ds[variable_name] = (
+                        (self.dimensions["time"]["name"],),
+                        empty_string_array,
+                    )
 
                 ds[variable_name] = ds[variable_name].astype(datatype)
 
             # if variable already exists
             else:
 
-                if datatype == 'timestamp[ns]':  # Timestamps do not have an astype method. But numpy.datetime64 do.
-                    datatype = 'datetime64[ns]'
+                if (
+                    datatype == "timestamp[ns]"
+                ):  # Timestamps do not have an astype method. But numpy.datetime64 do.
+                    datatype = "datetime64[ns]"
 
                 elif not np.issubdtype(datatype, np.number):
                     # we repeat the string variable to match the size of the TIME dimension
-                    ds[variable_name] = ((self.dimensions["time"]["name"],),
-                                         np.full_like(ds[self.dimensions["time"]["name"]],
-                                                      ds[variable_name], dtype='<S1'))
+                    ds[variable_name] = (
+                        (self.dimensions["time"]["name"],),
+                        np.full_like(
+                            ds[self.dimensions["time"]["name"]],
+                            ds[variable_name],
+                            dtype="<S1",
+                        ),
+                    )
 
                 ds[variable_name] = ds[variable_name].astype(datatype)
 
@@ -172,17 +209,19 @@ class GenericHandler(CommonHandler):
         """
 
         preproc = partial(self.preprocess_xarray, filename=self.filename)
-        ds = xr.open_mfdataset(self.tmp_input_file,
-                               preprocess=preproc,
-                               engine='h5netcdf',
-                               concat_characters=True,
-                               mask_and_scale=True,
-                               decode_cf=True,
-                               decode_times=True,
-                               use_cftime=True,
-                               parallel=True,
-                               # autoclose=True,
-                               decode_coords=True)
+        ds = xr.open_mfdataset(
+            self.tmp_input_file,
+            preprocess=preproc,
+            engine="h5netcdf",
+            concat_characters=True,
+            mask_and_scale=True,
+            decode_cf=True,
+            decode_times=True,
+            use_cftime=True,
+            parallel=True,
+            # autoclose=True,
+            decode_coords=True,
+        )
 
         return ds
 
@@ -197,50 +236,67 @@ class GenericHandler(CommonHandler):
         """
         s3 = s3fs.S3FileSystem(anon=False)
 
-        store = s3fs.S3Map(root=f'{self.cloud_optimised_output_path}', s3=s3, check=False)
+        store = s3fs.S3Map(
+            root=f"{self.cloud_optimised_output_path}", s3=s3, check=False
+        )
 
         ds = ds.chunk(chunks=self.chunks)
 
         # first file of the dataset (overwrite)
         if self.reprocess:
-            self.logger.warning(f'{self.filename}: Creating new Zarr dataset - OVERWRITTING existing all Zarr objects if exist')
+            self.logger.warning(
+                f"{self.filename}: Creating new Zarr dataset - OVERWRITTING existing all Zarr objects if exist"
+            )
 
-            write_job = ds.to_zarr(store,
-                                   write_empty_chunks=False,
-                                   mode='w',
-                                   compute=False,
-                                   consolidated=True)
+            write_job = ds.to_zarr(
+                store,
+                write_empty_chunks=False,
+                mode="w",
+                compute=False,
+                consolidated=True,
+            )
 
         # append new files to the dataset
         else:
-            self.logger.info(f'{self.filename}: append data to existing Zarr')
-            if self.check_file_already_processed():  # case when a file should be reprocessed and write to a specific region
+            self.logger.info(f"{self.filename}: append data to existing Zarr")
+            if (
+                self.check_file_already_processed()
+            ):  # case when a file should be reprocessed and write to a specific region
                 self.logger.info(
-                    f'{self.filename}: update time region at slice({self.reprocessed_time_idx} , {self.reprocessed_time_idx + 1}) with new NetCDF data')
+                    f"{self.filename}: update time region at slice({self.reprocessed_time_idx} , {self.reprocessed_time_idx + 1}) with new NetCDF data"
+                )
                 # when setting `region` explicitly in to_zarr(), all variables in the dataset to write
                 # must have at least one dimension in common with the region's dimensions ['TIME'],
                 # but that is not the case for some variables here. To drop these variables
                 # from this dataset before exporting to zarr, write:
                 # .drop_vars(['LATITUDE', 'LONGITUDE', 'GDOP'])
 
-                write_job = ds.drop_vars(self.vars_to_drop_no_common_dimension).to_zarr(store,
-                                                                                        write_empty_chunks=False,
-                                                                                        region={self.dimensions["time"]["name"]:
-                                                                                       slice(self.reprocessed_time_idx,
-                                                                                             self.reprocessed_time_idx + 1)},
-                                                                                        compute=True,
-                                                                                        consolidated=True)
+                write_job = ds.drop_vars(self.vars_to_drop_no_common_dimension).to_zarr(
+                    store,
+                    write_empty_chunks=False,
+                    region={
+                        self.dimensions["time"]["name"]: slice(
+                            self.reprocessed_time_idx, self.reprocessed_time_idx + 1
+                        )
+                    },
+                    compute=True,
+                    consolidated=True,
+                )
             else:
-                write_job = ds.to_zarr(store,
-                                       write_empty_chunks=False,
-                                       mode='a',
-                                       compute=True,
-                                       append_dim=self.dimensions["time"]["name"],
-                                       consolidated=True)
+                write_job = ds.to_zarr(
+                    store,
+                    write_empty_chunks=False,
+                    mode="a",
+                    compute=True,
+                    append_dim=self.dimensions["time"]["name"],
+                    consolidated=True,
+                )
 
-        #write_job = write_job.persist()
-        #distributed.progress(write_job, notebook=False)
-        self.logger.info(f'{self.filename}: Zarr created and pushed to {self.cloud_optimised_output_path} successfully')
+        # write_job = write_job.persist()
+        # distributed.progress(write_job, notebook=False)
+        self.logger.info(
+            f"{self.filename}: Zarr created and pushed to {self.cloud_optimised_output_path} successfully"
+        )
 
     def to_cloud_optimised(self):
         """
@@ -258,22 +314,26 @@ class GenericHandler(CommonHandler):
         """
 
         if self.tmp_input_file.endswith(".nc"):
-            self.is_valid_netcdf(self.tmp_input_file)  # check file validity before doing anything else
+            self.is_valid_netcdf(
+                self.tmp_input_file
+            )  # check file validity before doing anything else
 
         try:
             ds = self.preprocess()
             self.publish_cloud_optimised(ds)
             self.push_metadata_aws_registry()
 
-            time_spent = (timeit.default_timer() - self.start_time)
-            self.logger.info(f'Cloud Optimised file completed in {time_spent}s')
+            time_spent = timeit.default_timer() - self.start_time
+            self.logger.info(f"Cloud Optimised file completed in {time_spent}s")
 
             self.postprocess(ds)
 
         except Exception as e:
-            self.logger.error(f"Issue while creating Cloud Optimised file: {type(e).__name__}: {e} \n {traceback.print_exc()}")
+            self.logger.error(
+                f"Issue while creating Cloud Optimised file: {type(e).__name__}: {e} \n {traceback.print_exc()}"
+            )
 
-            if 'ds' in locals():
+            if "ds" in locals():
                 self.postprocess(ds)
 
     @staticmethod
@@ -296,7 +356,7 @@ class GenericHandler(CommonHandler):
 
         return rechunk_dimensions
 
-    def rechunk(self, max_mem='8.0GB'):
+    def rechunk(self, max_mem="8.0GB"):
         """
         Rechunk a Zarr dataset stored on S3.
 
@@ -316,43 +376,58 @@ class GenericHandler(CommonHandler):
 
         Note: The target chunks for rechunking are determined based on the dimensions and chunking information.
         """
-        #with worker_client():
+        # with worker_client():
         with Client() as client:
 
             target_chunks = self.filter_rechunk_dimensions(
-                self.dimensions)  # only return a dict with the dimensions to rechunk
+                self.dimensions
+            )  # only return a dict with the dimensions to rechunk
 
             s3 = s3fs.S3FileSystem(anon=False)
 
-            org_url = self.cloud_optimised_output_path #f's3://{self.optimised_bucket_name}/zarr/{self.dataset_name}.zarr'
-            #org_store = s3fs.S3Map(root=f'{org_url}', s3=s3, check=False)
+            org_url = (
+                self.cloud_optimised_output_path
+            )  # f's3://{self.optimised_bucket_name}/zarr/{self.dataset_name}.zarr'
+            # org_store = s3fs.S3Map(root=f'{org_url}', s3=s3, check=False)
 
-            target_url = org_url.replace(f"{self.dataset_name}", f"{self.dataset_name}_rechunked")
-            target_store = s3fs.S3Map(root=f'{target_url}', s3=s3, check=False)
+            target_url = org_url.replace(
+                f"{self.dataset_name}", f"{self.dataset_name}_rechunked"
+            )
+            target_store = s3fs.S3Map(root=f"{target_url}", s3=s3, check=False)
             # zarr.consolidate_metadata(org_store)
 
             ds = xr.open_zarr(fsspec.get_mapper(org_url, anon=True), consolidated=True)
 
-            temp_url = org_url.replace(f"{self.dataset_name}", f"{self.dataset_name}_intermediate")
+            temp_url = org_url.replace(
+                f"{self.dataset_name}", f"{self.dataset_name}_intermediate"
+            )
 
-            temp_store = s3fs.S3Map(root=f'{temp_url}', s3=s3, check=False)
+            temp_store = s3fs.S3Map(root=f"{temp_url}", s3=s3, check=False)
 
             # delete previous version of intermediate and rechunked data
-            s3_client = boto3.resource('s3')
-            bucket = s3_client.Bucket(f'{self.optimised_bucket_name}')
-            self.logger.info('Delete previous rechunked version in progress')
+            s3_client = boto3.resource("s3")
+            bucket = s3_client.Bucket(f"{self.optimised_bucket_name}")
+            self.logger.info("Delete previous rechunked version in progress")
 
-            bucket.objects.filter(Prefix=temp_url.replace(f"s3://{self.optimised_bucket_name}/", '')).delete()
-            bucket.objects.filter(Prefix=target_url.replace(f"s3://{self.optimised_bucket_name}/", '')).delete()
-            self.logger.info(f'Rechunking in progress with chunks: {target_chunks}')
+            bucket.objects.filter(
+                Prefix=temp_url.replace(f"s3://{self.optimised_bucket_name}/", "")
+            ).delete()
+            bucket.objects.filter(
+                Prefix=target_url.replace(f"s3://{self.optimised_bucket_name}/", "")
+            ).delete()
+            self.logger.info(f"Rechunking in progress with chunks: {target_chunks}")
 
             options = dict(overwrite=True)
             array_plan = rechunk(
-                ds, target_chunks, max_mem, target_store,
-                temp_store=temp_store, temp_options=options, target_options=options
+                ds,
+                target_chunks,
+                max_mem,
+                target_store,
+                temp_store=temp_store,
+                temp_options=options,
+                target_options=options,
             )
             with ProgressBar():
                 self.logger.info(f"{array_plan.execute()}")
 
             zarr.consolidate_metadata(target_store)
-

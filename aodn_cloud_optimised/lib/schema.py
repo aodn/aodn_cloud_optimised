@@ -18,7 +18,7 @@ def generate_pyarrow_schema_from_s3_netcdf(s3_object_address, sub_schema):
         pyarrow.Schema: The inferred PyArrow pyarrow_schema from the NetCDF file.
     """
     s3 = s3fs.S3FileSystem()
-    with s3.open(s3_object_address, 'rb') as f:
+    with s3.open(s3_object_address, "rb") as f:
         dataset = xr.open_dataset(f)
 
     variables = list(dataset.variables.keys())
@@ -27,7 +27,7 @@ def generate_pyarrow_schema_from_s3_netcdf(s3_object_address, sub_schema):
     # Create the base pyarrow_schema from the NetCDF file
     base_schema = pa.schema(list(zip(variables, types)))
 
-     # Combine the base pyarrow_schema and the provided subschema
+    # Combine the base pyarrow_schema and the provided subschema
     combined_schema = pa.unify_schemas([base_schema, sub_schema])
 
     return combined_schema
@@ -45,7 +45,7 @@ def generate_json_schema_var_from_netcdf(nc_path, var_name, indent=2):
     Returns:
         None
     """
-    with open(nc_path, 'rb') as f:
+    with open(nc_path, "rb") as f:
         dataset = xr.open_dataset(f)
 
     schema = {}
@@ -55,19 +55,13 @@ def generate_json_schema_var_from_netcdf(nc_path, var_name, indent=2):
         var_dtype = dataset.variables[var_name].dtype
         dtype_str = convert_dtype_to_str(var_dtype)
         var_attrs = extract_serialisable_attrs(dataset.variables[var_name].attrs)
-        schema[var_name] = {
-            "type": dtype_str,
-            **var_attrs
-        }
+        schema[var_name] = {"type": dtype_str, **var_attrs}
 
     elif var_name in dataset.coords:
         coord_dtype = dataset.coords[var_name].dtype
         dtype_str = convert_dtype_to_str(coord_dtype)
         coord_attrs = extract_serialisable_attrs(dataset.coords[var_name].attrs)
-        schema[var_name] = {
-            "type": dtype_str,
-            **coord_attrs
-        }
+        schema[var_name] = {"type": dtype_str, **coord_attrs}
 
     # Convert the pyarrow_schema dictionary to a JSON-formatted string with indentation
     json_str = json.dumps(schema, indent=indent)
@@ -89,7 +83,7 @@ def generate_json_schema_from_s3_netcdf(s3_object_address, indent=2):
         None
     """
     s3 = s3fs.S3FileSystem()
-    with s3.open(s3_object_address, 'rb') as f:
+    with s3.open(s3_object_address, "rb") as f:
         dataset = xr.open_dataset(f)
 
     schema = {}
@@ -99,26 +93,20 @@ def generate_json_schema_from_s3_netcdf(s3_object_address, indent=2):
         var_dtype = dataset.variables[var_name].dtype
         dtype_str = convert_dtype_to_str(var_dtype)
         var_attrs = extract_serialisable_attrs(dataset.variables[var_name].attrs)
-        schema[var_name] = {
-            "type": dtype_str,
-            **var_attrs
-        }
+        schema[var_name] = {"type": dtype_str, **var_attrs}
 
     # Process coordinates
     for coord_name in dataset.coords:
         coord_dtype = dataset.coords[coord_name].dtype
         dtype_str = convert_dtype_to_str(coord_dtype)
         coord_attrs = extract_serialisable_attrs(dataset.coords[coord_name].attrs)
-        schema[coord_name] = {
-            "type": dtype_str,
-            **coord_attrs
-        }
+        schema[coord_name] = {"type": dtype_str, **coord_attrs}
 
     # Convert the pyarrow_schema dictionary to a JSON-formatted string with indentation
     json_str = json.dumps(schema, indent=indent)
 
     # Print the JSON string with double quotes for easy copy/paste
-    with tempfile.NamedTemporaryFile(mode='w', delete=False) as temp_file:
+    with tempfile.NamedTemporaryFile(mode="w", delete=False) as temp_file:
         # Serialise the pyarrow_schema dictionary to JSON with indentation
         json.dump(schema, temp_file, indent=indent)
         # Get the path to the temporary file
@@ -180,7 +168,7 @@ def create_pyarrow_schema_from_list(schema_strings):
         elif dtype_str == "byte":
             dtype = pa.binary()
         elif dtype_str == "timestamp[ns]":
-            dtype = pa.timestamp('ns')
+            dtype = pa.timestamp("ns")
         else:
             raise ValueError(f"Unsupported data type: {dtype_str}")
 
@@ -193,7 +181,7 @@ def create_pyarrow_schema_from_list(schema_strings):
 def create_pyrarrow_schema_from_dict(schema_dict):
     fields = []
     for name, info in schema_dict.items():
-        dtype_str = info['type'].strip()
+        dtype_str = info["type"].strip()
 
         # Convert dtype string to PyArrow type
         if dtype_str == "int32":
@@ -209,7 +197,7 @@ def create_pyrarrow_schema_from_dict(schema_dict):
         elif dtype_str == "byte":
             dtype = pa.binary()
         elif dtype_str == "timestamp[ns]":
-            dtype = pa.timestamp('ns')
+            dtype = pa.timestamp("ns")
         else:
             raise ValueError(f"Unsupported data type: {dtype_str}")
 

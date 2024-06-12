@@ -36,19 +36,30 @@ class GenericHandler(CommonHandler):
         """
         super().__init__(**kwargs)
 
-        self.delete_pq_unmatch_enable = kwargs.get('force_old_pq_del',
-                                                   self.dataset_config.get("force_old_pq_del", False))
+        self.delete_pq_unmatch_enable = kwargs.get(
+            "force_old_pq_del", self.dataset_config.get("force_old_pq_del", False)
+        )
 
-        json_validation_path = str(importlib.resources.path("aodn_cloud_optimised.config", "schema_validation_parquet.json"))
-        self.validate_json(json_validation_path)  # we cannot validate the json config until self.dataset_config and self.logger are set
+        json_validation_path = str(
+            importlib.resources.path(
+                "aodn_cloud_optimised.config", "schema_validation_parquet.json"
+            )
+        )
+        self.validate_json(
+            json_validation_path
+        )  # we cannot validate the json config until self.dataset_config and self.logger are set
 
-        self.partition_period = self.dataset_config["time_extent"].get('partition_timestamp_period', 'M')
+        self.partition_period = self.dataset_config["time_extent"].get(
+            "partition_timestamp_period", "M"
+        )
 
-        self.pyarrow_schema = create_pyarrow_schema(self.dataset_config['schema'])
+        self.pyarrow_schema = create_pyarrow_schema(self.dataset_config["schema"])
 
-        self.attributes_list_to_check = ['units', 'standard_name', 'reference_datum']
+        self.attributes_list_to_check = ["units", "standard_name", "reference_datum"]
 
-    def preprocess_data_csv(self, csv_fp) -> Generator[Tuple[pd.DataFrame, xr.Dataset], None, None]:
+    def preprocess_data_csv(
+        self, csv_fp
+    ) -> Generator[Tuple[pd.DataFrame, xr.Dataset], None, None]:
         """
         Preprocesses a CSV file using pandas and converts it into an xarray Dataset based on dataset configuration.
 
@@ -88,7 +99,9 @@ class GenericHandler(CommonHandler):
             config_from_json = self.dataset_config["pandas_read_csv_config"]
             df = pd.read_csv(csv_fp, **config_from_json)
         else:
-            self.logger.warning("No options given to process CSV file with pandas. Using default pandas.read_csv configuration")
+            self.logger.warning(
+                "No options given to process CSV file with pandas. Using default pandas.read_csv configuration"
+            )
             df = pd.read_csv(csv_fp)
 
         ds = xr.Dataset.from_dataframe(df)
@@ -98,11 +111,15 @@ class GenericHandler(CommonHandler):
                 self.logger.error(f"Missing variable: {var} from config")
             else:
                 ds[var].attrs = self.schema.get(var)
-                del ds[var].attrs['type']  # remove the type attribute which is not necessary at all
+                del ds[var].attrs[
+                    "type"
+                ]  # remove the type attribute which is not necessary at all
 
         yield df, ds
 
-    def preprocess_data_netcdf(self, netcdf_fp) -> Generator[Tuple[pd.DataFrame, xr.Dataset], None, None]:
+    def preprocess_data_netcdf(
+        self, netcdf_fp
+    ) -> Generator[Tuple[pd.DataFrame, xr.Dataset], None, None]:
         """
         Generate DataFrame and Dataset from a NetCDF file.
         If the dataset is more complicated, this method could be rewritten in a custom class inheriting
@@ -124,12 +141,16 @@ class GenericHandler(CommonHandler):
                 if self.check_var_attributes(ds):
                     yield df, ds
                 else:
-                    self.logger.error('NetCDF file is not consistent with the pre-defined schema')
+                    self.logger.error(
+                        "NetCDF file is not consistent with the pre-defined schema"
+                    )
 
-    def preprocess_data(self, fp) -> Generator[Tuple[pd.DataFrame, xr.Dataset], None, None]:
-        if fp.endswith('.nc'):
+    def preprocess_data(
+        self, fp
+    ) -> Generator[Tuple[pd.DataFrame, xr.Dataset], None, None]:
+        if fp.endswith(".nc"):
             return self.preprocess_data_netcdf(fp)
-        if fp.endswith('.csv'):
+        if fp.endswith(".csv"):
             return self.preprocess_data_csv(fp)
 
     @staticmethod
@@ -170,7 +191,7 @@ class GenericHandler(CommonHandler):
         Athena does not support byte object. Converting bytes variables into string
         """
         str_df = df.select_dtypes([object])
-        str_df = str_df.stack().str.decode('utf-8').unstack()
+        str_df = str_df.stack().str.decode("utf-8").unstack()
         for col in str_df:
             df[col] = str_df[col]
 
@@ -199,10 +220,12 @@ class GenericHandler(CommonHandler):
         rounded_lat = int(lat / delta) * delta
 
         # Define the coordinates of the polygon based on rounded longitude and latitude
-        polygon_coords = [(rounded_lon - delta, rounded_lat - delta),
-                          (rounded_lon + delta, rounded_lat - delta),
-                          (rounded_lon + delta, rounded_lat + delta),
-                          (rounded_lon - delta, rounded_lat + delta)]
+        polygon_coords = [
+            (rounded_lon - delta, rounded_lat - delta),
+            (rounded_lon + delta, rounded_lat - delta),
+            (rounded_lon + delta, rounded_lat + delta),
+            (rounded_lon - delta, rounded_lat + delta),
+        ]
 
         # Create the polygon object
         polygon = Polygon(polygon_coords)
@@ -236,20 +259,30 @@ class GenericHandler(CommonHandler):
         # load default values if not available in config
         lat_varname = self.dataset_config["spatial_extent"].get("lat", "LATITUDE")
         lon_varname = self.dataset_config["spatial_extent"].get("lon", "LONGITUDE")
-        spatial_res = self.dataset_config["spatial_extent"].get("spatial_resolution", 5)  # Define delta for the polygon (in degrees)
+        spatial_res = self.dataset_config["spatial_extent"].get(
+            "spatial_resolution", 5
+        )  # Define delta for the polygon (in degrees)
 
         # Clean dataset from NaN values of LAT and LON; for ex 'IMOS/Argo/dac/csiro/5905017/5905017_prof.nc'
         for geo_var in [lat_varname, lon_varname]:
             geo_var_has_nan = df[geo_var].isna().any().any()
             if geo_var_has_nan:
-                self.logger.warning(f"The NetCDF has NaN values of {geo_var}. Removing corresponding data")
-                df = df.dropna(subset=[geo_var]).reset_index()#.reset_index(drop=True)
+                self.logger.warning(
+                    f"The NetCDF has NaN values of {geo_var}. Removing corresponding data"
+                )
+                df = df.dropna(
+                    subset=[geo_var]
+                ).reset_index()  # .reset_index(drop=True)
 
-        point_geometry = [Point(lon, lat) for lon, lat in zip(df[lon_varname], df[lat_varname])]
+        point_geometry = [
+            Point(lon, lat) for lon, lat in zip(df[lon_varname], df[lat_varname])
+        ]
 
         # Create Polygon objects around each Point
 
-        df['polygon'] = [self.create_polygon(point, spatial_res) for point in point_geometry]
+        df["polygon"] = [
+            self.create_polygon(point, spatial_res) for point in point_geometry
+        ]
 
         return df
 
@@ -270,18 +303,29 @@ class GenericHandler(CommonHandler):
             # Department_of_Transport-Western_Australia/WAVE-BUOYS/REALTIME/WAVE-PARAMETERS/ALBANY/2022/DOT-WA_20221106_ALBANY_RT_WAVE-PARAMETERS_monthly.nc
 
             datetime_var = df.index.get_level_values(time_varname)
-        elif isinstance(df.index, pd.Index) and df.index.name is not None and (time_varname in df.index.name):
+        elif (
+            isinstance(df.index, pd.Index)
+            and df.index.name is not None
+            and (time_varname in df.index.name)
+        ):
             datetime_var = df.index
         else:
             # for example, soop xbt nrt profiles where the index is the pressure and TIME is a variable
             for column in df.columns:
-                if (df[column].dtype == 'datetime64[ns]') and column == time_varname:
+                if (df[column].dtype == "datetime64[ns]") and column == time_varname:
                     datetime_var = df[column].values
 
-            if 'datetime_var' not in locals():
+            if "datetime_var" not in locals():
                 if pd.api.types.is_datetime64_any_dtype(df.index):
                     datetime_var = df.index
-        df['timestamp'] = np.int64(pd.to_datetime(datetime_var).to_period(self.partition_period).to_timestamp())/10**9  # for partitions with the date as the 1st of the month
+        df["timestamp"] = (
+            np.int64(
+                pd.to_datetime(datetime_var)
+                .to_period(self.partition_period)
+                .to_timestamp()
+            )
+            / 10**9
+        )  # for partitions with the date as the 1st of the month
 
         return df
 
@@ -297,12 +341,14 @@ class GenericHandler(CommonHandler):
             pd.DataFrame: DataFrame with added columns.
         """
 
-        gattrs_to_variables = self.dataset_config['gattrs_to_variables']
+        gattrs_to_variables = self.dataset_config["gattrs_to_variables"]
         for attr in gattrs_to_variables:
             if attr in ds.attrs:
                 df[attr] = getattr(ds, attr)
             else:
-                self.logger.warning(f"{attr} global attribute doesn't exist in the original NetCDF. The corresponding variable won't be created")
+                self.logger.warning(
+                    f"{attr} global attribute doesn't exist in the original NetCDF. The corresponding variable won't be created"
+                )
 
         df["filename"] = os.path.basename(self.input_object_key)
 
@@ -326,9 +372,11 @@ class GenericHandler(CommonHandler):
 
         time_varname = self.dataset_config["time_extent"].get("time", "TIME")
 
-        if any(df['timestamp'] < 0):
-            self.logger.warning(f'{self.filename}: NaN values of {time_varname} time variable in dataset. Trimming data from NaN values')
-            df2 = df[df['timestamp'] > 0].copy()
+        if any(df["timestamp"] < 0):
+            self.logger.warning(
+                f"{self.filename}: NaN values of {time_varname} time variable in dataset. Trimming data from NaN values"
+            )
+            df2 = df[df["timestamp"] > 0].copy()
             df = df2
             df = df.reset_index()
 
@@ -387,28 +435,28 @@ class GenericHandler(CommonHandler):
 
     def check_var_attributes(self, ds):
         """
-           Validate the attributes of each variable in an xarray Dataset against a predefined schema.
+        Validate the attributes of each variable in an xarray Dataset against a predefined schema.
 
-           This method checks if each variable in the provided xarray Dataset `ds` contains a specific set of attributes
-           and verifies that the values of these attributes match the expected values defined in the `dataset_config` schema.
-           If any attribute does not match the expected value, a ValueError is raised. If a variable is missing from the
-           `dataset_config`, a warning is logged.
+        This method checks if each variable in the provided xarray Dataset `ds` contains a specific set of attributes
+        and verifies that the values of these attributes match the expected values defined in the `dataset_config` schema.
+        If any attribute does not match the expected value, a ValueError is raised. If a variable is missing from the
+        `dataset_config`, a warning is logged.
 
-           Parameters:
-           ds (xarray.Dataset): The dataset to be validated.
+        Parameters:
+        ds (xarray.Dataset): The dataset to be validated.
 
-           Raises:
-           ValueError: If an attribute value does not match the expected value as defined in the schema.
-           KeyError: If an expected attribute is missing from a variable.
+        Raises:
+        ValueError: If an attribute value does not match the expected value as defined in the schema.
+        KeyError: If an expected attribute is missing from a variable.
 
-           Returns:
-           bool: True if all attributes are validated successfully.
+        Returns:
+        bool: True if all attributes are validated successfully.
 
-           Notes:
-           - The method uses a predefined list of mandatory attributes (`self.attributes_list_to_check`) that are expected
-             to be present and consistent across the dataset.
-           - The schema containing the expected attribute values for each variable is provided via `self.dataset_config`.
-           - If a variable is missing from the `dataset_config`, a warning is logged.
+        Notes:
+        - The method uses a predefined list of mandatory attributes (`self.attributes_list_to_check`) that are expected
+          to be present and consistent across the dataset.
+        - The schema containing the expected attribute values for each variable is provided via `self.dataset_config`.
+        - If a variable is missing from the `dataset_config`, a warning is logged.
         """
 
         errors = 0
@@ -417,25 +465,34 @@ class GenericHandler(CommonHandler):
             for attr in self.attributes_list_to_check:
                 # Iterate over the var_name attributes
                 if attr in ds[var_name].attrs:
-                    if var_name in self.dataset_config.get('schema'):
+                    if var_name in self.dataset_config.get("schema"):
                         # check if an attribute exist in the dataset_config for a specific variable, and compare their similarity
-                        if attr in self.dataset_config.get('schema')[var_name]:
-                            expected_attr = self.dataset_config.get('schema')[var_name][attr]
+                        if attr in self.dataset_config.get("schema")[var_name]:
+                            expected_attr = self.dataset_config.get("schema")[var_name][
+                                attr
+                            ]
                             file_attr = getattr(ds[var_name], attr)
 
                             if expected_attr != file_attr:
                                 self.logger.error(
-                                    f"Attribute '{attr}' for variable '{var_name}' does not match: expected '{expected_attr}', found '{file_attr}'")
-                                errors+=1
+                                    f"Attribute '{attr}' for variable '{var_name}' does not match: expected '{expected_attr}', found '{file_attr}'"
+                                )
+                                errors += 1
                     else:
-                        self.logger.warning(f'{var_name} is missing from the dataset_config. Please amend')
+                        self.logger.warning(
+                            f"{var_name} is missing from the dataset_config. Please amend"
+                        )
 
         if errors > 0:
             return False
         else:
             return True
 
-    def publish_cloud_optimised(self, df: pd.DataFrame, ds: xr.Dataset,) -> None:
+    def publish_cloud_optimised(
+        self,
+        df: pd.DataFrame,
+        ds: xr.Dataset,
+    ) -> None:
         """
         Create a parquet file containing data only.
 
@@ -445,7 +502,7 @@ class GenericHandler(CommonHandler):
         Returns:
             None
         """
-        partition_keys = self.dataset_config['partition_keys']
+        partition_keys = self.dataset_config["partition_keys"]
 
         df = self._add_timestamp_df(df)
         df = self._add_columns_df(df, ds)
@@ -454,7 +511,7 @@ class GenericHandler(CommonHandler):
         if "polygon" in partition_keys:
             if not "spatial_extent" in self.dataset_config:
                 self.logger.error("Missing spatial_extent config")
-                #raise ValueError
+                # raise ValueError
             else:
                 df = self._add_polygon(df)
 
@@ -498,7 +555,9 @@ class GenericHandler(CommonHandler):
         if self.pyarrow_schema is not None:
             for field in self.pyarrow_schema:
                 if field.name not in df_var_list:
-                    self.logger.warning(f"{self.filename}: {field.name} variable missing from dataset. creating a null array of {field.type}")
+                    self.logger.warning(
+                        f"{self.filename}: {field.name} variable missing from dataset. creating a null array of {field.type}"
+                    )
                     null_array = pa.nulls(len(pdf), field.type)
                     pdf = pdf.append_column(field.name, null_array)
 
@@ -507,31 +566,40 @@ class GenericHandler(CommonHandler):
         if self.pyarrow_schema is not None:
             for column_name in df_columns:
                 if column_name not in pdf.schema.names:
-                    var_config = generate_json_schema_var_from_netcdf(self.tmp_input_file, column_name)
-                    #if df.index.name is not None and column_name in df.index.name:
+                    var_config = generate_json_schema_var_from_netcdf(
+                        self.tmp_input_file, column_name
+                    )
+                    # if df.index.name is not None and column_name in df.index.name:
                     #    self.logger.warning(f'missing variable from provided pyarrow_schema, please add {column_name} : {df.index.dtype}')
-                    #else:
+                    # else:
                     #    #TODO: improce this to return all the varatts as well
                     #    var_config = generate_json_schema_var_from_netcdf(self.input_object_key, column_name)
                     self.logger.warning(
-                        f'missing variable from provided pyarrow_schema config, please add to dataset config (respect double quotes): {var_config}')
+                        f"missing variable from provided pyarrow_schema config, please add to dataset config (respect double quotes): {var_config}"
+                    )
 
         for partition_key in partition_keys:
             if all(not elem for elem in pdf[partition_key].is_null()):
-                self.logger.error(f"{partition_key} variable is full of NULL values. Most likely due to {partition_key} missing from \"gattrs_to_variables\" in dataset config")
+                self.logger.error(
+                    f'{partition_key} variable is full of NULL values. Most likely due to {partition_key} missing from "gattrs_to_variables" in dataset config'
+                )
                 raise ValueError
 
         metadata_collector = []
-        pq.write_to_dataset(pdf,
-                            root_path=self.cloud_optimised_output_path,
-                            existing_data_behavior="overwrite_or_ignore",
-                            row_group_size=20000,
-                            partition_cols=partition_keys,
-                            use_threads=True,
-                            metadata_collector=metadata_collector,
-                            basename_template=os.path.basename(self.input_object_key) + "-{i}.parquet"  # this is essential for the overwriting part
-                            )
-        self.logger.info(f"{self.filename}: Parquet files successfully created in {self.cloud_optimised_output_path} \n")
+        pq.write_to_dataset(
+            pdf,
+            root_path=self.cloud_optimised_output_path,
+            existing_data_behavior="overwrite_or_ignore",
+            row_group_size=20000,
+            partition_cols=partition_keys,
+            use_threads=True,
+            metadata_collector=metadata_collector,
+            basename_template=os.path.basename(self.input_object_key)
+            + "-{i}.parquet",  # this is essential for the overwriting part
+        )
+        self.logger.info(
+            f"{self.filename}: Parquet files successfully created in {self.cloud_optimised_output_path} \n"
+        )
 
         self._add_metadata_sidecar()
 
@@ -560,77 +628,81 @@ class GenericHandler(CommonHandler):
         fields = []
         byte_dict_list = []
         # Iterate over variables in the PyArrow table (pdf)
-        #for col_name in pdf.column_names:
-            # Check if the variable exists in the xarray Dataset
-            #if col_name in ds.variables:
-                # Get the xarray variable
-            #    var_data = ds.variables[col_name]
+        # for col_name in pdf.column_names:
+        # Check if the variable exists in the xarray Dataset
+        # if col_name in ds.variables:
+        # Get the xarray variable
+        #    var_data = ds.variables[col_name]
 
-                # Convert xarray variable attributes to PyArrow column metadata
-                #column_metadata = {}
-                #for attr_name, attr_value in var_data.attrs.items():
-                    ## Ensure attribute values are strings
-                    # attr_value_str = str(attr_value)
-                    # column_metadata[attr_name] = attr_value_str
+        # Convert xarray variable attributes to PyArrow column metadata
+        # column_metadata = {}
+        # for attr_name, attr_value in var_data.attrs.items():
+        ## Ensure attribute values are strings
+        # attr_value_str = str(attr_value)
+        # column_metadata[attr_name] = attr_value_str
         fields = []
         byte_dict_list = []
         column_metadata = {}
-        for var in self.dataset_config.get('schema'):
-            #column_metadata[attr_name] = attr_value_str
-            var_metadata = self.dataset_config.get('schema')[var]
+        for var in self.dataset_config.get("schema"):
+            # column_metadata[attr_name] = attr_value_str
+            var_metadata = self.dataset_config.get("schema")[var]
             # Convert xarray variable values to PyArrow data type
             # Adjust data type mapping as needed based on your data
-            if var_metadata['type'] == 'float64':
+            if var_metadata["type"] == "float64":
                 data_type = pa.float64()
-            elif var_metadata['type'] == 'float32':
+            elif var_metadata["type"] == "float32":
                 data_type = pa.float32()
-            elif var_metadata['type'] == 'float':
+            elif var_metadata["type"] == "float":
                 data_type = pa.float32()
-            elif var_metadata['type'] == 'double':
+            elif var_metadata["type"] == "double":
                 data_type = pa.float64()
-            elif var_metadata['type'] == 'int64':
+            elif var_metadata["type"] == "int64":
                 data_type = pa.int64()
-            elif var_metadata['type'] == 'int32':
+            elif var_metadata["type"] == "int32":
                 data_type = pa.int32()
-            elif var_metadata['type'] == 'int16':
+            elif var_metadata["type"] == "int16":
                 data_type = pa.int16()
-            elif var_metadata['type'] == 'int8':
+            elif var_metadata["type"] == "int8":
                 data_type = pa.int8()
-            elif var_metadata['type'] == 'uint64':
+            elif var_metadata["type"] == "uint64":
                 data_type = pa.uint64()
-            elif var_metadata['type'] == 'uint32':
+            elif var_metadata["type"] == "uint32":
                 data_type = pa.uint32()
-            elif var_metadata['type'] == 'uint16':
+            elif var_metadata["type"] == "uint16":
                 data_type = pa.uint16()
-            elif var_metadata['type'] == 'uint8':
+            elif var_metadata["type"] == "uint8":
                 data_type = pa.uint8()
-            elif var_metadata['type'] == 'bool':
+            elif var_metadata["type"] == "bool":
                 data_type = pa.bool_()
-            elif var_metadata['type'] == 'datetime64[ns]':
-                data_type = pa.timestamp('ns')
-            elif var_metadata['type'] == 'timestamp[ns]':
-                data_type = pa.timestamp('ns')
-            elif var_metadata['type'] == 'object':
+            elif var_metadata["type"] == "datetime64[ns]":
+                data_type = pa.timestamp("ns")
+            elif var_metadata["type"] == "timestamp[ns]":
+                data_type = pa.timestamp("ns")
+            elif var_metadata["type"] == "object":
                 data_type = pa.string()
-            elif var_metadata['type'] == '|S1':
+            elif var_metadata["type"] == "|S1":
                 data_type = pa.string()
-            elif var_metadata['type'] == 'string':
+            elif var_metadata["type"] == "string":
                 data_type = pa.string()
             else:
-                raise ValueError(f"Unsupported data type: {var_metadata['type']}  while creating metadata sidecar")
+                raise ValueError(
+                    f"Unsupported data type: {var_metadata['type']}  while creating metadata sidecar"
+                )
 
             # TODO: once pyarrow matures on the metadata side, we should modify this ...
             # Create a PyArrow field with metadata
             # Convert all values in var_metadata to strings as pyarrow schema wants bytes..
             var_metadata_str = {key: str(value) for key, value in var_metadata.items()}
 
-            field = pa.field(var, data_type, metadata=var_metadata_str)  # Here the metadata is properly attached as expected
+            field = pa.field(
+                var, data_type, metadata=var_metadata_str
+            )  # Here the metadata is properly attached as expected
             # Append the field to the list of fields
             fields.append(field)  # The metadata still exists here... Good sign
 
             # Because of some obscure reason, the above doesnt work as expected, the byte_dict_list is an alternative way to store the metadata
 
-            byte_dict = str(var_metadata).encode('utf-8')
+            byte_dict = str(var_metadata).encode("utf-8")
             byte_dict_list.append(byte_dict)
 
         # Create a PyArrow schema from the list of fields
@@ -643,12 +715,17 @@ class GenericHandler(CommonHandler):
         # schema_dict['TIMESERIES'].metadata.get(b'cf_role')  isntead of pdf_schema[0].metadata[b'cf_role'] but here the metadata is kinda lost, see https://github.com/apache/arrow/issues/38575
 
         # alternative way: need to create a horrible byte dict
-        #var_atts_dict = {col_name: byte_dict for col_name, byte_dict in zip(pdf.column_names, byte_dict_list)}
-        var_atts_dict = {col_name: byte_dict for col_name, byte_dict in zip(self.dataset_config.get('schema').keys(), byte_dict_list)}
+        # var_atts_dict = {col_name: byte_dict for col_name, byte_dict in zip(pdf.column_names, byte_dict_list)}
+        var_atts_dict = {
+            col_name: byte_dict
+            for col_name, byte_dict in zip(
+                self.dataset_config.get("schema").keys(), byte_dict_list
+            )
+        }
         # Add Global attributes into metadata (no schema)
         dataset_metadata = dict()
         if "metadata_uuid" in self.dataset_config.keys():
-            dataset_metadata["metadata_uuid"] = self.dataset_config['metadata_uuid']
+            dataset_metadata["metadata_uuid"] = self.dataset_config["metadata_uuid"]
         if "dataset_gattrs" in self.dataset_config.keys():
             for gattr in self.dataset_config["dataset_gattrs"]:
                 dataset_metadata[gattr] = self.dataset_config["dataset_gattrs"][gattr]
@@ -658,10 +735,14 @@ class GenericHandler(CommonHandler):
 
         pdf_schema = pdf_schema.with_metadata(var_atts_dict)
 
-        dataset_metadata_path = os.path.join(self.cloud_optimised_output_path, '_common_metadata')
+        dataset_metadata_path = os.path.join(
+            self.cloud_optimised_output_path, "_common_metadata"
+        )
         pq.write_metadata(pdf_schema, dataset_metadata_path)
 
-        self.logger.info(f"{self.filename}: Parquet metadata file successfully created in {dataset_metadata_path} \n")
+        self.logger.info(
+            f"{self.filename}: Parquet metadata file successfully created in {dataset_metadata_path} \n"
+        )
 
     def push_metadata_aws_registry(self) -> None:
         """
@@ -675,21 +756,27 @@ class GenericHandler(CommonHandler):
             None
         """
         if "aws_opendata_registry" not in self.dataset_config:
-            self.logger.warning("Missing dataset configuration to populate AWS OpenData Registry")
+            self.logger.warning(
+                "Missing dataset configuration to populate AWS OpenData Registry"
+            )
         else:
             aws_registry_config = self.dataset_config["aws_opendata_registry"]
             yaml_data = yaml.dump(aws_registry_config)
 
-            s3 = boto3.client('s3')
+            s3 = boto3.client("s3")
 
-            key = os.path.join(self.root_prefix_cloud_optimised_path, self.dataset_name + '.yaml')
+            key = os.path.join(
+                self.root_prefix_cloud_optimised_path, self.dataset_name + ".yaml"
+            )
             # Upload the YAML data to S3
             s3.put_object(
                 Bucket=self.optimised_bucket_name,
                 Key=key,
-                Body=yaml_data.encode('utf-8')
+                Body=yaml_data.encode("utf-8"),
             )
-            self.logger.info(f"Push AWS Registry file to: {os.path.join(self.cloud_optimised_output_path, self.dataset_name + '.yaml')}")
+            self.logger.info(
+                f"Push AWS Registry file to: {os.path.join(self.cloud_optimised_output_path, self.dataset_name + '.yaml')}"
+            )
 
     def delete_existing_matching_parquet(self) -> None:
         """
@@ -709,36 +796,44 @@ class GenericHandler(CommonHandler):
             None
         """
 
-        self.logger.info(f'Looking for matching Parquet objects to delete')
+        self.logger.info(f"Looking for matching Parquet objects to delete")
 
         # could be slow if there are too many objects to list
         # remote test on local machine shows 15 sec for 50k objects
 
         try:
-            parquet_files = pq.ParquetDataset(self.cloud_optimised_output_path, partitioning='hive')
+            parquet_files = pq.ParquetDataset(
+                self.cloud_optimised_output_path, partitioning="hive"
+            )
         except FileNotFoundError as e:
             self.logger.info(f"No files to delete: {e}")
             return
 
         # Define the regex pattern to match existing parquet files
-        pattern = rf'\/{self.filename}'
+        pattern = rf"\/{self.filename}"
 
         # Find files matching the pattern using list comprehension and regex
-        matching_files = [file_path for file_path in parquet_files.files if re.search(pattern, file_path)]
+        matching_files = [
+            file_path
+            for file_path in parquet_files.files
+            if re.search(pattern, file_path)
+        ]
 
         # The matching files returns also the bucket name. We need to strip it out of the array
-        object_keys = [file[len(self.optimised_bucket_name):].lstrip('/') for file in matching_files]
+        object_keys = [
+            file[len(self.optimised_bucket_name) :].lstrip("/")
+            for file in matching_files
+        ]
         if object_keys != []:
-            objects_to_delete = [{'Key': key} for key in object_keys]
+            objects_to_delete = [{"Key": key} for key in object_keys]
 
-            s3 = boto3.client('s3')
+            s3 = boto3.client("s3")
             response = s3.delete_objects(
-                Bucket=self.optimised_bucket_name,
-                Delete={
-                    'Objects': objects_to_delete
-                }
+                Bucket=self.optimised_bucket_name, Delete={"Objects": objects_to_delete}
             )
-            self.logger.info(f'Previous parquet objects successfully deleted: {response}')
+            self.logger.info(
+                f"Previous parquet objects successfully deleted: {response}"
+            )
 
     def to_cloud_optimised(self) -> None:
         """
@@ -748,7 +843,9 @@ class GenericHandler(CommonHandler):
             None
         """
         if self.tmp_input_file.endswith(".nc"):
-            self.is_valid_netcdf(self.tmp_input_file)  # check file validity before doing anything else
+            self.is_valid_netcdf(
+                self.tmp_input_file
+            )  # check file validity before doing anything else
 
         if self.delete_pq_unmatch_enable:
             self.delete_existing_matching_parquet()
@@ -760,15 +857,17 @@ class GenericHandler(CommonHandler):
                 self.publish_cloud_optimised(df, ds)
                 self.push_metadata_aws_registry()
 
-                time_spent = (timeit.default_timer() - self.start_time)
-                self.logger.info(f'Cloud Optimised file completed in {time_spent}s')
+                time_spent = timeit.default_timer() - self.start_time
+                self.logger.info(f"Cloud Optimised file completed in {time_spent}s")
 
                 self.postprocess(ds)
 
         except Exception as e:
-            self.logger.error(f"Issue while creating Cloud Optimised file: {type(e).__name__}: {e} \n {traceback.print_exc()}")
+            self.logger.error(
+                f"Issue while creating Cloud Optimised file: {type(e).__name__}: {e} \n {traceback.print_exc()}"
+            )
 
-            if 'ds' in locals():
+            if "ds" in locals():
                 self.postprocess(ds)
 
             raise e
