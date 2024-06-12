@@ -1,5 +1,7 @@
+import ctypes
 import os
 import tempfile
+import time
 import timeit
 from typing import List
 
@@ -285,6 +287,11 @@ def cloud_optimised_creation(obj_key: str, dataset_config, **kwargs) -> None:
     handler_instance.to_cloud_optimised()
 
 
+def trim_memory() -> int:
+    libc = ctypes.CDLL("libc.so.6")
+    return libc.malloc_trim(0)
+
+
 def cloud_optimised_creation_loop(
     obj_ls: List[str], dataset_config: dict, **kwargs
 ) -> None:
@@ -338,17 +345,19 @@ def cloud_optimised_creation_loop(
 
         if dataset_config.get("cloud_optimised_format") == "parquet":
             cluster = Cluster(
-                n_workers=[0, 12],
+                n_workers=[1, 12],
                 scheduler_vm_types="t3.small",
                 worker_vm_types="t3.medium",
                 allow_ingress_from="me",
+                compute_purchase_option="spot_with_fallback",
             )
         elif dataset_config.get("cloud_optimised_format") == "zarr":
             cluster = Cluster(
                 n_workers=1,
-                scheduler_vm_types="t3.medium",
-                worker_vm_types="m6i.xlarge",
+                scheduler_vm_types="t3.small",
+                worker_vm_types="c6i.xlarge",
                 allow_ingress_from="me",
+                compute_purchase_option="spot_with_fallback",
             )
 
         client = Client(cluster)
@@ -362,6 +371,8 @@ def cloud_optimised_creation_loop(
         client = Client(cluster)
 
     start_whole_processing = timeit.default_timer()
+
+    client.amm.start()  # Start Active Memory Manager
 
     # Define the task function to be executed in parallel
     def task(f, i):
@@ -381,26 +392,49 @@ def cloud_optimised_creation_loop(
         except Exception as e:
             logger.error(f"{i}/{len(obj_ls)} issue with {f}: {e}")
 
-    # Parallel Execution with List Comprehension
-    futures = [client.submit(task, f, i) for i, f in enumerate(obj_ls, start=1)]
+    client.amm.start()
 
-    # Wait for all futures to complete
-    wait(futures)
+    def wait_for_no_workers(client):
+        while len(client.scheduler_info()["workers"]) > 0:
+            time.sleep(1)
 
-    # #Submit tasks to the Dask cluster
-    # if dataset_config.get("cloud_optimised_format") == 'parquet':
-    #
-    #     # Parallel Execution with List Comprehension
-    #     futures = [client.submit(task, f, i) for i, f in enumerate(obj_ls, start=1)]
-    #
-    #     # Wait for all futures to complete
-    #     wait(futures)
-    #
-    # elif dataset_config.get("cloud_optimised_format") == 'zarr':
-    #     # Submit tasks to the Dask cluster sequentially
-    #     for i, f in enumerate(obj_ls, start=1):
-    #         future = client.submit(task, f, i)
-    #         result = future.result()  # Sequential Execution with future.result()
+    # Submit tasks to the Dask cluster
+    if dataset_config.get("cloud_optimised_format") == "parquet":
+
+        # Parallel Execution with List Comprehension
+        futures = [client.submit(task, f, i) for i, f in enumerate(obj_ls, start=1)]
+
+        # Wait for all futures to complete
+        wait(futures)
+
+    elif dataset_config.get("cloud_optimised_format") == "zarr":
+        # Submit tasks to the Dask cluster sequentially
+        for i, f in enumerate(obj_ls, start=1):
+            client.amm.start()
+            future = client.submit(task, f, i)
+            result = future.result()  # Sequential Execution with future.result()
+            wait(future)
+
+            trim_future = client.submit(trim_memory)
+            wait(trim_future)
+
+            restart_cluster_every_n = 100
+            if i % 10 == restart_cluster_every_n:
+                # Scale down to zero workers
+                logger.info(
+                    f"Restarting workers after {i} iterations to avoid memory leaks"
+                )
+                cluster.scale(0)
+
+                # Wait for the workers to be removed
+                wait_for_no_workers(client)
+
+                desired_n_workers = 1
+                # Scale back up to the desired number of workers
+                cluster.scale(desired_n_workers)
+
+                # Wait for the workers to be ready
+                client.wait_for_workers(desired_n_workers)
 
     time_spent_processing = timeit.default_timer() - start_whole_processing
     logger.info(f"Whole dataset completed in {time_spent_processing}s")

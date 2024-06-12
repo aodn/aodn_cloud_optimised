@@ -9,12 +9,10 @@ import numpy as np
 import s3fs
 import xarray as xr
 import zarr
+import time
 
-# from dask import distributed
 from dask.diagnostics import ProgressBar
-from dask.distributed import worker_client
-from dask.distributed import Client
-from dask.distributed import Lock, get_client
+from dask.distributed import Client, Lock, wait, get_client, worker_client
 
 from rechunker import rechunk
 
@@ -59,20 +57,47 @@ class GenericHandler(CommonHandler):
             self.dimensions["longitude"]["name"]: self.dimensions["longitude"]["chunk"],
         }
 
+    def acquire_dask_lock(self):
+        """
+        Acquire a Dask distributed lock to ensure exclusive access to a shared resource.
+
+        This method attempts to acquire a named Dask lock to prevent concurrent access to a
+        shared resource, such as writing to a Zarr dataset. If a Dask client is available,
+        it will obtain the lock, blocking if necessary until the lock becomes available.
+        If no Dask client is available, it will set the lock attribute to None and log a warning.
+        """
+        lock_name = "zarr_write_lock"
+
         # Attempt to get the Dask client
         try:
             dask_client = get_client()  # Get the Dask client
         except ValueError:
             dask_client = None  # Set to None if no Dask client is found
-
-        if dask_client:
-            self.lock = (
-                Lock()
-            )  # Create a Dask Lock object, to avoid corruption of writting zarr objects in parallel
-            self.logger.info("Setting up a Cluster Dask Lock to avoid Zarr corruption")
-        else:
             self.lock = None  # Set to None if no Dask cluster is found
             self.logger.warning("No cluster lock to setup")
+
+        if dask_client:
+            lock = Lock(lock_name)
+            lock.acquire()  #  https://docs.python.org/3/library/threading.html#threading.Lock.acquire
+            # When invoked with the blocking argument set to True (the default), block until the lock is unlocked, then set it to locked and return True.
+
+            self.logger.info(f"Lock '{lock_name}' acquired successfully.")
+            self.lock = lock
+
+    def release_lock(self):
+        """
+        Release the currently held Dask lock.
+
+        This method releases the Dask lock previously acquired by the `acquire_dask_lock` method.
+        If the lock is held, it will be released and an info message will be logged. If the lock
+        is not held, it will log an info message indicating that no lock is held.
+        """
+        if self.lock:
+            if self.lock.locked():
+                self.lock.release()
+                self.logger.info("Lock released.")
+            else:
+                self.logger.info("No lock is held.")
 
     def check_file_already_processed(self) -> bool:
         """
@@ -258,7 +283,6 @@ class GenericHandler(CommonHandler):
 
         ds = ds.chunk(chunks=self.chunks)
 
-        # Acquire the lock before writing to the Zarr dataset
         # first file of the dataset (overwrite)
         if self.reprocess:
             self.logger.warning(
@@ -338,21 +362,12 @@ class GenericHandler(CommonHandler):
         try:
             ds = self.preprocess()
 
-            # Attempt to acquire the lock
-            if self.lock:
-                if self.lock.acquire(blocking=False):
-                    try:
-                        # Critical section - perform operations protected by the lock
-                        self.publish_cloud_optimised(ds)
-                    finally:
-                        # Release the lock in a finally block to ensure it's always released
-                        self.lock.release()
-                else:
-                    # The lock is already held by another process, handle accordingly
-                    self.logger.warning("Lock is already held by another process")
-            else:
-                # No Dask cluster lock available, proceed without locking
-                self.publish_cloud_optimised(ds)
+            # Attempt to acquire the zarr lock
+            self.acquire_dask_lock()
+            # Critical section - perform operations protected by the lock
+            self.publish_cloud_optimised(ds)
+            # Release the lock
+            self.release_lock()
 
             self.push_metadata_aws_registry()
 
