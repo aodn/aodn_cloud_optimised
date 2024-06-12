@@ -1,16 +1,20 @@
 {
   "dataset_name": "anmn_hourly_timeseries",
+  "logger_name": "anmn_hourly_timeseries",
   "cloud_optimised_format": "parquet",
   "metadata_uuid": "7b901002-b1dc-46c3-89f2-b4951cedca48",
-  "logger_name": "anmn_hourly_timeseries",
   "gattrs_to_variables" : ["site_code"],
-  "partition_keys": ["site_code", "timestamp", "polygon"],
+  "partition_keys": [
+    "site_code", 
+    "timestamp", 
+    "polygon"
+  ],
   "time_extent": {
     "time": "TIME",
     "partition_timestamp_period": "Q"
   },
   "spatial_extent": {
-    "lat":  "LATITUDE",
+    "lat": "LATITUDE",
     "lon": "LONGITUDE",
     "spatial_resolution": 5
   },
