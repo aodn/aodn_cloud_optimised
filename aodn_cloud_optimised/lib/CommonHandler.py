@@ -11,6 +11,7 @@ import xarray as xr
 import yaml
 from dask.distributed import Client, LocalCluster, wait
 from jsonschema import validate, ValidationError
+from urllib.parse import urlparse
 
 from .config import load_variable_from_config, load_dataset_config
 from .logging import get_logger
@@ -106,6 +107,39 @@ class CommonHandler:
             self.logger.info("JSON configuration for dataset: Validation successful.")
         except ValidationError as e:
             raise ValueError(f"JSON configuration for dataset: Validation failed: {e}")
+
+    @staticmethod
+    def prefix_exists(s3_path):
+        """
+        Check if a given S3 prefix exists.
+
+        This function parses an S3 path to extract the bucket name and prefix,
+        then checks if the prefix exists in the specified S3 bucket.
+
+        Args:
+            s3_path (str): The S3 path to check, in the format "s3://bucket-name/prefix".
+
+        Returns:
+            bool: True if the prefix exists, False otherwise.
+
+        Raises:
+            ValueError: If the provided path does not appear to be an S3 URL.
+
+        """
+        # Parse the S3 path
+        parsed_url = urlparse(s3_path)
+
+        if parsed_url.scheme != "s3":
+            raise ValueError("The provided path does not appear to be an S3 URL.")
+
+        bucket_name = parsed_url.netloc
+        prefix = parsed_url.path.lstrip("/")
+
+        s3_client = boto3.client("s3")
+        response = s3_client.list_objects_v2(
+            Bucket=bucket_name, Prefix=prefix, MaxKeys=1
+        )
+        return "Contents" in response
 
     def is_valid_netcdf(self, nc_file_path):
         """
@@ -345,7 +379,7 @@ def cloud_optimised_creation_loop(
 
         if dataset_config.get("cloud_optimised_format") == "parquet":
             cluster = Cluster(
-                n_workers=[1, 12],
+                n_workers=[1, 20],
                 scheduler_vm_types="t3.small",
                 worker_vm_types="t3.medium",
                 allow_ingress_from="me",

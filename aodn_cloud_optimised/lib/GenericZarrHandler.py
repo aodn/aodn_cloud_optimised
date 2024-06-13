@@ -57,6 +57,8 @@ class GenericHandler(CommonHandler):
             self.dimensions["longitude"]["name"]: self.dimensions["longitude"]["chunk"],
         }
 
+        self.compute = bool(True)
+
     def acquire_dask_lock(self):
         """
         Acquire a Dask distributed lock to ensure exclusive access to a shared resource.
@@ -293,46 +295,59 @@ class GenericHandler(CommonHandler):
                 store,
                 write_empty_chunks=False,
                 mode="w",
-                compute=False,
+                compute=self.compute,
                 consolidated=True,
             )
 
         # append new files to the dataset
         else:
-            self.logger.info(f"{self.filename}: append data to existing Zarr")
-            if (
-                self.check_file_already_processed()
-            ):  # case when a file should be reprocessed and write to a specific region
-                self.logger.info(
-                    f"{self.filename}: update time region at slice({self.reprocessed_time_idx} , {self.reprocessed_time_idx + 1}) with new NetCDF data"
-                )
-                # when setting `region` explicitly in to_zarr(), all variables in the dataset to write
-                # must have at least one dimension in common with the region's dimensions ['TIME'],
-                # but that is not the case for some variables here. To drop these variables
-                # from this dataset before exporting to zarr, write:
-                # .drop_vars(['LATITUDE', 'LONGITUDE', 'GDOP'])
+            if self.prefix_exists(self.cloud_optimised_output_path):
 
-                write_job = ds.drop_vars(self.vars_to_drop_no_common_dimension).to_zarr(
-                    store,
-                    write_empty_chunks=False,
-                    region={
-                        self.dimensions["time"]["name"]: slice(
-                            self.reprocessed_time_idx, self.reprocessed_time_idx + 1
-                        )
-                    },
-                    compute=True,
-                    consolidated=True,
-                )
+                self.logger.info(f"{self.filename}: append data to existing Zarr")
+                if (
+                    self.check_file_already_processed()
+                ):  # case when a file should be reprocessed and write to a specific region
+                    self.logger.info(
+                        f"{self.filename}: update time region at slice({self.reprocessed_time_idx} , {self.reprocessed_time_idx + 1}) with new NetCDF data"
+                    )
+                    # when setting `region` explicitly in to_zarr(), all variables in the dataset to write
+                    # must have at least one dimension in common with the region's dimensions ['TIME'],
+                    # but that is not the case for some variables here. To drop these variables
+                    # from this dataset before exporting to zarr, write:
+                    # .drop_vars(['LATITUDE', 'LONGITUDE', 'GDOP'])
+
+                    write_job = ds.drop_vars(
+                        self.vars_to_drop_no_common_dimension
+                    ).to_zarr(
+                        store,
+                        write_empty_chunks=False,
+                        region={
+                            self.dimensions["time"]["name"]: slice(
+                                self.reprocessed_time_idx, self.reprocessed_time_idx + 1
+                            )
+                        },
+                        compute=self.compute,
+                        consolidated=True,
+                    )
+                else:
+                    write_job = ds.to_zarr(
+                        store,
+                        write_empty_chunks=False,
+                        mode="a",
+                        compute=self.compute,
+                        append_dim=self.dimensions["time"]["name"],
+                        consolidated=True,
+                    )
             else:
+                self.logger.info(f"{self.filename}: Write data to new Zarr dataset")
+
                 write_job = ds.to_zarr(
                     store,
                     write_empty_chunks=False,
-                    mode="a",
-                    compute=True,
-                    append_dim=self.dimensions["time"]["name"],
+                    mode="w",
+                    compute=self.compute,
                     consolidated=True,
                 )
-
         # write_job = write_job.persist()
         # distributed.progress(write_job, notebook=False)
         self.logger.info(
