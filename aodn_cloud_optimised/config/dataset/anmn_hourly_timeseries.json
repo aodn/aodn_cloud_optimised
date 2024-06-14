@@ -5,8 +5,8 @@
   "metadata_uuid": "7b901002-b1dc-46c3-89f2-b4951cedca48",
   "gattrs_to_variables" : ["site_code"],
   "partition_keys": [
-    "site_code", 
-    "timestamp", 
+    "site_code",
+    "timestamp",
     "polygon"
   ],
   "time_extent": {
