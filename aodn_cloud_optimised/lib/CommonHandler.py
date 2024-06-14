@@ -497,6 +497,9 @@ def cloud_optimised_creation_loop(
         #       the consecutive parallel task don't think it's an empty dataset.
         # TODO: my code seems to work fine in parallel instead of being sequential, however if too many tasks are put at once,
         #       , even like 20, everything seems to be very slow, hangs. I never have the patience to wait
+        # TODO: cpu for zarr never seem to exceet 25%, so maybe a smaller machine would be better? and memory could be
+        #       smaller . I didnt seem more than 5gb used, to append a zarr file. however the memory leak is growing over
+        #       time, so maybe a could idea to restart the cluster every n=50 files
 
         submit_tasks_in_batches(client, task, obj_ls, n_tasks)
 
