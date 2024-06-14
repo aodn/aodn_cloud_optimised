@@ -1,0 +1,379 @@
+{
+    "dataset_name": "aatams_sattag_meop_qc_ctd",
+    "cloud_optimised_format": "parquet",
+    "metadata_uuid": "95d6314c-cfc7-40ae-b439-85f14541db71",
+    "logger_name": "my_log",
+    "gattrs_to_variables" : ["smru_platform_code", "wmo_platform_code", "species", "location"],
+    "partition_keys": ["smru_platform_code", "timestamp", "polygon"],
+  "time_extent": {
+    "time": "JULD",
+    "partition_timestamp_period": "M"
+  },
+    "spatial_extent": {
+        "lat":  "LATITUDE",
+        "lon": "LONGITUDE",
+        "spatial_resolution": 5
+    },
+    "schema": {
+  "DATA_TYPE": {
+    "type": "string",
+    "comment": "Data type"
+  },
+  "FORMAT_VERSION": {
+    "type": "string",
+    "comment": "File format version"
+  },
+  "HANDBOOK_VERSION": {
+    "type": "string",
+    "comment": "Data handbook version"
+  },
+  "REFERENCE_DATE_TIME": {
+    "type": "string",
+    "comment": "Date of reference for Julian days",
+    "conventions": "YYYYMMDDHHMISS"
+  },
+  "DATE_CREATION": {
+    "type": "string",
+    "comment": "Date of file creation",
+    "conventions": "YYYYMMDDHHMISS"
+  },
+  "DATE_UPDATE": {
+    "type": "string",
+    "long_name": "Date of update of this file",
+    "conventions": "YYYYMMDDHHMISS"
+  },
+  "PLATFORM_NUMBER": {
+    "type": "string",
+    "long_name": "Float unique identifier",
+    "conventions": "WMO float identifier : A9IIIII"
+  },
+  "PROJECT_NAME": {
+    "type": "string",
+    "comment": "Name of the project"
+  },
+  "PI_NAME": {
+    "type": "string",
+    "comment": "Name of the principal investigator"
+  },
+  "STATION_PARAMETERS": {
+    "type": "string",
+    "long_name": "List of available parameters for the station",
+    "conventions": "Argo reference table 3"
+  },
+  "CYCLE_NUMBER": {
+    "type": "double",
+    "long_name": "Float cycle number",
+    "units": "1",
+    "conventions": "0..N, 0 : launch cycle (if exists), 1 : first complete cycle"
+  },
+  "DIRECTION": {
+    "type": "string",
+    "long_name": "Direction of the station profiles",
+    "conventions": "A: ascending profiles, D: descending profiles"
+  },
+  "DATA_CENTRE": {
+    "type": "string",
+    "long_name": "Data centre in charge of float data processing",
+    "conventions": "Argo reference table 4"
+  },
+  "DC_REFERENCE": {
+    "type": "string",
+    "long_name": "Station unique identifier in data centre",
+    "conventions": "Data centre convention"
+  },
+  "DATA_STATE_INDICATOR": {
+    "type": "string",
+    "long_name": "Degree of processing the data have passed through",
+    "conventions": "Argo reference table 6"
+  },
+  "DATA_MODE": {
+    "type": "string",
+    "long_name": "Delayed mode or real time data",
+    "conventions": "R : real time; D : delayed mode; A : real time with adjustment"
+  },
+  "INST_REFERENCE": {
+    "type": "string",
+    "long_name": "Instrument type",
+    "conventions": "Brand, type, serial number"
+  },
+  "WMO_INST_TYPE": {
+    "type": "string",
+    "long_name": "Coded instrument type",
+    "conventions": "Argo reference table 8"
+  },
+  "JULD": {
+    "type": "string",
+    "long_name": "Julian day (UTC) of the station relative to REFERENCE_DATE_TIME",
+    "conventions": "Relative julian days with decimal part (as parts of day)"
+  },
+  "JULD_QC": {
+    "type": "string",
+    "long_name": "Quality on Date and Time",
+    "conventions": "Argo reference table 2"
+  },
+  "JULD_LOCATION": {
+    "type": "string",
+    "long_name": "Julian day (UTC) of the location relative to REFERENCE_DATE_TIME",
+    "conventions": "Relative julian days with decimal part (as parts of day)"
+  },
+  "LATITUDE": {
+    "type": "double",
+    "long_name": "Latitude of the station, best estimate",
+    "units": "degree_north",
+    "valid_min": -90.0,
+    "valid_max": 90.0
+  },
+  "LONGITUDE": {
+    "type": "double",
+    "long_name": "Longitude of the station, best estimate",
+    "units": "degree_east",
+    "valid_min": -180.0,
+    "valid_max": 180.0
+  },
+  "POSITION_QC": {
+    "type": "string",
+    "long_name": "Quality on position (latitude and longitude)",
+    "conventions": "Argo reference table 2"
+  },
+  "POSITIONING_SYSTEM": {
+    "type": "string",
+    "long_name": "Positioning system"
+  },
+  "PROFILE_PRES_QC": {
+    "type": "string",
+    "long_name": "Global quality flag of PRES profile",
+    "conventions": "Argo reference table 2a"
+  },
+  "PROFILE_PSAL_QC": {
+    "type": "string",
+    "long_name": "Global quality flag of PSAL profile",
+    "conventions": "Argo reference table 2a"
+  },
+  "PROFILE_TEMP_QC": {
+    "type": "string",
+    "long_name": "Global quality flag of TEMP profile",
+    "conventions": "Argo reference table 2a"
+  },
+  "PRES": {
+    "type": "float",
+    "long_name": "SEA PRESSURE",
+    "units": "decibar",
+    "valid_min": 0.0,
+    "valid_max": 12000.0,
+    "comment": "In situ measurement, sea surface = 0"
+  },
+  "PRES_QC": {
+    "type": "string",
+    "long_name": "quality flag",
+    "conventions": "Argo reference table 2"
+  },
+  "PRES_ADJUSTED": {
+    "type": "float",
+    "long_name": "SEA PRESSURE",
+    "units": "decibar",
+    "valid_min": 0.0,
+    "valid_max": 12000.0,
+    "comment": "In situ measurement, sea surface = 0"
+  },
+  "PRES_ADJUSTED_QC": {
+    "type": "string",
+    "long_name": "quality flag",
+    "conventions": "Argo reference table 2"
+  },
+  "PRES_ADJUSTED_ERROR": {
+    "type": "float",
+    "long_name": "SEA PRESSURE",
+    "units": "decibar",
+    "comment": "Contains the error on the adjusted values as determined by the delayed mode QC process."
+  },
+  "TEMP": {
+    "type": "float",
+    "long_name": "SEA TEMPERATURE IN SITU ITS-90 SCALE",
+    "units": "degree_Celsius",
+    "valid_min": -2.0,
+    "valid_max": 40.0,
+    "comment": "In situ measurement"
+  },
+  "TEMP_QC": {
+    "type": "string",
+    "long_name": "quality flag",
+    "conventions": "Argo reference table 2"
+  },
+  "TEMP_ADJUSTED": {
+    "type": "float",
+    "long_name": "SEA TEMPERATURE IN SITU ITS-90 SCALE",
+    "units": "degree_Celsius",
+    "valid_min": -2.0,
+    "valid_max": 40.0,
+    "comment": "In situ measurement"
+  },
+  "TEMP_ADJUSTED_QC": {
+    "type": "string",
+    "long_name": "quality flag",
+    "conventions": "Argo reference table 2"
+  },
+  "TEMP_ADJUSTED_ERROR": {
+    "type": "float",
+    "long_name": "SEA TEMPERATURE ERROR IN SITU ITS-90 SCALE",
+    "units": "degree_Celsius",
+    "comment": "Contains the error on the adjusted values as determined by the delayed mode QC process."
+  },
+  "PSAL": {
+    "type": "float",
+    "long_name": "PRACTICAL SALINITY",
+    "units": "1e-3",
+    "valid_min": 0.0,
+    "valid_max": 42.0,
+    "comment": "In situ measurement"
+  },
+  "PSAL_QC": {
+    "type": "string",
+    "long_name": "quality flag",
+    "conventions": "Argo reference table 2"
+  },
+  "PSAL_ADJUSTED": {
+    "type": "float",
+    "long_name": "ADJUSTED PRACTICAL SALINITY",
+    "units": "1e-3",
+    "valid_min": 0.0,
+    "valid_max": 42.0,
+    "comment": "In situ measurement"
+  },
+  "PSAL_ADJUSTED_QC": {
+    "type": "string",
+    "long_name": "quality flag",
+    "conventions": "Argo reference table 2"
+  },
+  "PSAL_ADJUSTED_ERROR": {
+    "type": "float",
+    "long_name": "PRACTICAL SALINITY ERROR",
+    "units": "1e-3",
+    "comment": "Contains the error on the adjusted values as determined by the delayed mode QC process."
+  },
+  "PARAMETER": {
+    "type": "string",
+    "long_name": "List of parameters with calibration information",
+    "conventions": "Argo reference table 3"
+  },
+  "SCIENTIFIC_CALIB_EQUATION": {
+    "type": "string",
+    "long_name": "Calibration equation for this parameter"
+  },
+  "SCIENTIFIC_CALIB_COEFFICIENT": {
+    "type": "string",
+    "long_name": "SRDL identifier in the SMRU database"
+  },
+    "filename": {
+      "type": "string"
+    },
+        "timestamp": {
+      "type": "int64"
+    },
+        "polygon": {
+      "type": "string"
+    },
+        "smru_platform_code": {
+      "type": "string"
+    },
+        "wmo_platform_code": {
+      "type": "string"
+    },
+        "species": {
+      "type": "string"
+    },
+        "location": {
+      "type": "string"
+    }
+    },
+    "dataset_gattrs": {
+        "data_type": "Marine mammals time-series data",
+        "citation": "The marine mammal data were collected and made freely available by the International MEOP Consortium and the national programs that contribute to it (http://www.meop.net)."
+    },
+    "force_old_pq_del": true,
+    "aws_opendata_registry": {
+        "Name": "",
+        "Description": "",
+        "Documentation": "",
+        "Contact": "",
+        "ManagedBy": "",
+        "UpdateFrequency": "",
+        "Tags": [],
+        "License": "",
+        "Resources": [
+          {
+            "Description": "",
+            "ARN": "",
+            "Region": "",
+            "Type": "",
+            "Explore": []
+          },
+          {
+            "Description": "",
+            "ARN": "",
+            "Region": "",
+            "Type": ""
+          },
+          {
+            "Description": "",
+            "ARN": "",
+            "Region": "",
+            "Type": ""
+          },
+          {
+            "Description": "",
+            "ARN": "",
+            "Region": "",
+            "Type": ""
+          }
+        ],
+        "DataAtWork": {
+          "Tutorials": [
+            {
+              "Title": "",
+              "URL": "",
+              "Services": "",
+              "AuthorName": "",
+              "AuthorURL": ""
+            },
+            {
+              "Title": "",
+              "URL": "",
+              "AuthorName": "",
+              "AuthorURL": ""
+            },
+            {
+              "Title": "",
+              "URL": "",
+              "AuthorName": "",
+              "AuthorURL": ""
+            }
+          ],
+          "Tools & Applications": [
+            {
+              "Title": "",
+              "URL": "",
+              "AuthorName": "",
+              "AuthorURL": ""
+            },
+            {
+              "Title": "",
+              "URL": "",
+              "AuthorName": "",
+              "AuthorURL": ""
+            }
+          ],
+          "Publications": [
+            {
+              "Title": "",
+              "URL": "",
+              "AuthorName": ""
+            },
+            {
+              "Title": "",
+              "URL": "",
+              "AuthorName": ""
+            }
+          ]
+        }
+      }
+}
