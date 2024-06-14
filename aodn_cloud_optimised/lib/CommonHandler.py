@@ -69,6 +69,24 @@ class CommonHandler:
             self.logger.error("No input object given")
             raise ValueError
 
+    def __enter__(self):
+        # Initialize resources if necessary
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        # Release any resources held by the handler
+        self.close()
+
+    def close(self):
+        # Release resources
+        for name in dir():
+            if not name.startswith("_"):
+                # del globals()[name]
+                self.logger.info(f"{name} has not been deleted")
+        import gc
+
+        gc.collect()
+
     def validate_json(self, json_validation_path):
         """
         Validate the JSON configuration of a dataset against a specified pyarrow_schema.
@@ -316,9 +334,8 @@ def cloud_optimised_creation(obj_key: str, dataset_config, **kwargs) -> None:
     }
 
     # Creating an instance of the specified class with the provided arguments
-    handler_instance = handler_class(**kwargs_handler_class)
-
-    handler_instance.to_cloud_optimised()
+    with handler_class(**kwargs_handler_class) as handler_instance:
+        handler_instance.to_cloud_optimised()
 
 
 def trim_memory() -> int:
@@ -388,8 +405,8 @@ def cloud_optimised_creation_loop(
         elif dataset_config.get("cloud_optimised_format") == "zarr":
             cluster = Cluster(
                 n_workers=1,
-                scheduler_vm_types="t3.small",
-                worker_vm_types="c6i.xlarge",
+                scheduler_vm_types="c6gn.medium",  # t3.small",
+                worker_vm_types="c6gn.2xlarge",
                 allow_ingress_from="me",
                 compute_purchase_option="spot_with_fallback",
             )

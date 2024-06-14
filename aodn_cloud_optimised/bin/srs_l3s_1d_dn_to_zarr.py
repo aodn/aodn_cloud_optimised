@@ -33,7 +33,7 @@ def main():
     #    )
 
     cloud_optimised_creation_loop(
-        nc_obj_ls[0:5],
+        nc_obj_ls[0:150],
         dataset_config=dataset_config,
     )
 

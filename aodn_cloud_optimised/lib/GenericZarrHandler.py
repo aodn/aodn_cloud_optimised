@@ -72,15 +72,18 @@ class GenericHandler(CommonHandler):
 
         # Attempt to get the Dask client
         try:
-            dask_client = get_client()  # Get the Dask client
+            self.dask_client = get_client()  # Get the Dask client
+            self.logger.info(f"Acquired Dask Client: {self.dask_client}")
         except ValueError:
-            dask_client = None  # Set to None if no Dask client is found
+            self.dask_client = None  # Set to None if no Dask client is found
             self.lock = None  # Set to None if no Dask cluster is found
-            self.logger.warning("No cluster lock to setup")
+            self.logger.warning("Dask Client not found. No cluster lock to setup")
 
-        if dask_client:
-            lock = Lock(lock_name)
-            lock.acquire()  #  https://docs.python.org/3/library/threading.html#threading.Lock.acquire
+        if self.dask_client:
+            lock = Lock(name=lock_name, client=self.dask_client)
+            lock.acquire(
+                blocking=True
+            )  #  https://docs.python.org/3/library/threading.html#threading.Lock.acquire
             # When invoked with the blocking argument set to True (the default), block until the lock is unlocked, then set it to locked and return True.
 
             self.logger.info(f"Lock '{lock_name}' acquired successfully.")
@@ -98,6 +101,7 @@ class GenericHandler(CommonHandler):
             if self.lock.locked():
                 self.lock.release()
                 self.logger.info("Lock released.")
+                self.lock = None
             else:
                 self.logger.info("No lock is held.")
 
@@ -398,6 +402,8 @@ class GenericHandler(CommonHandler):
 
             if "ds" in locals():
                 self.postprocess(ds)
+        finally:
+            self.release_lock()
 
     @staticmethod
     def filter_rechunk_dimensions(dimensions):
