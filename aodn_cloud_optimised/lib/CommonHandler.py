@@ -403,8 +403,15 @@ def cloud_optimised_creation_loop(
                 compute_purchase_option="spot_with_fallback",
             )
         elif dataset_config.get("cloud_optimised_format") == "zarr":
+            # cluster = Cluster(
+            #     n_workers=[1,5],
+            #     scheduler_vm_types="c6gn.medium",  # t3.small",
+            #     worker_vm_types="c6gn.4xlarge",
+            #     allow_ingress_from="me",
+            #     compute_purchase_option="spot_with_fallback",
+            # )
             cluster = Cluster(
-                n_workers=1,
+                n_workers=1,  # havent managed to use more than one worker successfully without corrupting the zarr dataset, even by using the dask distributed lock
                 scheduler_vm_types="c6gn.medium",  # t3.small",
                 worker_vm_types="c6gn.2xlarge",
                 allow_ingress_from="me",
@@ -443,6 +450,19 @@ def cloud_optimised_creation_loop(
         except Exception as e:
             logger.error(f"{i}/{len(obj_ls)} issue with {f}: {e}")
 
+    # Number of tasks to submit at once
+    n_tasks = 4
+
+    # Function to submit tasks in batches
+    def submit_tasks_in_batches(client, task, obj_ls, n_tasks):
+        results = []
+        for i in range(0, len(obj_ls), n_tasks):
+            batch = obj_ls[i : i + n_tasks]
+            futures = [client.submit(task, f, i + j) for j, f in enumerate(batch)]
+            wait(futures)  # Wait for the batch to complete
+            results.extend(client.gather(futures))
+        return results
+
     client.amm.start()
 
     def wait_for_no_workers(client):
@@ -459,33 +479,60 @@ def cloud_optimised_creation_loop(
         wait(futures)
 
     elif dataset_config.get("cloud_optimised_format") == "zarr":
+
+        # TODO: because of memory leaks growing over time, it could make sense to define the cluster in this if elif
+        #       section and recreate it every 50-100 files?
+        # TODO: we need to get the parallelisation work like this for now, but eventually, the handler class should take
+        #       many NetCDF files as a list, and then do the dask processing of mfdataset and to_zarr. but how to deal
+        #       the download of the input data without saturating the disk, especially if to_zarr(compute=False)
+        # TODO: I tried verious thing to have multiple workers for zarr. the main thing is to have a proper lock on the
+        #       zarr dataset to avoid corruption and having multiple threads writing at the same time. I tried using a lock
+        #       which seems to work for one worker, but doesn't get shared amongts workers as claimed by the doc.
+        #       I tried retrieving the scheduler worker, and have it as an argument of task function. However, its not
+        #       possible to serialise a client() object with pickle or dill, and have it as a parameter... Nor was it
+        #       possible to have it as a global variable.
+        #       I then tried to create a custom lock by creating a zarr lock file on s3. Realistically, that should have
+        #       worked. Not sure why it didnt? maybe I should try again, I may have done to many changes as the same time.
+        #       would have to make sure that the first NetCDF is properly converted outside of the loop to make sure that
+        #       the consecutive parallel task don't think it's an empty dataset.
+        # TODO: my code seems to work fine in parallel instead of being sequential, however if too many tasks are put at once,
+        #       , even like 20, everything seems to be very slow, hangs. I never have the patience to wait
+
+        submit_tasks_in_batches(client, task, obj_ls, n_tasks)
+
+        # Parallel Execution with List Comprehension
+        # futures = [client.submit(task, f, i) for i, f in enumerate(obj_ls, start=1)]
+
+        # Wait for all futures to complete
+        # wait(futures)
+
         # Submit tasks to the Dask cluster sequentially
-        for i, f in enumerate(obj_ls, start=1):
-            client.amm.start()
-            future = client.submit(task, f, i)
-            result = future.result()  # Sequential Execution with future.result()
-            wait(future)
-
-            trim_future = client.submit(trim_memory)
-            wait(trim_future)
-
-            restart_cluster_every_n = 100
-            if i % 10 == restart_cluster_every_n:
-                # Scale down to zero workers
-                logger.info(
-                    f"Restarting workers after {i} iterations to avoid memory leaks"
-                )
-                cluster.scale(0)
-
-                # Wait for the workers to be removed
-                wait_for_no_workers(client)
-
-                desired_n_workers = 1
-                # Scale back up to the desired number of workers
-                cluster.scale(desired_n_workers)
-
-                # Wait for the workers to be ready
-                client.wait_for_workers(desired_n_workers)
+        # for i, f in enumerate(obj_ls, start=1):
+        #     client.amm.start()
+        #     future = client.submit(task, f, i)
+        #     result = future.result()  # Sequential Execution with future.result()
+        #     wait(future)
+        #
+        #     trim_future = client.submit(trim_memory)
+        #     wait(trim_future)
+        #
+        #     restart_cluster_every_n = 100
+        #     if i % 10 == restart_cluster_every_n:
+        #         # Scale down to zero workers
+        #         logger.info(
+        #             f"Restarting workers after {i} iterations to avoid memory leaks"
+        #         )
+        #         cluster.scale(0)
+        #
+        #         # Wait for the workers to be removed
+        #         wait_for_no_workers(client)
+        #
+        #         desired_n_workers = 1
+        #         # Scale back up to the desired number of workers
+        #         cluster.scale(desired_n_workers)
+        #
+        #         # Wait for the workers to be ready
+        #         client.wait_for_workers(desired_n_workers)
 
     time_spent_processing = timeit.default_timer() - start_whole_processing
     logger.info(f"Whole dataset completed in {time_spent_processing}s")

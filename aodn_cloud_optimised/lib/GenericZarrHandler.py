@@ -9,6 +9,8 @@ import numpy as np
 import s3fs
 import xarray as xr
 import zarr
+from zarr.sync import ThreadSynchronizer
+
 import time
 
 from dask.diagnostics import ProgressBar
@@ -82,7 +84,7 @@ class GenericHandler(CommonHandler):
         if self.dask_client:
             lock = Lock(name=lock_name, client=self.dask_client)
             lock.acquire(
-                blocking=True
+                blocking=False
             )  #  https://docs.python.org/3/library/threading.html#threading.Lock.acquire
             # When invoked with the blocking argument set to True (the default), block until the lock is unlocked, then set it to locked and return True.
 
@@ -98,12 +100,12 @@ class GenericHandler(CommonHandler):
         is not held, it will log an info message indicating that no lock is held.
         """
         if self.lock:
-            if self.lock.locked():
-                self.lock.release()
-                self.logger.info("Lock released.")
-                self.lock = None
-            else:
-                self.logger.info("No lock is held.")
+            # if self.lock.locked():
+            self.lock.release()
+            self.logger.info("Lock released.")
+            self.lock = None
+        else:
+            self.logger.info("No lock is held.")
 
     def check_file_already_processed(self) -> bool:
         """
@@ -352,6 +354,8 @@ class GenericHandler(CommonHandler):
                     compute=self.compute,
                     consolidated=True,
                 )
+                self.logger.info(f"{self.filename}: Writen data to new Zarr dataset")
+
         # write_job = write_job.persist()
         # distributed.progress(write_job, notebook=False)
         self.logger.info(
@@ -382,11 +386,19 @@ class GenericHandler(CommonHandler):
             ds = self.preprocess()
 
             # Attempt to acquire the zarr lock
-            self.acquire_dask_lock()
+            # self.acquire_dask_lock()
             # Critical section - perform operations protected by the lock
-            self.publish_cloud_optimised(ds)
+            try:
+                lock = Lock(name="zarr_lock", client=get_client())
+                self.logger.info(f"Get lock from Client {lock}")
+                with lock:
+                    self.publish_cloud_optimised(ds)
+            except:
+                self.logger.info("No existing Dask client to set up a lock")
+                self.publish_cloud_optimised(ds)
+
             # Release the lock
-            self.release_lock()
+            # self.release_lock()
 
             self.push_metadata_aws_registry()
 
@@ -402,8 +414,9 @@ class GenericHandler(CommonHandler):
 
             if "ds" in locals():
                 self.postprocess(ds)
-        finally:
-            self.release_lock()
+        # finally:
+        #    self.release_lock()
+        #    pass
 
     @staticmethod
     def filter_rechunk_dimensions(dimensions):
