@@ -403,7 +403,9 @@ class GenericHandler(CommonHandler):
             self.push_metadata_aws_registry()
 
             time_spent = timeit.default_timer() - self.start_time
-            self.logger.info(f"Cloud Optimised file completed in {time_spent}s")
+            self.logger.info(
+                f"Cloud Optimised file of {self.input_object_key} completed in {time_spent}s"
+            )
 
             self.postprocess(ds)
 
