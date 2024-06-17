@@ -468,12 +468,13 @@ def cloud_optimised_creation_loop(
             futures = [client.submit(task, f, i + j) for j, f in enumerate(batch)]
             wait(futures)  # Wait for the batch to complete
             results.extend(client.gather(futures))
+            wait_for_no_workers(
+                client
+            )  # Ensure no workers are busy before submitting the next batch
         return results
 
-    client.amm.start()
-
     def wait_for_no_workers(client):
-        while len(client.scheduler_info()["workers"]) > 0:
+        while any(w["executing"] for w in client.scheduler_info()["workers"].values()):
             time.sleep(1)
 
     # Submit tasks to the Dask cluster
