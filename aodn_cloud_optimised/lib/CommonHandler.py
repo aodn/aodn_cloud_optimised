@@ -417,6 +417,13 @@ def cloud_optimised_creation_loop(
                 allow_ingress_from="me",
                 compute_purchase_option="spot_with_fallback",
             )
+            cluster = Cluster(
+                n_workers=1,  # havent managed to use more than one worker successfully without corrupting the zarr dataset, even by using the dask distributed lock
+                scheduler_vm_types="t3a.medium",  # t3.small",
+                worker_vm_types="t3a.xlarge",
+                allow_ingress_from="me",
+                compute_purchase_option="spot_with_fallback",
+            )
 
         client = Client(cluster)
 
@@ -485,9 +492,9 @@ def cloud_optimised_creation_loop(
         # TODO: we need to get the parallelisation work like this for now, but eventually, the handler class should take
         #       many NetCDF files as a list, and then do the dask processing of mfdataset and to_zarr. but how to deal
         #       the download of the input data without saturating the disk, especially if to_zarr(compute=False)
-        # TODO: I tried verious thing to have multiple workers for zarr. the main thing is to have a proper lock on the
+        # TODO: I tried various thing to have multiple workers for zarr. the main thing is to have a proper lock on the
         #       zarr dataset to avoid corruption and having multiple threads writing at the same time. I tried using a lock
-        #       which seems to work for one worker, but doesn't get shared amongts workers as claimed by the doc.
+        #       which seems to work for one worker, but doesn't get shared amongst workers as claimed by the doc.
         #       I tried retrieving the scheduler worker, and have it as an argument of task function. However, its not
         #       possible to serialise a client() object with pickle or dill, and have it as a parameter... Nor was it
         #       possible to have it as a global variable.
@@ -497,7 +504,7 @@ def cloud_optimised_creation_loop(
         #       the consecutive parallel task don't think it's an empty dataset.
         # TODO: my code seems to work fine in parallel instead of being sequential, however if too many tasks are put at once,
         #       , even like 20, everything seems to be very slow, hangs. I never have the patience to wait
-        # TODO: cpu for zarr never seem to exceet 25%, so maybe a smaller machine would be better? and memory could be
+        # TODO: cpu for zarr never seem to exceed 25%, so maybe a smaller machine would be better? and memory could be
         #       smaller . I didnt seem more than 5gb used, to append a zarr file. however the memory leak is growing over
         #       time, so maybe a could idea to restart the cluster every n=50 files
 
