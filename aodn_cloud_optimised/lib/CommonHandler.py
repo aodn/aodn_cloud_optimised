@@ -410,6 +410,8 @@ def cloud_optimised_creation_loop(
             #     allow_ingress_from="me",
             #     compute_purchase_option="spot_with_fallback",
             # )
+
+            # typically takes 30sec per file
             cluster = Cluster(
                 n_workers=1,  # havent managed to use more than one worker successfully without corrupting the zarr dataset, even by using the dask distributed lock
                 scheduler_vm_types="c6gn.medium",  # t3.small",
@@ -417,13 +419,15 @@ def cloud_optimised_creation_loop(
                 allow_ingress_from="me",
                 compute_purchase_option="spot_with_fallback",
             )
-            cluster = Cluster(
-                n_workers=1,  # havent managed to use more than one worker successfully without corrupting the zarr dataset, even by using the dask distributed lock
-                scheduler_vm_types="t3a.medium",  # t3.small",
-                worker_vm_types="t3a.xlarge",
-                allow_ingress_from="me",
-                compute_purchase_option="spot_with_fallback",
-            )
+
+            # # typically takes 60sec per file
+            # cluster = Cluster(
+            #     n_workers=1,  # havent managed to use more than one worker successfully without corrupting the zarr dataset, even by using the dask distributed lock
+            #     scheduler_vm_types="t3a.medium",  # t3.small",
+            #     worker_vm_types="t3a.xlarge",
+            #     allow_ingress_from="me",
+            #     compute_purchase_option="spot_with_fallback",
+            # )
 
         client = Client(cluster)
 
@@ -474,7 +478,17 @@ def cloud_optimised_creation_loop(
         return results
 
     def wait_for_no_workers(client):
-        while any(w["executing"] for w in client.scheduler_info()["workers"].values()):
+        while True:
+            executing = False
+            workers_info = client.scheduler_info()["workers"].values()
+            for w in workers_info:
+                if "executing" in w and w["executing"]:
+                    executing = True
+                    break
+
+            if not executing:
+                break
+
             time.sleep(1)
 
     # Submit tasks to the Dask cluster
@@ -508,6 +522,8 @@ def cloud_optimised_creation_loop(
         # TODO: cpu for zarr never seem to exceed 25%, so maybe a smaller machine would be better? and memory could be
         #       smaller . I didnt seem more than 5gb used, to append a zarr file. however the memory leak is growing over
         #       time, so maybe a could idea to restart the cluster every n=50 files
+        # TODO: see if i can change the code to have the NetCDF in memory rather than writing them to a tmp folder to
+        #       avoid file not found errors when running multiple workers? seems to affect zarr only ??!
 
         submit_tasks_in_batches(client, task, obj_ls, n_tasks)
 
