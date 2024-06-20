@@ -3,26 +3,39 @@
     "logger_name": "anmn_hourly_timeseries",
     "cloud_optimised_format": "parquet",
     "metadata_uuid": "7b901002-b1dc-46c3-89f2-b4951cedca48",
-    "gattrs_to_variables": ["site_code"],
-    "partition_keys": ["site_code", "timestamp", "polygon"],
-    "time_extent": {"time": "TIME", "partition_timestamp_period": "Q"},
-    "spatial_extent": {"lat": "LATITUDE", "lon": "LONGITUDE", "spatial_resolution": 5},
+    "gattrs_to_variables": [
+        "site_code"
+    ],
+    "partition_keys": [
+        "site_code",
+        "timestamp",
+        "polygon"
+    ],
+    "time_extent": {
+        "time": "TIME",
+        "partition_timestamp_period": "Q"
+    },
+    "spatial_extent": {
+        "lat": "LATITUDE",
+        "lon": "LONGITUDE",
+        "spatial_resolution": 5
+    },
     "schema": {
         "instrument_index": {
             "type": "int32",
             "long_name": "which instrument this obs is for",
-            "instance_dimension": "INSTRUMENT",
+            "instance_dimension": "INSTRUMENT"
         },
         "instrument_id": {
             "type": "string",
-            "long_name": "source deployment code, instrument make, model, serial_number",
+            "long_name": "source deployment code, instrument make, model, serial_number"
         },
         "source_file": {
             "type": "string",
             "long_name": "source file for this instrument",
             "comment": "This variable lists the relative path of each input file. To obtain a download URL for a file, append its path to the download_url_prefix attribute. To interact with the file remotely via the OPENDAP protocol, append its path to the opendap_url_prefix attribute.",
             "download_url_prefix": "https://s3-ap-southeast-2.amazonaws.com/imos-data/",
-            "opendap_url_prefix": "http://thredds.aodn.org.au/thredds/dodsC/",
+            "opendap_url_prefix": "http://thredds.aodn.org.au/thredds/dodsC/"
         },
         "TIME": {
             "type": "timestamp[ns]",
@@ -31,7 +44,7 @@
             "long_name": "time",
             "standard_name": "time",
             "valid_max": 90000.0,
-            "valid_min": 0.0,
+            "valid_min": 0.0
         },
         "LONGITUDE": {
             "type": "double",
@@ -41,7 +54,7 @@
             "standard_name": "longitude",
             "units": "degrees_east",
             "valid_max": 180.0,
-            "valid_min": -180.0,
+            "valid_min": -180.0
         },
         "LATITUDE": {
             "type": "double",
@@ -51,7 +64,7 @@
             "standard_name": "latitude",
             "units": "degrees_north",
             "valid_max": 90.0,
-            "valid_min": -90.0,
+            "valid_min": -90.0
         },
         "NOMINAL_DEPTH": {
             "type": "float",
@@ -62,7 +75,7 @@
             "standard_name": "depth",
             "units": "m",
             "valid_max": 12000.0,
-            "valid_min": -5.0,
+            "valid_min": -5.0
         },
         "DEPTH": {
             "type": "float",
@@ -74,35 +87,35 @@
             "units": "m",
             "valid_max": 12000.0,
             "valid_min": -5.0,
-            "cell_methods": "TIME:mean (interval: 1 hr comment: time mid point)",
+            "cell_methods": "TIME:mean (interval: 1 hr comment: time mid point)"
         },
         "DEPTH_count": {
             "type": "float",
             "standard_name": "depth number_of_observations",
             "units": "1",
             "long_name": "count data value in the bin, after rejection of flagged data",
-            "cell_methods": "TIME:count",
+            "cell_methods": "TIME:count"
         },
         "DEPTH_min": {
             "type": "float",
             "units": "m",
             "standard_name": "depth",
             "long_name": "min data value in the bin, after rejection of flagged data",
-            "cell_methods": "TIME:min",
+            "cell_methods": "TIME:min"
         },
         "DEPTH_max": {
             "type": "float",
             "units": "m",
             "standard_name": "depth",
             "long_name": "max data value in the bin, after rejection of flagged data",
-            "cell_methods": "TIME:max",
+            "cell_methods": "TIME:max"
         },
         "DEPTH_std": {
             "type": "float",
             "units": "m",
             "standard_name": "depth",
             "long_name": "std data value in the bin, after rejection of flagged data",
-            "cell_methods": "TIME:std",
+            "cell_methods": "TIME:std"
         },
         "CPHL": {
             "type": "float",
@@ -112,31 +125,31 @@
             "valid_min": 0.0,
             "valid_max": 100.0,
             "ancillary_variables": "CPHL_min CPHL_max CPHL_std CPHL_count",
-            "cell_methods": "TIME:median (interval: 1 hr comment: time mid point)",
+            "cell_methods": "TIME:median (interval: 1 hr comment: time mid point)"
         },
         "CPHL_count": {
             "type": "float",
             "units": "1",
             "long_name": "count data value in the bin, after rejection of flagged data",
-            "cell_methods": "TIME:count",
+            "cell_methods": "TIME:count"
         },
         "CPHL_max": {
             "type": "float",
             "units": "mg m-3",
             "long_name": "max data value in the bin, after rejection of flagged data",
-            "cell_methods": "TIME:max",
+            "cell_methods": "TIME:max"
         },
         "CPHL_min": {
             "type": "float",
             "units": "mg m-3",
             "long_name": "min data value in the bin, after rejection of flagged data",
-            "cell_methods": "TIME:min",
+            "cell_methods": "TIME:min"
         },
         "CPHL_std": {
             "type": "float",
             "units": "mg m-3",
             "long_name": "std data value in the bin, after rejection of flagged data",
-            "cell_methods": "TIME:std",
+            "cell_methods": "TIME:std"
         },
         "DOX": {
             "type": "float",
@@ -146,7 +159,7 @@
             "units": "ml l-1",
             "valid_max": 200.0,
             "valid_min": 0.0,
-            "cell_methods": "TIME:mean (interval: 1 hr comment: time mid point)",
+            "cell_methods": "TIME:mean (interval: 1 hr comment: time mid point)"
         },
         "DOX1": {
             "type": "float",
@@ -157,7 +170,7 @@
             "units": "umol l-1",
             "valid_max": 1000.0,
             "valid_min": 0.0,
-            "cell_methods": "TIME:mean (interval: 1 hr comment: time mid point)",
+            "cell_methods": "TIME:mean (interval: 1 hr comment: time mid point)"
         },
         "DOX2": {
             "type": "float",
@@ -168,35 +181,35 @@
             "units": "umol kg-1",
             "valid_max": 1000.0,
             "valid_min": 0.0,
-            "cell_methods": "TIME:mean (interval: 1 hr comment: time mid point)",
+            "cell_methods": "TIME:mean (interval: 1 hr comment: time mid point)"
         },
         "DOX2_count": {
             "type": "float",
             "standard_name": "moles_of_oxygen_per_unit_mass_in_sea_water number_of_observations",
             "units": "1",
             "long_name": "count data value in the bin, after rejection of flagged data",
-            "cell_methods": "TIME:count",
+            "cell_methods": "TIME:count"
         },
         "DOX2_max": {
             "type": "float",
             "units": "umol kg-1",
             "standard_name": "moles_of_oxygen_per_unit_mass_in_sea_water",
             "long_name": "max data value in the bin, after rejection of flagged data",
-            "cell_methods": "TIME:max",
+            "cell_methods": "TIME:max"
         },
         "DOX2_min": {
             "type": "float",
             "units": "umol kg-1",
             "standard_name": "moles_of_oxygen_per_unit_mass_in_sea_water",
             "long_name": "min data value in the bin, after rejection of flagged data",
-            "cell_methods": "TIME:min",
+            "cell_methods": "TIME:min"
         },
         "DOX2_std": {
             "type": "float",
             "units": "umol kg-1",
             "standard_name": "moles_of_oxygen_per_unit_mass_in_sea_water",
             "long_name": "std data value in the bin, after rejection of flagged data",
-            "cell_methods": "TIME:std",
+            "cell_methods": "TIME:std"
         },
         "PRES": {
             "type": "float",
@@ -206,7 +219,7 @@
             "units": "dbar",
             "valid_max": 12000.0,
             "valid_min": -15.0,
-            "cell_methods": "TIME:mean (interval: 1 hr comment: time mid point)",
+            "cell_methods": "TIME:mean (interval: 1 hr comment: time mid point)"
         },
         "PRES_REL": {
             "type": "float",
@@ -313,65 +326,65 @@
                 -10.135296821594238,
                 -10.135296821594238,
                 -10.135296821594238,
-                -10.135296821594238,
+                -10.135296821594238
             ],
-            "cell_methods": "TIME:mean (interval: 1 hr comment: time mid point)",
+            "cell_methods": "TIME:mean (interval: 1 hr comment: time mid point)"
         },
         "PRES_REL_count": {
             "type": "float",
             "standard_name": "sea_water_pressure_due_to_sea_water number_of_observations",
             "units": "1",
             "long_name": "count data value in the bin, after rejection of flagged data",
-            "cell_methods": "TIME:count",
+            "cell_methods": "TIME:count"
         },
         "PRES_REL_max": {
             "type": "float",
             "units": "dbar",
             "standard_name": "sea_water_pressure_due_to_sea_water",
             "long_name": "max data value in the bin, after rejection of flagged data",
-            "cell_methods": "TIME:max",
+            "cell_methods": "TIME:max"
         },
         "PRES_REL_min": {
             "type": "float",
             "units": "dbar",
             "standard_name": "sea_water_pressure_due_to_sea_water",
             "long_name": "min data value in the bin, after rejection of flagged data",
-            "cell_methods": "TIME:min",
+            "cell_methods": "TIME:min"
         },
         "PRES_REL_std": {
             "type": "float",
             "units": "dbar",
             "standard_name": "sea_water_pressure_due_to_sea_water",
             "long_name": "std data value in the bin, after rejection of flagged data",
-            "cell_methods": "TIME:std",
+            "cell_methods": "TIME:std"
         },
         "PRES_count": {
             "type": "float",
             "standard_name": "sea_water_pressure_due_to_sea_water number_of_observations",
             "units": "1",
             "long_name": "count data value in the bin, after rejection of flagged data",
-            "cell_methods": "TIME:count",
+            "cell_methods": "TIME:count"
         },
         "PRES_max": {
             "type": "float",
             "units": "dbar",
             "standard_name": "sea_water_pressure_due_to_sea_water",
             "long_name": "max data value in the bin, after rejection of flagged data",
-            "cell_methods": "TIME:max",
+            "cell_methods": "TIME:max"
         },
         "PRES_min": {
             "type": "float",
             "units": "dbar",
             "standard_name": "sea_water_pressure_due_to_sea_water",
             "long_name": "min data value in the bin, after rejection of flagged data",
-            "cell_methods": "TIME:min",
+            "cell_methods": "TIME:min"
         },
         "PRES_std": {
             "type": "float",
             "units": "dbar",
             "standard_name": "sea_water_pressure_due_to_sea_water",
             "long_name": "std data value in the bin, after rejection of flagged data",
-            "cell_methods": "TIME:std",
+            "cell_methods": "TIME:std"
         },
         "PSAL": {
             "type": "float",
@@ -381,35 +394,35 @@
             "units": "S m-1",
             "valid_max": 41.0,
             "valid_min": 2.0,
-            "cell_methods": "TIME:mean (interval: 1 hr comment: time mid point)",
+            "cell_methods": "TIME:mean (interval: 1 hr comment: time mid point)"
         },
         "PSAL_count": {
             "type": "float",
             "standard_name": "sea_water_practical_salinity number_of_observations",
             "units": "1",
             "long_name": "count data value in the bin, after rejection of flagged data",
-            "cell_methods": "TIME:count",
+            "cell_methods": "TIME:count"
         },
         "PSAL_max": {
             "type": "float",
             "units": "S m-1",
             "standard_name": "sea_water_practical_salinity",
             "long_name": "max data value in the bin, after rejection of flagged data",
-            "cell_methods": "TIME:max",
+            "cell_methods": "TIME:max"
         },
         "PSAL_min": {
             "type": "float",
             "units": "S m-1",
             "standard_name": "sea_water_practical_salinity",
             "long_name": "min data value in the bin, after rejection of flagged data",
-            "cell_methods": "TIME:min",
+            "cell_methods": "TIME:min"
         },
         "PSAL_std": {
             "type": "float",
             "units": "S m-1",
             "standard_name": "sea_water_practical_salinity",
             "long_name": "std data value in the bin, after rejection of flagged data",
-            "cell_methods": "TIME:std",
+            "cell_methods": "TIME:std"
         },
         "TEMP": {
             "type": "float",
@@ -419,35 +432,35 @@
             "units": "degrees_Celsius",
             "valid_max": 40.0,
             "valid_min": -2.5,
-            "cell_methods": "TIME:mean (interval: 1 hr comment: time mid point)",
+            "cell_methods": "TIME:mean (interval: 1 hr comment: time mid point)"
         },
         "TEMP_count": {
             "type": "float",
             "standard_name": "sea_water_temperature number_of_observations",
             "units": "1",
             "long_name": "count data value in the bin, after rejection of flagged data",
-            "cell_methods": "TIME:count",
+            "cell_methods": "TIME:count"
         },
         "TEMP_max": {
             "type": "float",
             "units": "degrees_Celsius",
             "standard_name": "sea_water_temperature",
             "long_name": "max data value in the bin, after rejection of flagged data",
-            "cell_methods": "TIME:max",
+            "cell_methods": "TIME:max"
         },
         "TEMP_min": {
             "type": "float",
             "units": "degrees_Celsius",
             "standard_name": "sea_water_temperature",
             "long_name": "min data value in the bin, after rejection of flagged data",
-            "cell_methods": "TIME:min",
+            "cell_methods": "TIME:min"
         },
         "TEMP_std": {
             "type": "float",
             "units": "degrees_Celsius",
             "standard_name": "sea_water_temperature",
             "long_name": "std data value in the bin, after rejection of flagged data",
-            "cell_methods": "TIME:std",
+            "cell_methods": "TIME:std"
         },
         "TURB": {
             "type": "float",
@@ -457,35 +470,35 @@
             "units": "1",
             "valid_max": 1000.0,
             "valid_min": 0.0,
-            "cell_methods": "TIME:median (interval: 1 hr comment: time mid point)",
+            "cell_methods": "TIME:median (interval: 1 hr comment: time mid point)"
         },
         "TURB_count": {
             "type": "float",
             "standard_name": "sea_water_turbidity number_of_observations",
             "units": "1",
             "long_name": "count data value in the bin, after rejection of flagged data",
-            "cell_methods": "TIME:count",
+            "cell_methods": "TIME:count"
         },
         "TURB_max": {
             "type": "float",
             "units": "1",
             "standard_name": "sea_water_turbidity",
             "long_name": "max data value in the bin, after rejection of flagged data",
-            "cell_methods": "TIME:max",
+            "cell_methods": "TIME:max"
         },
         "TURB_min": {
             "type": "float",
             "units": "1",
             "standard_name": "sea_water_turbidity",
             "long_name": "min data value in the bin, after rejection of flagged data",
-            "cell_methods": "TIME:min",
+            "cell_methods": "TIME:min"
         },
         "TURB_std": {
             "type": "float",
             "units": "1",
             "standard_name": "sea_water_turbidity",
             "long_name": "std data value in the bin, after rejection of flagged data",
-            "cell_methods": "TIME:std",
+            "cell_methods": "TIME:std"
         },
         "CHLF": {
             "type": "float",
@@ -495,31 +508,31 @@
             "units": "mg m-3",
             "valid_max": 100.0,
             "valid_min": 0.0,
-            "cell_methods": "TIME:median (interval: 1 hr comment: time mid point)",
+            "cell_methods": "TIME:median (interval: 1 hr comment: time mid point)"
         },
         "CHLF_count": {
             "type": "float",
             "units": "1",
             "long_name": "count data value in the bin, after rejection of flagged data",
-            "cell_methods": "TIME:count",
+            "cell_methods": "TIME:count"
         },
         "CHLF_max": {
             "type": "float",
             "units": "mg m-3",
             "long_name": "max data value in the bin, after rejection of flagged data",
-            "cell_methods": "TIME:max",
+            "cell_methods": "TIME:max"
         },
         "CHLF_min": {
             "type": "float",
             "units": "mg m-3",
             "long_name": "min data value in the bin, after rejection of flagged data",
-            "cell_methods": "TIME:min",
+            "cell_methods": "TIME:min"
         },
         "CHLF_std": {
             "type": "float",
             "units": "mg m-3",
             "long_name": "std data value in the bin, after rejection of flagged data",
-            "cell_methods": "TIME:std",
+            "cell_methods": "TIME:std"
         },
         "CHLU": {
             "type": "float",
@@ -529,31 +542,31 @@
             "valid_min": 0.0,
             "valid_max": 100.0,
             "ancillary_variables": "CHLU_min CHLU_max CHLU_std CHLU_count",
-            "cell_methods": "TIME:median (interval: 1 hr comment: time mid point)",
+            "cell_methods": "TIME:median (interval: 1 hr comment: time mid point)"
         },
         "CHLU_count": {
             "type": "float",
             "units": "1",
             "long_name": "count data value in the bin, after rejection of flagged data",
-            "cell_methods": "TIME:count",
+            "cell_methods": "TIME:count"
         },
         "CHLU_max": {
             "type": "float",
             "units": "mg m-3",
             "long_name": "max data value in the bin, after rejection of flagged data",
-            "cell_methods": "TIME:max",
+            "cell_methods": "TIME:max"
         },
         "CHLU_min": {
             "type": "float",
             "units": "mg m-3",
             "long_name": "min data value in the bin, after rejection of flagged data",
-            "cell_methods": "TIME:min",
+            "cell_methods": "TIME:min"
         },
         "CHLU_std": {
             "type": "float",
             "units": "mg m-3",
             "long_name": "std data value in the bin, after rejection of flagged data",
-            "cell_methods": "TIME:std",
+            "cell_methods": "TIME:std"
         },
         "DOX1_2": {
             "type": "float",
@@ -564,35 +577,35 @@
             "units": "umol l-1",
             "valid_max": 1000.0,
             "valid_min": 0.0,
-            "cell_methods": "TIME:mean (interval: 1 hr comment: time mid point)",
+            "cell_methods": "TIME:mean (interval: 1 hr comment: time mid point)"
         },
         "DOX1_2_count": {
             "type": "float",
             "standard_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water number_of_observations",
             "units": "1",
             "long_name": "count data value in the bin, after rejection of flagged data",
-            "cell_methods": "TIME:count",
+            "cell_methods": "TIME:count"
         },
         "DOX1_2_max": {
             "type": "float",
             "units": "umol l-1",
             "standard_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water",
             "long_name": "max data value in the bin, after rejection of flagged data",
-            "cell_methods": "TIME:max",
+            "cell_methods": "TIME:max"
         },
         "DOX1_2_min": {
             "type": "float",
             "units": "umol l-1",
             "standard_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water",
             "long_name": "min data value in the bin, after rejection of flagged data",
-            "cell_methods": "TIME:min",
+            "cell_methods": "TIME:min"
         },
         "DOX1_2_std": {
             "type": "float",
             "units": "umol l-1",
             "standard_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water",
             "long_name": "std data value in the bin, after rejection of flagged data",
-            "cell_methods": "TIME:std",
+            "cell_methods": "TIME:std"
         },
         "DOX1_3": {
             "type": "float",
@@ -603,63 +616,63 @@
             "units": "umol l-1",
             "valid_max": 1000.0,
             "valid_min": 0.0,
-            "cell_methods": "TIME:mean (interval: 1 hr comment: time mid point)",
+            "cell_methods": "TIME:mean (interval: 1 hr comment: time mid point)"
         },
         "DOX1_3_count": {
             "type": "float",
             "standard_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water number_of_observations",
             "units": "1",
             "long_name": "count data value in the bin, after rejection of flagged data",
-            "cell_methods": "TIME:count",
+            "cell_methods": "TIME:count"
         },
         "DOX1_3_max": {
             "type": "float",
             "units": "umol l-1",
             "standard_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water",
             "long_name": "max data value in the bin, after rejection of flagged data",
-            "cell_methods": "TIME:max",
+            "cell_methods": "TIME:max"
         },
         "DOX1_3_min": {
             "type": "float",
             "units": "umol l-1",
             "standard_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water",
             "long_name": "min data value in the bin, after rejection of flagged data",
-            "cell_methods": "TIME:min",
+            "cell_methods": "TIME:min"
         },
         "DOX1_3_std": {
             "type": "float",
             "units": "umol l-1",
             "standard_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water",
             "long_name": "std data value in the bin, after rejection of flagged data",
-            "cell_methods": "TIME:std",
+            "cell_methods": "TIME:std"
         },
         "DOX1_count": {
             "type": "float",
             "standard_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water number_of_observations",
             "units": "1",
             "long_name": "count data value in the bin, after rejection of flagged data",
-            "cell_methods": "TIME:count",
+            "cell_methods": "TIME:count"
         },
         "DOX1_max": {
             "type": "float",
             "units": "umol l-1",
             "standard_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water",
             "long_name": "max data value in the bin, after rejection of flagged data",
-            "cell_methods": "TIME:max",
+            "cell_methods": "TIME:max"
         },
         "DOX1_min": {
             "type": "float",
             "units": "umol l-1",
             "standard_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water",
             "long_name": "min data value in the bin, after rejection of flagged data",
-            "cell_methods": "TIME:min",
+            "cell_methods": "TIME:min"
         },
         "DOX1_std": {
             "type": "float",
             "units": "umol l-1",
             "standard_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water",
             "long_name": "std data value in the bin, after rejection of flagged data",
-            "cell_methods": "TIME:std",
+            "cell_methods": "TIME:std"
         },
         "DOXS": {
             "type": "float",
@@ -668,35 +681,35 @@
             "long_name": "mean fractional_saturation_of_oxygen_in_sea_water",
             "standard_name": "fractional_saturation_of_oxygen_in_sea_water",
             "units": "%",
-            "cell_methods": "TIME:mean (interval: 1 hr comment: time mid point)",
+            "cell_methods": "TIME:mean (interval: 1 hr comment: time mid point)"
         },
         "DOXS_count": {
             "type": "float",
             "standard_name": "fractional_saturation_of_oxygen_in_sea_water number_of_observations",
             "units": "1",
             "long_name": "count data value in the bin, after rejection of flagged data",
-            "cell_methods": "TIME:count",
+            "cell_methods": "TIME:count"
         },
         "DOXS_max": {
             "type": "float",
             "units": "%",
             "standard_name": "fractional_saturation_of_oxygen_in_sea_water",
             "long_name": "max data value in the bin, after rejection of flagged data",
-            "cell_methods": "TIME:max",
+            "cell_methods": "TIME:max"
         },
         "DOXS_min": {
             "type": "float",
             "units": "%",
             "standard_name": "fractional_saturation_of_oxygen_in_sea_water",
             "long_name": "min data value in the bin, after rejection of flagged data",
-            "cell_methods": "TIME:min",
+            "cell_methods": "TIME:min"
         },
         "DOXS_std": {
             "type": "float",
             "units": "%",
             "standard_name": "fractional_saturation_of_oxygen_in_sea_water",
             "long_name": "std data value in the bin, after rejection of flagged data",
-            "cell_methods": "TIME:std",
+            "cell_methods": "TIME:std"
         },
         "DOXY": {
             "type": "float",
@@ -704,63 +717,63 @@
             "long_name": "mean mass_concentration_of_oxygen_in_sea_water",
             "standard_name": "mass_concentration_of_oxygen_in_sea_water",
             "units": "mg l-1",
-            "cell_methods": "TIME:mean (interval: 1 hr comment: time mid point)",
+            "cell_methods": "TIME:mean (interval: 1 hr comment: time mid point)"
         },
         "DOXY_count": {
             "type": "float",
             "standard_name": "mass_concentration_of_oxygen_in_sea_water number_of_observations",
             "units": "1",
             "long_name": "count data value in the bin, after rejection of flagged data",
-            "cell_methods": "TIME:count",
+            "cell_methods": "TIME:count"
         },
         "DOXY_max": {
             "type": "float",
             "units": "mg l-1",
             "standard_name": "mass_concentration_of_oxygen_in_sea_water",
             "long_name": "max data value in the bin, after rejection of flagged data",
-            "cell_methods": "TIME:max",
+            "cell_methods": "TIME:max"
         },
         "DOXY_min": {
             "type": "float",
             "units": "mg l-1",
             "standard_name": "mass_concentration_of_oxygen_in_sea_water",
             "long_name": "min data value in the bin, after rejection of flagged data",
-            "cell_methods": "TIME:min",
+            "cell_methods": "TIME:min"
         },
         "DOXY_std": {
             "type": "float",
             "units": "mg l-1",
             "standard_name": "mass_concentration_of_oxygen_in_sea_water",
             "long_name": "std data value in the bin, after rejection of flagged data",
-            "cell_methods": "TIME:std",
+            "cell_methods": "TIME:std"
         },
         "DOX_count": {
             "type": "float",
             "standard_name": "volume_concentration_of_dissolved_molecular_oxygen_in_sea_water number_of_observations",
             "units": "1",
             "long_name": "count data value in the bin, after rejection of flagged data",
-            "cell_methods": "TIME:count",
+            "cell_methods": "TIME:count"
         },
         "DOX_max": {
             "type": "float",
             "units": "ml l-1",
             "standard_name": "volume_concentration_of_dissolved_molecular_oxygen_in_sea_water",
             "long_name": "max data value in the bin, after rejection of flagged data",
-            "cell_methods": "TIME:max",
+            "cell_methods": "TIME:max"
         },
         "DOX_min": {
             "type": "float",
             "units": "ml l-1",
             "standard_name": "volume_concentration_of_dissolved_molecular_oxygen_in_sea_water",
             "long_name": "min data value in the bin, after rejection of flagged data",
-            "cell_methods": "TIME:min",
+            "cell_methods": "TIME:min"
         },
         "DOX_std": {
             "type": "float",
             "units": "ml l-1",
             "standard_name": "volume_concentration_of_dissolved_molecular_oxygen_in_sea_water",
             "long_name": "std data value in the bin, after rejection of flagged data",
-            "cell_methods": "TIME:std",
+            "cell_methods": "TIME:std"
         },
         "PAR": {
             "type": "float",
@@ -768,42 +781,53 @@
             "long_name": "median downwelling_photosynthetic_photon_flux_in_sea_water",
             "standard_name": "downwelling_photosynthetic_photon_flux_in_sea_water",
             "units": "umole m-2 s-1",
-            "cell_methods": "TIME:median (interval: 1 hr comment: time mid point)",
+            "cell_methods": "TIME:median (interval: 1 hr comment: time mid point)"
         },
         "PAR_count": {
             "type": "float",
             "standard_name": "downwelling_photosynthetic_photon_flux_in_sea_water number_of_observations",
             "units": "1",
             "long_name": "count data value in the bin, after rejection of flagged data",
-            "cell_methods": "TIME:count",
+            "cell_methods": "TIME:count"
         },
         "PAR_max": {
             "type": "float",
             "units": "umole m-2 s-1",
             "standard_name": "downwelling_photosynthetic_photon_flux_in_sea_water",
             "long_name": "max data value in the bin, after rejection of flagged data",
-            "cell_methods": "TIME:max",
+            "cell_methods": "TIME:max"
         },
         "PAR_min": {
             "type": "float",
             "units": "umole m-2 s-1",
             "standard_name": "downwelling_photosynthetic_photon_flux_in_sea_water",
             "long_name": "min data value in the bin, after rejection of flagged data",
-            "cell_methods": "TIME:min",
+            "cell_methods": "TIME:min"
         },
         "PAR_std": {
             "type": "float",
             "units": "umole m-2 s-1",
             "standard_name": "downwelling_photosynthetic_photon_flux_in_sea_water",
             "long_name": "std data value in the bin, after rejection of flagged data",
-            "cell_methods": "TIME:std",
+            "cell_methods": "TIME:std"
         },
-        "timestamp": {"type": "int64"},
-        "polygon": {"type": "string"},
-        "site_code": {"type": "string"},
-        "filename": {"type": "string"},
+        "timestamp": {
+            "type": "int64"
+        },
+        "polygon": {
+            "type": "string"
+        },
+        "site_code": {
+            "type": "string"
+        },
+        "filename": {
+            "type": "string"
+        }
     },
-    "dataset_gattrs": {"title": "ANMN hourly timeseries", "featureType": "timeSeries"},
+    "dataset_gattrs": {
+        "title": "ANMN hourly timeseries",
+        "featureType": "timeSeries"
+    },
     "force_old_pq_del": true,
     "aws_opendata_registry": {
         "Name": "ANMN hourly timeseries",
@@ -815,10 +839,31 @@
         "Tags": [],
         "License": "",
         "Resources": [
-            {"Description": "", "ARN": "", "Region": "", "Type": "", "Explore": []},
-            {"Description": "", "ARN": "", "Region": "", "Type": ""},
-            {"Description": "", "ARN": "", "Region": "", "Type": ""},
-            {"Description": "", "ARN": "", "Region": "", "Type": ""},
+            {
+                "Description": "",
+                "ARN": "",
+                "Region": "",
+                "Type": "",
+                "Explore": []
+            },
+            {
+                "Description": "",
+                "ARN": "",
+                "Region": "",
+                "Type": ""
+            },
+            {
+                "Description": "",
+                "ARN": "",
+                "Region": "",
+                "Type": ""
+            },
+            {
+                "Description": "",
+                "ARN": "",
+                "Region": "",
+                "Type": ""
+            }
         ],
         "DataAtWork": {
             "Tutorials": [
@@ -827,23 +872,47 @@
                     "URL": "",
                     "Services": "",
                     "AuthorName": "",
-                    "AuthorURL": "",
+                    "AuthorURL": ""
                 },
-                {"Title": "", "URL": "", "AuthorName": "", "AuthorURL": ""},
-                {"Title": "", "URL": "", "AuthorName": "", "AuthorURL": ""},
+                {
+                    "Title": "",
+                    "URL": "",
+                    "AuthorName": "",
+                    "AuthorURL": ""
+                },
+                {
+                    "Title": "",
+                    "URL": "",
+                    "AuthorName": "",
+                    "AuthorURL": ""
+                }
             ],
             "Tools & Applications": [
-                {"Title": "", "URL": "", "AuthorName": "", "AuthorURL": ""},
-                {"Title": "", "URL": "", "AuthorName": "", "AuthorURL": ""},
+                {
+                    "Title": "",
+                    "URL": "",
+                    "AuthorName": "",
+                    "AuthorURL": ""
+                },
+                {
+                    "Title": "",
+                    "URL": "",
+                    "AuthorName": "",
+                    "AuthorURL": ""
+                }
             ],
             "Publications": [
                 {
                     "Title": "IMOS - Australian National Mooring Network (ANMN) - CTD Profiles",
                     "URL": "https://catalogue.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/7b901002-b1dc-46c3-89f2-b4951cedca48",
-                    "AuthorName": "",
+                    "AuthorName": ""
                 },
-                {"Title": "", "URL": "", "AuthorName": ""},
-            ],
-        },
-    },
+                {
+                    "Title": "",
+                    "URL": "",
+                    "AuthorName": ""
+                }
+            ]
+        }
+    }
 }
