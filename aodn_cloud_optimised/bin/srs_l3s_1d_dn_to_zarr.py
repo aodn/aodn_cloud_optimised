@@ -23,20 +23,9 @@ def main():
             )
         )
     )
-    # important, with zarr creation, if we want to create a cluster and "append" data to a zarr if no data exists, it's important
-    # to create the first one manually, otherwise, all the tasks will think that the dataset doesnt exist
-    cloud_optimised_creation(
-        nc_obj_ls[0], dataset_config=dataset_config, handler_reprocess_arg=True
-    )
-
-    # for i in range(10):
-    #    cloud_optimised_creation(
-    #        nc_obj_ls[i+1], dataset_config=dataset_config,
-    #    )
 
     cloud_optimised_creation_loop(
-        nc_obj_ls[1:20],
-        dataset_config=dataset_config,
+        nc_obj_ls[:], dataset_config=dataset_config, reprocess=True
     )
 
 

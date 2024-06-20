@@ -15,6 +15,7 @@ from urllib.parse import urlparse
 
 from .config import load_variable_from_config, load_dataset_config
 from .logging import get_logger
+import s3fs
 
 
 class CommonHandler:
@@ -47,6 +48,7 @@ class CommonHandler:
         )
 
         self.input_object_key = kwargs.get("input_object_key", None)
+        self.input_object_keys = kwargs.get("input_object_keys", None)
 
         self.dataset_config = kwargs.get("dataset_config")
 
@@ -65,6 +67,8 @@ class CommonHandler:
         if self.input_object_key is not None:
             self.filename = os.path.basename(self.input_object_key)
             self.tmp_input_file = self.get_s3_raw_obj()
+        elif self.input_object_keys is not None:
+            self.filenames = [os.path.basename(key) for key in self.input_object_keys]
         else:
             self.logger.error("No input object given")
             raise ValueError
@@ -86,6 +90,19 @@ class CommonHandler:
         import gc
 
         gc.collect()
+
+    @staticmethod
+    def create_fileset(bucket_name, object_keys):
+        s3 = boto3.client("s3")
+        s3_fs = s3fs.S3FileSystem(anon=True)  # Adjust authentication as needed
+
+        # Get the list of files in the bucket matching the object keys
+        remote_files = [f"s3://{bucket_name}/{key}" for key in object_keys]
+
+        # Create a fileset by opening each file
+        fileset = [s3_fs.open(file) for file in remote_files]
+
+        return fileset
 
     def validate_json(self, json_validation_path):
         """
@@ -203,6 +220,7 @@ class CommonHandler:
         self.logger.info(
             f"{self.filename}: Downloading {self.input_object_key} object from {self.raw_bucket_name} bucket"
         )
+
         return temp_file_path
 
     @staticmethod
@@ -391,10 +409,11 @@ def cloud_optimised_creation_loop(
     logger = get_logger(logger_name)
 
     # Attempt to create a Coiled cluster
-    try:
-        from coiled import Cluster
+    if dataset_config.get("cloud_optimised_format") == "parquet":
 
-        if dataset_config.get("cloud_optimised_format") == "parquet":
+        try:
+            from coiled import Cluster
+
             cluster = Cluster(
                 n_workers=[1, 20],
                 scheduler_vm_types="t3.small",
@@ -402,46 +421,19 @@ def cloud_optimised_creation_loop(
                 allow_ingress_from="me",
                 compute_purchase_option="spot_with_fallback",
             )
-        elif dataset_config.get("cloud_optimised_format") == "zarr":
-            # cluster = Cluster(
-            #     n_workers=[1,5],
-            #     scheduler_vm_types="c6gn.medium",  # t3.small",
-            #     worker_vm_types="c6gn.4xlarge",
-            #     allow_ingress_from="me",
-            #     compute_purchase_option="spot_with_fallback",
-            # )
 
-            # typically takes 30sec per file
-            cluster = Cluster(
-                n_workers=1,  # havent managed to use more than one worker successfully without corrupting the zarr dataset, even by using the dask distributed lock
-                scheduler_vm_types="c6gn.medium",  # t3.small",
-                worker_vm_types="c6gn.2xlarge",
-                allow_ingress_from="me",
-                compute_purchase_option="spot_with_fallback",
+            client = Client(cluster)
+            client.amm.start()  # Start Active Memory Manager
+
+        except Exception as e:
+            logger.warning(
+                f"Could not create Coiled cluster: {e}. Falling back to local cluster."
             )
-
-            # # typically takes 60sec per file
-            # cluster = Cluster(
-            #     n_workers=1,  # havent managed to use more than one worker successfully without corrupting the zarr dataset, even by using the dask distributed lock
-            #     scheduler_vm_types="t3a.medium",  # t3.small",
-            #     worker_vm_types="t3a.xlarge",
-            #     allow_ingress_from="me",
-            #     compute_purchase_option="spot_with_fallback",
-            # )
-
-        client = Client(cluster)
-
-    except Exception as e:
-        logger.warning(
-            f"Could not create Coiled cluster: {e}. Falling back to local cluster."
-        )
-        # Create a local Dask cluster as a fallback
-        cluster = LocalCluster()
-        client = Client(cluster)
+            # Create a local Dask cluster as a fallback
+            cluster = LocalCluster()
+            client = Client(cluster)
 
     start_whole_processing = timeit.default_timer()
-
-    client.amm.start()  # Start Active Memory Manager
 
     # Define the task function to be executed in parallel
     def task(f, i):
@@ -465,31 +457,44 @@ def cloud_optimised_creation_loop(
     n_tasks = 4
 
     # Function to submit tasks in batches
-    def submit_tasks_in_batches(client, task, obj_ls, n_tasks):
-        results = []
-        for i in range(0, len(obj_ls), n_tasks):
-            batch = obj_ls[i : i + n_tasks]
-            futures = [client.submit(task, f, i + j) for j, f in enumerate(batch)]
-            wait(futures)  # Wait for the batch to complete
-            results.extend(client.gather(futures))
-            wait_for_no_workers(
-                client
-            )  # Ensure no workers are busy before submitting the next batch
-        return results
-
-    def wait_for_no_workers(client):
-        while True:
-            executing = False
-            workers_info = client.scheduler_info()["workers"].values()
-            for w in workers_info:
-                if "executing" in w and w["executing"]:
-                    executing = True
-                    break
-
-            if not executing:
-                break
-
-            time.sleep(1)
+    # def submit_tasks_in_batches(client, task, obj_ls, n_tasks):
+    #     results = []
+    #     for i in range(0, len(obj_ls), n_tasks):
+    #         batch = obj_ls[i : i + n_tasks]
+    #         futures = [client.submit(task, f, i + j) for j, f in enumerate(batch)]
+    #         wait(futures)  # Wait for the batch to complete
+    #         results.extend(client.gather(futures))
+    #         wait_for_no_workers(
+    #             client
+    #         )  # Ensure no workers are busy before submitting the next batch
+    #
+    #         # #import ipdb;ipdb.set_trace()
+    #         # total_memory, total_unmanaged_memory_percentage = get_total_memory_info(client)
+    #         # logger.info(f"Total memory across all workers: {total_memory / 1e9} GB")
+    #         # logger.info(f"Total unmanaged memory percentage: {total_unmanaged_memory_percentage:.2f}%")
+    #         #
+    #         # if total_unmanaged_memory_percentage > 0.8:
+    #         #     logger.warning("High unmanaged memory, restart cluster")
+    #         #     client.close()
+    #         #     cluster.close()
+    #         #
+    #         #     cluster = Cluster(**cluster_options)
+    #
+    #     return results
+    #
+    # def wait_for_no_workers(client):
+    #     while True:
+    #         executing = False
+    #         workers_info = client.scheduler_info()["workers"].values()
+    #         for w in workers_info:
+    #             if "executing" in w and w["executing"]:
+    #                 executing = True
+    #                 break
+    #
+    #         if not executing:
+    #             break
+    #
+    #         time.sleep(1)
 
     # Submit tasks to the Dask cluster
     if dataset_config.get("cloud_optimised_format") == "parquet":
@@ -499,6 +504,8 @@ def cloud_optimised_creation_loop(
 
         # Wait for all futures to complete
         wait(futures)
+        client.close()
+        cluster.close()
 
     elif dataset_config.get("cloud_optimised_format") == "zarr":
 
@@ -524,45 +531,58 @@ def cloud_optimised_creation_loop(
         #       time, so maybe a could idea to restart the cluster every n=50 files
         # TODO: see if i can change the code to have the NetCDF in memory rather than writing them to a tmp folder to
         #       avoid file not found errors when running multiple workers? seems to affect zarr only ??!
+        # TODO: write some code to check the amount of unmanaged memory and restart cluster when above a threshold
 
-        submit_tasks_in_batches(client, task, obj_ls, n_tasks)
+        # TODO: add this somewhere as an optional argument
+        run_zarr_loop_sequentially = False
+        if run_zarr_loop_sequentially:
+            # TODO: if ran sequentially, there are memory leaks over time. Hard to understand why. To avoid this,
+            #       an option would be to create a new cluster every n files. or to check the unmanaged memory ratio and
+            #       create new workers if around 80% of unmanaged memory
+            # submit_tasks_in_batches(client, task, obj_ls, n_tasks)
 
-        # Parallel Execution with List Comprehension
-        # futures = [client.submit(task, f, i) for i, f in enumerate(obj_ls, start=1)]
+            # Parallel Execution with List Comprehension
+            # futures = [client.submit(task, f, i) for i, f in enumerate(obj_ls, start=1)]
 
-        # Wait for all futures to complete
-        # wait(futures)
+            # Wait for all futures to complete
+            # wait(futures)
 
-        # Submit tasks to the Dask cluster sequentially
-        # for i, f in enumerate(obj_ls, start=1):
-        #     client.amm.start()
-        #     future = client.submit(task, f, i)
-        #     result = future.result()  # Sequential Execution with future.result()
-        #     wait(future)
-        #
-        #     trim_future = client.submit(trim_memory)
-        #     wait(trim_future)
-        #
-        #     restart_cluster_every_n = 100
-        #     if i % 10 == restart_cluster_every_n:
-        #         # Scale down to zero workers
-        #         logger.info(
-        #             f"Restarting workers after {i} iterations to avoid memory leaks"
-        #         )
-        #         cluster.scale(0)
-        #
-        #         # Wait for the workers to be removed
-        #         wait_for_no_workers(client)
-        #
-        #         desired_n_workers = 1
-        #         # Scale back up to the desired number of workers
-        #         cluster.scale(desired_n_workers)
-        #
-        #         # Wait for the workers to be ready
-        #         client.wait_for_workers(desired_n_workers)
+            # Submit tasks to the Dask cluster sequentially
+            # for i, f in enumerate(obj_ls, start=1):
+            #     client.amm.start()
+            #     future = client.submit(task, f, i)
+            #     result = future.result()  # Sequential Execution with future.result()
+            #     wait(future)
+            #
+            #     trim_future = client.submit(trim_memory)
+            #     wait(trim_future)
+            #
+            #     restart_cluster_every_n = 100
+            #     if i % 10 == restart_cluster_every_n:
+            #         # Scale down to zero workers
+            #         logger.info(
+            #             f"Restarting workers after {i} iterations to avoid memory leaks"
+            #         )
+            #         cluster.scale(0)
+            #
+            #         # Wait for the workers to be removed
+            #         wait_for_no_workers(client)
+            #
+            #         desired_n_workers = 1
+            #         # Scale back up to the desired number of workers
+            #         cluster.scale(desired_n_workers)
+            #
+            #         # Wait for the workers to be ready
+            #         client.wait_for_workers(desired_n_workers)
+            pass
+
+        kwargs_handler_class["input_object_keys"] = obj_ls
+        kwargs_handler_class["dataset_config"] = dataset_config
+        kwargs_handler_class["reprocess"] = handler_reprocess_arg
+
+        # Creating an instance of the specified class with the provided arguments
+        with handler_class(**kwargs_handler_class) as handler_instance:
+            handler_instance.to_cloud_optimised()
 
     time_spent_processing = timeit.default_timer() - start_whole_processing
     logger.info(f"Whole dataset completed in {time_spent_processing}s")
-
-    client.close()
-    cluster.close()

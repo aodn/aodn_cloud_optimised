@@ -1,4 +1,5 @@
 import boto3
+from urllib.parse import urlparse
 
 
 def s3_ls(bucket, prefix, suffix=".nc") -> list:
@@ -96,3 +97,19 @@ def delete_objects_in_prefix(bucket_name, prefix):
             continuation_token = response["NextContinuationToken"]
         else:
             break
+
+
+def split_s3_path(s3_path):
+    """
+    Split an S3 path into bucket name and prefix.
+
+    Args:
+        s3_path (str): The S3 path (e.g., 's3://bucket-name/path/to/object/').
+
+    Returns:
+        tuple: A tuple containing the bucket name and prefix.
+    """
+    parsed_url = urlparse(s3_path)
+    bucket_name = parsed_url.netloc
+    prefix = parsed_url.path.lstrip("/")
+    return bucket_name, prefix

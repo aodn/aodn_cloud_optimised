@@ -1,11 +1,21 @@
 {
-    "dataset_name": "srs_l3s_1d_dn_5",
+    "dataset_name": "srs_l3s_1d_dn",
     "logger_name": "srs_l3s_1d_dn",
     "cloud_optimised_format": "zarr",
+    "cluster_options" : {
+                "n_workers": [5, 8],
+                "scheduler_vm_types": "t3.medium",
+                "worker_vm_types": "t3.xlarge",
+                "allow_ingress_from": "me",
+                "compute_purchase_option": "spot_with_fallback",
+                "worker_options": {
+                  "nthreads": 8,
+                  "memory_limit": "32GB" }
+                },
     "metadata_uuid": "",
     "dimensions": {
       "time": {"name": "time",
-               "chunk": 10,
+               "chunk": 5,
                "rechunk": true},
       "latitude": {"name": "lat",
                    "chunk": 1000},
