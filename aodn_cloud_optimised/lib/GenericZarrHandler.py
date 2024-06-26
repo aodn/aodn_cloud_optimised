@@ -220,7 +220,7 @@ class GenericHandler(CommonHandler):
                     f"Could not create Coiled cluster: {e}. Falling back to local cluster."
                 )
                 # Create a local Dask cluster as a fallback
-                self.cluster = LocalCluster()
+                self.cluster = LocalCluster(memory_limit="4GB")
                 self.client = Client(self.cluster)
         elif self.cluster_mode == "local":
             self.logger.info("Creating a local cluster")

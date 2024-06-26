@@ -52,7 +52,7 @@ class CommonHandler:
 
         # Cluster options
         valid_clusters = ["remote", "local", None]
-        self.cluster_mode = kwargs.get("cluster", "remote")
+        self.cluster_mode = kwargs.get("cluster_mode", "local")
 
         if self.cluster_mode not in valid_clusters:
             raise ValueError(
