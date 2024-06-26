@@ -20,7 +20,7 @@ from xarray.core.merge import MergeError
 
 from functools import partial, partialmethod
 
-from aodn_cloud_optimised.lib.s3Tools import delete_objects_in_prefix, split_s3_path
+from ..lib.s3Tools import delete_objects_in_prefix, split_s3_path
 from .CommonHandler import CommonHandler
 from .logging import get_logger
 
@@ -159,10 +159,6 @@ class GenericHandler(CommonHandler):
         self.validate_json(
             json_validation_path
         )  # we cannot validate the json config until self.dataset_config and self.logger are set
-
-        self.reprocess = kwargs.get(
-            "reprocess", None
-        )  # setting to True will recreate the zarr from scratch at every run!
 
         self.dimensions = self.dataset_config.get("dimensions")
         self.rechunk_drop_vars = kwargs.get("rechunk_drop_vars", None)
@@ -803,7 +799,7 @@ class GenericHandler(CommonHandler):
 
         Note: The 'preprocess' and 'publish_cloud_optimised' methods are assumed to be defined within the class.
         """
-        if self.reprocess:
+        if self.clear_existing_data:
             self.logger.warning(
                 f"Creating new Zarr dataset - DELETING existing all Zarr objects if exist"
             )

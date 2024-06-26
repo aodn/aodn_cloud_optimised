@@ -27,7 +27,7 @@ def main():
 
     # First zarr creation - remove all previous objects
     cloud_optimised_creation_loop(
-        [nc_obj_ls[0]], dataset_config=dataset_config, reprocess=True
+        [nc_obj_ls[0]], dataset_config=dataset_config, clear_existing_data=True
     )
 
     # append to zarr

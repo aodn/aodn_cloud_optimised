@@ -16,6 +16,7 @@ import yaml
 from shapely.geometry import Point, Polygon
 
 from .schema import create_pyarrow_schema, generate_json_schema_var_from_netcdf
+from aodn_cloud_optimised.lib.s3Tools import delete_objects_in_prefix, split_s3_path
 
 from .CommonHandler import CommonHandler
 
@@ -842,6 +843,19 @@ class GenericHandler(CommonHandler):
         Returns:
             None
         """
+        if self.clear_existing_data:
+            self.logger.warning(
+                f"Creating new Zarr dataset - DELETING existing all Zarr objects if exist"
+            )
+            # TODO: delete all objects
+            if self.prefix_exists(self.cloud_optimised_output_path):
+                bucket_name, prefix = split_s3_path(self.cloud_optimised_output_path)
+                self.logger.info(
+                    f"Deleting existing Zarr objects from {self.cloud_optimised_output_path}"
+                )
+
+                delete_objects_in_prefix(bucket_name, prefix)
+
         if self.tmp_input_file.endswith(".nc"):
             self.is_valid_netcdf(
                 self.tmp_input_file

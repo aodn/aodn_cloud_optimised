@@ -73,6 +73,10 @@ class CommonHandler:
         cloud_optimised_format = self.dataset_config.get("cloud_optimised_format")
         self.cloud_optimised_output_path = f"s3://{os.path.join(self.optimised_bucket_name, self.root_prefix_cloud_optimised_path, self.dataset_name + '.' + cloud_optimised_format)}/"
 
+        self.clear_existing_data = kwargs.get(
+            "clear_existing_data", None
+        )  # setting to True will recreate the zarr from scratch at every run!
+
         if self.input_object_key is not None:
             self.filename = os.path.basename(self.input_object_key)
             self.tmp_input_file = self.get_s3_raw_obj()
@@ -339,7 +343,9 @@ def cloud_optimised_creation(obj_key: str, dataset_config, **kwargs) -> None:
     if handler_class is None:
         handler_class = _get_generic_handler_class(dataset_config)
 
-    handler_reprocess_arg = kwargs.get("handler_reprocess_arg", None)
+    handler_clear_existing_data_arg = kwargs.get(
+        "handler_clear_existing_data_arg", None
+    )
 
     kwargs_handler_class = {
         "raw_bucket_name": kwargs.get(
@@ -355,7 +361,7 @@ def cloud_optimised_creation(obj_key: str, dataset_config, **kwargs) -> None:
         ),
         "input_object_key": obj_key,
         "dataset_config": dataset_config,
-        "reprocess": handler_reprocess_arg,
+        "clear_existing_data": handler_clear_existing_data_arg,
     }
 
     # Creating an instance of the specified class with the provided arguments
@@ -391,7 +397,7 @@ def cloud_optimised_creation_loop(
     if handler_class is None:
         handler_class = _get_generic_handler_class(dataset_config)
 
-    handler_reprocess_arg = kwargs.get("reprocess", None)
+    handler_reprocess_arg = kwargs.get("clear_existing_data", None)
 
     # Create the kwargs_handler_class dictionary, to be used as list of arguments to call cloud_optimised_creation -> handler_class
     # when values need to be overwritten
@@ -540,7 +546,12 @@ def cloud_optimised_creation_loop(
         # TODO: see if i can change the code to have the NetCDF in memory rather than writing them to a tmp folder to
         #       avoid file not found errors when running multiple workers? seems to affect zarr only ??!
         # TODO: write some code to check the amount of unmanaged memory and restart cluster when above a threshold
-        # TODO: Improve class to give the user the option to use the local cluster and not the coiled cluster
+        # TODO: test if no cluster_mode is set, if the zarr code still works without a cluster. Should probably work then on a file per file basis and set run_zarr_loop_sequentially = True
+
+        # TODO: check if this is the best approach
+        # we dont want to create a cluster for a file per file
+        if kwargs.get("cluster_mode", None) is None:
+            run_zarr_loop_sequentially = True
 
         # TODO: add this somewhere as an optional argument
         run_zarr_loop_sequentially = False
@@ -587,7 +598,7 @@ def cloud_optimised_creation_loop(
 
         kwargs_handler_class["input_object_keys"] = obj_ls
         kwargs_handler_class["dataset_config"] = dataset_config
-        kwargs_handler_class["reprocess"] = handler_reprocess_arg
+        kwargs_handler_class["clear_existing_data"] = handler_reprocess_arg
 
         # Creating an instance of the specified class with the provided arguments
         with handler_class(**kwargs_handler_class) as handler_instance:

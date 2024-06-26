@@ -21,13 +21,12 @@ def main():
             )
         )
     )
-    cloud_optimised_creation_loop(
-        [nc_obj_ls[0]], dataset_config=dataset_config, reprocess=True
-    )
 
     cloud_optimised_creation_loop(
-        nc_obj_ls[1:],
+        nc_obj_ls,
         dataset_config=dataset_config,
+        clear_existing_data=True,
+        cluster_mode="remote",
     )
 
     # rechunking
