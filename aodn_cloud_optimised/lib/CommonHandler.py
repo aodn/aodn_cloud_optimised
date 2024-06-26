@@ -50,6 +50,15 @@ class CommonHandler:
         self.input_object_key = kwargs.get("input_object_key", None)
         self.input_object_keys = kwargs.get("input_object_keys", None)
 
+        # Cluster options
+        valid_clusters = ["remote", "local", None]
+        self.cluster_mode = kwargs.get("cluster", "remote")
+
+        if self.cluster_mode not in valid_clusters:
+            raise ValueError(
+                f"Invalid cluster value: {self.cluster}. Valid values are {valid_clusters}"
+            )
+
         self.dataset_config = kwargs.get("dataset_config")
 
         self.cloud_optimised_format = self.dataset_config.get("cloud_optimised_format")
@@ -93,10 +102,8 @@ class CommonHandler:
 
     @staticmethod
     def create_fileset(bucket_name, object_keys):
-        s3 = boto3.client("s3")
-        s3_fs = s3fs.S3FileSystem(anon=True)  # Adjust authentication as needed
+        s3_fs = s3fs.S3FileSystem(anon=True)
 
-        # Get the list of files in the bucket matching the object keys
         remote_files = [f"s3://{bucket_name}/{key}" for key in object_keys]
 
         # Create a fileset by opening each file
@@ -400,6 +407,7 @@ def cloud_optimised_creation_loop(
             "root_prefix_cloud_optimised_path",
             load_variable_from_config("ROOT_PREFIX_CLOUD_OPTIMISED_PATH"),
         ),
+        "cluster_mode": kwargs.get("cluster_mode", None),
     }
 
     # Filter out None values
@@ -532,6 +540,7 @@ def cloud_optimised_creation_loop(
         # TODO: see if i can change the code to have the NetCDF in memory rather than writing them to a tmp folder to
         #       avoid file not found errors when running multiple workers? seems to affect zarr only ??!
         # TODO: write some code to check the amount of unmanaged memory and restart cluster when above a threshold
+        # TODO: Improve class to give the user the option to use the local cluster and not the coiled cluster
 
         # TODO: add this somewhere as an optional argument
         run_zarr_loop_sequentially = False

@@ -25,12 +25,31 @@ from .CommonHandler import CommonHandler
 from .logging import get_logger
 
 
+def preprocess_xarray_no_class_wip(ds, dataset_config):
+    logger_name = dataset_config.get("logger_name", "generic")
+    dimensions = dataset_config.get("dimensions")
+    schema = dataset_config.get("schema")
+
+    # logger = get_logger(logger_name)
+
+    # TODO: get filename; Should be from https://github.com/pydata/xarray/issues/9142
+
+    # ds = ds.assign(
+    #     filename=((dimensions["time"]["name"],), [filename])
+    # )  # add new filename variable with time dimension
+
+    vars_to_drop = set(ds.data_vars) - set(schema)
+    ds_filtered = ds.drop_vars(vars_to_drop)
+    ds = ds_filtered
+    return ds
+
+
 def preprocess_xarray_no_class(ds, dataset_config):  # , filename):
     logger_name = dataset_config.get("logger_name", "generic")
     dimensions = dataset_config.get("dimensions")
     schema = dataset_config.get("schema")
 
-    logger = get_logger(logger_name)
+    # logger = get_logger(logger_name)
 
     # TODO: get filename; Should be from https://github.com/pydata/xarray/issues/9142
 
@@ -166,38 +185,66 @@ class GenericHandler(CommonHandler):
         )
 
     def create_cluster(self):
-        try:
-            # TODO: trying to figure out some issues with the cluster. Not sure if the dict coming from the config is the
-            #       reason, but it was working before implementing this. could be another problem...
-            cluster_options = {
-                "name": f"Processing_{self.dataset_name}",
-                "n_workers": [5, 8],
-                "scheduler_vm_types": "t3.medium",
-                "worker_vm_types": "t3.large",
-                "allow_ingress_from": "me",
-                "compute_purchase_option": "spot_with_fallback",
-            }
-            # import ipdb; ipdb.set_trace()
+        """
+        Create a Dask cluster based on the cluster_mode.
 
-            # cluster_options = self.dataset_config.get("cluster_options", None)
-            # if cluster_options is None:
-            #     self.logger.error("No cluster options provided in dataset_config")
-            #
-            # cluster_options["name"] = f"Processing_{self.dataset_name}"
+        If the cluster_mode is "remote", this method attempts to create a remote cluster using
+        the Coiled service. If creating the remote cluster fails, it falls back to creating a local
+        cluster. If the cluster_mode is "local", it creates a local Dask cluster.
 
-            self.cluster = Cluster(**cluster_options)
+        Attributes:
+            cluster_mode (str): Specifies the type of cluster to create ("remote" or "local").
+            logger (logging.Logger): Logger for logging information, warnings, and errors.
+            dataset_config (dict): Configuration dictionary containing cluster options.
+            dataset_name (str): Name of the dataset used for naming the remote cluster.
+            cluster (Cluster): The created Dask cluster (either remote or local).
+            client (Client): Dask client connected to the created cluster.
 
-            self.client = Client(self.cluster)
+        Raises:
+            ValueError: If an invalid cluster_mode is specified.
+        """
+        if self.cluster_mode == "remote":
+            try:
+                self.logger.info("Creating a remote cluster cluster")
+                cluster_options = self.dataset_config.get("cluster_options", None)
+                if cluster_options is None:
+                    self.logger.error("No cluster options provided in dataset_config")
 
-        except Exception as e:
-            self.logger.warning(
-                f"Could not create Coiled cluster: {e}. Falling back to local cluster."
-            )
-            # Create a local Dask cluster as a fallback
+                cluster_options["name"] = f"Processing_{self.dataset_name}"
+
+                self.cluster = Cluster(**cluster_options)
+                self.client = Client(self.cluster)
+
+            except Exception as e:
+                self.logger.warning(
+                    f"Could not create Coiled cluster: {e}. Falling back to local cluster."
+                )
+                # Create a local Dask cluster as a fallback
+                self.cluster = LocalCluster()
+                self.client = Client(self.cluster)
+        elif self.cluster_mode == "local":
+            self.logger.info("Creating a local cluster")
+
             self.cluster = LocalCluster()
             self.client = Client(self.cluster)
 
     def close_cluster(self):
+        """
+        Close the Dask cluster and client.
+
+        This method attempts to close the Dask client and cluster if they are currently open.
+        It logs successful closure operations and catches any exceptions that occur during
+        the process, logging them as errors.
+
+        Attributes:
+            client (Client): The Dask client connected to the cluster.
+            cluster (Cluster): The Dask cluster (either remote or local).
+            logger (logging.Logger): Logger for logging information and errors.
+
+        Logs:
+            Info: Logs a message when the Dask client and cluster are closed successfully.
+            Error: Logs a message if there is an error while closing the Dask client or cluster.
+        """
         try:
             if self.client:
                 self.client.close()
@@ -280,6 +327,8 @@ class GenericHandler(CommonHandler):
             self.logger.warning(f"Zarr dataset does not exist")
             return False
 
+        # TODO: Fix this as filename might not be a variable anymore. Solution is to load the org zarr dataset and look
+        #       for time index where the values are similar
         # Locate values of time indexes where new filename has possibly been already downloaded
         idx = ds.indexes[self.dimensions["time"]["name"]].where(
             ds.filename == self.filename
@@ -294,6 +343,40 @@ class GenericHandler(CommonHandler):
 
         elif indices_not_nan.size == 0:
             return False
+
+    def preprocess_xarray_wip(self, ds) -> xr.Dataset:
+        """
+        Perform preprocessing on the input dataset (`ds`) and return an xarray Dataset.
+
+        :param ds: Input xarray Dataset.
+        :param filename: Name of the file being processed.
+
+        :return:
+            Preprocessed xarray Dataset.
+        """
+
+        # Drop variables not in the list
+        # TODO: add a warning message
+        vars_to_drop = set(ds.data_vars) - set(self.schema)
+        ds_filtered = ds.drop_vars(vars_to_drop)
+        ds = ds_filtered
+
+        # https://github.com/pydata/xarray/issues/2313
+        # filename = ds.encoding["source"]
+
+        # self.logger.info(f"{filename}: xarray preprocessing")
+
+        # Add a new dimension 'filename' with a filename value
+        filename = None
+        if filename is not None:
+            ds = ds.assign(
+                filename=((self.dimensions["time"]["name"],), [filename])
+            )  # add new filename variable with time dimension
+
+        var_required = self.schema.copy()
+        var_required.pop(self.dimensions["time"]["name"])
+        var_required.pop(self.dimensions["latitude"]["name"])
+        var_required.pop(self.dimensions["longitude"]["name"])
 
     def preprocess_xarray(self, ds) -> xr.Dataset:
         """
@@ -407,14 +490,11 @@ class GenericHandler(CommonHandler):
 
     def publish_cloud_optimised_fileset_batch(self):
         """
-        TODO:
-        Careful calling this function. Need to investigate how this would work for reprocessing as before we would use
-        the region keyword
+
         Returns:
 
         """
         # Iterate over fileset in batches
-
         if self.input_object_keys is None:
             raise ValueError("input_object_keys is not defined")
 
@@ -430,7 +510,16 @@ class GenericHandler(CommonHandler):
                 preprocess_xarray_no_class, dataset_config=self.dataset_config
             )  # , filename=batch_filenames)
 
-            client = self.client
+            partial_reprocess2 = partial(
+                preprocess_xarray_no_class_wip, dataset_config=self.dataset_config
+            )  # , filename=batch_filenames)
+
+            drop_vars_list = [
+                var_name
+                for var_name, attrs in self.schema.items()
+                if attrs.get("drop_vars", False)
+            ]
+            self.logger.warning(f"Dropping variables {drop_vars_list} from dataset")
 
             with dask.config.set(
                 **{
@@ -439,56 +528,168 @@ class GenericHandler(CommonHandler):
                 }
             ):
                 try:
-                    import ipdb
-
-                    ipdb.set_trace()
-                    # TODO: This works for now. modify preprocess_xarray_no_class to have the filename, as well as partial
-                    #       very hard to debug
+                    # TODO: if using preprocess function within mfdataset (has to be outside the class otherwise parallelize issues), the
+                    #       local ram is being used! and not the cluster one! even if the function only does return ds
+                    #       solution, open at the end with ds = preprocess(ds) afterwards
+                    #
                     ds = xr.open_mfdataset(
                         batch_files,
                         engine="h5netcdf",
                         parallel=True,
-                        preprocess=partial_reprocess,
+                        # preprocess=partial_reprocess2, # this sometimes hangs the process
                         concat_characters=True,
                         mask_and_scale=True,
                         decode_cf=True,
                         decode_times=True,
                         use_cftime=True,
                         decode_coords=True,
+                        compat="override",
+                        coords="minimal",
+                        data_vars="minimal",
+                        drop_variables=drop_vars_list,
                     )
 
-                    # TODO: check if should something should be specified for ds.chunk
-                    # ds = ds.chunk(chunks=self.chunks) # careful with chunk size, had an issue
+                    # TODO: create a simple jupyter notebook 2 show 2 different problems:
+                    #       1) serialization issue if preprocess is within a class
+                    #       2) blowing of memory if preprocess function is outside of a class and only does return ds
+
+                    ds = preprocess_xarray_no_class_wip(ds, self.dataset_config)
+
+                    # NOTE: if I comment the next line, i get some errors with the latest chunk for some variables
+                    ds = ds.chunk(
+                        chunks=self.chunks
+                    )  # careful with chunk size, had an issue
+
+                    # Write the dataset to Zarr
+                    if self.prefix_exists(self.cloud_optimised_output_path):
+                        self.logger.info(f"append data to existing Zarr")
+
+                        # NOTE: In the next section, we need to figure out if we're reprocessing existing data.
+                        #       For this, the logic is open the original zarr store and compare with the new ds from
+                        #       this batch if they have time values in common.
+                        #       If this is the case, we need then to find the CONTIGUOUS regions as we can't assume that
+                        #       the data is well ordered. The logic below is looking for the matching regions and indexes
+
+                        ds_org = xr.open_zarr(
+                            self.store,
+                            consolidated=True,
+                            decode_cf=True,
+                            decode_times=True,
+                            use_cftime=True,
+                            decode_coords=True,
+                        )
+
+                        time_values_org = ds_org[self.dimensions["time"]["name"]].values
+                        time_values_new = ds[self.dimensions["time"]["name"]].values
+
+                        # Find common time values
+                        common_time_values = np.intersect1d(
+                            time_values_org, time_values_new
+                        )
+
+                        # Handle the 2 scenarios, reprocessing of a batch, or not
+                        if len(common_time_values) > 0:
+                            self.logger.info(
+                                f"Duplicate values of {self.dimensions['time']['name']}"
+                            )
+                            # Get indices of common time values in the original dataset
+                            common_indices = np.nonzero(
+                                np.isin(time_values_org, common_time_values)
+                            )[0]
+
+                            # regions must be CONTIGIOUS!! very important. so looking for different regions
+                            # Define regions as slices for the common time values
+                            regions = []
+                            matching_indexes = []
+
+                            start = common_indices[0]
+                            for i in range(1, len(common_indices)):
+                                if common_indices[i] != common_indices[i - 1] + 1:
+                                    end = common_indices[i - 1]
+                                    regions.append(
+                                        {
+                                            self.dimensions["time"]["name"]: slice(
+                                                start, end + 1
+                                            )
+                                        }
+                                    )
+                                    matching_indexes.append(
+                                        np.where(
+                                            np.isin(
+                                                time_values_new,
+                                                time_values_org[start : end + 1],
+                                            )
+                                        )[0]
+                                    )
+                                    start = common_indices[i]
+
+                            # Append the last region
+                            end = common_indices[-1]
+                            regions.append(
+                                {self.dimensions["time"]["name"]: slice(start, end + 1)}
+                            )
+                            matching_indexes.append(
+                                np.where(
+                                    np.isin(
+                                        time_values_new,
+                                        time_values_org[start : end + 1],
+                                    )
+                                )[0]
+                            )
+
+                            for region, indexes in zip(regions, matching_indexes):
+                                self.logger.info(
+                                    f"Overwriting zarr in Region: {region}, Matching Indexes in new ds: {indexes}"
+                                )
+                                ds.isel(time=indexes).drop_vars(
+                                    self.vars_to_drop_no_common_dimension
+                                ).to_zarr(
+                                    self.store,
+                                    write_empty_chunks=False,
+                                    region=region,
+                                    compute=True,
+                                    consolidated=True,
+                                )
+
+                        else:
+                            ds.to_zarr(
+                                self.store,
+                                mode="a",  # append mode for the next batches
+                                write_empty_chunks=False,  # TODO: could True fix the issue when some variables dont exists? I doubt
+                                compute=True,  # Compute the result immediately
+                                consolidated=True,
+                                append_dim=self.dimensions["time"]["name"],
+                            )
+
+                        # HACK:
+                        # FIXME:
+                        # NOTE:
+                        # BUG:
+                        # OPTIMIZE:
+                        # REFACTOR:
+                        # REVIEW:
+                        # DEPRECATED:
+
+                    else:
+                        self.logger.info(f"Writing data to new Zarr dataset")
+
+                        ds.to_zarr(
+                            self.store,
+                            mode="w",  # Overwrite mode for the first batch
+                            write_empty_chunks=False,
+                            compute=True,  # Compute the result immediately
+                            consolidated=True,
+                        )
+
+                    self.logger.info(
+                        f"Batch {idx + 1} processed and written to {self.store}"
+                    )
 
                 except MergeError as e:
                     self.logger.error(f"Failed to merge datasets: {e}")
 
                 except Exception as e:
                     self.logger.error(f"An unexpected error occurred: {e}")
-
-                # Write the dataset to Zarr
-                if self.prefix_exists(self.cloud_optimised_output_path):
-                    self.logger.info(f"append data to existing Zarr")
-                    ds.to_zarr(
-                        self.store,
-                        mode="a",  # append mode for the next batchs
-                        write_empty_chunks=False,
-                        compute=True,  # Compute the result immediately
-                        consolidated=True,
-                        append_dim=self.dimensions["time"]["name"],
-                    )
-                else:
-                    self.logger.info(f"Writing data to new Zarr dataset")
-
-                    ds.to_zarr(
-                        self.store,
-                        mode="w",  # Overwrite mode for the first batch
-                        write_empty_chunks=False,
-                        compute=True,  # Compute the result immediately
-                        consolidated=True,
-                    )
-
-            print(f"Batch {idx + 1} processed and written to {self.store}")
 
     def preprocess_single_file(self, fileset) -> xr.Dataset:
         """

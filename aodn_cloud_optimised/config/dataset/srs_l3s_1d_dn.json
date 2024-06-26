@@ -3,15 +3,15 @@
     "logger_name": "srs_l3s_1d_dn",
     "cloud_optimised_format": "zarr",
     "cluster_options" : {
-                "n_workers": [5, 8],
-                "scheduler_vm_types": "t3.medium",
-                "worker_vm_types": "t3.xlarge",
-                "allow_ingress_from": "me",
-                "compute_purchase_option": "spot_with_fallback",
-                "worker_options": {
-                  "nthreads": 8,
-                  "memory_limit": "32GB" }
-                },
+      "n_workers": [2, 8],
+      "scheduler_vm_types": "t3.medium",
+      "worker_vm_types": "t3.large",
+      "allow_ingress_from": "me",
+      "compute_purchase_option": "spot_with_fallback",
+      "worker_options": {
+        "nthreads": 8,
+        "memory_limit": "32GB" }
+    },
     "metadata_uuid": "",
     "dimensions": {
       "time": {"name": "time",
@@ -29,13 +29,13 @@
       "lat": {"type": "float32"},
       "time": {"type": "datetime64[ns]"},
       "sea_surface_temperature": {"type": "float32"},
-      "sea_surface_temperature_day_night": {"type": "float32"},
+      "sea_surface_temperature_day_night": {"type": "float32", "drop_vars": true},
       "sst_dtime": {"type": "float64"},
       "dt_analysis": {"type": "float32"},
-      "wind_speed": {"type": "float32"},
-      "wind_speed_dtime_from_sst": {"type": "float32"},
-      "sea_ice_fraction": {"type": "float32"},
-      "sea_ice_fraction_dtime_from_sst": {"type": "float32"},
+      "wind_speed": {"type": "float32", "drop_vars": true},
+      "wind_speed_dtime_from_sst": {"type": "float32", "drop_vars": true},
+      "sea_ice_fraction": {"type": "float32", "drop_vars": true},
+      "sea_ice_fraction_dtime_from_sst": {"type": "float32", "drop_vars": true},
       "satellite_zenith_angle": {"type": "float32"},
       "l2p_flags": {"type": "float32"},
       "quality_level": {"type": "float32"},
