@@ -12,7 +12,10 @@ import yaml
 from dask.distributed import Client, LocalCluster, wait
 from jsonschema import validate, ValidationError
 from urllib.parse import urlparse
-
+from coiled import Cluster
+from dask.diagnostics import ProgressBar
+from dask.distributed import Client, Lock, get_client, wait
+from dask.distributed import LocalCluster
 from .config import load_variable_from_config, load_dataset_config
 from .logging import get_logger
 import s3fs
@@ -86,6 +89,8 @@ class CommonHandler:
             self.logger.error("No input object given")
             raise ValueError
 
+        self.cluster_options = self.dataset_config.get("cluster_options", None)
+
     def __enter__(self):
         # Initialize resources if necessary
         return self
@@ -103,6 +108,96 @@ class CommonHandler:
         import gc
 
         gc.collect()
+
+    def create_cluster(self):
+        """
+        Create a Dask cluster based on the cluster_mode.
+
+        If the cluster_mode is "remote", this method attempts to create a remote cluster using
+        the Coiled service. If creating the remote cluster fails, it falls back to creating a local
+        cluster. If the cluster_mode is "local", it creates a local Dask cluster.
+
+        Attributes:
+            cluster_mode (str): Specifies the type of cluster to create ("remote" or "local").
+            logger (logging.Logger): Logger for logging information, warnings, and errors.
+            dataset_config (dict): Configuration dictionary containing cluster options.
+            dataset_name (str): Name of the dataset used for naming the remote cluster.
+            cluster (Cluster): The created Dask cluster (either remote or local).
+            client (Client): Dask client connected to the created cluster.
+
+        Raises:
+            ValueError: If an invalid cluster_mode is specified.
+        """
+
+        local_cluster_options = self.dataset_config.get(
+            "local_cluster_options",
+            {
+                "n_workers": 2,
+                "memory_limit": "12GB",
+                "threads_per_worker": 2,
+            },
+        )
+
+        if self.cluster_mode == "remote":
+            try:
+                self.logger.info("Creating a remote cluster cluster")
+                cluster_options = self.dataset_config.get("cluster_options", None)
+                if cluster_options is None:
+                    self.logger.error("No cluster options provided in dataset_config")
+
+                cluster_options["name"] = f"Processing_{self.dataset_name}"
+
+                self.cluster = Cluster(**cluster_options)
+                self.client = Client(self.cluster)
+                self.logger.info(
+                    f"Coiled Cluster dask dashboard available at {self.cluster.dashboard_link}"
+                )
+
+            except Exception as e:
+                self.logger.warning(
+                    f"Could not create a Coiled cluster: {e}. Falling back to local cluster."
+                )
+                # Create a local Dask cluster as a fallback
+                self.cluster = LocalCluster(**local_cluster_options)
+                self.client = Client(self.cluster)
+                self.logger.info(
+                    f"Local Cluster dask dashboard available at {self.cluster.dashboard_link}"
+                )
+        elif self.cluster_mode == "local":
+            self.logger.info("Creating a local cluster")
+
+            self.cluster = LocalCluster(**local_cluster_options)
+            self.client = Client(self.cluster)
+            self.logger.info(
+                f"Local Cluster dask dashboard available at {self.cluster.dashboard_link}"
+            )
+
+    def close_cluster(self):
+        """
+        Close the Dask cluster and client.
+
+        This method attempts to close the Dask client and cluster if they are currently open.
+        It logs successful closure operations and catches any exceptions that occur during
+        the process, logging them as errors.
+
+        Attributes:
+            client (Client): The Dask client connected to the cluster.
+            cluster (Cluster): The Dask cluster (either remote or local).
+            logger (logging.Logger): Logger for logging information and errors.
+
+        Logs:
+            Info: Logs a message when the Dask client and cluster are closed successfully.
+            Error: Logs a message if there is an error while closing the Dask client or cluster.
+        """
+        try:
+            if self.client:
+                self.client.close()
+                self.logger.info("Dask client closed successfully.")
+            if self.cluster:
+                self.cluster.close()
+                self.logger.info("Dask cluster closed successfully.")
+        except Exception as e:
+            self.logger.error(f"Error while closing the cluster or client: {e}")
 
     @staticmethod
     def create_fileset(bucket_name, object_keys):
@@ -150,9 +245,13 @@ class CommonHandler:
         schema = load_dataset_config(json_validation_path)
         try:
             validate(instance=self.dataset_config, schema=schema)
-            self.logger.info("JSON configuration for dataset: Validation successful.")
+            self.logger.info(
+                f"JSON configuration for dataset {os.path.basename(json_validation_path)}: Validation successful."
+            )
         except ValidationError as e:
-            raise ValueError(f"JSON configuration for dataset: Validation failed: {e}")
+            raise ValueError(
+                f"JSON configuration for dataset {os.path.basename(json_validation_path)}: Validation failed: {e}"
+            )
 
     @staticmethod
     def prefix_exists(s3_path):

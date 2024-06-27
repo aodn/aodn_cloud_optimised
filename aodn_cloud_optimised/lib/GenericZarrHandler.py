@@ -25,31 +25,12 @@ from .CommonHandler import CommonHandler
 from .logging import get_logger
 
 
-def preprocess_xarray_no_class_wip(ds, dataset_config):
-    logger_name = dataset_config.get("logger_name", "generic")
-    dimensions = dataset_config.get("dimensions")
-    schema = dataset_config.get("schema")
-
-    # logger = get_logger(logger_name)
-
-    # TODO: get filename; Should be from https://github.com/pydata/xarray/issues/9142
-
-    # ds = ds.assign(
-    #     filename=((dimensions["time"]["name"],), [filename])
-    # )  # add new filename variable with time dimension
-
-    vars_to_drop = set(ds.data_vars) - set(schema)
-    ds_filtered = ds.drop_vars(vars_to_drop)
-    ds = ds_filtered
-    return ds
-
-
 def preprocess_xarray_no_class(ds, dataset_config):  # , filename):
     logger_name = dataset_config.get("logger_name", "generic")
     dimensions = dataset_config.get("dimensions")
     schema = dataset_config.get("schema")
 
-    # logger = get_logger(logger_name)
+    logger = get_logger(logger_name)
 
     # TODO: get filename; Should be from https://github.com/pydata/xarray/issues/9142
 
@@ -180,77 +161,6 @@ class GenericHandler(CommonHandler):
             root=f"{self.cloud_optimised_output_path}", s3=self.s3, check=False
         )
 
-    def create_cluster(self):
-        """
-        Create a Dask cluster based on the cluster_mode.
-
-        If the cluster_mode is "remote", this method attempts to create a remote cluster using
-        the Coiled service. If creating the remote cluster fails, it falls back to creating a local
-        cluster. If the cluster_mode is "local", it creates a local Dask cluster.
-
-        Attributes:
-            cluster_mode (str): Specifies the type of cluster to create ("remote" or "local").
-            logger (logging.Logger): Logger for logging information, warnings, and errors.
-            dataset_config (dict): Configuration dictionary containing cluster options.
-            dataset_name (str): Name of the dataset used for naming the remote cluster.
-            cluster (Cluster): The created Dask cluster (either remote or local).
-            client (Client): Dask client connected to the created cluster.
-
-        Raises:
-            ValueError: If an invalid cluster_mode is specified.
-        """
-        if self.cluster_mode == "remote":
-            try:
-                self.logger.info("Creating a remote cluster cluster")
-                cluster_options = self.dataset_config.get("cluster_options", None)
-                if cluster_options is None:
-                    self.logger.error("No cluster options provided in dataset_config")
-
-                cluster_options["name"] = f"Processing_{self.dataset_name}"
-
-                self.cluster = Cluster(**cluster_options)
-                self.client = Client(self.cluster)
-
-            except Exception as e:
-                self.logger.warning(
-                    f"Could not create Coiled cluster: {e}. Falling back to local cluster."
-                )
-                # Create a local Dask cluster as a fallback
-                self.cluster = LocalCluster(memory_limit="4GB")
-                self.client = Client(self.cluster)
-        elif self.cluster_mode == "local":
-            self.logger.info("Creating a local cluster")
-
-            self.cluster = LocalCluster()
-            self.client = Client(self.cluster)
-
-    def close_cluster(self):
-        """
-        Close the Dask cluster and client.
-
-        This method attempts to close the Dask client and cluster if they are currently open.
-        It logs successful closure operations and catches any exceptions that occur during
-        the process, logging them as errors.
-
-        Attributes:
-            client (Client): The Dask client connected to the cluster.
-            cluster (Cluster): The Dask cluster (either remote or local).
-            logger (logging.Logger): Logger for logging information and errors.
-
-        Logs:
-            Info: Logs a message when the Dask client and cluster are closed successfully.
-            Error: Logs a message if there is an error while closing the Dask client or cluster.
-        """
-        try:
-            if self.client:
-                self.client.close()
-                self.logger.info("Dask client closed successfully.")
-            if self.cluster:
-                self.cluster.close()
-                self.logger.info("Dask cluster closed successfully.")
-        except Exception as e:
-            self.logger.error(f"Error while closing the cluster or client: {e}")
-
     def acquire_dask_lock(self):
         """
         Acquire a Dask distributed lock to ensure exclusive access to a shared resource.
@@ -339,40 +249,6 @@ class GenericHandler(CommonHandler):
 
         elif indices_not_nan.size == 0:
             return False
-
-    def preprocess_xarray_wip(self, ds) -> xr.Dataset:
-        """
-        Perform preprocessing on the input dataset (`ds`) and return an xarray Dataset.
-
-        :param ds: Input xarray Dataset.
-        :param filename: Name of the file being processed.
-
-        :return:
-            Preprocessed xarray Dataset.
-        """
-
-        # Drop variables not in the list
-        # TODO: add a warning message
-        vars_to_drop = set(ds.data_vars) - set(self.schema)
-        ds_filtered = ds.drop_vars(vars_to_drop)
-        ds = ds_filtered
-
-        # https://github.com/pydata/xarray/issues/2313
-        # filename = ds.encoding["source"]
-
-        # self.logger.info(f"{filename}: xarray preprocessing")
-
-        # Add a new dimension 'filename' with a filename value
-        filename = None
-        if filename is not None:
-            ds = ds.assign(
-                filename=((self.dimensions["time"]["name"],), [filename])
-            )  # add new filename variable with time dimension
-
-        var_required = self.schema.copy()
-        var_required.pop(self.dimensions["time"]["name"])
-        var_required.pop(self.dimensions["latitude"]["name"])
-        var_required.pop(self.dimensions["longitude"]["name"])
 
     def preprocess_xarray(self, ds) -> xr.Dataset:
         """
@@ -476,8 +352,27 @@ class GenericHandler(CommonHandler):
 
         return ds
 
-    # Function to iterate over fileset in batches
     def batch_process_fileset(self, fileset, batch_size=10):
+        """
+        Processes a list of files in batches.
+
+        This method yields successive batches of files from the input fileset.
+        Each batch contains up to `batch_size` files. Adjusting `batch_size`
+        can impact memory usage and performance and lead to out of memory errors. Be cautious
+
+        Parameters
+        ----------
+        fileset : list
+            A list of files to be processed in batches.
+        batch_size : int, optional
+            The number of files to include in each batch (default is 10).
+
+        Yields
+        ------
+        list
+            A sublist of `fileset` containing up to `batch_size` files.
+
+        """
         # batch_size modification could lead to some out of mem
         num_files = len(fileset)
         for start_idx in range(0, num_files, batch_size):
@@ -506,10 +401,6 @@ class GenericHandler(CommonHandler):
                 preprocess_xarray_no_class, dataset_config=self.dataset_config
             )  # , filename=batch_filenames)
 
-            partial_reprocess2 = partial(
-                preprocess_xarray_no_class_wip, dataset_config=self.dataset_config
-            )  # , filename=batch_filenames)
-
             drop_vars_list = [
                 var_name
                 for var_name, attrs in self.schema.items()
@@ -524,7 +415,7 @@ class GenericHandler(CommonHandler):
                 }
             ):
                 try:
-                    # TODO: if using preprocess function within mfdataset (has to be outside the class otherwise parallelize issues), the
+                    # TODO: if using preprocess function within mfdataset (has to be outside the class otherwise parallelizing issues), the
                     #       local ram is being used! and not the cluster one! even if the function only does return ds
                     #       solution, open at the end with ds = preprocess(ds) afterwards
                     #
@@ -532,7 +423,7 @@ class GenericHandler(CommonHandler):
                         batch_files,
                         engine="h5netcdf",
                         parallel=True,
-                        # preprocess=partial_reprocess2, # this sometimes hangs the process
+                        # preprocess=partial_reprocess, # this sometimes hangs the process
                         concat_characters=True,
                         mask_and_scale=True,
                         decode_cf=True,
@@ -583,7 +474,7 @@ class GenericHandler(CommonHandler):
                             time_values_org, time_values_new
                         )
 
-                        # Handle the 2 scenarios, reprocessing of a batch, or not
+                        # Handle the 2 scenarios, reprocessing of a batch, or append new data
                         if len(common_time_values) > 0:
                             self.logger.info(
                                 f"Duplicate values of {self.dimensions['time']['name']}"
@@ -633,6 +524,7 @@ class GenericHandler(CommonHandler):
                                 )[0]
                             )
 
+                            # Process region by region if necessary
                             for region, indexes in zip(regions, matching_indexes):
                                 self.logger.info(
                                     f"Overwriting zarr in Region: {region}, Matching Indexes in new ds: {indexes}"
@@ -647,6 +539,7 @@ class GenericHandler(CommonHandler):
                                     consolidated=True,
                                 )
 
+                        # No reprocessing needed
                         else:
                             ds.to_zarr(
                                 self.store,
@@ -657,15 +550,7 @@ class GenericHandler(CommonHandler):
                                 append_dim=self.dimensions["time"]["name"],
                             )
 
-                        # HACK:
-                        # FIXME:
-                        # NOTE:
-                        # BUG:
-                        # OPTIMIZE:
-                        # REFACTOR:
-                        # REVIEW:
-                        # DEPRECATED:
-
+                    # First time writing the dataset
                     else:
                         self.logger.info(f"Writing data to new Zarr dataset")
 
