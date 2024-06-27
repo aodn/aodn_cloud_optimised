@@ -25,18 +25,18 @@ def main():
         )
     )
 
-    # First zarr creation - remove all previous objects
     cloud_optimised_creation_loop(
-        [nc_obj_ls[0]], dataset_config=dataset_config, clear_existing_data=True
+        nc_obj_ls,
+        dataset_config=dataset_config,
+        clear_existing_data=True,
+        cluster_mode="local",
     )
 
-    # append to zarr
-    cloud_optimised_creation_loop(nc_obj_ls[1:], dataset_config=dataset_config)
     # rechunking
-    GenericHandler(
-        input_object_key=nc_obj_ls[0],
-        dataset_config=dataset_config,
-    ).rechunk()
+    # GenericHandler(
+    #     input_object_key=nc_obj_ls[0],
+    #     dataset_config=dataset_config,
+    # ).rechunk()
 
 
 if __name__ == "__main__":

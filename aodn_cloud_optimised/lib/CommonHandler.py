@@ -200,6 +200,34 @@ class CommonHandler:
             self.logger.error(f"Error while closing the cluster or client: {e}")
 
     @staticmethod
+    def batch_process_fileset(fileset, batch_size=10):
+        """
+        Processes a list of files in batches.
+
+        This method yields successive batches of files from the input fileset.
+        Each batch contains up to `batch_size` files. Adjusting `batch_size`
+        can impact memory usage and performance and lead to out of memory errors. Be cautious
+
+        Parameters
+        ----------
+        fileset : list
+            A list of files to be processed in batches.
+        batch_size : int, optional
+            The number of files to include in each batch (default is 10).
+
+        Yields
+        ------
+        list
+            A sublist of `fileset` containing up to `batch_size` files.
+
+        """
+        # batch_size modification could lead to some out of mem
+        num_files = len(fileset)
+        for start_idx in range(0, num_files, batch_size):
+            end_idx = min(start_idx + batch_size, num_files)
+            yield fileset[start_idx:end_idx]
+
+    @staticmethod
     def create_fileset(bucket_name, object_keys):
         s3_fs = s3fs.S3FileSystem(
             anon=True
@@ -514,7 +542,7 @@ def cloud_optimised_creation_loop(
             "root_prefix_cloud_optimised_path",
             load_variable_from_config("ROOT_PREFIX_CLOUD_OPTIMISED_PATH"),
         ),
-        "cluster_mode": kwargs.get("cluster_mode", None),
+        "cluster_mode": kwargs.get("cluster_mode", "local"),
     }
 
     # Filter out None values
@@ -649,7 +677,7 @@ def cloud_optimised_creation_loop(
         # TODO: write some code to check the amount of unmanaged memory and restart cluster when above a threshold
         # TODO: test if no cluster_mode is set, if the zarr code still works without a cluster. Should probably work then on a file per file basis and set run_zarr_loop_sequentially = True
 
-        # TODO: check if this is the best approach
+        # TODO: check if this is the best approach. default should be local!
         # we dont want to create a cluster for a file per file
         if kwargs.get("cluster_mode", None) is None:
             run_zarr_loop_sequentially = True
