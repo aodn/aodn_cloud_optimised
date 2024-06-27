@@ -1,11 +1,11 @@
 {
-    "dataset_name": "srs_l3s_1d_dn",
+    "dataset_name": "srs_l3s_1d_dn_2",
     "logger_name": "srs_l3s_1d_dn",
     "cloud_optimised_format": "zarr",
     "cluster_options" : {
       "n_workers": [2, 8],
-      "scheduler_vm_types": "t3.medium",
-      "worker_vm_types": "t3.large",
+      "scheduler_vm_types": "t3.small",
+      "worker_vm_types": "t3.medium",
       "allow_ingress_from": "me",
       "compute_purchase_option": "spot_with_fallback",
       "worker_options": {

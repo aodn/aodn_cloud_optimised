@@ -25,6 +25,25 @@ from .CommonHandler import CommonHandler
 from .logging import get_logger
 
 
+def preprocess_xarray_no_class_wip(ds, dataset_config):
+    logger_name = dataset_config.get("logger_name", "generic")
+    dimensions = dataset_config.get("dimensions")
+    schema = dataset_config.get("schema")
+
+    # logger = get_logger(logger_name)
+
+    # TODO: get filename; Should be from https://github.com/pydata/xarray/issues/9142
+
+    # ds = ds.assign(
+    #     filename=((dimensions["time"]["name"],), [filename])
+    # )  # add new filename variable with time dimension
+
+    vars_to_drop = set(ds.data_vars) - set(schema)
+    ds_filtered = ds.drop_vars(vars_to_drop)
+    ds = ds_filtered
+    return ds
+
+
 def preprocess_xarray_no_class(ds, dataset_config):  # , filename):
     logger_name = dataset_config.get("logger_name", "generic")
     dimensions = dataset_config.get("dimensions")
@@ -389,6 +408,7 @@ class GenericHandler(CommonHandler):
         if self.input_object_keys is None:
             raise ValueError("input_object_keys is not defined")
 
+        self.logger.info("Listing all objects to process and create a fileset")
         fileset = self.create_fileset(self.raw_bucket_name, self.input_object_keys)
 
         for idx, batch_files in enumerate(self.batch_process_fileset(fileset)):

@@ -201,7 +201,9 @@ class CommonHandler:
 
     @staticmethod
     def create_fileset(bucket_name, object_keys):
-        s3_fs = s3fs.S3FileSystem(anon=True)
+        s3_fs = s3fs.S3FileSystem(
+            anon=True
+        )  # TODO: check with data team this can be anon=True
 
         remote_files = [f"s3://{bucket_name}/{key}" for key in object_keys]
 

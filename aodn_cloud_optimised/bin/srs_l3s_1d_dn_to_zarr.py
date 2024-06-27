@@ -29,16 +29,16 @@ def main():
     # cloud_optimised_creation_loop(
     #     [nc_obj_ls[0]],
     #     dataset_config=dataset_config,
-    #     # reprocess=True,
+    #     # clear_existing_data=True,
     #     cluster_mode="remote",
     # )
 
-    # TODO: rename the reprocess argument! it's not clear. something such as clear_existing_data
+    # TODO: handle as an input a s3 url
     cloud_optimised_creation_loop(
-        nc_obj_ls,
+        [nc_obj_ls[0]],
         dataset_config=dataset_config,
-        # clear_existing_data=True,
-        cluster_mode="remote",
+        clear_existing_data=True,
+        cluster_mode="local",
     )
 
 
