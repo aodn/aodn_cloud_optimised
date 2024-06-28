@@ -81,14 +81,14 @@ class CommonHandler:
             "clear_existing_data", None
         )  # setting to True will recreate the zarr from scratch at every run!
 
-        if self.input_object_key is not None:
-            self.filename = os.path.basename(self.input_object_key)
-            # self.tmp_input_file = self.get_s3_raw_obj()
-        elif self.input_object_keys is not None:
-            self.filenames = [os.path.basename(key) for key in self.input_object_keys]
-        else:
-            self.logger.error("No input object given")
-            raise ValueError
+        # if self.input_object_key is not None:
+        #     self.filename = os.path.basename(self.input_object_key)
+        #     # self.tmp_input_file = self.get_s3_raw_obj()
+        # elif self.input_object_keys is not None:
+        #     self.filenames = [os.path.basename(key) for key in self.input_object_keys]
+        # else:
+        #     self.logger.error("No input object given")
+        #     raise ValueError
 
         self.cluster_options = self.dataset_config.get("cluster_options", None)
 
@@ -490,11 +490,7 @@ def _get_generic_handler_class(dataset_config):
 #         handler_instance.to_cloud_optimised()
 
 
-def trim_memory() -> int:
-    libc = ctypes.CDLL("libc.so.6")
-    return libc.malloc_trim(0)
-
-
+# TODO: input_obj of the class should be a full s3 path so that object can come from anywhere
 def cloud_optimised_creation_loop(
     obj_ls: List[str], dataset_config: dict, **kwargs
 ) -> None:
@@ -546,7 +542,7 @@ def cloud_optimised_creation_loop(
     def task(f, i, handler_clear_existing_data_arg=False):
         start_time = timeit.default_timer()
         try:
-            kwargs_handler_class["input_object_key"] = f
+            # kwargs_handler_class["input_object_key"] = f
             kwargs_handler_class["dataset_config"] = dataset_config
             kwargs_handler_class[
                 "clear_existing_data"
@@ -554,27 +550,27 @@ def cloud_optimised_creation_loop(
 
             # Creating an instance of the specified class with the provided arguments
             with handler_class(**kwargs_handler_class) as handler_instance:
-                handler_instance.to_cloud_optimised()
+                handler_instance.to_cloud_optimised(f)
 
-            #     cloud_optimised_creation(
-            #         f,
-            #         #dataset_config,
-            #         handler_class=handler_class,
-            #         handler_clear_existing_data_arg=handler_clear_existing_data_arg,
-            #         **filtered_kwargs,
-            #     )
-            #     time_spent = timeit.default_timer() - start_time
-            #     logger.info(
-            #         f"{i}/{len(obj_ls)}: {f} Cloud Optimised file completed in {time_spent}s"
-            #     )
+                #     cloud_optimised_creation(
+                #         f,
+                #         #dataset_config,
+                #         handler_class=handler_class,
+                #         handler_clear_existing_data_arg=handler_clear_existing_data_arg,
+                #         **filtered_kwargs,
+                #     )
+                time_spent = timeit.default_timer() - start_time
+                logger.info(
+                    f"{i}/{len(obj_ls)}: {f} Cloud Optimised file completed in {time_spent}s"
+                )
         except Exception as e:
             logger.error(f"{i}/{len(obj_ls)} issue with {f}: {e}")
 
+    start_whole_processing = timeit.default_timer()
     if dataset_config.get("cloud_optimised_format") == "parquet":
 
         kwargs_handler_class["dataset_config"] = dataset_config
 
-        start_whole_processing = timeit.default_timer()
         # TODO: get read of cloud_optimised_creation function, only used for parquet single file. just rewrite this function
         # TODO: for parquet, we got to create the cluster here! maybe the cluster creation should be written in its own class? some refactoring
         # TODO: handle the clustering properly below
@@ -650,13 +646,13 @@ def cloud_optimised_creation_loop(
         #     #       an option would be to create a new cluster every n files. or to check the unmanaged memory ratio and
         #     #       create new workers if around 80% of unmanaged memory
 
-        kwargs_handler_class["input_object_keys"] = obj_ls
+        # kwargs_handler_class["input_object_keys"] = obj_ls
         kwargs_handler_class["dataset_config"] = dataset_config
         kwargs_handler_class["clear_existing_data"] = handler_clear_existing_data_arg
 
         # Creating an instance of the specified class with the provided arguments
         with handler_class(**kwargs_handler_class) as handler_instance:
-            handler_instance.to_cloud_optimised()
+            handler_instance.to_cloud_optimised(obj_ls)
 
     time_spent_processing = timeit.default_timer() - start_whole_processing
     logger.info(f"Whole dataset completed in {time_spent_processing}s")

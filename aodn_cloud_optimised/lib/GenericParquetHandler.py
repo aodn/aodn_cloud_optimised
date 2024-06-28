@@ -839,7 +839,7 @@ class GenericHandler(CommonHandler):
                 f"Previous parquet objects successfully deleted: {response}"
             )
 
-    def to_cloud_optimised(self) -> None:
+    def to_cloud_optimised(self, input_object) -> None:
         """
         Create Parquet files from a NetCDF file.
 
@@ -859,14 +859,12 @@ class GenericHandler(CommonHandler):
 
                 delete_objects_in_prefix(bucket_name, prefix)
 
-        filename = os.path.basename(self.input_object_key)
+        filename = os.path.basename(input_object)
         if self.delete_pq_unmatch_enable:
             self.delete_existing_matching_parquet(filename)
 
         try:
-            fileset = self.create_fileset(
-                self.raw_bucket_name, [self.input_object_key]
-            )[
+            fileset = self.create_fileset(self.raw_bucket_name, [input_object])[
                 0
             ]  # only one file
 

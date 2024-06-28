@@ -1,10 +1,7 @@
 #!/usr/bin/env python3
 import importlib.resources
 
-from aodn_cloud_optimised.lib.CommonHandler import (
-    cloud_optimised_creation_loop,
-    cloud_optimised_creation,
-)
+from aodn_cloud_optimised.lib.CommonHandler import cloud_optimised_creation_loop
 from aodn_cloud_optimised.lib.config import (
     load_variable_from_config,
     load_dataset_config,

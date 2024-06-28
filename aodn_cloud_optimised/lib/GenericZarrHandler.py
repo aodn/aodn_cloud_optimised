@@ -21,6 +21,7 @@ from functools import partial, partialmethod
 from ..lib.s3Tools import delete_objects_in_prefix, split_s3_path, prefix_exists
 from .CommonHandler import CommonHandler
 from .logging import get_logger
+import fsspec
 
 
 def preprocess_xarray(ds, dataset_config):
@@ -284,18 +285,18 @@ class GenericHandler(CommonHandler):
 
         return ds
 
-    def publish_cloud_optimised_fileset_batch(self):
+    def publish_cloud_optimised_fileset_batch(self, input_objects):
         """
 
         Returns:
 
         """
         # Iterate over fileset in batches
-        if self.input_object_keys is None:
-            raise ValueError("input_object_keys is not defined")
+        if input_objects is None:
+            raise ValueError("input_objects is not defined")
 
         self.logger.info("Listing all objects to process and create a fileset")
-        fileset = self.create_fileset(self.raw_bucket_name, self.input_object_keys)
+        fileset = self.create_fileset(self.raw_bucket_name, input_objects)
 
         for idx, batch_files in enumerate(self.batch_process_fileset(fileset)):
             self.logger.info(f"Processing batch {idx + 1}...")
@@ -582,7 +583,7 @@ class GenericHandler(CommonHandler):
     #         f"{self.filename}: Zarr created and pushed to {self.cloud_optimised_output_path} successfully"
     #     )
 
-    def to_cloud_optimised(self):
+    def to_cloud_optimised(self, input_objects=None):
         """
         Create a Zarr dataset from NetCDF data.
 
@@ -609,11 +610,21 @@ class GenericHandler(CommonHandler):
 
                 delete_objects_in_prefix(bucket_name, prefix)
 
+        # import ipdb;ipdb.set_trace()
+        # if isinstance(input_objects, list):
+        #     # Check if all elements in the list are instances of s3fs.S3File
+        #     if all(isinstance(obj, fsspec.spec.AbstractBufferedFile) and 'S3' in str(type(obj)) for obj in
+        #            input_objects):
+        #         return input_objects
+        # elif isinstance(input_objects, fsspec.spec.AbstractBufferedFile) and 'S3' in str(type(input_objects)):
+        #     # Convert single s3fs.S3File object to a list
+        #     return [input_objects]
+
         # Multiple file processing with cluster
-        if self.input_object_keys is not None:
+        if input_objects is not None:
             # creating a cluster to process multiple files at once
             self.create_cluster()
-            self.publish_cloud_optimised_fileset_batch()
+            self.publish_cloud_optimised_fileset_batch(input_objects)
             self.close_cluster()
 
         # elif self.input_object_key is not None:
