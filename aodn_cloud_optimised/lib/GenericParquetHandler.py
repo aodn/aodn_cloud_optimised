@@ -20,8 +20,10 @@ from aodn_cloud_optimised.lib.s3Tools import (
     delete_objects_in_prefix,
     split_s3_path,
     prefix_exists,
+    create_fileset,
 )
 
+from aodn_cloud_optimised.lib.logging import get_logger
 from .CommonHandler import CommonHandler
 from dask.distributed import wait
 
@@ -839,45 +841,43 @@ class GenericHandler(CommonHandler):
                 f"Previous parquet objects successfully deleted: {response}"
             )
 
-    def to_cloud_optimised(self, input_object) -> None:
+    def to_cloud_optimised_single(self, s3_file_uri) -> None:
         """
         Create Parquet files from a NetCDF file.
 
         Returns:
             None
         """
-        if self.clear_existing_data:
-            self.logger.warning(
-                f"Creating new Parquet dataset - DELETING existing all Parquet objects if exist"
-            )
-            # TODO: delete all objects
-            if prefix_exists(self.cloud_optimised_output_path):
-                bucket_name, prefix = split_s3_path(self.cloud_optimised_output_path)
-                self.logger.info(
-                    f"Deleting existing Parquet objects from {self.cloud_optimised_output_path}"
-                )
+        # FIXME: the next 2 lines need to be here otherwise, the logging is lost when called within a dask task. Why??
+        logger_name = self.dataset_config.get("logger_name", "generic")
+        self.logger = get_logger(logger_name)
 
-                delete_objects_in_prefix(bucket_name, prefix)
+        self.logger.info(f"Processing {s3_file_uri}")
 
-        filename = os.path.basename(input_object)
+        filename = os.path.basename(s3_file_uri)
         if self.delete_pq_unmatch_enable:
             self.delete_existing_matching_parquet(filename)
 
         try:
-            fileset = self.create_fileset(self.raw_bucket_name, [input_object])[
-                0
-            ]  # only one file
+            start_time = timeit.default_timer()
 
-            generator = self.preprocess_data(fileset)
+            s3_file_handle = create_fileset(s3_file_uri)[0]  # only one file
+
+            generator = self.preprocess_data(s3_file_handle)
             for df, ds in generator:
 
-                self.publish_cloud_optimised(df, ds, fileset)
+                self.publish_cloud_optimised(df, ds, s3_file_handle)
                 self.push_metadata_aws_registry()
 
                 time_spent = timeit.default_timer() - self.start_time
                 self.logger.info(f"Cloud Optimised file completed in {time_spent}s")
 
                 self.postprocess(ds)
+
+                time_spent = timeit.default_timer() - start_time
+                self.logger.info(
+                    f"{s3_file_uri} Cloud Optimised file completed in {time_spent}s"
+                )
 
         except Exception as e:
             self.logger.error(
@@ -888,3 +888,29 @@ class GenericHandler(CommonHandler):
                 self.postprocess(ds)
 
             raise e
+
+    def to_cloud_optimised(self, s3_file_uri_list) -> None:
+        if self.clear_existing_data:
+            self.logger.warning(
+                f"Creating new Parquet dataset - DELETING existing all Parquet objects if exist"
+            )
+            if prefix_exists(self.cloud_optimised_output_path):
+                bucket_name, prefix = split_s3_path(self.cloud_optimised_output_path)
+                self.logger.info(
+                    f"Deleting existing Parquet objects from {self.cloud_optimised_output_path}"
+                )
+                delete_objects_in_prefix(bucket_name, prefix)
+
+        def task(f, i):
+            try:
+                self.to_cloud_optimised_single(f)
+            except Exception as e:
+                self.logger.error(f"{i}/{len(s3_file_uri_list)} issue with {f}: {e}")
+
+        client, cluster = self.create_cluster()
+
+        futures = [
+            client.submit(task, f, i) for i, f in enumerate(s3_file_uri_list, start=1)
+        ]
+        wait(futures)
+        self.close_cluster(client, cluster)

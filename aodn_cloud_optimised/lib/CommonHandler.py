@@ -18,7 +18,8 @@ from dask.distributed import Client, Lock, get_client, wait
 from dask.distributed import LocalCluster
 from .config import load_variable_from_config, load_dataset_config
 from .logging import get_logger
-from aodn_cloud_optimised.lib.s3Tools import prefix_exists
+from aodn_cloud_optimised.lib.s3Tools import prefix_exists, create_fileset
+
 import s3fs
 
 
@@ -60,7 +61,7 @@ class CommonHandler:
 
         if self.cluster_mode not in valid_clusters:
             raise ValueError(
-                f"Invalid cluster value: {self.cluster}. Valid values are {valid_clusters}"
+                f"Invalid cluster value: {self.cluster_mode}. Valid values are {valid_clusters}"
             )
 
         self.dataset_config = kwargs.get("dataset_config")
@@ -130,28 +131,31 @@ class CommonHandler:
             ValueError: If an invalid cluster_mode is specified.
         """
 
+        # TODO: quite crazy, but if client and cluster become self.client and self.cluster, then they can't be used
+        #       with self.client.submit as they can't be serialize ... what a bloody pain in .. seriously
+
         local_cluster_options = self.dataset_config.get(
             "local_cluster_options",
             {
                 "n_workers": 2,
-                "memory_limit": "12GB",
+                "memory_limit": "8GB",
                 "threads_per_worker": 2,
             },
         )
 
         if self.cluster_mode == "remote":
             try:
-                self.logger.info("Creating a remote cluster cluster")
+                self.logger.info("Creating a remote cluster")
                 cluster_options = self.dataset_config.get("cluster_options", None)
                 if cluster_options is None:
                     self.logger.error("No cluster options provided in dataset_config")
 
                 cluster_options["name"] = f"Processing_{self.dataset_name}"
 
-                self.cluster = Cluster(**cluster_options)
-                self.client = Client(self.cluster)
+                cluster = Cluster(**cluster_options)
+                client = Client(cluster)
                 self.logger.info(
-                    f"Coiled Cluster dask dashboard available at {self.cluster.dashboard_link}"
+                    f"Coiled Cluster dask dashboard available at {cluster.dashboard_link}"
                 )
 
             except Exception as e:
@@ -159,21 +163,23 @@ class CommonHandler:
                     f"Could not create a Coiled cluster: {e}. Falling back to local cluster."
                 )
                 # Create a local Dask cluster as a fallback
-                self.cluster = LocalCluster(**local_cluster_options)
-                self.client = Client(self.cluster)
+                cluster = LocalCluster(**local_cluster_options)
+                client = Client(cluster)
                 self.logger.info(
-                    f"Local Cluster dask dashboard available at {self.cluster.dashboard_link}"
+                    f"Local Cluster dask dashboard available at {cluster.dashboard_link}"
                 )
         elif self.cluster_mode == "local":
             self.logger.info("Creating a local cluster")
 
-            self.cluster = LocalCluster(**local_cluster_options)
-            self.client = Client(self.cluster)
+            cluster = LocalCluster(**local_cluster_options)
+            client = Client(cluster)
             self.logger.info(
-                f"Local Cluster dask dashboard available at {self.cluster.dashboard_link}"
+                f"Local Cluster dask dashboard available at {cluster.dashboard_link}"
             )
 
-    def close_cluster(self):
+        return client, cluster
+
+    def close_cluster(self, client, cluster):
         """
         Close the Dask cluster and client.
 
@@ -191,12 +197,11 @@ class CommonHandler:
             Error: Logs a message if there is an error while closing the Dask client or cluster.
         """
         try:
-            if self.client:
-                self.client.close()
-                self.logger.info("Dask client closed successfully.")
-            if self.cluster:
-                self.cluster.close()
-                self.logger.info("Dask cluster closed successfully.")
+            client.close()
+            self.logger.info("Dask client closed successfully.")
+
+            cluster.close()
+            self.logger.info("Dask cluster closed successfully.")
         except Exception as e:
             self.logger.error(f"Error while closing the cluster or client: {e}")
 
@@ -227,19 +232,6 @@ class CommonHandler:
         for start_idx in range(0, num_files, batch_size):
             end_idx = min(start_idx + batch_size, num_files)
             yield fileset[start_idx:end_idx]
-
-    @staticmethod
-    def create_fileset(bucket_name, object_keys):
-        s3_fs = s3fs.S3FileSystem(
-            anon=True
-        )  # TODO: check with data team this can be anon=True
-
-        remote_files = [f"s3://{bucket_name}/{key}" for key in object_keys]
-
-        # Create a fileset by opening each file
-        fileset = [s3_fs.open(file) for file in remote_files]
-
-        return fileset
 
     def validate_json(self, json_validation_path):
         """
@@ -492,13 +484,13 @@ def _get_generic_handler_class(dataset_config):
 
 # TODO: input_obj of the class should be a full s3 path so that object can come from anywhere
 def cloud_optimised_creation_loop(
-    obj_ls: List[str], dataset_config: dict, **kwargs
+    s3_file_uri_list: List[str], dataset_config: dict, **kwargs
 ) -> None:
     """
     Iterate through a list of file paths and create Cloud Optimised files for each file.
 
     Args:
-        obj_ls (List[str]): List of file paths to process.
+        s3_file_uri_list (List[str]): List of file paths to process.
         dataset_config (dictionary): dataset configuration. Check config/dataset_template.json for example
         **kwargs: Additional keyword arguments for customization.
             handler_class (class, optional): Handler class for cloud optimised creation.
@@ -519,9 +511,9 @@ def cloud_optimised_creation_loop(
     # Create the kwargs_handler_class dictionary, to be used as list of arguments to call cloud_optimised_creation -> handler_class
     # when values need to be overwritten
     kwargs_handler_class = {
-        "raw_bucket_name": kwargs.get(
-            "raw_bucket_name", load_variable_from_config("BUCKET_RAW_DEFAULT")
-        ),
+        # "raw_bucket_name": kwargs.get(
+        #    "raw_bucket_name", load_variable_from_config("BUCKET_RAW_DEFAULT")
+        # ),
         "optimised_bucket_name": kwargs.get(
             "optimised_bucket_name",
             load_variable_from_config("BUCKET_OPTIMISED_DEFAULT"),
@@ -561,51 +553,58 @@ def cloud_optimised_creation_loop(
                 #     )
                 time_spent = timeit.default_timer() - start_time
                 logger.info(
-                    f"{i}/{len(obj_ls)}: {f} Cloud Optimised file completed in {time_spent}s"
+                    f"{i}/{len(s3_file_uri_list)}: {f} Cloud Optimised file completed in {time_spent}s"
                 )
         except Exception as e:
-            logger.error(f"{i}/{len(obj_ls)} issue with {f}: {e}")
+            logger.error(f"{i}/{len(s3_file_uri_list)} issue with {f}: {e}")
 
     start_whole_processing = timeit.default_timer()
     if dataset_config.get("cloud_optimised_format") == "parquet":
 
         kwargs_handler_class["dataset_config"] = dataset_config
 
+        # kwargs_handler_class["dataset_config"] = dataset_config
+        kwargs_handler_class["clear_existing_data"] = handler_clear_existing_data_arg
+
+        # Creating an instance of the specified class with the provided arguments
+        with handler_class(**kwargs_handler_class) as handler_instance:
+            handler_instance.to_cloud_optimised(s3_file_uri_list)
+
         # TODO: get read of cloud_optimised_creation function, only used for parquet single file. just rewrite this function
         # TODO: for parquet, we got to create the cluster here! maybe the cluster creation should be written in its own class? some refactoring
         # TODO: handle the clustering properly below
-        local_cluster_options = {
-            "n_workers": 2,
-            "memory_limit": "8GB",
-            "threads_per_worker": 2,
-        }
-
-        cluster = LocalCluster(**local_cluster_options)
-        client = Client(cluster)
-
-        client.amm.start()  # Start Active Memory Manager
-        logger.info(
-            f"Local Cluster dask dashboard available at {cluster.dashboard_link}"
-        )
-
-        if handler_clear_existing_data_arg:
-            # if handler_clear_existing_data_arg, better to wait for this task to complete before adding new data!!
-            futures_init = [
-                client.submit(task, obj_ls[0], 1, handler_clear_existing_data_arg=True)
-            ]
-            wait(futures_init)
-
-            # Parallel Execution with List Comprehension
-            futures = [
-                client.submit(task, f, i) for i, f in enumerate(obj_ls[1:], start=2)
-            ]
-            wait(futures)
-        else:
-            futures = [client.submit(task, f, i) for i, f in enumerate(obj_ls, start=1)]
-            wait(futures)
-
-        client.close()
-        cluster.close()
+        # local_cluster_options = {
+        #     "n_workers": 2,
+        #     "memory_limit": "8GB",
+        #     "threads_per_worker": 2,
+        # }
+        #
+        # cluster = LocalCluster(**local_cluster_options)
+        # client = Client(cluster)
+        #
+        # client.amm.start()  # Start Active Memory Manager
+        # logger.info(
+        #     f"Local Cluster dask dashboard available at {cluster.dashboard_link}"
+        # )
+        #
+        # if handler_clear_existing_data_arg:
+        #     # if handler_clear_existing_data_arg, better to wait for this task to complete before adding new data!!
+        #     futures_init = [
+        #         client.submit(task, obj_ls[0], 1, handler_clear_existing_data_arg=True)
+        #     ]
+        #     wait(futures_init)
+        #
+        #     # Parallel Execution with List Comprehension
+        #     futures = [
+        #         client.submit(task, f, i) for i, f in enumerate(obj_ls[1:], start=2)
+        #     ]
+        #     wait(futures)
+        # else:
+        #     futures = [client.submit(task, f, i) for i, f in enumerate(obj_ls, start=1)]
+        #     wait(futures)
+        #
+        # client.close()
+        # cluster.close()
 
     elif dataset_config.get("cloud_optimised_format") == "zarr":
 
@@ -652,7 +651,7 @@ def cloud_optimised_creation_loop(
 
         # Creating an instance of the specified class with the provided arguments
         with handler_class(**kwargs_handler_class) as handler_instance:
-            handler_instance.to_cloud_optimised(obj_ls)
+            handler_instance.to_cloud_optimised(s3_file_uri_list)
 
     time_spent_processing = timeit.default_timer() - start_whole_processing
     logger.info(f"Whole dataset completed in {time_spent_processing}s")

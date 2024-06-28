@@ -5,7 +5,7 @@
   "cluster_options" : {
   "n_workers": [1, 20],
   "scheduler_vm_types": "t3.small",
-  "worker_vm_types": "t3.small",
+  "worker_vm_types": "t3.large",
   "allow_ingress_from": "me",
   "compute_purchase_option": "spot_with_fallback",
   "worker_options": {
@@ -446,6 +446,45 @@
       "units": "mg m-3",
       "long_name": "std data value in the bin, after rejection of flagged data",
       "cell_methods": "TIME:std"
+    },
+    "DOX1_count": {
+      "type": "float",
+      "standard_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water number_of_observations",
+      "units": "1",
+      "long_name": "count data value in the bin, after rejection of flagged data",
+      "cell_methods": "TIME:count"
+    },
+    "DOX1_max": {
+      "type": "float",
+      "units": "umol l-1",
+      "standard_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water",
+      "long_name": "max data value in the bin, after rejection of flagged data",
+      "cell_methods": "TIME:max"
+    },
+    "DOX1_min": {
+      "type": "float",
+      "units": "umol l-1",
+      "standard_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water",
+      "long_name": "min data value in the bin, after rejection of flagged data",
+      "cell_methods": "TIME:min"
+    },
+    "DOX1_std": {
+      "type": "float",
+      "units": "umol l-1",
+      "standard_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water",
+      "long_name": "std data value in the bin, after rejection of flagged data",
+      "cell_methods": "TIME:std"
+    },
+    "DOX2": {
+      "type": "float",
+      "ancillary_variables": "DOX2_min DOX2_max DOX2_std DOX2_count",
+      "comment": "Originally expressed in ml/l, assuming 1ml/l = 44.660umol/l and using density computed from Temperature, Salinity and Pressure with the CSIRO SeaWater library (EOS-80) v1.1.",
+      "long_name": "mean moles_of_oxygen_per_unit_mass_in_sea_water",
+      "standard_name": "moles_of_oxygen_per_unit_mass_in_sea_water",
+      "units": "umol kg-1",
+      "valid_max": 1000.0,
+      "valid_min": 0.0,
+      "cell_methods": "TIME:mean (interval: 1 hr comment: time mid point)"
     },
     "timestamp": {
       "type": "int64"

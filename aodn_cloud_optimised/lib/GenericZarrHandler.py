@@ -18,9 +18,14 @@ from xarray.core.merge import MergeError
 
 from functools import partial, partialmethod
 
-from ..lib.s3Tools import delete_objects_in_prefix, split_s3_path, prefix_exists
-from .CommonHandler import CommonHandler
-from .logging import get_logger
+from aodn_cloud_optimised.lib.s3Tools import (
+    delete_objects_in_prefix,
+    split_s3_path,
+    prefix_exists,
+    create_fileset,
+)
+from aodn_cloud_optimised.lib.CommonHandler import CommonHandler
+from aodn_cloud_optimised.lib.logging import get_logger
 import fsspec
 
 
@@ -285,20 +290,24 @@ class GenericHandler(CommonHandler):
 
         return ds
 
-    def publish_cloud_optimised_fileset_batch(self, input_objects):
+    def publish_cloud_optimised_fileset_batch(self, s3_file_uri_list):
         """
 
         Returns:
 
         """
-        # Iterate over fileset in batches
-        if input_objects is None:
+        # Iterate over s3_file_handle_list in batches
+        if s3_file_uri_list is None:
             raise ValueError("input_objects is not defined")
 
-        self.logger.info("Listing all objects to process and create a fileset")
-        fileset = self.create_fileset(self.raw_bucket_name, input_objects)
+        self.logger.info(
+            "Listing all objects to process and create a s3_file_handle_list"
+        )
+        s3_file_handle_list = create_fileset(s3_file_uri_list)
 
-        for idx, batch_files in enumerate(self.batch_process_fileset(fileset)):
+        for idx, batch_files in enumerate(
+            self.batch_process_fileset(s3_file_handle_list)
+        ):
             self.logger.info(f"Processing batch {idx + 1}...")
             self.logger.info(batch_files)
 
@@ -583,7 +592,7 @@ class GenericHandler(CommonHandler):
     #         f"{self.filename}: Zarr created and pushed to {self.cloud_optimised_output_path} successfully"
     #     )
 
-    def to_cloud_optimised(self, input_objects=None):
+    def to_cloud_optimised(self, s3_file_uri_list=None):
         """
         Create a Zarr dataset from NetCDF data.
 
@@ -621,11 +630,11 @@ class GenericHandler(CommonHandler):
         #     return [input_objects]
 
         # Multiple file processing with cluster
-        if input_objects is not None:
+        if s3_file_uri_list is not None:
             # creating a cluster to process multiple files at once
-            self.create_cluster()
-            self.publish_cloud_optimised_fileset_batch(input_objects)
-            self.close_cluster()
+            self.client, self.cluster = self.create_cluster()
+            self.publish_cloud_optimised_fileset_batch(s3_file_uri_list)
+            self.close_cluster(self.client, self.cluster)
 
         # elif self.input_object_key is not None:
         #
