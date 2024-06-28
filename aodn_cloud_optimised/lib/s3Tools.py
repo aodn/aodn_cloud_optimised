@@ -113,3 +113,34 @@ def split_s3_path(s3_path):
     bucket_name = parsed_url.netloc
     prefix = parsed_url.path.lstrip("/")
     return bucket_name, prefix
+
+
+def prefix_exists(s3_path):
+    """
+    Check if a given S3 prefix exists.
+
+    This function parses an S3 path to extract the bucket name and prefix,
+    then checks if the prefix exists in the specified S3 bucket.
+
+    Args:
+        s3_path (str): The S3 path to check, in the format "s3://bucket-name/prefix".
+
+    Returns:
+        bool: True if the prefix exists, False otherwise.
+
+    Raises:
+        ValueError: If the provided path does not appear to be an S3 URL.
+
+    """
+    # Parse the S3 path
+    parsed_url = urlparse(s3_path)
+
+    if parsed_url.scheme != "s3":
+        raise ValueError("The provided path does not appear to be an S3 URL.")
+
+    bucket_name = parsed_url.netloc
+    prefix = parsed_url.path.lstrip("/")
+
+    s3_client = boto3.client("s3")
+    response = s3_client.list_objects_v2(Bucket=bucket_name, Prefix=prefix, MaxKeys=1)
+    return "Contents" in response

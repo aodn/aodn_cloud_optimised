@@ -16,9 +16,18 @@ import yaml
 from shapely.geometry import Point, Polygon
 
 from .schema import create_pyarrow_schema, generate_json_schema_var_from_netcdf
-from aodn_cloud_optimised.lib.s3Tools import delete_objects_in_prefix, split_s3_path
+from aodn_cloud_optimised.lib.s3Tools import (
+    delete_objects_in_prefix,
+    split_s3_path,
+    prefix_exists,
+)
 
 from .CommonHandler import CommonHandler
+from dask.distributed import wait
+
+
+# TODO: improve doc for parallism by adding a uuid for each task
+# TODO: make sure that pandas can read the remote csv
 
 
 class GenericHandler(CommonHandler):
@@ -133,25 +142,24 @@ class GenericHandler(CommonHandler):
             tuple: A tuple containing DataFrame and Dataset.
         """
 
-        if self.is_valid_netcdf(netcdf_fp):
-            # Use open_dataset as a context manager to ensure proper handling of the dataset
-            with xr.open_dataset(netcdf_fp) as ds:
-                # Convert xarray to pandas DataFrame
-                df = ds.to_dataframe()
-                # TODO: call check function on variable attributes
-                if self.check_var_attributes(ds):
-                    yield df, ds
-                else:
-                    self.logger.error(
-                        "NetCDF file is not consistent with the pre-defined schema"
-                    )
+        with xr.open_dataset(netcdf_fp) as ds:
+            # Convert xarray to pandas DataFrame
+            df = ds.to_dataframe()
+            # TODO: call check function on variable attributes
+            if self.check_var_attributes(ds):
+                yield df, ds
+            else:
+                self.logger.error(
+                    "NetCDF file is not consistent with the pre-defined schema"
+                )
 
     def preprocess_data(
         self, fp
     ) -> Generator[Tuple[pd.DataFrame, xr.Dataset], None, None]:
-        if fp.endswith(".nc"):
+
+        if fp.path.endswith(".nc"):
             return self.preprocess_data_netcdf(fp)
-        if fp.endswith(".csv"):
+        if fp.path.endswith(".csv"):
             return self.preprocess_data_csv(fp)
 
     @staticmethod
@@ -330,7 +338,7 @@ class GenericHandler(CommonHandler):
 
         return df
 
-    def _add_columns_df(self, df: pd.DataFrame, ds: xr.Dataset) -> pd.DataFrame:
+    def _add_columns_df(self, df: pd.DataFrame, ds: xr.Dataset, f) -> pd.DataFrame:
         """
         Adds filename column to the DataFrame as well as variables defined in the json config.
 
@@ -351,11 +359,11 @@ class GenericHandler(CommonHandler):
                     f"{attr} global attribute doesn't exist in the original NetCDF. The corresponding variable won't be created"
                 )
 
-        df["filename"] = os.path.basename(self.input_object_key)
+        df["filename"] = os.path.basename(f.path)
 
         return df
 
-    def _rm_bad_timestamp_df(self, df: pd.DataFrame) -> pd.DataFrame:
+    def _rm_bad_timestamp_df(self, df: pd.DataFrame, f) -> pd.DataFrame:
         """
         Remove rows with bad timestamps from the DataFrame.
 
@@ -375,7 +383,7 @@ class GenericHandler(CommonHandler):
 
         if any(df["timestamp"] < 0):
             self.logger.warning(
-                f"{self.filename}: NaN values of {time_varname} time variable in dataset. Trimming data from NaN values"
+                f"{f.path}: NaN values of {time_varname} time variable in dataset. Trimming data from NaN values"
             )
             df2 = df[df["timestamp"] > 0].copy()
             df = df2
@@ -489,11 +497,7 @@ class GenericHandler(CommonHandler):
         else:
             return True
 
-    def publish_cloud_optimised(
-        self,
-        df: pd.DataFrame,
-        ds: xr.Dataset,
-    ) -> None:
+    def publish_cloud_optimised(self, df: pd.DataFrame, ds: xr.Dataset, f) -> None:
         """
         Create a parquet file containing data only.
 
@@ -506,15 +510,16 @@ class GenericHandler(CommonHandler):
         partition_keys = self.dataset_config["partition_keys"]
 
         df = self._add_timestamp_df(df)
-        df = self._add_columns_df(df, ds)
-        df = self._rm_bad_timestamp_df(df)
-
+        df = self._add_columns_df(df, ds, f)
+        df = self._rm_bad_timestamp_df(df, f)
         if "polygon" in partition_keys:
             if not "spatial_extent" in self.dataset_config:
                 self.logger.error("Missing spatial_extent config")
                 # raise ValueError
             else:
                 df = self._add_polygon(df)
+
+        filename = os.path.basename(f.path)
 
         # Needs to be specified here as df is here a pandas df, while later on, it is a pyarrow table. some renaming should happen
         if isinstance(df.index, pd.MultiIndex):
@@ -550,14 +555,14 @@ class GenericHandler(CommonHandler):
                 # df.cast fails complaining that the schemas are different while they're arent. different order is often the case
                 pdf = self.cast_table_by_schema(pdf, subset_schema)
             except ValueError as e:
-                self.logger.error(f"{self.filename}: {type(e).__name__}")
+                self.logger.error(f"{filename}: {type(e).__name__}")
 
         # Part B: Create NaN arrays for missing columns in the pyarrow table by comparing the self.pyarrow_schema variable
         if self.pyarrow_schema is not None:
             for field in self.pyarrow_schema:
                 if field.name not in df_var_list:
                     self.logger.warning(
-                        f"{self.filename}: {field.name} variable missing from dataset. creating a null array of {field.type}"
+                        f"{filename}: {field.name} variable missing from input file. creating a null array of {field.type}"
                     )
                     null_array = pa.nulls(len(pdf), field.type)
                     pdf = pdf.append_column(field.name, null_array)
@@ -567,13 +572,11 @@ class GenericHandler(CommonHandler):
         if self.pyarrow_schema is not None:
             for column_name in df_columns:
                 if column_name not in pdf.schema.names:
-                    var_config = generate_json_schema_var_from_netcdf(
-                        self.tmp_input_file, column_name
-                    )
+                    var_config = generate_json_schema_var_from_netcdf(f, column_name)
                     # if df.index.name is not None and column_name in df.index.name:
                     #    self.logger.warning(f'missing variable from provided pyarrow_schema, please add {column_name} : {df.index.dtype}')
                     # else:
-                    #    #TODO: improce this to return all the varatts as well
+                    #    #TODO: improve this to return all the varatts as well
                     #    var_config = generate_json_schema_var_from_netcdf(self.input_object_key, column_name)
                     self.logger.warning(
                         f"missing variable from provided pyarrow_schema config, please add to dataset config (respect double quotes): {var_config}"
@@ -595,11 +598,11 @@ class GenericHandler(CommonHandler):
             partition_cols=partition_keys,
             use_threads=True,
             metadata_collector=metadata_collector,
-            basename_template=os.path.basename(self.input_object_key)
+            basename_template=filename
             + "-{i}.parquet",  # this is essential for the overwriting part
         )
         self.logger.info(
-            f"{self.filename}: Parquet files successfully created in {self.cloud_optimised_output_path} \n"
+            f"{filename}: Parquet files successfully created in {self.cloud_optimised_output_path} \n"
         )
 
         self._add_metadata_sidecar()
@@ -742,7 +745,7 @@ class GenericHandler(CommonHandler):
         pq.write_metadata(pdf_schema, dataset_metadata_path)
 
         self.logger.info(
-            f"{self.filename}: Parquet metadata file successfully created in {dataset_metadata_path} \n"
+            f"Parquet metadata file successfully created in {dataset_metadata_path} \n"
         )
 
     def push_metadata_aws_registry(self) -> None:
@@ -779,7 +782,7 @@ class GenericHandler(CommonHandler):
                 f"Push AWS Registry file to: {os.path.join(self.cloud_optimised_output_path, self.dataset_name + '.yaml')}"
             )
 
-    def delete_existing_matching_parquet(self) -> None:
+    def delete_existing_matching_parquet(self, filename) -> None:
         """
         Delete unmatched Parquet files.
 
@@ -811,7 +814,7 @@ class GenericHandler(CommonHandler):
             return
 
         # Define the regex pattern to match existing parquet files
-        pattern = rf"\/{self.filename}"
+        pattern = rf"\/{filename}"
 
         # Find files matching the pattern using list comprehension and regex
         matching_files = [
@@ -845,30 +848,32 @@ class GenericHandler(CommonHandler):
         """
         if self.clear_existing_data:
             self.logger.warning(
-                f"Creating new Zarr dataset - DELETING existing all Zarr objects if exist"
+                f"Creating new Parquet dataset - DELETING existing all Parquet objects if exist"
             )
             # TODO: delete all objects
-            if self.prefix_exists(self.cloud_optimised_output_path):
+            if prefix_exists(self.cloud_optimised_output_path):
                 bucket_name, prefix = split_s3_path(self.cloud_optimised_output_path)
                 self.logger.info(
-                    f"Deleting existing Zarr objects from {self.cloud_optimised_output_path}"
+                    f"Deleting existing Parquet objects from {self.cloud_optimised_output_path}"
                 )
 
                 delete_objects_in_prefix(bucket_name, prefix)
 
-        if self.tmp_input_file.endswith(".nc"):
-            self.is_valid_netcdf(
-                self.tmp_input_file
-            )  # check file validity before doing anything else
-
+        filename = os.path.basename(self.input_object_key)
         if self.delete_pq_unmatch_enable:
-            self.delete_existing_matching_parquet()
+            self.delete_existing_matching_parquet(filename)
 
         try:
-            generator = self.preprocess_data(self.tmp_input_file)
+            fileset = self.create_fileset(
+                self.raw_bucket_name, [self.input_object_key]
+            )[
+                0
+            ]  # only one file
+
+            generator = self.preprocess_data(fileset)
             for df, ds in generator:
 
-                self.publish_cloud_optimised(df, ds)
+                self.publish_cloud_optimised(df, ds, fileset)
                 self.push_metadata_aws_registry()
 
                 time_spent = timeit.default_timer() - self.start_time

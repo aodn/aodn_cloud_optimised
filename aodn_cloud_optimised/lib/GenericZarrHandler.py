@@ -18,7 +18,7 @@ from xarray.core.merge import MergeError
 
 from functools import partial, partialmethod
 
-from ..lib.s3Tools import delete_objects_in_prefix, split_s3_path
+from ..lib.s3Tools import delete_objects_in_prefix, split_s3_path, prefix_exists
 from .CommonHandler import CommonHandler
 from .logging import get_logger
 
@@ -354,7 +354,7 @@ class GenericHandler(CommonHandler):
                     )  # careful with chunk size, had an issue
 
                     # Write the dataset to Zarr
-                    if self.prefix_exists(self.cloud_optimised_output_path):
+                    if prefix_exists(self.cloud_optimised_output_path):
                         self.logger.info(f"append data to existing Zarr")
 
                         # NOTE: In the next section, we need to figure out if we're reprocessing existing data.
@@ -601,7 +601,7 @@ class GenericHandler(CommonHandler):
                 f"Creating new Zarr dataset - DELETING existing all Zarr objects if exist"
             )
             # TODO: delete all objects
-            if self.prefix_exists(self.cloud_optimised_output_path):
+            if prefix_exists(self.cloud_optimised_output_path):
                 bucket_name, prefix = split_s3_path(self.cloud_optimised_output_path)
                 self.logger.info(
                     f"Deleting existing Zarr objects from {self.cloud_optimised_output_path}"

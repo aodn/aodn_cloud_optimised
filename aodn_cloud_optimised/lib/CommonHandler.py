@@ -18,6 +18,7 @@ from dask.distributed import Client, Lock, get_client, wait
 from dask.distributed import LocalCluster
 from .config import load_variable_from_config, load_dataset_config
 from .logging import get_logger
+from aodn_cloud_optimised.lib.s3Tools import prefix_exists
 import s3fs
 
 
@@ -82,7 +83,7 @@ class CommonHandler:
 
         if self.input_object_key is not None:
             self.filename = os.path.basename(self.input_object_key)
-            self.tmp_input_file = self.get_s3_raw_obj()
+            # self.tmp_input_file = self.get_s3_raw_obj()
         elif self.input_object_keys is not None:
             self.filenames = [os.path.basename(key) for key in self.input_object_keys]
         else:
@@ -283,39 +284,6 @@ class CommonHandler:
                 f"JSON configuration for dataset {os.path.basename(json_validation_path)}: Validation failed: {e}"
             )
 
-    @staticmethod
-    def prefix_exists(s3_path):
-        """
-        Check if a given S3 prefix exists.
-
-        This function parses an S3 path to extract the bucket name and prefix,
-        then checks if the prefix exists in the specified S3 bucket.
-
-        Args:
-            s3_path (str): The S3 path to check, in the format "s3://bucket-name/prefix".
-
-        Returns:
-            bool: True if the prefix exists, False otherwise.
-
-        Raises:
-            ValueError: If the provided path does not appear to be an S3 URL.
-
-        """
-        # Parse the S3 path
-        parsed_url = urlparse(s3_path)
-
-        if parsed_url.scheme != "s3":
-            raise ValueError("The provided path does not appear to be an S3 URL.")
-
-        bucket_name = parsed_url.netloc
-        prefix = parsed_url.path.lstrip("/")
-
-        s3_client = boto3.client("s3")
-        response = s3_client.list_objects_v2(
-            Bucket=bucket_name, Prefix=prefix, MaxKeys=1
-        )
-        return "Contents" in response
-
     def is_valid_netcdf(self, nc_file_path):
         """
         Check if a file is a valid NetCDF file.
@@ -428,8 +396,8 @@ class CommonHandler:
         if self.is_open_ds(ds):
             ds.close()
 
-        if os.path.exists(self.tmp_input_file):
-            os.remove(self.tmp_input_file)
+        # if os.path.exists(self.tmp_input_file):
+        #    os.remove(self.tmp_input_file)
         if os.path.exists(self.temp_dir.name):
             self.temp_dir.cleanup()
 
@@ -437,6 +405,30 @@ class CommonHandler:
 
 
 def _get_generic_handler_class(dataset_config):
+    """
+    Determine the appropriate handler class based on the dataset configuration.
+
+    This function selects and returns the handler class for processing cloud-optimized
+    datasets in either Zarr or Parquet format.
+
+    Parameters
+    ----------
+    dataset_config : dict
+        A dictionary containing the configuration of the dataset. The key
+        "cloud_optimised_format" should be set to either "zarr" or "parquet"
+        to specify the format.
+
+    Returns
+    -------
+    handler_class : class
+        The handler class corresponding to the specified cloud-optimized format.
+
+    Raises
+    ------
+    ValueError
+        If the "cloud_optimised_format" is not specified or is neither "zarr"
+        nor "parquet".
+    """
     from .GenericParquetHandler import GenericHandler as parquet_handler
     from .GenericZarrHandler import GenericHandler as zarr_handler
 
@@ -452,50 +444,50 @@ def _get_generic_handler_class(dataset_config):
     return handler_class
 
 
-def cloud_optimised_creation(obj_key: str, dataset_config, **kwargs) -> None:
-    """
-    Create Cloud Optimised files for a specific object key in an S3 bucket.
-
-    Args:
-        obj_key (str): The object key (file path) of the NetCDF file to process.
-        dataset_config (dictionary): dataset configuration. Check config/dataset_template.json for example
-        **kwargs: Additional keyword arguments for customization.
-            handler_class (class, optional): Handler class for cloud optimised  creation (default is GenericHandler).
-            force_old_pq_del (bool, optional): Whether to force deletion of old Parquet files (default is False).
-
-    Returns:
-        None
-    """
-    handler_class = kwargs.get("handler_class", None)
-
-    # loading the right handler based on configuration
-    if handler_class is None:
-        handler_class = _get_generic_handler_class(dataset_config)
-
-    handler_clear_existing_data_arg = kwargs.get(
-        "handler_clear_existing_data_arg", None
-    )
-
-    kwargs_handler_class = {
-        "raw_bucket_name": kwargs.get(
-            "raw_bucket_name", load_variable_from_config("BUCKET_RAW_DEFAULT")
-        ),
-        "optimised_bucket_name": kwargs.get(
-            "optimised_bucket_name",
-            load_variable_from_config("BUCKET_OPTIMISED_DEFAULT"),
-        ),
-        "root_prefix_cloud_optimised_path": kwargs.get(
-            "root_prefix_cloud_optimised_path",
-            load_variable_from_config("ROOT_PREFIX_CLOUD_OPTIMISED_PATH"),
-        ),
-        "input_object_key": obj_key,
-        "dataset_config": dataset_config,
-        "clear_existing_data": handler_clear_existing_data_arg,
-    }
-
-    # Creating an instance of the specified class with the provided arguments
-    with handler_class(**kwargs_handler_class) as handler_instance:
-        handler_instance.to_cloud_optimised()
+# def cloud_optimised_creation(obj_key: str, dataset_config, **kwargs) -> None:
+#     """
+#     Create Cloud Optimised files for a specific object key in an S3 bucket.
+#
+#     Args:
+#         obj_key (str): The object key (file path) of the NetCDF file to process.
+#         dataset_config (dictionary): dataset configuration. Check config/dataset_template.json for example
+#         **kwargs: Additional keyword arguments for customization.
+#             handler_class (class, optional): Handler class for cloud optimised  creation (default is GenericHandler).
+#             force_old_pq_del (bool, optional): Whether to force deletion of old Parquet files (default is False).
+#
+#     Returns:
+#         None
+#     """
+#     handler_class = kwargs.get("handler_class", None)
+#
+#     # loading the right handler based on configuration
+#     if handler_class is None:
+#         handler_class = _get_generic_handler_class(dataset_config)
+#
+#     handler_clear_existing_data_arg = kwargs.get(
+#         "handler_clear_existing_data_arg", None
+#     )
+#
+#     kwargs_handler_class = {
+#         "raw_bucket_name": kwargs.get(
+#             "raw_bucket_name", load_variable_from_config("BUCKET_RAW_DEFAULT")
+#         ),
+#         "optimised_bucket_name": kwargs.get(
+#             "optimised_bucket_name",
+#             load_variable_from_config("BUCKET_OPTIMISED_DEFAULT"),
+#         ),
+#         "root_prefix_cloud_optimised_path": kwargs.get(
+#             "root_prefix_cloud_optimised_path",
+#             load_variable_from_config("ROOT_PREFIX_CLOUD_OPTIMISED_PATH"),
+#         ),
+#         "input_object_key": obj_key,
+#         "dataset_config": dataset_config,
+#         "clear_existing_data": handler_clear_existing_data_arg,
+#     }
+#
+#     # Creating an instance of the specified class with the provided arguments
+#     with handler_class(**kwargs_handler_class) as handler_instance:
+#         handler_instance.to_cloud_optimised()
 
 
 def trim_memory() -> int:
@@ -526,7 +518,7 @@ def cloud_optimised_creation_loop(
     if handler_class is None:
         handler_class = _get_generic_handler_class(dataset_config)
 
-    handler_reprocess_arg = kwargs.get("clear_existing_data", None)
+    handler_clear_existing_data_arg = kwargs.get("clear_existing_data", None)
 
     # Create the kwargs_handler_class dictionary, to be used as list of arguments to call cloud_optimised_creation -> handler_class
     # when values need to be overwritten
@@ -547,106 +539,75 @@ def cloud_optimised_creation_loop(
 
     # Filter out None values
     filtered_kwargs = {k: v for k, v in kwargs_handler_class.items() if v is not None}
-
+    kwargs_handler_class = filtered_kwargs
     logger_name = dataset_config.get("logger_name", "generic")
     logger = get_logger(logger_name)
 
-    # Attempt to create a Coiled cluster
-    if dataset_config.get("cloud_optimised_format") == "parquet":
-
-        try:
-            from coiled import Cluster
-
-            cluster = Cluster(
-                n_workers=[1, 20],
-                scheduler_vm_types="t3.small",
-                worker_vm_types="t3.medium",
-                allow_ingress_from="me",
-                compute_purchase_option="spot_with_fallback",
-            )
-
-            client = Client(cluster)
-            client.amm.start()  # Start Active Memory Manager
-
-        except Exception as e:
-            logger.warning(
-                f"Could not create Coiled cluster: {e}. Falling back to local cluster."
-            )
-            # Create a local Dask cluster as a fallback
-            cluster = LocalCluster()
-            client = Client(cluster)
-
-    start_whole_processing = timeit.default_timer()
-
-    # Define the task function to be executed in parallel
-    def task(f, i):
+    def task(f, i, handler_clear_existing_data_arg=False):
         start_time = timeit.default_timer()
         try:
-            cloud_optimised_creation(
-                f,
-                dataset_config,
-                handler_class=handler_class,
-                handler_reprocess_arg=handler_reprocess_arg,
-                **filtered_kwargs,
-            )
-            time_spent = timeit.default_timer() - start_time
-            logger.info(
-                f"{i}/{len(obj_ls)}: {f} Cloud Optimised file completed in {time_spent}s"
-            )
+            kwargs_handler_class["input_object_key"] = f
+            kwargs_handler_class["dataset_config"] = dataset_config
+            kwargs_handler_class[
+                "clear_existing_data"
+            ] = handler_clear_existing_data_arg
+
+            # Creating an instance of the specified class with the provided arguments
+            with handler_class(**kwargs_handler_class) as handler_instance:
+                handler_instance.to_cloud_optimised()
+
+            #     cloud_optimised_creation(
+            #         f,
+            #         #dataset_config,
+            #         handler_class=handler_class,
+            #         handler_clear_existing_data_arg=handler_clear_existing_data_arg,
+            #         **filtered_kwargs,
+            #     )
+            #     time_spent = timeit.default_timer() - start_time
+            #     logger.info(
+            #         f"{i}/{len(obj_ls)}: {f} Cloud Optimised file completed in {time_spent}s"
+            #     )
         except Exception as e:
             logger.error(f"{i}/{len(obj_ls)} issue with {f}: {e}")
 
-    # Number of tasks to submit at once
-    n_tasks = 4
-
-    # Function to submit tasks in batches
-    # def submit_tasks_in_batches(client, task, obj_ls, n_tasks):
-    #     results = []
-    #     for i in range(0, len(obj_ls), n_tasks):
-    #         batch = obj_ls[i : i + n_tasks]
-    #         futures = [client.submit(task, f, i + j) for j, f in enumerate(batch)]
-    #         wait(futures)  # Wait for the batch to complete
-    #         results.extend(client.gather(futures))
-    #         wait_for_no_workers(
-    #             client
-    #         )  # Ensure no workers are busy before submitting the next batch
-    #
-    #         # #import ipdb;ipdb.set_trace()
-    #         # total_memory, total_unmanaged_memory_percentage = get_total_memory_info(client)
-    #         # logger.info(f"Total memory across all workers: {total_memory / 1e9} GB")
-    #         # logger.info(f"Total unmanaged memory percentage: {total_unmanaged_memory_percentage:.2f}%")
-    #         #
-    #         # if total_unmanaged_memory_percentage > 0.8:
-    #         #     logger.warning("High unmanaged memory, restart cluster")
-    #         #     client.close()
-    #         #     cluster.close()
-    #         #
-    #         #     cluster = Cluster(**cluster_options)
-    #
-    #     return results
-    #
-    # def wait_for_no_workers(client):
-    #     while True:
-    #         executing = False
-    #         workers_info = client.scheduler_info()["workers"].values()
-    #         for w in workers_info:
-    #             if "executing" in w and w["executing"]:
-    #                 executing = True
-    #                 break
-    #
-    #         if not executing:
-    #             break
-    #
-    #         time.sleep(1)
-
-    # Submit tasks to the Dask cluster
     if dataset_config.get("cloud_optimised_format") == "parquet":
 
-        # Parallel Execution with List Comprehension
-        futures = [client.submit(task, f, i) for i, f in enumerate(obj_ls, start=1)]
+        kwargs_handler_class["dataset_config"] = dataset_config
 
-        # Wait for all futures to complete
-        wait(futures)
+        start_whole_processing = timeit.default_timer()
+        # TODO: get read of cloud_optimised_creation function, only used for parquet single file. just rewrite this function
+        # TODO: for parquet, we got to create the cluster here! maybe the cluster creation should be written in its own class? some refactoring
+        # TODO: handle the clustering properly below
+        local_cluster_options = {
+            "n_workers": 2,
+            "memory_limit": "8GB",
+            "threads_per_worker": 2,
+        }
+
+        cluster = LocalCluster(**local_cluster_options)
+        client = Client(cluster)
+
+        client.amm.start()  # Start Active Memory Manager
+        logger.info(
+            f"Local Cluster dask dashboard available at {cluster.dashboard_link}"
+        )
+
+        if handler_clear_existing_data_arg:
+            # if handler_clear_existing_data_arg, better to wait for this task to complete before adding new data!!
+            futures_init = [
+                client.submit(task, obj_ls[0], 1, handler_clear_existing_data_arg=True)
+            ]
+            wait(futures_init)
+
+            # Parallel Execution with List Comprehension
+            futures = [
+                client.submit(task, f, i) for i, f in enumerate(obj_ls[1:], start=2)
+            ]
+            wait(futures)
+        else:
+            futures = [client.submit(task, f, i) for i, f in enumerate(obj_ls, start=1)]
+            wait(futures)
+
         client.close()
         cluster.close()
 
@@ -679,55 +640,19 @@ def cloud_optimised_creation_loop(
 
         # TODO: check if this is the best approach. default should be local!
         # we dont want to create a cluster for a file per file
-        if kwargs.get("cluster_mode", None) is None:
-            run_zarr_loop_sequentially = True
-
-        # TODO: add this somewhere as an optional argument
-        run_zarr_loop_sequentially = False
-        if run_zarr_loop_sequentially:
-            # TODO: if ran sequentially, there are memory leaks over time. Hard to understand why. To avoid this,
-            #       an option would be to create a new cluster every n files. or to check the unmanaged memory ratio and
-            #       create new workers if around 80% of unmanaged memory
-            # submit_tasks_in_batches(client, task, obj_ls, n_tasks)
-
-            # Parallel Execution with List Comprehension
-            # futures = [client.submit(task, f, i) for i, f in enumerate(obj_ls, start=1)]
-
-            # Wait for all futures to complete
-            # wait(futures)
-
-            # Submit tasks to the Dask cluster sequentially
-            # for i, f in enumerate(obj_ls, start=1):
-            #     client.amm.start()
-            #     future = client.submit(task, f, i)
-            #     result = future.result()  # Sequential Execution with future.result()
-            #     wait(future)
-            #
-            #     trim_future = client.submit(trim_memory)
-            #     wait(trim_future)
-            #
-            #     restart_cluster_every_n = 100
-            #     if i % 10 == restart_cluster_every_n:
-            #         # Scale down to zero workers
-            #         logger.info(
-            #             f"Restarting workers after {i} iterations to avoid memory leaks"
-            #         )
-            #         cluster.scale(0)
-            #
-            #         # Wait for the workers to be removed
-            #         wait_for_no_workers(client)
-            #
-            #         desired_n_workers = 1
-            #         # Scale back up to the desired number of workers
-            #         cluster.scale(desired_n_workers)
-            #
-            #         # Wait for the workers to be ready
-            #         client.wait_for_workers(desired_n_workers)
-            pass
+        # if kwargs.get("cluster_mode", None) is None:
+        #     run_zarr_loop_sequentially = True
+        #
+        # # TODO: add this somewhere as an optional argument
+        # run_zarr_loop_sequentially = False
+        # if run_zarr_loop_sequentially:
+        #     # TODO: if ran sequentially, there are memory leaks over time. Hard to understand why. To avoid this,
+        #     #       an option would be to create a new cluster every n files. or to check the unmanaged memory ratio and
+        #     #       create new workers if around 80% of unmanaged memory
 
         kwargs_handler_class["input_object_keys"] = obj_ls
         kwargs_handler_class["dataset_config"] = dataset_config
-        kwargs_handler_class["clear_existing_data"] = handler_reprocess_arg
+        kwargs_handler_class["clear_existing_data"] = handler_clear_existing_data_arg
 
         # Creating an instance of the specified class with the provided arguments
         with handler_class(**kwargs_handler_class) as handler_instance:

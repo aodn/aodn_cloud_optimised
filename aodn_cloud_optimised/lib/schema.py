@@ -4,6 +4,7 @@ import xarray as xr
 import numpy as np
 import json
 import tempfile
+import fsspec
 
 
 def generate_pyarrow_schema_from_s3_netcdf(s3_object_address, sub_schema):
@@ -35,39 +36,60 @@ def generate_pyarrow_schema_from_s3_netcdf(s3_object_address, sub_schema):
 
 def generate_json_schema_var_from_netcdf(nc_path, var_name, indent=2):
     """
-    Extracts variable names, types, and attributes from a NetCDF file in S3 and prints a JSON pyarrow_schema.
+    Extracts variable names, types, and attributes from a NetCDF file and returns a JSON pyarrow_schema.
 
     Args:
-        s3_object_nc_pathaddress (str): The address of the NetCDF object in S3 format,
-                                e.g., "s3://your-bucket/path/to/file.nc".
+        nc_path (str): Path or S3 address of the NetCDF file, e.g., "s3://your-bucket/path/to/file.nc".
+        var_name (str): Name of the variable or coordinate to extract schema for.
         indent (int, optional): Number of spaces for JSON indentation (default is 2).
 
     Returns:
-        None
+        str: JSON-formatted string representing the variable schema.
     """
-    with open(nc_path, "rb") as f:
-        dataset = xr.open_dataset(f)
+    #
+    if isinstance(nc_path, fsspec.spec.AbstractBufferedFile) and "S3" in str(
+        type(nc_path)
+    ):
+        # Open dataset from S3 file-like object using with statement
+        with xr.open_dataset(nc_path) as dataset:
+            schema = extract_variable_schema(dataset, var_name)
+    else:
+        # Open dataset from local file path using with statement
+        with xr.open_dataset(nc_path) as dataset:
+            schema = extract_variable_schema(dataset, var_name)
 
+    # Convert the schema dictionary to a JSON-formatted string with indentation
+    json_str = json.dumps(schema, indent=indent)
+    return json_str
+
+
+def extract_variable_schema(dataset, var_name):
+    """
+    Extracts variable schema (dtype and attributes) from an xarray Dataset or DataArray.
+
+    Args:
+        dataset (xarray.Dataset or xarray.DataArray): The xarray dataset or data array.
+        var_name (str): Name of the variable or coordinate to extract schema for.
+
+    Returns:
+        dict: Dictionary representing the variable schema.
+    """
     schema = {}
 
     # Process variables
     if var_name in dataset.variables:
         var_dtype = dataset.variables[var_name].dtype
-        dtype_str = convert_dtype_to_str(var_dtype)
-        var_attrs = extract_serialisable_attrs(dataset.variables[var_name].attrs)
+        dtype_str = str(var_dtype)
+        var_attrs = dataset.variables[var_name].attrs
         schema[var_name] = {"type": dtype_str, **var_attrs}
 
     elif var_name in dataset.coords:
         coord_dtype = dataset.coords[var_name].dtype
-        dtype_str = convert_dtype_to_str(coord_dtype)
-        coord_attrs = extract_serialisable_attrs(dataset.coords[var_name].attrs)
+        dtype_str = str(coord_dtype)
+        coord_attrs = dataset.coords[var_name].attrs
         schema[var_name] = {"type": dtype_str, **coord_attrs}
 
-    # Convert the pyarrow_schema dictionary to a JSON-formatted string with indentation
-    json_str = json.dumps(schema, indent=indent)
-
-    # Print the JSON string with double quotes for easy copy/paste
-    return json_str
+    return schema
 
 
 def generate_json_schema_from_s3_netcdf(s3_object_address, indent=2):
