@@ -3,7 +3,7 @@ import importlib.resources
 
 from aodn_cloud_optimised.lib.ArgoHandler import ArgoHandler
 from aodn_cloud_optimised.lib.CommonHandler import (
-    cloud_optimised_creation_loop,
+    cloud_optimised_creation,
     cloud_optimised_creation,
 )
 from aodn_cloud_optimised.lib.config import (
@@ -45,7 +45,7 @@ def main():
             BUCKET_RAW_DEFAULT, f"IMOS/Argo/dac/{org}", suffix="_prof.nc"
         )
 
-        cloud_optimised_creation_loop(
+        cloud_optimised_creation(
             argo_core_ls, dataset_config=dataset_config, handler_class=ArgoHandler
         )
 

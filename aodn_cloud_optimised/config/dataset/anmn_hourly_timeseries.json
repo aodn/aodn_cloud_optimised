@@ -3,14 +3,14 @@
   "logger_name": "anmn_hourly_timeseries",
   "cloud_optimised_format": "parquet",
   "cluster_options" : {
-  "n_workers": [1, 20],
-  "scheduler_vm_types": "t3.small",
-  "worker_vm_types": "t3.large",
-  "allow_ingress_from": "me",
-  "compute_purchase_option": "spot_with_fallback",
-  "worker_options": {
-    "nthreads": 8,
-    "memory_limit": "32GB" }
+    "n_workers": [8, 20],
+    "scheduler_vm_types": "t3.small",
+    "worker_vm_types": "t3.large",
+    "allow_ingress_from": "me",
+    "compute_purchase_option": "spot_with_fallback",
+    "worker_options": {
+      "nthreads": 8,
+      "memory_limit": "32GB" }
   },
   "metadata_uuid": "7b901002-b1dc-46c3-89f2-b4951cedca48",
   "gattrs_to_variables": [

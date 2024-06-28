@@ -2,6 +2,16 @@
   "dataset_name": "anmn_temperature_logger_ts_fv01",
   "logger_name": "anmn_temperature_logger_ts_fv01",
   "cloud_optimised_format": "parquet",
+  "cluster_options" : {
+    "n_workers": [8, 20],
+    "scheduler_vm_types": "t3.small",
+    "worker_vm_types": "t3.large",
+    "allow_ingress_from": "me",
+    "compute_purchase_option": "spot_with_fallback",
+    "worker_options": {
+      "nthreads": 8,
+      "memory_limit": "32GB" }
+  },
   "metadata_uuid": "7e13b5f3-4a70-4e31-9e95-335efa491c5c",
   "gattrs_to_variables": [
     "site_code"

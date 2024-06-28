@@ -80,6 +80,8 @@ srs_l3s_3d_dn_to_zarr = "aodn_cloud_optimised.bin.srs_l3s_3d_dn_to_zarr:main"
 pytest = "^8.2.1"
 coverage = "^7.5.3"
 pre-commit = "^3.7.1"
+moto = {version = "^4.1.15", extras = ["ec2", "s3",  "server", "all"]}  # Add Moto with optional dependencies
+
 
 [tool.pre_commit]
 version = "2.3.0"

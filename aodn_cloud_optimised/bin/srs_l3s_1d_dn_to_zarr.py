@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import importlib.resources
 
-from aodn_cloud_optimised.lib.CommonHandler import cloud_optimised_creation_loop
+from aodn_cloud_optimised.lib.CommonHandler import cloud_optimised_creation
 from aodn_cloud_optimised.lib.config import (
     load_variable_from_config,
     load_dataset_config,
@@ -11,7 +11,7 @@ from aodn_cloud_optimised.lib.s3Tools import s3_ls
 
 def main():
     BUCKET_RAW_DEFAULT = load_variable_from_config("BUCKET_RAW_DEFAULT")
-    nc_obj_ls = s3_ls(BUCKET_RAW_DEFAULT, "IMOS/SRS/SST/ghrsst/L3S-1d/dn/2023")
+    nc_obj_ls = s3_ls(BUCKET_RAW_DEFAULT, "IMOS/SRS/SST/ghrsst/L3S-1d/dn/2022")
 
     dataset_config = load_dataset_config(
         str(
@@ -20,22 +20,20 @@ def main():
             )
         )
     )
-    # reprocess one file! it works!!
-    # TODO: rename cloud_optimised_creation_loop as this can handle (for ZARR at least) an array of one file or many files
-    #       and for zarr cloud_optimised_creation_loop bypasses cloud_optimised_creation
+
+    # Process one file only, on a local cluster, and delete previous data
     # cloud_optimised_creation_loop(
     #     [nc_obj_ls[0]],
     #     dataset_config=dataset_config,
-    #     # clear_existing_data=True,
-    #     cluster_mode="remote",
+    #     clear_existing_data=True,
+    #     cluster_mode="local",
     # )
 
-    # TODO: handle as an input a s3 url
-    cloud_optimised_creation_loop(
-        [nc_obj_ls[0]],
+    cloud_optimised_creation(
+        nc_obj_ls,
         dataset_config=dataset_config,
-        clear_existing_data=True,
-        cluster_mode="local",
+        # clear_existing_data=True,
+        cluster_mode="remote",
     )
 
 

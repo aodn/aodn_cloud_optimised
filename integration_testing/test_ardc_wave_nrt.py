@@ -7,7 +7,7 @@ import pandas as pd
 import pyarrow.dataset as pds
 import pyarrow.parquet as pq
 
-from aodn_cloud_optimised.lib.CommonHandler import cloud_optimised_creation_loop
+from aodn_cloud_optimised.lib.CommonHandler import cloud_optimised_creation
 from aodn_cloud_optimised.lib.ParquetDataQuery import *
 from aodn_cloud_optimised.lib.config import (
     load_variable_from_config,
@@ -49,7 +49,7 @@ class TestIntegrationArdcWaveNrt(unittest.TestCase):
             ),
         )
 
-        cloud_optimised_creation_loop(
+        cloud_optimised_creation(
             nc_obj_ls,
             dataset_config=dataset_config,
             raw_bucket_name=load_variable_from_config(

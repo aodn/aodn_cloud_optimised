@@ -2,6 +2,16 @@
   "dataset_name": "ardc_wave_nrt",
   "logger_name": "ardc_wave_nrt",
   "cloud_optimised_format": "parquet",
+  "cluster_options" : {
+    "n_workers": [8, 20],
+    "scheduler_vm_types": "t3.small",
+    "worker_vm_types": "t3.large",
+    "allow_ingress_from": "me",
+    "compute_purchase_option": "spot_with_fallback",
+    "worker_options": {
+      "nthreads": 8,
+      "memory_limit": "32GB" }
+  },
   "metadata_uuid": "2807f3aa-4db0-4924-b64b-354ae8c10b58",
   "gattrs_to_variables": [
     "site_name",

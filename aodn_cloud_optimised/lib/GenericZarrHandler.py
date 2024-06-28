@@ -1,8 +1,6 @@
 import importlib.resources
-import os
-import timeit
-import traceback
 import warnings
+from functools import partial
 
 import boto3
 import dask
@@ -12,21 +10,18 @@ import s3fs
 import xarray as xr
 import zarr
 from dask.diagnostics import ProgressBar
-from dask.distributed import Client, Lock, get_client, wait
+from dask.distributed import Client
 from rechunker import rechunk
 from xarray.core.merge import MergeError
 
-from functools import partial, partialmethod
-
+from aodn_cloud_optimised.lib.CommonHandler import CommonHandler
+from aodn_cloud_optimised.lib.logging import get_logger
 from aodn_cloud_optimised.lib.s3Tools import (
     delete_objects_in_prefix,
     split_s3_path,
     prefix_exists,
     create_fileset,
 )
-from aodn_cloud_optimised.lib.CommonHandler import CommonHandler
-from aodn_cloud_optimised.lib.logging import get_logger
-import fsspec
 
 
 def preprocess_xarray(ds, dataset_config):
@@ -98,95 +93,6 @@ class GenericHandler(CommonHandler):
         self.store = s3fs.S3Map(
             root=f"{self.cloud_optimised_output_path}", s3=self.s3, check=False
         )
-
-    # def acquire_dask_lock(self):
-    #     """
-    #     Acquire a Dask distributed lock to ensure exclusive access to a shared resource.
-    #
-    #     This method attempts to acquire a named Dask lock to prevent concurrent access to a
-    #     shared resource, such as writing to a Zarr dataset. If a Dask client is available,
-    #     it will obtain the lock, blocking if necessary until the lock becomes available.
-    #     If no Dask client is available, it will set the lock attribute to None and log a warning.
-    #     """
-    #     lock_name = "zarr_write_lock"
-    #
-    #     # Attempt to get the Dask client
-    #     try:
-    #         self.dask_client = get_client()  # Get the Dask client
-    #         self.logger.info(f"Acquired Dask Client: {self.dask_client}")
-    #     except ValueError:
-    #         self.dask_client = None  # Set to None if no Dask client is found
-    #         self.lock = None  # Set to None if no Dask cluster is found
-    #         self.logger.warning("Dask Client not found. No cluster lock to setup")
-    #
-    #     if self.dask_client:
-    #         lock = Lock(name=lock_name, client=self.dask_client)
-    #         lock.acquire(
-    #             blocking=False
-    #         )  #  https://docs.python.org/3/library/threading.html#threading.Lock.acquire
-    #         # When invoked with the blocking argument set to True (the default), block until the lock is unlocked, then set it to locked and return True.
-    #
-    #         self.logger.info(f"Lock '{lock_name}' acquired successfully.")
-    #         self.lock = lock
-    #
-    # def release_lock(self):
-    #     """
-    #     Release the currently held Dask lock.
-    #
-    #     This method releases the Dask lock previously acquired by the `acquire_dask_lock` method.
-    #     If the lock is held, it will be released and an info message will be logged. If the lock
-    #     is not held, it will log an info message indicating that no lock is held.
-    #     """
-    #     if self.lock:
-    #         # if self.lock.locked():
-    #         self.lock.release()
-    #         self.logger.info("Lock released.")
-    #         self.lock = None
-    #     else:
-    #         self.logger.info("No lock is held.")
-
-    # def check_file_already_processed(self) -> bool:
-    #     """
-    #     Check whether a NetCDF file has been previously processed and integrated into an existing Zarr dataset.
-    #     This check is performed by examining the filename variable added to the Zarr dataset.
-    #
-    #     If the file has been processed previously, a self.reprocessed_time_idx variable will be created
-    #     to determine the index value of the time variable region for potential overwriting.
-    #
-    #     :returns:
-    #         - True if the filename has already been integrated.
-    #         - False if the filename has not been integrated yet.
-    #     """
-    #     self.logger.info(
-    #         f"{self.filename}: Checking if input NetCDF has already been ingested into Zarr dataset"
-    #     )
-    #
-    #     # Load existing zarr dataset
-    #     try:
-    #         ds = xr.open_zarr(
-    #             fsspec.get_mapper(self.cloud_optimised_output_path, anon=True),
-    #             consolidated=True,
-    #         )
-    #     except Exception as e:
-    #         self.logger.warning(f"Zarr dataset does not exist")
-    #         return False
-    #
-    #     # TODO: Fix this as filename might not be a variable anymore. Solution is to load the org zarr dataset and look
-    #     #       for time index where the values are similar
-    #     # Locate values of time indexes where new filename has possibly been already downloaded
-    #     idx = ds.indexes[self.dimensions["time"]["name"]].where(
-    #         ds.filename == self.filename
-    #     )
-    #     not_nan_mask = ~idx.isna()  # ~np.isnan(idx)
-    #
-    #     # Use numpy.where to get the indices where the values are not NaN
-    #     indices_not_nan = np.where(not_nan_mask)[0]
-    #     if indices_not_nan.size == 1:  # filename exists, file part of existing zarr
-    #         self.reprocessed_time_idx = indices_not_nan[0]
-    #         return True
-    #
-    #     elif indices_not_nan.size == 0:
-    #         return False
 
     def preprocess_xarray(self, ds) -> xr.Dataset:
         """
@@ -494,104 +400,6 @@ class GenericHandler(CommonHandler):
                     if "ds" in locals():
                         self.postprocess(ds)
 
-    # def preprocess_single_file(self, fileset) -> xr.Dataset:
-    #     """
-    #     Create a dataframe and xarray data from a NetCDF file. Loaded in memory.
-    #
-    #     :return:
-    #         ds: xarray Dataset.
-    #     """
-    #
-    #     # TODO:  be careful here. needs to be rewritten to have the 2 cases, single file, or list of files
-    #     # in order to allow paraellel=True, all the workers need to have access to the file. The file can't be local
-    #     # as not all the workers will have it.
-    #     # to fix this, we're opening the file with fsspec
-    #
-    #     # if self.input_object_key is None:
-    #     #     raise ValueError("input_object_key is not defined")
-    #
-    #     # fileset = self.create_fileset(self.raw_bucket_name, [self.input_object_key])
-    #
-    #     ds = xr.open_dataset(
-    #         fileset,
-    #         engine="h5netcdf",
-    #         concat_characters=True,
-    #         mask_and_scale=True,
-    #         decode_cf=True,
-    #         decode_times=True,
-    #         use_cftime=True,
-    #         # autoclose=True,
-    #         decode_coords=True,
-    #     )
-    #
-    #     filename = os.path.basename(fileset.full_name)
-    #     ds = self.preprocess_xarray(ds, filename)
-    #
-    #     return ds
-    #
-    # def publish_cloud_optimised_single_file(self, ds):
-    #     """
-    #     Create or update a Zarr dataset in the specified S3 bucket.
-    #
-    #     :param ds: The xarray dataset to be stored in Zarr format.
-    #     :type ds: xr.Dataset
-    #
-    #     :return: None
-    #     """
-    #
-    #     ds = ds.chunk(chunks=self.chunks)
-    #
-    #     if self.prefix_exists(self.cloud_optimised_output_path):
-    #
-    #         self.logger.info(f"{self.filename}: append data to existing Zarr")
-    #
-    #         # case when a file should be reprocessed and writen to a specific region
-    #         if self.check_file_already_processed():
-    #             self.logger.info(
-    #                 f"{self.filename}: update time region at slice({self.reprocessed_time_idx} , {self.reprocessed_time_idx + 1}) with new NetCDF data"
-    #             )
-    #             # when setting `region` explicitly in to_zarr(), all variables in the dataset to write
-    #             # must have at least one dimension in common with the region's dimensions ['TIME'],
-    #             # but that is not the case for some variables here. To drop these variables
-    #             # from this dataset before exporting to zarr, write:
-    #             # .drop_vars(['LATITUDE', 'LONGITUDE', 'GDOP'])
-    #
-    #             write_job = ds.drop_vars(self.vars_to_drop_no_common_dimension).to_zarr(
-    #                 self.store,
-    #                 write_empty_chunks=False,
-    #                 region={
-    #                     self.dimensions["time"]["name"]: slice(
-    #                         self.reprocessed_time_idx, self.reprocessed_time_idx + 1
-    #                     )
-    #                 },
-    #                 compute=self.compute,
-    #                 consolidated=True,
-    #             )
-    #         else:
-    #             write_job = ds.to_zarr(
-    #                 self.store,
-    #                 write_empty_chunks=False,
-    #                 mode="a",
-    #                 compute=self.compute,
-    #                 append_dim=self.dimensions["time"]["name"],
-    #                 consolidated=True,
-    #             )
-    #     else:
-    #         self.logger.info(f"{self.filename}: Write data to new Zarr dataset")
-    #
-    #         write_job = ds.to_zarr(
-    #             self.store,
-    #             write_empty_chunks=False,
-    #             mode="w",
-    #             compute=self.compute,
-    #             consolidated=True,
-    #         )
-    #         self.logger.info(f"{self.filename}: Writen data to new Zarr dataset")
-    #
-    #     self.logger.info(
-    #         f"{self.filename}: Zarr created and pushed to {self.cloud_optimised_output_path} successfully"
-    #     )
-
     def to_cloud_optimised(self, s3_file_uri_list=None):
         """
         Create a Zarr dataset from NetCDF data.
@@ -619,56 +427,12 @@ class GenericHandler(CommonHandler):
 
                 delete_objects_in_prefix(bucket_name, prefix)
 
-        # import ipdb;ipdb.set_trace()
-        # if isinstance(input_objects, list):
-        #     # Check if all elements in the list are instances of s3fs.S3File
-        #     if all(isinstance(obj, fsspec.spec.AbstractBufferedFile) and 'S3' in str(type(obj)) for obj in
-        #            input_objects):
-        #         return input_objects
-        # elif isinstance(input_objects, fsspec.spec.AbstractBufferedFile) and 'S3' in str(type(input_objects)):
-        #     # Convert single s3fs.S3File object to a list
-        #     return [input_objects]
-
         # Multiple file processing with cluster
         if s3_file_uri_list is not None:
             # creating a cluster to process multiple files at once
             self.client, self.cluster = self.create_cluster()
             self.publish_cloud_optimised_fileset_batch(s3_file_uri_list)
             self.close_cluster(self.client, self.cluster)
-
-        # elif self.input_object_key is not None:
-        #
-        #     try:
-        #         fileset = self.create_fileset(
-        #             self.raw_bucket_name, [self.input_object_key]
-        #         )
-        #         ds = self.preprocess_single_file(fileset)
-        #
-        #         try:
-        #             lock = Lock(name="zarr_lock", client=get_client())
-        #             self.logger.info(f"Get lock from Client {lock}")
-        #             with lock:
-        #                 self.publish_cloud_optimised_single_file(ds)
-        #         except:
-        #             self.logger.info("No existing Dask client to set up a lock")
-        #             self.publish_cloud_optimised_single_file(ds)
-        #
-        #         self.push_metadata_aws_registry()
-        #
-        #         time_spent = timeit.default_timer() - self.start_time
-        #         self.logger.info(
-        #             f"Cloud Optimised file of {self.input_object_key} completed in {time_spent}s"
-        #         )
-
-        # self.postprocess(ds)
-
-        # except Exception as e:
-        #     self.logger.error(
-        #         f"Issue while creating Cloud Optimised file: {type(e).__name__}: {e} \n {traceback.print_exc()}"
-        #     )
-        #
-        #     if "ds" in locals():
-        #         self.postprocess(ds)
 
     @staticmethod
     def filter_rechunk_dimensions(dimensions):

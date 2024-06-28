@@ -1,9 +1,8 @@
 import importlib.resources
-import json
 import os
 import re
 import timeit
-from typing import List, Tuple, Generator
+from typing import Tuple, Generator
 
 import boto3
 import numpy as np
@@ -811,7 +810,7 @@ class GenericHandler(CommonHandler):
             parquet_files = pq.ParquetDataset(
                 self.cloud_optimised_output_path, partitioning="hive"
             )
-        except FileNotFoundError as e:
+        except Exception as e:
             self.logger.info(f"No files to delete: {e}")
             return
 
@@ -890,6 +889,7 @@ class GenericHandler(CommonHandler):
             raise e
 
     def to_cloud_optimised(self, s3_file_uri_list) -> None:
+
         if self.clear_existing_data:
             self.logger.warning(
                 f"Creating new Parquet dataset - DELETING existing all Parquet objects if exist"
@@ -909,8 +909,15 @@ class GenericHandler(CommonHandler):
 
         client, cluster = self.create_cluster()
 
-        futures = [
-            client.submit(task, f, i) for i, f in enumerate(s3_file_uri_list, start=1)
-        ]
-        wait(futures)
+        batch_size = 5
+
+        # TODO: Do it in batches. maybe more efficient
+        for i in range(0, len(s3_file_uri_list), batch_size):
+            batch = s3_file_uri_list[i : i + batch_size]
+            batch_tasks = [
+                client.submit(task, f, idx + 1) for idx, f in enumerate(batch)
+            ]
+
+            wait(batch_tasks)
+
         self.close_cluster(client, cluster)

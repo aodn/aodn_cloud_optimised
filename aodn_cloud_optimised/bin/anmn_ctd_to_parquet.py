@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import importlib.resources
 
-from aodn_cloud_optimised.lib.CommonHandler import cloud_optimised_creation_loop
+from aodn_cloud_optimised.lib.CommonHandler import cloud_optimised_creation
 from aodn_cloud_optimised.lib.config import (
     load_variable_from_config,
     load_dataset_config,
@@ -31,7 +31,9 @@ def main():
         )
     )
 
-    cloud_optimised_creation_loop(ctd_ts_fv01_ls, dataset_config=dataset_config)
+    cloud_optimised_creation(
+        ctd_ts_fv01_ls, dataset_config=dataset_config, clear_existing_data=True
+    )
 
 
 if __name__ == "__main__":
