@@ -15,6 +15,9 @@ from jsonschema import validate, ValidationError
 from .config import load_variable_from_config, load_dataset_config
 from .logging import get_logger
 
+import s3fs
+import unittest
+
 
 class CommonHandler:
     def __init__(self, **kwargs):
@@ -27,7 +30,7 @@ class CommonHandler:
                 optimised_bucket_name (str, optional[config]): Name of the optimised bucket.
                 root_prefix_cloud_optimised_path (str, optional[config]): Root Prefix path of the location of cloud optimised files
                 input_object_key (str): Key of the input object.
-                force_old_pq_del (bool, optional[config]): Force the deletion of existing cloud optimised files(slow) (default=False)
+                force_previous_parquet_deletion (bool, optional[config]): Force the deletion of existing cloud optimised files(slow) (default=False)
 
         """
         self.start_time = timeit.default_timer()
@@ -77,12 +80,26 @@ class CommonHandler:
 
         self.cluster_options = self.dataset_config.get("cluster_options", None)
 
+        # TODO: fix this ugly abomination
+        if "unittest" in globals() or "unittest" in locals():
+            # Check if unittest is imported
+            if unittest.TestCase("__init__").__class__.__module__ == "unittest.case":
+                self.s3_fs = s3fs.S3FileSystem(
+                    anon=False,
+                    client_kwargs={
+                        "endpoint_url": "http://127.0.0.1:5555/",
+                        "region_name": "us-east-1",
+                    },
+                )
+            else:
+                self.s3_fs = s3fs.S3FileSystem(anon=False)
+
     def __enter__(self):
         # Initialize resources if necessary
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        # Release any resources held by the handler
+        # Release any resources held by the handler_nc_anmn_file
         self.close()
 
     def close(self):
@@ -358,9 +375,9 @@ class CommonHandler:
 
 def _get_generic_handler_class(dataset_config):
     """
-    Determine the appropriate handler class based on the dataset configuration.
+    Determine the appropriate handler_nc_anmn_file class based on the dataset configuration.
 
-    This function selects and returns the handler class for processing cloud-optimized
+    This function selects and returns the handler_nc_anmn_file class for processing cloud-optimized
     datasets in either Zarr or Parquet format.
 
     Parameters
@@ -373,7 +390,7 @@ def _get_generic_handler_class(dataset_config):
     Returns
     -------
     handler_class : class
-        The handler class corresponding to the specified cloud-optimized format.
+        The handler_nc_anmn_file class corresponding to the specified cloud-optimized format.
 
     Raises
     ------
@@ -407,7 +424,7 @@ def cloud_optimised_creation(
         dataset_config (dictionary): dataset configuration. Check config/dataset_template.json for example
         **kwargs: Additional keyword arguments for customization.
             handler_class (class, optional): Handler class for cloud optimised creation.
-            force_old_pq_del (bool, optional): Whether to force deletion of old Parquet files (default is False).
+            force_previous_parquet_deletion (bool, optional): Whether to force deletion of old Parquet files (default is False).
 
     Returns:
         None
@@ -415,7 +432,7 @@ def cloud_optimised_creation(
 
     handler_class = kwargs.get("handler_class", None)
 
-    # loading the right handler based on configuration
+    # loading the right handler_nc_anmn_file based on configuration
     if handler_class is None:
         handler_class = _get_generic_handler_class(dataset_config)
 

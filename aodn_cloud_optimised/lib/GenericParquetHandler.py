@@ -42,13 +42,14 @@ class GenericHandler(CommonHandler):
                 optimised_bucket_name (str, optional[config]): Name of the optimised bucket.
                 root_prefix_cloud_optimised_path (str, optional[config]): Root Prefix path of the location of cloud optimised files
                 input_object_key (str): Key of the input object.
-                force_old_pq_del (bool, optional[config]): Force the deletion of existing cloud optimised files(slow) (default=False)
+                force_previous_parquet_deletion (bool, optional[config]): Force the deletion of existing cloud optimised files(slow) (default=False)
 
         """
         super().__init__(**kwargs)
 
         self.delete_pq_unmatch_enable = kwargs.get(
-            "force_old_pq_del", self.dataset_config.get("force_old_pq_del", False)
+            "force_previous_parquet_deletion",
+            self.dataset_config.get("force_previous_parquet_deletion", False),
         )
 
         json_validation_path = str(
@@ -143,7 +144,7 @@ class GenericHandler(CommonHandler):
             tuple: A tuple containing DataFrame and Dataset.
         """
 
-        with xr.open_dataset(netcdf_fp) as ds:
+        with xr.open_dataset(netcdf_fp, engine="h5netcdf") as ds:
             # Convert xarray to pandas DataFrame
             df = ds.to_dataframe()
             # TODO: call check function on variable attributes
@@ -594,6 +595,7 @@ class GenericHandler(CommonHandler):
         pq.write_to_dataset(
             pdf,
             root_path=self.cloud_optimised_output_path,
+            filesystem=self.s3_fs,
             existing_data_behavior="overwrite_or_ignore",
             row_group_size=20000,
             partition_cols=partition_keys,
@@ -743,7 +745,11 @@ class GenericHandler(CommonHandler):
         dataset_metadata_path = os.path.join(
             self.cloud_optimised_output_path, "_common_metadata"
         )
-        pq.write_metadata(pdf_schema, dataset_metadata_path)
+        pq.write_metadata(
+            pdf_schema,
+            dataset_metadata_path,
+            filesystem=self.s3_fs,
+        )
 
         self.logger.info(
             f"Parquet metadata file successfully created in {dataset_metadata_path} \n"
@@ -807,8 +813,13 @@ class GenericHandler(CommonHandler):
         # remote test on local machine shows 15 sec for 50k objects
 
         try:
+            # TODO: with moto and unittests, we get the following error:
+            #       GetFileInfo() yielded path 'imos-data-lab-optimised/testing/anmn_ctd_ts_fv01.parquet/site_code=SYD140/timestamp=1625097600/polygon=01030000000100000005000000000000000020624000000000008041C0000000000060634000000000008041C0000000000060634000000000000039C0000000000020624000000000000039C0000000000020624000000000008041C0/IMOS_ANMN-NSW_CDSTZ_20210429T015500Z_SYD140_FV01_SYD140-2104-SBE37SM-RS232-128_END-20210812T011500Z_C-20210827T074819Z.nc-0.parquet', which is outside base dir 's3://imos-data-lab-optimised/testing/anmn_ctd_ts_fv01.parquet/'
+            #       obviously the file to delete is found with the unittests, but there is an issue, maybe with the way filesystem is set. Reading with pandas works, but we don't have the same capabilities
             parquet_files = pq.ParquetDataset(
-                self.cloud_optimised_output_path, partitioning="hive"
+                self.cloud_optimised_output_path,
+                partitioning="hive",
+                filesystem=self.s3_fs,
             )
         except Exception as e:
             self.logger.info(f"No files to delete: {e}")
@@ -866,7 +877,7 @@ class GenericHandler(CommonHandler):
             for df, ds in generator:
 
                 self.publish_cloud_optimised(df, ds, s3_file_handle)
-                self.push_metadata_aws_registry()
+                # self.push_metadata_aws_registry()
 
                 time_spent = timeit.default_timer() - self.start_time
                 self.logger.info(f"Cloud Optimised file completed in {time_spent}s")
@@ -891,7 +902,7 @@ class GenericHandler(CommonHandler):
     def to_cloud_optimised(self, s3_file_uri_list) -> None:
 
         if self.clear_existing_data:
-            self.logger.warning(
+            self.logger.info(
                 f"Creating new Parquet dataset - DELETING existing all Parquet objects if exist"
             )
             if prefix_exists(self.cloud_optimised_output_path):

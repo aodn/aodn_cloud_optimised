@@ -7,6 +7,7 @@ import tempfile
 import fsspec
 
 
+# TODO: fix s3fs issue with moto mock
 def generate_pyarrow_schema_from_s3_netcdf(s3_object_address, sub_schema):
     """
     Extracts variable names and types from a NetCDF file in S3 and returns a PyArrow pyarrow_schema.

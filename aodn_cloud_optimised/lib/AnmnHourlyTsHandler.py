@@ -15,7 +15,7 @@ class AnmnHourlyTsHandler(GenericHandler):
         self, netcdf_fp
     ) -> Generator[Tuple[pd.DataFrame, xr.Dataset], None, None]:
         # Use open_dataset as a context manager to ensure proper handling of the dataset
-        with xr.open_dataset(netcdf_fp) as ds:
+        with xr.open_dataset(netcdf_fp, engine="h5netcdf") as ds:
             # Convert xarray to pandas DataFrame
             assert set(ds.dims) == {
                 "OBSERVATION",

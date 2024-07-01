@@ -1,6 +1,8 @@
 import boto3
 from urllib.parse import urlparse
 import s3fs
+import unittest
+import logging
 
 
 def s3_ls(bucket, prefix, suffix=".nc", s3_path=True) -> list:
@@ -64,6 +66,7 @@ def delete_objects_in_prefix(bucket_name, prefix):
         botocore.exceptions.ClientError: If there is an error with the S3 client operation.
     """
     s3 = boto3.client("s3")
+    logger = logging.getLogger()
 
     # Continuation token for paginated results
     continuation_token = None
@@ -82,7 +85,9 @@ def delete_objects_in_prefix(bucket_name, prefix):
 
         # Check if there are any objects to delete
         if "Contents" not in response:
-            print(f"No objects found with prefix '{prefix}' in bucket '{bucket_name}'.")
+            logger.info(
+                f"No objects found with prefix '{prefix}' in bucket '{bucket_name}'."
+            )
             return
 
         # Collect object keys to delete
@@ -96,7 +101,7 @@ def delete_objects_in_prefix(bucket_name, prefix):
             },
         )
 
-        print(f"Deleted {len(delete_response['Deleted'])} objects.")
+        logger.info(f"Deleted {len(delete_response['Deleted'])} objects.")
 
         # Check if there are more objects to delete
         if response["IsTruncated"]:
@@ -163,7 +168,16 @@ def create_fileset(s3_paths):
     Returns:
         list[file-like object]: List of file-like objects representing each object in the fileset.
     """
-    s3_fs = s3fs.S3FileSystem(anon=True)
+
+    # TODO: fix this ugly abomination
+    if "unittest" in globals() or "unittest" in locals():
+        # Check if unittest is imported
+        if unittest.TestCase("__init__").__class__.__module__ == "unittest.case":
+            s3_fs = s3fs.S3FileSystem(
+                anon=False, client_kwargs={"endpoint_url": "http://127.0.0.1:5555/"}
+            )
+        else:
+            s3_fs = s3fs.S3FileSystem(anon=True)
 
     if isinstance(s3_paths, str):
         s3_paths = [s3_paths]

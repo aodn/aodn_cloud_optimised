@@ -1,5 +1,5 @@
 {
-    "dataset_name": "srs_l3s_1d_dn_2",
+    "dataset_name": "srs_l3s_1d_dn",
     "logger_name": "srs_l3s_1d_dn",
     "cloud_optimised_format": "zarr",
     "cluster_options" : {

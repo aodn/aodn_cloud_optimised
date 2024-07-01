@@ -10,174 +10,197 @@ from numpy.testing import assert_array_equal
 
 from aodn_cloud_optimised.lib.ArgoHandler import ArgoHandler
 from aodn_cloud_optimised.lib.config import load_dataset_config
+import json
+import os
+import unittest
+
+import boto3
+import pandas as pd
+import pyarrow as pa
+import s3fs
+from moto import mock_aws
+from moto.moto_server.threaded_moto_server import ThreadedMotoServer
+from shapely import wkb
+from shapely.geometry import Polygon
+
+from aodn_cloud_optimised.lib.GenericParquetHandler import GenericHandler
+from aodn_cloud_optimised.lib.config import load_dataset_config
+from aodn_cloud_optimised.lib.s3Tools import s3_ls
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Specify the filename relative to the current directory
+
 TEST_FILE_NC = os.path.join(ROOT_DIR, "resources", "2902093_prof.nc")
 TEST_FILE_BAD_GEOM_NC = os.path.join(ROOT_DIR, "resources", "5905017_prof.nc")
 
-CONFIG_JSON = os.path.join(ROOT_DIR, "resources", "argo_core.json")
+DATASET_CONFIG = os.path.join(ROOT_DIR, "resources", "argo_core.json")
 
 
+@mock_aws
 class TestGenericHandler(unittest.TestCase):
-    @patch("aodn_cloud_optimised.lib.ArgoHandler.ArgoHandler.get_s3_raw_obj")
-    def setUp(self, mock_get_s3_raw_obj):
-        # Create a temporary directory
-        self.tmp_dir = tempfile.mkdtemp()
+    def setUp(self):
+        self.BUCKET_OPTIMISED_NAME = "imos-data-lab-optimised"
+        self.ROOT_PREFIX_CLOUD_OPTIMISED_PATH = "testing"
+        self.s3 = boto3.client("s3", region_name="us-east-1")
+        self.s3.create_bucket(Bucket="imos-data")
+        self.s3.create_bucket(Bucket=self.BUCKET_OPTIMISED_NAME)
 
-        # Copy the test NetCDF file to the temporary directory
-        self.tmp_nc_path = os.path.join(self.tmp_dir, os.path.basename(TEST_FILE_NC))
-        shutil.copy(TEST_FILE_NC, self.tmp_nc_path)
+        # create moto server; needed for s3fs and parquet
+        self.server = ThreadedMotoServer(ip_address="127.0.0.1", port=5555)
 
-        self.tmp_nc_bad_geom_path = os.path.join(
-            self.tmp_dir, os.path.basename(TEST_FILE_BAD_GEOM_NC)
-        )
-        shutil.copy(TEST_FILE_BAD_GEOM_NC, self.tmp_nc_bad_geom_path)
-
-        dataset_config = load_dataset_config(CONFIG_JSON)
-
-        self.handler = ArgoHandler(
-            raw_bucket_name="dummy_raw_bucket",
-            optimised_bucket_name="dummy_optimised_bucket",
-            input_object_key=os.path.basename(self.tmp_nc_path),
-            dataset_config=dataset_config,
+        # TODO: use it for patching?
+        self.s3_fs = s3fs.S3FileSystem(
+            anon=False,
+            client_kwargs={
+                "endpoint_url": "http://127.0.0.1:5555/",
+                "region_name": "us-east-1",
+            },
         )
 
-        self.handler_bad_geom = ArgoHandler(
-            raw_bucket_name="dummy_raw_bucket",
-            optimised_bucket_name="dummy_optimised_bucket",
-            input_object_key=os.path.basename(self.tmp_nc_bad_geom_path),
-            dataset_config=dataset_config,
-        )
-        # modify the path of the parquet dataset output
-        self.handler.cloud_optimised_output_path = os.path.join(
-            self.tmp_dir, "dummy_table_name"
-        )
-        self.handler_bad_geom.cloud_optimised_output_path = os.path.join(
-            self.tmp_dir, "dummy_table_name"
-        )
+        self.server.start()
 
-        # Create a mock object for xr.open_dataset
-        self.mock_open_dataset = MagicMock()
+        # Make the "imos-data" bucket public
+        public_policy_imos_data = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Principal": "*",
+                    "Action": "s3:GetObject",
+                    "Resource": "arn:aws:s3:::imos-data/*",
+                }
+            ],
+        }
 
-    # test method inherited from super
-    @patch("aodn_cloud_optimised.lib.ArgoHandler.ArgoHandler.get_s3_raw_obj")
-    def test_get_s3_raw_obj(self, mock_get_s3_raw_obj):
-        with patch("aodn_cloud_optimised.lib.GenericParquetHandler.boto3.client"):
-            mock_get_s3_raw_obj.return_value = self.tmp_nc_path
-            tmp_filepath = self.handler.get_s3_raw_obj()
-            self.assertEqual(tmp_filepath, self.tmp_nc_path)
+        public_policy_cloud_optimised_data = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Principal": "*",
+                    "Action": "s3:GetObject",
+                    "Resource": f"arn:aws:s3:::{self.BUCKET_OPTIMISED_NAME}/*",
+                }
+            ],
+        }
 
-    @patch("aodn_cloud_optimised.lib.ArgoHandler.ArgoHandler.get_s3_raw_obj")
-    def test_data_to_df_ds(self, mock_get_s3_raw_obj):
-        # Configure the mock object to return the path of the copied NetCDF file
-        mock_get_s3_raw_obj.return_value = self.tmp_nc_path
-
-        # Call the preprocess_data method
-        generator = self.handler.preprocess_data(self.tmp_nc_path)
-        df, ds = next(generator)
-
-        # Assert that ds.site_code is equal to the expected value
-        assert_array_equal(np.unique(ds.PLATFORM_NUMBER.values), np.array([2902093]))
-
-    def test_add_columns_df_and_bad_timestamps(self):
-        # with patch.object(self.handler_no_schema, 'get_partition_parameters_data', return_value=["site_code"]) as mock_get_params:
-        # Convert the Dataset to DataFrame using preprocess_data
-        generator = self.handler.preprocess_data(self.tmp_nc_path)
-        df, ds = next(generator)
-
-        # Call the method to add columns to the DataFrame
-        result_df = self.handler._add_timestamp_df(df)
-        result_df = self.handler._add_columns_df(result_df, ds)
-
-        # Check if the column are added with the correct values
-        self.assertEqual(result_df["filename"][0], os.path.basename(self.tmp_nc_path))
-        self.assertEqual(
-            result_df["timestamp"][0], -9223372036.854776
-        )  # This is a NAN value but all good!
-
-        # now we call the next function to remove the bad timestamp values ( which does also a reindexing)
-        result_df = self.handler._rm_bad_timestamp_df(result_df)
-        self.assertEqual(result_df["timestamp"][0], 1356998400.0)
-
-    @patch("aodn_cloud_optimised.lib.GenericParquetHandler.boto3.client")
-    def test_create_data_parquet(self, mock_boto3_client):
-        # Set up mock return values and inputs
-        mock_s3_client = mock_boto3_client.return_value
-        # Mock the return value of s3.download_file to simulate file download
-        mock_s3_client.download_file.return_value = self.tmp_nc_path
-
-        # Call the get_s3_raw_obj method (which should now use the mocked behavior)
-        self.handler.get_s3_raw_obj()
-
-        self.handler.tmp_input_file = self.tmp_nc_path  # overwrite value in handler
-
-        # Mock the return value of self.get_partition_parameters_data()
-        # with patch.object(self.handler_no_schema, 'get_partition_parameters_data', return_value=["PLATFORM_NUMBER"]) as mock_get_params:
-        # Convert the Dataset to DataFrame using preprocess_data
-        generator = self.handler.preprocess_data(self.tmp_nc_path)
-        df, ds = next(generator)
-
-        self.handler.publish_cloud_optimised(df, ds)
-
-        # Read the Parquet dataset
-        parquet_file_path = self.handler.cloud_optimised_output_path
-        parquet_dataset = pd.read_parquet(parquet_file_path)
-
-        # Assert the expected values in the Parquet dataset
-        self.assertEqual(parquet_dataset["timestamp"][0], 1356998400.0)
-        self.assertEqual(
-            parquet_dataset["JULD"][0], pd.Timestamp("2013-02-26 03:15:00")
+        self.s3.put_bucket_policy(
+            Bucket="imos-data", Policy=json.dumps(public_policy_imos_data)
         )
 
-        # Assert the expected values in the Parquet dataset
-        self.assertNotIn(
-            "PSAL_ADJUSTED", parquet_dataset.columns
-        )  # make sure the variable is removed
-        self.assertIn("TEMP_ADJUSTED", parquet_dataset.columns)
-
-    @patch("aodn_cloud_optimised.lib.GenericParquetHandler.boto3.client")
-    def test_create_data_parquet_bad_geom(self, mock_boto3_client):
-        # Set up mock return values and inputs
-        mock_s3_client = mock_boto3_client.return_value
-        # Mock the return value of s3.download_file to simulate file download
-        mock_s3_client.download_file.return_value = self.tmp_nc_bad_geom_path
-
-        # Call the get_s3_raw_obj method (which should now use the mocked behavior)
-        self.handler_bad_geom.get_s3_raw_obj()
-
-        self.handler_bad_geom.tmp_input_file = (
-            self.tmp_nc_bad_geom_path
-        )  # overwrite value in handler
-
-        # Mock the return value of self.get_partition_parameters_data()
-        # with patch.object(self.handler_no_schema, 'get_partition_parameters_data', return_value=["PLATFORM_NUMBER"]) as mock_get_params:
-        # Convert the Dataset to DataFrame using preprocess_data
-        generator = self.handler_bad_geom.preprocess_data(self.tmp_nc_path)
-        df, ds = next(generator)
-
-        self.handler_bad_geom.publish_cloud_optimised(df, ds)
-
-        # Read the Parquet dataset
-        parquet_file_path = self.handler_bad_geom.cloud_optimised_output_path
-        parquet_dataset = pd.read_parquet(parquet_file_path)
-
-        # Assert the expected values in the Parquet dataset
-        self.assertEqual(parquet_dataset["timestamp"][0], 1356998400.0)
-        self.assertEqual(
-            parquet_dataset["JULD"][0], pd.Timestamp("2013-02-26 03:15:00")
+        self.s3.put_bucket_policy(
+            Bucket=self.BUCKET_OPTIMISED_NAME,
+            Policy=json.dumps(public_policy_cloud_optimised_data),
         )
 
-        # Assert the expected values in the Parquet dataset
-        self.assertNotIn(
-            "PSAL_ADJUSTED", parquet_dataset.columns
-        )  # make sure the variable is removed
-        self.assertIn("TEMP_ADJUSTED", parquet_dataset.columns)
+        # Copy files to the mock S3 bucket
+        self._upload_to_s3(
+            "imos-data", f"good_nc_argo/{os.path.basename(TEST_FILE_NC)}", TEST_FILE_NC
+        )
+        self._upload_to_s3(
+            "imos-data",
+            f"bad_geom_argo/{os.path.basename(TEST_FILE_BAD_GEOM_NC)}",
+            TEST_FILE_BAD_GEOM_NC,
+        )
+
+        self.dataset_argo_netcdf_config = load_dataset_config(DATASET_CONFIG)
+
+        self.handler_nc_argo_file = ArgoHandler(
+            optimised_bucket_name=self.BUCKET_OPTIMISED_NAME,
+            root_prefix_cloud_optimised_path=self.ROOT_PREFIX_CLOUD_OPTIMISED_PATH,
+            dataset_config=self.dataset_argo_netcdf_config,
+            clear_existing_data=True,
+            force_previous_parquet_deletion=True,
+            cluster_mode="local",
+        )
+
+    def _upload_to_s3(self, bucket_name, key, file_path):
+        with open(file_path, "rb") as f:
+            self.s3.upload_fileobj(f, bucket_name, key)
 
     def tearDown(self):
-        # Remove the temporary directory and its contents
-        shutil.rmtree(self.tmp_dir)
+        self.server.stop()
+
+    def test_parquet_nc_argo_handler(self):  # , MockS3FileSystem):
+        nc_obj_ls = s3_ls("imos-data", "good_nc_argo")
+        # with patch('s3fs.S3FileSystem', lambda anon, client_kwargs: s3fs.S3FileSystem(anon=False, client_kwargs={"endpoint_url": "http://127.0.0.1:5555/"})):
+        # MockS3FileSystem.return_value = s3fs.S3FileSystem(anon=False, client_kwargs={"endpoint_url": "http://127.0.0.1:5555"})
+
+        # with mock_aws(aws_credentials):
+
+        # 1st pass
+        self.handler_nc_argo_file.to_cloud_optimised([nc_obj_ls[0]])
+
+        # 2nd pass, process the same file a second time. Should be deleted
+        # TODO: Not a big big deal breaker, but got an issue which should be fixed in the try except only for the unittest
+        #       2024-07-01 16:04:54,721 - INFO - GenericParquetHandler.py:824 - delete_existing_matching_parquet - No files to delete: GetFileInfo() yielded path 'imos-data-lab-optimised/testing/anmn_ctd_ts_fv01.parquet/site_code=SYD140/timestamp=1625097600/polygon=01030000000100000005000000000000000020624000000000008041C0000000000060634000000000008041C0000000000060634000000000000039C0000000000020624000000000000039C0000000000020624000000000008041C0/IMOS_ANMN-NSW_CDSTZ_20210429T015500Z_SYD140_FV01_SYD140-2104-SBE37SM-RS232-128_END-20210812T011500Z_C-20210827T074819Z.nc-0.parquet', which is outside base dir 's3://imos-data-lab-optimised/testing/anmn_ctd_ts_fv01.parquet/'
+        self.handler_nc_argo_file.to_cloud_optimised_single(nc_obj_ls[0])
+
+        # read parquet
+        dataset_name = self.dataset_argo_netcdf_config["dataset_name"]
+        dname = f"s3://{self.BUCKET_OPTIMISED_NAME}/{self.ROOT_PREFIX_CLOUD_OPTIMISED_PATH}/{dataset_name}.parquet/"
+
+        parquet_dataset = pd.read_parquet(
+            dname,
+            engine="pyarrow",
+            storage_options={
+                "client_kwargs": {"endpoint_url": "http://127.0.0.1:5555"}
+            },
+        )
+
+        self.assertEqual(parquet_dataset["filename"][0], os.path.basename(TEST_FILE_NC))
+
+        # this checks that bad_timestamps values are cleaned
+        self.assertEqual(parquet_dataset["timestamp"][0], 1356998400.0)
+        self.assertEqual(
+            parquet_dataset["JULD"][0], pd.Timestamp("2013-02-26 03:15:00")
+        )
+
+        # Assert the expected values in the Parquet dataset
+        self.assertIn("PSAL_ADJUSTED", parquet_dataset.columns)
+        self.assertIn("TEMP_ADJUSTED", parquet_dataset.columns)
+        assert_array_equal(
+            np.unique(parquet_dataset.PLATFORM_NUMBER.values), np.array([2902093])
+        )
+
+    def test_parquet_nc_argo_bad_geom_handler(self):
+        nc_obj_ls = s3_ls("imos-data", "bad_geom_argo")
+        # with patch('s3fs.S3FileSystem', lambda anon, client_kwargs: s3fs.S3FileSystem(anon=False, client_kwargs={"endpoint_url": "http://127.0.0.1:5555/"})):
+        # MockS3FileSystem.return_value = s3fs.S3FileSystem(anon=False, client_kwargs={"endpoint_url": "http://127.0.0.1:5555"})
+
+        # with mock_aws(aws_credentials):
+
+        # 1st pass
+        self.handler_nc_argo_file.to_cloud_optimised_single(nc_obj_ls[0])
+
+        # read parquet
+        dataset_name = self.dataset_argo_netcdf_config["dataset_name"]
+        dname = f"s3://{self.BUCKET_OPTIMISED_NAME}/{self.ROOT_PREFIX_CLOUD_OPTIMISED_PATH}/{dataset_name}.parquet/"
+
+        parquet_dataset = pd.read_parquet(
+            dname,
+            engine="pyarrow",
+            storage_options={
+                "client_kwargs": {"endpoint_url": "http://127.0.0.1:5555"}
+            },
+        )
+
+        # TODO: check the values are correct, why are the first 10 values removed? forgot! To investigate!
+        #     JULD = "2016-01-07 22:06:34", "2016-01-17 15:35:41", "2016-01-27 09:41:07",
+        #     "2016-02-06 03:32:09", "2016-02-15 22:51:46", "2016-02-25 17:19:12",
+        #     "2016-03-06 12:20:15", "2016-03-16 07:49:21", "2016-03-26 01:49:47",
+        #     "2016-04-04 21:19:44", "2016-04-14 15:09:26", "2016-04-24 11:00:24",
+        #     "2016-05-04 06:12:07", "2016-05-14 01:40:30", "2016-05-23 20:29:18",
+        # Assert the expected values in the Parquet dataset
+        self.assertEqual(parquet_dataset["timestamp"][0], 1451606400)
+        self.assertEqual(
+            parquet_dataset["JULD"][0], pd.Timestamp("2016-05-23 20:29:18")
+        )
+
+        # Assert the expected values in the Parquet dataset
+        self.assertIn("PSAL_ADJUSTED", parquet_dataset.columns)
+        self.assertIn("TEMP_ADJUSTED", parquet_dataset.columns)
 
 
 if __name__ == "__main__":

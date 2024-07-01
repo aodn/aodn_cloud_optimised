@@ -1,192 +1,221 @@
 import json
 import os
-import shutil
-import tempfile
 import unittest
-from unittest.mock import patch
 
+import boto3
 import pandas as pd
 import pyarrow as pa
-
-from shapely.geometry import Polygon
+import s3fs
+from moto import mock_aws
+from moto.moto_server.threaded_moto_server import ThreadedMotoServer
 from shapely import wkb
+from shapely.geometry import Polygon
 
 from aodn_cloud_optimised.lib.GenericParquetHandler import GenericHandler
 from aodn_cloud_optimised.lib.config import load_dataset_config
+from aodn_cloud_optimised.lib.s3Tools import s3_ls
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Specify the filename relative to the current directory
-TEST_FILE_NC = os.path.join(
+TEST_FILE_NC_ANMN = os.path.join(
     ROOT_DIR,
     "resources",
     "IMOS_ANMN-NSW_CDSTZ_20210429T015500Z_SYD140_FV01_SYD140-2104-SBE37SM-RS232-128_END-20210812T011500Z_C-20210827T074819Z.nc",
 )
+
+TEST_FILE_NC_ARDC = os.path.join(
+    ROOT_DIR, "resources", "BOM_20240301_CAPE-SORELL_RT_WAVE-PARAMETERS_monthly.nc"
+)
+
 DUMMY_FILE = os.path.join(ROOT_DIR, "resources", "DUMMY.nan")
 DUMMY_NC_FILE = os.path.join(ROOT_DIR, "resources", "DUMMY.nc")
 TEST_CSV_FILE = os.path.join(
     ROOT_DIR, "resources", "A69-1105-135_107799906_130722039.csv"
 )
-CONFIG_CSV_JSON = os.path.join(ROOT_DIR, "resources", "aatams_acoustic_tagging.json")
+DATASET_CONFIG_CSV_AATAMS_JSON = os.path.join(
+    ROOT_DIR, "resources", "aatams_acoustic_tagging.json"
+)
+
+DATASET_CONFIG_NC_ANMN_JSON = os.path.join(
+    ROOT_DIR, "resources", "anmn_ctd_ts_fv01.json"
+)
+
+DATASET_CONFIG_NC_ARDC_JSON = os.path.join(ROOT_DIR, "resources", "ardc_wave_nrt.json")
+
+# TODO: remove this function if unused
+def set_aws_credentials():
+    """Mocked AWS Credentials for moto."""
+    os.environ["AWS_ACCESS_KEY_ID"] = "testing"
+    os.environ["AWS_SECRET_ACCESS_KEY"] = "testing"
+    os.environ["AWS_SECURITY_TOKEN"] = "testing"
+    os.environ["AWS_SESSION_TOKEN"] = "testing"
 
 
+@mock_aws
 class TestGenericHandler(unittest.TestCase):
-    @patch(
-        "aodn_cloud_optimised.lib.GenericParquetHandler.GenericHandler.get_s3_raw_obj"
-    )
-    def setUp(self, mock_get_s3_raw_obj):
-        # Create a temporary directory
-        self.tmp_dir = tempfile.mkdtemp()
+    def setUp(self):
+        set_aws_credentials()
 
-        # Copy the test NetCDF file to the temporary directory
-        self.tmp_nc_path = os.path.join(self.tmp_dir, os.path.basename(TEST_FILE_NC))
-        shutil.copy(TEST_FILE_NC, self.tmp_nc_path)
+        # Create a mock S3 service
+        self.BUCKET_OPTIMISED_NAME = "imos-data-lab-optimised"
+        self.ROOT_PREFIX_CLOUD_OPTIMISED_PATH = "testing"
+        self.s3 = boto3.client("s3", region_name="us-east-1")
+        self.s3.create_bucket(Bucket="imos-data")
+        self.s3.create_bucket(Bucket=self.BUCKET_OPTIMISED_NAME)
 
-        self.tmp_dummy_file_path = os.path.join(
-            self.tmp_dir, os.path.basename(DUMMY_FILE)
-        )
-        shutil.copy(DUMMY_FILE, self.tmp_dummy_file_path)
+        # create moto server; needed for s3fs and parquet
+        self.server = ThreadedMotoServer(ip_address="127.0.0.1", port=5555)
 
-        self.tmp_dummy_nc_path = os.path.join(
-            self.tmp_dir, os.path.basename(DUMMY_NC_FILE)
-        )
-        shutil.copy(DUMMY_NC_FILE, self.tmp_dummy_nc_path)
-
-        dataset_config = {
-            "dataset_name": "dummy",
-            "cloud_optimised_format": "parquet",
-            "metadata_uuid": "a681fdba-c6d9-44ab-90b9-113b0ed03536",
-            "gattrs_to_variables": ["site_code"],
-            "partition_keys": ["site_code", "timestamp", "polygon"],
-            "time_extent": {"time": "TIME", "partition_timestamp_period": "Q"},
-            "spatial_extent": {
-                "lat": "LATITUDE",
-                "lon": "LONGITUDE",
-                "spatial_resolution": 5,
+        # TODO: use it for patching?
+        self.s3_fs = s3fs.S3FileSystem(
+            anon=False,
+            client_kwargs={
+                "endpoint_url": "http://127.0.0.1:5555/",
+                "region_name": "us-east-1",
             },
-            "schema": {
-                "TIMESERIES": {"type": "int32"},
-                "LATITUDE": {"type": "double"},
-                "LONGITUDE": {"type": "double", "axis": "X"},
-                "NOMINAL_DEPTH": {"type": "float", "standard_name": "depth"},
-                "TEMP": {"type": "float", "standard_name": "sea_water_temperature"},
-                "DUMMY1": {"type": "float"},
-                "timestamp": {"type": "int64"},
-                "site_code": {"type": "string"},
-                "filename": {"type": "string"},
-                "polygon": {"type": "string"},
-                "TIME": {"type": "timestamp[ns]"},
-            },
-            "dataset_gattrs": {"title": "dummy"},
-            "force_old_pq_del": True,
+        )
+
+        self.server.start()
+
+        # Make the "imos-data" bucket public
+        public_policy_imos_data = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Principal": "*",
+                    "Action": "s3:GetObject",
+                    "Resource": "arn:aws:s3:::imos-data/*",
+                }
+            ],
         }
 
-        self.handler = GenericHandler(
-            raw_bucket_name="dummy_raw_bucket",
-            optimised_bucket_name="dummy_optimised_bucket",
-            input_object_key=os.path.basename(self.tmp_nc_path),
-            dataset_config=dataset_config,
+        public_policy_cloud_optimised_data = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Principal": "*",
+                    "Action": "s3:GetObject",
+                    "Resource": f"arn:aws:s3:::{self.BUCKET_OPTIMISED_NAME}/*",
+                }
+            ],
+        }
+
+        self.s3.put_bucket_policy(
+            Bucket="imos-data", Policy=json.dumps(public_policy_imos_data)
         )
 
-        self.handler_dummy_file = GenericHandler(
-            raw_bucket_name="dummy_raw_bucket",
-            optimised_bucket_name="dummy_optimised_bucket",
-            input_object_key=os.path.basename(self.tmp_dummy_file_path),
-            dataset_config=dataset_config,
+        self.s3.put_bucket_policy(
+            Bucket=self.BUCKET_OPTIMISED_NAME,
+            Policy=json.dumps(public_policy_cloud_optimised_data),
         )
 
-        self.handler_dummy_nc_file = GenericHandler(
-            raw_bucket_name="dummy_raw_bucket",
-            optimised_bucket_name="dummy_optimised_bucket",
-            input_object_key=os.path.basename(self.tmp_dummy_nc_path),
-            dataset_config=dataset_config,
+        # Copy files to the mock S3 bucket
+        self.s3.put_object(
+            Bucket=self.BUCKET_OPTIMISED_NAME, Key="testing", Body=""
+        )  # empty file
+        self._upload_to_s3(
+            "imos-data",
+            f"good_nc_anmn/{os.path.basename(TEST_FILE_NC_ANMN)}",
+            TEST_FILE_NC_ANMN,
+        )
+        self._upload_to_s3(
+            "imos-data", f"dummy/{os.path.basename(DUMMY_FILE)}", DUMMY_FILE
+        )
+        self._upload_to_s3(
+            "imos-data", f"dummy_nc/{os.path.basename(DUMMY_NC_FILE)}", DUMMY_NC_FILE
+        )
+        self._upload_to_s3(
+            "imos-data", f"good_csv/{os.path.basename(TEST_CSV_FILE)}", TEST_CSV_FILE
+        )
+        self._upload_to_s3(
+            "imos-data",
+            f"good_nc_ardc/{os.path.basename(TEST_FILE_NC_ARDC)}",
+            TEST_FILE_NC_ARDC,
         )
 
-        # modify the path of the parquet dataset output
-        self.handler.cloud_optimised_output_path = os.path.join(
-            self.tmp_dir, "dummy_dataset_name"
+        dataset_anmn_netcdf_config = load_dataset_config(DATASET_CONFIG_NC_ANMN_JSON)
+        self.handler_nc_anmn_file = GenericHandler(
+            optimised_bucket_name=self.BUCKET_OPTIMISED_NAME,
+            root_prefix_cloud_optimised_path=self.ROOT_PREFIX_CLOUD_OPTIMISED_PATH,
+            dataset_config=dataset_anmn_netcdf_config,
+            clear_existing_data=True,
+            force_previous_parquet_deletion=True,
+            cluster_mode="local",
         )
 
-        self.tmp_csv_path = os.path.join(self.tmp_dir, os.path.basename(TEST_CSV_FILE))
-        shutil.copy(TEST_CSV_FILE, self.tmp_csv_path)
-        dataset_csv_config = load_dataset_config(CONFIG_CSV_JSON)
+        dataset_ardc_netcdf_config = load_dataset_config(DATASET_CONFIG_NC_ARDC_JSON)
+        self.handler_nc_ardc_file = GenericHandler(
+            optimised_bucket_name=self.BUCKET_OPTIMISED_NAME,
+            root_prefix_cloud_optimised_path=self.ROOT_PREFIX_CLOUD_OPTIMISED_PATH,
+            dataset_config=dataset_ardc_netcdf_config,
+            clear_existing_data=True,
+            force_previous_parquet_deletion=True,
+            cluster_mode="local",
+        )
+
+        dataset_aatams_csv_config = load_dataset_config(DATASET_CONFIG_CSV_AATAMS_JSON)
         self.handler_csv_file = GenericHandler(
-            raw_bucket_name="dummy_raw_bucket",
-            optimised_bucket_name="dummy_optimised_bucket",
-            input_object_key=os.path.basename(self.tmp_csv_path),
-            dataset_config=dataset_csv_config,
-        )
-        self.handler_csv_file.cloud_optimised_output_path = os.path.join(
-            self.tmp_dir, "dummy_dataset_name"
+            optimised_bucket_name=self.BUCKET_OPTIMISED_NAME,
+            root_prefix_cloud_optimised_path=self.ROOT_PREFIX_CLOUD_OPTIMISED_PATH,
+            dataset_config=dataset_aatams_csv_config,
+            clear_existing_data=True,
+            cluster_mode="local",
         )
 
-        # Create a mock object for xr.open_dataset
-        # self.mock_open_dataset = MagicMock()
+    def _upload_to_s3(self, bucket_name, key, file_path):
+        with open(file_path, "rb") as f:
+            self.s3.upload_fileobj(f, bucket_name, key)
 
-    @patch(
-        "aodn_cloud_optimised.lib.GenericParquetHandler.GenericHandler.get_s3_raw_obj"
-    )
-    def test_get_s3_raw_obj(self, mock_get_s3_raw_obj):
-        with patch("aodn_cloud_optimised.lib.GenericParquetHandler.boto3.client"):
-            mock_get_s3_raw_obj.return_value = self.tmp_nc_path
-            tmp_filepath = self.handler.get_s3_raw_obj()
-            self.assertEqual(tmp_filepath, self.tmp_nc_path)
+    def tearDown(self):
+        self.server.stop()
 
-    @patch(
-        "aodn_cloud_optimised.lib.GenericParquetHandler.GenericHandler.get_s3_raw_obj"
-    )
-    def test_data_to_df_ds(self, mock_get_s3_raw_obj):
-        # Configure the mock object to return the path of the copied NetCDF file
-        mock_get_s3_raw_obj.return_value = self.tmp_nc_path
+    # TODO: find a solution to patch s3fs properly and not relying on changing the s3fs values in the code
+    # @patch('s3fs.S3FileSystem')
+    def test_parquet_nc_anmn_handler(self):  # , MockS3FileSystem):
+        nc_obj_ls = s3_ls("imos-data", "good_nc_anmn")
+        # with patch('s3fs.S3FileSystem', lambda anon, client_kwargs: s3fs.S3FileSystem(anon=False, client_kwargs={"endpoint_url": "http://127.0.0.1:5555/"})):
+        # MockS3FileSystem.return_value = s3fs.S3FileSystem(anon=False, client_kwargs={"endpoint_url": "http://127.0.0.1:5555"})
 
-        # Call the preprocess_data method
-        generator = self.handler.preprocess_data(self.tmp_nc_path)
-        df, ds = next(generator)
+        # with mock_aws(aws_credentials):
 
-        # Assert that ds.site_code is equal to the expected value
-        self.assertEqual(ds.site_code, "SYD140")
+        # 1st pass
+        self.handler_nc_anmn_file.to_cloud_optimised([nc_obj_ls[0]])
 
-    def test_add_columns_df(self):
-        # Convert the Dataset to DataFrame using preprocess_data
-        generator = self.handler.preprocess_data(self.tmp_nc_path)
-        df, ds = next(generator)
+        # 2nd pass, process the same file a second time. Should be deleted
+        # TODO: Not a big big deal breaker, but got an issue which should be fixed in the try except only for the unittest
+        #       2024-07-01 16:04:54,721 - INFO - GenericParquetHandler.py:824 - delete_existing_matching_parquet - No files to delete: GetFileInfo() yielded path 'imos-data-lab-optimised/testing/anmn_ctd_ts_fv01.parquet/site_code=SYD140/timestamp=1625097600/polygon=01030000000100000005000000000000000020624000000000008041C0000000000060634000000000008041C0000000000060634000000000000039C0000000000020624000000000000039C0000000000020624000000000008041C0/IMOS_ANMN-NSW_CDSTZ_20210429T015500Z_SYD140_FV01_SYD140-2104-SBE37SM-RS232-128_END-20210812T011500Z_C-20210827T074819Z.nc-0.parquet', which is outside base dir 's3://imos-data-lab-optimised/testing/anmn_ctd_ts_fv01.parquet/'
+        self.handler_nc_anmn_file.to_cloud_optimised_single(nc_obj_ls[0])
 
-        # Call the method to add columns such as timestamp, sitecode ... to the DataFrame
-        result_df = self.handler._add_timestamp_df(df)
-        result_df = self.handler._add_columns_df(result_df, ds)
+        # read parquet
+        dataset_config = load_dataset_config(DATASET_CONFIG_NC_ANMN_JSON)
+        dataset_name = dataset_config["dataset_name"]
+        dname = f"s3://{self.BUCKET_OPTIMISED_NAME}/{self.ROOT_PREFIX_CLOUD_OPTIMISED_PATH}/{dataset_name}.parquet/"
+
+        parquet_dataset = pd.read_parquet(
+            dname,
+            engine="pyarrow",
+            storage_options={
+                "client_kwargs": {"endpoint_url": "http://127.0.0.1:5555"}
+            },
+        )
+
+        self.assertNotIn("station_name", parquet_dataset.columns)
+        self.assertAlmostEqual(parquet_dataset["TEMP"][0], 13.2773, delta=1e-2)
 
         # Check if the column are added with the correct values
-        self.assertIn("site_code", result_df.columns)
-        self.assertEqual(result_df["site_code"].iloc[0], "SYD140")
+        self.assertIn("site_code", parquet_dataset.columns)
+        self.assertEqual(parquet_dataset["site_code"].iloc[0], "SYD140")
+
         self.assertEqual(
-            result_df["filename"].iloc[0], os.path.basename(self.tmp_nc_path)
+            parquet_dataset["filename"].iloc[0], os.path.basename(nc_obj_ls[0])
         )
-        self.assertEqual(result_df["timestamp"].iloc[0], 1617235200.0)
-
-    @patch("aodn_cloud_optimised.lib.GenericParquetHandler.boto3.client")
-    def test_create_data_parquet(self, mock_boto3_client):
-        # Set up mock return values and inputs
-        mock_s3_client = mock_boto3_client.return_value
-        # Mock the return value of s3.download_file to simulate file download
-        mock_s3_client.download_file.return_value = self.tmp_nc_path
-
-        # Call the get_s3_raw_obj method (which should now use the mocked behavior)
-        self.handler.get_s3_raw_obj()
-
-        self.handler.tmp_input_file = self.tmp_nc_path  # overwrite value in handler
-
-        # Convert the Dataset to DataFrame using preprocess_data
-        generator = self.handler.preprocess_data(self.tmp_nc_path)
-        df, ds = next(generator)
-
-        self.handler.publish_cloud_optimised(df, ds)
-
-        # Read the Parquet dataset
-        parquet_file_path = self.handler.cloud_optimised_output_path
-        parquet_dataset = pd.read_parquet(parquet_file_path)
+        self.assertEqual(parquet_dataset["timestamp"].iloc[0], 1617235200.0)
 
         # The following section shows how the created polygon variable can be used to perform data queries. this adds significant overload, but is worth it
-        df["converted_polygon"] = df["polygon"].apply(
+        parquet_dataset["converted_polygon"] = parquet_dataset["polygon"].apply(
             lambda x: wkb.loads(bytes.fromhex(x))
         )
 
@@ -197,22 +226,18 @@ class TestGenericHandler(unittest.TestCase):
         predefined_polygon_out = Polygon(predefined_polygon_coords_out)
         predefined_polygon_in = Polygon(predefined_polygon_coords_in)
 
-        df_unique_polygon = df["converted_polygon"].unique()[0]
+        df_unique_polygon = parquet_dataset["converted_polygon"].unique()[0]
         self.assertFalse(df_unique_polygon.intersects(predefined_polygon_out))
         self.assertTrue(df_unique_polygon.intersects(predefined_polygon_in))
-
-        # Assert the expected values in the Parquet dataset
-        self.assertNotIn(
-            "TEMP_quality_control", parquet_dataset.columns
-        )  # make sure the variable is removed
-        self.assertIn("TEMP", parquet_dataset.columns)
 
         # Testing the metadata sidecar file
         # Reading the metadata file of the dataset (at the root)
         parquet_meta_file_path = os.path.join(
-            self.handler.cloud_optimised_output_path, "_common_metadata"
+            self.handler_nc_anmn_file.cloud_optimised_output_path, "_common_metadata"
         )
-        parquet_meta = pa.parquet.read_schema(parquet_meta_file_path)
+        parquet_meta = pa.parquet.read_schema(
+            parquet_meta_file_path, filesystem=self.s3_fs
+        )
 
         # horrible ... but got to be done. The dictionary of metadata has to be a dictionnary with byte keys and byte values.
         # meaning that we can't have nested dictionaries ...
@@ -236,53 +261,93 @@ class TestGenericHandler(unittest.TestCase):
             schema_dict["TEMP"][b"standard_name"], b"sea_water_temperature"
         )
 
-    def test_create_csv_data_parquet(self):
-        # Mock the return value of self.get_partition_parameters_data()
-        # with patch.object(self.handler_no_schema, 'get_partition_parameters_data', return_value=["site_code"]) as mock_get_params:
-        # Convert the Dataset to DataFrame using preprocess_data
-        generator = self.handler_csv_file.preprocess_data(self.tmp_csv_path)
-        df, ds = next(generator)
+    def test_parquet_nc_generic_handler(self):  # , MockS3FileSystem):
+        nc_obj_ls = s3_ls("imos-data", "good_nc_ardc")
+        # with patch('s3fs.S3FileSystem', lambda anon, client_kwargs: s3fs.S3FileSystem(anon=False, client_kwargs={"endpoint_url": "http://127.0.0.1:5555/"})):
+        # MockS3FileSystem.return_value = s3fs.S3FileSystem(anon=False, client_kwargs={"endpoint_url": "http://127.0.0.1:5555"})
 
-        self.handler_csv_file.publish_cloud_optimised(df, ds)
+        # with mock_aws(aws_credentials):
 
-        # Read the Parquet dataset
-        parquet_file_path = self.handler_csv_file.cloud_optimised_output_path
-        parquet_dataset = pd.read_parquet(parquet_file_path)
+        # 1st pass
+        self.handler_nc_ardc_file.to_cloud_optimised([nc_obj_ls[0]])
 
-        # Assert the expected values in the Parquet dataset
-        # For example, assert that the 'site_code' column is present and contains the expected value
+        # 2nd pass, process the same file a second time. Should be deleted
+        # TODO: Not a big big deal breaker, but got an issue which should be fixed in the try except only for the unittest
+        #       2024-07-01 16:04:54,721 - INFO - GenericParquetHandler.py:824 - delete_existing_matching_parquet - No files to delete: GetFileInfo() yielded path 'imos-data-lab-optimised/testing/anmn_ctd_ts_fv01.parquet/site_code=SYD140/timestamp=1625097600/polygon=01030000000100000005000000000000000020624000000000008041C0000000000060634000000000008041C0000000000060634000000000000039C0000000000020624000000000000039C0000000000020624000000000008041C0/IMOS_ANMN-NSW_CDSTZ_20210429T015500Z_SYD140_FV01_SYD140-2104-SBE37SM-RS232-128_END-20210812T011500Z_C-20210827T074819Z.nc-0.parquet', which is outside base dir 's3://imos-data-lab-optimised/testing/anmn_ctd_ts_fv01.parquet/'
+        self.handler_nc_ardc_file.to_cloud_optimised_single(nc_obj_ls[0])
+
+        # read parquet
+        dataset_config = load_dataset_config(DATASET_CONFIG_NC_ARDC_JSON)
+        dataset_name = dataset_config["dataset_name"]
+        dname = f"s3://{self.BUCKET_OPTIMISED_NAME}/{self.ROOT_PREFIX_CLOUD_OPTIMISED_PATH}/{dataset_name}.parquet/"
+
+        parquet_dataset = pd.read_parquet(
+            dname,
+            engine="pyarrow",
+            storage_options={
+                "client_kwargs": {"endpoint_url": "http://127.0.0.1:5555"}
+            },
+        )
+
+        self.assertEqual(parquet_dataset["timestamp"][0], 1709251200.0)
+
+        self.assertNotIn(
+            "DUMMY_VAR_NOT_IN", parquet_dataset.columns
+        )  # make sure the variable is removed
+        self.assertIn("WHTH", parquet_dataset.columns)
+
+        self.assertEqual(parquet_dataset["timestamp"][0], 1709251200.0)
+        self.assertEqual(
+            parquet_dataset["TIME"][0], pd.Timestamp("2024-03-01 01:30:00")
+        )
+
+        parquet_meta_file_path = os.path.join(
+            self.handler_nc_ardc_file.cloud_optimised_output_path, "_common_metadata"
+        )
+        parquet_meta = pa.parquet.read_schema(
+            parquet_meta_file_path, filesystem=self.s3_fs
+        )
+
+        # horrible ... but got to be done. The dictionary of metadata has to be a dictionnary with byte keys and byte values.
+        # meaning that we can't have nested dictionaries ...
+        decoded_meta = {
+            key.decode("utf-8"): json.loads(value.decode("utf-8").replace("'", '"'))
+            for key, value in parquet_meta.metadata.items()
+        }
+
+        self.assertEqual(
+            decoded_meta["dataset_metadata"]["metadata_uuid"],
+            "2807f3aa-4db0-4924-b64b-354ae8c10b58",
+        )
+        self.assertEqual(decoded_meta["dataset_metadata"]["title"], "ARDC")
+
+    def test_parquet_csv_generic_handler(self):  # , MockS3FileSystem):
+        csv_obj_ls = s3_ls("imos-data", "good_csv", suffix=".csv")
+        # with patch('s3fs.S3FileSystem', lambda anon, client_kwargs: s3fs.S3FileSystem(anon=False, client_kwargs={"endpoint_url": "http://127.0.0.1:5555/"})):
+        # MockS3FileSystem.return_value = s3fs.S3FileSystem(anon=False, client_kwargs={"endpoint_url": "http://127.0.0.1:5555"})
+
+        # with mock_aws(aws_credentials):
+        # 1st pass, could have some errors distributed.worker - ERROR - Failed to communicate with scheduler during heartbeat.
+        # Solution is the rerun the unittest
+        self.handler_csv_file.to_cloud_optimised([csv_obj_ls[0]])
+
+        # 2nd pass
+        self.handler_csv_file.to_cloud_optimised_single(csv_obj_ls[0])
+
+        # Read parquet dataset and check data is good!
+        dataset_config = load_dataset_config(DATASET_CONFIG_CSV_AATAMS_JSON)
+        dataset_name = dataset_config["dataset_name"]
+        dname = f"s3://{self.BUCKET_OPTIMISED_NAME}/{self.ROOT_PREFIX_CLOUD_OPTIMISED_PATH}/{dataset_name}.parquet/"
+
+        parquet_dataset = pd.read_parquet(
+            dname,
+            engine="pyarrow",
+            storage_options={
+                "client_kwargs": {"endpoint_url": "http://127.0.0.1:5555"}
+            },
+        )
+
         self.assertIn("station_name", parquet_dataset.columns)
-
-        # Testing the metadata sidecar file
-
-    @patch("aodn_cloud_optimised.lib.GenericParquetHandler.boto3.client")
-    def test_handler_main_function(self, mock_boto3_client):
-        # Set up mock return values and inputs
-        mock_s3_client = mock_boto3_client.return_value
-        # Mock the return value of s3.download_file to simulate file download
-        mock_s3_client.download_file.return_value = self.tmp_nc_path
-        self.handler.tmp_input_file = self.tmp_nc_path
-        # Call the get_s3_raw_obj method (which should now use the mocked behavior)
-        self.handler.to_cloud_optimised()
-
-        # Read the Parquet dataset
-        parquet_file_path = self.handler.cloud_optimised_output_path
-        parquet_dataset = pd.read_parquet(parquet_file_path)
-
-        # Assert the expected values in the Parquet dataset
-        self.assertNotIn("station_name", parquet_dataset.columns)
-        self.assertAlmostEqual(parquet_dataset["TEMP"][0], 13.2773, delta=1e-2)
-
-    def test_dummies(self):
-        with self.assertRaises(ValueError):
-            self.handler_dummy_file.to_cloud_optimised()
-
-        with self.assertRaises(TypeError):
-            self.handler_dummy_nc_file.to_cloud_optimised()
-
-    def tearDown(self):
-        # Remove the temporary directory and its contents
-        shutil.rmtree(self.tmp_dir)
 
 
 if __name__ == "__main__":

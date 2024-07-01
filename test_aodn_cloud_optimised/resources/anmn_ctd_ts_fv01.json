@@ -1,0 +1,365 @@
+{
+  "dataset_name": "anmn_ctd_ts_fv01",
+  "logger_name": "anmn_ctd_ts_fv01",
+  "cloud_optimised_format": "parquet",
+  "cluster_options" : {
+    "n_workers": [8, 20],
+    "scheduler_vm_types": "t3.small",
+    "worker_vm_types": "t3.large",
+    "allow_ingress_from": "me",
+    "compute_purchase_option": "spot_with_fallback",
+    "worker_options": {
+      "nthreads": 8,
+      "memory_limit": "32GB" }
+  },
+  "metadata_uuid": "7b901002-b1dc-46c3-89f2-b4951cedca48",
+  "gattrs_to_variables": [
+    "site_code"
+  ],
+  "partition_keys": [
+    "site_code",
+    "timestamp",
+    "polygon"
+  ],
+  "time_extent": {
+    "time": "TIME",
+    "partition_timestamp_period": "Q"
+  },
+  "spatial_extent": {
+    "lat": "LATITUDE",
+    "lon": "LONGITUDE",
+    "spatial_resolution": 5
+  },
+  "schema": {
+    "TIME": {
+      "type": "timestamp[ns]",
+      "axis": "T",
+      "comment": "timeOffsetPP: TIME values and time_coverage_start/end global attributes have been applied the following offset : -10 hours.",
+      "long_name": "time",
+      "standard_name": "time",
+      "valid_max": 90000.0,
+      "valid_min": 0.0
+    },
+    "TIMESERIES": {
+      "type": "int32",
+      "cf_role": "timeseries_id",
+      "long_name": "unique_identifier_for_each_timeseries_feature_instance_in_this_file"
+    },
+    "LATITUDE": {
+      "type": "double",
+      "axis": "Y",
+      "long_name": "latitude",
+      "reference_datum": "WGS84 geographic coordinate system",
+      "standard_name": "latitude",
+      "units": "degrees_north",
+      "valid_max": 90.0,
+      "valid_min": -90.0
+    },
+    "LONGITUDE": {
+      "type": "double",
+      "axis": "X",
+      "long_name": "longitude",
+      "reference_datum": "WGS84 geographic coordinate system",
+      "standard_name": "longitude",
+      "units": "degrees_east",
+      "valid_max": 180.0,
+      "valid_min": -180.0
+    },
+    "NOMINAL_DEPTH": {
+      "type": "float",
+      "axis": "Z",
+      "long_name": "nominal depth",
+      "positive": "down",
+      "reference_datum": "sea surface",
+      "standard_name": "depth",
+      "units": "m",
+      "valid_max": 12000.0,
+      "valid_min": -5.0
+    },
+    "CNDC": {
+      "type": "float",
+      "ancillary_variables": "CNDC_quality_control",
+      "long_name": "sea_water_electrical_conductivity",
+      "standard_name": "sea_water_electrical_conductivity",
+      "units": "S m-1",
+      "valid_max": 50000.0,
+      "valid_min": 0.0
+    },
+    "CNDC_quality_control": {
+      "type": "float",
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "long_name": "quality flag for sea_water_electrical_conductivity",
+      "quality_control_conventions": "IMOS standard flags",
+      "quality_control_global": " ",
+      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
+      "standard_name": "sea_water_electrical_conductivity status_flag"
+    },
+    "TEMP": {
+      "type": "float",
+      "ancillary_variables": "TEMP_quality_control",
+      "long_name": "sea_water_temperature",
+      "standard_name": "sea_water_temperature",
+      "units": "degrees_Celsius",
+      "valid_max": 40.0,
+      "valid_min": -2.5
+    },
+    "TEMP_quality_control": {
+      "type": "float",
+      "comment": "Data values at TIME from 2021/04/29 01:55:01 UTC to 2021/04/29 01:55:01 UTC manually flagged as Bad_data : Instrument instability",
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "long_name": "quality flag for sea_water_temperature",
+      "quality_control_conventions": "IMOS standard flags",
+      "quality_control_global": "B",
+      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
+      "standard_name": "sea_water_temperature status_flag"
+    },
+    "PSAL": {
+      "type": "float",
+      "ancillary_variables": "PSAL_quality_control",
+      "long_name": "sea_water_practical_salinity",
+      "standard_name": "sea_water_practical_salinity",
+      "units": "1",
+      "valid_max": 41.0,
+      "valid_min": 2.0
+    },
+    "PSAL_quality_control": {
+      "type": "float",
+      "comment": "Data values at TIME from 2021/05/24 03:45:01 UTC to 2021/05/24 03:45:01 UTC manually flagged as Bad_data : spike. Data values at TIME from 2021/04/29 01:55:01 UTC to 2021/04/29 01:55:01 UTC manually flagged as Bad_data : Instrument instability",
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "long_name": "quality flag for sea_water_practical_salinity",
+      "quality_control_conventions": "IMOS standard flags",
+      "quality_control_global": "B",
+      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
+      "standard_name": "sea_water_practical_salinity status_flag"
+    },
+    "PRES_REL": {
+      "type": "float",
+      "ancillary_variables": "PRES_REL_quality_control",
+      "applied_offset": -10.135296821594238,
+      "long_name": "sea_water_pressure_due_to_sea_water",
+      "standard_name": "sea_water_pressure_due_to_sea_water",
+      "units": "dbar",
+      "valid_max": 12000.0,
+      "valid_min": -15.0
+    },
+    "PRES_REL_quality_control": {
+      "type": "float",
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "long_name": "quality flag for sea_water_pressure_due_to_sea_water",
+      "quality_control_conventions": "IMOS standard flags",
+      "quality_control_global": "A",
+      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
+      "standard_name": "sea_water_pressure_due_to_sea_water status_flag"
+    },
+    "DEPTH": {
+      "type": "float",
+      "ancillary_variables": "DEPTH_quality_control",
+      "long_name": "actual depth",
+      "positive": "down",
+      "reference_datum": "sea surface",
+      "standard_name": "depth",
+      "units": "m",
+      "valid_max": 12000.0,
+      "valid_min": -5.0
+    },
+    "DEPTH_quality_control": {
+      "type": "float",
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "long_name": "quality flag for depth",
+      "quality_control_conventions": "IMOS standard flags",
+      "quality_control_global": "A",
+      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
+      "standard_name": "depth status_flag"
+    },
+    "DENS": {
+      "type": "float",
+      "ancillary_variables": "DENS_quality_control",
+      "long_name": "sea_water_density",
+      "standard_name": "sea_water_density",
+      "units": "kg m-3"
+    },
+    "DENS_quality_control": {
+      "type": "float",
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "long_name": "quality flag for sea_water_density",
+      "quality_control_conventions": "IMOS standard flags",
+      "quality_control_global": " ",
+      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
+      "standard_name": "sea_water_density status_flag"
+    },
+    "timestamp": {
+      "type": "int64"
+    },
+    "polygon": {
+      "type": "string"
+    },
+    "site_code": {
+      "type": "string"
+    },
+    "filename": {
+      "type": "string"
+    }
+  },
+  "dataset_gattrs": {
+    "title": "ANMN CTD timeseries"
+  },
+  "force_old_pq_del": true,
+  "aws_opendata_registry": {
+    "Name": "ANMN CTD timeseries",
+    "Description": "",
+    "Documentation": "https://catalogue.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/7b901002-b1dc-46c3-89f2-b4951cedca48",
+    "Contact": "",
+    "ManagedBy": "",
+    "UpdateFrequency": "",
+    "Tags": [],
+    "License": "",
+    "Resources": [
+      {
+        "Description": "",
+        "ARN": "",
+        "Region": "",
+        "Type": "",
+        "Explore": []
+      },
+      {
+        "Description": "",
+        "ARN": "",
+        "Region": "",
+        "Type": ""
+      },
+      {
+        "Description": "",
+        "ARN": "",
+        "Region": "",
+        "Type": ""
+      },
+      {
+        "Description": "",
+        "ARN": "",
+        "Region": "",
+        "Type": ""
+      }
+    ],
+    "DataAtWork": {
+      "Tutorials": [
+        {
+          "Title": "",
+          "URL": "",
+          "Services": "",
+          "AuthorName": "",
+          "AuthorURL": ""
+        },
+        {
+          "Title": "",
+          "URL": "",
+          "AuthorName": "",
+          "AuthorURL": ""
+        },
+        {
+          "Title": "",
+          "URL": "",
+          "AuthorName": "",
+          "AuthorURL": ""
+        }
+      ],
+      "Tools & Applications": [
+        {
+          "Title": "",
+          "URL": "",
+          "AuthorName": "",
+          "AuthorURL": ""
+        },
+        {
+          "Title": "",
+          "URL": "",
+          "AuthorName": "",
+          "AuthorURL": ""
+        }
+      ],
+      "Publications": [
+        {
+          "Title": "IMOS - Australian National Mooring Network (ANMN) - CTD Profiles",
+          "URL": "https://catalogue.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/7b901002-b1dc-46c3-89f2-b4951cedca48",
+          "AuthorName": ""
+        },
+        {
+          "Title": "",
+          "URL": "",
+          "AuthorName": ""
+        }
+      ]
+    }
+  }
+}
