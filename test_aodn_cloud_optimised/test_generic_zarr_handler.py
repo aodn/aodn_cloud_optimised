@@ -27,7 +27,6 @@ filenames = [
 TEST_FILE_NC_ACORN = [
     os.path.join(ROOT_DIR, "resources", file_name) for file_name in filenames
 ]
-# TEST_FILE_NC_ACORN_1, TEST_FILE_NC_ACORN_2, TEST_FILE_NC_ACORN_3, TEST_FILE_NC_ACORN_4 = TEST_FILE_NC_ACORN
 
 DATASET_CONFIG_NC_ACORN_JSON = os.path.join(
     ROOT_DIR, "resources", "acorn_gridded_qc_turq.json"

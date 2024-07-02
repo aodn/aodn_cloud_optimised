@@ -94,6 +94,8 @@ class CommonHandler:
                 )
             else:
                 self.s3_fs = s3fs.S3FileSystem(anon=False)
+        else:
+            self.s3_fs = s3fs.S3FileSystem(anon=False)
 
     def __enter__(self):
         # Initialize resources if necessary

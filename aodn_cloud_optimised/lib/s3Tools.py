@@ -178,6 +178,8 @@ def create_fileset(s3_paths):
             )
         else:
             s3_fs = s3fs.S3FileSystem(anon=True)
+    else:
+        s3_fs = s3fs.S3FileSystem(anon=True)
 
     if isinstance(s3_paths, str):
         s3_paths = [s3_paths]
