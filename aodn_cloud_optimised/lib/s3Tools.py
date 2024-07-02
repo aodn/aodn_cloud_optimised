@@ -1,7 +1,6 @@
 import boto3
 from urllib.parse import urlparse
 import s3fs
-import unittest
 import logging
 
 
@@ -21,6 +20,19 @@ def s3_ls(bucket, prefix, suffix=".nc", s3_path=True) -> list:
                    If s3_path=True, returns list of S3 paths (s3://bucket_name/key).
                    If s3_path=False, returns list of object keys (key).
     """
+    # Store the initial logger state
+    initial_logger = logging.getLogger()
+
+    # Check if the root logger already has handlers
+    if not initial_logger.hasHandlers():
+        # Set up logging configuration if no handlers exist
+        logging.basicConfig(level=logging.INFO)  # Set the logging level as needed
+
+    # Get the logger instance
+    logger = logging.getLogger()
+
+    logger.info(f"Listing S3 objects in {bucket} under {prefix} ending with {suffix}")
+
     s3 = boto3.client("s3")
 
     paginator = s3.get_paginator("list_objects_v2")
@@ -35,6 +47,10 @@ def s3_ls(bucket, prefix, suffix=".nc", s3_path=True) -> list:
                     s3_objs.append(f"s3://{bucket}/{obj['Key']}")
                 else:
                     s3_objs.append(obj["Key"])
+
+    if not initial_logger.hasHandlers():
+        # Restore the original state if no handlers were initially present
+        logging.shutdown()
 
     return s3_objs
 
@@ -66,6 +82,8 @@ def delete_objects_in_prefix(bucket_name, prefix):
         botocore.exceptions.ClientError: If there is an error with the S3 client operation.
     """
     s3 = boto3.client("s3")
+
+    # Get the logger instance
     logger = logging.getLogger()
 
     # Continuation token for paginated results

@@ -1,3 +1,4 @@
+import importlib
 import os
 import tempfile
 import timeit
@@ -5,6 +6,7 @@ from typing import List
 
 import boto3
 import netCDF4
+import s3fs
 import xarray as xr
 import yaml
 from coiled import Cluster
@@ -14,9 +16,6 @@ from jsonschema import validate, ValidationError
 
 from .config import load_variable_from_config, load_dataset_config
 from .logging import get_logger
-
-import s3fs
-import unittest
 
 
 class CommonHandler:
@@ -422,11 +421,17 @@ def cloud_optimised_creation(
         None
     """
 
-    handler_class = kwargs.get("handler_class", None)
+    # this is optional! Default will use generic handler
+    handler_class_name = dataset_config.get("handler_class", None)
 
-    # loading the right handler_nc_anmn_file based on configuration
-    if handler_class is None:
+    # loading the right handler based on configuration
+    if handler_class_name is None:
         handler_class = _get_generic_handler_class(dataset_config)
+    else:
+        module = importlib.import_module(
+            f"aodn_cloud_optimised.lib.{handler_class_name}"
+        )
+        handler_class = getattr(module, handler_class_name)
 
     handler_clear_existing_data_arg = kwargs.get("clear_existing_data", None)
 

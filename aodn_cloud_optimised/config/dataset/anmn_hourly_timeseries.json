@@ -1,6 +1,7 @@
 {
   "dataset_name": "anmn_hourly_timeseries",
   "logger_name": "anmn_hourly_timeseries",
+  "handler_class": "AnmnHourlyTsHandler",
   "cloud_optimised_format": "parquet",
   "cluster_options" : {
     "n_workers": [8, 20],

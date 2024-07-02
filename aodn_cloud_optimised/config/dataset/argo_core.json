@@ -1,6 +1,7 @@
 {
   "dataset_name": "argo_core",
   "logger_name": "argo_core",
+  "handler_class": "ArgoHandler",
   "cloud_optimised_format": "parquet",
   "cluster_options" : {
     "n_workers": [8, 20],

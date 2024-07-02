@@ -1,41 +1,19 @@
 #!/usr/bin/env python3
-import importlib.resources
-
-from aodn_cloud_optimised.lib.CommonHandler import cloud_optimised_creation
-from aodn_cloud_optimised.lib.config import (
-    load_variable_from_config,
-    load_dataset_config,
-)
-from aodn_cloud_optimised.lib.s3Tools import s3_ls
+import subprocess
 
 
 def main():
-    BUCKET_RAW_DEFAULT = load_variable_from_config("BUCKET_RAW_DEFAULT")
-    nc_obj_ls = s3_ls(BUCKET_RAW_DEFAULT, "IMOS/SRS/SST/ghrsst/L3S-1d/dn/2022")
+    # Define the command with the predefined arguments
+    command = [
+        "generic_cloud_optimised_creation",
+        "--paths",
+        "IMOS/SRS/SST/ghrsst/L3S-1d/dn/2022",
+        "--dataset-config",
+        "srs_l3s_1d_dn.json",
+        "--clear-existing-data",
+        "--cluster-mode",
+        "remote",
+    ]
 
-    dataset_config = load_dataset_config(
-        str(
-            importlib.resources.path(
-                "aodn_cloud_optimised.config.dataset", "srs_l3s_1d_dn.json"
-            )
-        )
-    )
-
-    # Process one file only, on a local cluster, and delete previous data
-    # cloud_optimised_creation_loop(
-    #     [nc_obj_ls[0]],
-    #     dataset_config=dataset_config,
-    #     clear_existing_data=True,
-    #     cluster_mode="local",
-    # )
-
-    cloud_optimised_creation(
-        nc_obj_ls,
-        dataset_config=dataset_config,
-        # clear_existing_data=True,
-        cluster_mode="remote",
-    )
-
-
-if __name__ == "__main__":
-    main()
+    # Run the command
+    subprocess.run(command, check=True)

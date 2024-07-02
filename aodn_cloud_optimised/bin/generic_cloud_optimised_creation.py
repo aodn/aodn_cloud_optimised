@@ -32,6 +32,11 @@ def main():
         help="Optional filter strings to apply on the S3 paths. Example: '_hourly-timeseries_' 'FV02'",
     )
     parser.add_argument(
+        "--suffix",
+        default="",
+        help="Optional suffix used by s3_ls to filter S3 objects. Example: '.nc'",
+    )
+    parser.add_argument(
         "--dataset-config",
         required=True,
         help="Path to the dataset config JSON file. Example: 'anmn_hourly_timeseries.json'",
@@ -40,6 +45,11 @@ def main():
         "--clear-existing-data",
         action="store_true",
         help="Flag to clear existing data. Default is False.",
+    )
+    parser.add_argument(
+        "--force-previous-parquet-deletion",
+        action="store_true",
+        help="Flag to force the search of previous equivalent parquet file created. Much slower. Default is False.",
     )
     parser.add_argument(
         "--cluster-mode",
@@ -55,7 +65,7 @@ def main():
     # Gather S3 paths
     nc_obj_ls = []
     for path in args.paths:
-        nc_obj_ls += s3_ls(BUCKET_RAW_DEFAULT, path)
+        nc_obj_ls += s3_ls(BUCKET_RAW_DEFAULT, path, suffix=args.suffix)
 
     # Apply filters
     for filter_str in args.filters:
@@ -75,8 +85,9 @@ def main():
     cloud_optimised_creation(
         nc_obj_ls,
         dataset_config=dataset_config,
-        handler_class=None,  # Assuming handler_class needs to be provided; modify as needed
+        handler_class=None,
         clear_existing_data=args.clear_existing_data,
+        force_previous_parquet_deletion=args.force_previous_parquet_deletion,
         cluster_mode=args.cluster_mode,
     )
 
