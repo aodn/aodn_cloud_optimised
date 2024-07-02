@@ -69,6 +69,7 @@ anmn_aqualogger_to_parquet = "aodn_cloud_optimised.bin.anmn_aqualogger_to_parque
 ardc_wave_to_parquet = "aodn_cloud_optimised.bin.ardc_wave_to_parquet:main"
 argo_to_parquet = "aodn_cloud_optimised.bin.argo_to_parquet:main"
 gsla_nrt_to_zarr = "aodn_cloud_optimised.bin.gsla_nrt_to_zarr:main"
+generic_cloud_optimised_creation = "aodn_cloud_optimised.bin.generic_cloud_optimised_creation:main"
 soop_xbt_nrt_to_parquet = "aodn_cloud_optimised.bin.soop_xbt_nrt_to_parquet:main"
 srs_oc_ljco_to_parquet = "aodn_cloud_optimised.bin.srs_oc_ljco_to_parquet:main"
 srs_l3s_1d_dn_to_zarr = "aodn_cloud_optimised.bin.srs_l3s_1d_dn_to_zarr:main"
