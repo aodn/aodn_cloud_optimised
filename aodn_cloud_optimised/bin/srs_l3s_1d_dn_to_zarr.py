@@ -7,7 +7,12 @@ def main():
     command = [
         "generic_cloud_optimised_creation",
         "--paths",
+        "IMOS/SRS/SST/ghrsst/L3S-1d/dn/2019",
+        "IMOS/SRS/SST/ghrsst/L3S-1d/dn/2020",
+        "IMOS/SRS/SST/ghrsst/L3S-1d/dn/2021",
         "IMOS/SRS/SST/ghrsst/L3S-1d/dn/2022",
+        "IMOS/SRS/SST/ghrsst/L3S-1d/dn/2023",
+        "IMOS/SRS/SST/ghrsst/L3S-1d/dn/2024",
         "--dataset-config",
         "srs_l3s_1d_dn.json",
         "--clear-existing-data",

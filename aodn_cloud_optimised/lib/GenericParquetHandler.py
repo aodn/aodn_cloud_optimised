@@ -933,6 +933,6 @@ class GenericHandler(CommonHandler):
                 client.submit(task, f, idx + 1) for idx, f in enumerate(batch)
             ]
 
-            wait(batch_tasks)
+            wait(batch_tasks, timeout="10 minutes")
 
         self.close_cluster(client, cluster)
