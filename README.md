@@ -24,9 +24,10 @@ A tool designed to convert IMOS NetCDF and CSV files into Cloud Optimised format
   * Parquet: reprocessing is done via pyarrow internal overwritting function, but can also be forced in case an input file has significantly changed
 * Chunking:
   * Parquet: to facilitate the query of geospatial data, polygon and timestamp slices are created as partitions
-  * Zarr
+  * Zarr: done via dataset configuration
 * Metadata:
   * Parquet: Metadata is created as a sidecar _metadata.parquet file
+* Unittesting of module: Very close to integration testing, local cluster is used to create cloud optimised files
 
 
 # Installation
