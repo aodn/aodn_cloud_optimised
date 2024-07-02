@@ -87,22 +87,25 @@ class GenericHandler(CommonHandler):
         self.compute = bool(True)
 
         # TODO: fix this ugly abomination
-        # import unittest
         #
-        # if "unittest" in globals() or "unittest" in locals():
-        #     # Check if unittest is imported
-        #     if unittest.TestCase("__init__").__class__.__module__ == "unittest.case":
-        #         self.s3_fs = s3fs.S3FileSystem(
-        #             anon=False,
-        #             client_kwargs={
-        #                 "endpoint_url": "http://127.0.0.1:5555/",
-        #                 "region_name": "us-east-1",
-        #             },
-        #         )
-        #     else:
-        #         self.s3_fs = s3fs.S3FileSystem(anon=False)
-        # else:
-        #     self.s3_fs = s3fs.S3FileSystem(anon=False)
+        #
+        import unittest
+
+        if "unittest" in globals() or "unittest" in locals():
+
+            # Check if unittest is imported
+            if unittest.TestCase("__init__").__class__.__module__ == "unittest.case":
+                self.s3_fs = s3fs.S3FileSystem(
+                    anon=False,
+                    client_kwargs={
+                        "endpoint_url": "http://127.0.0.1:5555/",
+                        "region_name": "us-east-1",
+                    },
+                )
+            else:
+                self.s3_fs = s3fs.S3FileSystem(anon=False)
+        else:
+            self.s3_fs = s3fs.S3FileSystem(anon=False)
 
         self.store = s3fs.S3Map(
             root=f"{self.cloud_optimised_output_path}", s3=self.s3_fs, check=False
