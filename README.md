@@ -5,23 +5,42 @@
 ![Release](https://img.shields.io/github/v/release/aodn/aodn_cloud_optimised.svg)
 [![codecov](https://codecov.io/gh/aodn/aodn_cloud_optimised/branch/main/graph/badge.svg)](https://codecov.io/gh/aodn/aodn_cloud_optimised/branch/main)
 
-A tool designed to convert IMOS NetCDF files and CSV into Cloud Optimised formats such as Zarr and Parquet
+A tool designed to convert IMOS NetCDF and CSV files into Cloud Optimised formats such as Zarr and Parquet
 
 ## Key Features
 
-* Conversion of a dataset with YAML Configuration: Convert tabular data (CSV or NetCDF) to Parquet and gridded data to Zarr using YAML configuration files only.
-* Preservation of NetCDF Metadata: Maintain NetCDF global attributes metadata
-* Improve Querying of Cloud Optimised data by Geographical Bounding box and Time Slice: Create geometry polygon and time slice partitions for Parquet dataset, facilitating efficient data querying by time and geographical bounding box.
-* Data Reprocessing: Easily reprocess NetCDF files into Zarr and Parquet formats
+* Conversion of CSV/NetCDF to Cloud Optimised format (Zarr/Parquet)
+  * YAML configuration approach with parent and child YAML configuration if multiple dataset are very similar (i.e. Radar ACORN, GHRSST, see [config](https://github.com/aodn/aodn_cloud_optimised/tree/main/aodn_cloud_optimised/config/dataset))
+  * Generic handlers for most dataset ([GenericParquetHandler](https://github.com/aodn/aodn_cloud_optimised/blob/main/aodn_cloud_optimised/lib/GenericParquetHandler.py), [GenericZarrHandler](https://github.com/aodn/aodn_cloud_optimised/blob/main/aodn_cloud_optimised/lib/GenericZarrHandler.py)).
+  * Specific handlers can be written and inherits methods from a generic handler ([Argo handler](https://github.com/aodn/aodn_cloud_optimised/blob/main/aodn_cloud_optimised/lib/ArgoHandler.py), [Mooring Timseries Handler](https://github.com/aodn/aodn_cloud_optimised/blob/main/aodn_cloud_optimised/lib/AnmnHourlyTsHandler.py))
+* Clustering capability:
+  * Local dask cluster
+  * Remote Coiled cluster
+  * driven by configuration/can be easily overwritten
+  * Zarr: gridded dataset are done in batch and in parallel with xarray.open_mfdataset
+  * Parquet: tabular files are done in batch and in parallel as independent task, done with future
+* Reprocessing:
+  * Zarr,: reprocessing is achieved by writting to specific regions with slices. Non-contigous regions are handled
+  * Parquet: reprocessing is done via pyarrow internal overwritting function, but can also be forced in case an input file has significantly changed
+* Chunking:
+  * Parquet: to facilitate the query of geospatial data, polygon and timestamp slices are created as partitions
+  * Zarr
+* Metadata:
+  * Parquet: Metadata is created as a sidecar _metadata.parquet file
+
 
 # Installation
 ## Users
 Requirements:
 * python >= 3.10.14
 
+### automatic install of latest wheel release
 ```bash
 curl -s https://raw.githubusercontent.com/aodn/aodn_cloud_optimised/main/install.sh | bash
 ```
+
+Otherwise go to
+github.com/aodn/aodn_cloud_optimised/releases/latest
 
 ## Development
 Requirements:
@@ -46,57 +65,76 @@ to update the poetry.lock file. Commit the changes to poetry.lock
 # Requirements
 AWS SSO to push files to S3
 
-# Features List
-
-## Parquet Features
-| Feature                                                                                        | Status | Comment                                                                            |
-|------------------------------------------------------------------------------------------------|--------|------------------------------------------------------------------------------------|
-| Process IMOS tabular NetCDF to Parquet with GenericHandler                                     | Done   | Converts NetCDF files to Parquet format using a generic handler.                   |
-| Process CSV to Parquet with GenericHandler                                                     | Done   | Converts CSV files to Parquet format using a generic handler.                      |
-| Specific Handlers inherit all methods from GenericHandler with super()                         | Done   | Simplifies the creation of new handlers by inheriting methods.                     |
-| Unittests implemented                                                                          | Done   | Tests to ensure functionality and reliability.                                     |
-| Reprocessing of files already converted to Parquet                                             | Done   | Reprocessing of NetCDF files; original method can be slow for large datasets.      |
-| Metadata variable attributes in sidecar parquet file                                           | Done   | Metadata attributes available in dataset sidecars.                                 |
-| Add new variables to dataset                                                                   | Done   | Addition of new variables such as site_code, deployment_code, filename attributes. |
-| Add timestamp variable for partition key                                                       | Done   | Enhances query performance by adding a timestamp variable.                         |
-| Remove NaN timestamp when NetCDF not CF compliant                                              | Done   | Eliminates NaN timestamps, particularly for non CF compliant data like Argo.       |
-| Create dataset Schema                                                                          | Done   | Creation of a schema for the dataset.                                              |
-| Create missing variables available in Schema                                                   | Done   | Ensures dataset consistency by adding missing variables from the schema.           |
-| Warning when new variable from NetCDF is missing from Schema                                   | Done   | Alerts when a new variable from NetCDF is absent in the schema.                    |
-| Creating metadata parquet sidecar                                                              | Done   |                                                                                    |
-| Create AWS OpenData Registry Yaml                                                              | Done   |
-| Config file JSON validation against schema                                                     | Done   |
-| Create polygon variable to facilite geometry queries | Done   |
-
-## Zarr Features
-| Feature                                                                | Status | Comment                                                                            |
-|------------------------------------------------------------------------|--------|------------------------------------------------------------------------------------|
-| Process IMOS Gridded NetCDF to Zarr with GenericHandler                | Done   | Converts NetCDF files to Parquet format using a generic handler.                   |
-| Specific Handlers inherit all methods from GenericHandler with super() | Done   | Simplifies the creation of new handlers by inheriting methods.                     |
-
-
 
 # Usage
 
-## Parquet
-The GenericHandler for parquet dataset creation is designed to be used either as a standalone class or as a base class for more specialised handler implementations. Here's a basic usage example:
+## As a standalone bash script
+```bash
+generic_cloud_optimised_creation -h
+usage: generic_cloud_optimised_creation [-h] --paths PATHS [PATHS ...] [--filters [FILTERS ...]] [--suffix SUFFIX] --dataset-config
+                                        DATASET_CONFIG [--clear-existing-data] [--force-previous-parquet-deletion]
+                                        [--cluster-mode {local,remote}]
+
+Process S3 paths and create cloud-optimized datasets.
+
+options:
+  -h, --help            show this help message and exit
+  --paths PATHS [PATHS ...]
+                        List of S3 paths to process. Example: 'IMOS/ANMN/NSW' 'IMOS/ANMN/PA'
+  --filters [FILTERS ...]
+                        Optional filter strings to apply on the S3 paths. Example: '_hourly-timeseries_' 'FV02'
+  --suffix SUFFIX       Optional suffix used by s3_ls to filter S3 objects. Example: '.nc'
+  --dataset-config DATASET_CONFIG
+                        Path to the dataset config JSON file. Example: 'anmn_hourly_timeseries.json'
+  --clear-existing-data
+                        Flag to clear existing data. Default is False.
+  --force-previous-parquet-deletion
+                        Flag to force the search of previous equivalent parquet file created. Much slower. Default is False.
+  --cluster-mode {local,remote}
+                        Cluster mode to use. Options: 'local' or 'remote'. Default is 'local'.
+
+Examples:
+  generic_cloud_optimised_creation --paths 'IMOS/ANMN/NSW' 'IMOS/ANMN/PA' --filters '_hourly-timeseries_' 'FV02' --dataset-config 'anmn_hourly_timeseries.json' --clear-existing-data --cluster-mode 'remote'
+  generic_cloud_optimised_creation --paths 'IMOS/ANMN/NSW' 'IMOS/ANMN/QLD' --dataset-config 'anmn_ctd_ts_fv01.json'
+  generic_cloud_optimised_creation --paths 'IMOS/ACORN/gridded_1h-avg-current-map_QC/TURQ/2024' --dataset-config 'acorn_gridded_qc_turq.json' --clear-existing-data --cluster-mode 'remote'
+
+```
+
+## As a python module
 
 ```python
-# Read the content of the dataset template JSON file (with comments)
-#import commentjson
-#with open('aodn_cloud_optimised/config/dataset/dataset_template.json', 'r') as file:
-#   json_with_comments = file.read()
-#dataset_config = commentjson.loads(json_with_comments)
-
 import importlib.resources
-from aodn_cloud_optimised.lib.config import load_dataset_config
+
 from aodn_cloud_optimised.lib.CommonHandler import cloud_optimised_creation
+from aodn_cloud_optimised.lib.config import (
+    load_variable_from_config,
+    load_dataset_config,
+)
+from aodn_cloud_optimised.lib.s3Tools import s3_ls
 
-dataset_config = load_dataset_config(str(importlib.resources.path("aodn_cloud_optimised.config.dataset", "anfog_slocum_glider.json")))
 
-cloud_optimised_creation('object/path/netcdf_file.nc',
-                          dataset_config=dataset_config
-                         )
+def main():
+    BUCKET_RAW_DEFAULT = load_variable_from_config("BUCKET_RAW_DEFAULT")
+    nc_obj_ls = s3_ls(BUCKET_RAW_DEFAULT, "IMOS/SRS/SST/ghrsst/L3S-1d/dn/2024")
+
+    dataset_config = load_dataset_config(
+        str(
+            importlib.resources.path(
+                "aodn_cloud_optimised.config.dataset", "srs_l3s_1d_dn.json"
+            )
+        )
+    )
+
+    cloud_optimised_creation(
+       nc_obj_ls,
+       dataset_config=dataset_config,
+       reprocess=True,
+       cluster_mode='remote'
+    )
+
+
+if __name__ == "__main__":
+    main()
 ```
 
 

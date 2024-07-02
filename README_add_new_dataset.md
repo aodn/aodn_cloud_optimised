@@ -1,4 +1,9 @@
+# Creating a dataset configuration file
+
+
 This module aims to be generic enough so that adding a new IMOS dataset is driven through a json config file.
+Examples of dataset configuration can be found at [config](https://github.com/aodn/aodn_cloud_optimised/tree/main/aodn_cloud_optimised/config/dataset).
+
 For more complicated dataset, such as Argo for example, it's also possible to create a specific handler which would
 inherit with ```Super()``` all of the methods for the ```aodn_cloud_optimised.lib.GenericParquetHandler.GenericHandler``` class.
 
