@@ -23,16 +23,6 @@ from fuzzywuzzy import fuzz
 from shapely import wkb
 from shapely.geometry import Polygon, MultiPolygon
 
-from parquet_queries import (
-    create_time_filter,
-    create_bbox_filter,
-    query_unique_value,
-    plot_spatial_extent,
-    get_spatial_extent,
-    get_temporal_extent,
-    get_schema_metadata,
-)
-
 
 def query_unique_value(dataset: pq.ParquetDataset, partition: str) -> set:
     """Query the unique values of a specified partition name from a ParquetDataset.
