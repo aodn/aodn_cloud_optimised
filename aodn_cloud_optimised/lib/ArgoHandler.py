@@ -20,7 +20,8 @@ class ArgoHandler(GenericHandler):
         :param netcdf_fp: input NetCDF filepath of an argo *_prof.nc file
         :return: dataframe containing profile data
         """
-        if not self.input_object_key.endswith("_prof.nc"):
+
+        if not netcdf_fp.path.endswith("_prof.nc"):
             raise ValueError
 
         with xr.open_dataset(netcdf_fp) as ds:

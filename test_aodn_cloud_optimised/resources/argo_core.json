@@ -2,6 +2,16 @@
   "dataset_name": "argo_core",
   "logger_name": "argo_core",
   "cloud_optimised_format": "parquet",
+  "cluster_options" : {
+    "n_workers": [8, 20],
+    "scheduler_vm_types": "t3.small",
+    "worker_vm_types": "t3.large",
+    "allow_ingress_from": "me",
+    "compute_purchase_option": "spot_with_fallback",
+    "worker_options": {
+      "nthreads": 8,
+      "memory_limit": "32GB" }
+  },
   "metadata_uuid": "4402cb50-e20a-44ee-93e6-4728259250d2",
   "gattrs_to_variables": [],
   "partition_keys": [
@@ -281,6 +291,17 @@
       "type": "string",
       "long_name": "quality flag",
       "conventions": "Argo reference table 2"
+    },
+    "PSAL_ADJUSTED": {
+      "type": "float",
+      "long_name": "Practical salinity",
+      "standard_name": "sea_water_salinity",
+      "units": "psu",
+      "valid_min": 2.0,
+      "valid_max": 41.0,
+      "C_format": "%9.3f",
+      "FORTRAN_format": "F9.3",
+      "resolution": 0.0010000000474974513
     },
     "PSAL_ADJUSTED_QC": {
       "type": "string",

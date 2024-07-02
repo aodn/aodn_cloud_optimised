@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 import importlib.resources
 
-from aodn_cloud_optimised.lib.GenericZarrHandler import GenericHandler
-from aodn_cloud_optimised.lib.CommonHandler import cloud_optimised_creation_loop
+from aodn_cloud_optimised.lib.CommonHandler import cloud_optimised_creation
 from aodn_cloud_optimised.lib.config import (
     load_variable_from_config,
     load_dataset_config,
@@ -21,20 +20,19 @@ def main():
             )
         )
     )
-    # cloud_optimised_creation_loop([nc_obj_ls[0]],
-    #                              dataset_config=dataset_config,
-    #                              reprocess=True
-    #                              )
 
-    # cloud_optimised_creation_loop(nc_obj_ls[1:],
-    #                              dataset_config=dataset_config,
-    #                              )
+    cloud_optimised_creation(
+        nc_obj_ls,
+        dataset_config=dataset_config,
+        clear_existing_data=True,
+        cluster_mode="remote",
+    )
 
     # rechunking
-    GenericHandler(
-        input_object_key=nc_obj_ls[0],
-        dataset_config=dataset_config,
-    ).rechunk()
+    # GenericHandler(
+    #    input_object_key=nc_obj_ls[0],
+    #    dataset_config=dataset_config,
+    # ).rechunk()
 
     if __name__ == "__main__":
         main()

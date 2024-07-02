@@ -1,126 +1,301 @@
 {
-    "dataset_name": "ardc_wave_nrt",
-    "logger_name": "ardc_wave_nrt",
-    "cloud_optimised_format": "parquet",
-    "metadata_uuid": "2807f3aa-4db0-4924-b64b-354ae8c10b58",
-    "gattrs_to_variables" : ["site_name", "water_depth", "wmo_id"],
-    "partition_keys": ["site_name", "timestamp", "polygon"],
-    "time_extent": {
-        "time": "TIME",
-        "partition_timestamp_period": "M"
+  "dataset_name": "ardc_wave_nrt",
+  "logger_name": "ardc_wave_nrt",
+  "cloud_optimised_format": "parquet",
+  "cluster_options" : {
+    "n_workers": [8, 20],
+    "scheduler_vm_types": "t3.small",
+    "worker_vm_types": "t3.large",
+    "allow_ingress_from": "me",
+    "compute_purchase_option": "spot_with_fallback",
+    "worker_options": {
+      "nthreads": 8,
+      "memory_limit": "32GB" }
+  },
+  "metadata_uuid": "2807f3aa-4db0-4924-b64b-354ae8c10b58",
+  "gattrs_to_variables": [
+    "site_name",
+    "water_depth",
+    "wmo_id"
+  ],
+  "partition_keys": [
+    "site_name",
+    "timestamp",
+    "polygon"
+  ],
+  "time_extent": {
+    "time": "TIME",
+    "partition_timestamp_period": "M"
+  },
+  "spatial_extent": {
+    "lat": "LATITUDE",
+    "lon": "LONGITUDE",
+    "spatial_resolution": 5
+  },
+  "schema": {
+    "timeSeries": {
+      "type": "int32",
+      "long_name": "unique identifier for each feature instance",
+      "cf_role": "timeseries_id"
     },
-    "spatial_extent": {
-        "lat": "LATITUDE",
-        "lon": "LONGITUDE",
-        "spatial_resolution": 5
+    "TIME": {
+      "type": "timestamp[ns]",
+      "standard_name": "time",
+      "long_name": "time",
+      "axis": "T",
+      "valid_min": 0.0,
+      "valid_max": 90000.0
     },
-    "schema" : {
-      "timeSeries": {"type": "int32"},
-      "LATITUDE": {"type": "double"},
-      "LONGITUDE": {"type": "double"},
-      "WHTH": {"type": "float"},
-      "WPMH": {"type": "float"},
-      "WMXH": {"type": "float"},
-      "WPPE": {"type": "float"},
-      "WPDI": {"type": "float"},
-      "WPDS": {"type": "float"},
-      "WAVE_quality_control": {"type": "float"},
-      "water_depth": {"type": "int64"},
-      "wmo_id": {"type": "string"},
-      "timestamp": {"type": "int64"},
-      "polygon": {"type": "string"},
-      "site_name": {"type": "string"},
-      "filename": {"type": "string"},
-      "TIME": {"type": "timestamp[ns]"}
+    "LATITUDE": {
+      "type": "double",
+      "standard_name": "latitude",
+      "long_name": "latitude",
+      "units": "degrees_north",
+      "axis": "Y",
+      "valid_min": -90.0,
+      "valid_max": 90.0,
+      "reference_datum": "WGS84 coordinate reference system; EPSG:4326"
     },
-    "dataset_gattrs": {
-        "title": "ARDC"
+    "LONGITUDE": {
+      "type": "double",
+      "standard_name": "longitude",
+      "long_name": "longitude",
+      "units": "degrees_east",
+      "axis": "X",
+      "valid_min": -180.0,
+      "valid_max": 180.0,
+      "reference_datum": "WGS84 coordinate reference system; EPSG:4326"
     },
-    "force_old_pq_del": true,
-    "aws_opendata_registry": {
-      "Name": "",
-      "Description": "",
-      "Documentation": "",
-      "Contact": "",
-      "ManagedBy": "",
-      "UpdateFrequency": "",
-      "Tags": [],
-      "License": "",
-      "Resources": [
+    "WHTH": {
+      "type": "double",
+      "standard_name": "sea_surface_wave_significant_height",
+      "long_name": "sea surface wave significant height from time domain analysis",
+      "units": "m",
+      "valid_min": 0.0,
+      "valid_max": 100.0,
+      "method": "Time domain analysis",
+      "ancillary_variable": "WAVE_quality_control"
+    },
+    "WPMH": {
+      "type": "double",
+      "standard_name": "sea_surface_wave_mean_period",
+      "long_name": "sea surface wave mean period",
+      "units": "s",
+      "valid_min": 0.0,
+      "valid_max": 50.0,
+      "method": "Time domain analysis",
+      "ancillary_variable": "WAVE_quality_control"
+    },
+    "WMXH": {
+      "type": "double",
+      "standard_name": "sea_surface_wave_maximum_height",
+      "long_name": "sea surface wave maximum height",
+      "units": "m",
+      "valid_min": 0.0,
+      "valid_max": 100.0,
+      "method": "Time domain analysis",
+      "ancillary_variable": "WAVE_quality_control"
+    },
+    "WPPE": {
+      "type": "double",
+      "standard_name": "sea_surface_wave_period_at_variance_spectral_density_maximum",
+      "long_name": "spectral peak wave period",
+      "units": "s",
+      "valid_min": 0.0,
+      "valid_max": 50.0,
+      "method": "Spectral analysis method",
+      "ancillary_variable": "WAVE_quality_control"
+    },
+    "WPDI": {
+      "type": "double",
+      "standard_name": "sea_surface_wave_from_direction_at_variance_spectral_density_maximum",
+      "long_name": "direction of the dominant wave",
+      "units": "degree",
+      "reference_datum": "true north",
+      "valid_min": 0.0,
+      "valid_max": 360.0,
+      "method": "Spectral analysis method",
+      "ancillary_variable": "WAVE_quality_control"
+    },
+    "WPDS": {
+      "type": "double",
+      "standard_name": "sea_surface_wave_directional_spread_at_variance_spectral_density_maximum",
+      "long_name": "directional spread of the dominant wave",
+      "units": "degree",
+      "reference_datum": "true north",
+      "valid_min": 0.0,
+      "valid_max": 360.0,
+      "method": "Spectral analysis method",
+      "ancillary_variable": "WAVE_quality_control"
+    },
+    "WAVE_quality_control": {
+      "type": "float",
+      "long_name": "primary Quality Control flag for wave variables",
+      "valid_min": 1,
+      "valid_max": 9,
+      "flag_values": [
+        1,
+        2,
+        3,
+        4,
+        9
+      ],
+      "flag_meanings": "good not_evaluated questionable bad missing",
+      "quality_control_convention": "Ocean Data Standards, UNESCO 2013 - IOC Manuals and Guides, 54, Volume 3 Version 1"
+    },
+    "WSSH": {
+      "type": "double",
+      "ancillary_variable": "WAVE_quality_control",
+      "long_name": "sea surface wave spectral significant height",
+      "method": "Spectral analysis method",
+      "standard_name": "sea_surface_wave_significant_height",
+      "units": "m",
+      "valid_max": 100.0,
+      "valid_min": 0.0
+    },
+    "WPFM": {
+      "type": "double",
+      "ancillary_variable": "WAVE_quality_control",
+      "long_name": "sea surface wave spectral mean period",
+      "method": "Spectral analysis method",
+      "standard_name": "sea_surface_wave_mean_period_from_variance_spectral_density_first_frequency_moment",
+      "units": "s",
+      "valid_max": 50.0,
+      "valid_min": 0.0
+    },
+    "WMDS": {
+      "type": "double",
+      "ancillary_variable": "WAVE_quality_control",
+      "long_name": "spectral sea surface wave mean directional spread",
+      "method": "Spectral analysis method",
+      "positive": "clockwise",
+      "standard_name": "sea_surface_wave_directional_spread",
+      "units": "Degrees",
+      "valid_max": 360.0,
+      "valid_min": 0.0
+    },
+    "SSWMD": {
+      "type": "double",
+      "ancillary_variable": "WAVE_quality_control",
+      "comment": "Direction (related to the magnetic north) from which the mean period waves are coming from",
+      "compass_correction_applied": 13,
+      "long_name": "spectral sea surface wave mean direction",
+      "magnetic_declination": 12.86,
+      "method": "Spectral analysis method",
+      "positive": "clockwise",
+      "reference_datum": "true north",
+      "standard_name": "sea_surface_wave_from_direction",
+      "units": "Degrees",
+      "valid_max": 360.0,
+      "valid_min": 0.0
+    },
+    "water_depth": {
+      "type": "int64"
+    },
+    "wmo_id": {
+      "type": "string"
+    },
+    "timestamp": {
+      "type": "int64"
+    },
+    "polygon": {
+      "type": "string"
+    },
+    "site_name": {
+      "type": "string"
+    },
+    "filename": {
+      "type": "string"
+    }
+  },
+  "dataset_gattrs": {
+    "title": "ARDC"
+  },
+  "force_old_pq_del": true,
+  "aws_opendata_registry": {
+    "Name": "",
+    "Description": "",
+    "Documentation": "",
+    "Contact": "",
+    "ManagedBy": "",
+    "UpdateFrequency": "",
+    "Tags": [],
+    "License": "",
+    "Resources": [
+      {
+        "Description": "",
+        "ARN": "",
+        "Region": "",
+        "Type": "",
+        "Explore": []
+      },
+      {
+        "Description": "",
+        "ARN": "",
+        "Region": "",
+        "Type": ""
+      },
+      {
+        "Description": "",
+        "ARN": "",
+        "Region": "",
+        "Type": ""
+      },
+      {
+        "Description": "",
+        "ARN": "",
+        "Region": "",
+        "Type": ""
+      }
+    ],
+    "DataAtWork": {
+      "Tutorials": [
         {
-          "Description": "",
-          "ARN": "",
-          "Region": "",
-          "Type": "",
-          "Explore": []
+          "Title": "",
+          "URL": "",
+          "Services": "",
+          "AuthorName": "",
+          "AuthorURL": ""
         },
         {
-          "Description": "",
-          "ARN": "",
-          "Region": "",
-          "Type": ""
+          "Title": "",
+          "URL": "",
+          "AuthorName": "",
+          "AuthorURL": ""
         },
         {
-          "Description": "",
-          "ARN": "",
-          "Region": "",
-          "Type": ""
-        },
-        {
-          "Description": "",
-          "ARN": "",
-          "Region": "",
-          "Type": ""
+          "Title": "",
+          "URL": "",
+          "AuthorName": "",
+          "AuthorURL": ""
         }
       ],
-      "DataAtWork": {
-        "Tutorials": [
-          {
-            "Title": "",
-            "URL": "",
-            "Services": "",
-            "AuthorName": "",
-            "AuthorURL": ""
-          },
-          {
-            "Title": "",
-            "URL": "",
-            "AuthorName": "",
-            "AuthorURL": ""
-          },
-          {
-            "Title": "",
-            "URL": "",
-            "AuthorName": "",
-            "AuthorURL": ""
-          }
-        ],
-        "Tools & Applications": [
-          {
-            "Title": "",
-            "URL": "",
-            "AuthorName": "",
-            "AuthorURL": ""
-          },
-          {
-            "Title": "",
-            "URL": "",
-            "AuthorName": "",
-            "AuthorURL": ""
-          }
-        ],
-        "Publications": [
-          {
-            "Title": "",
-            "URL": "",
-            "AuthorName": ""
-          },
-          {
-            "Title": "",
-            "URL": "",
-            "AuthorName": ""
-          }
-        ]
-      }
+      "Tools & Applications": [
+        {
+          "Title": "",
+          "URL": "",
+          "AuthorName": "",
+          "AuthorURL": ""
+        },
+        {
+          "Title": "",
+          "URL": "",
+          "AuthorName": "",
+          "AuthorURL": ""
+        }
+      ],
+      "Publications": [
+        {
+          "Title": "",
+          "URL": "",
+          "AuthorName": ""
+        },
+        {
+          "Title": "",
+          "URL": "",
+          "AuthorName": ""
+        }
+      ]
     }
+  }
 }

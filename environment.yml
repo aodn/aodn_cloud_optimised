@@ -11,7 +11,7 @@ dependencies:
   - notebook
   - h5py
   - scipy
-  - pip
+  - pip<24.1
   - pip:
     - poetry
     - -r requirements.txt

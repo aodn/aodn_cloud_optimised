@@ -7,6 +7,13 @@ import tempfile
 from aodn_cloud_optimised.lib.config import (
     load_variable_from_file,
     load_variable_from_config,
+    load_dataset_config,
+)
+
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+DATASET_CONFIG_NC_ACORN_JSON = os.path.join(
+    ROOT_DIR, "resources", "acorn_gridded_qc_turq.json"
 )
 
 
@@ -51,6 +58,13 @@ class TestLoadVariableFromFile(unittest.TestCase):
             load_variable_from_file(
                 os.path.join(self.temp_dir, "non_existent_file.json"), "var1"
             )
+
+    def test_load_parent_child_config(self):
+        dataset_acorn_netcdf_config = load_dataset_config(DATASET_CONFIG_NC_ACORN_JSON)
+        cloud_optimised_format = dataset_acorn_netcdf_config["cloud_optimised_format"]
+        self.assertEqual(
+            "zarr", cloud_optimised_format
+        )  # attribute only found in parent record
 
 
 if __name__ == "__main__":

@@ -2,6 +2,16 @@
   "dataset_name": "srs_oc_ljco_wqm_daily",
   "logger_name": "srs_oc_ljco_wqm_daily",
   "cloud_optimised_format": "parquet",
+  "cluster_options" : {
+    "n_workers": [8, 20],
+    "scheduler_vm_types": "t3.small",
+    "worker_vm_types": "t3.large",
+    "allow_ingress_from": "me",
+    "compute_purchase_option": "spot_with_fallback",
+    "worker_options": {
+      "nthreads": 8,
+      "memory_limit": "32GB" }
+  },
   "metadata_uuid": "e4ac6bf81-cd37-4611-8da8-4d5ae5e2bda",
   "gattrs_to_variables": [
     "site_code"

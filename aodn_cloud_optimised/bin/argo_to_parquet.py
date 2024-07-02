@@ -3,7 +3,7 @@ import importlib.resources
 
 from aodn_cloud_optimised.lib.ArgoHandler import ArgoHandler
 from aodn_cloud_optimised.lib.CommonHandler import (
-    cloud_optimised_creation_loop,
+    cloud_optimised_creation,
     cloud_optimised_creation,
 )
 from aodn_cloud_optimised.lib.config import (
@@ -27,13 +27,13 @@ def main():
     # cloud_optimised_creation('IMOS/Argo/dac/incois/2902093/2902093_prof.nc',
     #                 dataset_config=dataset_config,
     #                 handler_class=ArgoHandler,
-    #                 force_old_pq_del=True)
+    #                 force_previous_parquet_deletion=True)
 
     # Lots of ram usage
     # cloud_optimised_creation('IMOS/Argo/dac/coriolis/3902120/3902120_prof.nc',
     #                 dataset_config=dataset_config,
     #                 handler_class=ArgoHandler,
-    #                 force_old_pq_del=True)
+    #                 force_previous_parquet_deletion=True)
 
     BUCKET_RAW_DEFAULT = load_variable_from_config("BUCKET_RAW_DEFAULT")
 
@@ -45,7 +45,7 @@ def main():
             BUCKET_RAW_DEFAULT, f"IMOS/Argo/dac/{org}", suffix="_prof.nc"
         )
 
-        cloud_optimised_creation_loop(
+        cloud_optimised_creation(
             argo_core_ls, dataset_config=dataset_config, handler_class=ArgoHandler
         )
 

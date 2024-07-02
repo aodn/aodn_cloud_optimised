@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import importlib.resources
 
-from aodn_cloud_optimised.lib.CommonHandler import cloud_optimised_creation_loop
+from aodn_cloud_optimised.lib.CommonHandler import cloud_optimised_creation
 from aodn_cloud_optimised.lib.config import (
     load_variable_from_config,
     load_dataset_config,
@@ -19,7 +19,6 @@ def main():
         + s3_ls(BUCKET_RAW_DEFAULT, "Bureau_of_Meteorology/WAVE-BUOYS/REALTIME/")
         + s3_ls(BUCKET_RAW_DEFAULT, "Deakin_University/WAVE-BUOYS/REALTIME")
     )
-
     dataset_config = load_dataset_config(
         str(
             importlib.resources.path(
@@ -28,7 +27,9 @@ def main():
         )
     )
 
-    cloud_optimised_creation_loop(nc_obj_ls, dataset_config=dataset_config)
+    cloud_optimised_creation(
+        nc_obj_ls, dataset_config=dataset_config, clear_existing_data=True
+    )
 
 
 if __name__ == "__main__":

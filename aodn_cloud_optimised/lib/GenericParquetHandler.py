@@ -1,9 +1,8 @@
 import importlib.resources
-import json
 import os
 import re
 import timeit
-from typing import List, Tuple, Generator
+from typing import Tuple, Generator
 
 import boto3
 import numpy as np
@@ -16,8 +15,19 @@ import yaml
 from shapely.geometry import Point, Polygon
 
 from .schema import create_pyarrow_schema, generate_json_schema_var_from_netcdf
+from aodn_cloud_optimised.lib.s3Tools import (
+    delete_objects_in_prefix,
+    split_s3_path,
+    prefix_exists,
+    create_fileset,
+)
 
+from aodn_cloud_optimised.lib.logging import get_logger
 from .CommonHandler import CommonHandler
+from dask.distributed import wait
+
+
+# TODO: improve log for parallism by adding a uuid for each task
 
 
 class GenericHandler(CommonHandler):
@@ -27,17 +37,16 @@ class GenericHandler(CommonHandler):
 
         Args:
             **kwargs: Additional keyword arguments.
-                raw_bucket_name (str, optional[config]): Name of the raw bucket.
                 optimised_bucket_name (str, optional[config]): Name of the optimised bucket.
                 root_prefix_cloud_optimised_path (str, optional[config]): Root Prefix path of the location of cloud optimised files
-                input_object_key (str): Key of the input object.
-                force_old_pq_del (bool, optional[config]): Force the deletion of existing cloud optimised files(slow) (default=False)
+                force_previous_parquet_deletion (bool, optional[config]): Force the deletion of existing cloud optimised files(slow) (default=False)
 
         """
         super().__init__(**kwargs)
 
         self.delete_pq_unmatch_enable = kwargs.get(
-            "force_old_pq_del", self.dataset_config.get("force_old_pq_del", False)
+            "force_previous_parquet_deletion",
+            self.dataset_config.get("force_previous_parquet_deletion", False),
         )
 
         json_validation_path = str(
@@ -132,25 +141,24 @@ class GenericHandler(CommonHandler):
             tuple: A tuple containing DataFrame and Dataset.
         """
 
-        if self.is_valid_netcdf(netcdf_fp):
-            # Use open_dataset as a context manager to ensure proper handling of the dataset
-            with xr.open_dataset(netcdf_fp) as ds:
-                # Convert xarray to pandas DataFrame
-                df = ds.to_dataframe()
-                # TODO: call check function on variable attributes
-                if self.check_var_attributes(ds):
-                    yield df, ds
-                else:
-                    self.logger.error(
-                        "NetCDF file is not consistent with the pre-defined schema"
-                    )
+        with xr.open_dataset(netcdf_fp, engine="h5netcdf") as ds:
+            # Convert xarray to pandas DataFrame
+            df = ds.to_dataframe()
+            # TODO: call check function on variable attributes
+            if self.check_var_attributes(ds):
+                yield df, ds
+            else:
+                self.logger.error(
+                    "NetCDF file is not consistent with the pre-defined schema"
+                )
 
     def preprocess_data(
         self, fp
     ) -> Generator[Tuple[pd.DataFrame, xr.Dataset], None, None]:
-        if fp.endswith(".nc"):
+
+        if fp.path.endswith(".nc"):
             return self.preprocess_data_netcdf(fp)
-        if fp.endswith(".csv"):
+        if fp.path.endswith(".csv"):
             return self.preprocess_data_csv(fp)
 
     @staticmethod
@@ -329,7 +337,7 @@ class GenericHandler(CommonHandler):
 
         return df
 
-    def _add_columns_df(self, df: pd.DataFrame, ds: xr.Dataset) -> pd.DataFrame:
+    def _add_columns_df(self, df: pd.DataFrame, ds: xr.Dataset, f) -> pd.DataFrame:
         """
         Adds filename column to the DataFrame as well as variables defined in the json config.
 
@@ -350,11 +358,11 @@ class GenericHandler(CommonHandler):
                     f"{attr} global attribute doesn't exist in the original NetCDF. The corresponding variable won't be created"
                 )
 
-        df["filename"] = os.path.basename(self.input_object_key)
+        df["filename"] = os.path.basename(f.path)
 
         return df
 
-    def _rm_bad_timestamp_df(self, df: pd.DataFrame) -> pd.DataFrame:
+    def _rm_bad_timestamp_df(self, df: pd.DataFrame, f) -> pd.DataFrame:
         """
         Remove rows with bad timestamps from the DataFrame.
 
@@ -374,7 +382,7 @@ class GenericHandler(CommonHandler):
 
         if any(df["timestamp"] < 0):
             self.logger.warning(
-                f"{self.filename}: NaN values of {time_varname} time variable in dataset. Trimming data from NaN values"
+                f"{f.path}: NaN values of {time_varname} time variable in dataset. Trimming data from NaN values"
             )
             df2 = df[df["timestamp"] > 0].copy()
             df = df2
@@ -488,11 +496,7 @@ class GenericHandler(CommonHandler):
         else:
             return True
 
-    def publish_cloud_optimised(
-        self,
-        df: pd.DataFrame,
-        ds: xr.Dataset,
-    ) -> None:
+    def publish_cloud_optimised(self, df: pd.DataFrame, ds: xr.Dataset, f) -> None:
         """
         Create a parquet file containing data only.
 
@@ -505,15 +509,16 @@ class GenericHandler(CommonHandler):
         partition_keys = self.dataset_config["partition_keys"]
 
         df = self._add_timestamp_df(df)
-        df = self._add_columns_df(df, ds)
-        df = self._rm_bad_timestamp_df(df)
-
+        df = self._add_columns_df(df, ds, f)
+        df = self._rm_bad_timestamp_df(df, f)
         if "polygon" in partition_keys:
             if not "spatial_extent" in self.dataset_config:
                 self.logger.error("Missing spatial_extent config")
                 # raise ValueError
             else:
                 df = self._add_polygon(df)
+
+        filename = os.path.basename(f.path)
 
         # Needs to be specified here as df is here a pandas df, while later on, it is a pyarrow table. some renaming should happen
         if isinstance(df.index, pd.MultiIndex):
@@ -549,14 +554,14 @@ class GenericHandler(CommonHandler):
                 # df.cast fails complaining that the schemas are different while they're arent. different order is often the case
                 pdf = self.cast_table_by_schema(pdf, subset_schema)
             except ValueError as e:
-                self.logger.error(f"{self.filename}: {type(e).__name__}")
+                self.logger.error(f"{filename}: {type(e).__name__}")
 
         # Part B: Create NaN arrays for missing columns in the pyarrow table by comparing the self.pyarrow_schema variable
         if self.pyarrow_schema is not None:
             for field in self.pyarrow_schema:
                 if field.name not in df_var_list:
                     self.logger.warning(
-                        f"{self.filename}: {field.name} variable missing from dataset. creating a null array of {field.type}"
+                        f"{filename}: {field.name} variable missing from input file. creating a null array of {field.type}"
                     )
                     null_array = pa.nulls(len(pdf), field.type)
                     pdf = pdf.append_column(field.name, null_array)
@@ -566,13 +571,11 @@ class GenericHandler(CommonHandler):
         if self.pyarrow_schema is not None:
             for column_name in df_columns:
                 if column_name not in pdf.schema.names:
-                    var_config = generate_json_schema_var_from_netcdf(
-                        self.tmp_input_file, column_name
-                    )
+                    var_config = generate_json_schema_var_from_netcdf(f, column_name)
                     # if df.index.name is not None and column_name in df.index.name:
                     #    self.logger.warning(f'missing variable from provided pyarrow_schema, please add {column_name} : {df.index.dtype}')
                     # else:
-                    #    #TODO: improce this to return all the varatts as well
+                    #    #TODO: improve this to return all the varatts as well
                     #    var_config = generate_json_schema_var_from_netcdf(self.input_object_key, column_name)
                     self.logger.warning(
                         f"missing variable from provided pyarrow_schema config, please add to dataset config (respect double quotes): {var_config}"
@@ -589,16 +592,17 @@ class GenericHandler(CommonHandler):
         pq.write_to_dataset(
             pdf,
             root_path=self.cloud_optimised_output_path,
+            filesystem=self.s3_fs,
             existing_data_behavior="overwrite_or_ignore",
             row_group_size=20000,
             partition_cols=partition_keys,
             use_threads=True,
             metadata_collector=metadata_collector,
-            basename_template=os.path.basename(self.input_object_key)
+            basename_template=filename
             + "-{i}.parquet",  # this is essential for the overwriting part
         )
         self.logger.info(
-            f"{self.filename}: Parquet files successfully created in {self.cloud_optimised_output_path} \n"
+            f"{filename}: Parquet files successfully created in {self.cloud_optimised_output_path} \n"
         )
 
         self._add_metadata_sidecar()
@@ -738,10 +742,14 @@ class GenericHandler(CommonHandler):
         dataset_metadata_path = os.path.join(
             self.cloud_optimised_output_path, "_common_metadata"
         )
-        pq.write_metadata(pdf_schema, dataset_metadata_path)
+        pq.write_metadata(
+            pdf_schema,
+            dataset_metadata_path,
+            filesystem=self.s3_fs,
+        )
 
         self.logger.info(
-            f"{self.filename}: Parquet metadata file successfully created in {dataset_metadata_path} \n"
+            f"Parquet metadata file successfully created in {dataset_metadata_path} \n"
         )
 
     def push_metadata_aws_registry(self) -> None:
@@ -778,7 +786,7 @@ class GenericHandler(CommonHandler):
                 f"Push AWS Registry file to: {os.path.join(self.cloud_optimised_output_path, self.dataset_name + '.yaml')}"
             )
 
-    def delete_existing_matching_parquet(self) -> None:
+    def delete_existing_matching_parquet(self, filename) -> None:
         """
         Delete unmatched Parquet files.
 
@@ -802,15 +810,20 @@ class GenericHandler(CommonHandler):
         # remote test on local machine shows 15 sec for 50k objects
 
         try:
+            # TODO: with moto and unittests, we get the following error:
+            #       GetFileInfo() yielded path 'imos-data-lab-optimised/testing/anmn_ctd_ts_fv01.parquet/site_code=SYD140/timestamp=1625097600/polygon=01030000000100000005000000000000000020624000000000008041C0000000000060634000000000008041C0000000000060634000000000000039C0000000000020624000000000000039C0000000000020624000000000008041C0/IMOS_ANMN-NSW_CDSTZ_20210429T015500Z_SYD140_FV01_SYD140-2104-SBE37SM-RS232-128_END-20210812T011500Z_C-20210827T074819Z.nc-0.parquet', which is outside base dir 's3://imos-data-lab-optimised/testing/anmn_ctd_ts_fv01.parquet/'
+            #       obviously the file to delete is found with the unittests, but there is an issue, maybe with the way filesystem is set. Reading with pandas works, but we don't have the same capabilities
             parquet_files = pq.ParquetDataset(
-                self.cloud_optimised_output_path, partitioning="hive"
+                self.cloud_optimised_output_path,
+                partitioning="hive",
+                filesystem=self.s3_fs,
             )
-        except FileNotFoundError as e:
+        except Exception as e:
             self.logger.info(f"No files to delete: {e}")
             return
 
         # Define the regex pattern to match existing parquet files
-        pattern = rf"\/{self.filename}"
+        pattern = rf"\/{filename}"
 
         # Find files matching the pattern using list comprehension and regex
         matching_files = [
@@ -835,32 +848,43 @@ class GenericHandler(CommonHandler):
                 f"Previous parquet objects successfully deleted: {response}"
             )
 
-    def to_cloud_optimised(self) -> None:
+    def to_cloud_optimised_single(self, s3_file_uri) -> None:
         """
         Create Parquet files from a NetCDF file.
 
         Returns:
             None
         """
-        if self.tmp_input_file.endswith(".nc"):
-            self.is_valid_netcdf(
-                self.tmp_input_file
-            )  # check file validity before doing anything else
+        # FIXME: the next 2 lines need to be here otherwise, the logging is lost when called within a dask task. Why??
+        logger_name = self.dataset_config.get("logger_name", "generic")
+        self.logger = get_logger(logger_name)
 
+        self.logger.info(f"Processing {s3_file_uri}")
+
+        filename = os.path.basename(s3_file_uri)
         if self.delete_pq_unmatch_enable:
-            self.delete_existing_matching_parquet()
+            self.delete_existing_matching_parquet(filename)
 
         try:
-            generator = self.preprocess_data(self.tmp_input_file)
+            start_time = timeit.default_timer()
+
+            s3_file_handle = create_fileset(s3_file_uri)[0]  # only one file
+
+            generator = self.preprocess_data(s3_file_handle)
             for df, ds in generator:
 
-                self.publish_cloud_optimised(df, ds)
-                self.push_metadata_aws_registry()
+                self.publish_cloud_optimised(df, ds, s3_file_handle)
+                # self.push_metadata_aws_registry()
 
                 time_spent = timeit.default_timer() - self.start_time
                 self.logger.info(f"Cloud Optimised file completed in {time_spent}s")
 
                 self.postprocess(ds)
+
+                time_spent = timeit.default_timer() - start_time
+                self.logger.info(
+                    f"{s3_file_uri} Cloud Optimised file completed in {time_spent}s"
+                )
 
         except Exception as e:
             self.logger.error(
@@ -871,3 +895,44 @@ class GenericHandler(CommonHandler):
                 self.postprocess(ds)
 
             raise e
+
+    def to_cloud_optimised(self, s3_file_uri_list) -> None:
+
+        if self.clear_existing_data:
+            self.logger.info(
+                f"Creating new Parquet dataset - DELETING existing all Parquet objects if exist"
+            )
+            if prefix_exists(self.cloud_optimised_output_path):
+                bucket_name, prefix = split_s3_path(self.cloud_optimised_output_path)
+                self.logger.info(
+                    f"Deleting existing Parquet objects from {self.cloud_optimised_output_path}"
+                )
+                delete_objects_in_prefix(bucket_name, prefix)
+
+        def task(f, i):
+            try:
+                self.to_cloud_optimised_single(f)
+            except Exception as e:
+                self.logger.error(f"{i}/{len(s3_file_uri_list)} issue with {f}: {e}")
+
+        client, cluster = self.create_cluster()
+
+        # Get the minimum cluster worker value as a batch size? and multiply it by 2 ?
+        n_workers_list = self.dataset_config.get("cluster_options", {}).get(
+            "n_workers", []
+        )
+
+        # Get the minimum value from n_workers list
+        min_n_workers = min(n_workers_list) if n_workers_list else None
+        batch_size = min_n_workers * 2
+
+        # Do it in batches. maybe more efficient
+        for i in range(0, len(s3_file_uri_list), batch_size):
+            batch = s3_file_uri_list[i : i + batch_size]
+            batch_tasks = [
+                client.submit(task, f, idx + 1) for idx, f in enumerate(batch)
+            ]
+
+            wait(batch_tasks)
+
+        self.close_cluster(client, cluster)
