@@ -133,13 +133,17 @@ class TestGenericZarrHandler(unittest.TestCase):
         # 1st pass
         # 2024-07-02 11:16:16,538 - INFO - GenericZarrHandler.py:381 - publish_cloud_optimised_fileset_batch - Writing data to new Zarr dataset
         # 2024-07-02 11:16:19,366 - INFO - GenericZarrHandler.py:391 - publish_cloud_optimised_fileset_batch - Batch 1 processed and written to <fsspec.mapping.FSMap object at 0x78166762b730>
-        self.handler_nc_acorn_file.to_cloud_optimised(nc_obj_ls)
+        from unittest.mock import patch
+
+        with patch.object(self.handler_nc_acorn_file, "s3_fs", new=self.s3_fs):
+            self.handler_nc_acorn_file.to_cloud_optimised(nc_obj_ls)
 
         # 2nd pass, process the same file a second time. Should be overwritten in ONE region slice
         # 2024-07-02 11:16:21,649 - INFO - GenericZarrHandler.py:303 - publish_cloud_optimised_fileset_batch - Duplicate values of TIME
         # 2024-07-02 11:16:21,650 - INFO - GenericZarrHandler.py:353 - publish_cloud_optimised_fileset_batch - Overwriting Zarr dataset in Region: {'TIME': slice(0, 4, None)}, Matching Indexes in new ds: [0 1 2 3]
         # 2024-07-02 11:16:22,573 - INFO - GenericZarrHandler.py:391 - publish_cloud_optimised_fileset_batch - Batch 1 processed and written to <fsspec.mapping.FSMap object at 0x78166762b730>
-        self.handler_nc_acorn_file.to_cloud_optimised(nc_obj_ls)
+        with patch.object(self.handler_nc_acorn_file, "s3_fs", new=self.s3_fs):
+            self.handler_nc_acorn_file.to_cloud_optimised(nc_obj_ls)
 
         # 3rd pass, create a non-contiguous list of files to reprocess. TWO region slices should happen. Look in the log
         # output of the unittest as it's hard to test!
@@ -150,7 +154,8 @@ class TestGenericZarrHandler(unittest.TestCase):
         # 2024-07-02 11:16:25,905 - INFO - GenericZarrHandler.py:353 - publish_cloud_optimised_fileset_batch - Overwriting Zarr dataset in Region: {'TIME': slice(2, 4, None)}, Matching Indexes in new ds: [1 2]
         # 2024-07-02 11:16:26,631 - INFO - GenericZarrHandler.py:391 - publish_cloud_optimised_fileset_batch - Batch 1 processed and written to <fsspec.mapping.FSMap object at 0x78166762b730>
         nc_obj_ls_non_contiguous = nc_obj_ls[0:1] + nc_obj_ls[2:4]
-        self.handler_nc_acorn_file.to_cloud_optimised(nc_obj_ls_non_contiguous)
+        with patch.object(self.handler_nc_acorn_file, "s3_fs", new=self.s3_fs):
+            self.handler_nc_acorn_file.to_cloud_optimised(nc_obj_ls_non_contiguous)
 
         # read zarr
         dataset_config = load_dataset_config(DATASET_CONFIG_NC_ACORN_JSON)
