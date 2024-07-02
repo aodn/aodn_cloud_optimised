@@ -27,8 +27,7 @@ from .CommonHandler import CommonHandler
 from dask.distributed import wait
 
 
-# TODO: improve doc for parallism by adding a uuid for each task
-# TODO: make sure that pandas can read the remote csv
+# TODO: improve log for parallism by adding a uuid for each task
 
 
 class GenericHandler(CommonHandler):
@@ -38,10 +37,8 @@ class GenericHandler(CommonHandler):
 
         Args:
             **kwargs: Additional keyword arguments.
-                raw_bucket_name (str, optional[config]): Name of the raw bucket.
                 optimised_bucket_name (str, optional[config]): Name of the optimised bucket.
                 root_prefix_cloud_optimised_path (str, optional[config]): Root Prefix path of the location of cloud optimised files
-                input_object_key (str): Key of the input object.
                 force_previous_parquet_deletion (bool, optional[config]): Force the deletion of existing cloud optimised files(slow) (default=False)
 
         """
@@ -920,9 +917,16 @@ class GenericHandler(CommonHandler):
 
         client, cluster = self.create_cluster()
 
-        batch_size = 5
+        # Get the minimum cluster worker value as a batch size? and multiply it by 2 ?
+        n_workers_list = self.dataset_config.get("cluster_options", {}).get(
+            "n_workers", []
+        )
 
-        # TODO: Do it in batches. maybe more efficient
+        # Get the minimum value from n_workers list
+        min_n_workers = min(n_workers_list) if n_workers_list else None
+        batch_size = min_n_workers * 2
+
+        # Do it in batches. maybe more efficient
         for i in range(0, len(s3_file_uri_list), batch_size):
             batch = s3_file_uri_list[i : i + batch_size]
             batch_tasks = [

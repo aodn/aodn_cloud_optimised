@@ -1,10 +1,11 @@
+import json
+import tempfile
+
+import fsspec
+import numpy as np
 import pyarrow as pa
 import s3fs
 import xarray as xr
-import numpy as np
-import json
-import tempfile
-import fsspec
 
 
 # TODO: fix s3fs issue with moto mock

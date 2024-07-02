@@ -26,7 +26,6 @@ class CommonHandler:
 
         Args:
             **kwargs: Additional keyword arguments.
-                raw_bucket_name (str, optional[config]): Name of the raw bucket.
                 optimised_bucket_name (str, optional[config]): Name of the optimised bucket.
                 root_prefix_cloud_optimised_path (str, optional[config]): Root Prefix path of the location of cloud optimised files
                 input_object_key (str): Key of the input object.
@@ -36,9 +35,10 @@ class CommonHandler:
         self.start_time = timeit.default_timer()
         self.temp_dir = tempfile.TemporaryDirectory()
 
-        self.raw_bucket_name = kwargs.get(
-            "raw_bucket_name", load_variable_from_config("BUCKET_RAW_DEFAULT")
-        )
+        # TODO: remove this variable, not used anymore.
+        # self.raw_bucket_name = kwargs.get(
+        #     "raw_bucket_name", load_variable_from_config("BUCKET_RAW_DEFAULT")
+        # )
         self.optimised_bucket_name = kwargs.get(
             "optimised_bucket_name",
             load_variable_from_config("BUCKET_OPTIMISED_DEFAULT"),
@@ -48,6 +48,7 @@ class CommonHandler:
             load_variable_from_config("ROOT_PREFIX_CLOUD_OPTIMISED_PATH"),
         )
 
+        # TODO: remove the following variables as not used anymore
         self.input_object_key = kwargs.get("input_object_key", None)
         self.input_object_keys = kwargs.get("input_object_keys", None)
 
@@ -277,6 +278,7 @@ class CommonHandler:
                 f"JSON configuration for dataset {os.path.basename(json_validation_path)}: Validation failed: {e}"
             )
 
+    # TODO: remove as not used anymore
     def is_valid_netcdf(self, nc_file_path):
         """
         Check if a file is a valid NetCDF file.

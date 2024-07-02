@@ -58,10 +58,8 @@ class GenericHandler(CommonHandler):
 
         Args:
             **kwargs: Additional keyword arguments.
-                raw_bucket_name (str, optional[config]): Name of the raw bucket.
                 optimised_bucket_name (str, optional[config]): Name of the optimised bucket.
                 root_prefix_cloud_optimised_path (str, optional[config]): Root Prefix path of the location of cloud optimised files
-                input_object_key (str): Key of the input object.
         """
         super().__init__(**kwargs)
 
@@ -88,10 +86,10 @@ class GenericHandler(CommonHandler):
 
         self.compute = bool(True)
 
-        self.s3 = s3fs.S3FileSystem(anon=False)
+        # self.s3 = s3fs.S3FileSystem(anon=False)
 
         self.store = s3fs.S3Map(
-            root=f"{self.cloud_optimised_output_path}", s3=self.s3, check=False
+            root=f"{self.cloud_optimised_output_path}", s3=self.s3_fs, check=False
         )
 
     def preprocess_xarray(self, ds) -> xr.Dataset:
@@ -211,6 +209,8 @@ class GenericHandler(CommonHandler):
         )
         s3_file_handle_list = create_fileset(s3_file_uri_list)
 
+        time_dimension_name = self.dimensions["time"]["name"]
+
         for idx, batch_files in enumerate(
             self.batch_process_fileset(s3_file_handle_list)
         ):
@@ -288,8 +288,8 @@ class GenericHandler(CommonHandler):
                             decode_coords=True,
                         )
 
-                        time_values_org = ds_org[self.dimensions["time"]["name"]].values
-                        time_values_new = ds[self.dimensions["time"]["name"]].values
+                        time_values_org = ds_org[time_dimension_name].values
+                        time_values_new = ds[time_dimension_name].values
 
                         # Find common time values
                         common_time_values = np.intersect1d(
@@ -316,11 +316,7 @@ class GenericHandler(CommonHandler):
                                 if common_indices[i] != common_indices[i - 1] + 1:
                                     end = common_indices[i - 1]
                                     regions.append(
-                                        {
-                                            self.dimensions["time"]["name"]: slice(
-                                                start, end + 1
-                                            )
-                                        }
+                                        {time_dimension_name: slice(start, end + 1)}
                                     )
                                     matching_indexes.append(
                                         np.where(
@@ -334,9 +330,7 @@ class GenericHandler(CommonHandler):
 
                             # Append the last region
                             end = common_indices[-1]
-                            regions.append(
-                                {self.dimensions["time"]["name"]: slice(start, end + 1)}
-                            )
+                            regions.append({time_dimension_name: slice(start, end + 1)})
                             matching_indexes.append(
                                 np.where(
                                     np.isin(
@@ -351,7 +345,7 @@ class GenericHandler(CommonHandler):
                                 self.logger.info(
                                     f"Overwriting Zarr dataset in Region: {region}, Matching Indexes in new ds: {indexes}"
                                 )
-                                ds.isel(time=indexes).drop_vars(
+                                ds.isel(**{time_dimension_name: indexes}).drop_vars(
                                     self.vars_to_drop_no_common_dimension
                                 ).to_zarr(
                                     self.store,
@@ -371,7 +365,7 @@ class GenericHandler(CommonHandler):
                                 write_empty_chunks=False,  # TODO: could True fix the issue when some variables dont exists? I doubt
                                 compute=True,  # Compute the result immediately
                                 consolidated=True,
-                                append_dim=self.dimensions["time"]["name"],
+                                append_dim=time_dimension_name,
                             )
 
                     # First time writing the dataset
@@ -481,7 +475,7 @@ class GenericHandler(CommonHandler):
                 self.dimensions
             )  # only return a dict with the dimensions to rechunk
 
-            s3 = s3fs.S3FileSystem(anon=False)
+            # s3 = s3fs.S3FileSystem(anon=False)
 
             org_url = (
                 self.cloud_optimised_output_path
@@ -491,7 +485,7 @@ class GenericHandler(CommonHandler):
             target_url = org_url.replace(
                 f"{self.dataset_name}", f"{self.dataset_name}_rechunked"
             )
-            target_store = s3fs.S3Map(root=f"{target_url}", s3=s3, check=False)
+            target_store = s3fs.S3Map(root=f"{target_url}", s3=self.s3_fs, check=False)
             # zarr.consolidate_metadata(org_store)
 
             ds = xr.open_zarr(fsspec.get_mapper(org_url, anon=True), consolidated=True)
@@ -500,7 +494,7 @@ class GenericHandler(CommonHandler):
                 f"{self.dataset_name}", f"{self.dataset_name}_intermediate"
             )
 
-            temp_store = s3fs.S3Map(root=f"{temp_url}", s3=s3, check=False)
+            temp_store = s3fs.S3Map(root=f"{temp_url}", s3=self.s3_fs, check=False)
 
             # delete previous version of intermediate and rechunked data
             s3_client = boto3.resource("s3")

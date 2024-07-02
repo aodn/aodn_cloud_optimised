@@ -1,4 +1,8 @@
+import json
 import unittest
+
+import boto3
+from moto import mock_aws
 from moto.moto_server.threaded_moto_server import ThreadedMotoServer
 
 from aodn_cloud_optimised.lib.s3Tools import (
@@ -8,9 +12,6 @@ from aodn_cloud_optimised.lib.s3Tools import (
     delete_objects_in_prefix,
     prefix_exists,
 )
-from moto import mock_aws
-import json
-import boto3
 
 
 @mock_aws()

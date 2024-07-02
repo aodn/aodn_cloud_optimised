@@ -52,7 +52,7 @@ pytest = "^8.2.1"
 ipdb = "^0.13"
 ipython = "^7.5.3"
 moto = {version = ">=5.0.0", extras = ["ec2", "s3",  "server", "all"]}  # Add Moto with optional dependencies
-
+fuzzywuzzy = ">=0.18.0"
 
 #[tool.poetry.extras]
 #testing = ["pytest", "ipython", "ipdb"]
