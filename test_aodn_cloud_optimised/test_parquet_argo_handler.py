@@ -1,6 +1,7 @@
 import json
 import os
 import unittest
+from unittest.mock import patch
 
 import boto3
 import numpy as np
@@ -108,20 +109,18 @@ class TestArgoHandler(unittest.TestCase):
     def tearDown(self):
         self.server.stop()
 
-    def test_parquet_nc_argo_handler(self):  # , MockS3FileSystem):
+    def test_parquet_nc_argo_handler(self):
         nc_obj_ls = s3_ls("imos-data", "good_nc_argo")
-        # with patch('s3fs.S3FileSystem', lambda anon, client_kwargs: s3fs.S3FileSystem(anon=False, client_kwargs={"endpoint_url": "http://127.0.0.1:5555/"})):
-        # MockS3FileSystem.return_value = s3fs.S3FileSystem(anon=False, client_kwargs={"endpoint_url": "http://127.0.0.1:5555"})
-
-        # with mock_aws(aws_credentials):
 
         # 1st pass
-        self.handler_nc_argo_file.to_cloud_optimised([nc_obj_ls[0]])
+        with patch.object(self.handler_nc_argo_file, "s3_fs", new=self.s3_fs):
+            self.handler_nc_argo_file.to_cloud_optimised([nc_obj_ls[0]])
 
         # 2nd pass, process the same file a second time. Should be deleted
         # TODO: Not a big big deal breaker, but got an issue which should be fixed in the try except only for the unittest
         #       2024-07-01 16:04:54,721 - INFO - GenericParquetHandler.py:824 - delete_existing_matching_parquet - No files to delete: GetFileInfo() yielded path 'imos-data-lab-optimised/testing/anmn_ctd_ts_fv01.parquet/site_code=SYD140/timestamp=1625097600/polygon=01030000000100000005000000000000000020624000000000008041C0000000000060634000000000008041C0000000000060634000000000000039C0000000000020624000000000000039C0000000000020624000000000008041C0/IMOS_ANMN-NSW_CDSTZ_20210429T015500Z_SYD140_FV01_SYD140-2104-SBE37SM-RS232-128_END-20210812T011500Z_C-20210827T074819Z.nc-0.parquet', which is outside base dir 's3://imos-data-lab-optimised/testing/anmn_ctd_ts_fv01.parquet/'
-        self.handler_nc_argo_file.to_cloud_optimised_single(nc_obj_ls[0])
+        with patch.object(self.handler_nc_argo_file, "s3_fs", new=self.s3_fs):
+            self.handler_nc_argo_file.to_cloud_optimised_single(nc_obj_ls[0])
 
         # read parquet
         dataset_name = self.dataset_argo_netcdf_config["dataset_name"]
@@ -152,13 +151,10 @@ class TestArgoHandler(unittest.TestCase):
 
     def test_parquet_nc_argo_bad_geom_handler(self):
         nc_obj_ls = s3_ls("imos-data", "bad_geom_argo")
-        # with patch('s3fs.S3FileSystem', lambda anon, client_kwargs: s3fs.S3FileSystem(anon=False, client_kwargs={"endpoint_url": "http://127.0.0.1:5555/"})):
-        # MockS3FileSystem.return_value = s3fs.S3FileSystem(anon=False, client_kwargs={"endpoint_url": "http://127.0.0.1:5555"})
-
-        # with mock_aws(aws_credentials):
 
         # 1st pass
-        self.handler_nc_argo_file.to_cloud_optimised_single(nc_obj_ls[0])
+        with patch.object(self.handler_nc_argo_file, "s3_fs", new=self.s3_fs):
+            self.handler_nc_argo_file.to_cloud_optimised_single(nc_obj_ls[0])
 
         # read parquet
         dataset_name = self.dataset_argo_netcdf_config["dataset_name"]
