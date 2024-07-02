@@ -1,6 +1,7 @@
 import json
 import os
 import unittest
+from unittest.mock import patch
 
 import boto3
 import numpy as np
@@ -42,6 +43,8 @@ def mock_aws_server():
 @mock_aws
 class TestGenericZarrHandler(unittest.TestCase):
     def setUp(self):
+        # TODO: remove this abomination for unittesting. but it works. Only for zarr !
+        os.environ["RUNNING_UNDER_UNITTEST"] = "true"
 
         # Create a mock S3 service
         self.BUCKET_OPTIMISED_NAME = "imos-data-lab-optimised"
@@ -53,7 +56,6 @@ class TestGenericZarrHandler(unittest.TestCase):
         # create moto server; needed for s3fs and parquet
         self.server = ThreadedMotoServer(ip_address="127.0.0.1", port=5555)
 
-        # TODO: use it for patching?
         self.s3_fs = s3fs.S3FileSystem(
             anon=False,
             client_kwargs={
@@ -120,20 +122,15 @@ class TestGenericZarrHandler(unittest.TestCase):
 
     def tearDown(self):
         self.server.stop()
+        del os.environ["RUNNING_UNDER_UNITTEST"]
 
     # TODO: find a solution to patch s3fs properly and not relying on changing the s3fs values in the code
-    # @patch('s3fs.S3FileSystem')
-    def test_zarr_nc_acorn_handler(self):  # , MockS3FileSystem):
+    def test_zarr_nc_acorn_handler(self):
         nc_obj_ls = s3_ls("imos-data", "acorn")
-        # with patch('s3fs.S3FileSystem', lambda anon, client_kwargs: s3fs.S3FileSystem(anon=False, client_kwargs={"endpoint_url": "http://127.0.0.1:5555/"})):
-        # MockS3FileSystem.return_value = s3fs.S3FileSystem(anon=False, client_kwargs={"endpoint_url": "http://127.0.0.1:5555"})
-
-        # with mock_aws(aws_credentials):
 
         # 1st pass
         # 2024-07-02 11:16:16,538 - INFO - GenericZarrHandler.py:381 - publish_cloud_optimised_fileset_batch - Writing data to new Zarr dataset
         # 2024-07-02 11:16:19,366 - INFO - GenericZarrHandler.py:391 - publish_cloud_optimised_fileset_batch - Batch 1 processed and written to <fsspec.mapping.FSMap object at 0x78166762b730>
-        from unittest.mock import patch
 
         with patch.object(self.handler_nc_acorn_file, "s3_fs", new=self.s3_fs):
             self.handler_nc_acorn_file.to_cloud_optimised(nc_obj_ls)

@@ -1,4 +1,5 @@
 import importlib.resources
+import os
 import warnings
 from functools import partial
 
@@ -86,26 +87,17 @@ class GenericHandler(CommonHandler):
 
         self.compute = bool(True)
 
-        # TODO: fix this ugly abomination
-        #
-        #
-        import unittest
-
-        if "unittest" in globals() or "unittest" in locals():
-
-            # Check if unittest is imported
-            if unittest.TestCase("__init__").__class__.__module__ == "unittest.case":
-                self.s3_fs = s3fs.S3FileSystem(
-                    anon=False,
-                    client_kwargs={
-                        "endpoint_url": "http://127.0.0.1:5555/",
-                        "region_name": "us-east-1",
-                    },
-                )
-            else:
-                self.s3_fs = s3fs.S3FileSystem(anon=False)
-        else:
-            self.s3_fs = s3fs.S3FileSystem(anon=False)
+        # TODO: fix this ugly abomination. Unfortunately, patching the s3_fs value in the unittest is not enough for
+        #       zarr! why? it works fine for parquet, but if I remove this if condition, my unittest breaks! maybe
+        #       self.s3_fs is overwritten somewhere?? need to check
+        if os.getenv("RUNNING_UNDER_UNITTEST") == "true":
+            self.s3_fs = s3fs.S3FileSystem(
+                anon=False,
+                client_kwargs={
+                    "endpoint_url": "http://127.0.0.1:5555/",
+                    "region_name": "us-east-1",
+                },
+            )
 
         self.store = s3fs.S3Map(
             root=f"{self.cloud_optimised_output_path}", s3=self.s3_fs, check=False

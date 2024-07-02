@@ -59,7 +59,6 @@ class TestGenericHandler(unittest.TestCase):
         # create moto server; needed for s3fs and parquet
         self.server = ThreadedMotoServer(ip_address="127.0.0.1", port=5555)
 
-        # TODO: use it for patching?
         self.s3_fs = s3fs.S3FileSystem(
             anon=False,
             client_kwargs={
