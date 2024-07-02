@@ -123,7 +123,7 @@ class TestGenericZarrHandler(unittest.TestCase):
 
     # TODO: find a solution to patch s3fs properly and not relying on changing the s3fs values in the code
     # @patch('s3fs.S3FileSystem')
-    def test_parquet_nc_acorn_handler(self):  # , MockS3FileSystem):
+    def test_zarr_nc_acorn_handler(self):  # , MockS3FileSystem):
         nc_obj_ls = s3_ls("imos-data", "acorn")
         # with patch('s3fs.S3FileSystem', lambda anon, client_kwargs: s3fs.S3FileSystem(anon=False, client_kwargs={"endpoint_url": "http://127.0.0.1:5555/"})):
         # MockS3FileSystem.return_value = s3fs.S3FileSystem(anon=False, client_kwargs={"endpoint_url": "http://127.0.0.1:5555"})

@@ -12,12 +12,13 @@ from aodn_cloud_optimised.lib.s3Tools import (
     delete_objects_in_prefix,
     prefix_exists,
 )
+from unittest.mock import patch, MagicMock, Mock
+import s3fs
 
 
 @mock_aws()
-class TestS3Ls(unittest.TestCase):
+class TestS3Tools(unittest.TestCase):
     def setUp(self):
-
         self.server = ThreadedMotoServer(ip_address="127.0.0.1", port=5555)
         self.server.start()
 
@@ -75,9 +76,38 @@ class TestS3Ls(unittest.TestCase):
         result = s3_ls(self.bucket_name, "prefix")
         self.assertListEqual(result, [])
 
-    def test_create_fileset(self):
+    @patch("s3fs.S3FileSystem")
+    def test_create_fileset(self, MockS3FileSystem):
+        MockS3FileSystem.return_value = s3fs.S3FileSystem(
+            anon=False, client_kwargs={"endpoint_url": "http://127.0.0.1:5555/"}
+        )
+
         fileset = create_fileset("s3://test-bucket/prefix/file1.nc")
         self.assertEqual(fileset[0].path, "test-bucket/prefix/file1.nc")
+
+    @patch.object(s3fs.S3FileSystem, "open")
+    def test_create_fileset(self, mock_open):
+        # Prepare a list of mock objects for each file path
+        mock_files = []
+        s3_paths = [
+            "s3://test-bucket/prefix/file1.nc",
+            "s3://test-bucket/prefix/file2.nc",
+        ]
+
+        for s3_path in s3_paths:
+            mock_file = Mock()
+            mock_file.path = s3_path
+            mock_files.append(mock_file)
+
+        # Configure mock_open to return the appropriate mock file for each call
+        mock_open.side_effect = mock_files
+
+        # Call the function under test
+        fileset = create_fileset(s3_paths)
+
+        # Assert that each file in the fileset has the correct path
+        for idx, file_obj in enumerate(fileset):
+            self.assertEqual(file_obj.path, s3_paths[idx])
 
 
 if __name__ == "__main__":

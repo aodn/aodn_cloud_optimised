@@ -81,21 +81,9 @@ class CommonHandler:
 
         self.cluster_options = self.dataset_config.get("cluster_options", None)
 
-        # TODO: fix this ugly abomination
-        if "unittest" in globals() or "unittest" in locals():
-            # Check if unittest is imported
-            if unittest.TestCase("__init__").__class__.__module__ == "unittest.case":
-                self.s3_fs = s3fs.S3FileSystem(
-                    anon=False,
-                    client_kwargs={
-                        "endpoint_url": "http://127.0.0.1:5555/",
-                        "region_name": "us-east-1",
-                    },
-                )
-            else:
-                self.s3_fs = s3fs.S3FileSystem(anon=False)
-        else:
-            self.s3_fs = s3fs.S3FileSystem(anon=False)
+        self.s3_fs = s3fs.S3FileSystem(
+            anon=False
+        )  # variable overwritten in unittest to use moto server
 
     def __enter__(self):
         # Initialize resources if necessary

@@ -868,7 +868,7 @@ class GenericHandler(CommonHandler):
         try:
             start_time = timeit.default_timer()
 
-            s3_file_handle = create_fileset(s3_file_uri)[0]  # only one file
+            s3_file_handle = create_fileset(s3_file_uri, self.s3_fs)[0]  # only one file
 
             generator = self.preprocess_data(s3_file_handle)
             for df, ds in generator:

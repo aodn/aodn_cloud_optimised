@@ -157,7 +157,7 @@ def prefix_exists(s3_path):
     return "Contents" in response
 
 
-def create_fileset(s3_paths):
+def create_fileset(s3_paths, s3_fs=None):
     """
     Create a fileset from S3 objects specified by a list of full S3 paths.
 
@@ -168,17 +168,7 @@ def create_fileset(s3_paths):
     Returns:
         list[file-like object]: List of file-like objects representing each object in the fileset.
     """
-
-    # TODO: fix this ugly abomination
-    if "unittest" in globals() or "unittest" in locals():
-        # Check if unittest is imported
-        if unittest.TestCase("__init__").__class__.__module__ == "unittest.case":
-            s3_fs = s3fs.S3FileSystem(
-                anon=False, client_kwargs={"endpoint_url": "http://127.0.0.1:5555/"}
-            )
-        else:
-            s3_fs = s3fs.S3FileSystem(anon=True)
-    else:
+    if s3_fs is None:
         s3_fs = s3fs.S3FileSystem(anon=True)
 
     if isinstance(s3_paths, str):

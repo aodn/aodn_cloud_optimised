@@ -14,6 +14,7 @@ from shapely.geometry import Polygon
 from aodn_cloud_optimised.lib.GenericParquetHandler import GenericHandler
 from aodn_cloud_optimised.lib.config import load_dataset_config
 from aodn_cloud_optimised.lib.s3Tools import s3_ls
+from unittest.mock import patch
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -43,19 +44,10 @@ DATASET_CONFIG_NC_ANMN_JSON = os.path.join(
 
 DATASET_CONFIG_NC_ARDC_JSON = os.path.join(ROOT_DIR, "resources", "ardc_wave_nrt.json")
 
-# TODO: remove this function if unused
-def set_aws_credentials():
-    """Mocked AWS Credentials for moto."""
-    os.environ["AWS_ACCESS_KEY_ID"] = "testing"
-    os.environ["AWS_SECRET_ACCESS_KEY"] = "testing"
-    os.environ["AWS_SECURITY_TOKEN"] = "testing"
-    os.environ["AWS_SESSION_TOKEN"] = "testing"
-
 
 @mock_aws
 class TestGenericHandler(unittest.TestCase):
     def setUp(self):
-        set_aws_credentials()
 
         # Create a mock S3 service
         self.BUCKET_OPTIMISED_NAME = "imos-data-lab-optimised"
@@ -172,22 +164,18 @@ class TestGenericHandler(unittest.TestCase):
     def tearDown(self):
         self.server.stop()
 
-    # TODO: find a solution to patch s3fs properly and not relying on changing the s3fs values in the code
-    # @patch('s3fs.S3FileSystem')
-    def test_parquet_nc_anmn_handler(self):  # , MockS3FileSystem):
+    def test_parquet_nc_anmn_handler(self):
         nc_obj_ls = s3_ls("imos-data", "good_nc_anmn")
-        # with patch('s3fs.S3FileSystem', lambda anon, client_kwargs: s3fs.S3FileSystem(anon=False, client_kwargs={"endpoint_url": "http://127.0.0.1:5555/"})):
-        # MockS3FileSystem.return_value = s3fs.S3FileSystem(anon=False, client_kwargs={"endpoint_url": "http://127.0.0.1:5555"})
-
-        # with mock_aws(aws_credentials):
 
         # 1st pass
-        self.handler_nc_anmn_file.to_cloud_optimised([nc_obj_ls[0]])
+        with patch.object(self.handler_nc_anmn_file, "s3_fs", new=self.s3_fs):
+            self.handler_nc_anmn_file.to_cloud_optimised([nc_obj_ls[0]])
 
         # 2nd pass, process the same file a second time. Should be deleted
         # TODO: Not a big big deal breaker, but got an issue which should be fixed in the try except only for the unittest
         #       2024-07-01 16:04:54,721 - INFO - GenericParquetHandler.py:824 - delete_existing_matching_parquet - No files to delete: GetFileInfo() yielded path 'imos-data-lab-optimised/testing/anmn_ctd_ts_fv01.parquet/site_code=SYD140/timestamp=1625097600/polygon=01030000000100000005000000000000000020624000000000008041C0000000000060634000000000008041C0000000000060634000000000000039C0000000000020624000000000000039C0000000000020624000000000008041C0/IMOS_ANMN-NSW_CDSTZ_20210429T015500Z_SYD140_FV01_SYD140-2104-SBE37SM-RS232-128_END-20210812T011500Z_C-20210827T074819Z.nc-0.parquet', which is outside base dir 's3://imos-data-lab-optimised/testing/anmn_ctd_ts_fv01.parquet/'
-        self.handler_nc_anmn_file.to_cloud_optimised_single(nc_obj_ls[0])
+        with patch.object(self.handler_nc_anmn_file, "s3_fs", new=self.s3_fs):
+            self.handler_nc_anmn_file.to_cloud_optimised_single(nc_obj_ls[0])
 
         # read parquet
         dataset_config = load_dataset_config(DATASET_CONFIG_NC_ANMN_JSON)
@@ -261,20 +249,18 @@ class TestGenericHandler(unittest.TestCase):
             schema_dict["TEMP"][b"standard_name"], b"sea_water_temperature"
         )
 
-    def test_parquet_nc_generic_handler(self):  # , MockS3FileSystem):
+    def test_parquet_nc_generic_handler(self):
         nc_obj_ls = s3_ls("imos-data", "good_nc_ardc")
-        # with patch('s3fs.S3FileSystem', lambda anon, client_kwargs: s3fs.S3FileSystem(anon=False, client_kwargs={"endpoint_url": "http://127.0.0.1:5555/"})):
-        # MockS3FileSystem.return_value = s3fs.S3FileSystem(anon=False, client_kwargs={"endpoint_url": "http://127.0.0.1:5555"})
-
-        # with mock_aws(aws_credentials):
 
         # 1st pass
-        self.handler_nc_ardc_file.to_cloud_optimised([nc_obj_ls[0]])
+        with patch.object(self.handler_nc_ardc_file, "s3_fs", new=self.s3_fs):
+            self.handler_nc_ardc_file.to_cloud_optimised([nc_obj_ls[0]])
 
         # 2nd pass, process the same file a second time. Should be deleted
         # TODO: Not a big big deal breaker, but got an issue which should be fixed in the try except only for the unittest
         #       2024-07-01 16:04:54,721 - INFO - GenericParquetHandler.py:824 - delete_existing_matching_parquet - No files to delete: GetFileInfo() yielded path 'imos-data-lab-optimised/testing/anmn_ctd_ts_fv01.parquet/site_code=SYD140/timestamp=1625097600/polygon=01030000000100000005000000000000000020624000000000008041C0000000000060634000000000008041C0000000000060634000000000000039C0000000000020624000000000000039C0000000000020624000000000008041C0/IMOS_ANMN-NSW_CDSTZ_20210429T015500Z_SYD140_FV01_SYD140-2104-SBE37SM-RS232-128_END-20210812T011500Z_C-20210827T074819Z.nc-0.parquet', which is outside base dir 's3://imos-data-lab-optimised/testing/anmn_ctd_ts_fv01.parquet/'
-        self.handler_nc_ardc_file.to_cloud_optimised_single(nc_obj_ls[0])
+        with patch.object(self.handler_nc_ardc_file, "s3_fs", new=self.s3_fs):
+            self.handler_nc_ardc_file.to_cloud_optimised_single(nc_obj_ls[0])
 
         # read parquet
         dataset_config = load_dataset_config(DATASET_CONFIG_NC_ARDC_JSON)
@@ -329,10 +315,12 @@ class TestGenericHandler(unittest.TestCase):
         # with mock_aws(aws_credentials):
         # 1st pass, could have some errors distributed.worker - ERROR - Failed to communicate with scheduler during heartbeat.
         # Solution is the rerun the unittest
-        self.handler_csv_file.to_cloud_optimised([csv_obj_ls[0]])
+        with patch.object(self.handler_csv_file, "s3_fs", new=self.s3_fs):
+            self.handler_csv_file.to_cloud_optimised([csv_obj_ls[0]])
 
         # 2nd pass
-        self.handler_csv_file.to_cloud_optimised_single(csv_obj_ls[0])
+        with patch.object(self.handler_csv_file, "s3_fs", new=self.s3_fs):
+            self.handler_csv_file.to_cloud_optimised_single(csv_obj_ls[0])
 
         # Read parquet dataset and check data is good!
         dataset_config = load_dataset_config(DATASET_CONFIG_CSV_AATAMS_JSON)
