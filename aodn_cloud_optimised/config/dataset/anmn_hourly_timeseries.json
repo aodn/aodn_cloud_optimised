@@ -11,7 +11,7 @@
     "compute_purchase_option": "spot_with_fallback",
     "worker_options": {
       "nthreads": 8,
-      "memory_limit": "32GB" }
+      "memory_limit": "64GB" }
   },
   "metadata_uuid": "7b901002-b1dc-46c3-89f2-b4951cedca48",
   "gattrs_to_variables": [

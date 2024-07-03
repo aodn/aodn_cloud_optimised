@@ -958,7 +958,7 @@ class GenericHandler(CommonHandler):
 
         # Get the minimum value from n_workers list
         min_n_workers = min(n_workers_list) if n_workers_list else None
-        batch_size = min_n_workers * 2
+        batch_size = min_n_workers * 3
 
         # Do it in batches. maybe more efficient
         for i in range(0, len(s3_file_uri_list), batch_size):

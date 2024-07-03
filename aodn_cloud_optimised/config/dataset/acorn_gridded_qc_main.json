@@ -1,53 +1,53 @@
 {
-    "dataset_name": "acorn_gridded_qc",
-    "logger_name": "acorn_gridded_qc",
-    "cloud_optimised_format": "zarr",
-    "cluster_options" : {
-      "n_workers": [2, 8],
-      "scheduler_vm_types": "t3.small",
-      "worker_vm_types": "t3.medium",
-      "allow_ingress_from": "me",
-      "compute_purchase_option": "spot_with_fallback",
-      "worker_options": {
-        "nthreads": 8,
-        "memory_limit": "32GB" }
-    },
-    "cluster_config" : {
-      "n_workers": [0, 6],
-      "scheduler_vm_types": "t3.medium"
-    },
-    "metadata_uuid": "",
-    "dimensions": {
-        "time": {"name": "TIME",
-                 "chunk": 1500,
-                 "rechunk": true},
-        "latitude": {"name": "J",
-                     "chunk": 60},
-        "longitude": {"name": "I",
-                      "chunk": 59}
-    },
-    "var_template_shape": "UCUR",
-    "vars_to_drop_no_common_dimension": ["I", "J", "LATITUDE", "LONGITUDE", "GDOP"],
-    "schema": {
-      "TIME": {"type": "datetime64[ns]"},
-      "I": {"type": "int32"},
-      "J": {"type": "int32"},
-      "LATITUDE": {"type": "float64"},
-      "LONGITUDE": {"type": "float64"},
-      "GDOP": {"type": "float32"},
-      "UCUR": {"type": "float32"},
-      "VCUR": {"type": "float32"},
-      "UCUR_sd": {"type": "float32"},
-      "VCUR_sd": {"type": "float32"},
-      "NOBS1": {"type": "float32"},
-      "NOBS2": {"type": "float32"},
-      "UCUR_quality_control": {"type": "float32"},
-      "VCUR_quality_control": {"type": "float32"}
-    },
-    "dataset_gattrs": {
-        "title": "Temperature logger"
-    },
-    "aws_opendata_registry": {
+  "dataset_name": "acorn_gridded_qc",
+  "logger_name": "acorn_gridded_qc",
+  "cloud_optimised_format": "zarr",
+  "cluster_options" : {
+    "n_workers": [2, 8],
+    "scheduler_vm_types": "t3.small",
+    "worker_vm_types": "t3.medium",
+    "allow_ingress_from": "me",
+    "compute_purchase_option": "spot_with_fallback",
+    "worker_options": {
+      "nthreads": 8,
+      "memory_limit": "32GB" }
+  },
+  "cluster_config" : {
+    "n_workers": [0, 6],
+    "scheduler_vm_types": "t3.medium"
+  },
+  "metadata_uuid": "",
+  "dimensions": {
+    "time": {"name": "TIME",
+      "chunk": 1500,
+      "rechunk": true},
+    "latitude": {"name": "J",
+      "chunk": 60},
+    "longitude": {"name": "I",
+      "chunk": 59}
+  },
+  "var_template_shape": "UCUR",
+  "vars_to_drop_no_common_dimension": ["I", "J", "LATITUDE", "LONGITUDE", "GDOP"],
+  "schema": {
+    "TIME": {"type": "datetime64[ns]"},
+    "I": {"type": "int32"},
+    "J": {"type": "int32"},
+    "LATITUDE": {"type": "float64"},
+    "LONGITUDE": {"type": "float64"},
+    "GDOP": {"type": "float32"},
+    "UCUR": {"type": "float32"},
+    "VCUR": {"type": "float32"},
+    "UCUR_sd": {"type": "float32"},
+    "VCUR_sd": {"type": "float32"},
+    "NOBS1": {"type": "float32"},
+    "NOBS2": {"type": "float32"},
+    "UCUR_quality_control": {"type": "float32"},
+    "VCUR_quality_control": {"type": "float32"}
+  },
+  "dataset_gattrs": {
+    "title": "Temperature logger"
+  },
+  "aws_opendata_registry": {
     "Name": "",
     "Description": "",
     "Documentation": "",
