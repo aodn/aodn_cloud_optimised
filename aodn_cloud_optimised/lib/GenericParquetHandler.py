@@ -522,11 +522,14 @@ class GenericHandler(CommonHandler):
         else:
             return True
 
-    def publish_cloud_optimised(self, df: pd.DataFrame, ds: xr.Dataset, f) -> None:
+    def publish_cloud_optimised(
+        self, df: pd.DataFrame, ds: xr.Dataset, s3_file_handle
+    ) -> None:
         """
         Create a parquet file containing data only.
 
         Args:
+            s3_file_handle: s3_file_handle
             df (pd.DataFrame): The pandas DataFrame containing the data.
             ds (Dataset): The dataset object.
         Returns:
@@ -535,8 +538,8 @@ class GenericHandler(CommonHandler):
         partition_keys = self.dataset_config["partition_keys"]
 
         df = self._add_timestamp_df(df)
-        df = self._add_columns_df(df, ds, f)
-        df = self._rm_bad_timestamp_df(df, f)
+        df = self._add_columns_df(df, ds, s3_file_handle)
+        df = self._rm_bad_timestamp_df(df, s3_file_handle)
         if "polygon" in partition_keys:
             if not "spatial_extent" in self.dataset_config:
                 self.logger.error("Missing spatial_extent config")
@@ -544,7 +547,7 @@ class GenericHandler(CommonHandler):
             else:
                 df = self._add_polygon(df)
 
-        filename = os.path.basename(f.path)
+        filename = os.path.basename(s3_file_handle.path)
 
         # Needs to be specified here as df is here a pandas df, while later on, it is a pyarrow table. some renaming should happen
         if isinstance(df.index, pd.MultiIndex):
@@ -597,7 +600,9 @@ class GenericHandler(CommonHandler):
         if self.pyarrow_schema is not None:
             for column_name in df_columns:
                 if column_name not in pdf.schema.names:
-                    var_config = generate_json_schema_var_from_netcdf(f, column_name)
+                    var_config = generate_json_schema_var_from_netcdf(
+                        s3_file_handle, column_name, s3_fs=self.s3_fs
+                    )
                     # if df.index.name is not None and column_name in df.index.name:
                     #    self.logger.warning(f'missing variable from provided pyarrow_schema, please add {column_name} : {df.index.dtype}')
                     # else:

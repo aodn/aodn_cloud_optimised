@@ -66,16 +66,6 @@
       "valid_max": 180.0,
       "reference_datum": "WGS84 coordinate reference system; EPSG:4326"
     },
-    "WHTH": {
-      "type": "double",
-      "standard_name": "sea_surface_wave_significant_height",
-      "long_name": "sea surface wave significant height from time domain analysis",
-      "units": "m",
-      "valid_min": 0.0,
-      "valid_max": 100.0,
-      "method": "Time domain analysis",
-      "ancillary_variable": "WAVE_quality_control"
-    },
     "WPMH": {
       "type": "double",
       "standard_name": "sea_surface_wave_mean_period",

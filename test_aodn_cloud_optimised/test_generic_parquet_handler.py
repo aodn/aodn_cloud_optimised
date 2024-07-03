@@ -279,7 +279,10 @@ class TestGenericHandler(unittest.TestCase):
         self.assertNotIn(
             "DUMMY_VAR_NOT_IN", parquet_dataset.columns
         )  # make sure the variable is removed
-        self.assertIn("WHTH", parquet_dataset.columns)
+        self.assertNotIn(
+            "WHTH", parquet_dataset.columns
+        )  # removed on purpose to trigger "missing variable from provided pyarrow_schema config, please add to dataset config"
+        self.assertIn("WPMH", parquet_dataset.columns)
 
         self.assertEqual(parquet_dataset["timestamp"][0], 1709251200.0)
         self.assertEqual(
