@@ -13,6 +13,7 @@ repos:
         files: \.json$
         exclude: ^aodn_cloud_optimised/config/dataset/dataset_template.json$
       - id: end-of-file-fixer
+        exclude: '\.schema$'
       - id: trailing-whitespace
       - id: check-toml
 
