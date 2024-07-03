@@ -28,8 +28,8 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = "==3.10.14"
-netCDF4 = ">=1.6.5"
-numpy = ">=1.26.4"
+netCDF4 = "==1.6.5"  # hardpinned because of bug https://github.com/Unidata/netcdf4-python/issues/1342
+numpy = "<2.0.0"
 pandas = ">=2.2.2"
 python-dateutil = ">=2.9.0"
 jsonschema = ">=4.22.0"
@@ -42,14 +42,18 @@ rechunker = ">=0.5.2"
 s3fs = ">=2024.3.1"
 shapely = ">=2.0.4"
 xarray = { version = ">=2024.3.0", extras = ["complete"] }
-zarr = ">=2.18.0"
+zarr = ">=2.18.2"
 geopandas = ">=0.14.4"
+coiled = ">=1.27.2"
+dask = ">=2024.6.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^8.2.1"
 ipdb = "^0.13"
 ipython = "^7.5.3"
-
+moto = {version = ">=5.0.0", extras = ["ec2", "s3",  "server", "all"]}  # Add Moto with optional dependencies
+fuzzywuzzy = ">=0.18.0"
+sphinx = ">=7.3.7"
 
 #[tool.poetry.extras]
 #testing = ["pytest", "ipython", "ipdb"]
@@ -66,9 +70,11 @@ anmn_aqualogger_to_parquet = "aodn_cloud_optimised.bin.anmn_aqualogger_to_parque
 ardc_wave_to_parquet = "aodn_cloud_optimised.bin.ardc_wave_to_parquet:main"
 argo_to_parquet = "aodn_cloud_optimised.bin.argo_to_parquet:main"
 gsla_nrt_to_zarr = "aodn_cloud_optimised.bin.gsla_nrt_to_zarr:main"
+generic_cloud_optimised_creation = "aodn_cloud_optimised.bin.generic_cloud_optimised_creation:main"
 soop_xbt_nrt_to_parquet = "aodn_cloud_optimised.bin.soop_xbt_nrt_to_parquet:main"
 srs_oc_ljco_to_parquet = "aodn_cloud_optimised.bin.srs_oc_ljco_to_parquet:main"
 srs_l3s_1d_dn_to_zarr = "aodn_cloud_optimised.bin.srs_l3s_1d_dn_to_zarr:main"
+srs_l3s_3d_dn_to_zarr = "aodn_cloud_optimised.bin.srs_l3s_3d_dn_to_zarr:main"
 
 #[tool.poetry.include]
 #data = ["aodn_cloud_optimised/config/*.json", "aodn_cloud_optimised/config/dataset/*.json"]
@@ -77,6 +83,9 @@ srs_l3s_1d_dn_to_zarr = "aodn_cloud_optimised.bin.srs_l3s_1d_dn_to_zarr:main"
 pytest = "^8.2.1"
 coverage = "^7.5.3"
 pre-commit = "^3.7.1"
+moto = {version = ">=5.0.0", extras = ["ec2", "s3",  "server", "all"]}  # Add Moto with optional dependencies
+sphinx = ">=7.3.7"
+
 
 [tool.pre_commit]
 version = "2.3.0"

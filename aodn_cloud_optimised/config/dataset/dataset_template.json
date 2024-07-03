@@ -4,6 +4,17 @@
 
     "cloud_optimised_format": "parquet",
 
+    "cluster_options" : {
+        "n_workers": [8, 20],
+        "scheduler_vm_types": "t3.small",
+        "worker_vm_types": "t3.large",
+        "allow_ingress_from": "me",
+        "compute_purchase_option": "spot_with_fallback",
+        "worker_options": {
+          "nthreads": 8,
+          "memory_limit": "32GB" }
+      },
+
     // (Optional) The associated geonetwork metadata record uuid
     "metadata_uuid": "b12b3-123bb-iijww",
 

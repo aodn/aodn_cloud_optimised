@@ -16,11 +16,18 @@ class ArgoHandler(GenericHandler):
         self, netcdf_fp
     ) -> Generator[Tuple[pd.DataFrame, xr.Dataset], None, None]:
         """
-        Read a profile *_prof.nc which is an aggregation of multiple profiles files and returns a dataframe
-        :param netcdf_fp: input NetCDF filepath of an argo *_prof.nc file
-        :return: dataframe containing profile data
+        Preprocess a NetCDF file containing aggregated profile data.
+
+        This method reads a profile NetCDF file (typically named with a *_prof.nc suffix),
+        which is an aggregation of multiple profile files, and returns a generator
+        yielding a tuple of a pandas DataFrame and an xarray Dataset.
+
+        :param netcdf_fp: Path to the input NetCDF file, or an open S3 file object (using s3fs) of an Argo *_prof.nc file.
+        :return: Generator yielding tuples of (DataFrame, Dataset) where DataFrame contains the profile data
+                 and Dataset is the corresponding xarray Dataset.
         """
-        if not self.input_object_key.endswith("_prof.nc"):
+
+        if not netcdf_fp.path.endswith("_prof.nc"):
             raise ValueError
 
         with xr.open_dataset(netcdf_fp) as ds:

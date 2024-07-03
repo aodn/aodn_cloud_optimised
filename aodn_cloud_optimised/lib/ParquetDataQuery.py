@@ -6,7 +6,9 @@ import json
 import os
 import re
 from datetime import datetime
+from functools import lru_cache
 
+import boto3
 import geopandas as gpd
 import matplotlib.pyplot as plt
 import numpy as np
@@ -14,6 +16,10 @@ import pandas as pd
 import pyarrow as pa
 import pyarrow.compute as pc
 import pyarrow.parquet as pq
+import pyarrow.parquet as pq
+from botocore import UNSIGNED
+from botocore.client import Config
+from fuzzywuzzy import fuzz
 from shapely import wkb
 from shapely.geometry import Polygon, MultiPolygon
 
@@ -300,3 +306,200 @@ def get_schema_metadata(dname):
         for key, value in parquet_meta.metadata.items()
     }
     return decoded_meta
+
+
+####################################################################################################################
+# Work done during IMOS HACKATHON 2024
+# https://github.com/aodn/IMOS-hackathon/blob/main/2024/Projects/CARSv2/notebooks/get_aodn_example_hackathon.ipynb
+###################################################################################################################
+class GetAodn:
+    def __init__(self):
+        self.bucket_name = "imos-data-lab-optimised"
+        self.prefix = "cloud_optimised/cluster_testing"
+
+    def get_dataset(self, dataset_name):
+        return Dataset(self.bucket_name, self.prefix, dataset_name)
+
+    def get_metadata(self):
+        return Metadata(self.bucket_name, self.prefix)
+
+
+class Dataset:
+    def __init__(self, bucket_name, prefix, dataset_name):
+        self.bucket_name = bucket_name
+        self.prefix = prefix
+        self.dataset_name = dataset_name
+        self.dname = (
+            f"s3://{self.bucket_name}/{self.prefix}/{self.dataset_name}.parquet/"
+        )
+        self.parquet_ds = pq.ParquetDataset(self.dname, partitioning="hive")
+
+    def partition_keys_list(self):
+        dataset = pq.ParquetDataset(self.dname, format="parquet", partitioning="hive")
+        partition_keys = dataset.partitioning.schema
+        return partition_keys
+
+    def get_spatial_extent(self):
+        return get_spatial_extent(self.parquet_ds)
+
+    def plot_spatial_extent(self):
+        return plot_spatial_extent(self.parquet_ds)
+
+    def get_temporal_extent(self):
+        return get_temporal_extent(self.parquet_ds)
+
+    def get_data(
+        self,
+        date_start=None,
+        date_end=None,
+        lat_min=None,
+        lat_max=None,
+        lon_min=None,
+        lon_max=None,
+        scalar_filter=None,
+    ):
+        # TODO fix the whole logic as not everything is considered
+
+        # time filter: doesnt require date_end
+        if date_end == None:
+            now = datetime.now()
+            date_end = now.strftime("%Y-%m-%d %H:%M:%S")
+
+        if date_start == None:
+            filter_time = None
+        else:
+            filter_time = create_time_filter(
+                self.parquet_ds, date_start=date_start, date_end=date_end
+            )
+
+        # Geometry filter requires ALL optional args to be defined
+        if lat_min == None or lat_max == None or lon_min == None or lon_max == None:
+            filter_geo = None
+        else:
+            filter_geo = create_bbox_filter(
+                self.parquet_ds,
+                lat_min=lat_min,
+                lat_max=lat_max,
+                lon_min=lon_min,
+                lon_max=lon_max,
+            )
+
+        # scalar filter
+        if scalar_filter != None:
+            expr = None
+            for item in scalar_filter:
+                expr_1 = pc.field(item) == pa.scalar(scalar_filter[item])
+                if type(expr) != pc.Expression:
+                    expr = expr_1
+                else:
+                    expr = expr_1 & expr
+
+        # merge filters together
+        if type(filter_time) != pc.Expression:
+            data_filter = filter_geo
+        elif type(filter_geo) != pc.Expression:
+            data_filter = filter_time
+        elif (type(filter_geo) != pc.Expression) & (type(filter_time) != pc.Expression):
+            data_filter = None
+        else:
+            data_filter = filter_geo & filter_time
+
+        # add scalar filter to data_filter
+        if scalar_filter != None:
+            data_filter = data_filter & expr
+
+        df = pd.read_parquet(self.dname, engine="pyarrow", filters=data_filter)
+        return df
+
+    def get_metadata(self):
+        return get_schema_metadata(self.dname)
+
+
+class Metadata:
+    def __init__(self, bucket_name, prefix):
+        # super().__init__()
+        # initialise the class by calling the needed methods
+        self.bucket_name = bucket_name
+        self.prefix = prefix
+        self.catalog = self.metadata_catalog()
+
+    def metadata_catalog_uncached(self):
+        # print('Running metadata_catalog_uncached...')  # Debug output
+
+        folders_with_parquet = self.list_folders_with_parquet()
+        catalog = {}
+
+        for dataset in folders_with_parquet:
+            dname = f"s3://{self.bucket_name}/{dataset}"
+            metadata = get_schema_metadata(dname)  # schema metadata
+
+            path_parts = dataset.strip("/").split("/")
+            last_folder_with_extension = path_parts[-1]
+            dataset_name = os.path.splitext(last_folder_with_extension)[0]
+
+            catalog[dataset_name] = metadata
+
+        return catalog
+
+    @lru_cache(maxsize=None)
+    def metadata_catalog(self):
+        # print('Running metadata_catalog...')  # Debug output
+        if "catalog" in self.__dict__:
+            return self.catalog
+        else:
+            return self.metadata_catalog_uncached()
+
+    def list_folders_with_parquet(self):
+        s3 = boto3.client("s3", config=Config(signature_version=UNSIGNED))
+        prefix = self.prefix
+
+        if not prefix.endswith("/"):
+            prefix += "/"
+
+        response = s3.list_objects_v2(
+            Bucket=self.bucket_name, Prefix=prefix, Delimiter="/"
+        )
+
+        folders = []
+        for prefix in response.get("CommonPrefixes", []):
+            folder_path = prefix["Prefix"]
+            if folder_path.endswith(".parquet/"):
+                folder_name = folder_path[len(prefix) - 1 :]
+                folders.append(folder_name)
+
+        return folders
+
+    def find_datasets_with_attribute(
+        self, target_value, target_key="standard_name", data_dict=None, threshold=80
+    ):
+
+        matching_datasets = []
+        # https://stackoverflow.com/questions/56535948/python-why-cant-you-use-a-self-variable-as-an-optional-argument-in-a-method
+        if data_dict == None:
+            data_dict = self.metadata_catalog()
+
+        if not isinstance(data_dict, dict):
+            return matching_datasets  # handle bad cases
+
+        for dataset_name, attributes in data_dict.items():
+            if not isinstance(attributes, dict):
+                continue
+
+            for key, value in attributes.items():
+                if isinstance(value, dict) and target_key in value:
+                    # Check for any attribute available in a dict(catalog) match using fuzzy matching
+                    current_standard_name = value.get(target_key, "")
+                    similarity_score = fuzz.partial_ratio(
+                        target_value.lower(), current_standard_name.lower()
+                    )
+                    if similarity_score >= threshold:
+                        matching_datasets.append(
+                            dataset_name
+                        )  # Add dataset name to list
+
+                # Recursively search
+                matching_datasets.extend(
+                    self.find_datasets_with_attribute(value, target_value, threshold)
+                )
+
+        return list(set(matching_datasets))

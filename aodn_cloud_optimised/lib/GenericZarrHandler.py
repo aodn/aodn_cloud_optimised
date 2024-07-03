@@ -1,23 +1,64 @@
 import importlib.resources
-import timeit
-import traceback
+import os
+import warnings
 from functools import partial
 
 import boto3
+import dask
 import fsspec
 import numpy as np
 import s3fs
 import xarray as xr
 import zarr
-
-# from dask import distributed
 from dask.diagnostics import ProgressBar
-from dask.distributed import worker_client
 from dask.distributed import Client
-
 from rechunker import rechunk
+from xarray.core.merge import MergeError
 
-from .CommonHandler import CommonHandler
+from aodn_cloud_optimised.lib.CommonHandler import CommonHandler
+from aodn_cloud_optimised.lib.logging import get_logger
+from aodn_cloud_optimised.lib.s3Tools import (
+    delete_objects_in_prefix,
+    split_s3_path,
+    prefix_exists,
+    create_fileset,
+)
+
+
+def preprocess_xarray(ds, dataset_config):
+    """
+    Perform preprocessing on the input dataset (`ds`) and return an xarray Dataset.
+
+    :param ds: Input xarray Dataset.
+    :param dataset_config: Configuration dictionary for the dataset.
+
+    :return:
+        Preprocessed xarray Dataset.
+    """
+    # TODO: this is part a rewritten function available in the GenericHandler class below.
+    #       running the class method with xarray as preprocess=self.preprocess_xarray lead to many issues
+    #       1) serialization of the arguments with pickle.
+    #       2) Running in a dask remote cluster, it seemed like the preprocess function (if donne within mfdataset)
+    #          was actually running locally and using ALL of the local ram. Complete nonsense. So this function was made
+    #          as a test. It should be run after the xarray dataset is opened. More testing required as
+    #          self.preprocess_xarray() was pretty complete function.
+
+    logger_name = dataset_config.get("logger_name", "generic")
+    dimensions = dataset_config.get("dimensions")
+    schema = dataset_config.get("schema")
+
+    logger = get_logger(logger_name)
+
+    # TODO: get filename; Should be from https://github.com/pydata/xarray/issues/9142
+
+    # ds = ds.assign(
+    #     filename=((dimensions["time"]["name"],), [filename])
+    # )  # add new filename variable with time dimension
+
+    vars_to_drop = set(ds.data_vars) - set(schema)
+    ds_filtered = ds.drop_vars(vars_to_drop)
+    ds = ds_filtered
+    return ds
 
 
 class GenericHandler(CommonHandler):
@@ -27,10 +68,12 @@ class GenericHandler(CommonHandler):
 
         Args:
             **kwargs: Additional keyword arguments.
-                raw_bucket_name (str, optional[config]): Name of the raw bucket.
                 optimised_bucket_name (str, optional[config]): Name of the optimised bucket.
                 root_prefix_cloud_optimised_path (str, optional[config]): Root Prefix path of the location of cloud optimised files
-                input_object_key (str): Key of the input object.
+
+        Inherits:
+            CommonHandler: Provides common functionality for handling cloud-optimised datasets.
+
         """
         super().__init__(**kwargs)
 
@@ -43,10 +86,6 @@ class GenericHandler(CommonHandler):
             json_validation_path
         )  # we cannot validate the json config until self.dataset_config and self.logger are set
 
-        self.reprocess = kwargs.get(
-            "reprocess", None
-        )  # setting to True will recreate the zarr from scratch at every run!
-
         self.dimensions = self.dataset_config.get("dimensions")
         self.rechunk_drop_vars = kwargs.get("rechunk_drop_vars", None)
         self.vars_to_drop_no_common_dimension = self.dataset_config.get(
@@ -54,57 +93,35 @@ class GenericHandler(CommonHandler):
         )
 
         self.chunks = {
+            self.dimensions["time"]["name"]: self.dimensions["time"]["chunk"],
             self.dimensions["latitude"]["name"]: self.dimensions["latitude"]["chunk"],
             self.dimensions["longitude"]["name"]: self.dimensions["longitude"]["chunk"],
         }
 
-    def check_file_already_processed(self) -> bool:
-        """
-        Check whether a NetCDF file has been previously processed and integrated into an existing Zarr dataset.
-        This check is performed by examining the filename variable added to the Zarr dataset.
+        self.compute = bool(True)
 
-        If the file has been processed previously, a self.reprocessed_time_idx variable will be created
-        to determine the index value of the time variable region for potential overwriting.
-
-        :returns:
-            - True if the filename has already been integrated.
-            - False if the filename has not been integrated yet.
-        """
-        self.logger.info(
-            f"{self.filename}: Checking if input NetCDF has already been ingested into Zarr dataset"
-        )
-
-        # Load existing zarr dataset
-        try:
-            ds = xr.open_zarr(
-                fsspec.get_mapper(self.cloud_optimised_output_path, anon=True),
-                consolidated=True,
+        # TODO: fix this ugly abomination. Unfortunately, patching the s3_fs value in the unittest is not enough for
+        #       zarr! why? it works fine for parquet, but if I remove this if condition, my unittest breaks! maybe
+        #       self.s3_fs is overwritten somewhere?? need to check
+        if os.getenv("RUNNING_UNDER_UNITTEST") == "true":
+            self.s3_fs = s3fs.S3FileSystem(
+                anon=False,
+                client_kwargs={
+                    "endpoint_url": "http://127.0.0.1:5555/",
+                    "region_name": "us-east-1",
+                },
             )
-        except Exception as e:
-            self.logger.warning(f"Zarr dataset does not exist")
-            return False
 
-        # Locate values of time indexes where new filename has possibly been already downloaded
-        idx = ds.indexes[self.dimensions["time"]["name"]].where(
-            ds.filename == self.filename
+        self.store = s3fs.S3Map(
+            root=f"{self.cloud_optimised_output_path}", s3=self.s3_fs, check=False
         )
-        not_nan_mask = ~idx.isna()  # ~np.isnan(idx)
 
-        # Use numpy.where to get the indices where the values are not NaN
-        indices_not_nan = np.where(not_nan_mask)[0]
-        if indices_not_nan.size == 1:  # filename exists, file part of existing zarr
-            self.reprocessed_time_idx = indices_not_nan[0]
-            return True
-
-        elif indices_not_nan.size == 0:
-            return False
-
-    def preprocess_xarray(self, ds, filename) -> xr.Dataset:
+    # TODO: Unused at the moment
+    def preprocess_xarray(self, ds) -> xr.Dataset:
         """
         Perform preprocessing on the input dataset (`ds`) and return an xarray Dataset.
 
         :param ds: Input xarray Dataset.
-        :param filename: Name of the file being processed.
 
         :return:
             Preprocessed xarray Dataset.
@@ -116,15 +133,17 @@ class GenericHandler(CommonHandler):
         ds_filtered = ds.drop_vars(vars_to_drop)
         ds = ds_filtered
 
-        # add a new filename variable
-        filename = self.filename
+        # https://github.com/pydata/xarray/issues/2313
+        # filename = ds.encoding["source"]
 
-        self.logger.info(f"{self.filename}: xarray preprocessing")
+        # self.logger.info(f"{filename}: xarray preprocessing")
 
         # Add a new dimension 'filename' with a filename value
-        ds = ds.assign(
-            filename=((self.dimensions["time"]["name"],), [filename])
-        )  # add new filename variable with time dimension
+        filename = None
+        if filename is not None:
+            ds = ds.assign(
+                filename=((self.dimensions["time"]["name"],), [filename])
+            )  # add new filename variable with time dimension
 
         var_required = self.schema.copy()
         var_required.pop(self.dimensions["time"]["name"])
@@ -133,8 +152,6 @@ class GenericHandler(CommonHandler):
 
         # TODO: make the variable below something more generic? a parameter?
         var_template_shape = self.dataset_config.get("var_template_shape")
-
-        import warnings
 
         try:
             warnings.filterwarnings("error", category=RuntimeWarning)
@@ -150,9 +167,10 @@ class GenericHandler(CommonHandler):
 
             # if variable doesn't exist
             if variable_name not in ds:
-                self.logger.warning(
-                    f"{self.filename}: add missing {variable_name} to xarray dataset"
-                )
+                # self.logger.warning(
+                #     f"{filename}: add missing {variable_name} to xarray dataset"
+                # )
+                self.logger.warning(f"add missing {variable_name} to xarray dataset")
 
                 # check the type of the variable (numerical of string)
                 if np.issubdtype(datatype, np.number):
@@ -200,141 +218,262 @@ class GenericHandler(CommonHandler):
 
         return ds
 
-    def preprocess(self) -> xr.Dataset:
+    def publish_cloud_optimised_fileset_batch(self, s3_file_uri_list):
         """
-        Create a dataframe and xarray data from a NetCDF file. Loaded in memory.
+        Process and publish a batch of NetCDF files stored in S3 to a Zarr dataset.
 
-        :return:
-            ds: xarray Dataset.
-        """
+        This method iterates over a list of S3 file URIs, processes them in batches, and publishes
+        the resulting datasets to a Zarr store on S3. It performs the following steps:
 
-        preproc = partial(self.preprocess_xarray, filename=self.filename)
-        ds = xr.open_mfdataset(
-            self.tmp_input_file,
-            preprocess=preproc,
-            engine="h5netcdf",
-            concat_characters=True,
-            mask_and_scale=True,
-            decode_cf=True,
-            decode_times=True,
-            use_cftime=True,
-            parallel=True,
-            # autoclose=True,
-            decode_coords=True,
-        )
+        1. Validate input parameters and initialise logging.
+        2. Create a list of file handles from S3 file URIs.
+        3. Iterate through batches of file handles.
+        4. Perform preprocessing on each batched dataset.
+        5. Drop specified variables from the dataset based on schema settings.
+        6. Open and preprocess each dataset using Dask for parallel processing.
+        7. Chunk the dataset according to predefined dimensions.
+        8. Write the processed dataset to an existing or new Zarr store on S3.
+        9. Handle merging datasets and logging errors if encountered.
 
-        return ds
+        Parameters:
+        - s3_file_uri_list (list): List of S3 file URIs to process and publish.
 
-    def publish_cloud_optimised(self, ds):
-        """
-        Create or update a Zarr dataset in the specified S3 bucket.
-
-        :param ds: The xarray dataset to be stored in Zarr format.
-        :type ds: xr.Dataset
-
-        :return: None
-        """
-        s3 = s3fs.S3FileSystem(anon=False)
-
-        store = s3fs.S3Map(
-            root=f"{self.cloud_optimised_output_path}", s3=s3, check=False
-        )
-
-        ds = ds.chunk(chunks=self.chunks)
-
-        # first file of the dataset (overwrite)
-        if self.reprocess:
-            self.logger.warning(
-                f"{self.filename}: Creating new Zarr dataset - OVERWRITTING existing all Zarr objects if exist"
-            )
-
-            write_job = ds.to_zarr(
-                store,
-                write_empty_chunks=False,
-                mode="w",
-                compute=False,
-                consolidated=True,
-            )
-
-        # append new files to the dataset
-        else:
-            self.logger.info(f"{self.filename}: append data to existing Zarr")
-            if (
-                self.check_file_already_processed()
-            ):  # case when a file should be reprocessed and write to a specific region
-                self.logger.info(
-                    f"{self.filename}: update time region at slice({self.reprocessed_time_idx} , {self.reprocessed_time_idx + 1}) with new NetCDF data"
-                )
-                # when setting `region` explicitly in to_zarr(), all variables in the dataset to write
-                # must have at least one dimension in common with the region's dimensions ['TIME'],
-                # but that is not the case for some variables here. To drop these variables
-                # from this dataset before exporting to zarr, write:
-                # .drop_vars(['LATITUDE', 'LONGITUDE', 'GDOP'])
-
-                write_job = ds.drop_vars(self.vars_to_drop_no_common_dimension).to_zarr(
-                    store,
-                    write_empty_chunks=False,
-                    region={
-                        self.dimensions["time"]["name"]: slice(
-                            self.reprocessed_time_idx, self.reprocessed_time_idx + 1
-                        )
-                    },
-                    compute=True,
-                    consolidated=True,
-                )
-            else:
-                write_job = ds.to_zarr(
-                    store,
-                    write_empty_chunks=False,
-                    mode="a",
-                    compute=True,
-                    append_dim=self.dimensions["time"]["name"],
-                    consolidated=True,
-                )
-
-        # write_job = write_job.persist()
-        # distributed.progress(write_job, notebook=False)
-        self.logger.info(
-            f"{self.filename}: Zarr created and pushed to {self.cloud_optimised_output_path} successfully"
-        )
-
-    def to_cloud_optimised(self):
-        """
-        Create a Zarr dataset from NetCDF data.
+        Raises:
+        - ValueError: If input_objects (`s3_file_uri_list`) is not defined.
 
         Returns:
         None
-
-        This method creates a Zarr dataset from NetCDF data. It logs the process,
-        creates a dataset using the 'preprocess' method, and populates the Zarr dataset
-        using the 'publish_cloud_optimised' method. After completion, the temporary NetCDF file
-        is removed. The total time taken for the operation is logged.
-
-        Note: The 'preprocess' and 'publish_cloud_optimised' methods are assumed to be defined within the class.
         """
+        # Iterate over s3_file_handle_list in batches
+        if s3_file_uri_list is None:
+            raise ValueError("input_objects is not defined")
 
-        if self.tmp_input_file.endswith(".nc"):
-            self.is_valid_netcdf(
-                self.tmp_input_file
-            )  # check file validity before doing anything else
+        self.logger.info(
+            "Listing all objects to process and create a s3_file_handle_list"
+        )
+        s3_file_handle_list = create_fileset(s3_file_uri_list, self.s3_fs)
 
-        try:
-            ds = self.preprocess()
-            self.publish_cloud_optimised(ds)
-            self.push_metadata_aws_registry()
+        time_dimension_name = self.dimensions["time"]["name"]
 
-            time_spent = timeit.default_timer() - self.start_time
-            self.logger.info(f"Cloud Optimised file completed in {time_spent}s")
+        for idx, batch_files in enumerate(
+            self.batch_process_fileset(s3_file_handle_list)
+        ):
+            self.logger.info(f"Processing batch {idx + 1}...")
+            self.logger.info(batch_files)
 
-            self.postprocess(ds)
+            # batch_filenames = [os.path.basename(f.full_name) for f in batch_files]
 
-        except Exception as e:
-            self.logger.error(
-                f"Issue while creating Cloud Optimised file: {type(e).__name__}: {e} \n {traceback.print_exc()}"
+            partial_preprocess = partial(
+                preprocess_xarray, dataset_config=self.dataset_config
             )
 
-            if "ds" in locals():
-                self.postprocess(ds)
+            drop_vars_list = [
+                var_name
+                for var_name, attrs in self.schema.items()
+                if attrs.get("drop_vars", False)
+            ]
+            self.logger.warning(f"Dropping variables {drop_vars_list} from dataset")
+
+            with dask.config.set(
+                **{
+                    "array.slicing.split_large_chunks": False,
+                    "distributed.scheduler.worker-saturation": "inf",
+                }
+            ):
+                try:
+                    # TODO: if using preprocess function within mfdataset (has to be outside the class otherwise parallelizing issues), the
+                    #       local ram is being used! and not the cluster one! even if the function only does return ds
+                    #       solution, open at the end with ds = preprocess(ds) afterwards
+                    #
+                    ds = xr.open_mfdataset(
+                        batch_files,
+                        engine="h5netcdf",
+                        parallel=True,
+                        # preprocess=partial_preprocess, # this sometimes hangs the process
+                        concat_characters=True,
+                        mask_and_scale=True,
+                        decode_cf=True,
+                        decode_times=True,
+                        use_cftime=True,
+                        decode_coords=True,
+                        compat="override",
+                        coords="minimal",
+                        data_vars="minimal",
+                        drop_variables=drop_vars_list,
+                    )
+
+                    # TODO: create a simple jupyter notebook 2 show 2 different problems:
+                    #       1) serialization issue if preprocess is within a class
+                    #       2) blowing of memory if preprocess function is outside of a class and only does return ds
+
+                    ds = preprocess_xarray(ds, self.dataset_config)
+
+                    # NOTE: if I comment the next line, i get some errors with the latest chunk for some variables
+                    ds = ds.chunk(
+                        chunks=self.chunks
+                    )  # careful with chunk size, had an issue
+
+                    # Write the dataset to Zarr
+                    if prefix_exists(self.cloud_optimised_output_path):
+                        self.logger.info(f"append data to existing Zarr")
+
+                        # NOTE: In the next section, we need to figure out if we're reprocessing existing data.
+                        #       For this, the logic is open the original zarr store and compare with the new ds from
+                        #       this batch if they have time values in common.
+                        #       If this is the case, we need then to find the CONTIGUOUS regions as we can't assume that
+                        #       the data is well ordered. The logic below is looking for the matching regions and indexes
+
+                        ds_org = xr.open_zarr(
+                            self.store,
+                            consolidated=True,
+                            decode_cf=True,
+                            decode_times=True,
+                            use_cftime=True,
+                            decode_coords=True,
+                        )
+
+                        time_values_org = ds_org[time_dimension_name].values
+                        time_values_new = ds[time_dimension_name].values
+
+                        # Find common time values
+                        common_time_values = np.intersect1d(
+                            time_values_org, time_values_new
+                        )
+
+                        # Handle the 2 scenarios, reprocessing of a batch, or append new data
+                        if len(common_time_values) > 0:
+                            self.logger.info(
+                                f"Duplicate values of {self.dimensions['time']['name']}"
+                            )
+                            # Get indices of common time values in the original dataset
+                            common_indices = np.nonzero(
+                                np.isin(time_values_org, common_time_values)
+                            )[0]
+
+                            # regions must be CONTIGIOUS!! very important. so looking for different regions
+                            # Define regions as slices for the common time values
+                            regions = []
+                            matching_indexes = []
+
+                            start = common_indices[0]
+                            for i in range(1, len(common_indices)):
+                                if common_indices[i] != common_indices[i - 1] + 1:
+                                    end = common_indices[i - 1]
+                                    regions.append(
+                                        {time_dimension_name: slice(start, end + 1)}
+                                    )
+                                    matching_indexes.append(
+                                        np.where(
+                                            np.isin(
+                                                time_values_new,
+                                                time_values_org[start : end + 1],
+                                            )
+                                        )[0]
+                                    )
+                                    start = common_indices[i]
+
+                            # Append the last region
+                            end = common_indices[-1]
+                            regions.append({time_dimension_name: slice(start, end + 1)})
+                            matching_indexes.append(
+                                np.where(
+                                    np.isin(
+                                        time_values_new,
+                                        time_values_org[start : end + 1],
+                                    )
+                                )[0]
+                            )
+
+                            # Process region by region if necessary
+                            for region, indexes in zip(regions, matching_indexes):
+                                self.logger.info(
+                                    f"Overwriting Zarr dataset in Region: {region}, Matching Indexes in new ds: {indexes}"
+                                )
+                                ds.isel(**{time_dimension_name: indexes}).drop_vars(
+                                    self.vars_to_drop_no_common_dimension
+                                ).to_zarr(
+                                    self.store,
+                                    write_empty_chunks=False,
+                                    region=region,
+                                    compute=True,
+                                    consolidated=True,
+                                )
+
+                        # No reprocessing needed
+                        else:
+                            self.logger.info(f"Appending data to Zarr dataset")
+
+                            ds.to_zarr(
+                                self.store,
+                                mode="a",  # append mode for the next batches
+                                write_empty_chunks=False,  # TODO: could True fix the issue when some variables dont exists? I doubt
+                                compute=True,  # Compute the result immediately
+                                consolidated=True,
+                                append_dim=time_dimension_name,
+                            )
+
+                    # First time writing the dataset
+                    else:
+                        self.logger.info(f"Writing data to new Zarr dataset")
+
+                        ds.to_zarr(
+                            self.store,
+                            mode="w",  # Overwrite mode for the first batch
+                            write_empty_chunks=False,
+                            compute=True,  # Compute the result immediately
+                            consolidated=True,
+                        )
+
+                    self.logger.info(
+                        f"Batch {idx + 1} processed and written to {self.store}"
+                    )
+
+                except MergeError as e:
+                    self.logger.error(f"Failed to merge datasets: {e}")
+                    if "ds" in locals():
+                        self.postprocess(ds)
+
+                except Exception as e:
+                    self.logger.error(f"An unexpected error occurred: {e}")
+                    if "ds" in locals():
+                        self.postprocess(ds)
+
+    def to_cloud_optimised(self, s3_file_uri_list=None):
+        """
+        Create a Zarr dataset from NetCDF data.
+
+        This method creates a Zarr dataset from NetCDF data stored in S3. It logs the process,
+        deletes existing Zarr objects if specified, processes multiple files concurrently using a cluster,
+        and publishes the resulting datasets using the 'publish_cloud_optimised_fileset_batch' method.
+
+        Note:
+
+        Args:
+        - s3_file_uri_list (list, optional): List of S3 file URIs to process and create the Zarr dataset.
+                                             If not provided, no processing is performed.
+
+        Returns:
+        None
+        """
+        if self.clear_existing_data:
+            self.logger.warning(
+                f"Creating new Zarr dataset - DELETING existing all Zarr objects if exist"
+            )
+            # TODO: delete all objects
+            if prefix_exists(self.cloud_optimised_output_path):
+                bucket_name, prefix = split_s3_path(self.cloud_optimised_output_path)
+                self.logger.info(
+                    f"Deleting existing Zarr objects from {self.cloud_optimised_output_path}"
+                )
+
+                delete_objects_in_prefix(bucket_name, prefix)
+
+        # Multiple file processing with cluster
+        if s3_file_uri_list is not None:
+            # creating a cluster to process multiple files at once
+            self.client, self.cluster = self.create_cluster()
+            self.publish_cloud_optimised_fileset_batch(s3_file_uri_list)
+            self.close_cluster(self.client, self.cluster)
 
     @staticmethod
     def filter_rechunk_dimensions(dimensions):
@@ -383,7 +522,7 @@ class GenericHandler(CommonHandler):
                 self.dimensions
             )  # only return a dict with the dimensions to rechunk
 
-            s3 = s3fs.S3FileSystem(anon=False)
+            # s3 = s3fs.S3FileSystem(anon=False)
 
             org_url = (
                 self.cloud_optimised_output_path
@@ -393,7 +532,7 @@ class GenericHandler(CommonHandler):
             target_url = org_url.replace(
                 f"{self.dataset_name}", f"{self.dataset_name}_rechunked"
             )
-            target_store = s3fs.S3Map(root=f"{target_url}", s3=s3, check=False)
+            target_store = s3fs.S3Map(root=f"{target_url}", s3=self.s3_fs, check=False)
             # zarr.consolidate_metadata(org_store)
 
             ds = xr.open_zarr(fsspec.get_mapper(org_url, anon=True), consolidated=True)
@@ -402,7 +541,7 @@ class GenericHandler(CommonHandler):
                 f"{self.dataset_name}", f"{self.dataset_name}_intermediate"
             )
 
-            temp_store = s3fs.S3Map(root=f"{temp_url}", s3=s3, check=False)
+            temp_store = s3fs.S3Map(root=f"{temp_url}", s3=self.s3_fs, check=False)
 
             # delete previous version of intermediate and rechunked data
             s3_client = boto3.resource("s3")

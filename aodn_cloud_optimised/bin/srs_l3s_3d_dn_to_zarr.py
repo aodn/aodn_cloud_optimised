@@ -6,9 +6,9 @@ def main():
     command = [
         "generic_cloud_optimised_creation",
         "--paths",
-        "IMOS/ANFOG/slocum_glider",
+        "IMOS/SRS/SST/ghrsst/L3S-3d/dn/2022",
         "--dataset-config",
-        "anfog_slocum_glider.json",
+        "srs_l3s_3d_dn.json",
         "--clear-existing-data",
         "--cluster-mode",
         "remote",

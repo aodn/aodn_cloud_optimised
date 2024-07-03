@@ -1,12 +1,15 @@
+import importlib
 import os
-import tempfile
 import timeit
 from typing import List
 
 import boto3
-import netCDF4
+import s3fs
 import xarray as xr
 import yaml
+from coiled import Cluster
+from dask.distributed import Client
+from dask.distributed import LocalCluster
 from jsonschema import validate, ValidationError
 
 from .config import load_variable_from_config, load_dataset_config
@@ -20,19 +23,37 @@ class CommonHandler:
 
         Args:
             **kwargs: Additional keyword arguments.
-                raw_bucket_name (str, optional[config]): Name of the raw bucket.
-                optimised_bucket_name (str, optional[config]): Name of the optimised bucket.
-                root_prefix_cloud_optimised_path (str, optional[config]): Root Prefix path of the location of cloud optimised files
-                input_object_key (str): Key of the input object.
-                force_old_pq_del (bool, optional[config]): Force the deletion of existing cloud optimised files(slow) (default=False)
+                optimised_bucket_name (str, optional): Name of the optimised bucket. Defaults to the value in the configuration.
+                root_prefix_cloud_optimised_path (str, optional): Root prefix path of the location of cloud optimised files. Defaults to the value in the configuration.
+                force_previous_parquet_deletion (bool, optional): Force the deletion of existing cloud optimised files (slow). Defaults to False.
+                cluster_mode (str, optional): Specifies the type of cluster to create ("remote", "local", or None). Defaults to "local".
+                dataset_config (dict): Configuration dictionary for the dataset.
+                clear_existing_data (bool, optional): Flag to clear existing data. Defaults to None.
 
+        Attributes:
+            start_time (float): The start time of the handler.
+            optimised_bucket_name (str): Name of the optimised bucket.
+            root_prefix_cloud_optimised_path (str): Root prefix path of the location of cloud optimised files.
+            cluster_mode (str): Specifies the type of cluster to create ("remote", "local", or None).
+            dataset_config (dict): Configuration dictionary for the dataset.
+            cloud_optimised_format (str): Format for cloud optimised files.
+            dataset_name (str): Name of the dataset.
+            schema (dict): Schema of the dataset.
+            logger (logging.Logger): Logger for logging information, warnings, and errors.
+            cloud_optimised_output_path (str): S3 path for cloud optimised output.
+            clear_existing_data (bool): Flag to clear existing data.
+            cluster_options (dict): Options for the cluster configuration.
+            s3_fs (s3fs.S3FileSystem): S3 file system object for accessing S3.
+
+        Raises:
+            ValueError: If an invalid cluster_mode is specified.
         """
         self.start_time = timeit.default_timer()
-        self.temp_dir = tempfile.TemporaryDirectory()
 
-        self.raw_bucket_name = kwargs.get(
-            "raw_bucket_name", load_variable_from_config("BUCKET_RAW_DEFAULT")
-        )
+        # TODO: remove this variable, not used anymore.
+        # self.raw_bucket_name = kwargs.get(
+        #     "raw_bucket_name", load_variable_from_config("BUCKET_RAW_DEFAULT")
+        # )
         self.optimised_bucket_name = kwargs.get(
             "optimised_bucket_name",
             load_variable_from_config("BUCKET_OPTIMISED_DEFAULT"),
@@ -42,7 +63,14 @@ class CommonHandler:
             load_variable_from_config("ROOT_PREFIX_CLOUD_OPTIMISED_PATH"),
         )
 
-        self.input_object_key = kwargs.get("input_object_key", None)
+        # Cluster options
+        valid_clusters = ["remote", "local", None]
+        self.cluster_mode = kwargs.get("cluster_mode", "local")
+
+        if self.cluster_mode not in valid_clusters:
+            raise ValueError(
+                f"Invalid cluster value: {self.cluster_mode}. Valid values are {valid_clusters}"
+            )
 
         self.dataset_config = kwargs.get("dataset_config")
 
@@ -58,12 +86,157 @@ class CommonHandler:
         cloud_optimised_format = self.dataset_config.get("cloud_optimised_format")
         self.cloud_optimised_output_path = f"s3://{os.path.join(self.optimised_bucket_name, self.root_prefix_cloud_optimised_path, self.dataset_name + '.' + cloud_optimised_format)}/"
 
-        if self.input_object_key is not None:
-            self.filename = os.path.basename(self.input_object_key)
-            self.tmp_input_file = self.get_s3_raw_obj()
-        else:
-            self.logger.error("No input object given")
-            raise ValueError
+        self.clear_existing_data = kwargs.get(
+            "clear_existing_data", None
+        )  # setting to True will recreate the zarr from scratch at every run!
+
+        self.cluster_options = self.dataset_config.get("cluster_options", None)
+
+        self.s3_fs = s3fs.S3FileSystem(
+            anon=False
+        )  # variable overwritten in unittest to use moto server
+
+    def __enter__(self):
+        # Initialize resources if necessary
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        # Release any resources held by the handler_nc_anmn_file
+        self.close()
+
+    def close(self):
+        # Release resources
+        for name in dir():
+            if not name.startswith("_"):
+                # del globals()[name]
+                self.logger.info(f"{name} has not been deleted")
+        import gc
+
+        gc.collect()
+
+    def create_cluster(self):
+        """
+        Create a Dask cluster based on the specified cluster_mode.
+
+        This method creates a Dask cluster either remotely using the Coiled service or locally
+        depending on the value of the cluster_mode attribute. If remote cluster creation fails,
+        it falls back to creating a local cluster.
+
+        Attributes:
+            cluster_mode (str): Specifies the type of cluster to create ("remote" or "local").
+            logger (logging.Logger): Logger for logging information, warnings, and errors.
+            dataset_config (dict): Configuration dictionary containing cluster options.
+            dataset_name (str): Name of the dataset used for naming the remote cluster.
+            cluster (Cluster): The created Dask cluster (either remote or local).
+            client (Client): Dask client connected to the created cluster.
+
+        Raises:
+            ValueError: If an invalid cluster_mode is specified.
+
+        Returns:
+            Tuple[Client, Cluster]: A tuple containing the Dask client and the created cluster.
+
+        Notes:
+            - If self.client and self.cluster become instance attributes, they can't be used with
+              self.client.submit as they can't be serialised.
+
+        """
+
+        # TODO: quite crazy, but if client and cluster become self.client and self.cluster, then they can't be used
+        #       with self.client.submit as they can't be serialize ... what a bloody pain in .. seriously
+
+        local_cluster_options = self.dataset_config.get(
+            "local_cluster_options",
+            {
+                "n_workers": 2,
+                "memory_limit": "8GB",
+                "threads_per_worker": 2,
+            },
+        )
+
+        if self.cluster_mode == "remote":
+            try:
+                self.logger.info("Creating a remote cluster")
+                cluster_options = self.dataset_config.get("cluster_options", None)
+                if cluster_options is None:
+                    self.logger.error("No cluster options provided in dataset_config")
+
+                cluster_options["name"] = f"Processing_{self.dataset_name}"
+
+                cluster = Cluster(**cluster_options)
+                client = Client(cluster)
+                self.logger.info(
+                    f"Coiled Cluster dask dashboard available at {cluster.dashboard_link}"
+                )
+
+            except Exception as e:
+                self.logger.warning(
+                    f"Could not create a Coiled cluster: {e}. Falling back to local cluster."
+                )
+                # Create a local Dask cluster as a fallback
+                cluster = LocalCluster(**local_cluster_options)
+                client = Client(cluster)
+                self.logger.info(
+                    f"Local Cluster dask dashboard available at {cluster.dashboard_link}"
+                )
+        elif self.cluster_mode == "local":
+            self.logger.info("Creating a local cluster")
+
+            cluster = LocalCluster(**local_cluster_options)
+            client = Client(cluster)
+            self.logger.info(
+                f"Local Cluster dask dashboard available at {cluster.dashboard_link}"
+            )
+
+        return client, cluster
+
+    def close_cluster(self, client, cluster):
+        """
+        Close the Dask cluster and client.
+
+        This method attempts to close the Dask client and cluster if they are currently open.
+        It logs successful closure operations and catches any exceptions that occur during
+        the process, logging them as errors.
+
+        Attributes:
+            client (Client): The Dask client connected to the cluster.
+            cluster (Cluster): The Dask cluster (either remote or local).
+            logger (logging.Logger): Logger for logging information and errors.
+
+        Logs:
+            Info: Logs a message when the Dask client and cluster are closed successfully.
+            Error: Logs a message if there is an error while closing the Dask client or cluster.
+        """
+        try:
+            client.close()
+            self.logger.info("Dask client closed successfully.")
+
+            cluster.close()
+            self.logger.info("Dask cluster closed successfully.")
+        except Exception as e:
+            self.logger.error(f"Error while closing the cluster or client: {e}")
+
+    @staticmethod
+    def batch_process_fileset(fileset, batch_size=10):
+        """
+        Processes a list of files in batches.
+
+        This method yields successive batches of files from the input fileset.
+        Each batch contains up to `batch_size` files. Adjusting `batch_size`
+        can impact memory usage and performance, potentially leading to out-of-memory errors. Be cautious.
+
+        Args:
+            fileset (list): A list of files to be processed in batches.
+            batch_size (int, optional): The number of files to include in each batch (default is 10).
+
+        Yields:
+            list: A sublist of `fileset` containing up to `batch_size` files.
+        """
+        # batch_size modification could lead to some out of mem
+        num_files = len(fileset)
+        for start_idx in range(0, num_files, batch_size):
+            end_idx = min(start_idx + batch_size, num_files)
+            yield fileset[start_idx:end_idx]
 
     def validate_json(self, json_validation_path):
         """
@@ -100,55 +273,37 @@ class CommonHandler:
         schema = load_dataset_config(json_validation_path)
         try:
             validate(instance=self.dataset_config, schema=schema)
-            self.logger.info("JSON configuration for dataset: Validation successful.")
-        except ValidationError as e:
-            raise ValueError(f"JSON configuration for dataset: Validation failed: {e}")
-
-    def is_valid_netcdf(self, nc_file_path):
-        """
-        Check if a file is a valid NetCDF file.
-
-        Parameters:
-        - file_path (str): The path to the NetCDF file.
-
-        Returns:
-        - bool: True if the file is a valid NetCDF file, False otherwise.
-        """
-        if not self.input_object_key.endswith(".nc"):
-            self.logger.error(
-                f"{self.filename}: Not valid NetCDF file. Not ending with .nc"
+            self.logger.info(
+                f"JSON configuration for dataset {os.path.basename(json_validation_path)}: Validation successful."
             )
-            raise ValueError
+        except ValidationError as e:
+            raise ValueError(
+                f"JSON configuration for dataset {os.path.basename(json_validation_path)}: Validation failed: {e}"
+            )
 
-        try:
-            netCDF4.Dataset(nc_file_path)
-            return True
-        except Exception as e:
-            self.logger.error(f"{self.filename}: Not valid NetCDF file: {e}.")
-            raise TypeError
-
-    def get_s3_raw_obj(self) -> str:
-        """
-        Download an S3 object from the raw bucket to a temporary file.
-
-        :return: Local filepath of the temporary file.
-        :rtype: str
-        """
-
-        s3 = boto3.client("s3")
-
-        # Construct the full path for the temporary file
-        temp_file_path = os.path.join(
-            self.temp_dir.name, os.path.basename(self.input_object_key)
-        )
-
-        # Download the S3 object to the temporary file
-        s3.download_file(self.raw_bucket_name, self.input_object_key, temp_file_path)
-
-        self.logger.info(
-            f"{self.filename}: Downloading {self.input_object_key} object from {self.raw_bucket_name} bucket"
-        )
-        return temp_file_path
+    # TODO: remove as not used anymore
+    # def is_valid_netcdf(self, nc_file_path):
+    #     """
+    #     Check if a file is a valid NetCDF file.
+    #
+    #     Parameters:
+    #     - file_path (str): The path to the NetCDF file.
+    #
+    #     Returns:
+    #     - bool: True if the file is a valid NetCDF file, False otherwise.
+    #     """
+    #     if not self.input_object_key.endswith(".nc"):
+    #         self.logger.error(
+    #             f"{self.filename}: Not valid NetCDF file. Not ending with .nc"
+    #         )
+    #         raise ValueError
+    #
+    #     try:
+    #         netCDF4.Dataset(nc_file_path)
+    #         return True
+    #     except Exception as e:
+    #         self.logger.error(f"{self.filename}: Not valid NetCDF file: {e}.")
+    #         raise TypeError
 
     @staticmethod
     def is_open_ds(ds: xr.Dataset) -> bool:
@@ -168,39 +323,40 @@ class CommonHandler:
         except RuntimeError:
             return False  # If a RuntimeError is raised, the Dataset is closed
 
-    def push_metadata_aws_registry(self) -> None:
-        """
-        Pushes metadata to the AWS OpenData Registry.
-
-        If the 'aws_opendata_registry' key is missing from the dataset configuration, a warning is logged.
-        Otherwise, the metadata is extracted from the 'aws_opendata_registry' key, converted to YAML format,
-        and uploaded to the specified S3 bucket.
-
-        Returns:
-            None
-        """
-        if "aws_opendata_registry" not in self.dataset_config:
-            self.logger.warning(
-                "Missing dataset configuration to populate AWS OpenData Registry"
-            )
-        else:
-            aws_registry_config = self.dataset_config["aws_opendata_registry"]
-            yaml_data = yaml.dump(aws_registry_config)
-
-            s3 = boto3.client("s3")
-
-            key = os.path.join(
-                self.root_prefix_cloud_optimised_path, self.dataset_name + ".yaml"
-            )
-            # Upload the YAML data to S3
-            s3.put_object(
-                Bucket=self.optimised_bucket_name,
-                Key=key,
-                Body=yaml_data.encode("utf-8"),
-            )
-            self.logger.info(
-                f"Push AWS Registry file to: {os.path.join(self.root_prefix_cloud_optimised_path, self.dataset_name + '.yaml')}"
-            )
+    # TODO: this is not the way aws registry files are created. To remove/modify
+    # def push_metadata_aws_registry(self) -> None:
+    #     """
+    #     Pushes metadata to the AWS OpenData Registry.
+    #
+    #     If the 'aws_opendata_registry' key is missing from the dataset configuration, a warning is logged.
+    #     Otherwise, the metadata is extracted from the 'aws_opendata_registry' key, converted to YAML format,
+    #     and uploaded to the specified S3 bucket.
+    #
+    #     Returns:
+    #         None
+    #     """
+    #     if "aws_opendata_registry" not in self.dataset_config:
+    #         self.logger.warning(
+    #             "Missing dataset configuration to populate AWS OpenData Registry"
+    #         )
+    #     else:
+    #         aws_registry_config = self.dataset_config["aws_opendata_registry"]
+    #         yaml_data = yaml.dump(aws_registry_config)
+    #
+    #         s3 = boto3.client("s3")
+    #
+    #         key = os.path.join(
+    #             self.root_prefix_cloud_optimised_path, self.dataset_name + ".yaml"
+    #         )
+    #         # Upload the YAML data to S3
+    #         s3.put_object(
+    #             Bucket=self.optimised_bucket_name,
+    #             Key=key,
+    #             Body=yaml_data.encode("utf-8"),
+    #         )
+    #         self.logger.info(
+    #             f"Push AWS Registry file to: {os.path.join(self.root_prefix_cloud_optimised_path, self.dataset_name + '.yaml')}"
+    #         )
 
     def postprocess(self, ds: xr.Dataset) -> None:
         """
@@ -215,15 +371,25 @@ class CommonHandler:
         if self.is_open_ds(ds):
             ds.close()
 
-        if os.path.exists(self.tmp_input_file):
-            os.remove(self.tmp_input_file)
-        if os.path.exists(self.temp_dir.name):
-            self.temp_dir.cleanup()
-
         self.logger.handlers.clear()
 
 
 def _get_generic_handler_class(dataset_config):
+    """
+    Determine the appropriate handler_nc_anmn_file class based on the dataset configuration.
+
+    Args:
+        dataset_config (dict): A dictionary containing the configuration of the dataset. The key
+            "cloud_optimised_format" should be set to either "zarr" or "parquet"
+            to specify the format.
+
+    Returns:
+        class: The handler_nc_anmn_file class corresponding to the specified cloud-optimized format.
+
+    Raises:
+        ValueError: If the "cloud_optimised_format" is not specified or is neither "zarr"
+            nor "parquet".
+    """
     from .GenericParquetHandler import GenericHandler as parquet_handler
     from .GenericZarrHandler import GenericHandler as zarr_handler
 
@@ -239,82 +405,40 @@ def _get_generic_handler_class(dataset_config):
     return handler_class
 
 
-def cloud_optimised_creation(obj_key: str, dataset_config, **kwargs) -> None:
-    """
-    Create Cloud Optimised files for a specific object key in an S3 bucket.
-
-    Args:
-        obj_key (str): The object key (file path) of the NetCDF file to process.
-        dataset_config (dictionary): dataset configuration. Check config/dataset_template.json for example
-        **kwargs: Additional keyword arguments for customization.
-            handler_class (class, optional): Handler class for cloud optimised  creation (default is GenericHandler).
-            force_old_pq_del (bool, optional): Whether to force deletion of old Parquet files (default is False).
-
-    Returns:
-        None
-    """
-    handler_class = kwargs.get("handler_class", None)
-
-    # loading the right handler based on configuration
-    if handler_class is None:
-        handler_class = _get_generic_handler_class(dataset_config)
-
-    handler_reprocess_arg = kwargs.get("handler_reprocess_arg", None)
-
-    kwargs_handler_class = {
-        "raw_bucket_name": kwargs.get(
-            "raw_bucket_name", load_variable_from_config("BUCKET_RAW_DEFAULT")
-        ),
-        "optimised_bucket_name": kwargs.get(
-            "optimised_bucket_name",
-            load_variable_from_config("BUCKET_OPTIMISED_DEFAULT"),
-        ),
-        "root_prefix_cloud_optimised_path": kwargs.get(
-            "root_prefix_cloud_optimised_path",
-            load_variable_from_config("ROOT_PREFIX_CLOUD_OPTIMISED_PATH"),
-        ),
-        "input_object_key": obj_key,
-        "dataset_config": dataset_config,
-        "reprocess": handler_reprocess_arg,
-    }
-
-    # Creating an instance of the specified class with the provided arguments
-    handler_instance = handler_class(**kwargs_handler_class)
-
-    handler_instance.to_cloud_optimised()
-
-
-def cloud_optimised_creation_loop(
-    obj_ls: List[str], dataset_config: dict, **kwargs
+def cloud_optimised_creation(
+    s3_file_uri_list: List[str], dataset_config: dict, **kwargs
 ) -> None:
     """
-    Iterate through a list of file paths and create Cloud Optimised files for each file.
+    Iterate through a list of s3 file paths and create Cloud Optimised files for each file.
 
     Args:
-        obj_ls (List[str]): List of file paths to process.
+        s3_file_uri_list (List[str]): List of file paths to process.
         dataset_config (dictionary): dataset configuration. Check config/dataset_template.json for example
         **kwargs: Additional keyword arguments for customization.
             handler_class (class, optional): Handler class for cloud optimised creation.
-            force_old_pq_del (bool, optional): Whether to force deletion of old Parquet files (default is False).
+            force_previous_parquet_deletion (bool, optional): Whether to force deletion of old Parquet files (default is False).
 
     Returns:
         None
     """
 
-    handler_class = kwargs.get("handler_class", None)
+    # this is optional! Default will use generic handler
+    handler_class_name = dataset_config.get("handler_class", None)
 
     # loading the right handler based on configuration
-    if handler_class is None:
+    if handler_class_name is None:
         handler_class = _get_generic_handler_class(dataset_config)
+    else:
+        module = importlib.import_module(
+            f"aodn_cloud_optimised.lib.{handler_class_name}"
+        )
+        handler_class = getattr(module, handler_class_name)
 
-    handler_reprocess_arg = kwargs.get("reprocess", None)
+    handler_clear_existing_data_arg = kwargs.get("clear_existing_data", None)
 
     # Create the kwargs_handler_class dictionary, to be used as list of arguments to call cloud_optimised_creation -> handler_class
     # when values need to be overwritten
     kwargs_handler_class = {
-        "raw_bucket_name": kwargs.get(
-            "raw_bucket_name", load_variable_from_config("BUCKET_RAW_DEFAULT")
-        ),
         "optimised_bucket_name": kwargs.get(
             "optimised_bucket_name",
             load_variable_from_config("BUCKET_OPTIMISED_DEFAULT"),
@@ -323,38 +447,80 @@ def cloud_optimised_creation_loop(
             "root_prefix_cloud_optimised_path",
             load_variable_from_config("ROOT_PREFIX_CLOUD_OPTIMISED_PATH"),
         ),
+        "cluster_mode": kwargs.get("cluster_mode", "local"),
     }
 
     # Filter out None values
     filtered_kwargs = {k: v for k, v in kwargs_handler_class.items() if v is not None}
-
+    kwargs_handler_class = filtered_kwargs
     logger_name = dataset_config.get("logger_name", "generic")
     logger = get_logger(logger_name)
 
+    kwargs_handler_class["dataset_config"] = dataset_config
+    kwargs_handler_class["clear_existing_data"] = handler_clear_existing_data_arg
+
+    # Creating an instance of the specified class with the provided arguments
     start_whole_processing = timeit.default_timer()
-    i = 1
-    for f in obj_ls:
-
-        logger.info(f"{f}: start processing")
-
-        start_time = timeit.default_timer()
-        try:
-            cloud_optimised_creation(
-                f,
-                dataset_config,
-                handler_class=handler_class,
-                handler_reprocess_arg=handler_reprocess_arg,
-                **filtered_kwargs,
-            )
-            time_spent = timeit.default_timer() - start_time
-
-            logger.info(
-                f"{i}/{len(obj_ls)}: {f} Cloud Optimised file completed in {time_spent}s"
-            )
-        except Exception as e:
-            logger.error(f"{i}/{len(obj_ls)} issue with {f}: {e}")
-
-        i += 1
+    with handler_class(**kwargs_handler_class) as handler_instance:
+        handler_instance.to_cloud_optimised(s3_file_uri_list)
 
     time_spent_processing = timeit.default_timer() - start_whole_processing
     logger.info(f"Whole dataset completed in {time_spent_processing}s")
+
+    # TODO: everything seems very slow using to_cloud_optimised. Maybe let's try to use to_cloud_optimised_single below?
+    #       and comment above or do something. Will comment for now
+    #
+    # if dataset_config.get("cloud_optimised_format") == "parquet":
+    #     def task(f, i, handler_clear_existing_data_arg=False):
+    #         start_time = timeit.default_timer()
+    #         try:
+    #             # kwargs_handler_class["input_object_key"] = f
+    #             kwargs_handler_class["dataset_config"] = dataset_config
+    #             kwargs_handler_class[
+    #                 "clear_existing_data"
+    #             ] = handler_clear_existing_data_arg
+    #
+    #             # Creating an instance of the specified class with the provided arguments
+    #             with handler_class(**kwargs_handler_class) as handler_instance:
+    #                 handler_instance.to_cloud_optimised_single(f)
+    #
+    #                 time_spent = timeit.default_timer() - start_time
+    #                 logger.info(
+    #                     f"{i}/{len(s3_file_uri_list)}: {f} Cloud Optimised file completed in {time_spent}s"
+    #                 )
+    #
+    #         except Exception as e:
+    #             logger.error(f"{i}/{len(s3_file_uri_list)} issue with {f}: {e}")
+    #
+    #     local_cluster_options = {
+    #         "n_workers": 2,
+    #         "memory_limit": "8GB",
+    #         "threads_per_worker": 2,
+    #     }
+    #
+    #     cluster = LocalCluster(**local_cluster_options)
+    #     client = Client(cluster)
+    #
+    #     client.amm.start()  # Start Active Memory Manager
+    #     logger.info(
+    #         f"Local Cluster dask dashboard available at {cluster.dashboard_link}"
+    #     )
+    #
+    #     if handler_clear_existing_data_arg:
+    #         # if handler_clear_existing_data_arg, better to wait for this task to complete before adding new data!!
+    #         futures_init = [
+    #             client.submit(task, s3_file_uri_list[0], 1, handler_clear_existing_data_arg=True)
+    #         ]
+    #         wait(futures_init)
+    #
+    #         # Parallel Execution with List Comprehension
+    #         futures = [
+    #             client.submit(task, f, i) for i, f in enumerate(s3_file_uri_list[1:], start=2)
+    #         ]
+    #         wait(futures)
+    #     else:
+    #         futures = [client.submit(task, f, i) for i, f in enumerate(s3_file_uri_list, start=1)]
+    #         wait(futures)
+    #
+    #     client.close()
+    #     cluster.close()

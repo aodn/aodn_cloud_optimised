@@ -1,89 +1,100 @@
-import pyarrow as pa
-import s3fs
-import xarray as xr
-import numpy as np
 import json
 import tempfile
 
+import numpy as np
+import pyarrow as pa
+import s3fs
+import xarray as xr
 
-def generate_pyarrow_schema_from_s3_netcdf(s3_object_address, sub_schema):
+
+def custom_encoder(obj):
+    if isinstance(obj, np.float32):
+        return float(obj)  # Convert np.float32 to Python float
+    raise TypeError(f"Object of type {type(obj)} is not JSON serializable")
+
+
+def generate_json_schema_var_from_netcdf(nc_path, var_name, indent=2, s3_fs=None):
     """
-    Extracts variable names and types from a NetCDF file in S3 and returns a PyArrow pyarrow_schema.
+    Extracts variable names, types, and attributes from a NetCDF file and returns a JSON-formatted schema.
 
     Args:
-        s3_object_address (str): The address of the NetCDF object in S3 format,
-                                e.g., "s3://your-bucket/path/to/file.nc".
-
-    Returns:
-        pyarrow.Schema: The inferred PyArrow pyarrow_schema from the NetCDF file.
-    """
-    s3 = s3fs.S3FileSystem()
-    with s3.open(s3_object_address, "rb") as f:
-        dataset = xr.open_dataset(f)
-
-    variables = list(dataset.variables.keys())
-    types = [pa.from_numpy_dtype(dataset[var].dtype) for var in variables]
-
-    # Create the base pyarrow_schema from the NetCDF file
-    base_schema = pa.schema(list(zip(variables, types)))
-
-    # Combine the base pyarrow_schema and the provided subschema
-    combined_schema = pa.unify_schemas([base_schema, sub_schema])
-
-    return combined_schema
-
-
-def generate_json_schema_var_from_netcdf(nc_path, var_name, indent=2):
-    """
-    Extracts variable names, types, and attributes from a NetCDF file in S3 and prints a JSON pyarrow_schema.
-
-    Args:
-        s3_object_nc_pathaddress (str): The address of the NetCDF object in S3 format,
-                                e.g., "s3://your-bucket/path/to/file.nc".
+        nc_path (str or S3File): Path to a local NetCDF file or S3 address of the NetCDF file,
+                                 e.g., "s3://your-bucket/path/to/file.nc", or an open S3File object.
+        var_name (str): Name of the variable or coordinate to extract schema for.
         indent (int, optional): Number of spaces for JSON indentation (default is 2).
+        s3_fs (s3fs.S3FileSystem, optional): S3FileSystem instance used to open S3 objects (default is None).
 
     Returns:
-        None
+        str: JSON-formatted string representing the variable schema.
     """
-    with open(nc_path, "rb") as f:
-        dataset = xr.open_dataset(f)
+    if isinstance(nc_path, s3fs.S3File):
+        if s3_fs is None:
+            s3_fs = s3fs.S3FileSystem(anon=True)
 
+        # Open dataset from S3 file-like object using with statement
+        with s3_fs.open(nc_path) as f:
+            with xr.open_dataset(f) as dataset:
+                schema = extract_variable_schema(dataset, var_name)
+    elif nc_path.startswith("s3://"):
+        with s3_fs.open(nc_path) as f:
+            with xr.open_dataset(f) as dataset:
+                schema = extract_variable_schema(dataset, var_name)
+    else:
+        with xr.open_dataset(nc_path) as dataset:
+            schema = extract_variable_schema(dataset, var_name)
+
+    json_str = json.dumps(schema, indent=indent, default=custom_encoder)
+
+    return json_str
+
+
+def extract_variable_schema(dataset, var_name):
+    """
+    Extracts variable schema (dtype and attributes) from an xarray Dataset or DataArray.
+
+    Args:
+        dataset (xarray.Dataset or xarray.DataArray): The xarray dataset or data array.
+        var_name (str): Name of the variable or coordinate to extract schema for.
+
+    Returns:
+        dict: Dictionary representing the variable schema.
+    """
     schema = {}
 
     # Process variables
     if var_name in dataset.variables:
         var_dtype = dataset.variables[var_name].dtype
-        dtype_str = convert_dtype_to_str(var_dtype)
-        var_attrs = extract_serialisable_attrs(dataset.variables[var_name].attrs)
+        dtype_str = str(var_dtype)
+        var_attrs = dataset.variables[var_name].attrs
         schema[var_name] = {"type": dtype_str, **var_attrs}
 
     elif var_name in dataset.coords:
         coord_dtype = dataset.coords[var_name].dtype
-        dtype_str = convert_dtype_to_str(coord_dtype)
-        coord_attrs = extract_serialisable_attrs(dataset.coords[var_name].attrs)
+        dtype_str = str(coord_dtype)
+        coord_attrs = dataset.coords[var_name].attrs
         schema[var_name] = {"type": dtype_str, **coord_attrs}
 
-    # Convert the pyarrow_schema dictionary to a JSON-formatted string with indentation
-    json_str = json.dumps(schema, indent=indent)
-
-    # Print the JSON string with double quotes for easy copy/paste
-    return json_str
+    return schema
 
 
-def generate_json_schema_from_s3_netcdf(s3_object_address, indent=2):
+def generate_json_schema_from_s3_netcdf(s3_object_address, indent=2, s3_fs=None):
     """
-    Extracts variable names, types, and attributes from a NetCDF file in S3 and prints a JSON pyarrow_schema.
+    Extracts variable names, types, and attributes from a NetCDF file in S3 and returns a JSON-formatted schema.
 
     Args:
         s3_object_address (str): The address of the NetCDF object in S3 format,
                                 e.g., "s3://your-bucket/path/to/file.nc".
         indent (int, optional): Number of spaces for JSON indentation (default is 2).
+        s3_fs (s3fs.S3FileSystem, optional): S3FileSystem instance used to open S3 objects (default is None).
 
     Returns:
-        None
+        str: Path to a temporary JSON file containing the variable schema.
     """
-    s3 = s3fs.S3FileSystem()
-    with s3.open(s3_object_address, "rb") as f:
+
+    if s3_fs is None:
+        s3_fs = s3fs.S3FileSystem(anon=True)
+
+    with s3_fs.open(s3_object_address, "rb") as f:
         dataset = xr.open_dataset(f)
 
     schema = {}

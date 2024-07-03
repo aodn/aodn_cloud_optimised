@@ -1,22 +1,79 @@
+import json
 import unittest
 from unittest.mock import patch, mock_open, MagicMock
 
-import os
-import json
 import pyarrow as pa
 import xarray as xr
+import os
+import boto3
+from moto import mock_aws
+from moto.moto_server.threaded_moto_server import ThreadedMotoServer
+from aodn_cloud_optimised.lib.s3Tools import s3_ls
+import s3fs
 
 from aodn_cloud_optimised.lib.schema import (
-    generate_pyarrow_schema_from_s3_netcdf,
-    create_pyarrow_schema_from_list,
     create_pyrarrow_schema_from_dict,
     create_pyarrow_schema,
     generate_json_schema_from_s3_netcdf,
+    generate_json_schema_var_from_netcdf,
 )
 
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
+# Specify the filename relative to the current directory
+TEST_FILE_NC_ANMN = os.path.join(
+    ROOT_DIR,
+    "resources",
+    "IMOS_ANMN-NSW_CDSTZ_20210429T015500Z_SYD140_FV01_SYD140-2104-SBE37SM-RS232-128_END-20210812T011500Z_C-20210827T074819Z.nc",
+)
+
+TEST_FILE_NC_ANMN_SCHEMA = TEST_FILE_NC_ANMN.replace(".nc", ".schema")
+
+
+@mock_aws()
 class TestNetCDFSchemaGeneration(unittest.TestCase):
     def setUp(self):
+        # Create a mock S3 service
+        self.s3 = boto3.client("s3", region_name="us-east-1")
+        self.bucket_name = "imos-data"
+        self.s3.create_bucket(Bucket=self.bucket_name)
+
+        # Make the "imos-data" bucket public
+        public_policy_imos_data = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Principal": "*",
+                    "Action": "s3:GetObject",
+                    "Resource": f"arn:aws:s3:::{self.bucket_name}/*",
+                }
+            ],
+        }
+
+        self.s3.put_bucket_policy(
+            Bucket=self.bucket_name, Policy=json.dumps(public_policy_imos_data)
+        )
+
+        # Copy files to the mock S3 bucket
+        self._upload_to_s3(
+            self.bucket_name,
+            f"good_nc_anmn/{os.path.basename(TEST_FILE_NC_ANMN)}",
+            TEST_FILE_NC_ANMN,
+        )
+
+        self.nc_s3_path = s3_ls("imos-data", "good_nc_anmn")[0]
+
+        self.server = ThreadedMotoServer(ip_address="127.0.0.1", port=5555)
+        self.server.start()
+        self.s3_fs = s3fs.S3FileSystem(
+            anon=False,
+            client_kwargs={
+                "endpoint_url": "http://127.0.0.1:5555/",
+                "region_name": "us-east-1",
+            },
+        )
+
         # Define some sample data for testing
         self.schema_list = [
             "temperature: double",
@@ -38,56 +95,13 @@ class TestNetCDFSchemaGeneration(unittest.TestCase):
         }
 
         self.sub_schema_strings = ["filename: string", "site_code: string"]
-        self.sub_schema = create_pyarrow_schema_from_list(self.sub_schema_strings)
 
-    @patch("aodn_cloud_optimised.lib.schema.xr.open_dataset")
-    @patch("aodn_cloud_optimised.lib.schema.s3fs.S3FileSystem")
-    def test_generate_pyarrow_schema_from_s3_netcdf(
-        self, mock_s3fs, mock_xr_open_dataset
-    ):
-        # Mock S3 file access and Xarray open_dataset function
-        mock_s3 = MagicMock()
-        mock_s3.open.return_value = mock_open(read_data=b"dummy_data").return_value
-        mock_s3fs.return_value = mock_s3
+    def tearDown(self):
+        self.server.stop()
 
-        # Mock Xarray open_dataset function to return a dummy dataset. We really don't care at this stage of the values
-        dummy_dataset = xr.Dataset(
-            {
-                "temperature": xr.DataArray([1, 2, 3]),
-                "humidity": xr.DataArray([4, 5, 6]),
-                "pressure": xr.DataArray([7, 8, 9]),
-                "timestamp": xr.DataArray([10, 11, 12]),
-                "location": xr.DataArray(["A", "B", "C"]),
-            }
-        )
-        mock_xr_open_dataset.return_value = dummy_dataset
-
-        # Test the function with mocked S3 file access
-        result_schema = generate_pyarrow_schema_from_s3_netcdf(
-            "dummy_s3_path", self.sub_schema
-        )
-
-        # Check if the result pyarrow_schema is an instance of PyArrow pyarrow_schema
-        self.assertIsInstance(result_schema, pa.Schema)
-
-        # You can add more assertions based on your expected behavior
-
-    def test_create_schema_from_list(self):
-        # Test pyarrow_schema creation from pyarrow_schema strings
-        result_schema = create_pyarrow_schema_from_list(self.schema_list)
-
-        # Check if the result pyarrow_schema is an instance of PyArrow pyarrow_schema
-        self.assertIsInstance(result_schema, pa.Schema)
-
-        # Check if the pyarrow_schema fields match the expected fields
-        expected_fields = [
-            pa.field("temperature", pa.float64()),
-            pa.field("humidity", pa.float32()),
-            pa.field("pressure", pa.int32()),
-            pa.field("timestamp", pa.timestamp("ns")),
-            pa.field("location", pa.string()),
-        ]
-        self.assertEqual(result_schema, pa.schema(expected_fields))
+    def _upload_to_s3(self, bucket_name, key, file_path):
+        with open(file_path, "rb") as f:
+            self.s3.upload_fileobj(f, bucket_name, key)
 
     def test_create_schema_from_dict(self):
         # Test pyarrow_schema creation from pyarrow_schema strings
@@ -121,43 +135,53 @@ class TestNetCDFSchemaGeneration(unittest.TestCase):
         result_schema = create_pyarrow_schema(self.schema_list)
         self.assertEqual(result_schema, pa.schema(expected_fields))
 
-    @patch("aodn_cloud_optimised.lib.schema.xr.open_dataset")
-    @patch("aodn_cloud_optimised.lib.schema.s3fs.S3FileSystem")
-    def test_generate_json_schema_from_s3_netcdf(self, mock_s3fs, mock_xr_open_dataset):
-        # Mock the S3 file system
-        mock_s3 = MagicMock()
-        mock_s3fs.return_value = mock_s3
+    def test_generate_json_schema_from_s3_netcdf(self):
+        def assert_file_contents_equal(file1_path, file2_path):
+            with open(file1_path, "r") as f1, open(file2_path, "r") as f2:
+                content1 = f1.read()
+                content2 = f2.read()
+                assert (
+                    content1 == content2
+                ), f"File contents do not match: {file1_path} != {file2_path}"
 
-        # Mock the open_dataset method to return a dataset
-        mock_dataset = MagicMock()
-        mock_xr_open_dataset.return_value = mock_dataset
+        try:
+            loaded_schema_file = generate_json_schema_from_s3_netcdf(
+                self.nc_s3_path, s3_fs=self.s3_fs
+            )
+            assert_file_contents_equal(loaded_schema_file, TEST_FILE_NC_ANMN_SCHEMA)
 
-        # Define mock dataset variables and coordinates
-        mock_dataset.variables = {
-            "lon": MagicMock(dtype="float32", attrs={"units": "degrees_east"}),
-            "lat": MagicMock(dtype="float32", attrs={"units": "degrees_north"}),
-            "time": MagicMock(
-                dtype="datetime64[ns]", attrs={"units": "seconds since 1970-01-01"}
-            ),
+        finally:
+            os.remove(loaded_schema_file)
+
+    def test_generate_json_schema_var_from_netcdf(self):
+
+        json_expected = {
+            "TEMP": {
+                "type": "float32",
+                "ancillary_variables": "TEMP_quality_control",
+                "long_name": "sea_water_temperature",
+                "standard_name": "sea_water_temperature",
+                "units": "degrees_Celsius",
+                "valid_max": 40.0,
+                "valid_min": -2.5,
+            }
         }
-        mock_dataset.coords = {}
 
-        # Call the function under test
-        temp_file_path = generate_json_schema_from_s3_netcdf(
-            "s3://your-bucket/path/to/file.nc"
+        # Test from a local file
+        json_output = generate_json_schema_var_from_netcdf(TEST_FILE_NC_ANMN, "TEMP")
+        self.assertEqual(json_output, json.dumps(json_expected, indent=2))
+
+        # Test from a s3fs file
+        json_output = generate_json_schema_var_from_netcdf(
+            self.s3_fs.open(self.nc_s3_path), "TEMP", s3_fs=self.s3_fs
         )
+        self.assertEqual(json_output, json.dumps(json_expected, indent=2))
 
-        # Load the generated JSON schema
-        with open(temp_file_path, "r") as json_file:
-            loaded_schema = json.load(json_file)
-
-        # Assert the content of the loaded schema
-        expected_schema = {
-            "lon": {"type": "float", "units": "degrees_east"},
-            "lat": {"type": "float", "units": "degrees_north"},
-            "time": {"type": "timestamp[ns]", "units": "seconds since 1970-01-01"},
-        }
-        self.assertEqual(loaded_schema, expected_schema)
+        # Test from a s3 file
+        json_output = generate_json_schema_var_from_netcdf(
+            self.nc_s3_path, "TEMP", s3_fs=self.s3_fs
+        )
+        self.assertEqual(json_output, json.dumps(json_expected, indent=2))
 
 
 if __name__ == "__main__":
