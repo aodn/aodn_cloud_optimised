@@ -3,7 +3,6 @@ import subprocess
 
 
 def main():
-    # Define the command with the predefined arguments
     command = [
         "generic_cloud_optimised_creation",
         "--paths",

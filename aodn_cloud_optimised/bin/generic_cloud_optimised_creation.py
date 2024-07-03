@@ -1,4 +1,24 @@
 #!/usr/bin/env python3
+"""
+Script to process S3 paths and create cloud-optimized datasets.
+
+This script allows you to specify S3 paths and various options to process
+datasets and create cloud-optimised versions. It provides filtering options
+and supports different cluster modes.
+
+Usage Examples:
+  generic_cloud_optimised_creation --paths 'IMOS/ANMN/NSW' 'IMOS/ANMN/PA' \
+  --filters '_hourly-timeseries_' 'FV02' --dataset-config 'anmn_hourly_timeseries.json' \
+  --clear-existing-data --cluster-mode 'remote'
+
+  generic_cloud_optimised_creation --paths 'IMOS/ANMN/NSW' 'IMOS/ANMN/QLD' \
+  --dataset-config 'anmn_ctd_ts_fv01.json'
+
+  generic_cloud_optimised_creation --paths 'IMOS/ACORN/gridded_1h-avg-current-map_QC/TURQ/2024' \
+  --dataset-config 'acorn_gridded_qc_turq.json' --clear-existing-data --cluster-mode 'remote'
+
+"""
+
 import argparse
 import importlib.resources
 from aodn_cloud_optimised.lib.CommonHandler import cloud_optimised_creation

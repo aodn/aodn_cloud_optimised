@@ -6,7 +6,13 @@ from importlib.resources import path
 
 
 def merge_dicts(parent, child):
-    """Merge two dictionaries, giving priority to the child dictionary."""
+    """
+    Merge two dictionaries, giving priority to the child dictionary.
+
+    :param parent: The parent dictionary.
+    :param child: The child dictionary whose values will override those of the parent.
+    :return: The merged dictionary with child's values taking precedence.
+    """
     for key, value in child.items():
         if isinstance(value, dict) and key in parent:
             parent[key] = merge_dicts(parent[key], value)
@@ -16,7 +22,14 @@ def merge_dicts(parent, child):
 
 
 def load_config(file_path):
-    """Load a configuration file in either YAML or JSON format."""
+    """
+    Load a configuration file in either YAML or JSON format.
+
+    :param file_path: Path to the configuration file.
+    :return: The loaded configuration as a dictionary.
+    :raises ValueError: If the file format is unsupported.
+    :raises FileNotFoundError: If the file is not found.
+    """
     try:
         with open(file_path, "r") as file:
             if file_path.endswith(".yaml"):
@@ -34,6 +47,14 @@ def load_config(file_path):
 
 
 def load_variable_from_file(file_path, variable_name) -> str:
+    """
+    Load a specific variable from a configuration file, considering parent configurations if specified.
+
+    :param file_path: Path to the configuration file.
+    :param variable_name: Name of the variable to retrieve.
+    :return: The value of the specified variable.
+    :raises KeyError: If the variable is not found in the configuration file.
+    """
     # Load the child configuration
     variables = load_config(file_path)
 
@@ -59,12 +80,27 @@ def load_variable_from_file(file_path, variable_name) -> str:
 
 
 def load_variable_from_config(variable_name) -> str:
+    """
+    Load a specific variable from the common configuration file.
+
+    :param variable_name: Name of the variable to retrieve.
+    :return: The value of the specified variable.
+    :raises KeyError: If the variable is not found in the configuration file.
+    """
     # Obtain the file path using the context manager
     with path("aodn_cloud_optimised.config", "common.json") as common_config_path:
         return load_variable_from_file(str(common_config_path), variable_name)
 
 
 def load_dataset_config(config_path) -> dict:
+    """
+    Load a dataset configuration, considering parent configurations if specified.
+
+    :param config_path: Path to the dataset configuration file.
+    :return: The loaded dataset configuration as a dictionary.
+    :raises FileNotFoundError: If the parent configuration file is not found.
+    :raises ValueError: If there is an error loading the parent configuration file.
+    """
     # Load the child configuration
     dataset_config = load_config(config_path)
 
