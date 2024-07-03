@@ -19,7 +19,7 @@ def main():
         "anmn_hourly_timeseries.json",
         "--clear-existing-data",
         "--cluster-mode",
-        "local",
+        "remote",
     ]
 
     # Run the command
