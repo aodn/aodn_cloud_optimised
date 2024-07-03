@@ -1,11 +1,9 @@
 import importlib
 import os
-import tempfile
 import timeit
 from typing import List
 
 import boto3
-import netCDF4
 import s3fs
 import xarray as xr
 import yaml
@@ -25,14 +23,32 @@ class CommonHandler:
 
         Args:
             **kwargs: Additional keyword arguments.
-                optimised_bucket_name (str, optional[config]): Name of the optimised bucket.
-                root_prefix_cloud_optimised_path (str, optional[config]): Root Prefix path of the location of cloud optimised files
-                input_object_key (str): Key of the input object.
-                force_previous_parquet_deletion (bool, optional[config]): Force the deletion of existing cloud optimised files(slow) (default=False)
+                optimised_bucket_name (str, optional): Name of the optimised bucket. Defaults to the value in the configuration.
+                root_prefix_cloud_optimised_path (str, optional): Root prefix path of the location of cloud optimised files. Defaults to the value in the configuration.
+                force_previous_parquet_deletion (bool, optional): Force the deletion of existing cloud optimised files (slow). Defaults to False.
+                cluster_mode (str, optional): Specifies the type of cluster to create ("remote", "local", or None). Defaults to "local".
+                dataset_config (dict): Configuration dictionary for the dataset.
+                clear_existing_data (bool, optional): Flag to clear existing data. Defaults to None.
 
+        Attributes:
+            start_time (float): The start time of the handler.
+            optimised_bucket_name (str): Name of the optimised bucket.
+            root_prefix_cloud_optimised_path (str): Root prefix path of the location of cloud optimised files.
+            cluster_mode (str): Specifies the type of cluster to create ("remote", "local", or None).
+            dataset_config (dict): Configuration dictionary for the dataset.
+            cloud_optimised_format (str): Format for cloud optimised files.
+            dataset_name (str): Name of the dataset.
+            schema (dict): Schema of the dataset.
+            logger (logging.Logger): Logger for logging information, warnings, and errors.
+            cloud_optimised_output_path (str): S3 path for cloud optimised output.
+            clear_existing_data (bool): Flag to clear existing data.
+            cluster_options (dict): Options for the cluster configuration.
+            s3_fs (s3fs.S3FileSystem): S3 file system object for accessing S3.
+
+        Raises:
+            ValueError: If an invalid cluster_mode is specified.
         """
         self.start_time = timeit.default_timer()
-        self.temp_dir = tempfile.TemporaryDirectory()
 
         # TODO: remove this variable, not used anymore.
         # self.raw_bucket_name = kwargs.get(
@@ -46,10 +62,6 @@ class CommonHandler:
             "root_prefix_cloud_optimised_path",
             load_variable_from_config("ROOT_PREFIX_CLOUD_OPTIMISED_PATH"),
         )
-
-        # TODO: remove the following variables as not used anymore
-        self.input_object_key = kwargs.get("input_object_key", None)
-        self.input_object_keys = kwargs.get("input_object_keys", None)
 
         # Cluster options
         valid_clusters = ["remote", "local", None]
@@ -104,11 +116,11 @@ class CommonHandler:
 
     def create_cluster(self):
         """
-        Create a Dask cluster based on the cluster_mode.
+        Create a Dask cluster based on the specified cluster_mode.
 
-        If the cluster_mode is "remote", this method attempts to create a remote cluster using
-        the Coiled service. If creating the remote cluster fails, it falls back to creating a local
-        cluster. If the cluster_mode is "local", it creates a local Dask cluster.
+        This method creates a Dask cluster either remotely using the Coiled service or locally
+        depending on the value of the cluster_mode attribute. If remote cluster creation fails,
+        it falls back to creating a local cluster.
 
         Attributes:
             cluster_mode (str): Specifies the type of cluster to create ("remote" or "local").
@@ -120,6 +132,14 @@ class CommonHandler:
 
         Raises:
             ValueError: If an invalid cluster_mode is specified.
+
+        Returns:
+            Tuple[Client, Cluster]: A tuple containing the Dask client and the created cluster.
+
+        Notes:
+            - If self.client and self.cluster become instance attributes, they can't be used with
+              self.client.submit as they can't be serialised.
+
         """
 
         # TODO: quite crazy, but if client and cluster become self.client and self.cluster, then they can't be used
@@ -203,20 +223,14 @@ class CommonHandler:
 
         This method yields successive batches of files from the input fileset.
         Each batch contains up to `batch_size` files. Adjusting `batch_size`
-        can impact memory usage and performance and lead to out of memory errors. Be cautious
+        can impact memory usage and performance, potentially leading to out-of-memory errors. Be cautious.
 
-        Parameters
-        ----------
-        fileset : list
-            A list of files to be processed in batches.
-        batch_size : int, optional
-            The number of files to include in each batch (default is 10).
+        Args:
+            fileset (list): A list of files to be processed in batches.
+            batch_size (int, optional): The number of files to include in each batch (default is 10).
 
-        Yields
-        ------
-        list
-            A sublist of `fileset` containing up to `batch_size` files.
-
+        Yields:
+            list: A sublist of `fileset` containing up to `batch_size` files.
         """
         # batch_size modification could lead to some out of mem
         num_files = len(fileset)
@@ -268,28 +282,28 @@ class CommonHandler:
             )
 
     # TODO: remove as not used anymore
-    def is_valid_netcdf(self, nc_file_path):
-        """
-        Check if a file is a valid NetCDF file.
-
-        Parameters:
-        - file_path (str): The path to the NetCDF file.
-
-        Returns:
-        - bool: True if the file is a valid NetCDF file, False otherwise.
-        """
-        if not self.input_object_key.endswith(".nc"):
-            self.logger.error(
-                f"{self.filename}: Not valid NetCDF file. Not ending with .nc"
-            )
-            raise ValueError
-
-        try:
-            netCDF4.Dataset(nc_file_path)
-            return True
-        except Exception as e:
-            self.logger.error(f"{self.filename}: Not valid NetCDF file: {e}.")
-            raise TypeError
+    # def is_valid_netcdf(self, nc_file_path):
+    #     """
+    #     Check if a file is a valid NetCDF file.
+    #
+    #     Parameters:
+    #     - file_path (str): The path to the NetCDF file.
+    #
+    #     Returns:
+    #     - bool: True if the file is a valid NetCDF file, False otherwise.
+    #     """
+    #     if not self.input_object_key.endswith(".nc"):
+    #         self.logger.error(
+    #             f"{self.filename}: Not valid NetCDF file. Not ending with .nc"
+    #         )
+    #         raise ValueError
+    #
+    #     try:
+    #         netCDF4.Dataset(nc_file_path)
+    #         return True
+    #     except Exception as e:
+    #         self.logger.error(f"{self.filename}: Not valid NetCDF file: {e}.")
+    #         raise TypeError
 
     @staticmethod
     def is_open_ds(ds: xr.Dataset) -> bool:
@@ -309,39 +323,40 @@ class CommonHandler:
         except RuntimeError:
             return False  # If a RuntimeError is raised, the Dataset is closed
 
-    def push_metadata_aws_registry(self) -> None:
-        """
-        Pushes metadata to the AWS OpenData Registry.
-
-        If the 'aws_opendata_registry' key is missing from the dataset configuration, a warning is logged.
-        Otherwise, the metadata is extracted from the 'aws_opendata_registry' key, converted to YAML format,
-        and uploaded to the specified S3 bucket.
-
-        Returns:
-            None
-        """
-        if "aws_opendata_registry" not in self.dataset_config:
-            self.logger.warning(
-                "Missing dataset configuration to populate AWS OpenData Registry"
-            )
-        else:
-            aws_registry_config = self.dataset_config["aws_opendata_registry"]
-            yaml_data = yaml.dump(aws_registry_config)
-
-            s3 = boto3.client("s3")
-
-            key = os.path.join(
-                self.root_prefix_cloud_optimised_path, self.dataset_name + ".yaml"
-            )
-            # Upload the YAML data to S3
-            s3.put_object(
-                Bucket=self.optimised_bucket_name,
-                Key=key,
-                Body=yaml_data.encode("utf-8"),
-            )
-            self.logger.info(
-                f"Push AWS Registry file to: {os.path.join(self.root_prefix_cloud_optimised_path, self.dataset_name + '.yaml')}"
-            )
+    # TODO: this is not the way aws registry files are created. To remove/modify
+    # def push_metadata_aws_registry(self) -> None:
+    #     """
+    #     Pushes metadata to the AWS OpenData Registry.
+    #
+    #     If the 'aws_opendata_registry' key is missing from the dataset configuration, a warning is logged.
+    #     Otherwise, the metadata is extracted from the 'aws_opendata_registry' key, converted to YAML format,
+    #     and uploaded to the specified S3 bucket.
+    #
+    #     Returns:
+    #         None
+    #     """
+    #     if "aws_opendata_registry" not in self.dataset_config:
+    #         self.logger.warning(
+    #             "Missing dataset configuration to populate AWS OpenData Registry"
+    #         )
+    #     else:
+    #         aws_registry_config = self.dataset_config["aws_opendata_registry"]
+    #         yaml_data = yaml.dump(aws_registry_config)
+    #
+    #         s3 = boto3.client("s3")
+    #
+    #         key = os.path.join(
+    #             self.root_prefix_cloud_optimised_path, self.dataset_name + ".yaml"
+    #         )
+    #         # Upload the YAML data to S3
+    #         s3.put_object(
+    #             Bucket=self.optimised_bucket_name,
+    #             Key=key,
+    #             Body=yaml_data.encode("utf-8"),
+    #         )
+    #         self.logger.info(
+    #             f"Push AWS Registry file to: {os.path.join(self.root_prefix_cloud_optimised_path, self.dataset_name + '.yaml')}"
+    #         )
 
     def postprocess(self, ds: xr.Dataset) -> None:
         """
@@ -356,11 +371,6 @@ class CommonHandler:
         if self.is_open_ds(ds):
             ds.close()
 
-        # if os.path.exists(self.tmp_input_file):
-        #    os.remove(self.tmp_input_file)
-        if os.path.exists(self.temp_dir.name):
-            self.temp_dir.cleanup()
-
         self.logger.handlers.clear()
 
 
@@ -368,26 +378,17 @@ def _get_generic_handler_class(dataset_config):
     """
     Determine the appropriate handler_nc_anmn_file class based on the dataset configuration.
 
-    This function selects and returns the handler_nc_anmn_file class for processing cloud-optimized
-    datasets in either Zarr or Parquet format.
+    Args:
+        dataset_config (dict): A dictionary containing the configuration of the dataset. The key
+            "cloud_optimised_format" should be set to either "zarr" or "parquet"
+            to specify the format.
 
-    Parameters
-    ----------
-    dataset_config : dict
-        A dictionary containing the configuration of the dataset. The key
-        "cloud_optimised_format" should be set to either "zarr" or "parquet"
-        to specify the format.
+    Returns:
+        class: The handler_nc_anmn_file class corresponding to the specified cloud-optimized format.
 
-    Returns
-    -------
-    handler_class : class
-        The handler_nc_anmn_file class corresponding to the specified cloud-optimized format.
-
-    Raises
-    ------
-    ValueError
-        If the "cloud_optimised_format" is not specified or is neither "zarr"
-        nor "parquet".
+    Raises:
+        ValueError: If the "cloud_optimised_format" is not specified or is neither "zarr"
+            nor "parquet".
     """
     from .GenericParquetHandler import GenericHandler as parquet_handler
     from .GenericZarrHandler import GenericHandler as zarr_handler

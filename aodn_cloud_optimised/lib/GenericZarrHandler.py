@@ -26,6 +26,15 @@ from aodn_cloud_optimised.lib.s3Tools import (
 
 
 def preprocess_xarray(ds, dataset_config):
+    """
+    Perform preprocessing on the input dataset (`ds`) and return an xarray Dataset.
+
+    :param ds: Input xarray Dataset.
+    :param dataset_config: Configuration dictionary for the dataset.
+
+    :return:
+        Preprocessed xarray Dataset.
+    """
     # TODO: this is part a rewritten function available in the GenericHandler class below.
     #       running the class method with xarray as preprocess=self.preprocess_xarray lead to many issues
     #       1) serialization of the arguments with pickle.
@@ -61,6 +70,10 @@ class GenericHandler(CommonHandler):
             **kwargs: Additional keyword arguments.
                 optimised_bucket_name (str, optional[config]): Name of the optimised bucket.
                 root_prefix_cloud_optimised_path (str, optional[config]): Root Prefix path of the location of cloud optimised files
+
+        Inherits:
+            CommonHandler: Provides common functionality for handling cloud-optimised datasets.
+
         """
         super().__init__(**kwargs)
 
@@ -103,12 +116,12 @@ class GenericHandler(CommonHandler):
             root=f"{self.cloud_optimised_output_path}", s3=self.s3_fs, check=False
         )
 
+    # TODO: Unused at the moment
     def preprocess_xarray(self, ds) -> xr.Dataset:
         """
         Perform preprocessing on the input dataset (`ds`) and return an xarray Dataset.
 
         :param ds: Input xarray Dataset.
-        :param filename: Name of the file being processed.
 
         :return:
             Preprocessed xarray Dataset.
@@ -207,9 +220,29 @@ class GenericHandler(CommonHandler):
 
     def publish_cloud_optimised_fileset_batch(self, s3_file_uri_list):
         """
+        Process and publish a batch of NetCDF files stored in S3 to a Zarr dataset.
+
+        This method iterates over a list of S3 file URIs, processes them in batches, and publishes
+        the resulting datasets to a Zarr store on S3. It performs the following steps:
+
+        1. Validate input parameters and initialise logging.
+        2. Create a list of file handles from S3 file URIs.
+        3. Iterate through batches of file handles.
+        4. Perform preprocessing on each batched dataset.
+        5. Drop specified variables from the dataset based on schema settings.
+        6. Open and preprocess each dataset using Dask for parallel processing.
+        7. Chunk the dataset according to predefined dimensions.
+        8. Write the processed dataset to an existing or new Zarr store on S3.
+        9. Handle merging datasets and logging errors if encountered.
+
+        Parameters:
+        - s3_file_uri_list (list): List of S3 file URIs to process and publish.
+
+        Raises:
+        - ValueError: If input_objects (`s3_file_uri_list`) is not defined.
 
         Returns:
-
+        None
         """
         # Iterate over s3_file_handle_list in batches
         if s3_file_uri_list is None:
@@ -409,15 +442,18 @@ class GenericHandler(CommonHandler):
         """
         Create a Zarr dataset from NetCDF data.
 
+        This method creates a Zarr dataset from NetCDF data stored in S3. It logs the process,
+        deletes existing Zarr objects if specified, processes multiple files concurrently using a cluster,
+        and publishes the resulting datasets using the 'publish_cloud_optimised_fileset_batch' method.
+
+        Note:
+
+        Args:
+        - s3_file_uri_list (list, optional): List of S3 file URIs to process and create the Zarr dataset.
+                                             If not provided, no processing is performed.
+
         Returns:
         None
-
-        This method creates a Zarr dataset from NetCDF data. It logs the process,
-        creates a dataset using the 'preprocess' method, and populates the Zarr dataset
-        using the 'publish_cloud_optimised' method. After completion, the temporary NetCDF file
-        is removed. The total time taken for the operation is logged.
-
-        Note: The 'preprocess' and 'publish_cloud_optimised' methods are assumed to be defined within the class.
         """
         if self.clear_existing_data:
             self.logger.warning(

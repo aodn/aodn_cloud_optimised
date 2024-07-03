@@ -11,7 +11,6 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import traceback
 import xarray as xr
-import yaml
 from shapely.geometry import Point, Polygon
 
 from .schema import create_pyarrow_schema, generate_json_schema_var_from_netcdf
@@ -40,6 +39,9 @@ class GenericHandler(CommonHandler):
                 optimised_bucket_name (str, optional[config]): Name of the optimised bucket.
                 root_prefix_cloud_optimised_path (str, optional[config]): Root Prefix path of the location of cloud optimised files
                 force_previous_parquet_deletion (bool, optional[config]): Force the deletion of existing cloud optimised files(slow) (default=False)
+
+        Inherits:
+            CommonHandler: Provides common functionality for handling cloud-optimised datasets.
 
         """
         super().__init__(**kwargs)
@@ -73,36 +75,35 @@ class GenericHandler(CommonHandler):
         Preprocesses a CSV file using pandas and converts it into an xarray Dataset based on dataset configuration.
 
         Args:
-            csv_fp (str): File path to the CSV file to be processed.
+            csv_fp (str or s3fs.core.S3File): File path or s3fs object of the CSV file to be processed.
 
         Yields:
             Tuple[pd.DataFrame, xr.Dataset]: A generator yielding a tuple containing the processed pandas DataFrame
                 and its corresponding xarray Dataset.
 
-        This method reads a CSV file, csv_fp using pandas read_csv function with configuration options
-        specified in the dataset configuration (stored in 'pandas_read_csv_config' key of self.dataset_config, expected
-        to be a JSON-like dictionary). The resulting DataFrame is then converted into an xarray Dataset using
-        xr.Dataset.from_dataframe().
+        This method reads a CSV file (`csv_fp`) using pandas' `read_csv` function with configuration options
+        specified in the dataset configuration (`pandas_read_csv_config` key of `self.dataset_config`, expected
+        to be a JSON-like dictionary). The resulting DataFrame (`df`) is then converted into an xarray Dataset using
+        `xr.Dataset.from_dataframe()`.
 
-        i.e.:
-           "pandas_read_csv_config": {
-              "delimiter": ";",
-              "header": 0,
-              "index_col": "detection_timestamp",
-              "parse_dates": ["detection_timestamp"],
-              "na_values": ["N/A", "NaN"],
-              "encoding": "utf-8"
-              },
-
-              See pandas.read_csv Documentation for more options
+        Example of `pandas_read_csv_config` in dataset configuration:
+        ```json
+        "pandas_read_csv_config": {
+            "delimiter": ";",
+            "header": 0,
+            "index_col": "detection_timestamp",
+            "parse_dates": ["detection_timestamp"],
+            "na_values": ["N/A", "NaN"],
+            "encoding": "utf-8"
+        }
+        ```
 
         The method also uses the 'schema' from the dataset configuration to assign attributes to variables in the
         xarray Dataset. Each variable's attributes are extracted from the 'schema' and assigned to the Dataset variable's
-        attributes. The 'type' attribute from the pyarrow_schema is removed from the Dataset variables' attributes since it
+        attributes. The 'type' attribute from the `pyarrow_schema` is removed from the Dataset variables' attributes since it
         is considered unnecessary.
 
         If a variable in the Dataset is not found in the schema, an error is logged.
-
         """
         if "pandas_read_csv_config" in self.dataset_config:
             config_from_json = self.dataset_config["pandas_read_csv_config"]
@@ -135,12 +136,27 @@ class GenericHandler(CommonHandler):
         the GenericHandler class with super() for method delegation.
 
         Args:
-            netcdf_fp (str): Input NetCDF filepath.
+            netcdf_fp (str or s3fs.core.S3File): Input NetCDF filepath or s3fs object.
 
         Yields:
             tuple: A tuple containing DataFrame and Dataset.
-        """
 
+        This method reads a NetCDF file (`netcdf_fp`) using xarray's `open_dataset` function with configuration options
+        specified in the dataset configuration (`netcdf_read_config` key of `self.dataset_config`, expected
+        to be a JSON-like dictionary). The resulting Dataset (`ds`) is converted into a pandas DataFrame (`df`) using
+        `ds.to_dataframe()`.
+
+        The method also verifies variable attributes against the 'schema' from the dataset configuration.
+        If the attributes do not match the schema, an error is logged.
+
+        Example of `netcdf_read_config` in dataset configuration:
+        ```json
+        "netcdf_read_config": {
+            "engine": "h5netcdf",
+            "decode_times": False
+        }
+        ```
+        """
         with xr.open_dataset(netcdf_fp, engine="h5netcdf") as ds:
             # Convert xarray to pandas DataFrame
             df = ds.to_dataframe()
@@ -155,7 +171,18 @@ class GenericHandler(CommonHandler):
     def preprocess_data(
         self, fp
     ) -> Generator[Tuple[pd.DataFrame, xr.Dataset], None, None]:
+        """
+        Overwrites the preprocess_data method from CommonHandler.
 
+        Args:
+            fp (str or s3fs.core.S3File): File path or S3 file object.
+
+        Yields:
+            tuple: A tuple containing DataFrame and Dataset.
+
+        If `fp` ends with ".nc", it delegates to `self.preprocess_data_netcdf(fp)`.
+        If `fp` ends with ".csv", it delegates to `self.preprocess_data_csv(fp)`.
+        """
         if fp.path.endswith(".nc"):
             return self.preprocess_data_netcdf(fp)
         if fp.path.endswith(".csv"):
@@ -348,7 +375,6 @@ class GenericHandler(CommonHandler):
         Returns:
             pd.DataFrame: DataFrame with added columns.
         """
-
         gattrs_to_variables = self.dataset_config["gattrs_to_variables"]
         for attr in gattrs_to_variables:
             if attr in ds.attrs:
@@ -752,40 +778,6 @@ class GenericHandler(CommonHandler):
             f"Parquet metadata file successfully created in {dataset_metadata_path} \n"
         )
 
-    def push_metadata_aws_registry(self) -> None:
-        """
-        Pushes metadata to the AWS OpenData Registry.
-
-        If the 'aws_opendata_registry' key is missing from the dataset configuration, a warning is logged.
-        Otherwise, the metadata is extracted from the 'aws_opendata_registry' key, converted to YAML format,
-        and uploaded to the specified S3 bucket.
-
-        Returns:
-            None
-        """
-        if "aws_opendata_registry" not in self.dataset_config:
-            self.logger.warning(
-                "Missing dataset configuration to populate AWS OpenData Registry"
-            )
-        else:
-            aws_registry_config = self.dataset_config["aws_opendata_registry"]
-            yaml_data = yaml.dump(aws_registry_config)
-
-            s3 = boto3.client("s3")
-
-            key = os.path.join(
-                self.root_prefix_cloud_optimised_path, self.dataset_name + ".yaml"
-            )
-            # Upload the YAML data to S3
-            s3.put_object(
-                Bucket=self.optimised_bucket_name,
-                Key=key,
-                Body=yaml_data.encode("utf-8"),
-            )
-            self.logger.info(
-                f"Push AWS Registry file to: {os.path.join(self.cloud_optimised_output_path, self.dataset_name + '.yaml')}"
-            )
-
     def delete_existing_matching_parquet(self, filename) -> None:
         """
         Delete unmatched Parquet files.
@@ -850,10 +842,28 @@ class GenericHandler(CommonHandler):
 
     def to_cloud_optimised_single(self, s3_file_uri) -> None:
         """
-        Create Parquet files from a NetCDF file.
+        Process a single NetCDF file from an S3 URI, converting it into Parquet format.
+
+        Args:
+            s3_file_uri (str): The S3 URI of the NetCDF file to process.
 
         Returns:
             None
+
+        This method processes a NetCDF file located at `s3_file_uri`:
+        - Logs the processing start.
+        - Deletes existing matching Parquet files if enabled (`self.delete_pq_unmatch_enable`).
+        - Creates a fileset from the S3 file URI.
+        - Calls `self.preprocess_data()` to preprocess the data, yielding DataFrame and Dataset.
+        - Publishes the cloud-optimised data using `self.publish_cloud_optimised()`.
+        - Performs post-processing tasks using `self.postprocess()`.
+        - Logs completion time and finalises the process.
+
+        If any exception occurs during processing, it logs the error and raises the exception.
+
+        Note:
+        - Uses the logger defined in `self.logger`.
+        - Uses configurations and settings from `self.dataset_config`.
         """
         # FIXME: the next 2 lines need to be here otherwise, the logging is lost when called within a dask task. Why??
         logger_name = self.dataset_config.get("logger_name", "generic")
@@ -874,7 +884,7 @@ class GenericHandler(CommonHandler):
             for df, ds in generator:
 
                 self.publish_cloud_optimised(df, ds, s3_file_handle)
-                # self.push_metadata_aws_registry()
+                # self.push_metadata_aws_registry()  # Deprecated
 
                 time_spent = timeit.default_timer() - self.start_time
                 self.logger.info(f"Cloud Optimised file completed in {time_spent}s")
@@ -897,7 +907,26 @@ class GenericHandler(CommonHandler):
             raise e
 
     def to_cloud_optimised(self, s3_file_uri_list) -> None:
+        """
+        Process a list of NetCDF files from S3 URIs, converting them into Parquet format in batches.
 
+        Args:
+            s3_file_uri_list (list): List of S3 URIs of NetCDF files to process.
+
+        Returns:
+            None
+
+        This method processes a list of NetCDF files located at `s3_file_uri_list`:
+        - Deletes existing Parquet files if `self.clear_existing_data` is set to True.
+        - Logs deletion of existing Parquet files if they exist.
+        - Creates a Dask cluster and submits tasks to process each file URI in batches.
+        - Waits for batch tasks to complete using a timeout of 10 minutes.
+        - Closes the Dask cluster after all tasks are completed.
+
+        Note:
+        - Uses the logger defined in `self.logger`.
+        - Uses configurations and settings from `self.dataset_config`.
+        """
         if self.clear_existing_data:
             self.logger.info(
                 f"Creating new Parquet dataset - DELETING existing all Parquet objects if exist"
