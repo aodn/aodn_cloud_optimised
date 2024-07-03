@@ -33,8 +33,8 @@ def main():
     )
     parser.add_argument(
         "--suffix",
-        default="",
-        help="Optional suffix used by s3_ls to filter S3 objects. Example: '.nc'",
+        default=".nc",
+        help="Optional suffix used by s3_ls to filter S3 objects. Default is .nc. Example: '.nc'",
     )
     parser.add_argument(
         "--dataset-config",
