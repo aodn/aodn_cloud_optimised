@@ -20,7 +20,7 @@ def main():
         "--suffix",
         "_prof.nc",
         "--dataset-config",
-        "argo_core.json",
+        "argo.json",
         "--clear-existing-data",
         "--force-previous-parquet-deletion",
         "--cluster-mode",

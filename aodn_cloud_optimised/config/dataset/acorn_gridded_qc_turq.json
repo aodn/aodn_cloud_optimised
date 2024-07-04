@@ -1,6 +1,0 @@
-{
-    "dataset_name": "acorn_gridded_qc_turq",
-    "parent_config": "acorn_gridded_qc_main.json",
-    "logger_name": "acorn_gridded_qc_turq",
-    "metadata_uuid": ""
-}

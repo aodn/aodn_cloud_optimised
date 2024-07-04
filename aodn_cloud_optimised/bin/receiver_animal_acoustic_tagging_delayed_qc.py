@@ -6,9 +6,9 @@ def main():
     command = [
         "generic_cloud_optimised_creation",
         "--paths",
-        "IMOS/SOOP/SOOP-XBT/REALTIME/",
+        "IMOS/AATAMS/acoustic_tagging/",
         "--dataset-config",
-        "soop_xbt_nrt.json",
+        "receiver_animal_acoustic_tagging_delayed_qc.json",
         "--clear-existing-data",
         "--cluster-mode",
         "remote",

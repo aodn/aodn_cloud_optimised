@@ -6,9 +6,9 @@ def main():
     command = [
         "generic_cloud_optimised_creation",
         "--paths",
-        "IMOS/OceanCurrent/GSLA/NRT/2024",
+        "IMOS/SRS/SST/ghrsst/L3S-3d/dn/2022",
         "--dataset-config",
-        "gsla_nrt.json",
+        "satellite_ghrsst_l3s_3day_daynighttime_single_sensor_australia.json",
         "--clear-existing-data",
         "--cluster-mode",
         "remote",

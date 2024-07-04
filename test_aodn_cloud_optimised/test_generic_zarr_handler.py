@@ -30,7 +30,9 @@ TEST_FILE_NC_ACORN = [
 ]
 
 DATASET_CONFIG_NC_ACORN_JSON = os.path.join(
-    ROOT_DIR, "resources", "acorn_gridded_qc_turq.json"
+    ROOT_DIR,
+    "resources",
+    "radar_TurquoiseCoast_velocity_hourly_average_delayed_qc.json",
 )
 
 

@@ -1,6 +1,6 @@
 {
-  "dataset_name": "argo_core",
-  "logger_name": "argo_core",
+  "dataset_name": "argo",
+  "logger_name": "argo",
   "handler_class": "ArgoHandler",
   "cloud_optimised_format": "parquet",
   "cluster_options" : {
@@ -13,6 +13,7 @@
       "nthreads": 8,
       "memory_limit": "32GB" }
   },
+  "batch_size": 40,
   "metadata_uuid": "4402cb50-e20a-44ee-93e6-4728259250d2",
   "gattrs_to_variables": [],
   "partition_keys": [

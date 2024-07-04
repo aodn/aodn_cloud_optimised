@@ -1,6 +1,6 @@
 {
-  "dataset_name": "ardc_wave_nrt",
-  "logger_name": "ardc_wave_nrt",
+  "dataset_name": "wave_buoy_realtime_nonqc",
+  "logger_name": "wave_buoy_realtime_nonqc",
   "cloud_optimised_format": "parquet",
   "cluster_options" : {
     "n_workers": [8, 20],
@@ -12,6 +12,7 @@
       "nthreads": 8,
       "memory_limit": "32GB" }
   },
+  "batch_size": 40,
   "metadata_uuid": "2807f3aa-4db0-4924-b64b-354ae8c10b58",
   "gattrs_to_variables": [
     "site_name",
@@ -65,6 +66,16 @@
       "valid_min": -180.0,
       "valid_max": 180.0,
       "reference_datum": "WGS84 coordinate reference system; EPSG:4326"
+    },
+    "WHTH": {
+      "type": "double",
+      "standard_name": "sea_surface_wave_significant_height",
+      "long_name": "sea surface wave significant height from time domain analysis",
+      "units": "m",
+      "valid_min": 0.0,
+      "valid_max": 100.0,
+      "method": "Time domain analysis",
+      "ancillary_variable": "WAVE_quality_control"
     },
     "WPMH": {
       "type": "double",

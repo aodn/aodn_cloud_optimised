@@ -1,6 +1,6 @@
 {
-  "dataset_name": "aatams_acoustic_tagging",
-  "logger_name": "aatams_acoustic_tagging",
+  "dataset_name": "receiver_animal_acoustic_tagging_delayed_qc",
+  "logger_name": "receiver_animal_acoustic_tagging_delayed_qc",
   "cloud_optimised_format": "parquet",
   "cluster_options" : {
     "n_workers": [4, 20],

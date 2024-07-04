@@ -8,7 +8,7 @@ def main():
         "--paths",
         "IMOS/ANFOG/slocum_glider",
         "--dataset-config",
-        "anfog_slocum_glider.json",
+        "slocum_glider_delayed_qc.json",
         "--clear-existing-data",
         "--cluster-mode",
         "remote",

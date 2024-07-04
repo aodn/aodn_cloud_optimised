@@ -72,9 +72,10 @@ AWS SSO to push files to S3
 ## As a standalone bash script
 ```bash
 generic_cloud_optimised_creation -h
-usage: generic_cloud_optimised_creation [-h] --paths PATHS [PATHS ...] [--filters [FILTERS ...]] [--suffix SUFFIX] --dataset-config
-                                        DATASET_CONFIG [--clear-existing-data] [--force-previous-parquet-deletion]
-                                        [--cluster-mode {local,remote}]
+usage: generic_cloud_optimised_creation [-h] --paths PATHS [PATHS ...] [--filters [FILTERS ...]] [--suffix SUFFIX] --dataset-config DATASET_CONFIG
+                                        [--clear-existing-data] [--force-previous-parquet-deletion] [--cluster-mode {local,remote}]
+                                        [--optimised-bucket-name OPTIMISED_BUCKET_NAME] [--root_prefix-cloud-optimised-path ROOT_PREFIX_CLOUD_OPTIMISED_PATH]
+                                        [--bucket-raw BUCKET_RAW]
 
 Process S3 paths and create cloud-optimized datasets.
 
@@ -84,21 +85,26 @@ options:
                         List of S3 paths to process. Example: 'IMOS/ANMN/NSW' 'IMOS/ANMN/PA'
   --filters [FILTERS ...]
                         Optional filter strings to apply on the S3 paths. Example: '_hourly-timeseries_' 'FV02'
-  --suffix SUFFIX       Optional suffix used by s3_ls to filter S3 objects. Example: '.nc'
+  --suffix SUFFIX       Optional suffix used by s3_ls to filter S3 objects. Default is .nc. Example: '.nc'
   --dataset-config DATASET_CONFIG
-                        Path to the dataset config JSON file. Example: 'anmn_hourly_timeseries.json'
+                        Path to the dataset config JSON file. Example: 'mooring_hourly_timeseries_delayed_qc.json'
   --clear-existing-data
                         Flag to clear existing data. Default is False.
   --force-previous-parquet-deletion
-                        Flag to force the search of previous equivalent parquet file created. Much slower. Default is False.
+                        Flag to force the search of previous equivalent parquet file created. Much slower. Default is False.Only for Parquet processing.
   --cluster-mode {local,remote}
                         Cluster mode to use. Options: 'local' or 'remote'. Default is 'local'.
+  --optimised-bucket-name OPTIMISED_BUCKET_NAME
+                        Bucket name where cloud optimised object will be created. Default is 'imos-data-lab-optimised'
+  --root_prefix-cloud-optimised-path ROOT_PREFIX_CLOUD_OPTIMISED_PATH
+                        Prefix value for the root location of the cloud optimised objects, such as s3://optimised-bucket-name/root_prefix-cloud-optimised-path/... Default is 'cloud_optimised/cluster_testing'
+  --bucket-raw BUCKET_RAW
+                        Bucket name where input object files will be searched for. Default is 'imos-data'
 
 Examples:
-  generic_cloud_optimised_creation --paths 'IMOS/ANMN/NSW' 'IMOS/ANMN/PA' --filters '_hourly-timeseries_' 'FV02' --dataset-config 'anmn_hourly_timeseries.json' --clear-existing-data --cluster-mode 'remote'
+  generic_cloud_optimised_creation --paths 'IMOS/ANMN/NSW' 'IMOS/ANMN/PA' --filters '_hourly-timeseries_' 'FV02' --dataset-config 'mooring_hourly_timeseries_delayed_qc.json' --clear-existing-data --cluster-mode 'remote'
   generic_cloud_optimised_creation --paths 'IMOS/ANMN/NSW' 'IMOS/ANMN/QLD' --dataset-config 'anmn_ctd_ts_fv01.json'
-  generic_cloud_optimised_creation --paths 'IMOS/ACORN/gridded_1h-avg-current-map_QC/TURQ/2024' --dataset-config 'acorn_gridded_qc_turq.json' --clear-existing-data --cluster-mode 'remote'
-
+  generic_cloud_optimised_creation --paths 'IMOS/ACORN/gridded_1h-avg-current-map_QC/TURQ/2024' --dataset-config 'radar_TurquoiseCoast_velocity_hourly_average_delayed_qc.json' --clear-existing-data --cluster-mode 'remote'
 ```
 
 ## As a python module
@@ -121,7 +127,7 @@ def main():
     dataset_config = load_dataset_config(
         str(
             importlib.resources.path(
-                "aodn_cloud_optimised.config.dataset", "srs_l3s_1d_dn.json"
+                "aodn_cloud_optimised.config.dataset", "satellite_ghrsst_l3s_1day_daynighttime_single_sensor_australia.json"
             )
         )
     )

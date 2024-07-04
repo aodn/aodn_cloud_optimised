@@ -35,14 +35,16 @@ TEST_CSV_FILE = os.path.join(
     ROOT_DIR, "resources", "A69-1105-135_107799906_130722039.csv"
 )
 DATASET_CONFIG_CSV_AATAMS_JSON = os.path.join(
-    ROOT_DIR, "resources", "aatams_acoustic_tagging.json"
+    ROOT_DIR, "resources", "receiver_animal_acoustic_tagging_delayed_qc.json"
 )
 
 DATASET_CONFIG_NC_ANMN_JSON = os.path.join(
     ROOT_DIR, "resources", "anmn_ctd_ts_fv01.json"
 )
 
-DATASET_CONFIG_NC_ARDC_JSON = os.path.join(ROOT_DIR, "resources", "ardc_wave_nrt.json")
+DATASET_CONFIG_NC_ARDC_JSON = os.path.join(
+    ROOT_DIR, "resources", "wave_buoy_realtime_nonqc.json"
+)
 
 
 @mock_aws

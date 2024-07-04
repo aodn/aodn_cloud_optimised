@@ -1,6 +1,6 @@
 {
-  "dataset_name": "srs_ghrsst",
-  "logger_name": "srs_ghrsst",
+  "dataset_name": "radar_velocity_hourly_average_delayed_qc_main.json",
+  "logger_name": "radar_velocity_hourly_average_delayed_qc_main.json",
   "cloud_optimised_format": "zarr",
   "cluster_options" : {
     "n_workers": [2, 8],
@@ -12,39 +12,38 @@
       "nthreads": 8,
       "memory_limit": "32GB" }
   },
+  "batch_size": 30,
+  "cluster_config" : {
+    "n_workers": [0, 6],
+    "scheduler_vm_types": "t3.medium"
+  },
   "metadata_uuid": "",
   "dimensions": {
-    "time": {"name": "time",
-      "chunk": 5,
+    "time": {"name": "TIME",
+      "chunk": 1500,
       "rechunk": true},
-    "latitude": {"name": "lat",
-      "chunk": 1000},
-    "longitude": {"name": "lon",
-      "chunk": 1000}
+    "latitude": {"name": "J",
+      "chunk": 60},
+    "longitude": {"name": "I",
+      "chunk": 59}
   },
-  "var_template_shape": "sea_surface_temperature",
-  "vars_to_drop_no_common_dimension": ["lat", "lon"],
+  "var_template_shape": "UCUR",
+  "vars_to_drop_no_common_dimension": ["I", "J", "LATITUDE", "LONGITUDE", "GDOP"],
   "schema": {
-    "lon": {"type": "float32"},
-    "lat": {"type": "float32"},
-    "time": {"type": "datetime64[ns]"},
-    "sea_surface_temperature": {"type": "float32"},
-    "sea_surface_temperature_day_night": {"type": "float32", "drop_vars": true},
-    "sst_dtime": {"type": "float64"},
-    "dt_analysis": {"type": "float32"},
-    "wind_speed": {"type": "float32", "drop_vars": true},
-    "wind_speed_dtime_from_sst": {"type": "float32", "drop_vars": true},
-    "sea_ice_fraction": {"type": "float32", "drop_vars": true},
-    "sea_ice_fraction_dtime_from_sst": {"type": "float32", "drop_vars": true},
-    "satellite_zenith_angle": {"type": "float32"},
-    "l2p_flags": {"type": "float32"},
-    "quality_level": {"type": "float32"},
-    "sses_bias": {"type": "float32"},
-    "sses_standard_deviation": {"type": "float32"},
-    "sses_count": {"type": "float32"},
-    "sst_count": {"type": "float32"},
-    "sst_mean": {"type": "float32"},
-    "sst_standard_deviation": {"type": "float32"}
+    "TIME": {"type": "datetime64[ns]"},
+    "I": {"type": "int32"},
+    "J": {"type": "int32"},
+    "LATITUDE": {"type": "float64"},
+    "LONGITUDE": {"type": "float64"},
+    "GDOP": {"type": "float32"},
+    "UCUR": {"type": "float32"},
+    "VCUR": {"type": "float32"},
+    "UCUR_sd": {"type": "float32"},
+    "VCUR_sd": {"type": "float32"},
+    "NOBS1": {"type": "float32"},
+    "NOBS2": {"type": "float32"},
+    "UCUR_quality_control": {"type": "float32"},
+    "VCUR_quality_control": {"type": "float32"}
   },
   "dataset_gattrs": {
     "title": "Temperature logger"

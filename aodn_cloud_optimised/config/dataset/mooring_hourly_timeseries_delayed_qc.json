@@ -1,6 +1,6 @@
 {
-  "dataset_name": "anmn_hourly_timeseries",
-  "logger_name": "anmn_hourly_timeseries",
+  "dataset_name": "mooring_hourly_timeseries_delayed_qc",
+  "logger_name": "mooring_hourly_timeseries_delayed_qc",
   "handler_class": "AnmnHourlyTsHandler",
   "cloud_optimised_format": "parquet",
   "cluster_options" : {
@@ -13,6 +13,7 @@
       "nthreads": 8,
       "memory_limit": "64GB" }
   },
+  "batch_size": 30,
   "metadata_uuid": "7b901002-b1dc-46c3-89f2-b4951cedca48",
   "gattrs_to_variables": [
     "site_code"

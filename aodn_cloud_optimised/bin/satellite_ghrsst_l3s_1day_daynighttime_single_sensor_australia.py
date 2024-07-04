@@ -13,7 +13,7 @@ def main():
         "IMOS/SRS/SST/ghrsst/L3S-1d/dn/2023",
         "IMOS/SRS/SST/ghrsst/L3S-1d/dn/2024",
         "--dataset-config",
-        "srs_l3s_1d_dn.json",
+        "satellite_ghrsst_l3s_1day_daynighttime_single_sensor_australia.json",
         "--clear-existing-data",
         "--cluster-mode",
         "remote",

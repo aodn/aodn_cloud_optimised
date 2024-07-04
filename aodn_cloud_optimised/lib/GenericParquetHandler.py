@@ -110,7 +110,7 @@ class GenericHandler(CommonHandler):
             df = pd.read_csv(csv_fp, **config_from_json)
         else:
             self.logger.warning(
-                "No options given to process CSV file with pandas. Using default pandas.read_csv configuration"
+                "No options provided for processing CSV file with pandas. Using default pandas.read_csv configuration."
             )
             df = pd.read_csv(csv_fp)
 
@@ -118,7 +118,7 @@ class GenericHandler(CommonHandler):
 
         for var in ds.variables:
             if var not in self.schema:
-                self.logger.error(f"Missing variable: {var} from config")
+                self.logger.error(f"Missing variable: {var} from dataset config")
             else:
                 ds[var].attrs = self.schema.get(var)
                 del ds[var].attrs[
@@ -165,7 +165,7 @@ class GenericHandler(CommonHandler):
                 yield df, ds
             else:
                 self.logger.error(
-                    "NetCDF file is not consistent with the pre-defined schema"
+                    "The NetCDF file does not conform to the pre-defined schema."
                 )
 
     def preprocess_data(
@@ -288,7 +288,9 @@ class GenericHandler(CommonHandler):
         """
         # Create Point objects from latitude and longitude
         if not "spatial_extent" in self.dataset_config:
-            self.logger.error("Missing spatial_extent config")
+            self.logger.error(
+                "Spatial_extent configuration is missing from dataset configuration."
+            )
             raise ValueError
 
         # load default values if not available in config
@@ -303,7 +305,7 @@ class GenericHandler(CommonHandler):
             geo_var_has_nan = df[geo_var].isna().any().any()
             if geo_var_has_nan:
                 self.logger.warning(
-                    f"The NetCDF has NaN values of {geo_var}. Removing corresponding data"
+                    f"The NetCDF contains NaN values of {geo_var}. Removing corresponding data"
                 )
                 df = df.dropna(
                     subset=[geo_var]
@@ -381,7 +383,7 @@ class GenericHandler(CommonHandler):
                 df[attr] = getattr(ds, attr)
             else:
                 self.logger.warning(
-                    f"{attr} global attribute doesn't exist in the original NetCDF. The corresponding variable won't be created"
+                    f"The global attribute '{attr}' does not exist in the original NetCDF. The corresponding variable won't be created."
                 )
 
         df["filename"] = os.path.basename(f.path)
@@ -408,7 +410,7 @@ class GenericHandler(CommonHandler):
 
         if any(df["timestamp"] < 0):
             self.logger.warning(
-                f"{f.path}: NaN values of {time_varname} time variable in dataset. Trimming data from NaN values"
+                f"{f.path}: NaN values detected in {time_varname} time variable. Trimming corresponding data."
             )
             df2 = df[df["timestamp"] > 0].copy()
             df = df2
@@ -514,7 +516,7 @@ class GenericHandler(CommonHandler):
                                 errors += 1
                     else:
                         self.logger.warning(
-                            f"{var_name} is missing from the dataset_config. Please amend"
+                            f"{var_name} is missing from the dataset configuration. Please update the configuration."
                         )
 
         if errors > 0:
@@ -542,7 +544,7 @@ class GenericHandler(CommonHandler):
         df = self._rm_bad_timestamp_df(df, s3_file_handle)
         if "polygon" in partition_keys:
             if not "spatial_extent" in self.dataset_config:
-                self.logger.error("Missing spatial_extent config")
+                self.logger.error("Missing spatial_extent from dataset configuration")
                 # raise ValueError
             else:
                 df = self._add_polygon(df)
@@ -609,13 +611,13 @@ class GenericHandler(CommonHandler):
                     #    #TODO: improve this to return all the varatts as well
                     #    var_config = generate_json_schema_var_from_netcdf(self.input_object_key, column_name)
                     self.logger.warning(
-                        f"missing variable from provided pyarrow_schema config, please add to dataset config (respect double quotes): {var_config}"
+                        f"Variable missing from provided pyarrow_schema configuration. Please add to dataset configuration (ensure correct quoting): {var_config}"
                     )
 
         for partition_key in partition_keys:
             if all(not elem for elem in pdf[partition_key].is_null()):
                 self.logger.error(
-                    f'{partition_key} variable is full of NULL values. Most likely due to {partition_key} missing from "gattrs_to_variables" in dataset config'
+                    f"The '{partition_key}' variable is filled with NULL values, likely because '{partition_key}' is missing from 'gattrs_to_variables' in the dataset configuration."
                 )
                 raise ValueError
 
@@ -632,8 +634,9 @@ class GenericHandler(CommonHandler):
             basename_template=filename
             + "-{i}.parquet",  # this is essential for the overwriting part
         )
+        # TODO: when running on a remote cluster, it seems like we only get a logger per batch? maybe the logger is closed?
         self.logger.info(
-            f"{filename}: Parquet files successfully created in {self.cloud_optimised_output_path} \n"
+            f"{filename}: Parquet files successfully published to {self.cloud_optimised_output_path} \n"
         )
 
         self._add_metadata_sidecar()
@@ -780,7 +783,7 @@ class GenericHandler(CommonHandler):
         )
 
         self.logger.info(
-            f"Parquet metadata file successfully created in {dataset_metadata_path} \n"
+            f"Parquet metadata file successfully published to {dataset_metadata_path} \n"
         )
 
     def delete_existing_matching_parquet(self, filename) -> None:
@@ -801,7 +804,7 @@ class GenericHandler(CommonHandler):
             None
         """
 
-        self.logger.info(f"Looking for matching Parquet objects to delete")
+        self.logger.info("Searching for matching Parquet objects to delete.")
 
         # could be slow if there are too many objects to list
         # remote test on local machine shows 15 sec for 50k objects
@@ -816,7 +819,7 @@ class GenericHandler(CommonHandler):
                 filesystem=self.s3_fs,
             )
         except Exception as e:
-            self.logger.info(f"No files to delete: {e}")
+            self.logger.info(f"No Parquet files to delete. Reason: {e}")
             return
 
         # Define the regex pattern to match existing parquet files
@@ -842,7 +845,7 @@ class GenericHandler(CommonHandler):
                 Bucket=self.optimised_bucket_name, Delete={"Objects": objects_to_delete}
             )
             self.logger.info(
-                f"Previous parquet objects successfully deleted: {response}"
+                f"Successfully deleted previous Parquet objects: {response}"
             )
 
     def to_cloud_optimised_single(self, s3_file_uri) -> None:
@@ -874,7 +877,7 @@ class GenericHandler(CommonHandler):
         logger_name = self.dataset_config.get("logger_name", "generic")
         self.logger = get_logger(logger_name)
 
-        self.logger.info(f"Processing {s3_file_uri}")
+        self.logger.info(f"Processing file: {s3_file_uri}")
 
         filename = os.path.basename(s3_file_uri)
         if self.delete_pq_unmatch_enable:
@@ -891,19 +894,16 @@ class GenericHandler(CommonHandler):
                 self.publish_cloud_optimised(df, ds, s3_file_handle)
                 # self.push_metadata_aws_registry()  # Deprecated
 
-                time_spent = timeit.default_timer() - self.start_time
-                self.logger.info(f"Cloud Optimised file completed in {time_spent}s")
-
                 self.postprocess(ds)
 
                 time_spent = timeit.default_timer() - start_time
                 self.logger.info(
-                    f"{s3_file_uri} Cloud Optimised file completed in {time_spent}s"
+                    f"Cloud-optimised file processing completed in {time_spent} seconds."
                 )
 
         except Exception as e:
             self.logger.error(
-                f"Issue while creating Cloud Optimised file: {type(e).__name__}: {e} \n {traceback.print_exc()}"
+                f"Issue encountered while creating Cloud Optimised file: {type(e).__name__}: {e} \n {traceback.format_exc()}"
             )
 
             if "ds" in locals():
@@ -939,7 +939,7 @@ class GenericHandler(CommonHandler):
             if prefix_exists(self.cloud_optimised_output_path):
                 bucket_name, prefix = split_s3_path(self.cloud_optimised_output_path)
                 self.logger.info(
-                    f"Deleting existing Parquet objects from {self.cloud_optimised_output_path}"
+                    f"Deleting existing Parquet objects from {self.cloud_optimised_output_path}."
                 )
                 delete_objects_in_prefix(bucket_name, prefix)
 
@@ -947,26 +947,25 @@ class GenericHandler(CommonHandler):
             try:
                 self.to_cloud_optimised_single(f)
             except Exception as e:
-                self.logger.error(f"{i}/{len(s3_file_uri_list)} issue with {f}: {e}")
+                self.logger.error(
+                    f"Issue {i}/{len(s3_file_uri_list)} with {f}: {type(e).__name__}: {e}"
+                )
 
         client, cluster = self.create_cluster()
 
-        # Get the minimum cluster worker value as a batch size? and multiply it by 2 ?
-        n_workers_list = self.dataset_config.get("cluster_options", {}).get(
-            "n_workers", []
-        )
-
-        # Get the minimum value from n_workers list
-        min_n_workers = min(n_workers_list) if n_workers_list else None
-        batch_size = min_n_workers * 3
+        batch_size = self.get_batch_size(client=client)
 
         # Do it in batches. maybe more efficient
+        ii = 0
         for i in range(0, len(s3_file_uri_list), batch_size):
+            self.logger.info(f"Processing batch {ii + 1}...")
             batch = s3_file_uri_list[i : i + batch_size]
             batch_tasks = [
                 client.submit(task, f, idx + 1) for idx, f in enumerate(batch)
             ]
 
-            wait(batch_tasks, timeout="10 minutes")
+            wait(batch_tasks, timeout=batch_size * 80)
+            ii += 1
 
         self.close_cluster(client, cluster)
+        self.logger.handlers.clear()
