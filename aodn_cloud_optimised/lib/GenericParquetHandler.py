@@ -956,14 +956,16 @@ class GenericHandler(CommonHandler):
         batch_size = self.get_batch_size(client=client)
 
         # Do it in batches. maybe more efficient
+        ii = 0
         for i in range(0, len(s3_file_uri_list), batch_size):
-            self.logger.info(f"Processing batch {i + 1}...")
+            self.logger.info(f"Processing batch {ii + 1}...")
             batch = s3_file_uri_list[i : i + batch_size]
             batch_tasks = [
                 client.submit(task, f, idx + 1) for idx, f in enumerate(batch)
             ]
 
             wait(batch_tasks, timeout=batch_size * 80)
+            ii += 1
 
         self.close_cluster(client, cluster)
         self.logger.handlers.clear()
