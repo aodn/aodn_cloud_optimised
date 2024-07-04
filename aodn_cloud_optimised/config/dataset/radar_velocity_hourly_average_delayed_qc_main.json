@@ -1,6 +1,6 @@
 {
-  "dataset_name": "acorn_gridded_qc",
-  "logger_name": "acorn_gridded_qc",
+  "dataset_name": "radar_velocity_hourly_average_delayed_qc_main.json",
+  "logger_name": "radar_velocity_hourly_average_delayed_qc_main.json",
   "cloud_optimised_format": "zarr",
   "cluster_options" : {
     "n_workers": [2, 8],
@@ -12,6 +12,7 @@
       "nthreads": 8,
       "memory_limit": "32GB" }
   },
+  "batch_size": 30,
   "cluster_config" : {
     "n_workers": [0, 6],
     "scheduler_vm_types": "t3.medium"

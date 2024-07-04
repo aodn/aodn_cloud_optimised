@@ -30,7 +30,8 @@ class TestIntegrationArdcWaveNrt(unittest.TestCase):
         dataset_config = load_dataset_config(
             str(
                 importlib.resources.path(
-                    "aodn_cloud_optimised.config.dataset", "ardc_wave_nrt.json"
+                    "aodn_cloud_optimised.config.dataset",
+                    "wave_buoy_realtime_nonqc.json",
                 )
             )
         )
@@ -67,7 +68,8 @@ class TestIntegrationArdcWaveNrt(unittest.TestCase):
         dataset_config = load_dataset_config(
             str(
                 importlib.resources.path(
-                    "aodn_cloud_optimised.config.dataset", "ardc_wave_nrt.json"
+                    "aodn_cloud_optimised.config.dataset",
+                    "wave_buoy_realtime_nonqc.json",
                 )
             )
         )
@@ -99,7 +101,8 @@ class TestIntegrationArdcWaveNrt(unittest.TestCase):
         dataset_config = load_dataset_config(
             str(
                 importlib.resources.path(
-                    "aodn_cloud_optimised.config.dataset", "ardc_wave_nrt.json"
+                    "aodn_cloud_optimised.config.dataset",
+                    "wave_buoy_realtime_nonqc.json",
                 )
             )
         )

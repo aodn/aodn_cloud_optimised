@@ -8,20 +8,20 @@ and supports different cluster modes.
 
 Usage Examples:
   generic_cloud_optimised_creation --paths 'IMOS/ANMN/NSW' 'IMOS/ANMN/PA' \
-  --filters '_hourly-timeseries_' 'FV02' --dataset-config 'anmn_hourly_timeseries.json' \
+  --filters '_hourly-timeseries_' 'FV02' --dataset-config 'mooring_hourly_timeseries_delayed_qc.json' \
   --clear-existing-data --cluster-mode 'remote'
 
   generic_cloud_optimised_creation --paths 'IMOS/ANMN/NSW' 'IMOS/ANMN/QLD' \
   --dataset-config 'anmn_ctd_ts_fv01.json'
 
   generic_cloud_optimised_creation --paths 'IMOS/ACORN/gridded_1h-avg-current-map_QC/TURQ/2024' \
-  --dataset-config 'acorn_gridded_qc_turq.json' --clear-existing-data --cluster-mode 'remote'
+  --dataset-config 'radar_TurquoiseCoast_velocity_hourly_average_delayed_qc.json' --clear-existing-data --cluster-mode 'remote'
 
 Arguments:
   --paths: List of S3 paths to process. Example: 'IMOS/ANMN/NSW' 'IMOS/ANMN/PA'
   --filters: Optional filter strings to apply on the S3 paths. Example: '_hourly-timeseries_' 'FV02'
   --suffix: Optional suffix used by s3_ls to filter S3 objects. Default is .nc. Example: '.nc'
-  --dataset-config: Path to the dataset config JSON file. Example: 'anmn_hourly_timeseries.json'
+  --dataset-config: Path to the dataset config JSON file. Example: 'mooring_hourly_timeseries_delayed_qc.json'
   --clear-existing-data: Flag to clear existing data. Default is False.
   --force-previous-parquet-deletion: Flag to force the search of previous equivalent parquet file created. Much slower. Default is False. Only for Parquet processing.
   --cluster-mode: Cluster mode to use. Options: 'local' or 'remote'. Default is 'local'.
@@ -45,9 +45,9 @@ def main():
     parser = argparse.ArgumentParser(
         description="Process S3 paths and create cloud-optimized datasets.",
         epilog="Examples:\n"
-        "  generic_cloud_optimised_creation --paths 'IMOS/ANMN/NSW' 'IMOS/ANMN/PA' --filters '_hourly-timeseries_' 'FV02' --dataset-config 'anmn_hourly_timeseries.json' --clear-existing-data --cluster-mode 'remote'\n"
+        "  generic_cloud_optimised_creation --paths 'IMOS/ANMN/NSW' 'IMOS/ANMN/PA' --filters '_hourly-timeseries_' 'FV02' --dataset-config 'mooring_hourly_timeseries_delayed_qc.json' --clear-existing-data --cluster-mode 'remote'\n"
         "  generic_cloud_optimised_creation --paths 'IMOS/ANMN/NSW' 'IMOS/ANMN/QLD' --dataset-config 'anmn_ctd_ts_fv01.json'\n"
-        "  generic_cloud_optimised_creation --paths 'IMOS/ACORN/gridded_1h-avg-current-map_QC/TURQ/2024' --dataset-config 'acorn_gridded_qc_turq.json' --clear-existing-data --cluster-mode 'remote'\n",
+        "  generic_cloud_optimised_creation --paths 'IMOS/ACORN/gridded_1h-avg-current-map_QC/TURQ/2024' --dataset-config 'radar_TurquoiseCoast_velocity_hourly_average_delayed_qc.json' --clear-existing-data --cluster-mode 'remote'\n",
         formatter_class=argparse.RawTextHelpFormatter,
     )
 
@@ -71,7 +71,7 @@ def main():
     parser.add_argument(
         "--dataset-config",
         required=True,
-        help="Path to the dataset config JSON file. Example: 'anmn_hourly_timeseries.json'",
+        help="Path to the dataset config JSON file. Example: 'mooring_hourly_timeseries_delayed_qc.json'",
     )
     parser.add_argument(
         "--clear-existing-data",

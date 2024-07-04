@@ -1,0 +1,6 @@
+{
+  "dataset_name": "satellite_ghrsst_l3s_3day_daynighttime_single_sensor_australia",
+  "logger_name": "satellite_ghrsst_l3s_3day_daynighttime_single_sensor_australia",
+  "parent_config": "satellite_ghrsst_main.json",
+  "metadata_uuid": ""
+}

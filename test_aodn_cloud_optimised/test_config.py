@@ -13,7 +13,9 @@ from aodn_cloud_optimised.lib.config import (
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 DATASET_CONFIG_NC_ACORN_JSON = os.path.join(
-    ROOT_DIR, "resources", "acorn_gridded_qc_turq.json"
+    ROOT_DIR,
+    "resources",
+    "radar_TurquoiseCoast_velocity_hourly_average_delayed_qc.json",
 )
 
 

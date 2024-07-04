@@ -1,6 +1,6 @@
 {
-  "dataset_name": "gsla_nrt",
-  "logger_name": "gsla_nrt",
+  "dataset_name": "model_sea_level_anomaly_gridded_realtime",
+  "logger_name": "model_sea_level_anomaly_gridded_realtime",
   "cloud_optimised_format": "zarr",
   "cluster_options" : {
     "n_workers": [2, 8],
@@ -12,6 +12,7 @@
       "nthreads": 8,
       "memory_limit": "32GB" }
     },
+  "batch_size": 10,
   "metadata_uuid": "",
   "dimensions": {
     "time": {

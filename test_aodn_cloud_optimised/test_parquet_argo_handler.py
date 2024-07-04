@@ -21,7 +21,7 @@ ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 TEST_FILE_NC = os.path.join(ROOT_DIR, "resources", "2902093_prof.nc")
 TEST_FILE_BAD_GEOM_NC = os.path.join(ROOT_DIR, "resources", "5905017_prof.nc")
 
-DATASET_CONFIG = os.path.join(ROOT_DIR, "resources", "argo_core.json")
+DATASET_CONFIG = os.path.join(ROOT_DIR, "resources", "argo.json")
 
 
 @mock_aws

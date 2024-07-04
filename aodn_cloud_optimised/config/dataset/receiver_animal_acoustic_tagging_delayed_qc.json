@@ -1,6 +1,6 @@
 {
-  "dataset_name": "aatams_acoustic_tagging",
-  "logger_name": "aatams_acoustic_tagging",
+  "dataset_name": "receiver_animal_acoustic_tagging_delayed_qc",
+  "logger_name": "receiver_animal_acoustic_tagging_delayed_qc",
   "cloud_optimised_format": "parquet",
   "cluster_options" : {
     "n_workers": [4, 20],
@@ -12,6 +12,7 @@
       "nthreads": 8,
       "memory_limit": "32GB" }
   },
+  "batch_size": 20,
   "metadata_uuid": "4a97bd11-e821-4682-8b20-cb69201f3223",
   "gattrs_to_variables": [],
   "partition_keys": ["transmitter_id", "timestamp", "polygon"],

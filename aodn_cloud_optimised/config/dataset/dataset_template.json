@@ -14,6 +14,7 @@
           "nthreads": 8,
           "memory_limit": "32GB" }
       },
+    "batch_size": 40,
 
     // (Optional) The associated geonetwork metadata record uuid
     "metadata_uuid": "b12b3-123bb-iijww",

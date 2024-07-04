@@ -1,6 +1,6 @@
 {
-  "dataset_name": "soop_xbt_nrt",
-  "logger_name": "soop_xbt_nrt",
+  "dataset_name": "vessel_xbt_realtime_nonqc",
+  "logger_name": "vessel_xbt_realtime_nonqc",
   "cloud_optimised_format": "parquet",
   "cluster_options" : {
     "n_workers": [8, 20],
@@ -12,6 +12,7 @@
       "nthreads": 8,
       "memory_limit": "32GB" }
   },
+  "batch_size": 40,
   "metadata_uuid": "35234913-aa3c-48ec-b9a4-77f822f66ef8",
   "gattrs_to_variables": [
     "XBT_line",

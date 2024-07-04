@@ -1,6 +1,6 @@
 {
-  "dataset_name": "anfog_slocum_glider",
-  "logger_name": "anfog_slocum_glider",
+  "dataset_name": "slocum_glider_delayed_qc",
+  "logger_name": "slocum_glider_delayed_qc",
   "cloud_optimised_format": "parquet",
   "cluster_options" : {
     "n_workers": [4, 20],
@@ -12,6 +12,7 @@
       "nthreads": 8,
       "memory_limit": "32GB" }
   },
+  "batch_size": 30,
   "metadata_uuid": "a681fdba-c6d9-44ab-90b9-113b0ed03536",
   "gattrs_to_variables": [
     "deployment_code"

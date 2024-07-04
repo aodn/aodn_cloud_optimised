@@ -61,20 +61,20 @@ sphinx = ">=7.3.7"
 
 
 [tool.poetry.scripts]
-aatams_acoustic_tagging = "aodn_cloud_optimised.bin.aatams_acoustic_tagging:main"
-acorn_gridded_qc_turq = "aodn_cloud_optimised.bin.acorn_gridded_qc_turq:main"
-anfog_to_parquet = "aodn_cloud_optimised.bin.anfog_to_parquet:main"
-anmn_ctd_to_parquet = "aodn_cloud_optimised.bin.anmn_ctd_to_parquet:main"
-anmn_hourly_timeseries = "aodn_cloud_optimised.bin.anmn_hourly_timeseries:main"
-anmn_aqualogger_to_parquet = "aodn_cloud_optimised.bin.anmn_aqualogger_to_parquet:main"
-ardc_wave_to_parquet = "aodn_cloud_optimised.bin.ardc_wave_to_parquet:main"
-argo_to_parquet = "aodn_cloud_optimised.bin.argo_to_parquet:main"
-gsla_nrt_to_zarr = "aodn_cloud_optimised.bin.gsla_nrt_to_zarr:main"
+#anmn_aqualogger_to_parquet = "aodn_cloud_optimised.bin.anmn_aqualogger_to_parquet:main"
+#anmn_ctd_timeseries = "aodn_cloud_optimised.bin.anmn_ctd_timeseries:main"
+cloud_optimised_argo = "aodn_cloud_optimised.bin.argo:main"
+cloud_optimised_model_sea_level_anomaly_gridded_realtime = "aodn_cloud_optimised.bin.model_sea_level_anomaly_gridded_realtime:main"
+cloud_optimised_mooring_hourly_timeseries_delayed_qc = "aodn_cloud_optimised.bin.mooring_hourly_timeseries_delayed_qc:main"
+cloud_optimised_radar_TurquoiseCoast_velocity_hourly_average_delayed_qc = "aodn_cloud_optimised.bin.radar_TurquoiseCoast_velocity_hourly_average_delayed_qc:main"
+cloud_optimised_receiver_animal_acoustic_tagging_delayed_qc = "aodn_cloud_optimised.bin.receiver_animal_acoustic_tagging_delayed_qc:main"
+cloud_optimised_satellite_ghrsst_l3s_1day_daynighttime_single_sensor_australia = "aodn_cloud_optimised.bin.satellite_ghrsst_l3s_1day_daynighttime_single_sensor_australia:main"
+cloud_optimised_satellite_ghrsst_l3s_3day_daynighttime_single_sensor_australia = "aodn_cloud_optimised.bin.satellite_ghrsst_l3s_3day_daynighttime_single_sensor_australia:main"
+cloud_optimised_slocum_glider_delayed_qc = "aodn_cloud_optimised.bin.slocum_glider_delayed_qc.py:main"
+cloud_optimised_srs_oc_ljco_to_parquet = "aodn_cloud_optimised.bin.srs_oc_ljco_to_parquet:main"
+cloud_optimised_vessel_xbt_realtime_nonqc = "aodn_cloud_optimised.bin.vessel_xbt_realtime_nonqc:main"
+cloud_optimised_wave_buoy_realtime_nonqc = "aodn_cloud_optimised.bin.wave_buoy_realtime_nonqc:main"
 generic_cloud_optimised_creation = "aodn_cloud_optimised.bin.generic_cloud_optimised_creation:main"
-soop_xbt_nrt_to_parquet = "aodn_cloud_optimised.bin.soop_xbt_nrt_to_parquet:main"
-srs_oc_ljco_to_parquet = "aodn_cloud_optimised.bin.srs_oc_ljco_to_parquet:main"
-srs_l3s_1d_dn_to_zarr = "aodn_cloud_optimised.bin.srs_l3s_1d_dn_to_zarr:main"
-srs_l3s_3d_dn_to_zarr = "aodn_cloud_optimised.bin.srs_l3s_3d_dn_to_zarr:main"
 
 #[tool.poetry.include]
 #data = ["aodn_cloud_optimised/config/*.json", "aodn_cloud_optimised/config/dataset/*.json"]

@@ -6,9 +6,9 @@ def main():
     command = [
         "generic_cloud_optimised_creation",
         "--paths",
-        "IMOS/SRS/SST/ghrsst/L3S-3d/dn/2022",
+        "IMOS/SOOP/SOOP-XBT/REALTIME/",
         "--dataset-config",
-        "srs_l3s_3d_dn.json",
+        "vessel_xbt_realtime_nonqc.json",
         "--clear-existing-data",
         "--cluster-mode",
         "remote",
