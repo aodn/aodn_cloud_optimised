@@ -249,7 +249,7 @@ class GenericHandler(CommonHandler):
             raise ValueError("input_objects is not defined")
 
         self.logger.info(
-            "Listing all objects to process and create a s3_file_handle_list"
+            "Listing all objects to process and creating a s3_file_handle_list"
         )
         s3_file_handle_list = create_fileset(s3_file_uri_list, self.s3_fs)
 
@@ -274,7 +274,9 @@ class GenericHandler(CommonHandler):
                 for var_name, attrs in self.schema.items()
                 if attrs.get("drop_vars", False)
             ]
-            self.logger.warning(f"Dropping variables {drop_vars_list} from dataset")
+            self.logger.warning(
+                f"Dropping variables: {drop_vars_list} from the dataset"
+            )
 
             with dask.config.set(
                 **{
@@ -317,7 +319,7 @@ class GenericHandler(CommonHandler):
 
                     # Write the dataset to Zarr
                     if prefix_exists(self.cloud_optimised_output_path):
-                        self.logger.info(f"append data to existing Zarr")
+                        self.logger.info(f"Appending data to existing Zarr")
 
                         # NOTE: In the next section, we need to figure out if we're reprocessing existing data.
                         #       For this, the logic is open the original zarr store and compare with the new ds from
@@ -424,7 +426,7 @@ class GenericHandler(CommonHandler):
 
                     # First time writing the dataset
                     else:
-                        self.logger.info(f"Writing data to new Zarr dataset")
+                        self.logger.info(f"Writing data to new a Zarr dataset")
 
                         ds.to_zarr(
                             self.store,
@@ -435,7 +437,7 @@ class GenericHandler(CommonHandler):
                         )
 
                     self.logger.info(
-                        f"Batch {idx + 1} successfully published to {self.store}"
+                        f"Batch {idx + 1} successfully published to Zarr store: {self.store}"
                     )
 
                 except MergeError as e:
@@ -467,13 +469,13 @@ class GenericHandler(CommonHandler):
         """
         if self.clear_existing_data:
             self.logger.warning(
-                f"Creating new Zarr dataset - DELETING existing all Zarr objects if exist"
+                f"Creating new Zarr dataset - DELETING existing all Zarr objects if they exist"
             )
             # TODO: delete all objects
             if prefix_exists(self.cloud_optimised_output_path):
                 bucket_name, prefix = split_s3_path(self.cloud_optimised_output_path)
                 self.logger.info(
-                    f"Deleting existing Zarr objects from {self.cloud_optimised_output_path}"
+                    f"Deleting existing Zarr objects from path: {self.cloud_optimised_output_path}"
                 )
 
                 delete_objects_in_prefix(bucket_name, prefix)
@@ -564,7 +566,9 @@ class GenericHandler(CommonHandler):
             bucket.objects.filter(
                 Prefix=target_url.replace(f"s3://{self.optimised_bucket_name}/", "")
             ).delete()
-            self.logger.info(f"Rechunking in progress with chunks: {target_chunks}")
+            self.logger.info(
+                f"Rechunking in progress with target chunks: {target_chunks}"
+            )
 
             options = dict(overwrite=True)
             array_plan = rechunk(

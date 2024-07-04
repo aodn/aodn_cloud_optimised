@@ -172,7 +172,7 @@ class CommonHandler:
 
             except Exception as e:
                 self.logger.warning(
-                    f"Could not create a Coiled cluster: {e}. Falling back to local cluster."
+                    f"Failed to create a Coiled cluster: {e}. Falling back to local cluster."
                 )
                 # Create a local Dask cluster as a fallback
                 cluster = LocalCluster(**local_cluster_options)
@@ -181,7 +181,7 @@ class CommonHandler:
                     f"Local Cluster dask dashboard available at {cluster.dashboard_link}"
                 )
         elif self.cluster_mode == "local":
-            self.logger.info("Creating a local cluster")
+            self.logger.info("Creating a local Dask cluster")
 
             cluster = LocalCluster(**local_cluster_options)
             client = Client(cluster)
@@ -210,10 +210,10 @@ class CommonHandler:
         """
         try:
             client.close()
-            self.logger.info("Dask client closed successfully.")
+            self.logger.info("Successfully closed Dask client.")
 
             cluster.close()
-            self.logger.info("Dask cluster closed successfully.")
+            self.logger.info("Successfully closed Dask cluster.")
         except Exception as e:
             self.logger.error(f"Error while closing the cluster or client: {e}")
 
@@ -301,7 +301,7 @@ class CommonHandler:
 
         batch_size = int(n_workers * n_threads)  # too big?
 
-        self.logger.info(f"Optimal batch size computed to {batch_size}")
+        self.logger.info(f"Computed optimal batch size:  {batch_size}")
         return batch_size
 
     @staticmethod
@@ -362,7 +362,7 @@ class CommonHandler:
         try:
             validate(instance=self.dataset_config, schema=schema)
             self.logger.info(
-                f"JSON configuration for dataset {os.path.basename(json_validation_path)}: Validation successful."
+                f"Successfully validated JSON configuration for dataset {os.path.basename(json_validation_path)}."
             )
         except ValidationError as e:
             raise ValueError(
@@ -459,8 +459,6 @@ class CommonHandler:
         if self.is_open_ds(ds):
             ds.close()
 
-        self.logger.handlers.clear()
-
 
 def _get_generic_handler_class(dataset_config):
     """
@@ -553,7 +551,7 @@ def cloud_optimised_creation(
         handler_instance.to_cloud_optimised(s3_file_uri_list)
 
     time_spent_processing = timeit.default_timer() - start_whole_processing
-    logger.info(f"Whole dataset completed in {time_spent_processing}s")
+    logger.info(f"Processed entire dataset in {time_spent_processing}s")
 
     # TODO: everything seems very slow using to_cloud_optimised. Maybe let's try to use to_cloud_optimised_single below?
     #       and comment above or do something. Will comment for now
