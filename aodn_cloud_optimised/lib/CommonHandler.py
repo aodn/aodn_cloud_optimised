@@ -163,6 +163,7 @@ class CommonHandler:
 
                 cluster_options["name"] = f"Processing_{self.dataset_name}"
 
+                # TODO: check how many files need to be processed! Could be useful?
                 cluster = Cluster(**cluster_options)
                 client = Client(cluster)
                 self.logger.info(
@@ -215,6 +216,93 @@ class CommonHandler:
             self.logger.info("Dask cluster closed successfully.")
         except Exception as e:
             self.logger.error(f"Error while closing the cluster or client: {e}")
+
+    from dask.distributed import Client, LocalCluster
+
+    def get_batch_size(self, client=None):
+        """
+        Calculate the optimal batch size for processing files with Dask on a cluster.
+
+        This function determines the batch size based on the number of workers and the number
+        of threads per worker. It retrieves these values from the dataset configuration or, if
+        a Dask client is provided, directly from the Dask client.
+
+        Args:
+            client (dask.distributed.Client, optional): A Dask client to retrieve the number of
+                threads per worker. If not provided, the number of threads is retrieved from the
+                dataset configuration. Defaults to None.
+
+        Returns:
+            int: The calculated batch size for processing files.
+
+        Explanation:
+            The function first checks if a specific batch size is defined in the dataset configuration.
+            This value comes from trial and error.
+            If not, it determines the number of workers (`n_workers`) and the number of threads per worker
+            (`n_threads`) from the dataset configuration's cluster options.
+
+            If a Dask client is provided (`client`), it retrieves the current scheduler and thread
+            information to dynamically calculate the optimal `n_threads` per worker. This is particularly
+            useful for adjusting to changes in cluster resources or configurations.
+
+            The final batch size is computed as the product of `n_workers` and `n_threads`. This value
+            represents the optimal number of files that can be processed simultaneously, balancing
+            parallelism with resource availability.
+
+            The function logs the computed batch size using the logger associated with the instance.
+
+
+        Args:
+            client (dask.distributed.Client, optional): A Dask client to retrieve the number of
+                threads per worker. If not provided, the number of threads is retrieved from the
+                dataset configuration. Defaults to None.
+
+        Returns:
+            int: The calculated batch size for processing files.
+        """
+        # retrieve info from dataset config
+        if self.dataset_config.get("batch_size") is not None:
+            batch_size = int(self.dataset_config["batch_size"])
+            self.logger.info(
+                f"Optimal batch size taken from dataset configuration: {batch_size}"
+            )
+
+            return batch_size
+
+        n_workers = self.dataset_config.get("cluster_options", {}).get("n_workers", [])
+        max_n_workers = max(n_workers) if n_workers else None
+        n_workers = max_n_workers  #
+
+        # retrieve the number of threads
+        worker_options = self.dataset_config.get("cluster_options", {}).get(
+            "worker_options", {}
+        )
+
+        # Retrieve nthreads if it exists
+        n_threads = worker_options.get("nthreads", 1)
+
+        # but overwrite values from above if the client exists
+        if client is not None:
+            scheduler_info = client.scheduler_info()
+            nthreads_info = client.nthreads()
+
+            # Calculate the average number of threads per worker
+            if nthreads_info:
+                total_threads = sum(nthreads_info.values())
+                num_workers = len(nthreads_info)
+                n_threads = total_threads / num_workers
+            else:
+                n_threads = 1
+
+            # local cluster
+            if isinstance(client.cluster, LocalCluster):
+                # Calculate the number of workers available in the local cluster. For remote we keep the dataset config max value
+                n_workers = len(scheduler_info["workers"])
+
+        batch_size = int(n_workers * n_threads)  # too big?
+
+        self.logger.info(f"Optimal batch size computed to {batch_size}")
+        return batch_size
 
     @staticmethod
     def batch_process_fileset(fileset, batch_size=10):

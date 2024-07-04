@@ -3,15 +3,16 @@
   "logger_name": "srs_ghrsst",
   "cloud_optimised_format": "zarr",
   "cluster_options" : {
-    "n_workers": [2, 8],
+    "n_workers": [2, 30],
     "scheduler_vm_types": "t3.small",
     "worker_vm_types": "t3.medium",
     "allow_ingress_from": "me",
     "compute_purchase_option": "spot_with_fallback",
     "worker_options": {
       "nthreads": 8,
-      "memory_limit": "32GB" }
+      "memory_limit": "240GB" }
   },
+  "batch_size": 20,
   "metadata_uuid": "",
   "dimensions": {
     "time": {"name": "time",

@@ -17,6 +17,18 @@ Usage Examples:
   generic_cloud_optimised_creation --paths 'IMOS/ACORN/gridded_1h-avg-current-map_QC/TURQ/2024' \
   --dataset-config 'acorn_gridded_qc_turq.json' --clear-existing-data --cluster-mode 'remote'
 
+Arguments:
+  --paths: List of S3 paths to process. Example: 'IMOS/ANMN/NSW' 'IMOS/ANMN/PA'
+  --filters: Optional filter strings to apply on the S3 paths. Example: '_hourly-timeseries_' 'FV02'
+  --suffix: Optional suffix used by s3_ls to filter S3 objects. Default is .nc. Example: '.nc'
+  --dataset-config: Path to the dataset config JSON file. Example: 'anmn_hourly_timeseries.json'
+  --clear-existing-data: Flag to clear existing data. Default is False.
+  --force-previous-parquet-deletion: Flag to force the search of previous equivalent parquet file created. Much slower. Default is False. Only for Parquet processing.
+  --cluster-mode: Cluster mode to use. Options: 'local' or 'remote'. Default is 'local'.
+  --optimised-bucket-name: Bucket name where cloud optimised object will be created. Default is the value of BUCKET_OPTIMISED_DEFAULT from the config.
+  --root_prefix-cloud-optimised-path: Prefix value for the root location of the cloud optimised objects. Default is the value of ROOT_PREFIX_CLOUD_OPTIMISED_PATH from the config.
+  --bucket-raw: Bucket name where input object files will be searched for. Default is the value of BUCKET_RAW_DEFAULT from the config.
+
 """
 
 import argparse
@@ -69,7 +81,8 @@ def main():
     parser.add_argument(
         "--force-previous-parquet-deletion",
         action="store_true",
-        help="Flag to force the search of previous equivalent parquet file created. Much slower. Default is False.",
+        help="Flag to force the search of previous equivalent parquet file created. Much slower. Default is False. "
+        "Only for Parquet processing.",
     )
     parser.add_argument(
         "--cluster-mode",
@@ -78,14 +91,36 @@ def main():
         help="Cluster mode to use. Options: 'local' or 'remote'. Default is 'local'.",
     )
 
+    parser.add_argument(
+        "--optimised-bucket-name",
+        default=load_variable_from_config("BUCKET_OPTIMISED_DEFAULT"),
+        help=f"Bucket name where cloud optimised object will be created. "
+        f"Default is '{load_variable_from_config('BUCKET_OPTIMISED_DEFAULT')}'",
+    )
+
+    parser.add_argument(
+        "--root_prefix-cloud-optimised-path",
+        default=load_variable_from_config("ROOT_PREFIX_CLOUD_OPTIMISED_PATH"),
+        help=f"Prefix value for the root location of the cloud optimised objects, such as "
+        f"s3://optimised-bucket-name/root_prefix-cloud-optimised-path/... "
+        f"Default is '{load_variable_from_config('ROOT_PREFIX_CLOUD_OPTIMISED_PATH')}'",
+    )
+
+    parser.add_argument(
+        "--bucket-raw",
+        default=load_variable_from_config("BUCKET_RAW_DEFAULT"),
+        help=f"Bucket name where input object files will be searched for. "
+        f"Default is '{load_variable_from_config('BUCKET_RAW_DEFAULT')}'",
+    )
+
     args = parser.parse_args()
 
-    BUCKET_RAW_DEFAULT = load_variable_from_config("BUCKET_RAW_DEFAULT")
+    bucket_raw_value = args.bucket_raw
 
     # Gather S3 paths
     nc_obj_ls = []
     for path in args.paths:
-        nc_obj_ls += s3_ls(BUCKET_RAW_DEFAULT, path, suffix=args.suffix)
+        nc_obj_ls += s3_ls(bucket_raw_value, path, suffix=args.suffix)
 
     # Apply filters
     for filter_str in args.filters:
@@ -109,6 +144,8 @@ def main():
         clear_existing_data=args.clear_existing_data,
         force_previous_parquet_deletion=args.force_previous_parquet_deletion,
         cluster_mode=args.cluster_mode,
+        optimised_bucket_name=args.optimised_bucket_name,
+        root_prefix_cloud_optimised_path=args.root_prefix_cloud_optimised_path,
     )
 
 

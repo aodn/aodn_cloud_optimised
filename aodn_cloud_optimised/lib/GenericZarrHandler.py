@@ -255,8 +255,10 @@ class GenericHandler(CommonHandler):
 
         time_dimension_name = self.dimensions["time"]["name"]
 
+        batch_size = self.get_batch_size(client=self.client)
+
         for idx, batch_files in enumerate(
-            self.batch_process_fileset(s3_file_handle_list)
+            self.batch_process_fileset(s3_file_handle_list, batch_size=batch_size)
         ):
             self.logger.info(f"Processing batch {idx + 1}...")
             self.logger.info(batch_files)
@@ -399,6 +401,10 @@ class GenericHandler(CommonHandler):
                                     consolidated=True,
                                 )
 
+                                self.logger.info(
+                                    f"Batch {idx + 1} successfully published to {self.store}"
+                                )
+
                         # No reprocessing needed
                         else:
                             self.logger.info(f"Appending data to Zarr dataset")
@@ -410,6 +416,10 @@ class GenericHandler(CommonHandler):
                                 compute=True,  # Compute the result immediately
                                 consolidated=True,
                                 append_dim=time_dimension_name,
+                            )
+
+                            self.logger.info(
+                                f"Batch {idx + 1} successfully published to {self.store}"
                             )
 
                     # First time writing the dataset
@@ -425,7 +435,7 @@ class GenericHandler(CommonHandler):
                         )
 
                     self.logger.info(
-                        f"Batch {idx + 1} processed and written to {self.store}"
+                        f"Batch {idx + 1} successfully published to {self.store}"
                     )
 
                 except MergeError as e:

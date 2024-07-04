@@ -633,7 +633,7 @@ class GenericHandler(CommonHandler):
             + "-{i}.parquet",  # this is essential for the overwriting part
         )
         self.logger.info(
-            f"{filename}: Parquet files successfully created in {self.cloud_optimised_output_path} \n"
+            f"{filename}: Parquet files successfully published to {self.cloud_optimised_output_path} \n"
         )
 
         self._add_metadata_sidecar()
@@ -780,7 +780,7 @@ class GenericHandler(CommonHandler):
         )
 
         self.logger.info(
-            f"Parquet metadata file successfully created in {dataset_metadata_path} \n"
+            f"Parquet metadata file successfully published in {dataset_metadata_path} \n"
         )
 
     def delete_existing_matching_parquet(self, filename) -> None:
@@ -951,14 +951,7 @@ class GenericHandler(CommonHandler):
 
         client, cluster = self.create_cluster()
 
-        # Get the minimum cluster worker value as a batch size? and multiply it by 2 ?
-        n_workers_list = self.dataset_config.get("cluster_options", {}).get(
-            "n_workers", []
-        )
-
-        # Get the minimum value from n_workers list
-        min_n_workers = min(n_workers_list) if n_workers_list else None
-        batch_size = min_n_workers * 3
+        batch_size = self.get_batch_size(client=client)
 
         # Do it in batches. maybe more efficient
         for i in range(0, len(s3_file_uri_list), batch_size):
@@ -967,6 +960,6 @@ class GenericHandler(CommonHandler):
                 client.submit(task, f, idx + 1) for idx, f in enumerate(batch)
             ]
 
-            wait(batch_tasks, timeout="10 minutes")
+            wait(batch_tasks, timeout=batch_size * 80)
 
         self.close_cluster(client, cluster)
