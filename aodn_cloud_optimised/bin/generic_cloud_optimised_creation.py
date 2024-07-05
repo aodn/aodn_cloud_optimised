@@ -26,7 +26,7 @@ Arguments:
   --force-previous-parquet-deletion: Flag to force the search of previous equivalent parquet file created. Much slower. Default is False. Only for Parquet processing.
   --cluster-mode: Cluster mode to use. Options: 'local' or 'remote'. Default is 'local'.
   --optimised-bucket-name: Bucket name where cloud optimised object will be created. Default is the value of BUCKET_OPTIMISED_DEFAULT from the config.
-  --root_prefix-cloud-optimised-path: Prefix value for the root location of the cloud optimised objects. Default is the value of ROOT_PREFIX_CLOUD_OPTIMISED_PATH from the config.
+  --root-prefix-cloud-optimised-path: Prefix value for the root location of the cloud optimised objects. Default is the value of ROOT_PREFIX_CLOUD_OPTIMISED_PATH from the config.
   --bucket-raw: Bucket name where input object files will be searched for. Default is the value of BUCKET_RAW_DEFAULT from the config.
 
 """
@@ -99,10 +99,10 @@ def main():
     )
 
     parser.add_argument(
-        "--root_prefix-cloud-optimised-path",
+        "--root-prefix-cloud-optimised-path",
         default=load_variable_from_config("ROOT_PREFIX_CLOUD_OPTIMISED_PATH"),
         help=f"Prefix value for the root location of the cloud optimised objects, such as "
-        f"s3://optimised-bucket-name/root_prefix-cloud-optimised-path/... "
+        f"s3://optimised-bucket-name/root-prefix-cloud-optimised-path/... "
         f"Default is '{load_variable_from_config('ROOT_PREFIX_CLOUD_OPTIMISED_PATH')}'",
     )
 
