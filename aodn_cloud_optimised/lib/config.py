@@ -2,7 +2,7 @@ import json
 import yaml
 import os
 from collections import OrderedDict
-from importlib.resources import path
+from importlib.resources import files
 
 
 def merge_dicts(parent, child):
@@ -88,7 +88,9 @@ def load_variable_from_config(variable_name) -> str:
     :raises KeyError: If the variable is not found in the configuration file.
     """
     # Obtain the file path using the context manager
-    with path("aodn_cloud_optimised.config", "common.json") as common_config_path:
+    with files("aodn_cloud_optimised").joinpath("config").joinpath(
+        "common.json"
+    ) as common_config_path:
         return load_variable_from_file(str(common_config_path), variable_name)
 
 

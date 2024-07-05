@@ -53,9 +53,9 @@ class GenericHandler(CommonHandler):
         )
 
         json_validation_path = str(
-            importlib.resources.path(
-                "aodn_cloud_optimised.config", "schema_validation_parquet.json"
-            )
+            importlib.resources.files("aodn_cloud_optimised")
+            .joinpath("config")
+            .joinpath("schema_validation_parquet.json")
         )
         self.validate_json(
             json_validation_path

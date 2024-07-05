@@ -32,7 +32,8 @@ Arguments:
 """
 
 import argparse
-import importlib.resources
+from importlib.resources import files
+
 from aodn_cloud_optimised.lib.CommonHandler import cloud_optimised_creation
 from aodn_cloud_optimised.lib.config import (
     load_variable_from_config,
@@ -129,11 +130,7 @@ def main():
     # Load dataset config
     dataset_config_path = args.dataset_config
     dataset_config = load_dataset_config(
-        str(
-            importlib.resources.path(
-                "aodn_cloud_optimised.config.dataset", dataset_config_path
-            )
-        )
+        str(files("aodn_cloud_optimised.config.dataset").joinpath(dataset_config_path))
     )
 
     # Call cloud_optimised_creation

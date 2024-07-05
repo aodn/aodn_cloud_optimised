@@ -78,10 +78,11 @@ class GenericHandler(CommonHandler):
         super().__init__(**kwargs)
 
         json_validation_path = str(
-            importlib.resources.path(
-                "aodn_cloud_optimised.config", "schema_validation_zarr.json"
-            )
+            importlib.resources.files("aodn_cloud_optimised")
+            .joinpath("config")
+            .joinpath("schema_validation_zarr.json")
         )
+
         self.validate_json(
             json_validation_path
         )  # we cannot validate the json config until self.dataset_config and self.logger are set

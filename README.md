@@ -113,7 +113,7 @@ Examples:
 ## As a python module
 
 ```python
-import importlib.resources
+from importlib.resources import files
 
 from aodn_cloud_optimised.lib.CommonHandler import cloud_optimised_creation
 from aodn_cloud_optimised.lib.config import (
@@ -128,12 +128,9 @@ def main():
     nc_obj_ls = s3_ls(BUCKET_RAW_DEFAULT, "IMOS/SRS/SST/ghrsst/L3S-1d/dn/2024")
 
     dataset_config = load_dataset_config(
-        str(
-            importlib.resources.path(
-                "aodn_cloud_optimised.config.dataset", "satellite_ghrsst_l3s_1day_daynighttime_single_sensor_australia.json"
+        str(files("aodn_cloud_optimised").joinpath("config").joinpath("dataset").joinpath("satellite_ghrsst_l3s_1day_daynighttime_single_sensor_australia.json")
             )
         )
-    )
 
     cloud_optimised_creation(
        nc_obj_ls,
