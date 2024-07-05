@@ -94,6 +94,8 @@ class CommonHandler:
             anon=False
         )  # variable overwritten in unittest to use moto server
 
+        self.uuid_log = None
+
     def __enter__(self):
         # Initialize resources if necessary
         return self
