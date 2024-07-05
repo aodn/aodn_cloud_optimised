@@ -372,13 +372,13 @@ files = [
 
 [[package]]
 name = "bokeh"
-version = "3.4.2"
+version = "3.5.0"
 description = "Interactive plots and applications in the browser from Python"
 optional = false
-python-versions = ">=3.9"
+python-versions = ">=3.10"
 files = [
-    {file = "bokeh-3.4.2-py3-none-any.whl", hash = "sha256:931a43ee59dbf1720383ab904f8205e126b85561aac55592415b800c96f1b0eb"},
-    {file = "bokeh-3.4.2.tar.gz", hash = "sha256:a16d5cc0abb93d2d270d70fc35851f3e1b9208814a985a4678e0ba5ef2d9cd42"},
+    {file = "bokeh-3.5.0-py3-none-any.whl", hash = "sha256:1a1c7d35aa9aba1ae86916e92c1d9f19d706ba1c4929e0ff8647902b32e25689"},
+    {file = "bokeh-3.5.0.tar.gz", hash = "sha256:65e89addbe900c37af25a2052ae174b6d3ba1ef08c91fd5ab6dfd712e184c399"},
 ]
 
 [package.dependencies]
@@ -639,7 +639,10 @@ files = [
 ]
 
 [package.dependencies]
-numpy = {version = ">1.13.3", markers = "python_version < \"3.12.0.rc1\""}
+numpy = [
+    {version = ">1.13.3", markers = "python_version < \"3.12.0.rc1\""},
+    {version = ">=1.26.0b1", markers = "python_version >= \"3.12.0.rc1\""},
+]
 
 [[package]]
 name = "charset-normalizer"
@@ -1788,13 +1791,13 @@ files = [
 
 [[package]]
 name = "hypothesis"
-version = "6.104.2"
+version = "6.105.0"
 description = "A library for property-based testing"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "hypothesis-6.104.2-py3-none-any.whl", hash = "sha256:8b52b7e2462e552c75b819495d5cb6251a2b840accc79cf2ce52588004c915d9"},
-    {file = "hypothesis-6.104.2.tar.gz", hash = "sha256:6f2a1489bc8fe1c87ffd202707319b66ec46b2bc11faf6e0161e957b8b9b1eab"},
+    {file = "hypothesis-6.105.0-py3-none-any.whl", hash = "sha256:383bb2d8b37d8090e82847d7cb1130b9ef04bf8c71addd099f7ee1f7139f00d8"},
+    {file = "hypothesis-6.105.0.tar.gz", hash = "sha256:45078be3168c06a0426afca6f139829b28dfea9d2ea79fa1bd498b9783b11c16"},
 ]
 
 [package.dependencies]
@@ -1803,10 +1806,10 @@ exceptiongroup = {version = ">=1.0.0", markers = "python_version < \"3.11\""}
 sortedcontainers = ">=2.1.0,<3.0.0"
 
 [package.extras]
-all = ["backports.zoneinfo (>=0.2.1)", "black (>=19.10b0)", "click (>=7.0)", "crosshair-tool (>=0.0.55)", "django (>=3.2)", "dpcontracts (>=0.4)", "hypothesis-crosshair (>=0.0.4)", "lark (>=0.10.1)", "libcst (>=0.3.16)", "numpy (>=1.17.3)", "pandas (>=1.1)", "pytest (>=4.6)", "python-dateutil (>=1.4)", "pytz (>=2014.1)", "redis (>=3.0.0)", "rich (>=9.0.0)", "tzdata (>=2024.1)"]
+all = ["backports.zoneinfo (>=0.2.1)", "black (>=19.10b0)", "click (>=7.0)", "crosshair-tool (>=0.0.58)", "django (>=3.2)", "dpcontracts (>=0.4)", "hypothesis-crosshair (>=0.0.6)", "lark (>=0.10.1)", "libcst (>=0.3.16)", "numpy (>=1.17.3)", "pandas (>=1.1)", "pytest (>=4.6)", "python-dateutil (>=1.4)", "pytz (>=2014.1)", "redis (>=3.0.0)", "rich (>=9.0.0)", "tzdata (>=2024.1)"]
 cli = ["black (>=19.10b0)", "click (>=7.0)", "rich (>=9.0.0)"]
 codemods = ["libcst (>=0.3.16)"]
-crosshair = ["crosshair-tool (>=0.0.55)", "hypothesis-crosshair (>=0.0.4)"]
+crosshair = ["crosshair-tool (>=0.0.58)", "hypothesis-crosshair (>=0.0.6)"]
 dateutil = ["python-dateutil (>=1.4)"]
 django = ["django (>=3.2)"]
 dpcontracts = ["dpcontracts (>=0.4)"]
@@ -1908,8 +1911,8 @@ files = [
 ]
 
 [package.dependencies]
-decorator = {version = "*", markers = "python_version > \"3.6\" and python_version < \"3.11\""}
-ipython = {version = ">=7.31.1", markers = "python_version > \"3.6\" and python_version < \"3.11\""}
+decorator = {version = "*", markers = "python_version > \"3.6\""}
+ipython = {version = ">=7.31.1", markers = "python_version > \"3.6\""}
 tomli = {version = "*", markers = "python_version > \"3.6\" and python_version < \"3.11\""}
 
 [[package]]
@@ -3243,7 +3246,11 @@ files = [
 ]
 
 [package.dependencies]
-numpy = {version = ">=1.22.4", markers = "python_version < \"3.11\""}
+numpy = [
+    {version = ">=1.22.4", markers = "python_version < \"3.11\""},
+    {version = ">=1.23.2", markers = "python_version == \"3.11\""},
+    {version = ">=1.26.0", markers = "python_version >= \"3.12\""},
+]
 python-dateutil = ">=2.8.2"
 pytz = ">=2020.1"
 tzdata = ">=2022.7"
@@ -3737,7 +3744,10 @@ files = [
 [package.dependencies]
 annotated-types = ">=0.4.0"
 pydantic-core = "2.20.1"
-typing-extensions = {version = ">=4.6.1", markers = "python_version < \"3.13\""}
+typing-extensions = [
+    {version = ">=4.6.1", markers = "python_version < \"3.13\""},
+    {version = ">=4.12.2", markers = "python_version >= \"3.13\""},
+]
 
 [package.extras]
 email = ["email-validator (>=2.0.0)"]
@@ -5365,5 +5375,5 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 
 [metadata]
 lock-version = "2.0"
-python-versions = "==3.10.14"
-content-hash = "1264c2e84e01cd3b4e4b21ee672dfa3ddd47c3d2c9702b9c733a5d31e37a6590"
+python-versions = ">=3.10.14, <4.0"
+content-hash = "cd5b0514696583a4d1d554cff5616a7b9744b91871bc62a073e1915dc5ec2a50"

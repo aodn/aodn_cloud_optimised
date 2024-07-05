@@ -7,7 +7,7 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - python=3.10.14
+  - python>=3.10.14
   - notebook
   - h5py
   - scipy
