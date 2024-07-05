@@ -1,7 +1,9 @@
+import gc
 import importlib.resources
 import os
 import re
 import timeit
+import traceback
 from typing import Tuple, Generator
 
 import boto3
@@ -9,21 +11,20 @@ import numpy as np
 import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
-import traceback
 import xarray as xr
+from dask.distributed import Client
+from dask.distributed import wait
 from shapely.geometry import Point, Polygon
 
-from .schema import create_pyarrow_schema, generate_json_schema_var_from_netcdf
+from aodn_cloud_optimised.lib.logging import get_logger
 from aodn_cloud_optimised.lib.s3Tools import (
     delete_objects_in_prefix,
     split_s3_path,
     prefix_exists,
     create_fileset,
 )
-
-from aodn_cloud_optimised.lib.logging import get_logger
 from .CommonHandler import CommonHandler
-from dask.distributed import wait
+from .schema import create_pyarrow_schema, generate_json_schema_var_from_netcdf
 
 
 # TODO: improve log for parallism by adding a uuid for each task
@@ -954,18 +955,36 @@ class GenericHandler(CommonHandler):
         client, cluster = self.create_cluster()
 
         batch_size = self.get_batch_size(client=client)
+        # restart_client_interval = 3  # Restart client every 5 batches, to manage memory leak. Only the dask client is restarted. This Approach might not work
 
         # Do it in batches. maybe more efficient
         ii = 0
+        total_batches = len(s3_file_uri_list) // batch_size + 1
+
         for i in range(0, len(s3_file_uri_list), batch_size):
-            self.logger.info(f"Processing batch {ii + 1}...")
+            self.logger.info(f"Processing batch {ii + 1}/{total_batches}...")
             batch = s3_file_uri_list[i : i + batch_size]
             batch_tasks = [
                 client.submit(task, f, idx + 1) for idx, f in enumerate(batch)
             ]
 
-            wait(batch_tasks, timeout=batch_size * 120)
+            # timeout = batch_size * 120  # Initial timeout
+            done, not_done = wait(batch_tasks, return_when="ALL_COMPLETED")
+
             ii += 1
+
+            # Cleanup memory
+            del batch_tasks
+
+            # Trigger garbage collection
+            gc.collect()
+
+            # # TODO: seem useless
+            # # Restart client every `restart_client_interval` batches
+            # if ii % restart_client_interval == 0 and ii != total_batches:
+            #     client.close()
+            #     client = Client(cluster)
+            #     self.logger.info(f"Dask client restarted to avoid memory leaks")
 
         self.close_cluster(client, cluster)
         self.logger.handlers.clear()

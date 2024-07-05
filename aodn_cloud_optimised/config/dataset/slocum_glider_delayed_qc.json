@@ -4,13 +4,13 @@
   "cloud_optimised_format": "parquet",
   "cluster_options" : {
     "n_workers": [4, 20],
-    "scheduler_vm_types": "t3.medium",
-    "worker_vm_types": "t3.xlarge",
+    "scheduler_vm_types": "t3.small",
+    "worker_vm_types": "t3.large",
     "allow_ingress_from": "me",
     "compute_purchase_option": "spot_with_fallback",
     "worker_options": {
       "nthreads": 8,
-      "memory_limit": "32GB" }
+      "memory_limit": "6GB" }
   },
   "batch_size": 30,
   "metadata_uuid": "a681fdba-c6d9-44ab-90b9-113b0ed03536",
