@@ -10,9 +10,9 @@
     "compute_purchase_option": "spot_with_fallback",
     "worker_options": {
       "nthreads": 8,
-      "memory_limit": "6GB" }
+      "memory_limit": "8GB" }
   },
-  "batch_size": 30,
+  "batch_size": 100,
   "metadata_uuid": "a681fdba-c6d9-44ab-90b9-113b0ed03536",
   "gattrs_to_variables": [
     "deployment_code"
@@ -476,7 +476,7 @@
       "valid_max": 1000.0,
       "positive": "down",
       "axis": "Z",
-      "reference_datum": "sea-surface",
+      "reference_datum": "sea surface",
       "ancillary_variables": "DEPTH_quality_control",
       "observation_type": "computed",
       "quality_control_set": 1,

@@ -3,16 +3,16 @@
   "logger_name": "radar_velocity_hourly_average_delayed_qc_main.json",
   "cloud_optimised_format": "zarr",
   "cluster_options" : {
-    "n_workers": [2, 8],
+    "n_workers": [2, 20],
     "scheduler_vm_types": "t3.small",
     "worker_vm_types": "t3.medium",
     "allow_ingress_from": "me",
     "compute_purchase_option": "spot_with_fallback",
     "worker_options": {
       "nthreads": 8,
-      "memory_limit": "32GB" }
+      "memory_limit": "8GB" }
   },
-  "batch_size": 30,
+  "batch_size": 8000,
   "cluster_config" : {
     "n_workers": [0, 6],
     "scheduler_vm_types": "t3.medium"
