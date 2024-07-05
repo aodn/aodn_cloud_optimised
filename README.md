@@ -40,12 +40,11 @@ Requirements:
 curl -s https://raw.githubusercontent.com/aodn/aodn_cloud_optimised/main/install.sh | bash
 ```
 
-Otherwise go to
-github.com/aodn/aodn_cloud_optimised/releases/latest
+Otherwise go to the [release](http://github.com/aodn/aodn_cloud_optimised/releases/latest) page.
 
 ## Development
 Requirements:
-* Mamba from miniforge3: https://github.com/conda-forge/miniforge
+* Mamba from [miniforge3](https://github.com/conda-forge/miniforge)
 
 ```bash
 mamba env create --file=environment.yml
@@ -60,8 +59,12 @@ poetry install --with dev
 ```bash
 poetry update
 ```
-to update the poetry.lock file. Commit the changes to poetry.lock
+to update and commit the changes to ```poetry.lock```
 
+To update the ```requirements.txt```, run
+```bash
+poetry export -f requirements.txt --without-hashes -o requirements.txt
+```
 
 # Requirements
 AWS SSO to push files to S3
@@ -96,8 +99,8 @@ options:
                         Cluster mode to use. Options: 'local' or 'remote'. Default is 'local'.
   --optimised-bucket-name OPTIMISED_BUCKET_NAME
                         Bucket name where cloud optimised object will be created. Default is 'imos-data-lab-optimised'
-  --root_prefix-cloud-optimised-path ROOT_PREFIX_CLOUD_OPTIMISED_PATH
-                        Prefix value for the root location of the cloud optimised objects, such as s3://optimised-bucket-name/root_prefix-cloud-optimised-path/... Default is 'cloud_optimised/cluster_testing'
+  --root-prefix-cloud-optimised-path ROOT_PREFIX_CLOUD_OPTIMISED_PATH
+                        Prefix value for the root location of the cloud optimised objects, such as s3://optimised-bucket-name/root-prefix-cloud-optimised-path/... Default is 'cloud_optimised/cluster_testing'
   --bucket-raw BUCKET_RAW
                         Bucket name where input object files will be searched for. Default is 'imos-data'
 
@@ -110,7 +113,7 @@ Examples:
 ## As a python module
 
 ```python
-import importlib.resources
+from importlib.resources import files
 
 from aodn_cloud_optimised.lib.CommonHandler import cloud_optimised_creation
 from aodn_cloud_optimised.lib.config import (
@@ -125,17 +128,16 @@ def main():
     nc_obj_ls = s3_ls(BUCKET_RAW_DEFAULT, "IMOS/SRS/SST/ghrsst/L3S-1d/dn/2024")
 
     dataset_config = load_dataset_config(
-        str(
-            importlib.resources.path(
-                "aodn_cloud_optimised.config.dataset", "satellite_ghrsst_l3s_1day_daynighttime_single_sensor_australia.json"
+        str(files("aodn_cloud_optimised").joinpath("config").joinpath("dataset").joinpath("satellite_ghrsst_l3s_1day_daynighttime_single_sensor_australia.json")
             )
         )
-    )
 
     cloud_optimised_creation(
        nc_obj_ls,
        dataset_config=dataset_config,
-       reprocess=True,
+       # clear_existing_data=True,  # this will delete existing data, be cautious! If testing change the paths below
+       # optimised_bucket_name="imos-data-lab-optimised",  # optional, default value in config/common.json
+       # root_prefix_cloud_optimised_path="cloud_optimised/cluster_testing",  # optional, default value in config/common.json
        cluster_mode='remote'
     )
 

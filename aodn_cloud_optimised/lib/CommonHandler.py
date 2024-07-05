@@ -3,10 +3,8 @@ import os
 import timeit
 from typing import List
 
-import boto3
 import s3fs
 import xarray as xr
-import yaml
 from coiled import Cluster
 from dask.distributed import Client
 from dask.distributed import LocalCluster
@@ -217,8 +215,6 @@ class CommonHandler:
         except Exception as e:
             self.logger.error(f"Error while closing the cluster or client: {e}")
 
-    from dask.distributed import Client, LocalCluster
-
     def get_batch_size(self, client=None):
         """
         Calculate the optimal batch size for processing files with Dask on a cluster.
@@ -349,7 +345,7 @@ class CommonHandler:
             ```
 
         Schema Loading:
-            The pyarrow_schema is loaded from a JSON file using `importlib.resources.path`.
+            The pyarrow_schema is loaded from a JSON file using `importlib.resources.files`.
             Ensure the pyarrow_schema file (`schema_validation_parquet.json`) is accessible within the
             `aodn_cloud_optimised.config.dataset` package.
 
