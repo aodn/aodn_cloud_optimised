@@ -50,9 +50,13 @@ dask = ">=2024.6.0"
 pytest = "^8.2.1"
 ipdb = "^0.13"
 ipython = "^7.5.3"
+coverage = "^7.5.3"
+pre-commit = "^3.7.1"
 moto = {version = ">=5.0.0", extras = ["ec2", "s3",  "server", "all"]}  # Add Moto with optional dependencies
 fuzzywuzzy = ">=0.18.0"
 sphinx = ">=7.3.7"
+poetry-pre-commit-plugin = "^0.1.2"
+
 
 #[tool.poetry.extras]
 #testing = ["pytest", "ipython", "ipdb"]
@@ -80,10 +84,14 @@ generic_cloud_optimised_creation = "aodn_cloud_optimised.bin.generic_cloud_optim
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.2.1"
+ipdb = "^0.13"
+ipython = "^7.5.3"
 coverage = "^7.5.3"
 pre-commit = "^3.7.1"
 moto = {version = ">=5.0.0", extras = ["ec2", "s3",  "server", "all"]}  # Add Moto with optional dependencies
+fuzzywuzzy = ">=0.18.0"
 sphinx = ">=7.3.7"
+poetry-pre-commit-plugin = "^0.1.2"
 
 
 [tool.pre_commit]
