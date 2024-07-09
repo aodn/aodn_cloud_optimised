@@ -127,6 +127,9 @@ def main():
     for filter_str in args.filters:
         nc_obj_ls = [s for s in nc_obj_ls if filter_str in s]
 
+    if not nc_obj_ls:
+        raise ValueError("No files found matching the specified criteria.")
+
     # Load dataset config
     dataset_config_path = args.dataset_config
     dataset_config = load_dataset_config(

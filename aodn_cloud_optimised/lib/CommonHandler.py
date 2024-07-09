@@ -94,6 +94,9 @@ class CommonHandler:
             anon=False
         )  # variable overwritten in unittest to use moto server
 
+        self.uuid_log = None
+        self.s3_file_uri_list = None
+
     def __enter__(self):
         # Initialize resources if necessary
         return self
@@ -160,6 +163,11 @@ class CommonHandler:
                     self.logger.error("No cluster options provided in dataset_config")
 
                 cluster_options["name"] = f"Processing_{self.dataset_name}"
+
+                if self.s3_file_uri_list is not None:
+                    # overwrite n_workers value to 1 when only one file needs to be processed
+                    if len(self.s3_file_uri_list) == 1:
+                        cluster_options["n_workers"] = 1
 
                 # TODO: check how many files need to be processed! Could be useful?
                 cluster = Cluster(**cluster_options)

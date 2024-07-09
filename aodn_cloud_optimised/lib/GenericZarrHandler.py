@@ -1,5 +1,6 @@
 import importlib.resources
 import os
+import uuid
 import warnings
 from functools import partial
 
@@ -261,7 +262,9 @@ class GenericHandler(CommonHandler):
         for idx, batch_files in enumerate(
             self.batch_process_fileset(s3_file_handle_list, batch_size=batch_size)
         ):
-            self.logger.info(f"Processing batch {idx + 1}...")
+            self.uuid_log = str(uuid.uuid4())  # value per batch
+
+            self.logger.info(f"{self.uuid_log}: Processing batch {idx + 1}...")
             self.logger.info(batch_files)
 
             # batch_filenames = [os.path.basename(f.full_name) for f in batch_files]
@@ -276,7 +279,7 @@ class GenericHandler(CommonHandler):
                 if attrs.get("drop_vars", False)
             ]
             self.logger.warning(
-                f"Dropping variables: {drop_vars_list} from the dataset"
+                f"{self.uuid_log}: Dropping variables: {drop_vars_list} from the dataset"
             )
 
             with dask.config.set(
@@ -320,7 +323,9 @@ class GenericHandler(CommonHandler):
 
                     # Write the dataset to Zarr
                     if prefix_exists(self.cloud_optimised_output_path):
-                        self.logger.info(f"Appending data to existing Zarr")
+                        self.logger.info(
+                            f"{self.uuid_log}: Appending data to existing Zarr"
+                        )
 
                         # NOTE: In the next section, we need to figure out if we're reprocessing existing data.
                         #       For this, the logic is open the original zarr store and compare with the new ds from
@@ -348,7 +353,7 @@ class GenericHandler(CommonHandler):
                         # Handle the 2 scenarios, reprocessing of a batch, or append new data
                         if len(common_time_values) > 0:
                             self.logger.info(
-                                f"Duplicate values of {self.dimensions['time']['name']}"
+                                f"{self.uuid_log}: Duplicate values of {self.dimensions['time']['name']}"
                             )
                             # Get indices of common time values in the original dataset
                             common_indices = np.nonzero(
@@ -392,7 +397,7 @@ class GenericHandler(CommonHandler):
                             # Process region by region if necessary
                             for region, indexes in zip(regions, matching_indexes):
                                 self.logger.info(
-                                    f"Overwriting Zarr dataset in Region: {region}, Matching Indexes in new ds: {indexes}"
+                                    f"{self.uuid_log}: Overwriting Zarr dataset in Region: {region}, Matching Indexes in new ds: {indexes}"
                                 )
                                 ds.isel(**{time_dimension_name: indexes}).drop_vars(
                                     self.vars_to_drop_no_common_dimension
@@ -405,12 +410,14 @@ class GenericHandler(CommonHandler):
                                 )
 
                                 self.logger.info(
-                                    f"Batch {idx + 1} successfully published to {self.store}"
+                                    f"{self.uuid_log}: Batch {idx + 1} successfully published to {self.store}"
                                 )
 
                         # No reprocessing needed
                         else:
-                            self.logger.info(f"Appending data to Zarr dataset")
+                            self.logger.info(
+                                f"{self.uuid_log}: Appending data to Zarr dataset"
+                            )
 
                             ds.to_zarr(
                                 self.store,
@@ -427,7 +434,9 @@ class GenericHandler(CommonHandler):
 
                     # First time writing the dataset
                     else:
-                        self.logger.info(f"Writing data to new a Zarr dataset")
+                        self.logger.info(
+                            f"{self.uuid_log}: Writing data to new a Zarr dataset"
+                        )
 
                         ds.to_zarr(
                             self.store,
@@ -438,16 +447,18 @@ class GenericHandler(CommonHandler):
                         )
 
                     self.logger.info(
-                        f"Batch {idx + 1} successfully published to Zarr store: {self.store}"
+                        f"{self.uuid_log}: Batch {idx + 1} successfully published to Zarr store: {self.store}"
                     )
 
                 except MergeError as e:
-                    self.logger.error(f"Failed to merge datasets: {e}")
+                    self.logger.error(f"{self.uuid_log}: Failed to merge datasets: {e}")
                     if "ds" in locals():
                         self.postprocess(ds)
 
                 except Exception as e:
-                    self.logger.error(f"An unexpected error occurred: {e}")
+                    self.logger.error(
+                        f"{self.uuid_log}: An unexpected error occurred: {e}"
+                    )
                     if "ds" in locals():
                         self.postprocess(ds)
 
@@ -483,6 +494,7 @@ class GenericHandler(CommonHandler):
 
         # Multiple file processing with cluster
         if s3_file_uri_list is not None:
+            self.s3_file_uri_list = s3_file_uri_list
             # creating a cluster to process multiple files at once
             self.client, self.cluster = self.create_cluster()
             self.publish_cloud_optimised_fileset_batch(s3_file_uri_list)

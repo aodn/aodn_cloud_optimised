@@ -4,6 +4,7 @@ import os
 import re
 import timeit
 import traceback
+import uuid
 from typing import Tuple, Generator
 
 import boto3
@@ -12,7 +13,6 @@ import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 import xarray as xr
-from dask.distributed import Client
 from dask.distributed import wait
 from shapely.geometry import Point, Polygon
 
@@ -111,7 +111,7 @@ class GenericHandler(CommonHandler):
             df = pd.read_csv(csv_fp, **config_from_json)
         else:
             self.logger.warning(
-                "No options provided for processing CSV file with pandas. Using default pandas.read_csv configuration."
+                f"{self.uuid_log}: No options provided for processing CSV file with pandas. Using default pandas.read_csv configuration."
             )
             df = pd.read_csv(csv_fp)
 
@@ -119,7 +119,9 @@ class GenericHandler(CommonHandler):
 
         for var in ds.variables:
             if var not in self.schema:
-                self.logger.error(f"Missing variable: {var} from dataset config")
+                self.logger.error(
+                    f"{self.uuid_log}: Missing variable: {var} from dataset config"
+                )
             else:
                 ds[var].attrs = self.schema.get(var)
                 del ds[var].attrs[
@@ -166,7 +168,7 @@ class GenericHandler(CommonHandler):
                 yield df, ds
             else:
                 self.logger.error(
-                    "The NetCDF file does not conform to the pre-defined schema."
+                    f"{self.uuid_log}: The NetCDF file does not conform to the pre-defined schema."
                 )
 
     def preprocess_data(
@@ -290,7 +292,7 @@ class GenericHandler(CommonHandler):
         # Create Point objects from latitude and longitude
         if not "spatial_extent" in self.dataset_config:
             self.logger.error(
-                "Spatial_extent configuration is missing from dataset configuration."
+                f"{self.uuid_log}: Spatial_extent configuration is missing from dataset configuration."
             )
             raise ValueError
 
@@ -306,7 +308,7 @@ class GenericHandler(CommonHandler):
             geo_var_has_nan = df[geo_var].isna().any().any()
             if geo_var_has_nan:
                 self.logger.warning(
-                    f"The NetCDF contains NaN values of {geo_var}. Removing corresponding data"
+                    f"{self.uuid_log}: The NetCDF contains NaN values of {geo_var}. Removing corresponding data"
                 )
                 df = df.dropna(
                     subset=[geo_var]
@@ -384,7 +386,7 @@ class GenericHandler(CommonHandler):
                 df[attr] = getattr(ds, attr)
             else:
                 self.logger.warning(
-                    f"The global attribute '{attr}' does not exist in the original NetCDF. The corresponding variable won't be created."
+                    f"{self.uuid_log}: The global attribute '{attr}' does not exist in the original NetCDF. The corresponding variable won't be created."
                 )
 
         df["filename"] = os.path.basename(f.path)
@@ -411,7 +413,7 @@ class GenericHandler(CommonHandler):
 
         if any(df["timestamp"] < 0):
             self.logger.warning(
-                f"{f.path}: NaN values detected in {time_varname} time variable. Trimming corresponding data."
+                f"{self.uuid_log}: {f.path}: NaN values detected in {time_varname} time variable. Trimming corresponding data."
             )
             df2 = df[df["timestamp"] > 0].copy()
             df = df2
@@ -511,13 +513,18 @@ class GenericHandler(CommonHandler):
                             file_attr = getattr(ds[var_name], attr)
 
                             if expected_attr != file_attr:
+                                # TODO: Do we really want to do this? I've rejected too some files with a valid attribute
+                                #       degree different from Degrees. Should maybe do some fuzzy and have 90% of
+                                #       similarity? Maybe dangerous. In the meantime, waiting to take a decision with
+                                #       rest of the team, I prefer to set errors to 0
                                 self.logger.error(
-                                    f"Attribute '{attr}' for variable '{var_name}' does not match: expected '{expected_attr}', found '{file_attr}'"
+                                    f"{self.uuid_log}: Attribute '{attr}' for variable '{var_name}' does not match: expected '{expected_attr}', found '{file_attr}'"
                                 )
-                                errors += 1
+                                # TODO: Uncomment below once found a good system
+                                # errors += 1
                     else:
                         self.logger.warning(
-                            f"{var_name} is missing from the dataset configuration. Please update the configuration."
+                            f"{self.uuid_log}: {var_name} is missing from the dataset configuration. Please update the configuration."
                         )
 
         if errors > 0:
@@ -545,7 +552,9 @@ class GenericHandler(CommonHandler):
         df = self._rm_bad_timestamp_df(df, s3_file_handle)
         if "polygon" in partition_keys:
             if not "spatial_extent" in self.dataset_config:
-                self.logger.error("Missing spatial_extent from dataset configuration")
+                self.logger.error(
+                    f"{self.uuid_log}: Missing spatial_extent from dataset configuration"
+                )
                 # raise ValueError
             else:
                 df = self._add_polygon(df)
@@ -593,7 +602,7 @@ class GenericHandler(CommonHandler):
             for field in self.pyarrow_schema:
                 if field.name not in df_var_list:
                     self.logger.warning(
-                        f"{filename}: {field.name} variable missing from input file. creating a null array of {field.type}"
+                        f"{self.uuid_log}: {filename}: {field.name} variable missing from input file. creating a null array of {field.type}"
                     )
                     null_array = pa.nulls(len(pdf), field.type)
                     pdf = pdf.append_column(field.name, null_array)
@@ -612,13 +621,13 @@ class GenericHandler(CommonHandler):
                     #    #TODO: improve this to return all the varatts as well
                     #    var_config = generate_json_schema_var_from_netcdf(self.input_object_key, column_name)
                     self.logger.warning(
-                        f"Variable missing from provided pyarrow_schema configuration. Please add to dataset configuration (ensure correct quoting): {var_config}"
+                        f"{self.uuid_log}: Variable missing from provided pyarrow_schema configuration. Please add to dataset configuration (ensure correct quoting): {var_config}"
                     )
 
         for partition_key in partition_keys:
             if all(not elem for elem in pdf[partition_key].is_null()):
                 self.logger.error(
-                    f"The '{partition_key}' variable is filled with NULL values, likely because '{partition_key}' is missing from 'gattrs_to_variables' in the dataset configuration."
+                    f"{self.uuid_log}: The '{partition_key}' variable is filled with NULL values, likely because '{partition_key}' is missing from 'gattrs_to_variables' in the dataset configuration."
                 )
                 raise ValueError
 
@@ -637,7 +646,7 @@ class GenericHandler(CommonHandler):
         )
         # TODO: when running on a remote cluster, it seems like we only get a logger per batch? maybe the logger is closed?
         self.logger.info(
-            f"{filename}: Parquet files successfully published to {self.cloud_optimised_output_path} \n"
+            f"{self.uuid_log}: {filename}: Parquet files successfully published to {self.cloud_optimised_output_path} \n"
         )
 
         self._add_metadata_sidecar()
@@ -784,7 +793,7 @@ class GenericHandler(CommonHandler):
         )
 
         self.logger.info(
-            f"Parquet metadata file successfully published to {dataset_metadata_path} \n"
+            f"{self.uuid_log}: Parquet metadata file successfully published to {dataset_metadata_path} \n"
         )
 
     def delete_existing_matching_parquet(self, filename) -> None:
@@ -805,7 +814,9 @@ class GenericHandler(CommonHandler):
             None
         """
 
-        self.logger.info("Searching for matching Parquet objects to delete.")
+        self.logger.info(
+            f"{self.uuid_log}: Searching for matching Parquet objects to delete."
+        )
 
         # could be slow if there are too many objects to list
         # remote test on local machine shows 15 sec for 50k objects
@@ -820,7 +831,9 @@ class GenericHandler(CommonHandler):
                 filesystem=self.s3_fs,
             )
         except Exception as e:
-            self.logger.info(f"No Parquet files to delete. Reason: {e}")
+            self.logger.info(
+                f"{self.uuid_log}: No Parquet files to delete. Reason: {e}"
+            )
             return
 
         # Define the regex pattern to match existing parquet files
@@ -846,7 +859,7 @@ class GenericHandler(CommonHandler):
                 Bucket=self.optimised_bucket_name, Delete={"Objects": objects_to_delete}
             )
             self.logger.info(
-                f"Successfully deleted previous Parquet objects: {response}"
+                f"{self.uuid_log}: Successfully deleted previous Parquet objects: {response}"
             )
 
     def to_cloud_optimised_single(self, s3_file_uri) -> None:
@@ -878,7 +891,11 @@ class GenericHandler(CommonHandler):
         logger_name = self.dataset_config.get("logger_name", "generic")
         self.logger = get_logger(logger_name)
 
-        self.logger.info(f"Processing file: {s3_file_uri}")
+        # if no value set per batch, we create one for per file processing
+        if self.uuid_log is None:
+            self.uuid_log = str(uuid.uuid4())
+
+        self.logger.info(f"{self.uuid_log}: Processing file: {s3_file_uri}")
 
         filename = os.path.basename(s3_file_uri)
         if self.delete_pq_unmatch_enable:
@@ -899,12 +916,12 @@ class GenericHandler(CommonHandler):
 
                 time_spent = timeit.default_timer() - start_time
                 self.logger.info(
-                    f"Cloud-optimised file processing completed in {time_spent} seconds."
+                    f"{self.uuid_log}: Cloud-optimised file processing completed in {time_spent} seconds."
                 )
 
         except Exception as e:
             self.logger.error(
-                f"Issue encountered while creating Cloud Optimised file: {type(e).__name__}: {e} \n {traceback.format_exc()}"
+                f"{self.uuid_log}: Issue encountered while creating Cloud Optimised file: {type(e).__name__}: {e} \n {traceback.format_exc()}"
             )
 
             if "ds" in locals():
@@ -952,17 +969,22 @@ class GenericHandler(CommonHandler):
                     f"Issue {i}/{len(s3_file_uri_list)} with {f}: {type(e).__name__}: {e}"
                 )
 
+        self.s3_file_uri_list = s3_file_uri_list
         client, cluster = self.create_cluster()
 
         batch_size = self.get_batch_size(client=client)
-        # restart_client_interval = 3  # Restart client every 5 batches, to manage memory leak. Only the dask client is restarted. This Approach might not work
 
         # Do it in batches. maybe more efficient
         ii = 0
         total_batches = len(s3_file_uri_list) // batch_size + 1
 
         for i in range(0, len(s3_file_uri_list), batch_size):
-            self.logger.info(f"Processing batch {ii + 1}/{total_batches}...")
+            self.uuid_log = str(uuid.uuid4())  # value per batch
+
+            self.logger.info(
+                f"{self.uuid_log}: Processing batch {ii + 1}/{total_batches}..."
+            )
+
             batch = s3_file_uri_list[i : i + batch_size]
             batch_tasks = [
                 client.submit(task, f, idx + 1) for idx, f in enumerate(batch)
@@ -978,13 +1000,6 @@ class GenericHandler(CommonHandler):
 
             # Trigger garbage collection
             gc.collect()
-
-            # # TODO: seem useless
-            # # Restart client every `restart_client_interval` batches
-            # if ii % restart_client_interval == 0 and ii != total_batches:
-            #     client.close()
-            #     client = Client(cluster)
-            #     self.logger.info(f"Dask client restarted to avoid memory leaks")
 
         self.close_cluster(client, cluster)
         self.logger.handlers.clear()
