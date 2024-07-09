@@ -61,7 +61,8 @@ Create a virtual environment of your choice and activate it
 ```bash
 pip install poetry
 poetry install --with dev
-
+#pip install -r requirements.txt
+#pre-commit install  # should be done by poetry install
 ```
 
 ### Update dependencies
