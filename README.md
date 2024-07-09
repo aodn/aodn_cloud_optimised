@@ -195,4 +195,3 @@ and create a new notebook.
 
 These notebooks use a common library of python functions to help with creating the geo-spatial filters:
 ```notebooks/parquet_queries.py```
-
