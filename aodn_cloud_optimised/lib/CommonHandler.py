@@ -499,19 +499,18 @@ def _get_generic_handler_class(dataset_config):
 def cloud_optimised_creation(
     s3_file_uri_list: List[str],
     dataset_config: dict,
-    s3fs_session: AioSession,
     **kwargs,
 ) -> None:
     """
     Iterate through a list of s3 file paths and create Cloud Optimised files for each file.
 
     Args:
-        s3fs_session: An aiobotocore authenticated session
         s3_file_uri_list (List[str]): List of file paths to process.
         dataset_config (dictionary): dataset configuration. Check config/dataset_template.json for example
         **kwargs: Additional keyword arguments for customization.
             handler_class (class, optional): Handler class for cloud optimised creation.
             force_previous_parquet_deletion (bool, optional): Whether to force deletion of old Parquet files (default is False).
+            s3fs_session: An aiobotocore authenticated session
 
     Returns:
         None
@@ -543,7 +542,7 @@ def cloud_optimised_creation(
             load_variable_from_config("ROOT_PREFIX_CLOUD_OPTIMISED_PATH"),
         ),
         "cluster_mode": kwargs.get("cluster_mode", "local"),
-        "s3fs_session": s3fs_session,
+        "s3fs_session": kwargs.get("s3fs_session", None),
     }
 
     # Filter out None values
