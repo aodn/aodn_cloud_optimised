@@ -9,6 +9,7 @@ from coiled import Cluster
 from dask.distributed import Client
 from dask.distributed import LocalCluster
 from jsonschema import validate, ValidationError
+from aiobotocore.session import AioSession
 
 from .config import load_variable_from_config, load_dataset_config
 from .logging import get_logger
@@ -91,7 +92,7 @@ class CommonHandler:
         self.cluster_options = self.dataset_config.get("cluster_options", None)
 
         self.s3_fs = s3fs.S3FileSystem(
-            anon=False
+            anon=False, session=kwargs.get("s3fs_session")
         )  # variable overwritten in unittest to use moto server
 
         self.uuid_log = None
@@ -496,7 +497,9 @@ def _get_generic_handler_class(dataset_config):
 
 
 def cloud_optimised_creation(
-    s3_file_uri_list: List[str], dataset_config: dict, **kwargs
+    s3_file_uri_list: List[str],
+    dataset_config: dict,
+    **kwargs,
 ) -> None:
     """
     Iterate through a list of s3 file paths and create Cloud Optimised files for each file.
@@ -507,6 +510,7 @@ def cloud_optimised_creation(
         **kwargs: Additional keyword arguments for customization.
             handler_class (class, optional): Handler class for cloud optimised creation.
             force_previous_parquet_deletion (bool, optional): Whether to force deletion of old Parquet files (default is False).
+            s3fs_session: An aiobotocore authenticated session
 
     Returns:
         None
@@ -538,6 +542,7 @@ def cloud_optimised_creation(
             load_variable_from_config("ROOT_PREFIX_CLOUD_OPTIMISED_PATH"),
         ),
         "cluster_mode": kwargs.get("cluster_mode", "local"),
+        "s3fs_session": kwargs.get("s3fs_session", None),
     }
 
     # Filter out None values
