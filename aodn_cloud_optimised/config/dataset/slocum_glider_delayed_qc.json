@@ -10,9 +10,9 @@
     "compute_purchase_option": "spot_with_fallback",
     "worker_options": {
       "nthreads": 8,
-      "memory_limit": "10GB" }
+      "memory_limit": "16GB" }
   },
-  "batch_size": 50,
+  "batch_size": 20,
   "metadata_uuid": "a681fdba-c6d9-44ab-90b9-113b0ed03536",
   "gattrs_to_variables": [
     "deployment_code"

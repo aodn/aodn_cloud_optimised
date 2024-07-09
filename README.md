@@ -35,14 +35,16 @@ A tool designed to convert IMOS NetCDF and CSV files into Cloud Optimised format
 Requirements:
 * python >= 3.10.14
 
-### automatic install of latest wheel release
+### automatic installation of latest wheel release
 ```bash
 curl -s https://raw.githubusercontent.com/aodn/aodn_cloud_optimised/main/install.sh | bash
 ```
 
-Otherwise go to the [release](http://github.com/aodn/aodn_cloud_optimised/releases/latest) page.
+Otherwise, go to the [release](http://github.com/aodn/aodn_cloud_optimised/releases/latest) page.
 
 ## Development
+
+### Option 1: Install with Mamba/Conda
 Requirements:
 * Mamba from [miniforge3](https://github.com/conda-forge/miniforge)
 
@@ -52,6 +54,16 @@ mamba activate CloudOptimisedParquet
 
 poetry install --with dev
 ```
+
+### Option 2: Create a virtual environment of your choice
+
+Create a virtual environment of your choice and activate it
+```bash
+pip install poetry
+poetry install --with dev
+
+```
+
 ### Update dependencies
 
 1. Update manually the pyproject.toml file with the required package versions
