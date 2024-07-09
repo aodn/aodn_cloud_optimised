@@ -40,7 +40,7 @@ class TestGenericCloudOptimisedCreation(unittest.TestCase):
         os.environ["RUNNING_UNDER_UNITTEST"] = "true"
 
         # Create a mock S3 service
-        self.BUCKET_OPTIMISED_NAME = "imos-data-lab-optimised"
+        self.BUCKET_OPTIMISED_NAME = "optimised-bucket"
         self.ROOT_PREFIX_CLOUD_OPTIMISED_PATH = "testing"
         self.s3 = boto3.client("s3", region_name="us-east-1")
         self.s3.create_bucket(Bucket="imos-data")
@@ -106,6 +106,15 @@ class TestGenericCloudOptimisedCreation(unittest.TestCase):
             self.s3.upload_fileobj(f, bucket_name, key)
 
     def tearDown(self):
+        # Delete all objects and buckets in the mock S3
+        bucket_list = self.s3.list_buckets()["Buckets"]
+        for bucket in bucket_list:
+            bucket_name = bucket["Name"]
+            objects = self.s3.list_objects_v2(Bucket=bucket_name).get("Contents", [])
+            for obj in objects:
+                self.s3.delete_object(Bucket=bucket_name, Key=obj["Key"])
+            self.s3.delete_bucket(Bucket=bucket_name)
+
         self.server.stop()
         del os.environ["RUNNING_UNDER_UNITTEST"]
 
@@ -150,6 +159,7 @@ class TestGenericCloudOptimisedCreation(unittest.TestCase):
                     for log in captured_logs
                 )
             )
+            self.assertFalse(any("ERROR" in log for log in captured_logs))
 
         finally:
             # Restore stdout

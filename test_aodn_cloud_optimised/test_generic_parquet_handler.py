@@ -163,6 +163,15 @@ class TestGenericHandler(unittest.TestCase):
             self.s3.upload_fileobj(f, bucket_name, key)
 
     def tearDown(self):
+        # Delete all objects and buckets in the mock S3
+        bucket_list = self.s3.list_buckets()["Buckets"]
+        for bucket in bucket_list:
+            bucket_name = bucket["Name"]
+            objects = self.s3.list_objects_v2(Bucket=bucket_name).get("Contents", [])
+            for obj in objects:
+                self.s3.delete_object(Bucket=bucket_name, Key=obj["Key"])
+            self.s3.delete_bucket(Bucket=bucket_name)
+
         self.server.stop()
 
     def test_parquet_nc_anmn_handler(self):
