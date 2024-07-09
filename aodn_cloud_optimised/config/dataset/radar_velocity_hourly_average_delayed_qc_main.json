@@ -5,18 +5,14 @@
   "cluster_options" : {
     "n_workers": [2, 20],
     "scheduler_vm_types": "t3.small",
-    "worker_vm_types": "t3.medium",
+    "worker_vm_types": "t3.large",
     "allow_ingress_from": "me",
     "compute_purchase_option": "spot_with_fallback",
     "worker_options": {
       "nthreads": 8,
-      "memory_limit": "8GB" }
+      "memory_limit": "16GB" }
   },
-  "batch_size": 8000,
-  "cluster_config" : {
-    "n_workers": [0, 6],
-    "scheduler_vm_types": "t3.medium"
-  },
+  "batch_size": 1000,
   "metadata_uuid": "",
   "dimensions": {
     "time": {"name": "TIME",
