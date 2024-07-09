@@ -969,6 +969,7 @@ class GenericHandler(CommonHandler):
                     f"Issue {i}/{len(s3_file_uri_list)} with {f}: {type(e).__name__}: {e}"
                 )
 
+        self.s3_file_uri_list = s3_file_uri_list
         client, cluster = self.create_cluster()
 
         batch_size = self.get_batch_size(client=client)

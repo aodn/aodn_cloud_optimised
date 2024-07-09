@@ -494,6 +494,7 @@ class GenericHandler(CommonHandler):
 
         # Multiple file processing with cluster
         if s3_file_uri_list is not None:
+            self.s3_file_uri_list = s3_file_uri_list
             # creating a cluster to process multiple files at once
             self.client, self.cluster = self.create_cluster()
             self.publish_cloud_optimised_fileset_batch(s3_file_uri_list)
