@@ -1,5 +1,5 @@
 {
-  "dataset_name": "mooring_hourly_timeseries_delayed_qc",
+  "dataset_name": "mooring_hourly_timeseries_delayed_qc2",
   "logger_name": "mooring_hourly_timeseries_delayed_qc",
   "handler_class": "AnmnHourlyTsHandler",
   "cloud_optimised_format": "parquet",
@@ -11,7 +11,7 @@
     "compute_purchase_option": "spot_with_fallback",
     "worker_options": {
       "nthreads": 8,
-      "memory_limit": "64GB" }
+      "memory_limit": "8GB" }
   },
   "batch_size": 30,
   "metadata_uuid": "7b901002-b1dc-46c3-89f2-b4951cedca48",
@@ -449,6 +449,55 @@
       "long_name": "std data value in the bin, after rejection of flagged data",
       "cell_methods": "TIME:std"
     },
+    "DOX": {
+      "type": "float",
+      "ancillary_variables": "DOX_min DOX_max DOX_std DOX_count",
+      "long_name": "mean volume_concentration_of_dissolved_molecular_oxygen_in_sea_water",
+      "standard_name": "volume_concentration_of_dissolved_molecular_oxygen_in_sea_water",
+      "units": "ml l-1",
+      "valid_max": 200.0,
+      "valid_min": 0.0,
+      "cell_methods": "TIME:mean (interval: 1 hr comment: time mid point)"
+    },
+    "DOX_min": {
+      "type": "float",
+      "units": "ml l-1",
+      "standard_name": "volume_concentration_of_dissolved_molecular_oxygen_in_sea_water",
+      "long_name": "min data value in the bin, after rejection of flagged data",
+      "cell_methods": "TIME:min"
+    },
+    "DOX_max": {
+      "type": "float",
+      "units": "ml l-1",
+      "standard_name": "volume_concentration_of_dissolved_molecular_oxygen_in_sea_water",
+      "long_name": "max data value in the bin, after rejection of flagged data",
+      "cell_methods": "TIME:max"
+    },
+    "DOX_std": {
+      "type": "float",
+      "units": "ml l-1",
+      "standard_name": "volume_concentration_of_dissolved_molecular_oxygen_in_sea_water",
+      "long_name": "std data value in the bin, after rejection of flagged data",
+      "cell_methods": "TIME:std"
+    },
+    "DOX_count": {
+      "type": "float",
+      "standard_name": "volume_concentration_of_dissolved_molecular_oxygen_in_sea_water number_of_observations",
+      "units": "1",
+      "long_name": "count data value in the bin, after rejection of flagged data",
+      "cell_methods": "TIME:count"
+    },
+    "DOX1": {
+      "type": "float",
+      "ancillary_variables": "DOX1_min DOX1_max DOX1_std DOX1_count",
+      "comment": "oxygenPP.m: DOX1 derived using DOX1 = DOX * 44.6596.",
+      "long_name": "mean mole_concentration_of_dissolved_molecular_oxygen_in_sea_water",
+      "standard_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water",
+      "units": "umol l-1",
+      "valid_max": 1000.0,
+      "valid_min": 0.0,
+      "cell_methods": "TIME:mean (interval: 1 hr comment: time mid point)"
+    },
     "DOX1_count": {
       "type": "float",
       "standard_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water number_of_observations",
@@ -477,6 +526,45 @@
       "long_name": "std data value in the bin, after rejection of flagged data",
       "cell_methods": "TIME:std"
     },
+    "DOX1_2": {
+      "type": "float",
+      "ancillary_variables": "DOX1_2_min DOX1_2_max DOX1_2_std DOX1_2_count",
+      "comment": "Originally expressed in ml/l, 1ml/l = 44.660umol/l was assumed.",
+      "long_name": "mean mole_concentration_of_dissolved_molecular_oxygen_in_sea_water",
+      "standard_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water",
+      "units": "umol l-1",
+      "valid_max": 1000.0,
+      "valid_min": 0.0,
+      "cell_methods": "TIME:mean (interval: 1 hr comment: time mid point)"
+    },
+    "DOX1_2_min": {
+      "type": "float",
+      "units": "umol l-1",
+      "standard_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water",
+      "long_name": "min data value in the bin, after rejection of flagged data",
+      "cell_methods": "TIME:min"
+    },
+    "DOX1_2_max": {
+      "type": "float",
+      "units": "umol l-1",
+      "standard_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water",
+      "long_name": "max data value in the bin, after rejection of flagged data",
+      "cell_methods": "TIME:max"
+    },
+    "DOX1_2_std": {
+      "type": "float",
+      "units": "umol l-1",
+      "standard_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water",
+      "long_name": "std data value in the bin, after rejection of flagged data",
+      "cell_methods": "TIME:std"
+    },
+    "DOX1_2_count": {
+      "type": "float",
+      "standard_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water number_of_observations",
+      "units": "1",
+      "long_name": "count data value in the bin, after rejection of flagged data",
+      "cell_methods": "TIME:count"
+    },
     "DOX2": {
       "type": "float",
       "ancillary_variables": "DOX2_min DOX2_max DOX2_std DOX2_count",
@@ -487,6 +575,182 @@
       "valid_max": 1000.0,
       "valid_min": 0.0,
       "cell_methods": "TIME:mean (interval: 1 hr comment: time mid point)"
+    },
+    "DOX2_min": {
+      "type": "float",
+      "units": "umol kg-1",
+      "standard_name": "moles_of_oxygen_per_unit_mass_in_sea_water",
+      "long_name": "min data value in the bin, after rejection of flagged data",
+      "cell_methods": "TIME:min"
+    },
+    "DOX2_max": {
+      "type": "float",
+      "units": "umol kg-1",
+      "standard_name": "moles_of_oxygen_per_unit_mass_in_sea_water",
+      "long_name": "max data value in the bin, after rejection of flagged data",
+      "cell_methods": "TIME:max"
+    },
+    "DOX2_count": {
+      "type": "float",
+      "standard_name": "moles_of_oxygen_per_unit_mass_in_sea_water number_of_observations",
+      "units": "1",
+      "long_name": "count data value in the bin, after rejection of flagged data",
+      "cell_methods": "TIME:count"
+    },
+    "DOX2_std": {
+      "type": "float",
+      "units": "umol kg-1",
+      "standard_name": "moles_of_oxygen_per_unit_mass_in_sea_water",
+      "long_name": "std data value in the bin, after rejection of flagged data",
+      "cell_methods": "TIME:std"
+    },
+    "DOX1_3": {
+      "type": "float",
+      "ancillary_variables": "DOX1_3_min DOX1_3_max DOX1_3_std DOX1_3_count",
+      "comment": "Originally expressed in mg/l, O2 density = 1.429kg/m3 and 1ml/l = 44.660umol/l were assumed.",
+      "long_name": "mean mole_concentration_of_dissolved_molecular_oxygen_in_sea_water",
+      "standard_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water",
+      "units": "umol l-1",
+      "valid_max": 1000.0,
+      "valid_min": 0.0,
+      "cell_methods": "TIME:mean (interval: 1 hr comment: time mid point)"
+    },
+    "DOX1_3_min": {
+      "type": "float",
+      "units": "umol l-1",
+      "standard_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water",
+      "long_name": "min data value in the bin, after rejection of flagged data",
+      "cell_methods": "TIME:min"
+    },
+    "DOX1_3_max": {
+      "type": "float",
+      "units": "umol l-1",
+      "standard_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water",
+      "long_name": "max data value in the bin, after rejection of flagged data",
+      "cell_methods": "TIME:max"
+    },
+    "DOX1_3_count": {
+      "type": "float",
+      "standard_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water number_of_observations",
+      "units": "1",
+      "long_name": "count data value in the bin, after rejection of flagged data",
+      "cell_methods": "TIME:count"
+    },
+    "DOX1_3_std": {
+      "type": "float",
+      "units": "umol l-1",
+      "standard_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water",
+      "long_name": "std data value in the bin, after rejection of flagged data",
+      "cell_methods": "TIME:std"
+    },
+    "DOXY": {
+      "type": "float",
+      "ancillary_variables": "DOXY_min DOXY_max DOXY_std DOXY_count",
+      "long_name": "mean mass_concentration_of_oxygen_in_sea_water",
+      "standard_name": "mass_concentration_of_oxygen_in_sea_water",
+      "units": "mg l-1",
+      "cell_methods": "TIME:mean (interval: 1 hr comment: time mid point)"
+    },
+    "DOXY_std": {
+      "type": "float",
+      "units": "mg l-1",
+      "standard_name": "mass_concentration_of_oxygen_in_sea_water",
+      "long_name": "std data value in the bin, after rejection of flagged data",
+      "cell_methods": "TIME:std"
+    },
+    "DOXY_min": {
+      "type": "float",
+      "units": "mg l-1",
+      "standard_name": "mass_concentration_of_oxygen_in_sea_water",
+      "long_name": "min data value in the bin, after rejection of flagged data",
+      "cell_methods": "TIME:min"
+    },
+    "DOXY_max": {
+      "type": "float",
+      "units": "mg l-1",
+      "standard_name": "mass_concentration_of_oxygen_in_sea_water",
+      "long_name": "max data value in the bin, after rejection of flagged data",
+      "cell_methods": "TIME:max"
+    },
+    "DOXY_count": {
+      "type": "float",
+      "standard_name": "mass_concentration_of_oxygen_in_sea_water number_of_observations",
+      "units": "1",
+      "long_name": "count data value in the bin, after rejection of flagged data",
+      "cell_methods": "TIME:count"
+    },
+    "DOXS": {
+      "type": "float",
+      "ancillary_variables": "DOXS_min DOXS_max DOXS_std DOXS_count",
+      "comment": "oxygenPP.m: \"DOXS derived using DOXS = 100 * DOX2 / OXSOL_SURFACE. OXSOL_SURFACE derived from TEMP, PSAL, PRES_REL , LATITUDE and LONGITUDE using gsw_O2sol_SP_pt, gsw_pt0_from_t and gsw_SA_from_SP from the Gibbs-SeaWater toolbox (TEOS-10) v3.06. See SeaBird data processing manual (http://www.seabird.com/document/sbe-data-processing-manual).",
+      "long_name": "mean fractional_saturation_of_oxygen_in_sea_water",
+      "standard_name": "fractional_saturation_of_oxygen_in_sea_water",
+      "units": "%",
+      "cell_methods": "TIME:mean (interval: 1 hr comment: time mid point)"
+    },
+    "DOXS_std": {
+      "type": "float",
+      "units": "%",
+      "standard_name": "fractional_saturation_of_oxygen_in_sea_water",
+      "long_name": "std data value in the bin, after rejection of flagged data",
+      "cell_methods": "TIME:std"
+    },
+    "DOXS_min": {
+      "type": "float",
+      "units": "%",
+      "standard_name": "fractional_saturation_of_oxygen_in_sea_water",
+      "long_name": "min data value in the bin, after rejection of flagged data",
+      "cell_methods": "TIME:min"
+    },
+    "DOXS_max": {
+      "type": "float",
+      "units": "%",
+      "standard_name": "fractional_saturation_of_oxygen_in_sea_water",
+      "long_name": "max data value in the bin, after rejection of flagged data",
+      "cell_methods": "TIME:max"
+    },
+    "DOXS_count": {
+      "type": "float",
+      "standard_name": "fractional_saturation_of_oxygen_in_sea_water number_of_observations",
+      "units": "1",
+      "long_name": "count data value in the bin, after rejection of flagged data",
+      "cell_methods": "TIME:count"
+    },
+    "PAR": {
+      "type": "float",
+      "ancillary_variables": "PAR_min PAR_max PAR_std PAR_count",
+      "long_name": "median downwelling_photosynthetic_photon_flux_in_sea_water",
+      "standard_name": "downwelling_photosynthetic_photon_flux_in_sea_water",
+      "units": "umole m-2 s-1",
+      "cell_methods": "TIME:median (interval: 1 hr comment: time mid point)"
+    },
+    "PAR_std": {
+      "type": "float",
+      "units": "umole m-2 s-1",
+      "standard_name": "downwelling_photosynthetic_photon_flux_in_sea_water",
+      "long_name": "std data value in the bin, after rejection of flagged data",
+      "cell_methods": "TIME:std"
+    },
+    "PAR_min": {
+      "type": "float",
+      "units": "umole m-2 s-1",
+      "standard_name": "downwelling_photosynthetic_photon_flux_in_sea_water",
+      "long_name": "min data value in the bin, after rejection of flagged data",
+      "cell_methods": "TIME:min"
+    },
+    "PAR_max": {
+    "type": "float",
+      "units": "umole m-2 s-1",
+      "standard_name": "downwelling_photosynthetic_photon_flux_in_sea_water",
+      "long_name": "max data value in the bin, after rejection of flagged data",
+      "cell_methods": "TIME:max"
+    },
+    "PAR_count": {
+      "type": "float",
+      "standard_name": "downwelling_photosynthetic_photon_flux_in_sea_water number_of_observations",
+      "units": "1",
+      "long_name": "count data value in the bin, after rejection of flagged data",
+      "cell_methods": "TIME:count"
     },
     "timestamp": {
       "type": "int64"

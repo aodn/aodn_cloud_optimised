@@ -1,9 +1,9 @@
 {
-  "dataset_name": "slocum_glider_delayed_qc",
+  "dataset_name": "slocum_glider_delayed_qc2",
   "logger_name": "slocum_glider_delayed_qc",
   "cloud_optimised_format": "parquet",
   "cluster_options" : {
-    "n_workers": [2, 25],
+    "n_workers": [30, 35],
     "scheduler_vm_types": "t3.small",
     "worker_vm_types": "t3.xlarge",
     "allow_ingress_from": "me",
