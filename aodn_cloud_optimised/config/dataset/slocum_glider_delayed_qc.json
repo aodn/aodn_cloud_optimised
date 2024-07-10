@@ -1,5 +1,5 @@
 {
-  "dataset_name": "slocum_glider_delayed_qc2",
+  "dataset_name": "slocum_glider_delayed_qc",
   "logger_name": "slocum_glider_delayed_qc",
   "cloud_optimised_format": "parquet",
   "cluster_options" : {
