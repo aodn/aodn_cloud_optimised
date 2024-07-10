@@ -16,7 +16,26 @@ class CustomFormatter(logging.Formatter):
         logging.CRITICAL: "\033[35m%(asctime)s - %(levelname)s - %(filename)s:%(lineno)d - %(funcName)s - %(message)s\033[0m",
     }
 
+    def __init__(self, use_color=True):
+        """
+        Initialize the custom formatter.
+
+        Args:
+            use_color (bool, optional): Whether to use colored output (default is True).
+        """
+        super().__init__()
+        self.use_color = use_color
+
     def format(self, record):
+        """
+        Format the log record.
+
+        Args:
+            record (logging.LogRecord): The log record to format.
+
+        Returns:
+            str: Formatted log message.
+        """
         # Get line number from caller
         frame = inspect.stack()[2]
         lineno = frame.lineno
@@ -29,14 +48,18 @@ class CustomFormatter(logging.Formatter):
             )  # Access first element of exc_info
             record.msg = f"{record.msg} ({filename}:{lineno}{error_type})"
 
-        log_fmt = self.FORMATS.get(record.levelno)
+        if self.use_color:
+            log_fmt = self.FORMATS.get(record.levelno)
+        else:
+            log_fmt = "%(asctime)s - %(levelname)s - %(filename)s:%(lineno)d - %(funcName)s - %(message)s"
+
         formatter = logging.Formatter(log_fmt)
         return formatter.format(record)
 
 
 def get_logger(logger_name: str, log_level: int = logging.DEBUG) -> logging.Logger:
     """
-    Get or create a logger with colored output, line numbers, and error types.
+    Get or create a logger with colored output for console, and non-colored output for file.
 
     Args:
         logger_name (str): Name of the logger.
@@ -52,25 +75,23 @@ def get_logger(logger_name: str, log_level: int = logging.DEBUG) -> logging.Logg
         logger = logging.getLogger(logger_name)
         logger.setLevel(log_level)
 
-        formatter = CustomFormatter()
+        # Console handler with color
+        color_formatter = CustomFormatter(use_color=True)
         stream_handler = logging.StreamHandler()
-        stream_handler.setFormatter(formatter)
+        stream_handler.setFormatter(color_formatter)
         stream_handler.setLevel(log_level)
         logger.addHandler(stream_handler)
 
         # Create a temporary file for logging with prefix and date
-        # date_str = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         date_str = datetime.now().strftime("%Y-%m-%d")
-        temp_file_name = f"{logger_name}_{date_str}.log"
-
+        temp_file_name = f"cloud_optimised_{logger_name}_{date_str}.log"
         temp_path = os.path.join(tempfile.gettempdir(), temp_file_name)
 
+        # File handler without color
+        file_formatter = CustomFormatter(use_color=False)
         file_handler = logging.FileHandler(temp_path)
-        file_handler.setFormatter(formatter)
+        file_handler.setFormatter(file_formatter)
         file_handler.setLevel(log_level)
-
         logger.addHandler(file_handler)
 
-        return logger
-    else:
-        return existing_logger
+    return existing_logger

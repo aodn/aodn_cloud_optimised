@@ -602,7 +602,7 @@ class GenericHandler(CommonHandler):
             for field in self.pyarrow_schema:
                 if field.name not in df_var_list:
                     self.logger.warning(
-                        f"{self.uuid_log}: {filename}: {field.name} variable missing from input file. creating a null array of {field.type}"
+                        f"{self.uuid_log}: {filename}: {field.name}; variable missing from input file. creating a null array of {field.type}"
                     )
                     null_array = pa.nulls(len(pdf), field.type)
                     pdf = pdf.append_column(field.name, null_array)
@@ -621,7 +621,7 @@ class GenericHandler(CommonHandler):
                     #    #TODO: improve this to return all the varatts as well
                     #    var_config = generate_json_schema_var_from_netcdf(self.input_object_key, column_name)
                     self.logger.warning(
-                        f"{self.uuid_log}: Variable missing from provided pyarrow_schema configuration. Please add to dataset configuration (ensure correct quoting): {var_config}"
+                        f"{self.uuid_log}: {filename}; Variable missing from provided pyarrow_schema configuration. Please add to dataset configuration (ensure correct quoting): {var_config}"
                     )
 
         for partition_key in partition_keys:
@@ -888,8 +888,8 @@ class GenericHandler(CommonHandler):
         - Uses configurations and settings from `self.dataset_config`.
         """
         # FIXME: the next 2 lines need to be here otherwise, the logging is lost when called within a dask task. Why??
-        logger_name = self.dataset_config.get("logger_name", "generic")
-        self.logger = get_logger(logger_name)
+        # logger_name = self.dataset_config.get("logger_name", "generic")
+        # self.logger = get_logger(logger_name)
 
         # if no value set per batch, we create one for per file processing
         if self.uuid_log is None:
@@ -987,7 +987,10 @@ class GenericHandler(CommonHandler):
 
             batch = s3_file_uri_list[i : i + batch_size]
             batch_tasks = [
-                client.submit(task, f, idx + 1) for idx, f in enumerate(batch)
+                client.submit(task, f, idx + 1, pure=False)
+                for idx, f in enumerate(
+                    batch
+                )  # Use pure=False for multiprocessing. More efficient to avoid GIL contention
             ]
 
             # timeout = batch_size * 120  # Initial timeout

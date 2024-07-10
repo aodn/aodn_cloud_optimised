@@ -620,13 +620,13 @@ files = [
 
 [[package]]
 name = "cfn-lint"
-version = "1.5.1"
+version = "1.5.2"
 description = "Checks CloudFormation templates for practices and behaviour that could potentially be improved"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "cfn_lint-1.5.1-py3-none-any.whl", hash = "sha256:82b41fddcfbcac59128af168ae91f9f072e0fdbe1870940bd36cbd5ea20ebfeb"},
-    {file = "cfn_lint-1.5.1.tar.gz", hash = "sha256:7ee28264d55543912803ddd6e895f37d4cac5aad4e7135a606c71697e6ed9d3a"},
+    {file = "cfn_lint-1.5.2-py3-none-any.whl", hash = "sha256:a2da6b02da5316fd451a280271a226d6b1cdaefab8a92b51b11c0e5e0dc129b2"},
+    {file = "cfn_lint-1.5.2.tar.gz", hash = "sha256:a2d15bf02727233fb6dd8d813fa0cbe5cce8a1b42d133e65e2fa0534b17c4f72"},
 ]
 
 [package.dependencies]
@@ -830,13 +830,13 @@ files = [
 
 [[package]]
 name = "coiled"
-version = "1.34.1"
+version = "1.34.2"
 description = "Python client for coiled.io dask clusters"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "coiled-1.34.1-py3-none-any.whl", hash = "sha256:b0221378fe597dba03f598c533d88695fe02b002a001478377db2a9f8dfc844f"},
-    {file = "coiled-1.34.1.tar.gz", hash = "sha256:35cda4ae0eb32c4fa57aa39a01753025d5f54ffa295958b3e16d1ffed9d41a03"},
+    {file = "coiled-1.34.2-py3-none-any.whl", hash = "sha256:a6c2d5fe2ae9459407d26653e129d65f5e0e34432b8fb39ec5636a4621507f7f"},
+    {file = "coiled-1.34.2.tar.gz", hash = "sha256:330c76dd28cf027ce6623266018813349d6062147128d02ea7aeaf09c22791bf"},
 ]
 
 [package.dependencies]
@@ -5122,13 +5122,13 @@ jeepney = ">=0.6"
 
 [[package]]
 name = "setuptools"
-version = "70.2.0"
+version = "70.3.0"
 description = "Easily download, build, install, upgrade, and uninstall Python packages"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "setuptools-70.2.0-py3-none-any.whl", hash = "sha256:b8b8060bb426838fbe942479c90296ce976249451118ef566a5a0b7d8b78fb05"},
-    {file = "setuptools-70.2.0.tar.gz", hash = "sha256:bd63e505105011b25c3c11f753f7e3b8465ea739efddaccef8f0efac2137bac1"},
+    {file = "setuptools-70.3.0-py3-none-any.whl", hash = "sha256:fe384da74336c398e0d956d1cae0669bc02eed936cdb1d49b57de1990dc11ffc"},
+    {file = "setuptools-70.3.0.tar.gz", hash = "sha256:f171bab1dfbc86b132997f26a119f6056a57950d058587841a0082e8830f9dc5"},
 ]
 
 [package.extras]

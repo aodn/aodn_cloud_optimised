@@ -3,13 +3,13 @@ import os
 import timeit
 from typing import List
 
+import dask
 import s3fs
 import xarray as xr
 from coiled import Cluster
 from dask.distributed import Client
 from dask.distributed import LocalCluster
 from jsonschema import validate, ValidationError
-from aiobotocore.session import AioSession
 
 from .config import load_variable_from_config, load_dataset_config
 from .logging import get_logger
@@ -155,6 +155,17 @@ class CommonHandler:
                 "threads_per_worker": 2,
             },
         )
+        dask_distributed_config = load_dataset_config(
+            str(
+                importlib.resources.files("aodn_cloud_optimised.config").joinpath(
+                    "distributed.yaml"
+                )
+            )
+        )
+
+        dask.config.set(
+            dask_distributed_config
+        )  # to retrieve logging from workers locally
 
         if self.cluster_mode == "remote":
             try:
@@ -196,6 +207,7 @@ class CommonHandler:
                 f"Local Cluster dask dashboard available at {cluster.dashboard_link}"
             )
 
+        client.forward_logging()
         return client, cluster
 
     def close_cluster(self, client, cluster):
