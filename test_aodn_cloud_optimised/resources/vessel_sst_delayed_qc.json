@@ -2,15 +2,19 @@
   "dataset_name": "vessel_sst_delayed_qc",
   "logger_name": "vessel_sst_delayed_qc",
   "cloud_optimised_format": "parquet",
-  "cluster_options" : {
-    "n_workers": [8, 20],
+  "cluster_options": {
+    "n_workers": [
+      8,
+      20
+    ],
     "scheduler_vm_types": "t3.small",
     "worker_vm_types": "t3.large",
     "allow_ingress_from": "me",
     "compute_purchase_option": "spot_with_fallback",
     "worker_options": {
       "nthreads": 8,
-      "memory_limit": "32GB" }
+      "memory_limit": "32GB"
+    }
   },
   "batch_size": 600,
   "metadata_uuid": "",

@@ -1,141 +1,294 @@
 {
-    "type": "object",
-    "properties": {
-        "dataset_name": {"type": "string"},
-        "logger_name": {"type": "string"},
-        "cloud_optimised_format": {"type": "string"},
-        "cluster_options": {
-            "type": "object",
-            "properties": {
-                "n_workers": {
-                    "type": "array",
-                    "items": {"type": "integer"},
-                    "minItems": 2,
-                    "maxItems": 2
-                },
-                "scheduler_vm_types": {"type": "string"},
-                "worker_vm_types": {"type": "string"},
-                "allow_ingress_from": {"type": "string"},
-                "compute_purchase_option": {"type": "string"},
-                "worker_options": {
-                    "type": "object",
-                    "properties": {
-                        "nthreads": {"type": "integer"},
-                        "memory_limit": {"type": "string"}
-                    },
-                    "required": ["nthreads", "memory_limit"]
-                }
-            },
-            "required": ["n_workers", "scheduler_vm_types", "worker_vm_types", "allow_ingress_from", "compute_purchase_option", "worker_options"]
-        },
-        "metadata_uuid": {"type": "string"},
-        "gattrs_to_variables": {"type": "array", "items": {"type": "string"}},
-        "partition_keys": {"type": "array", "items": {"type": "string"}},
-        "time_extent": {
-            "type": "object",
-            "properties": {
-                "time": {"type": "string"},
-                "partition_timestamp_period": {"type": "string"}
-            },
-            "required": ["time", "partition_timestamp_period"]
-        },
-        "spatial_extent": {
-            "type": "object",
-            "properties": {
-                "lat": {"type": "string"},
-                "lon": {"type": "string"},
-                "spatial_resolution": {"type": "integer"}
-            },
-            "required": ["lat", "lon", "spatial_resolution"]
-        },
-        "schema": {
-            "type": "object",
-            "properties": {
-                "timestamp": {"type": "object"},
-                "polygon": {"type": "object"},
-                "filename": {"type": "object"}
-            },
-            "required": ["timestamp", "polygon", "filename"]
-        },
-        "dataset_gattrs": {
-            "type": "object",
-            "properties": {
-                "title": {"type": "string"}
-            },
-            "required": ["title"]
-        },
-        "force_old_pq_del": {"type": "boolean"},
-        "aws_opendata_registry": {
-            "type": "object",
-            "properties": {
-                "Name": {"type": "string"},
-                "Description": {"type": "string"},
-                "Documentation": {"type": "string"},
-                "Contact": {"type": "string"},
-                "ManagedBy": {"type": "string"},
-                "UpdateFrequency": {"type": "string"},
-                "Tags": {"type": "array", "items": {"type": "string"}},
-                "License": {"type": "string"},
-                "Resources": {
-                    "type": "array",
-                    "items": {
-                        "type": "object",
-                        "properties": {
-                            "Description": {"type": "string"},
-                            "ARN": {"type": "string"},
-                            "Region": {"type": "string"},
-                            "Type": {"type": "string"},
-                            "Explore": {"type": "array", "items": {"type": "string"}}
-                        },
-                        "required": ["Description", "ARN", "Region", "Type"]
-                    }
-                },
-                "DataAtWork": {
-                    "type": "object",
-                    "properties": {
-                        "Tutorials": {
-                            "type": "array",
-                            "items": {
-                                "type": "object",
-                                "properties": {
-                                    "Title": {"type": "string"},
-                                    "URL": {"type": "string"},
-                                    "Services": {"type": "string"},
-                                    "AuthorName": {"type": "string"},
-                                    "AuthorURL": {"type": "string"}
-                                },
-                                "required": ["Title", "URL"]
-                            }
-                        },
-                        "Tools & Applications": {
-                            "type": "array",
-                            "items": {
-                                "type": "object",
-                                "properties": {
-                                    "Title": {"type": "string"},
-                                    "URL": {"type": "string"},
-                                    "AuthorName": {"type": "string"},
-                                    "AuthorURL": {"type": "string"}
-                                },
-                                "required": ["Title", "URL"]
-                            }
-                        },
-                        "Publications": {
-                            "type": "array",
-                            "items": {
-                                "type": "object",
-                                "properties": {
-                                    "Title": {"type": "string"},
-                                    "URL": {"type": "string"},
-                                    "AuthorName": {"type": "string"}
-                                },
-                                "required": ["Title", "URL"]
-                            }
-                        }
-                    }
-                }
-            }
-        }
+  "type": "object",
+  "properties": {
+    "dataset_name": {
+      "type": "string"
     },
-    "required": ["dataset_name", "cluster_options", "cloud_optimised_format", "time_extent", "spatial_extent", "metadata_uuid", "schema"]
+    "logger_name": {
+      "type": "string"
+    },
+    "cloud_optimised_format": {
+      "type": "string"
+    },
+    "cluster_options": {
+      "type": "object",
+      "properties": {
+        "n_workers": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "scheduler_vm_types": {
+          "type": "string"
+        },
+        "worker_vm_types": {
+          "type": "string"
+        },
+        "allow_ingress_from": {
+          "type": "string"
+        },
+        "compute_purchase_option": {
+          "type": "string"
+        },
+        "worker_options": {
+          "type": "object",
+          "properties": {
+            "nthreads": {
+              "type": "integer"
+            },
+            "memory_limit": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "nthreads",
+            "memory_limit"
+          ]
+        }
+      },
+      "required": [
+        "n_workers",
+        "scheduler_vm_types",
+        "worker_vm_types",
+        "allow_ingress_from",
+        "compute_purchase_option",
+        "worker_options"
+      ]
+    },
+    "metadata_uuid": {
+      "type": "string"
+    },
+    "gattrs_to_variables": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "partition_keys": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "time_extent": {
+      "type": "object",
+      "properties": {
+        "time": {
+          "type": "string"
+        },
+        "partition_timestamp_period": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "time",
+        "partition_timestamp_period"
+      ]
+    },
+    "spatial_extent": {
+      "type": "object",
+      "properties": {
+        "lat": {
+          "type": "string"
+        },
+        "lon": {
+          "type": "string"
+        },
+        "spatial_resolution": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "lat",
+        "lon",
+        "spatial_resolution"
+      ]
+    },
+    "schema": {
+      "type": "object",
+      "properties": {
+        "timestamp": {
+          "type": "object"
+        },
+        "polygon": {
+          "type": "object"
+        },
+        "filename": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "timestamp",
+        "polygon",
+        "filename"
+      ]
+    },
+    "dataset_gattrs": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "title"
+      ]
+    },
+    "force_old_pq_del": {
+      "type": "boolean"
+    },
+    "aws_opendata_registry": {
+      "type": "object",
+      "properties": {
+        "Name": {
+          "type": "string"
+        },
+        "Description": {
+          "type": "string"
+        },
+        "Documentation": {
+          "type": "string"
+        },
+        "Contact": {
+          "type": "string"
+        },
+        "ManagedBy": {
+          "type": "string"
+        },
+        "UpdateFrequency": {
+          "type": "string"
+        },
+        "Tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "License": {
+          "type": "string"
+        },
+        "Resources": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "Description": {
+                "type": "string"
+              },
+              "ARN": {
+                "type": "string"
+              },
+              "Region": {
+                "type": "string"
+              },
+              "Type": {
+                "type": "string"
+              },
+              "Explore": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "Description",
+              "ARN",
+              "Region",
+              "Type"
+            ]
+          }
+        },
+        "DataAtWork": {
+          "type": "object",
+          "properties": {
+            "Tutorials": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "Title": {
+                    "type": "string"
+                  },
+                  "URL": {
+                    "type": "string"
+                  },
+                  "Services": {
+                    "type": "string"
+                  },
+                  "AuthorName": {
+                    "type": "string"
+                  },
+                  "AuthorURL": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "Title",
+                  "URL"
+                ]
+              }
+            },
+            "Tools & Applications": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "Title": {
+                    "type": "string"
+                  },
+                  "URL": {
+                    "type": "string"
+                  },
+                  "AuthorName": {
+                    "type": "string"
+                  },
+                  "AuthorURL": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "Title",
+                  "URL"
+                ]
+              }
+            },
+            "Publications": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "Title": {
+                    "type": "string"
+                  },
+                  "URL": {
+                    "type": "string"
+                  },
+                  "AuthorName": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "Title",
+                  "URL"
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "required": [
+    "dataset_name",
+    "cluster_options",
+    "cloud_optimised_format",
+    "time_extent",
+    "spatial_extent",
+    "metadata_uuid",
+    "schema"
+  ]
 }
