@@ -3,7 +3,7 @@
   "logger_name": "vessel_sst_delayed_qc",
   "cloud_optimised_format": "parquet",
   "cluster_options" : {
-    "n_workers": [1, 20],
+    "n_workers": [1, 25],
     "scheduler_vm_types": "t3.xlarge",
     "worker_vm_types": "t3.large",
     "allow_ingress_from": "me",
@@ -192,6 +192,91 @@
       "quality_control_flag_values": "B, C, D, E, F, G, H, J, K, L, M, Q, S, T, U, V, X, Z",
       "quality_control_flag_meanings": "Value_out_of_bounds Time_not_sequential Failed_T_Tw_Td_test Failed_true_wind_recomputation_test Platform_velocity_unrealistic Value_exceeds_threshold Discontinuity Erroneous_value Suspect_value_(visual) Value_located_over_land Instrument_malfunction Pre-flagged_as_suspect Spike_in_data_(visual) Time_duplicate Suspect_value_(statistical) Step_in_data_(statistical) Spike_in_data_(statistical) Value_passed_all_tests"
     },
+      "PL_WSPD_quality_control": {
+    "type": "string",
+    "standard_name": "wind_speed status_flag",
+    "long_name": "quality flags for wind_speed",
+    "quality_control_conventions": "IMOS Reference Table F",
+    "quality_control_set": 3,
+    "quality_control_flag_values": "B, C, D, E, F, G, H, J, K, L, M, Q, S, T, U, V, X, Z",
+    "quality_control_flag_meanings": "Value_out_of_bounds Time_not_sequential Failed_T_Tw_Td_test Failed_true_wind_recomputation_test Platform_velocity_unrealistic Value_exceeds_threshold Discontinuity Erroneous_value Suspect_value_(visual) Value_located_over_land Instrument_malfunction Pre-flagged_as_suspect Spike_in_data_(visual) Time_duplicate Suspect_value_(statistical) Step_in_data_(statistical) Spike_in_data_(statistical) Value_passed_all_tests"
+  },
+    "PL_WDIR": {
+      "type": "float",
+      "long_name": "platform relative wind direction",
+      "units": "degrees (clockwise from true north)",
+      "instrument": "Vaisala WAV151 (s/n W29135)",
+      "sensor_height": 21.100000381469727,
+      "distance_from_bow": 20.5,
+      "centerline_offset": -9999.0,
+      "observation_type": "measured",
+      "standard_name": "wind_from_direction",
+      "ancillary_variables": "PL_WDIR_quality_control"
+    },
+    "PL_WDIR_quality_control": {
+      "type": "string",
+      "standard_name": "wind_from_direction status_flag",
+      "long_name": "quality flags for wind_from_direction",
+      "quality_control_conventions": "IMOS Reference Table F",
+      "quality_control_set": 3,
+      "quality_control_flag_values": "B, C, D, E, F, G, H, J, K, L, M, Q, S, T, U, V, X, Z",
+      "quality_control_flag_meanings": "Value_out_of_bounds Time_not_sequential Failed_T_Tw_Td_test Failed_true_wind_recomputation_test Platform_velocity_unrealistic Value_exceeds_threshold Discontinuity Erroneous_value Suspect_value_(visual) Value_located_over_land Instrument_malfunction Pre-flagged_as_suspect Spike_in_data_(visual) Time_duplicate Suspect_value_(statistical) Step_in_data_(statistical) Spike_in_data_(statistical) Value_passed_all_tests"
+    },
+    "PL_WSPD": {
+      "type": "float",
+      "long_name": "platform relative wind speed",
+      "units": "meter second-1",
+      "instrument": "Vaisala WAA151 (s/n W42236)",
+      "sensor_height": 21.100000381469727,
+      "distance_from_bow": 20.5,
+      "centerline_offset": -9999.0,
+      "observation_type": "measured",
+      "standard_name": "wind_speed",
+      "ancillary_variables": "PL_WSPD_quality_control"
+    },
+    "RAD_PAR": {
+      "type": "float",
+      "long_name": "photosynthetically active radiation",
+      "units": "microeinstein meter-2",
+      "instrument": "unknown",
+      "rad_direction": "downwelling",
+      "observation_type": "measured",
+      "distance_from_bow": -9999.0,
+      "centerline_offset": -9999.0,
+      "sensor_height": -9999.0,
+      "standard_name": "surface_downwelling_photosynthetic_radiative_flux_in_air",
+      "ancillary_variables": "RAD_PAR_quality_control"
+    },
+    "RAD_PAR_quality_control": {
+    "type": "string",
+    "standard_name": "surface_downwelling_photosynthetic_radiative_flux_in_air status_flag",
+    "long_name": "quality flags for surface_downwelling_photosynthetic_radiative_flux_in_air",
+    "quality_control_conventions": "IMOS Reference Table F",
+    "quality_control_set": 3,
+    "quality_control_flag_values": "B, C, D, E, F, G, H, J, K, L, M, Q, S, T, U, V, X, Z",
+    "quality_control_flag_meanings": "Value_out_of_bounds Time_not_sequential Failed_T_Tw_Td_test Failed_true_wind_recomputation_test Platform_velocity_unrealistic Value_exceeds_threshold Discontinuity Erroneous_value Suspect_value_(visual) Value_located_over_land Instrument_malfunction Pre-flagged_as_suspect Spike_in_data_(visual) Time_duplicate Suspect_value_(statistical) Step_in_data_(statistical) Spike_in_data_(statistical) Value_passed_all_tests"
+  },
+    "RELH": {
+      "type": "float",
+      "long_name": "relative humidity (starboard)",
+      "units": "percent",
+      "instrument": "Vaisala HMP233 (s/n X20303107)",
+      "observation_type": "measured",
+      "distance_from_bow": -9999.0,
+      "centerline_offset": -9999.0,
+      "sensor_height": 11.600000381469727,
+      "standard_name": "relative_humidity",
+      "ancillary_variables": "RELH_quality_control"
+    },
+      "RELH_quality_control": {
+    "type": "string",
+    "standard_name": "relative_humidity status_flag",
+    "long_name": "quality flags for relative_humidity",
+    "quality_control_conventions": "IMOS Reference Table F",
+    "quality_control_set": 3,
+    "quality_control_flag_values": "B, C, D, E, F, G, H, J, K, L, M, Q, S, T, U, V, X, Z",
+    "quality_control_flag_meanings": "Value_out_of_bounds Time_not_sequential Failed_T_Tw_Td_test Failed_true_wind_recomputation_test Platform_velocity_unrealistic Value_exceeds_threshold Discontinuity Erroneous_value Suspect_value_(visual) Value_located_over_land Instrument_malfunction Pre-flagged_as_suspect Spike_in_data_(visual) Time_duplicate Suspect_value_(statistical) Step_in_data_(statistical) Spike_in_data_(statistical) Value_passed_all_tests"
+  },
     "PL_CRS": {
       "type": "float32",
       "long_name": "platform course",
