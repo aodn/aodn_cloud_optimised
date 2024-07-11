@@ -90,7 +90,7 @@ jobs:
 
       - name: Create and push new tag
         run: |
-          git tag -a v${{ env.new_version }}
+          git tag -a v${{ env.new_version }}  -m "Release v${{ env.new_version }}"
           git push origin v${{ env.new_version }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -109,5 +109,17 @@ jobs:
       - name: Upload assets to release
         run: |
           gh release upload v${{ env.new_version }} dist/*.whl dist/*.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Delete latest draft release
+      - name: Delete latest draft release
+        run: |
+          latest_release=$(gh release list --draft --limit 1 --json name,url | jq -r '.[0] | select(.name | test("^v[0-9]+\\.[0-9]+\\.[0-9]+(-\\w+)?")) | .url')
+          if [ -n "$latest_release" ]; then
+            gh release delete "$latest_release" -y
+          else
+            echo "No draft release found to delete."
+          fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
