@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "aodn-cloud-optimised"
-version = "0.1.11"
+version = "0.1.12"
 description = "Cloud optimised data formats for IMOS NetCDF files and CSVs."
 authors = ["lbesnard <laurent.besnard@utas.edu.au>"]
 license = "GNU General Public License v3.0"
