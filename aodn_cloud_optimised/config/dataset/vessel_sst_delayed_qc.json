@@ -4,7 +4,7 @@
   "cloud_optimised_format": "parquet",
   "cluster_options" : {
     "n_workers": [1, 20],
-    "scheduler_vm_types": "t3.large",
+    "scheduler_vm_types": "t3.xlarge",
     "worker_vm_types": "t3.large",
     "allow_ingress_from": "me",
     "compute_purchase_option": "spot_with_fallback",
@@ -19,7 +19,8 @@
   ],
   "partition_keys": [
     "timestamp",
-    "polygon"
+    "polygon",
+    "platform_code"
   ],
   "time_extent": {
     "time": "TIME",
