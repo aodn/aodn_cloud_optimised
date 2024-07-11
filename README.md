@@ -220,6 +220,9 @@ Every dataset should be configured with a config JSON file. A template exists at
 
 See [documentation](README_add_new_dataset.md) to learn how to add a new dataset
 
+# Create a new release
+Go to the [release](http://github.com/aodn/aodn_cloud_optimised/releases) page, create a new release and up the tag version.
+The new wheel will be build and pushed shortly afterwards
 
 # Notebooks
 
