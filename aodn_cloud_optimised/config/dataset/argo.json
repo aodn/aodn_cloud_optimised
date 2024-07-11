@@ -4,7 +4,7 @@
   "handler_class": "ArgoHandler",
   "cloud_optimised_format": "parquet",
   "cluster_options" : {
-    "n_workers": [8, 30],
+    "n_workers": [2, 80],
     "scheduler_vm_types": "t3.large",
     "worker_vm_types": "t3.xlarge",
     "allow_ingress_from": "me",
@@ -13,7 +13,7 @@
       "nthreads": 8,
       "memory_limit": "12GB" }
   },
-  "batch_size": 600,
+  "batch_size": 2500,
   "metadata_uuid": "4402cb50-e20a-44ee-93e6-4728259250d2",
   "gattrs_to_variables": [],
   "partition_keys": [
