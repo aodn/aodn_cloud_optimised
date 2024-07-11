@@ -125,6 +125,7 @@ Examples:
 
 ## As a python module
 
+Zarr example
 ```python
 from importlib.resources import files
 
@@ -159,6 +160,41 @@ if __name__ == "__main__":
     main()
 ```
 
+Prefect Example
+```python
+from importlib.resources import files
+
+from aodn_cloud_optimised.lib.CommonHandler import cloud_optimised_creation
+from aodn_cloud_optimised.lib.config import (
+    load_variable_from_config,
+    load_dataset_config,
+)
+from aodn_cloud_optimised.lib.s3Tools import s3_ls
+
+
+def main():
+    BUCKET_RAW_DEFAULT = load_variable_from_config("BUCKET_RAW_DEFAULT")
+    nc_obj_ls = s3_ls(BUCKET_RAW_DEFAULT, "IMOS/ANMN/NSW")
+
+    dataset_config = load_dataset_config(
+        str(files("aodn_cloud_optimised").joinpath("config").joinpath("dataset").joinpath("mooring_hourly_timeseries_delayed_qc.json")
+            )
+        )
+
+    cloud_optimised_creation(
+       nc_obj_ls,
+       dataset_config=dataset_config,
+       # clear_existing_data=True,  # this will delete existing data, be cautious! If testing change the paths below
+       # optimised_bucket_name="imos-data-lab-optimised",  # optional, default value in config/common.json
+       root_prefix_cloud_optimised_path="cloud_optimised/prefect_testing",  # optional, default value in config/common.json
+       cluster_mode='remote'
+    )
+
+
+if __name__ == "__main__":
+    main()
+
+```
 
 # Parquet GenericHandler - handler steps
 The conversion process in GenericHandler is broken down into a series of ordered steps, each responsible for a specific task. These steps include:
