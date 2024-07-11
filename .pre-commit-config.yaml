@@ -16,6 +16,8 @@ repos:
         exclude: '\.schema$'
       - id: trailing-whitespace
       - id: check-toml
+      - id: pretty-format-json
+        args: ["--autofix"]
 
   - repo: https://github.com/psf/black
     rev: 22.10.0
