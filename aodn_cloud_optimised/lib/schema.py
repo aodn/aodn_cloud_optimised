@@ -8,8 +8,8 @@ import xarray as xr
 
 
 def custom_encoder(obj):
-    if isinstance(obj, np.float32):
-        return float(obj)  # Convert np.float32 to Python float
+    if isinstance(obj, np.generic):
+        return obj.item()  # Convert NumPy scalar to its corresponding Python type
     raise TypeError(f"Object of type {type(obj)} is not JSON serializable")
 
 
@@ -61,16 +61,24 @@ def extract_variable_schema(dataset, var_name):
     """
     schema = {}
 
+    def map_dtype(dtype):
+        dtype_str = str(dtype)
+        if dtype_str.startswith("float"):
+            return "float"
+        elif dtype_str.startswith("|S"):
+            return "string"
+        return dtype_str
+
     # Process variables
     if var_name in dataset.variables:
         var_dtype = dataset.variables[var_name].dtype
-        dtype_str = str(var_dtype)
+        dtype_str = map_dtype(var_dtype)
         var_attrs = dataset.variables[var_name].attrs
         schema[var_name] = {"type": dtype_str, **var_attrs}
 
     elif var_name in dataset.coords:
         coord_dtype = dataset.coords[var_name].dtype
-        dtype_str = str(coord_dtype)
+        dtype_str = map_dtype(coord_dtype)
         coord_attrs = dataset.coords[var_name].attrs
         schema[var_name] = {"type": dtype_str, **coord_attrs}
 
@@ -203,6 +211,8 @@ def create_pyrarrow_schema_from_dict(schema_dict):
             dtype = pa.float64()  # assuming 'double' refers to float64
         elif dtype_str == "float":
             dtype = pa.float32()  # assuming 'float' refers to float32
+        elif dtype_str == "float32":
+            dtype = pa.float32()
         elif dtype_str == "string":
             dtype = pa.string()
         elif dtype_str == "byte":

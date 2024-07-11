@@ -40,7 +40,7 @@ pyarrow = "==16.0.0"
 rechunker = ">=0.5.2"
 s3fs = ">=2024.3.1"
 shapely = ">=2.0.4"
-xarray = { version = ">=2024.3.0", extras = ["complete"] }
+xarray = { version = ">=2024.6.0", extras = ["complete"] }
 zarr = ">=2.18.2"
 geopandas = ">=0.14.4"
 coiled = ">=1.27.2"
@@ -77,6 +77,7 @@ cloud_optimised_satellite_ghrsst_l3s_3day_daynighttime_single_sensor_australia =
 cloud_optimised_slocum_glider_delayed_qc = "aodn_cloud_optimised.bin.slocum_glider_delayed_qc:main"
 #cloud_optimised_srs_oc_ljco_to_parquet = "aodn_cloud_optimised.bin.srs_oc_ljco_to_parquet:main"
 cloud_optimised_vessel_xbt_realtime_nonqc = "aodn_cloud_optimised.bin.vessel_xbt_realtime_nonqc:main"
+cloud_optimised_vessel_sst_delayed_qc = "aodn_cloud_optimised.bin.vessel_sst_delayed_qc:main"
 cloud_optimised_wave_buoy_realtime_nonqc = "aodn_cloud_optimised.bin.wave_buoy_realtime_nonqc:main"
 generic_cloud_optimised_creation = "aodn_cloud_optimised.bin.generic_cloud_optimised_creation:main"
 
