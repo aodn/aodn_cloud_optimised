@@ -3,15 +3,19 @@
   "logger_name": "mooring_hourly_timeseries_delayed_qc",
   "handler_class": "AnmnHourlyTsHandler",
   "cloud_optimised_format": "parquet",
-  "cluster_options" : {
-    "n_workers": [8, 20],
+  "cluster_options": {
+    "n_workers": [
+      8,
+      20
+    ],
     "scheduler_vm_types": "t3.small",
     "worker_vm_types": "t3.large",
     "allow_ingress_from": "me",
     "compute_purchase_option": "spot_with_fallback",
     "worker_options": {
       "nthreads": 8,
-      "memory_limit": "8GB" }
+      "memory_limit": "8GB"
+    }
   },
   "batch_size": 30,
   "metadata_uuid": "7b901002-b1dc-46c3-89f2-b4951cedca48",
@@ -739,7 +743,7 @@
       "cell_methods": "TIME:min"
     },
     "PAR_max": {
-    "type": "float",
+      "type": "float",
       "units": "umole m-2 s-1",
       "standard_name": "downwelling_photosynthetic_photon_flux_in_sea_water",
       "long_name": "max data value in the bin, after rejection of flagged data",

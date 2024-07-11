@@ -29,6 +29,12 @@ TEST_FILE_NC_ARDC = os.path.join(
     ROOT_DIR, "resources", "BOM_20240301_CAPE-SORELL_RT_WAVE-PARAMETERS_monthly.nc"
 )
 
+TEST_FILE_NC_SOOP_SST = os.path.join(
+    ROOT_DIR,
+    "resources",
+    "IMOS_SOOP-SST_MT_20110101T000000Z_9HA2479_FV01_C-20120528T071958Z.nc",
+)
+
 DUMMY_FILE = os.path.join(ROOT_DIR, "resources", "DUMMY.nan")
 DUMMY_NC_FILE = os.path.join(ROOT_DIR, "resources", "DUMMY.nc")
 TEST_CSV_FILE = os.path.join(
@@ -44,6 +50,10 @@ DATASET_CONFIG_NC_ANMN_JSON = os.path.join(
 
 DATASET_CONFIG_NC_ARDC_JSON = os.path.join(
     ROOT_DIR, "resources", "wave_buoy_realtime_nonqc.json"
+)
+
+DATASET_CONFIG_NC_SOOP_SST_JSON = os.path.join(
+    ROOT_DIR, "resources", "vessel_sst_delayed_qc.json"
 )
 
 
@@ -129,6 +139,12 @@ class TestGenericHandler(unittest.TestCase):
             TEST_FILE_NC_ARDC,
         )
 
+        self._upload_to_s3(
+            "imos-data",
+            f"good_nc_soop_sst/{os.path.basename(TEST_FILE_NC_SOOP_SST)}",
+            TEST_FILE_NC_SOOP_SST,
+        )
+
         dataset_anmn_netcdf_config = load_dataset_config(DATASET_CONFIG_NC_ANMN_JSON)
         self.handler_nc_anmn_file = GenericHandler(
             optimised_bucket_name=self.BUCKET_OPTIMISED_NAME,
@@ -144,6 +160,18 @@ class TestGenericHandler(unittest.TestCase):
             optimised_bucket_name=self.BUCKET_OPTIMISED_NAME,
             root_prefix_cloud_optimised_path=self.ROOT_PREFIX_CLOUD_OPTIMISED_PATH,
             dataset_config=dataset_ardc_netcdf_config,
+            clear_existing_data=True,
+            force_previous_parquet_deletion=True,
+            cluster_mode="local",
+        )
+
+        dataset_soop_sst_netcdf_config = load_dataset_config(
+            DATASET_CONFIG_NC_SOOP_SST_JSON
+        )
+        self.handler_nc_soop_sst_file = GenericHandler(
+            optimised_bucket_name=self.BUCKET_OPTIMISED_NAME,
+            root_prefix_cloud_optimised_path=self.ROOT_PREFIX_CLOUD_OPTIMISED_PATH,
+            dataset_config=dataset_soop_sst_netcdf_config,
             clear_existing_data=True,
             force_previous_parquet_deletion=True,
             cluster_mode="local",
@@ -259,7 +287,8 @@ class TestGenericHandler(unittest.TestCase):
             schema_dict["TEMP"][b"standard_name"], b"sea_water_temperature"
         )
 
-    def test_parquet_nc_generic_handler(self):
+    def test_parquet_nc_generic_handler_h5netcdf(self):
+        # test with the h5netcdf engine
         nc_obj_ls = s3_ls("imos-data", "good_nc_ardc")
 
         # 1st pass
@@ -319,6 +348,37 @@ class TestGenericHandler(unittest.TestCase):
             "2807f3aa-4db0-4924-b64b-354ae8c10b58",
         )
         self.assertEqual(decoded_meta["dataset_metadata"]["title"], "ARDC")
+
+    def test_parquet_nc_generic_handler_scipy(self):
+        # test with the scipy engine
+        nc_obj_ls = s3_ls("imos-data", "good_nc_soop_sst")
+
+        # 1st pass
+        with patch.object(self.handler_nc_soop_sst_file, "s3_fs", new=self.s3_fs):
+            self.handler_nc_soop_sst_file.to_cloud_optimised([nc_obj_ls[0]])
+
+        # 2nd pass, process the same file a second time. Should be deleted
+        with patch.object(self.handler_nc_soop_sst_file, "s3_fs", new=self.s3_fs):
+            self.handler_nc_soop_sst_file.to_cloud_optimised_single(nc_obj_ls[0])
+
+        # read parquet
+        dataset_config = load_dataset_config(DATASET_CONFIG_NC_SOOP_SST_JSON)
+        dataset_name = dataset_config["dataset_name"]
+        dname = f"s3://{self.BUCKET_OPTIMISED_NAME}/{self.ROOT_PREFIX_CLOUD_OPTIMISED_PATH}/{dataset_name}.parquet/"
+
+        parquet_dataset = pd.read_parquet(
+            dname,
+            engine="pyarrow",
+            storage_options={
+                "client_kwargs": {"endpoint_url": "http://127.0.0.1:5555"}
+            },
+        )
+
+        self.assertEqual(parquet_dataset["timestamp"][0], 1293840000)
+
+        self.assertEqual(
+            parquet_dataset["TIME"][0], pd.Timestamp("2011-01-01 00:00:00")
+        )
 
     def test_parquet_csv_generic_handler(self):  # , MockS3FileSystem):
         csv_obj_ls = s3_ls("imos-data", "good_csv", suffix=".csv")

@@ -1,16 +1,14 @@
 import json
-import unittest
-from unittest.mock import patch, mock_open, MagicMock
-
-import pyarrow as pa
-import xarray as xr
 import os
+import unittest
+
 import boto3
+import pyarrow as pa
+import s3fs
 from moto import mock_aws
 from moto.moto_server.threaded_moto_server import ThreadedMotoServer
-from aodn_cloud_optimised.lib.s3Tools import s3_ls
-import s3fs
 
+from aodn_cloud_optimised.lib.s3Tools import s3_ls
 from aodn_cloud_optimised.lib.schema import (
     create_pyrarrow_schema_from_dict,
     create_pyarrow_schema,
@@ -157,7 +155,7 @@ class TestNetCDFSchemaGeneration(unittest.TestCase):
 
         json_expected = {
             "TEMP": {
-                "type": "float32",
+                "type": "float",
                 "ancillary_variables": "TEMP_quality_control",
                 "long_name": "sea_water_temperature",
                 "standard_name": "sea_water_temperature",

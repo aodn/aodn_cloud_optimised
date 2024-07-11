@@ -1,6 +1,6 @@
 {
-    "dataset_name": "radar_TurquoiseCoast_velocity_hourly_average_delayed_qc",
-    "parent_config": "acorn_gridded_qc_main.json",
-    "logger_name": "radar_TurquoiseCoast_velocity_hourly_average_delayed_qc",
-    "metadata_uuid": ""
+  "dataset_name": "radar_TurquoiseCoast_velocity_hourly_average_delayed_qc",
+  "parent_config": "acorn_gridded_qc_main.json",
+  "logger_name": "radar_TurquoiseCoast_velocity_hourly_average_delayed_qc",
+  "metadata_uuid": ""
 }

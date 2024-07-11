@@ -160,16 +160,34 @@ class GenericHandler(CommonHandler):
         }
         ```
         """
-        with xr.open_dataset(netcdf_fp, engine="h5netcdf") as ds:
-            # Convert xarray to pandas DataFrame
-            df = ds.to_dataframe()
-            # TODO: call check function on variable attributes
-            if self.check_var_attributes(ds):
-                yield df, ds
-            else:
-                self.logger.error(
-                    f"{self.uuid_log}: The NetCDF file does not conform to the pre-defined schema."
-                )
+        try:
+            with xr.open_dataset(netcdf_fp, engine="h5netcdf") as ds:
+                # Convert xarray to pandas DataFrame
+                df = ds.to_dataframe()
+                # TODO: call check function on variable attributes
+                if self.check_var_attributes(ds):
+                    yield df, ds
+                else:
+                    self.logger.error(
+                        f"{self.uuid_log}: The NetCDF file does not conform to the pre-defined schema."
+                    )
+        except:
+            self.logger.warning(
+                f'{self.uuid_log}: The default engine "h5netcdf" could not be used. Falling back '
+                f'to using "scipy" engine. This is an issue with old NetCDF files'
+            )
+            # some old NetCDF files arent compatible with h5netcdf, such as
+            # https://thredds.aodn.org.au/thredds/dodsC/IMOS/SOOP/SOOP-SST/9HA2479_Pacific-Sun/2011/IMOS_SOOP-SST_MT_20110101T000000Z_9HA2479_FV01_C-20120528T071958Z.nc.html
+            with xr.open_dataset(netcdf_fp, engine="scipy") as ds:
+                # Convert xarray to pandas DataFrame
+                df = ds.to_dataframe()
+                # TODO: call check function on variable attributes
+                if self.check_var_attributes(ds):
+                    yield df, ds
+                else:
+                    self.logger.error(
+                        f"{self.uuid_log}: The NetCDF file does not conform to the pre-defined schema."
+                    )
 
     def preprocess_data(
         self, fp
@@ -621,7 +639,7 @@ class GenericHandler(CommonHandler):
                     #    #TODO: improve this to return all the varatts as well
                     #    var_config = generate_json_schema_var_from_netcdf(self.input_object_key, column_name)
                     self.logger.warning(
-                        f"{self.uuid_log}: {filename}; Variable missing from provided pyarrow_schema configuration. Please add to dataset configuration (ensure correct quoting): {var_config}"
+                        f"{self.uuid_log}: {filename}; {column_name}: Variable missing from provided pyarrow_schema configuration. Please add to dataset configuration (ensure correct quoting): {var_config}"
                     )
 
         for partition_key in partition_keys:
@@ -1003,6 +1021,8 @@ class GenericHandler(CommonHandler):
 
             # Trigger garbage collection
             gc.collect()
+
+            client.run_on_scheduler(gc.collect)  # GC!
 
         self.close_cluster(client, cluster)
         self.logger.handlers.clear()

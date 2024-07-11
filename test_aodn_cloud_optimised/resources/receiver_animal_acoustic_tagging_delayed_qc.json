@@ -2,19 +2,27 @@
   "dataset_name": "receiver_animal_acoustic_tagging_delayed_qc",
   "logger_name": "receiver_animal_acoustic_tagging_delayed_qc",
   "cloud_optimised_format": "parquet",
-  "cluster_options" : {
-    "n_workers": [4, 20],
+  "cluster_options": {
+    "n_workers": [
+      4,
+      20
+    ],
     "scheduler_vm_types": "t3.small",
     "worker_vm_types": "t3.large",
     "allow_ingress_from": "me",
     "compute_purchase_option": "spot_with_fallback",
     "worker_options": {
       "nthreads": 8,
-      "memory_limit": "32GB" }
+      "memory_limit": "32GB"
+    }
   },
   "metadata_uuid": "4a97bd11-e821-4682-8b20-cb69201f3223",
   "gattrs_to_variables": [],
-  "partition_keys": ["transmitter_id", "timestamp", "polygon"],
+  "partition_keys": [
+    "transmitter_id",
+    "timestamp",
+    "polygon"
+  ],
   "pandas_read_csv_config": {
     "delimiter": ";",
     "header": 0,
