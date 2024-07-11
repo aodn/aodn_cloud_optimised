@@ -99,11 +99,11 @@ jobs:
         run: |
           sudo apt-get install gh
 
-      - name: Create GitHub release
-        run: |
-          gh release create v${{ env.new_version }} --generate-notes
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #      - name: Create GitHub release
+      #        run: |
+      #          gh release create v${{ env.new_version }} --generate-notes
+      #        env:
+      #          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 
       - name: Upload assets to release
