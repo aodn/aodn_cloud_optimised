@@ -17,6 +17,7 @@ repos:
       - id: trailing-whitespace
       - id: check-toml
       - id: pretty-format-json
+        files: \.json$
         args: ["--autofix", "--no-sort-keys"]
 
   - repo: https://github.com/psf/black
@@ -28,10 +29,12 @@ repos:
     rev: '1.8.3'
     hooks:
       - id: poetry-check
-        args: [ "--lock" ]
-        verbose: true
+        args: ["--lock", "--quiet"]  # Add --quiet to run poetry-check quietly
+        verbose: false
       - id: poetry-export
-        args: ["-f", "requirements.txt"]
-        verbose: true
+        args: ["-f", "requirements.txt", "--quiet"]
+        verbose: false
       - id: poetry-lock
+        args: ["--quiet"]
       - id: poetry-install
+        args: ["--quiet"]
