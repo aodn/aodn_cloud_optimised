@@ -1,11 +1,13 @@
 import importlib
 import os
+import tempfile
 import timeit
 from typing import List
 
 import dask
 import s3fs
 import xarray as xr
+import yaml
 from coiled import Cluster
 from dask.distributed import Client
 from dask.distributed import LocalCluster
@@ -72,7 +74,6 @@ class CommonHandler:
             )
 
         self.dataset_config = kwargs.get("dataset_config")
-
         self.cloud_optimised_format = self.dataset_config.get("cloud_optimised_format")
 
         self.dataset_name = self.dataset_config["dataset_name"]
@@ -428,40 +429,41 @@ class CommonHandler:
         except RuntimeError:
             return False  # If a RuntimeError is raised, the Dataset is closed
 
-    # TODO: this is not the way aws registry files are created. To remove/modify
-    # def push_metadata_aws_registry(self) -> None:
-    #     """
-    #     Pushes metadata to the AWS OpenData Registry.
-    #
-    #     If the 'aws_opendata_registry' key is missing from the dataset configuration, a warning is logged.
-    #     Otherwise, the metadata is extracted from the 'aws_opendata_registry' key, converted to YAML format,
-    #     and uploaded to the specified S3 bucket.
-    #
-    #     Returns:
-    #         None
-    #     """
-    #     if "aws_opendata_registry" not in self.dataset_config:
-    #         self.logger.warning(
-    #             "Missing dataset configuration to populate AWS OpenData Registry"
-    #         )
-    #     else:
-    #         aws_registry_config = self.dataset_config["aws_opendata_registry"]
-    #         yaml_data = yaml.dump(aws_registry_config)
-    #
-    #         s3 = boto3.client("s3")
-    #
-    #         key = os.path.join(
-    #             self.root_prefix_cloud_optimised_path, self.dataset_name + ".yaml"
-    #         )
-    #         # Upload the YAML data to S3
-    #         s3.put_object(
-    #             Bucket=self.optimised_bucket_name,
-    #             Key=key,
-    #             Body=yaml_data.encode("utf-8"),
-    #         )
-    #         self.logger.info(
-    #             f"Push AWS Registry file to: {os.path.join(self.root_prefix_cloud_optimised_path, self.dataset_name + '.yaml')}"
-    #         )
+    def create_metadata_aws_registry(self, target_directory=None):
+        """
+        Creates a YAML file with metadata for the AWS OpenData Registry.
+
+        If the 'aws_opendata_registry' key is missing from the dataset configuration, a warning is logged.
+        Otherwise, the metadata is extracted from the 'aws_opendata_registry' key, converted to YAML format,
+        and saved to the specified directory.
+
+        Args:
+            target_directory (str, optional): Directory where the YAML file should be created.
+                If not provided, a temporary directory is used.
+
+        Returns:
+            None
+        """
+        if "aws_opendata_registry" not in self.dataset_config:
+            self.logger.warning(
+                "Missing dataset configuration to populate AWS OpenData Registry"
+            )
+            return
+
+        aws_registry_config = self.dataset_config["aws_opendata_registry"]
+        yaml_data = yaml.dump(aws_registry_config)
+
+        if target_directory:
+            file_path = os.path.join(target_directory, f"{self.dataset_name}.yaml")
+        else:
+            target_directory = tempfile.gettempdir()
+            file_path = os.path.join(target_directory, f"{self.dataset_name}.yaml")
+
+        # Write the YAML data to the file
+        with open(file_path, "w") as file:
+            file.write(yaml_data)
+
+        self.logger.info(f"Created AWS Registry file at: {file_path}")
 
     def postprocess(self, ds: xr.Dataset) -> None:
         """

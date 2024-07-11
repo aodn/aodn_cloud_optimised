@@ -15,15 +15,15 @@ As a rule of thumbs, for:
 * **gridded** dataset (NetCDF) -> **Zarr**
 
 ## Creating a Parquet dataset for NetCDF
-As an example, we'll explain the ```aodn_cloud_optimised.config.anfog_slocum_glider.json``` config file.
+As an example, we'll explain the ```aodn_cloud_optimised.config.slocum_glider_delayed_qc.json``` config file.
 
 ### The Basics
 The first sections to add are
 
 ```json
 {
-  "dataset_name": "anfog_slocum_glider",
-  "logger_name": "anfog_slocum_glider",
+  "dataset_name": "slocum_glider_delayed_qc",
+  "logger_name": "slocum_glider_delayed_qc",
   "cloud_optimised_format": "parquet",
   "metadata_uuid": "a681fdba-c6d9-44ab-90b9-113b0ed03536",
   ...
@@ -99,8 +99,8 @@ Simply copy this into the ```schema``` key of the dataset config, so that:
 
 ```json
 {
-  "dataset_name": "anfog_slocum_glider",
-  "logger_name": "anfog_slocum_glider",
+  "dataset_name": "slocum_glider_delayed_qc",
+  "logger_name": "slocum_glider_delayed_qc",
   "cloud_optimised_format": "parquet",
   "metadata_uuid": "a681fdba-c6d9-44ab-90b9-113b0ed03536",
   "schema": {
@@ -245,12 +245,136 @@ To add common global attributes to the metadata parquet sidecar, add:
 ### Force search and deletion of previous parquet files
 Force search for existing parquet files to delete when creating new ones. This can end up being really slow if there are a lot of objets (for example Argo)
 ```json
-  "force_old_pq_del": true
+  "force_previous_parquet_deletion": true
 ```
 
+
+
+
+
+## Creating a Parquet dataset for CSV
+To create a parquet dataset from CSV files, all of the above is relevant. However, there are some special config to deal
+with various CSV formats.
+
+As an example, we will use the  ```aodn_cloud_optimised.config.aatams_acoustic_tagging.json``` config file.
+
+The config is based on the ```pandas.read_csv``` documentation. Below is only a short list of optional arguments. Any options
+from the ```pandas.read_csv``` could be used
+
+```json
+  "pandas_read_csv_config": {
+    "delimiter": ";",
+    "header": 0,
+    "index_col": "detection_timestamp",
+    "parse_dates": [
+      "detection_timestamp"
+    ],
+    "na_values": [
+      "N/A",
+      "NaN"
+    ],
+    "encoding": "utf-8"
+  },
+```
+
+## Creating a Zarr dataset
+
+As an example, we'll explain the ```aodn_cloud_optimised.config.radar_velocity_hourly_average_delayed_qc_main.json``` config file.
+Please note that it is possible to have a main config and a child config to avoid duplication. This is especially useful for IMOS Zarr dataset
+such as the ones from the Radar and GHRSST dataset which are similar in terms of metadata.
+
+See for example the two configurations files which are related:
+https://github.com/aodn/aodn_cloud_optimised/blob/main/aodn_cloud_optimised/config/dataset/radar_velocity_hourly_average_delayed_qc_main.json
+https://github.com/aodn/aodn_cloud_optimised/blob/main/aodn_cloud_optimised/config/dataset/radar_TurquoiseCoast_velocity_hourly_average_delayed_qc.json
+
+### The Basics
+The first section to add is
+
+```json
+{
+  "dataset_name": "radar_velocity_hourly_average_delayed_qc_main",
+  "logger_name": "radar_velocity_hourly_average_delayed_qc_main",
+  "cloud_optimised_format": "zarr",
+  "metadata_uuid": "a681fdba-c6d9-44ab-90b9-113b0ed03536",
+  ...
+}
+```
+* dataset_name: the name as it will appear on AWS S3 storage
+* cloud_optimised_format key is important as this will allow the code to either choose the Parquet handler or the zarr handler
+* metadata_uuid: the GeoNetwork uuid metadata record. This value will be written in the parquet sidecar file
+
+### The chunks
+
+```json
+    "dimensions": {
+        "time": {"name": "TIME",
+                 "chunk": 1500,
+                 "rechunk": true},
+        "latitude": {"name": "J",
+                     "chunk": 60},
+        "longitude": {"name": "I",
+                      "chunk": 59}
+    },
+```
+### Variable Template
+
+The name of a variable which will be used as a template to create missing variables from the dataset and have similar shape
+
+```json
+    "var_template_shape": "UCUR",
+
+```
+
+### Variables to drop
+when setting `region` explicitly in to_zarr() method, all variables in the dataset to write must have at least one
+dimension in common with the region's dimensions ['TIME'].
+We need to remove the variables from the dataset which fall into this condition:
+```json
+    "vars_to_drop_no_common_dimension": ["I", "J", "LATITUDE", "LONGITUDE", "GDOP"],
+
+```
+### Creating the Schema
+
+See same section above. As for parquet
+
 ### AWS OpenData registry
-In order to publicise the dataset on the OpenData Registry, add the following to the config. A ```yaml``` file will be
-created/updated alongside the parquet dataset.
+See same section above. As for parquet
+
+
+## Cluster options
+In order to create the dataset on a remote cluster (Coiled), the following configuration needs to be added:
+```json
+  "cluster_options" : {
+    "n_workers": [2, 20],
+    "scheduler_vm_types": "t3.small",
+    "worker_vm_types": "t3.large",
+    "allow_ingress_from": "me",
+    "compute_purchase_option": "spot_with_fallback",
+    "worker_options": {
+      "nthreads": 8,
+      "memory_limit": "16GB" }
+  },
+  "batch_size": 1000,
+
+```
+
+See [coiled documentation](https://docs.coiled.io/user_guide/clusters/index.html)
+
+Every dataset is different, and so will be the configuration above. The values of the ```batch_size```,
+```number of n_workers```, ```scheduler_vm_types``` and  ```worker_vm_types``` are all intertwined.
+
+It is necessary to understand the dataset, how big are the input files, and to run some tests on the coiled cluster to
+find the best cluster options to process input files as quickly and cheaply as possible.
+
+Too big of a ```batch_size``` with a too small of a ```worker_vm_types``` will lead to out of memory issues, and higher Global Interpreter Lock (GIL)
+
+
+
+## AWS OpenData registry
+In order to publicise the dataset on the OpenData Registry, the following needs to be added to every dataset configuration file.
+Once populated, the registry files needed by AWS can be created by the script below,
+and then added to the AWS OpenData Github repository https://github.com/awslabs/open-data-registry
+
 
 ```json
   "aws_opendata_registry": {
@@ -343,84 +467,24 @@ created/updated alongside the parquet dataset.
 
 ```
 
-## Creating a Parquet dataset for CSV
-To create a parquet dataset from CSV files, all of the above is relevant. However, there are some special config to deal
-with various CSV formats.
+A script exists to facilitate the creation of all registry entries:
+```shell
+cloud_optimised_create_aws_registry_dataset -h
+usage: cloud_optimised_create_aws_registry_dataset [-h] [-f FILE] [-d DIRECTORY] [-a]
 
-As an example, we will use the  ```aodn_cloud_optimised.config.aatams_acoustic_tagging.json``` config file.
+        Create AWS OpenData Registry YAML files from the dataset configuration, ready to be added to the OpenData Github
+        repository.
+        The script can be run in three ways:
+            1. Convert a specific JSON file to YAML using '-f' or '--file'.
+            2. Convert all JSON files in the directory using '-a' or '--all'.
+            3. Run interactively to list all available JSON files and prompt
+               the user to choose one to convert.
 
-The config is based on the ```pandas.read_csv``` documentation. Below is only a short list of optional arguments. Any options
-from the ```pandas.read_csv``` could be used
 
-```json
-  "pandas_read_csv_config": {
-    "delimiter": ";",
-    "header": 0,
-    "index_col": "detection_timestamp",
-    "parse_dates": [
-      "detection_timestamp"
-    ],
-    "na_values": [
-      "N/A",
-      "NaN"
-    ],
-    "encoding": "utf-8"
-  },
+options:
+  -h, --help            show this help message and exit
+  -f FILE, --file FILE  Name of a specific JSON file to convert.
+  -d DIRECTORY, --directory DIRECTORY
+                        Output directory to save converted YAML files.
+  -a, --all             Convert all JSON files in the directory.
 ```
-
-## Creating a Zarr dataset
-
-As an example, we'll explain the ```aodn_cloud_optimised.config.acorn_gridded_qc_turq.json``` config file.
-
-### The Basics
-The first section to add is
-
-```json
-{
-  "dataset_name": "acorn_gridded_qc_turq",
-  "logger_name": "acorn_gridded_qc_turq",
-  "cloud_optimised_format": "zarr",
-  "metadata_uuid": "a681fdba-c6d9-44ab-90b9-113b0ed03536",
-  ...
-}
-```
-* dataset_name: the name as it will appear on AWS S3 storage
-* cloud_optimised_format key is important as this will allow the code to either choose the Parquet handler or the zarr handler
-* metadata_uuid: the Geonetwork uuid metadata record. This value will be written in the parquet sidecar file
-
-### The chunks
-
-```json
-    "dimensions": {
-        "time": {"name": "TIME",
-                 "chunk": 1500,
-                 "rechunk": true},
-        "latitude": {"name": "J",
-                     "chunk": 60},
-        "longitude": {"name": "I",
-                      "chunk": 59}
-    },
-```
-### Variable Template
-
-The name of a variable which will be used as a template to create missing variables from the dataset and have similar shape
-
-```json
-    "var_template_shape": "UCUR",
-
-```
-
-### Variables to drop
-when setting `region` explicitly in to_zarr() method, all variables in the dataset to write must have at least one
-dimension in common with the region's dimensions ['TIME'].
-We need to remove the variables from the dataset which fall into this condition:
-```json
-    "vars_to_drop_no_common_dimension": ["I", "J", "LATITUDE", "LONGITUDE", "GDOP"],
-
-```
-### Creating the Schema
-
-See same section above. As for parquet
-
-### AWS OpenData registry
-See same section above. As for parquet
