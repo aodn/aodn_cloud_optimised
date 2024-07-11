@@ -333,6 +333,25 @@ We need to remove the variables from the dataset which fall into this condition:
     "vars_to_drop_no_common_dimension": ["I", "J", "LATITUDE", "LONGITUDE", "GDOP"],
 
 ```
+
+Also, when a dataset to be converted to ZARR has some variables which aren't always in the dataset,
+it is at the moment (July 2024) good practice to drop them:
+```json
+    "wind_speed_dtime_from_sst": {
+      "type": "float32",
+      "drop_vars": true
+    },
+```
+
+Ideally we should create an empty variable. This is implemented in the zarr handler with the preprocess function to be used
+by xarray_open_mfdataset. However, this function is currently not used, as it leads to some issues when running in a cluster.
+
+After multiple testing of this preprocess function, which is very hard to serialise, it needs to be outside of the handler class.
+But even outised of the class, even with an empty preprocess function, calling it with mfdataset will send the data back
+to the machine creating the coiled cluster!! Insane behaviour, but it happens. So far, the hack has been to call
+the preprocess function after mfdataset and keeping it "simple".
+
+
 ### Creating the Schema
 
 See same section above. As for parquet
