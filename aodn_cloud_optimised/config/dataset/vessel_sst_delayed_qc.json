@@ -2,15 +2,19 @@
   "dataset_name": "vessel_sst_delayed_qc",
   "logger_name": "vessel_sst_delayed_qc",
   "cloud_optimised_format": "parquet",
-  "cluster_options" : {
-    "n_workers": [1, 25],
+  "cluster_options": {
+    "n_workers": [
+      1,
+      25
+    ],
     "scheduler_vm_types": "t3.xlarge",
     "worker_vm_types": "t3.large",
     "allow_ingress_from": "me",
     "compute_purchase_option": "spot_with_fallback",
     "worker_options": {
       "nthreads": 8,
-      "memory_limit": "32GB" }
+      "memory_limit": "32GB"
+    }
   },
   "batch_size": 500,
   "metadata_uuid": "",
@@ -192,15 +196,15 @@
       "quality_control_flag_values": "B, C, D, E, F, G, H, J, K, L, M, Q, S, T, U, V, X, Z",
       "quality_control_flag_meanings": "Value_out_of_bounds Time_not_sequential Failed_T_Tw_Td_test Failed_true_wind_recomputation_test Platform_velocity_unrealistic Value_exceeds_threshold Discontinuity Erroneous_value Suspect_value_(visual) Value_located_over_land Instrument_malfunction Pre-flagged_as_suspect Spike_in_data_(visual) Time_duplicate Suspect_value_(statistical) Step_in_data_(statistical) Spike_in_data_(statistical) Value_passed_all_tests"
     },
-      "PL_WSPD_quality_control": {
-    "type": "string",
-    "standard_name": "wind_speed status_flag",
-    "long_name": "quality flags for wind_speed",
-    "quality_control_conventions": "IMOS Reference Table F",
-    "quality_control_set": 3,
-    "quality_control_flag_values": "B, C, D, E, F, G, H, J, K, L, M, Q, S, T, U, V, X, Z",
-    "quality_control_flag_meanings": "Value_out_of_bounds Time_not_sequential Failed_T_Tw_Td_test Failed_true_wind_recomputation_test Platform_velocity_unrealistic Value_exceeds_threshold Discontinuity Erroneous_value Suspect_value_(visual) Value_located_over_land Instrument_malfunction Pre-flagged_as_suspect Spike_in_data_(visual) Time_duplicate Suspect_value_(statistical) Step_in_data_(statistical) Spike_in_data_(statistical) Value_passed_all_tests"
-  },
+    "PL_WSPD_quality_control": {
+      "type": "string",
+      "standard_name": "wind_speed status_flag",
+      "long_name": "quality flags for wind_speed",
+      "quality_control_conventions": "IMOS Reference Table F",
+      "quality_control_set": 3,
+      "quality_control_flag_values": "B, C, D, E, F, G, H, J, K, L, M, Q, S, T, U, V, X, Z",
+      "quality_control_flag_meanings": "Value_out_of_bounds Time_not_sequential Failed_T_Tw_Td_test Failed_true_wind_recomputation_test Platform_velocity_unrealistic Value_exceeds_threshold Discontinuity Erroneous_value Suspect_value_(visual) Value_located_over_land Instrument_malfunction Pre-flagged_as_suspect Spike_in_data_(visual) Time_duplicate Suspect_value_(statistical) Step_in_data_(statistical) Spike_in_data_(statistical) Value_passed_all_tests"
+    },
     "PL_WDIR": {
       "type": "float",
       "long_name": "platform relative wind direction",
@@ -248,14 +252,14 @@
       "ancillary_variables": "RAD_PAR_quality_control"
     },
     "RAD_PAR_quality_control": {
-    "type": "string",
-    "standard_name": "surface_downwelling_photosynthetic_radiative_flux_in_air status_flag",
-    "long_name": "quality flags for surface_downwelling_photosynthetic_radiative_flux_in_air",
-    "quality_control_conventions": "IMOS Reference Table F",
-    "quality_control_set": 3,
-    "quality_control_flag_values": "B, C, D, E, F, G, H, J, K, L, M, Q, S, T, U, V, X, Z",
-    "quality_control_flag_meanings": "Value_out_of_bounds Time_not_sequential Failed_T_Tw_Td_test Failed_true_wind_recomputation_test Platform_velocity_unrealistic Value_exceeds_threshold Discontinuity Erroneous_value Suspect_value_(visual) Value_located_over_land Instrument_malfunction Pre-flagged_as_suspect Spike_in_data_(visual) Time_duplicate Suspect_value_(statistical) Step_in_data_(statistical) Spike_in_data_(statistical) Value_passed_all_tests"
-  },
+      "type": "string",
+      "standard_name": "surface_downwelling_photosynthetic_radiative_flux_in_air status_flag",
+      "long_name": "quality flags for surface_downwelling_photosynthetic_radiative_flux_in_air",
+      "quality_control_conventions": "IMOS Reference Table F",
+      "quality_control_set": 3,
+      "quality_control_flag_values": "B, C, D, E, F, G, H, J, K, L, M, Q, S, T, U, V, X, Z",
+      "quality_control_flag_meanings": "Value_out_of_bounds Time_not_sequential Failed_T_Tw_Td_test Failed_true_wind_recomputation_test Platform_velocity_unrealistic Value_exceeds_threshold Discontinuity Erroneous_value Suspect_value_(visual) Value_located_over_land Instrument_malfunction Pre-flagged_as_suspect Spike_in_data_(visual) Time_duplicate Suspect_value_(statistical) Step_in_data_(statistical) Spike_in_data_(statistical) Value_passed_all_tests"
+    },
     "RELH": {
       "type": "float",
       "long_name": "relative humidity (starboard)",
@@ -268,15 +272,15 @@
       "standard_name": "relative_humidity",
       "ancillary_variables": "RELH_quality_control"
     },
-      "RELH_quality_control": {
-    "type": "string",
-    "standard_name": "relative_humidity status_flag",
-    "long_name": "quality flags for relative_humidity",
-    "quality_control_conventions": "IMOS Reference Table F",
-    "quality_control_set": 3,
-    "quality_control_flag_values": "B, C, D, E, F, G, H, J, K, L, M, Q, S, T, U, V, X, Z",
-    "quality_control_flag_meanings": "Value_out_of_bounds Time_not_sequential Failed_T_Tw_Td_test Failed_true_wind_recomputation_test Platform_velocity_unrealistic Value_exceeds_threshold Discontinuity Erroneous_value Suspect_value_(visual) Value_located_over_land Instrument_malfunction Pre-flagged_as_suspect Spike_in_data_(visual) Time_duplicate Suspect_value_(statistical) Step_in_data_(statistical) Spike_in_data_(statistical) Value_passed_all_tests"
-  },
+    "RELH_quality_control": {
+      "type": "string",
+      "standard_name": "relative_humidity status_flag",
+      "long_name": "quality flags for relative_humidity",
+      "quality_control_conventions": "IMOS Reference Table F",
+      "quality_control_set": 3,
+      "quality_control_flag_values": "B, C, D, E, F, G, H, J, K, L, M, Q, S, T, U, V, X, Z",
+      "quality_control_flag_meanings": "Value_out_of_bounds Time_not_sequential Failed_T_Tw_Td_test Failed_true_wind_recomputation_test Platform_velocity_unrealistic Value_exceeds_threshold Discontinuity Erroneous_value Suspect_value_(visual) Value_located_over_land Instrument_malfunction Pre-flagged_as_suspect Spike_in_data_(visual) Time_duplicate Suspect_value_(statistical) Step_in_data_(statistical) Spike_in_data_(statistical) Value_passed_all_tests"
+    },
     "PL_CRS": {
       "type": "float32",
       "long_name": "platform course",
