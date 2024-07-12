@@ -35,7 +35,7 @@ class AnmnHourlyTsHandler(GenericHandler):
             assert set(ds.dims) == {
                 "OBSERVATION",
                 "INSTRUMENT",
-            }, f"Unexpected dimensions {ds.dims.keys()}"
+            }, f"Unexpected dimensions {set(ds.dims)}"
 
             df = ds.drop_dims("INSTRUMENT").to_dataframe()
             instrument_info = ds.drop_dims("OBSERVATION").to_dataframe()
