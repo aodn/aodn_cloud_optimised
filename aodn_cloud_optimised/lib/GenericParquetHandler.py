@@ -394,19 +394,22 @@ class GenericHandler(CommonHandler):
                 if pd.api.types.is_datetime64_any_dtype(df.index):
                     datetime_var = df.index
 
-        today = datetime.today()
-        # assume that todays year + 1 is the future, and no in-situ data should be in the future, since we're not dealing
-        # with models!
-        bad_year_limit = today.year + 1
-        if any(datetime_var.year > bad_year_limit):
-            bad_time_values = datetime_var[datetime_var.year > bad_year_limit].unique()
+        if not isinstance(df.index, pd.MultiIndex) and (time_varname in df.index.names):
+            today = datetime.today()
+            # assume that todays year + 1 is the future, and no in-situ data should be in the future, since we're not dealing
+            # with models!
+            bad_year_limit = today.year + 1
+            if any(datetime_var.year > bad_year_limit):
+                bad_time_values = datetime_var[
+                    datetime_var.year > bad_year_limit
+                ].unique()
 
-            self.logger.error(
-                f"{self.uuid_log}: {f.path}: Some values of the time variable were bad and removed:\n{bad_time_values}. \n Contact the data provider."
-            )
-            df = df[datetime_var.year <= bad_year_limit]
+                self.logger.error(
+                    f"{self.uuid_log}: {f.path}: Some values of the time variable were bad and removed:\n{bad_time_values}. \n Contact the data provider."
+                )
+                df = df[datetime_var.year <= bad_year_limit]
 
-            df.reset_index()
+                df.reset_index()
 
         try:
             df["timestamp"] = (
