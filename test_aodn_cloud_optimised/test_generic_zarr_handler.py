@@ -139,6 +139,8 @@ class TestGenericZarrHandler(unittest.TestCase):
     def test_zarr_nc_acorn_handler(self):
         nc_obj_ls = s3_ls("imos-data", "acorn")
 
+        # TODO: capture logging from handler as done in the test_generic_parquet_handler for SOOP SST.
+        #       Then test that we're getting to correct logging messages
         # 1st pass
         # 2024-07-02 11:16:16,538 - INFO - GenericZarrHandler.py:381 - publish_cloud_optimised_fileset_batch - Writing data to new Zarr dataset
         # 2024-07-02 11:16:19,366 - INFO - GenericZarrHandler.py:391 - publish_cloud_optimised_fileset_batch - Batch 1 processed and written to <fsspec.mapping.FSMap object at 0x78166762b730>
