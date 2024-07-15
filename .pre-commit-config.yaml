@@ -31,7 +31,7 @@ repos:
     rev: '1.8.3'
     hooks:
       - id: poetry-check
-        args: ["--lock", "--quiet"]  # Add --quiet to run poetry-check quietly
+        args: ["--lock", "--no-cache"]  # Add --quiet to run poetry-check quietly
         verbose: false
       - id: poetry-export
         args: ["-f", "requirements.txt", "--quiet"]
