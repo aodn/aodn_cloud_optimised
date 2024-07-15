@@ -5,6 +5,7 @@ import re
 import timeit
 import traceback
 import uuid
+from datetime import datetime
 from typing import Tuple, Generator
 
 import boto3
@@ -16,7 +17,6 @@ import xarray as xr
 from dask.distributed import wait
 from shapely.geometry import Point, Polygon
 
-from aodn_cloud_optimised.lib.logging import get_logger
 from aodn_cloud_optimised.lib.s3Tools import (
     delete_objects_in_prefix,
     split_s3_path,
@@ -321,6 +321,23 @@ class GenericHandler(CommonHandler):
             "spatial_resolution", 5
         )  # Define delta for the polygon (in degrees)
 
+        # Check for invalid latitude and longitude values outside of [-180, 180; -90; 90]
+        invalid_lat = ~df[lat_varname].between(-90, 90)
+        invalid_lon = ~df[lon_varname].between(-180, 180)
+
+        if invalid_lat.any() or invalid_lon.any():
+            self.logger.warning(
+                f"{self.uuid_log}: Dataset contains latitude or longitude values outside the valid ranges. Cleaning data"
+            )
+
+            # Clean dataset
+            df = df[
+                (df[lat_varname].between(-90, 90))
+                & (df[lon_varname].between(-180, 180))
+            ]
+
+            df.reset_index()
+
         # Clean dataset from NaN values of LAT and LON; for ex 'IMOS/Argo/dac/csiro/5905017/5905017_prof.nc'
         for geo_var in [lat_varname, lon_varname]:
             geo_var_has_nan = df[geo_var].isna().any().any()
@@ -344,7 +361,7 @@ class GenericHandler(CommonHandler):
 
         return df
 
-    def _add_timestamp_df(self, df: pd.DataFrame) -> pd.DataFrame:
+    def _add_timestamp_df(self, df: pd.DataFrame, f) -> pd.DataFrame:
         """
         Adds timestamp to the DataFrame.
 
@@ -376,14 +393,38 @@ class GenericHandler(CommonHandler):
             if "datetime_var" not in locals():
                 if pd.api.types.is_datetime64_any_dtype(df.index):
                     datetime_var = df.index
-        df["timestamp"] = (
-            np.int64(
-                pd.to_datetime(datetime_var)
-                .to_period(self.partition_period)
-                .to_timestamp()
+
+        if not isinstance(df.index, pd.MultiIndex) and (time_varname in df.index.names):
+            today = datetime.today()
+            # assume that todays year + 1 is the future, and no in-situ data should be in the future, since we're not dealing
+            # with models!
+            bad_year_limit = today.year + 1
+            if any(datetime_var.year > bad_year_limit):
+                bad_time_values = datetime_var[
+                    datetime_var.year > bad_year_limit
+                ].unique()
+
+                self.logger.error(
+                    f"{self.uuid_log}: {f.path}: Some values of the time variable were bad and removed:\n{bad_time_values}. \n Contact the data provider."
+                )
+                df = df[datetime_var.year <= bad_year_limit]
+
+                df.reset_index()
+
+        try:
+            df["timestamp"] = (
+                np.int64(
+                    pd.to_datetime(datetime_var)
+                    .to_period(self.partition_period)
+                    .to_timestamp()
+                )
+                / 10**9
+            )  # for partitions with the date as the 1st of the month
+        except Exception as e:
+            self.logger.error(
+                f"{self.uuid_log}: {f.path}: time issues with the input file. File not processed. Contact the data provider.{e}"
             )
-            / 10**9
-        )  # for partitions with the date as the 1st of the month
+            raise ValueError
 
         return df
 
@@ -429,13 +470,19 @@ class GenericHandler(CommonHandler):
 
         time_varname = self.dataset_config["time_extent"].get("time", "TIME")
 
-        if any(df["timestamp"] < 0):
+        if any(df["timestamp"] <= 0):
             self.logger.warning(
-                f"{self.uuid_log}: {f.path}: NaN values detected in {time_varname} time variable. Trimming corresponding data."
+                f"{self.uuid_log}: {f.path}: Bad values detected in {time_varname} time variable. Trimming corresponding data."
             )
             df2 = df[df["timestamp"] > 0].copy()
             df = df2
             df = df.reset_index()
+
+            if df.empty:
+                self.logger.error(
+                    f"{self.uuid_log}: {f.path}: All values of the time variable were bad. Contact the creator of the data."
+                )
+                raise ValueError
 
         return df
 
@@ -564,8 +611,7 @@ class GenericHandler(CommonHandler):
             None
         """
         partition_keys = self.dataset_config["partition_keys"]
-
-        df = self._add_timestamp_df(df)
+        df = self._add_timestamp_df(df, s3_file_handle)
         df = self._add_columns_df(df, ds, s3_file_handle)
         df = self._rm_bad_timestamp_df(df, s3_file_handle)
         if "polygon" in partition_keys:

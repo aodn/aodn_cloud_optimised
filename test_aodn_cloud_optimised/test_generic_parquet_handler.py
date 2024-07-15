@@ -1,6 +1,9 @@
 import json
+import logging
 import os
 import unittest
+from io import StringIO
+from unittest.mock import patch
 
 import boto3
 import pandas as pd
@@ -14,7 +17,6 @@ from shapely.geometry import Polygon
 from aodn_cloud_optimised.lib.GenericParquetHandler import GenericHandler
 from aodn_cloud_optimised.lib.config import load_dataset_config
 from aodn_cloud_optimised.lib.s3Tools import s3_ls
-from unittest.mock import patch
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -33,6 +35,18 @@ TEST_FILE_NC_SOOP_SST = os.path.join(
     ROOT_DIR,
     "resources",
     "IMOS_SOOP-SST_MT_20110101T000000Z_9HA2479_FV01_C-20120528T071958Z.nc",
+)
+
+TEST_FILE_NC_SOOP_SST_BAD_NO_TIME = os.path.join(
+    ROOT_DIR,
+    "resources",
+    "IMOS_SOOP-SST_ST_20130612T000000Z_VMQ9273_FV01_C-20130613T005515Z.nc",
+)
+
+TEST_FILE_NC_SOOP_SST_BAD_OUTOFRANGE_TIME = os.path.join(
+    ROOT_DIR,
+    "resources",
+    "IMOS_SOOP-SST_ST_20131229T235800Z_VMQ9273_FV01_C-20131230T005523Z.nc",
 )
 
 DUMMY_FILE = os.path.join(ROOT_DIR, "resources", "DUMMY.nan")
@@ -143,6 +157,17 @@ class TestGenericHandler(unittest.TestCase):
             "imos-data",
             f"good_nc_soop_sst/{os.path.basename(TEST_FILE_NC_SOOP_SST)}",
             TEST_FILE_NC_SOOP_SST,
+        )
+
+        self._upload_to_s3(
+            "imos-data",
+            f"bad_nc_soop_sst/{os.path.basename(TEST_FILE_NC_SOOP_SST_BAD_NO_TIME)}",
+            TEST_FILE_NC_SOOP_SST_BAD_NO_TIME,
+        )
+        self._upload_to_s3(
+            "imos-data",
+            f"bad_nc_soop_sst/{os.path.basename(TEST_FILE_NC_SOOP_SST_BAD_OUTOFRANGE_TIME)}",
+            TEST_FILE_NC_SOOP_SST_BAD_OUTOFRANGE_TIME,
         )
 
         dataset_anmn_netcdf_config = load_dataset_config(DATASET_CONFIG_NC_ANMN_JSON)
@@ -378,6 +403,50 @@ class TestGenericHandler(unittest.TestCase):
 
         self.assertEqual(
             parquet_dataset["TIME"][0], pd.Timestamp("2011-01-01 00:00:00")
+        )
+
+    def test_parquet_nc_generic_handler_bad_time_values(self):
+        # test with the scipy engine
+        nc_obj_ls = s3_ls("imos-data", "bad_nc_soop_sst")
+
+        # Capture logs
+        log_stream = StringIO()
+        log_handler = logging.StreamHandler(log_stream)
+        logger = logging.getLogger()
+        logger.addHandler(log_handler)
+
+        with patch.object(self.handler_nc_soop_sst_file, "s3_fs", new=self.s3_fs):
+            self.handler_nc_soop_sst_file.to_cloud_optimised([nc_obj_ls[0]])
+
+        log_handler.flush()
+        captured_logs = log_stream.getvalue().strip().split("\n")
+
+        # Validate logs (add more specific assertions based on your logging format)
+        self.assertTrue(
+            any(
+                "All values of the time variable were bad" in log
+                for log in captured_logs
+            )
+        )
+        ####################3
+
+        # Capture logs
+        log_stream = StringIO()
+        log_handler = logging.StreamHandler(log_stream)
+        logger = logging.getLogger()
+        logger.addHandler(log_handler)
+
+        with patch.object(self.handler_nc_soop_sst_file, "s3_fs", new=self.s3_fs):
+            self.handler_nc_soop_sst_file.to_cloud_optimised([nc_obj_ls[1]])
+
+        log_handler.flush()
+        captured_logs = log_stream.getvalue().strip().split("\n")
+        # Validate logs (add more specific assertions based on your logging format)
+        self.assertTrue(
+            any(
+                "time issues with the input file. File not processed" in log
+                for log in captured_logs
+            )
         )
 
     def test_parquet_csv_generic_handler(self):  # , MockS3FileSystem):
