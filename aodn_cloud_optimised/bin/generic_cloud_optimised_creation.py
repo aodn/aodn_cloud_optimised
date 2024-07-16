@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Script to process S3 paths and create cloud-optimized datasets.
+Script to process S3 paths and create cloud-optimised datasets.
 
 This script allows you to specify S3 paths and various options to process
 datasets and create cloud-optimised versions. It provides filtering options

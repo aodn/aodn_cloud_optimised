@@ -38,6 +38,9 @@ extensions = [
     "sphinx_rtd_theme",
 ]
 
+napoleon_google_docstring = True
+napoleon_numpy_docstring = False
+
 
 # Ensuring the code can be imported
 import os

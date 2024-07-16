@@ -1,4 +1,21 @@
 #!/usr/bin/env python3
+"""
+Script to convert configuration JSON files to AWS OpenData Registry format.
+
+The script can be run in three ways:
+
+1. Convert a specific JSON file to AWS OpenData Registry format.
+2. Convert all JSON files in the directory.
+3. Run interactively to list all available JSON files and prompt the user to choose one to convert.
+
+Args (optional):
+    -f, --file (str): Name of a specific JSON file to convert.
+    -d, --directory (str): Output directory to save converted YAML files.
+    -a, --all: Convert all JSON files in the directory.
+
+If the directory is not specified, a temporary directory is created.
+"""
+
 import argparse
 import os
 import tempfile

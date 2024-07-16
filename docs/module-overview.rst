@@ -9,7 +9,7 @@ Generic Cloud Optimised Creation
 
 Create AWS Registry dataset entry
 ---------------------------------
-.. automodule:: aodn_cloud_optimised.bin.generic_cloud_optimised_creation
+.. automodule:: aodn_cloud_optimised.bin.create_aws_registry_dataset
     :members:
     :undoc-members:
 
