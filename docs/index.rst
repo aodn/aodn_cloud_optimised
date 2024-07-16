@@ -13,6 +13,7 @@ Welcome to AODN Cloud Optimised's documentation!
    installation
    module-overview
    development/index
+   usage
 
 Indices and tables
 ==================
