@@ -7,14 +7,14 @@ datasets and create cloud-optimised versions. It provides filtering options
 and supports different cluster modes.
 
 Usage Examples:
-  generic_cloud_optimised_creation --paths 'IMOS/ANMN/NSW' 'IMOS/ANMN/PA' \
-  --filters '_hourly-timeseries_' 'FV02' --dataset-config 'mooring_hourly_timeseries_delayed_qc.json' \
+  generic_cloud_optimised_creation --paths 'IMOS/ANMN/NSW' 'IMOS/ANMN/PA'
+  --filters '_hourly-timeseries_' 'FV02' --dataset-config 'mooring_hourly_timeseries_delayed_qc.json'
   --clear-existing-data --cluster-mode 'remote'
 
-  generic_cloud_optimised_creation --paths 'IMOS/ANMN/NSW' 'IMOS/ANMN/QLD' \
+  generic_cloud_optimised_creation --paths 'IMOS/ANMN/NSW' 'IMOS/ANMN/QLD'
   --dataset-config 'anmn_ctd_ts_fv01.json'
 
-  generic_cloud_optimised_creation --paths 'IMOS/ACORN/gridded_1h-avg-current-map_QC/TURQ/2024' \
+  generic_cloud_optimised_creation --paths 'IMOS/ACORN/gridded_1h-avg-current-map_QC/TURQ/2024'
   --dataset-config 'radar_TurquoiseCoast_velocity_hourly_average_delayed_qc.json' --clear-existing-data --cluster-mode 'remote'
 
 Arguments:
@@ -23,11 +23,15 @@ Arguments:
   --suffix: Optional suffix used by s3_ls to filter S3 objects. Default is .nc. Example: '.nc'
   --dataset-config: Path to the dataset config JSON file. Example: 'mooring_hourly_timeseries_delayed_qc.json'
   --clear-existing-data: Flag to clear existing data. Default is False.
-  --force-previous-parquet-deletion: Flag to force the search of previous equivalent parquet file created. Much slower. Default is False. Only for Parquet processing.
+  --force-previous-parquet-deletion: Flag to force the search of previous equivalent parquet file created. Much slower.
+                                     Default is False. Only for Parquet processing.
   --cluster-mode: Cluster mode to use. Options: 'local' or 'remote'. Default is 'local'.
-  --optimised-bucket-name: Bucket name where cloud optimised object will be created. Default is the value of BUCKET_OPTIMISED_DEFAULT from the config.
-  --root-prefix-cloud-optimised-path: Prefix value for the root location of the cloud optimised objects. Default is the value of ROOT_PREFIX_CLOUD_OPTIMISED_PATH from the config.
-  --bucket-raw: Bucket name where input object files will be searched for. Default is the value of BUCKET_RAW_DEFAULT from the config.
+  --optimised-bucket-name: Bucket name where cloud optimised object will be created. Default is the value of
+                           BUCKET_OPTIMISED_DEFAULT from the config.
+  --root-prefix-cloud-optimised-path: Prefix value for the root location of the cloud optimised objects. Default is the
+                                      value of ROOT_PREFIX_CLOUD_OPTIMISED_PATH from the config.
+  --bucket-raw: Bucket name where input object files will be searched for. Default is the value of BUCKET_RAW_DEFAULT
+                from the config.
 
 """
 
