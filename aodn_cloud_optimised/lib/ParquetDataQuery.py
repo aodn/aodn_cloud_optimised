@@ -301,11 +301,34 @@ def get_schema_metadata(dname):
     parquet_meta = pa.parquet.read_schema(os.path.join(dname, "_common_metadata"))
     # horrible ... but got to be done. The dictionary of metadata has to be a dictionnary with byte keys and byte values.
     # meaning that we can't have nested dictionaries ...
-    decoded_meta = {
-        key.decode("utf-8"): json.loads(value.decode("utf-8").replace("'", '"'))
-        for key, value in parquet_meta.metadata.items()
-    }
+
+    # the code below works, but in some case, when the metadata file is poorly written (with a wrong double quote escape
+    # for example, none of the metadata file is converted and it's hard to spot the issue. We replace this with the
+    # decode_and_load_json function
+    # decoded_meta = {
+    #     key.decode("utf-8"): json.loads(value.decode("utf-8").replace("'", '"'))
+    #     for key, value in parquet_meta.metadata.items()
+    # }
+
+    decoded_meta = decode_and_load_json(parquet_meta.metadata)
     return decoded_meta
+
+
+def decode_and_load_json(metadata):
+    decoded_metadata = {}
+    for key, value in metadata.items():
+        try:
+            # Decode bytes to string
+            value_str = value.decode("utf-8")
+            value_str = value_str.replace("'", '"')
+
+            decoded_metadata[key.decode("utf-8")] = json.loads(value_str)
+        except json.JSONDecodeError as e:
+            print(f"Error decoding JSON for key {key}: {e}")
+            print(f"Problematic JSON string: {value_str}")
+        except Exception as e:
+            print(f"Unexpected error for key {key}: {e}")
+    return decoded_metadata
 
 
 ####################################################################################################################
@@ -431,7 +454,11 @@ class Metadata:
 
         for dataset in folders_with_parquet:
             dname = f"s3://{self.bucket_name}/{dataset}"
-            metadata = get_schema_metadata(dname)  # schema metadata
+            try:
+                metadata = get_schema_metadata(dname)  # schema metadata
+            except:
+                print(f"Error processing metadata from {dataset}")
+                continue
 
             path_parts = dataset.strip("/").split("/")
             last_folder_with_extension = path_parts[-1]

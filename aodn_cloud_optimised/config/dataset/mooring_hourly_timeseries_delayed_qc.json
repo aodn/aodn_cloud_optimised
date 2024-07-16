@@ -686,7 +686,7 @@
     "DOXS": {
       "type": "float",
       "ancillary_variables": "DOXS_min DOXS_max DOXS_std DOXS_count",
-      "comment": "oxygenPP.m: \"DOXS derived using DOXS = 100 * DOX2 / OXSOL_SURFACE. OXSOL_SURFACE derived from TEMP, PSAL, PRES_REL , LATITUDE and LONGITUDE using gsw_O2sol_SP_pt, gsw_pt0_from_t and gsw_SA_from_SP from the Gibbs-SeaWater toolbox (TEOS-10) v3.06. See SeaBird data processing manual (http://www.seabird.com/document/sbe-data-processing-manual).",
+      "comment": "oxygenPP.m: DOXS derived using DOXS = 100 * DOX2 / OXSOL_SURFACE. OXSOL_SURFACE derived from TEMP, PSAL, PRES_REL , LATITUDE and LONGITUDE using gsw_O2sol_SP_pt, gsw_pt0_from_t and gsw_SA_from_SP from the Gibbs-SeaWater toolbox (TEOS-10) v3.06. See SeaBird data processing manual (http://www.seabird.com/document/sbe-data-processing-manual).",
       "long_name": "mean fractional_saturation_of_oxygen_in_sea_water",
       "standard_name": "fractional_saturation_of_oxygen_in_sea_water",
       "units": "%",
