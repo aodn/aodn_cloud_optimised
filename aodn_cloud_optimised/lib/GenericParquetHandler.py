@@ -31,6 +31,13 @@ from .schema import create_pyarrow_schema, generate_json_schema_var_from_netcdf
 
 
 class GenericHandler(CommonHandler):
+    """
+    GenericHandler to create cloud-optimised datasets in Parquet format.
+
+    Inherits:
+        CommonHandler: Provides common functionality for handling cloud-optimised datasets.
+    """
+
     def __init__(self, **kwargs):
         """
         Initialise the GenericHandler object.

@@ -63,6 +63,13 @@ def preprocess_xarray(ds, dataset_config):
 
 
 class GenericHandler(CommonHandler):
+    """
+    GenericHandler to create cloud-optimised datasets in Zarr format.
+
+    Inherits:
+        CommonHandler: Provides common functionality for handling cloud-optimised datasets.
+    """
+
     def __init__(self, **kwargs):
         """
         Initialise the GenericHandler object.

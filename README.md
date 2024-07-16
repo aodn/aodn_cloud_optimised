@@ -4,6 +4,7 @@
 ![Test Status](https://github.com/aodn/aodn_cloud_optimised/actions/workflows/test-mamba.yml/badge.svg)
 ![Release](https://img.shields.io/github/v/release/aodn/aodn_cloud_optimised.svg)
 [![codecov](https://codecov.io/gh/aodn/aodn_cloud_optimised/branch/main/graph/badge.svg)](https://codecov.io/gh/aodn/aodn_cloud_optimised/branch/main)
+[![Documentation Status](https://readthedocs.org/projects/aodn-cloud-optimised/badge/?version=latest)](https://aodn-cloud-optimised.readthedocs.io/en/latest/?badge=latest)
 
 A tool designed to convert IMOS NetCDF and CSV files into Cloud Optimised formats such as Zarr and Parquet
 
