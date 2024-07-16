@@ -81,6 +81,16 @@ Modify `pyproject.toml <https://github.com/aodn/aodn_cloud_optimised/blob/main/p
 
     Don't forget to add and commit ``poetry.lock``
 
+.. note:: Important Note
+   :class: custom-note
+   :name: poetry-requirements
+
+    When modules are updated, it can be good practice to also update the ``requirements.txt`` file used to create the Mamba env.
+    It is not done automatically yet.
+
+    .. code-block:: bash
+
+        poetry export -f requirements.txt --without-hashes -o requirements.txt
 
 Handling Pre-commit Hook Issues:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
