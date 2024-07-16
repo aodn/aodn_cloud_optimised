@@ -59,5 +59,5 @@ See [ReadTheDocs - Dev](https://aodn-cloud-optimised.readthedocs.io/en/latest/de
 ## Usage
 See [ReadTheDocs - Usage](https://aodn-cloud-optimised.readthedocs.io/en/latest/usage.html)
 
-# Notebooks
+## Notebooks
 [Notebooks](https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/) can directly be imported into Google Colab.
