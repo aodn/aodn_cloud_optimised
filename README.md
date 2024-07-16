@@ -8,6 +8,12 @@
 
 A tool designed to convert IMOS NetCDF and CSV files into Cloud Optimised formats such as Zarr and Parquet
 
+## Documentation
+
+Visit our documentation on [ReadTheDocs](https://yaodn-cloud-optimised.readthedocs.io/en/latest/) for detailed information.
+
+[![Documentation Status](https://readthedocs.org/projects/aodn-cloud-optimised/badge/?version=latest)](https://aodn-cloud-optimised.readthedocs.io/en/latest/?badge=latest)
+
 ## Key Features
 
 * Conversion of CSV/NetCDF to Cloud Optimised format (Zarr/Parquet)
@@ -221,9 +227,6 @@ Every dataset should be configured with a config JSON file. A template exists at
 
 See [documentation](README_add_new_dataset.md) to learn how to add a new dataset
 
-# Create a new release
-Go to the [release](http://github.com/aodn/aodn_cloud_optimised/releases) page, create a new release and up the tag version.
-The new wheel will be build and pushed shortly afterwards
 
 # Notebooks
 

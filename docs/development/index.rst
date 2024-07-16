@@ -3,7 +3,7 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to AODN Cloud Optimised's documentation!
+Development
 ================================================
 
 .. toctree::
@@ -11,12 +11,6 @@ Welcome to AODN Cloud Optimised's documentation!
    :caption: Contents:
 
    installation
-   module-overview
-   development/index
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+   dataset-configuration
+   documentation-build
+   notebooks
