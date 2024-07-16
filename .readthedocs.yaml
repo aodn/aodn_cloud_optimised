@@ -30,7 +30,3 @@ sphinx:
 python:
   install:
     - requirements: docs/requirements.txt
-
-# Optionally, specify the versions to build
-versions:
-  only: ['latest']
