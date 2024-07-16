@@ -18,6 +18,13 @@ from .logging import get_logger
 
 
 class CommonHandler:
+    """
+    GenericHandler for managing cloud-optimised datasets.
+
+    This class provides common methods and functionality for handling cloud-optimised datasets.
+
+    """
+
     def __init__(self, **kwargs):
         """
         Initialise the CommonHandler object.
