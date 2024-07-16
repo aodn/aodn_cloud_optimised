@@ -10,7 +10,7 @@ A tool designed to convert IMOS NetCDF and CSV files into Cloud Optimised format
 
 ## Documentation
 
-Visit our documentation on [ReadTheDocs](https://yaodn-cloud-optimised.readthedocs.io/en/latest/) for detailed information.
+Visit our documentation on [ReadTheDocs](https://aodn-cloud-optimised.readthedocs.io/en/latest/) for detailed information.
 
 [![Documentation Status](https://readthedocs.org/projects/aodn-cloud-optimised/badge/?version=latest)](https://aodn-cloud-optimised.readthedocs.io/en/latest/?badge=latest)
 
