@@ -5,7 +5,7 @@
   "cloud_optimised_format": "parquet",
   "cluster_options": {
     "n_workers": [
-      8,
+      1,
       20
     ],
     "scheduler_vm_types": "t3.small",
@@ -17,7 +17,7 @@
       "memory_limit": "8GB"
     }
   },
-  "batch_size": 30,
+  "batch_size": 100,
   "metadata_uuid": "efd8201c-1eca-412e-9ad2-0534e96cea14",
   "gattrs_to_variables": [
     "site_code"
