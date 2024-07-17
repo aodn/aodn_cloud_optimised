@@ -18,7 +18,7 @@
     }
   },
   "batch_size": 30,
-  "metadata_uuid": "7b901002-b1dc-46c3-89f2-b4951cedca48",
+  "metadata_uuid": "efd8201c-1eca-412e-9ad2-0534e96cea14",
   "gattrs_to_variables": [
     "site_code"
   ],
@@ -777,7 +777,7 @@
   "aws_opendata_registry": {
     "Name": "ANMN hourly timeseries",
     "Description": "",
-    "Documentation": "https://catalogue.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/7b901002-b1dc-46c3-89f2-b4951cedca48",
+    "Documentation": "https://catalogue.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/efd8201c-1eca-412e-9ad2-0534e96cea14",
     "Contact": "",
     "ManagedBy": "",
     "UpdateFrequency": "",

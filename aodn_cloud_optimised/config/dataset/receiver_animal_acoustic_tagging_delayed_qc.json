@@ -17,7 +17,7 @@
     }
   },
   "batch_size": 20,
-  "metadata_uuid": "4a97bd11-e821-4682-8b20-cb69201f3223",
+  "metadata_uuid": "541d4f15-122a-443d-ab4e-2b5feb08d6a0",
   "gattrs_to_variables": [],
   "partition_keys": [
     "transmitter_id",
@@ -195,7 +195,7 @@
   "aws_opendata_registry": {
     "Name": "",
     "Description": "",
-    "Documentation": "",
+    "Documentation": "https://catalogue-imos.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/541d4f15-122a-443d-ab4e-2b5feb08d6a0",
     "Contact": "",
     "ManagedBy": "",
     "UpdateFrequency": "",

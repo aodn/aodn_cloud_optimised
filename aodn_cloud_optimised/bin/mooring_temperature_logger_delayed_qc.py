@@ -14,7 +14,7 @@ def main():
         "--filters",
         "'/Temperature/', 'FV01'",
         "--dataset-config",
-        "anmn_temperature_logger_ts_fv01.json",
+        "mooring_temperature_logger_delayed_qc.json",
         "--clear-existing-data",
         "--cluster-mode",
         "remote",

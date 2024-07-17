@@ -17,7 +17,7 @@
     }
   },
   "batch_size": 500,
-  "metadata_uuid": "",
+  "metadata_uuid": "63db5801-cc19-40ef-83b3-85ccba884cf7",
   "gattrs_to_variables": [
     "platform_code"
   ],
@@ -428,16 +428,16 @@
     }
   },
   "dataset_gattrs": {
-    "title": "Upper Ocean Thermal Data collected using XBT (expendable bathythermographs)",
-    "principal_investigator": "Cowley, Rebecca",
-    "principal_investigator_email": "rebecca.cowley@csiro.au",
-    "featureType": "profile"
+    "title": "",
+    "principal_investigator": "",
+    "principal_investigator_email": "",
+    "featureType": "trajectory"
   },
   "force_old_pq_del": true,
   "aws_opendata_registry": {
     "Name": "SOOP SST",
     "Description": "",
-    "Documentation": "https://catalogue.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/[uuid]",
+    "Documentation": "https://catalogue.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/63db5801-cc19-40ef-83b3-85ccba884cf7",
     "Contact": "",
     "ManagedBy": "",
     "UpdateFrequency": "",

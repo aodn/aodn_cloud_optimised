@@ -1,0 +1,443 @@
+{
+  "dataset_name": "vessel_xbt_delayed_qc",
+  "logger_name": "vessel_xbt_delayed_qc",
+  "cloud_optimised_format": "parquet",
+  "cluster_options": {
+    "n_workers": [
+      2,
+      20
+    ],
+    "scheduler_vm_types": "t3.large",
+    "worker_vm_types": "t3.large",
+    "allow_ingress_from": "me",
+    "compute_purchase_option": "spot_with_fallback",
+    "worker_options": {
+      "nthreads": 8,
+      "memory_limit": "32GB"
+    }
+  },
+  "batch_size": 1000,
+  "metadata_uuid": "911f6b96-fa33-4621-9d8c-4d1cc14d94d0",
+  "gattrs_to_variables": [
+    "XBT_line",
+    "ship_name",
+    "Callsign",
+    "imo_number"
+  ],
+  "partition_keys": [
+    "XBT_line",
+    "timestamp",
+    "polygon"
+  ],
+  "time_extent": {
+    "time": "TIME",
+    "partition_timestamp_period": "M"
+  },
+  "spatial_extent": {
+    "lat": "LATITUDE",
+    "lon": "LONGITUDE",
+    "spatial_resolution": 5
+  },
+  "schema": {
+    "TIME": {
+      "type": "timestamp[ns]",
+      "ancillary_variables": "TIME_quality_control",
+      "axis": "T",
+      "long_name": "time",
+      "standard_name": "time",
+      "valid_max": 90000.0,
+      "valid_min": 0.0
+    },
+    "TIME_quality_control": {
+      "type": "float",
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "long_name": "quality flags for time",
+      "quality_control_conventions": "IMOS standard flags",
+      "standard_name": "time status_flag",
+      "valid_max": 9,
+      "valid_min": 0
+    },
+    "LATITUDE": {
+      "type": "float",
+      "ancillary_variables": "LATITUDE_quality_control",
+      "axis": "Y",
+      "long_name": "latitude",
+      "reference_datum": "geographical coordinates, WGS84 projection",
+      "standard_name": "latitude",
+      "units": "degrees_north",
+      "valid_max": 90.0,
+      "valid_min": -90.0
+    },
+    "LATITUDE_quality_control": {
+      "type": "float",
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "long_name": "quality flags for latitude",
+      "quality_control_conventions": "IMOS standard flags",
+      "standard_name": "latitude status_flag",
+      "valid_max": 9,
+      "valid_min": 0
+    },
+    "LONGITUDE": {
+      "type": "float",
+      "ancillary_variables": "LONGITUDE_quality_control",
+      "axis": "X",
+      "long_name": "longitude",
+      "reference_datum": "geographical coordinates, WGS84 projection",
+      "standard_name": "longitude",
+      "units": "degrees_east",
+      "valid_max": 180.0,
+      "valid_min": -180.0
+    },
+    "LONGITUDE_quality_control": {
+      "type": "float",
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "long_name": "quality flags for longitude",
+      "quality_control_conventions": "IMOS standard flags",
+      "standard_name": "longitude status_flag",
+      "valid_max": 9,
+      "valid_min": 0
+    },
+    "DEPTH_RAW": {
+      "type": "float",
+      "ancillary_variables": "DEPTH_RAW_quality_control",
+      "axis": "Z",
+      "fallrate_equation_coefficient_a": 6.691,
+      "fallrate_equation_coefficient_b": -2.25,
+      "long_name": "depth_raw",
+      "positive": "down",
+      "reference_datum": "sea surface",
+      "standard_name": "depth",
+      "units": "m",
+      "valid_max": 12000.0,
+      "valid_min": -5.0
+    },
+    "DEPTH_RAW_quality_control": {
+      "type": "int32",
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "long_name": "quality flags for depth raw",
+      "quality_control_conventions": "IMOS standard flags",
+      "standard_name": "depth status_flag",
+      "valid_max": 9,
+      "valid_min": 0
+    },
+    "DEPTH": {
+      "type": "float",
+      "ancillary_variables": "DEPTH_quality_control",
+      "axis": "Z",
+      "fallrate_equation_coefficient_a": 6.691,
+      "fallrate_equation_coefficient_b": -2.25,
+      "long_name": "depth",
+      "longname": "depth",
+      "positive": "down",
+      "reference_datum": "sea surface",
+      "standard_name": "depth",
+      "units": "m",
+      "valid_max": 12000.0,
+      "valid_min": -5.0
+    },
+    "DEPTH_quality_control": {
+      "type": "int32",
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "long_name": "quality flags for depth",
+      "quality_control_conventions": "IMOS standard flags",
+      "standard_name": "depth status_flag",
+      "valid_max": 9,
+      "valid_min": 0
+    },
+    "TEMP_RAW": {
+      "type": "float",
+      "ancillary_variables": "TEMP_RAW_quality_control",
+      "axis": "Z",
+      "long_name": "sea_water_temperature_raw",
+      "positive": "down",
+      "units": "Celsius",
+      "valid_max": 40.0,
+      "valid_min": -2.5
+    },
+    "TEMP_RAW_quality_control": {
+      "type": "float",
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "long_name": "quality flag for sea_water_temperature_raw",
+      "quality_control_conventions": "IMOS standard flags",
+      "standard_name": "sea_water_temperature status_flag",
+      "valid_max": 9,
+      "valid_min": 0
+    },
+    "TEMP": {
+      "type": "float",
+      "ancillary_variables": "TEMP_quality_control",
+      "axis": "Z",
+      "long_name": "sea_water_temperature",
+      "positive": "down",
+      "standard_name": "sea_water_temperature",
+      "units": "Celsius",
+      "valid_max": 40.0,
+      "valid_min": -2.5
+    },
+    "TEMP_quality_control": {
+      "type": "float",
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "long_name": "quality flag for sea_water_temperature",
+      "quality_control_conventions": "IMOS standard flags",
+      "standard_name": "sea_water_temperature status_flag",
+      "valid_max": 9,
+      "valid_min": 0
+    },
+    "HISTORY_INSTITUTION": {
+      "type": "string",
+      "Conventions": "GTSPP IDENT_CODE table",
+      "long_name": "Institution which performed action"
+    },
+    "HISTORY_STEP": {
+      "type": "string",
+      "Conventions": "GTSPP PRC_CODE table",
+      "long_name": "Step in data processing"
+    },
+    "HISTORY_SOFTWARE": {
+      "type": "string",
+      "Conventions": "Institution dependent",
+      "long_name": "Name of software which performed action"
+    },
+    "HISTORY_SOFTWARE_RELEASE": {
+      "type": "string",
+      "Conventions": "Institution dependent",
+      "long_name": "Version/Release of software which performed action"
+    },
+    "HISTORY_DATE": {
+      "type": "timestamp[ns]",
+      "axis": "T",
+      "long_name": "Date the history record was created"
+    },
+    "HISTORY_PARAMETER": {
+      "type": "string",
+      "Conventions": "GTSPP PC_PROF table",
+      "long_name": "Parameter that action is performed on"
+    },
+    "HISTORY_START_DEPTH": {
+      "type": "float",
+      "axis": "Z",
+      "long_name": "Start depth action applied to",
+      "positive": "down",
+      "units": "m"
+    },
+    "HISTORY_STOP_DEPTH": {
+      "type": "float",
+      "axis": "Z",
+      "long_name": "End depth action applied to",
+      "positive": "down",
+      "units": "m"
+    },
+    "HISTORY_PREVIOUS_VALUE": {
+      "type": "string",
+      "long_name": "Parameter previous value before action"
+    },
+    "HISTORY_QC_FLAG": {
+      "type": "string",
+      "Conventions": "GTSPP ACT_CODE table and CSIRO XBT Cookbook",
+      "long_name": "QC flag applied"
+    },
+    "HISTORY_QC_FLAG_DESCRIPTION": {
+      "type": "string",
+      "Conventions": "GTSPP ACT_CODE table and CSIRO XBT Cookbook",
+      "long_name": "Description of HISTORY_QC_FLAG"
+    },
+    "imo_number": {
+      "type": "int32"
+    },
+    "timestamp": {
+      "type": "int64"
+    },
+    "polygon": {
+      "type": "string"
+    },
+    "XBT_line": {
+      "type": "string"
+    },
+    "ship_name": {
+      "type": "string"
+    },
+    "Callsign": {
+      "type": "string"
+    },
+    "filename": {
+      "type": "string"
+    }
+  },
+  "dataset_gattrs": {
+    "title": "Upper Ocean Thermal Data collected using XBT (expendable bathythermographs)",
+    "principal_investigator": "Cowley, Rebecca",
+    "principal_investigator_email": "rebecca.cowley@csiro.au",
+    "featureType": "profile"
+  },
+  "force_old_pq_del": true,
+  "aws_opendata_registry": {
+    "Name": "SOOP XBT NRT",
+    "Description": "",
+    "Documentation": "https://catalogue.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/911f6b96-fa33-4621-9d8c-4d1cc14d94d0",
+    "Contact": "",
+    "ManagedBy": "",
+    "UpdateFrequency": "",
+    "Tags": [],
+    "License": "",
+    "Resources": [
+      {
+        "Description": "",
+        "ARN": "",
+        "Region": "",
+        "Type": "",
+        "Explore": []
+      },
+      {
+        "Description": "",
+        "ARN": "",
+        "Region": "",
+        "Type": ""
+      },
+      {
+        "Description": "",
+        "ARN": "",
+        "Region": "",
+        "Type": ""
+      },
+      {
+        "Description": "",
+        "ARN": "",
+        "Region": "",
+        "Type": ""
+      }
+    ],
+    "DataAtWork": {
+      "Tutorials": [
+        {
+          "Title": "",
+          "URL": "",
+          "Services": "",
+          "AuthorName": "",
+          "AuthorURL": ""
+        },
+        {
+          "Title": "",
+          "URL": "",
+          "AuthorName": "",
+          "AuthorURL": ""
+        },
+        {
+          "Title": "",
+          "URL": "",
+          "AuthorName": "",
+          "AuthorURL": ""
+        }
+      ],
+      "Tools & Applications": [
+        {
+          "Title": "",
+          "URL": "",
+          "AuthorName": "",
+          "AuthorURL": ""
+        },
+        {
+          "Title": "",
+          "URL": "",
+          "AuthorName": "",
+          "AuthorURL": ""
+        }
+      ],
+      "Publications": [
+        {
+          "Title": "IMOS - SOOP Expendable Bathythermographs (XBT) Research Group - XBT real-time data",
+          "URL": "https://catalogue.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/35234913-aa3c-48ec-b9a4-77f822f66ef8",
+          "AuthorName": ""
+        },
+        {
+          "Title": "",
+          "URL": "",
+          "AuthorName": ""
+        }
+      ]
+    }
+  }
+}

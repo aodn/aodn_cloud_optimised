@@ -12,7 +12,7 @@ Usage Examples:
   --clear-existing-data --cluster-mode 'remote'
 
   generic_cloud_optimised_creation --paths 'IMOS/ANMN/NSW' 'IMOS/ANMN/QLD'
-  --dataset-config 'anmn_ctd_ts_fv01.json'
+  --dataset-config 'mooring_ctd_delayed_qc.json'
 
   generic_cloud_optimised_creation --paths 'IMOS/ACORN/gridded_1h-avg-current-map_QC/TURQ/2024'
   --dataset-config 'radar_TurquoiseCoast_velocity_hourly_average_delayed_qc.json' --clear-existing-data --cluster-mode 'remote'
@@ -51,7 +51,7 @@ def main():
         description="Process S3 paths and create cloud-optimized datasets.",
         epilog="Examples:\n"
         "  generic_cloud_optimised_creation --paths 'IMOS/ANMN/NSW' 'IMOS/ANMN/PA' --filters '_hourly-timeseries_' 'FV02' --dataset-config 'mooring_hourly_timeseries_delayed_qc.json' --clear-existing-data --cluster-mode 'remote'\n"
-        "  generic_cloud_optimised_creation --paths 'IMOS/ANMN/NSW' 'IMOS/ANMN/QLD' --dataset-config 'anmn_ctd_ts_fv01.json'\n"
+        "  generic_cloud_optimised_creation --paths 'IMOS/ANMN/NSW' 'IMOS/ANMN/QLD' --dataset-config 'mooring_ctd_delayed_qc.json'\n"
         "  generic_cloud_optimised_creation --paths 'IMOS/ACORN/gridded_1h-avg-current-map_QC/TURQ/2024' --dataset-config 'radar_TurquoiseCoast_velocity_hourly_average_delayed_qc.json' --clear-existing-data --cluster-mode 'remote'\n",
         formatter_class=argparse.RawTextHelpFormatter,
     )
