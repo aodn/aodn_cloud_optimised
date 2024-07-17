@@ -17,7 +17,7 @@
     }
   },
   "batch_size": 300,
-  "metadata_uuid": "2807f3aa-4db0-4924-b64b-354ae8c10b58",
+  "metadata_uuid": "b299cdcd-3dee-48aa-abdd-e0fcdbb9cadc",
   "gattrs_to_variables": [
     "site_name",
     "water_depth",
@@ -220,7 +220,7 @@
   "aws_opendata_registry": {
     "Name": "",
     "Description": "",
-    "Documentation": "",
+    "Documentation": "https://catalogue.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/b299cdcd-3dee-48aa-abdd-e0fcdbb9cadc",
     "Contact": "",
     "ManagedBy": "",
     "UpdateFrequency": "",

@@ -1,0 +1,588 @@
+{
+  "dataset_name": "vessel_co2_delayed_qc",
+  "logger_name": "vessel_co2_delayed_qc",
+  "cloud_optimised_format": "parquet",
+  "cluster_options": {
+    "n_workers": [
+      1,
+      25
+    ],
+    "scheduler_vm_types": "t3.small",
+    "worker_vm_types": "t3.large",
+    "allow_ingress_from": "me",
+    "compute_purchase_option": "spot_with_fallback",
+    "worker_options": {
+      "nthreads": 8,
+      "memory_limit": "32GB"
+    }
+  },
+  "batch_size": 500,
+  "metadata_uuid": "63db5801-cc19-40ef-83b3-85ccba884cf7",
+  "gattrs_to_variables": [
+    "platform_code",
+    "cruise_id",
+    "vessel_name"
+  ],
+  "partition_keys": [
+    "timestamp",
+    "polygon",
+    "platform_code"
+  ],
+  "time_extent": {
+    "time": "TIME",
+    "partition_timestamp_period": "M"
+  },
+  "spatial_extent": {
+    "lat": "LATITUDE",
+    "lon": "LONGITUDE",
+    "spatial_resolution": 5
+  },
+  "schema": {
+    "TIME": {
+      "type": "timestamp[ns]",
+      "standard_name": "time",
+      "long_name": "analysis_time",
+      "axis": "T",
+      "valid_min": 0.0,
+      "valid_max": 999999.0,
+      "ancillary_variables": "TIME_quality_control"
+    },
+    "TIME_quality_control": {
+      "type": "float",
+      "standard_name": "time status_flag",
+      "long_name": "Quality Control flag for time",
+      "quality_control_conventions": "WOCE quality control procedure",
+      "valid_min": 2,
+      "valid_max": 4,
+      "flag_values": [
+        2,
+        3,
+        4
+      ],
+      "flag_meanings": "good questionable bad",
+      "references": "Pierrot,D. et al. 2009, Recommendations for Autonomous Underway pCO2 Measuring Systems and Data Reduction Routines, Deep-Sea Research II, doi:10.1016/j.dsr2.2008.12.005",
+      "ancillary_variables": "SUBFLAG"
+    },
+    "LATITUDE": {
+      "type": "double",
+      "standard_name": "latitude",
+      "long_name": "latitude",
+      "units": "degrees_north",
+      "axis": "Y",
+      "valid_min": -90.0,
+      "valid_max": 90.0,
+      "reference_datum": "geographical coordinates, WGS84 projection",
+      "ancillary_variables": "LATITUDE_quality_control"
+    },
+    "LATITUDE_quality_control": {
+      "type": "float",
+      "standard_name": "latitude status_flag",
+      "long_name": "Quality Control flag for latitude",
+      "quality_control_conventions": "WOCE quality control procedure",
+      "valid_min": 2,
+      "valid_max": 4,
+      "flag_values": [
+        2,
+        3,
+        4
+      ],
+      "flag_meanings": "good questionable bad",
+      "references": "Pierrot,D. et al. 2009, Recommendations for Autonomous Underway pCO2 Measuring Systems and Data Reduction Routines, Deep-Sea Research II, doi:10.1016/j.dsr2.2008.12.005",
+      "ancillary_variables": "SUBFLAG"
+    },
+    "LONGITUDE": {
+      "type": "double",
+      "standard_name": "longitude",
+      "long_name": "longitude",
+      "units": "degrees_east",
+      "axis": "X",
+      "valid_min": -180.0,
+      "valid_max": 180.0,
+      "reference_datum": "geographical coordinates, WGS84 projection",
+      "ancillary_variables": "LONGITUDE_quality_control"
+    },
+    "LONGITUDE_quality_control": {
+      "type": "float",
+      "standard_name": "longitude status_flag",
+      "long_name": "Quality Control flag for longitude",
+      "quality_control_conventions": "WOCE quality control procedure",
+      "valid_min": 2,
+      "valid_max": 4,
+      "flag_values": [
+        2,
+        3,
+        4
+      ],
+      "flag_meanings": "good questionable bad",
+      "references": "Pierrot,D. et al. 2009, Recommendations for Autonomous Underway pCO2 Measuring Systems and Data Reduction Routines, Deep-Sea Research II, doi:10.1016/j.dsr2.2008.12.005",
+      "ancillary_variables": "SUBFLAG"
+    },
+    "TEMP": {
+      "type": "double",
+      "standard_name": "sea_surface_temperature",
+      "long_name": "sea surface temperature",
+      "units": "degree_Celsius",
+      "valid_min": -2.0,
+      "valid_max": 40.0,
+      "ancillary_variables": "TEMP_quality_control"
+    },
+    "TEMP_quality_control": {
+      "type": "float",
+      "standard_name": "sea_surface_temperature status_flag",
+      "long_name": "Quality Control flag for sea_surface_temperature",
+      "quality_control_conventions": "WOCE quality control procedure",
+      "valid_min": 2,
+      "valid_max": 4,
+      "flag_values": [
+        2,
+        3,
+        4
+      ],
+      "flag_meanings": "good questionable bad",
+      "references": "Pierrot,D. et al. 2009, Recommendations for Autonomous Underway pCO2 Measuring Systems and Data Reduction Routines, Deep-Sea Research II, doi:10.1016/j.dsr2.2008.12.005",
+      "ancillary_variables": "SUBFLAG"
+    },
+    "TEMP_2": {
+      "type": "double",
+      "long_name": "equilibrator water temperature",
+      "units": "degree_Celsius",
+      "valid_min": -2.0,
+      "valid_max": 40.0,
+      "ancillary_variables": "TEMP_2_quality_control"
+    },
+    "TEMP_2_quality_control": {
+      "type": "float",
+      "long_name": "Quality Control flag for sea_surface_temperature",
+      "quality_control_conventions": "WOCE quality control procedure",
+      "valid_min": 2,
+      "valid_max": 4,
+      "flag_values": [
+        2,
+        3,
+        4
+      ],
+      "flag_meanings": "good questionable bad",
+      "references": "Pierrot,D. et al. 2009, Recommendations for Autonomous Underway pCO2 Measuring Systems and Data Reduction Routines, Deep-Sea Research II, doi:10.1016/j.dsr2.2008.12.005",
+      "ancillary_variables": "SUBFLAG"
+    },
+    "PSAL": {
+      "type": "double",
+      "standard_name": "sea_surface_salinity",
+      "long_name": "sea surface salinity",
+      "units": "1e-3",
+      "valid_min": 0.0,
+      "valid_max": 42.0,
+      "ancillary_variables": "PSAL_quality_control"
+    },
+    "PSAL_quality_control": {
+      "type": "float",
+      "standard_name": "sea_surface_salinity status_flag",
+      "long_name": "Quality Control flag for sea_surface_salinity",
+      "quality_control_conventions": "WOCE quality control procedure",
+      "valid_min": 2,
+      "valid_max": 4,
+      "flag_values": [
+        2,
+        3,
+        4
+      ],
+      "flag_meanings": "good questionable bad",
+      "references": "Pierrot,D. et al. 2009, Recommendations for Autonomous Underway pCO2 Measuring Systems and Data Reduction Routines, Deep-Sea Research II, doi:10.1016/j.dsr2.2008.12.005",
+      "ancillary_variables": "SUBFLAG"
+    },
+    "WSPD": {
+      "type": "double",
+      "standard_name": "wind_speed",
+      "long_name": "wind speed",
+      "units": "m s-1",
+      "ancillary_variables": "WSPD_quality_control"
+    },
+    "WSPD_quality_control": {
+      "type": "float",
+      "standard_name": "wind_speed status_flag",
+      "long_name": "Quality Control flag for wind speed",
+      "quality_control_conventions": "WOCE quality control procedure",
+      "valid_min": 2,
+      "valid_max": 4,
+      "flag_values": [
+        2,
+        3,
+        4
+      ],
+      "flag_meanings": "good questionable bad",
+      "references": "Pierrot,D. et al. 2009, Recommendations for Autonomous Underway pCO2 Measuring Systems and Data Reduction Routines, Deep-Sea Research II, doi:10.1016/j.dsr2.2008.12.005",
+      "ancillary_variables": "SUBFLAG"
+    },
+    "WDIR": {
+      "type": "double",
+      "long_name": "wind direction",
+      "units": "degree",
+      "ancillary_variables": "WDIR_quality_control",
+      "comment": "true wind direction where 0 is North and 90 is East"
+    },
+    "WDIR_quality_control": {
+      "type": "float",
+      "long_name": "Quality Control flag for wind direction",
+      "quality_control_conventions": "WOCE quality control procedure",
+      "valid_min": 2,
+      "valid_max": 4,
+      "flag_values": [
+        2,
+        3,
+        4
+      ],
+      "flag_meanings": "good questionable bad",
+      "references": "Pierrot,D. et al. 2009, Recommendations for Autonomous Underway pCO2 Measuring Systems and Data Reduction Routines, Deep-Sea Research II, doi:10.1016/j.dsr2.2008.12.005",
+      "ancillary_variables": "SUBFLAG"
+    },
+    "Press_Equil": {
+      "type": "double",
+      "long_name": "equilibrator head space pressure",
+      "units": "hPa",
+      "ancillary_variables": "Press_Equil_quality_control"
+    },
+    "Press_Equil_quality_control": {
+      "type": "float",
+      "long_name": "Quality Control flag for equilibrator head space pressure",
+      "quality_control_conventions": "WOCE quality control procedure",
+      "valid_min": 2,
+      "valid_max": 4,
+      "flag_values": [
+        2,
+        3,
+        4
+      ],
+      "flag_meanings": "good questionable bad",
+      "references": "Pierrot,D. et al. 2009, Recommendations for Autonomous Underway pCO2 Measuring Systems and Data Reduction Routines, Deep-Sea Research II, doi:10.1016/j.dsr2.2008.12.005",
+      "ancillary_variables": "SUBFLAG"
+    },
+    "Press_ATM": {
+      "type": "double",
+      "long_name": "barometric pressure",
+      "units": "hPa",
+      "ancillary_variables": "Press_ATM_quality_control"
+    },
+    "Press_ATM_quality_control": {
+      "type": "float",
+      "long_name": "Quality Control flag for barometric pressure",
+      "quality_control_conventions": "WOCE quality control procedure",
+      "valid_min": 2,
+      "valid_max": 4,
+      "flag_values": [
+        2,
+        3,
+        4
+      ],
+      "flag_meanings": "good questionable bad",
+      "references": "Pierrot,D. et al. 2009, Recommendations for Autonomous Underway pCO2 Measuring Systems and Data Reduction Routines, Deep-Sea Research II, doi:10.1016/j.dsr2.2008.12.005",
+      "ancillary_variables": "SUBFLAG"
+    },
+    "xCO2EQ_PPM": {
+      "type": "double",
+      "long_name": "mole fraction of CO2 in the equilibrator head space (dry)",
+      "units": "1e-6",
+      "ancillary_variables": "xCO2EQ_PPM_quality_control",
+      "comment": "the unit 1e-6 is also called parts per million (ppm)"
+    },
+    "xCO2EQ_PPM_quality_control": {
+      "type": "float",
+      "long_name": "Quality Control flag for xCO2EQ_PPM",
+      "quality_control_conventions": "WOCE quality control procedure",
+      "valid_min": 2,
+      "valid_max": 4,
+      "flag_values": [
+        2,
+        3,
+        4
+      ],
+      "flag_meanings": "good questionable bad",
+      "references": "Pierrot,D. et al. 2009, Recommendations for Autonomous Underway pCO2 Measuring Systems and Data Reduction Routines, Deep-Sea Research II, doi:10.1016/j.dsr2.2008.12.005",
+      "ancillary_variables": "SUBFLAG"
+    },
+    "xCO2ATM_PPM": {
+      "type": "double",
+      "long_name": "mole fraction of CO2 in the atmosphere (dry) measured every 4 hours after standard runs",
+      "units": "1e-6",
+      "ancillary_variables": "xCO2ATM_PPM_quality_control",
+      "comment": "the unit 1e-6 is also called parts per million (ppm)"
+    },
+    "xCO2ATM_PPM_quality_control": {
+      "type": "float",
+      "long_name": "Quality Control flag for xCO2ATM_PPM",
+      "quality_control_conventions": "WOCE quality control procedure",
+      "valid_min": 2,
+      "valid_max": 4,
+      "flag_values": [
+        2,
+        3,
+        4
+      ],
+      "flag_meanings": "good questionable bad",
+      "references": "Pierrot,D. et al. 2009, Recommendations for Autonomous Underway pCO2 Measuring Systems and Data Reduction Routines, Deep-Sea Research II, doi:10.1016/j.dsr2.2008.12.005",
+      "ancillary_variables": "SUBFLAG"
+    },
+    "xCO2ATM_PPM_INTERPOLATED": {
+      "type": "double",
+      "long_name": "mole fraction of CO2 in the atmosphere (dry) measured every 4 hours after standard runs and values linearly interpolated to the times shown",
+      "units": "1e-6",
+      "ancillary_variables": "xCO2ATM_PPM_INTERPOLATED_quality_control",
+      "comment": "the unit 1e-6 is also called parts per million (ppm)"
+    },
+    "xCO2ATM_PPM_INTERPOLATED_quality_control": {
+      "type": "float",
+      "long_name": "Quality Control flag for xCO2ATM_PPM_INTERPOLATED",
+      "quality_control_conventions": "WOCE quality control procedure",
+      "valid_min": 2,
+      "valid_max": 4,
+      "flag_values": [
+        2,
+        3,
+        4
+      ],
+      "flag_meanings": "good questionable bad",
+      "references": "Pierrot,D. et al. 2009, Recommendations for Autonomous Underway pCO2 Measuring Systems and Data Reduction Routines, Deep-Sea Research II, doi:10.1016/j.dsr2.2008.12.005",
+      "ancillary_variables": "SUBFLAG"
+    },
+    "fCO2SW_UATM": {
+      "type": "double",
+      "long_name": "fugacity of carbon dioxide at surface water salinity and temperature",
+      "units": "microatmospheres",
+      "ancillary_variables": "fCO2SW_UATM_quality_control"
+    },
+    "fCO2SW_UATM_quality_control": {
+      "type": "float",
+      "long_name": "Quality Control flag for fCO2SW_UATM",
+      "quality_control_conventions": "WOCE quality control procedure",
+      "valid_min": 2,
+      "valid_max": 4,
+      "flag_values": [
+        2,
+        3,
+        4
+      ],
+      "flag_meanings": "good questionable bad",
+      "references": "Pierrot,D. et al. 2009, Recommendations for Autonomous Underway pCO2 Measuring Systems and Data Reduction Routines, Deep-Sea Research II, doi:10.1016/j.dsr2.2008.12.005",
+      "ancillary_variables": "SUBFLAG"
+    },
+    "fCO2ATM_UATM_INTERPOLATED": {
+      "type": "double",
+      "long_name": "fugacity of CO2 in the atmosphere",
+      "units": "microatmospheres",
+      "ancillary_variables": "fCO2ATM_UATM_INTERPOLATED_quality_control"
+    },
+    "fCO2ATM_UATM_INTERPOLATED_quality_control": {
+      "type": "float",
+      "long_name": "Quality Control flag for fCO2ATM_UATM_INTERPOLATED",
+      "quality_control_conventions": "WOCE quality control procedure",
+      "valid_min": 2,
+      "valid_max": 4,
+      "flag_values": [
+        2,
+        3,
+        4
+      ],
+      "flag_meanings": "good questionable bad",
+      "references": "Pierrot,D. et al. 2009, Recommendations for Autonomous Underway pCO2 Measuring Systems and Data Reduction Routines, Deep-Sea Research II, doi:10.1016/j.dsr2.2008.12.005",
+      "ancillary_variables": "SUBFLAG"
+    },
+    "DfCO2": {
+      "type": "double",
+      "long_name": "Difference between fCO2SW and fCO2ATM",
+      "units": "microatmospheres",
+      "ancillary_variables": "DfCO2_quality_control"
+    },
+    "DfCO2_quality_control": {
+      "type": "float",
+      "long_name": "Quality Control flag for DfCO2",
+      "quality_control_conventions": "WOCE quality control procedure",
+      "valid_min": 2,
+      "valid_max": 4,
+      "flag_values": [
+        2,
+        3,
+        4
+      ],
+      "flag_meanings": "good questionable bad",
+      "references": "Pierrot,D. et al. 2009, Recommendations for Autonomous Underway pCO2 Measuring Systems and Data Reduction Routines, Deep-Sea Research II, doi:10.1016/j.dsr2.2008.12.005",
+      "ancillary_variables": "SUBFLAG"
+    },
+    "LICORflow": {
+      "type": "double",
+      "long_name": "Gas flow through infrared gas analyser",
+      "units": "ml min-1",
+      "ancillary_variables": "LICORflow_quality_control"
+    },
+    "LICORflow_quality_control": {
+      "type": "float",
+      "long_name": "Quality Control flag for LICORflow",
+      "quality_control_conventions": "WOCE quality control procedure",
+      "valid_min": 2,
+      "valid_max": 4,
+      "flag_values": [
+        2,
+        3,
+        4
+      ],
+      "flag_meanings": "good questionable bad",
+      "references": "Pierrot,D. et al. 2009, Recommendations for Autonomous Underway pCO2 Measuring Systems and Data Reduction Routines, Deep-Sea Research II, doi:10.1016/j.dsr2.2008.12.005",
+      "ancillary_variables": "SUBFLAG"
+    },
+    "H2OFLOW": {
+      "type": "double",
+      "long_name": "water flow to equilibrator",
+      "units": "L min-1",
+      "ancillary_variables": "H2OFLOW_quality_control"
+    },
+    "H2OFLOW_quality_control": {
+      "type": "float",
+      "long_name": "Quality Control flag for H2OFLOW",
+      "quality_control_conventions": "WOCE quality control procedure",
+      "valid_min": 2,
+      "valid_max": 4,
+      "flag_values": [
+        2,
+        3,
+        4
+      ],
+      "flag_meanings": "good questionable bad",
+      "references": "Pierrot,D. et al. 2009, Recommendations for Autonomous Underway pCO2 Measuring Systems and Data Reduction Routines, Deep-Sea Research II, doi:10.1016/j.dsr2.2008.12.005",
+      "ancillary_variables": "SUBFLAG"
+    },
+    "SUBFLAG": {
+      "type": "float",
+      "long_name": "secondary flags, only for questionable measurements, WOCE flag 3 (Pierrot et Al 2009)",
+      "valid_min": 1,
+      "valid_max": 10,
+      "flag_values": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "flag_meanings": "Outside_of_standard_range Questionable_or_interpolated_SST Questionable_EQU_temperature Anomalous_EQU_temperature-SST_+or-1degC Questionable_sea-surface_salinity Questionable_pressure Low_EQU_gas_flow Questionable_air_value Interpolated_standard Other_see_metadata",
+      "references": "Pierrot,D. et al. 2009, Recommendations for Autonomous Underway pCO2 Measuring Systems and Data Reduction Routines, Deep-Sea Research II, doi:10.1016/j.dsr2.2008.12.005"
+    },
+    "TYPE": {
+      "type": "string",
+      "long_name": "measurement type (equilibrator, standard or atmosphere)",
+      "units": "categorical"
+    },
+    "timestamp": {
+      "type": "int64"
+    },
+    "polygon": {
+      "type": "string"
+    },
+    "platform_code": {
+      "type": "string"
+    },
+    "cruise_id": {
+      "type": "string"
+    },
+    "vessel_name": {
+      "type": "string"
+    },
+    "filename": {
+      "type": "string"
+    }
+  },
+  "dataset_gattrs": {
+    "title": "IMOS Underway CO2 dataset measured",
+    "principal_investigator": "",
+    "principal_investigator_email": "",
+    "featureType": "trajectory"
+  },
+  "force_old_pq_del": true,
+  "aws_opendata_registry": {
+    "Name": "SOOP CO2",
+    "Description": "",
+    "Documentation": "https://catalogue.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/63db5801-cc19-40ef-83b3-85ccba884cf7",
+    "Contact": "",
+    "ManagedBy": "",
+    "UpdateFrequency": "",
+    "Tags": [],
+    "License": "",
+    "Resources": [
+      {
+        "Description": "",
+        "ARN": "",
+        "Region": "",
+        "Type": "",
+        "Explore": []
+      },
+      {
+        "Description": "",
+        "ARN": "",
+        "Region": "",
+        "Type": ""
+      },
+      {
+        "Description": "",
+        "ARN": "",
+        "Region": "",
+        "Type": ""
+      },
+      {
+        "Description": "",
+        "ARN": "",
+        "Region": "",
+        "Type": ""
+      }
+    ],
+    "DataAtWork": {
+      "Tutorials": [
+        {
+          "Title": "",
+          "URL": "",
+          "Services": "",
+          "AuthorName": "",
+          "AuthorURL": ""
+        },
+        {
+          "Title": "",
+          "URL": "",
+          "AuthorName": "",
+          "AuthorURL": ""
+        },
+        {
+          "Title": "",
+          "URL": "",
+          "AuthorName": "",
+          "AuthorURL": ""
+        }
+      ],
+      "Tools & Applications": [
+        {
+          "Title": "",
+          "URL": "",
+          "AuthorName": "",
+          "AuthorURL": ""
+        },
+        {
+          "Title": "",
+          "URL": "",
+          "AuthorName": "",
+          "AuthorURL": ""
+        }
+      ],
+      "Publications": [
+        {
+          "Title": "IMOS - SOOP Expendable Bathythermographs (XBT) Research Group - XBT real-time data",
+          "URL": "https://catalogue.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/35234913-aa3c-48ec-b9a4-77f822f66ef8",
+          "AuthorName": ""
+        },
+        {
+          "Title": "",
+          "URL": "",
+          "AuthorName": ""
+        }
+      ]
+    }
+  }
+}

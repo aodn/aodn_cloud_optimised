@@ -17,7 +17,7 @@
     }
   },
   "batch_size": 10,
-  "metadata_uuid": "",
+  "metadata_uuid": "0c9eb39c-9cbe-4c6a-8a10-5867087e703a",
   "dimensions": {
     "time": {
       "name": "TIME",
@@ -130,7 +130,7 @@
   "aws_opendata_registry": {
     "Name": "",
     "Description": "",
-    "Documentation": "",
+    "Documentation": "https://catalogue-imos.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/0c9eb39c-9cbe-4c6a-8a10-5867087e703a",
     "Contact": "",
     "ManagedBy": "",
     "UpdateFrequency": "",

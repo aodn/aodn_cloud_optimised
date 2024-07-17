@@ -1,10 +1,10 @@
 {
-  "dataset_name": "anmn_temperature_logger_ts_fv01",
-  "logger_name": "anmn_temperature_logger_ts_fv01",
+  "dataset_name": "mooring_temperature_logger_delayed_qc",
+  "logger_name": "mooring_temperature_logger_delayed_qc",
   "cloud_optimised_format": "parquet",
   "cluster_options": {
     "n_workers": [
-      8,
+      1,
       20
     ],
     "scheduler_vm_types": "t3.small",
@@ -16,6 +16,7 @@
       "memory_limit": "32GB"
     }
   },
+  "batch_size": 100,
   "metadata_uuid": "7e13b5f3-4a70-4e31-9e95-335efa491c5c",
   "gattrs_to_variables": [
     "site_code"

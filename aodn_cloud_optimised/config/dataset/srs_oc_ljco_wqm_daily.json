@@ -16,7 +16,7 @@
       "memory_limit": "32GB"
     }
   },
-  "metadata_uuid": "e4ac6bf81-cd37-4611-8da8-4d5ae5e2bda",
+  "metadata_uuid": "4ac6bf81-cd37-4611-8da8-4d5ae5e2bda3",
   "gattrs_to_variables": [
     "site_code"
   ],
@@ -636,7 +636,7 @@
   "aws_opendata_registry": {
     "Name": "SRS OC LJCO",
     "Description": "",
-    "Documentation": "https://catalogue.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/e4ac6bf81-cd37-4611-8da8-4d5ae5e2bda",
+    "Documentation": "https://catalogue.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/4ac6bf81-cd37-4611-8da8-4d5ae5e2bda3",
     "Contact": "",
     "ManagedBy": "",
     "UpdateFrequency": "",

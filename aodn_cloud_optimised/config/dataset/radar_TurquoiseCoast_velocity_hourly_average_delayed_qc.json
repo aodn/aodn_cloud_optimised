@@ -2,5 +2,5 @@
   "dataset_name": "radar_TurquoiseCoast_velocity_hourly_average_delayed_qc",
   "parent_config": "radar_velocity_hourly_average_delayed_qc_main.json",
   "logger_name": "radar_TurquoiseCoast_velocity_hourly_average_delayed_qc",
-  "metadata_uuid": ""
+  "metadata_uuid": "055342fc-f970-4be7-a764-8903220d42fb"
 }

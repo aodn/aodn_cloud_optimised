@@ -15,7 +15,7 @@ def main():
         "/CTD_timeseries/",
         "FV01",
         "--dataset-config",
-        "anmn_ctd_ts_fv01.json",
+        "mooring_ctd_delayed_qc.json",
         "--clear-existing-data",
         "--cluster-mode",
         "remote",
