@@ -203,6 +203,10 @@ def populate_dataset_config_with_geonetwork_metadata(json_file):
 
     gn3_metadata = retrieve_geonetwork_metadata(uuid)
 
+    if gn3_metadata is None:
+        print("No Geonetwork metadata available")
+        return
+
     dataset_config = update_nested_dict_key(dataset_config, ["aws_opendata_registry", "Name"], gn3_metadata["title"])
     dataset_config = update_nested_dict_key(dataset_config, ["aws_opendata_registry", "Description"], gn3_metadata["abstract"])
     dataset_config = update_nested_dict_key(dataset_config, ["aws_opendata_registry", "Documentation"],
@@ -332,7 +336,7 @@ def main():
     elif args.file:
         output_dir = args.directory or tempfile.mkdtemp()
         if args.geonetwork:
-            populate_dataset_config_with_geonetwork_metadata(arg.file)
+            populate_dataset_config_with_geonetwork_metadata(args.file)
 
         convert_to_opendata_registry(args.file, output_dir)
     else:
