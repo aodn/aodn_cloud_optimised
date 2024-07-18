@@ -26,6 +26,7 @@ repos:
     rev: 22.10.0
     hooks:
       - id: black
+        exclude: ^aodn_cloud_optimised/bin/create_aws_registry_dataset.py$  # issue with black!
 
   - repo: https://github.com/python-poetry/poetry
     rev: '1.8.3'

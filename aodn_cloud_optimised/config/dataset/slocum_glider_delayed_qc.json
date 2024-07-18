@@ -1035,7 +1035,7 @@
         {
           "Title": "Accessing IMOS Slocum Glider data",
           "URL": "https://nbviewer.org/github/aodn/aodn_cloud_optimised/blob/main/notebooks/slocum_glider_delayed_qc.ipynb",
-          "NotebokkURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/slocum_glider_delayed_qc.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/slocum_glider_delayed_qc.ipynb",
           "Services": "",
           "AuthorName": "Laurent Besnard",
           "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
