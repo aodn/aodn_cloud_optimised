@@ -52,6 +52,13 @@ The project utilises `pre-commit <https://pre-commit.com>`_ with various hooks f
 Ensure that every commit triggers pre-commit hooks. If hooks do not trigger, you may need to install pre-commit or reactivate your Python environment.
 
 
+See below how pre-commit works when a JSON file is badly indented for example:
+
+.. asciinema:: ../_static/recordings/precommit.cast
+   :preload: 1
+   :theme: solarized-dark
+
+
 Dependencies Update
 -------------------
 
