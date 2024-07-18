@@ -13,6 +13,12 @@ Create AWS Registry dataset entry
     :members:
     :undoc-members:
 
+Terminal Recording
+~~~~~~~~~~~~~~~~~~
+.. asciinema:: _static/recordings/create_aws_registry.cast
+   :preload: 1
+   :theme: solarized-dark
+
 
 Common Handler
 --------------

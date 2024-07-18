@@ -36,6 +36,7 @@ extensions = [
     "sphinx.ext.githubpages",
     "sphinx.ext.intersphinx",
     "sphinx_rtd_theme",
+    "sphinxcontrib.asciinema",
 ]
 
 napoleon_google_docstring = True
