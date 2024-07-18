@@ -1,6 +1,170 @@
 {
   "dataset_name": "satellite_ghrsst_l3s_3day_daynighttime_single_sensor_australia",
   "logger_name": "satellite_ghrsst_l3s_3day_daynighttime_single_sensor_australia",
-  "parent_config": "satellite_ghrsst_main.json",
-  "metadata_uuid": "4cbb9eeb-9ed3-4079-a180-2293a2c219b9"
+  "cloud_optimised_format": "zarr",
+  "cluster_options": {
+    "n_workers": [
+      2,
+      40
+    ],
+    "scheduler_vm_types": "t3.medium",
+    "worker_vm_types": "t3.large",
+    "allow_ingress_from": "me",
+    "compute_purchase_option": "spot_with_fallback",
+    "worker_options": {
+      "nthreads": 8,
+      "memory_limit": "6GB"
+    }
+  },
+  "batch_size": 30,
+  "metadata_uuid": "4cbb9eeb-9ed3-4079-a180-2293a2c219b9",
+  "dimensions": {
+    "time": {
+      "name": "time",
+      "chunk": 5,
+      "rechunk": true
+    },
+    "latitude": {
+      "name": "lat",
+      "chunk": 1000
+    },
+    "longitude": {
+      "name": "lon",
+      "chunk": 1000
+    }
+  },
+  "var_template_shape": "sea_surface_temperature",
+  "vars_to_drop_no_common_dimension": [
+    "lat",
+    "lon"
+  ],
+  "schema": {
+    "lon": {
+      "type": "float32"
+    },
+    "lat": {
+      "type": "float32"
+    },
+    "time": {
+      "type": "datetime64[ns]"
+    },
+    "sea_surface_temperature": {
+      "type": "float32"
+    },
+    "sea_surface_temperature_day_night": {
+      "type": "float32",
+      "drop_vars": true
+    },
+    "sst_dtime": {
+      "type": "float64"
+    },
+    "dt_analysis": {
+      "type": "float32"
+    },
+    "wind_speed": {
+      "type": "float32",
+      "drop_vars": true
+    },
+    "wind_speed_dtime_from_sst": {
+      "type": "float32",
+      "drop_vars": true
+    },
+    "sea_ice_fraction": {
+      "type": "float32",
+      "drop_vars": true
+    },
+    "sea_ice_fraction_dtime_from_sst": {
+      "type": "float32",
+      "drop_vars": true
+    },
+    "satellite_zenith_angle": {
+      "type": "float32"
+    },
+    "l2p_flags": {
+      "type": "float32"
+    },
+    "quality_level": {
+      "type": "float32"
+    },
+    "sses_bias": {
+      "type": "float32"
+    },
+    "sses_standard_deviation": {
+      "type": "float32"
+    },
+    "sses_count": {
+      "type": "float32"
+    },
+    "sst_count": {
+      "type": "float32"
+    },
+    "sst_mean": {
+      "type": "float32"
+    },
+    "sst_standard_deviation": {
+      "type": "float32"
+    }
+  },
+  "dataset_gattrs": {
+    "title": "Temperature logger"
+  },
+  "aws_opendata_registry": {
+    "Name": "IMOS - SRS - SST - L3S - Multi Sensor - 3 day - day and night time - Australia",
+    "Description": "This is a multi-sensor SSTfnd L3S product for a single 72 hour period, derived using sea surface temperature retrievals from the VIIRS sensor on the Suomi-NPP satellite and JPSS series of satellites, and AVHRR sensor on the NOAA and Metop series of Polar-orbiting satellites. The sensors and satellite platforms contributing to each file are listed in the sensor and platform global attributes in the file header. The SSTfnd is derived by adding a constant 0.17 degC to the NOAA AVHRR SSTskin observations, and 0 degC to the Metop and VIIRS SSTsubskin observations, after rejecting observations with low surface wind speeds (<6 m/s by day and <2 m/s at night). The Multi-sensor L3S product is provided as a 0.02deg x 0.02deg cylindrical equidistant projected map over the region 70E to 170W, 20N to 70S. The quality level for each pixel was remapped using the original ACSPO VIIRS and AVHRR L3U quality levels and Sensor Specific Error Statistics (SSES), as described in Griffin et al. (2017) Appendix at http://imos.org.au/facilities/srs/sstproducts/sstdata0/sstdata-references/, before compositing single swaths from the sensors. Each grid cell contains the 72 hour average of all the highest available quality SSTs that overlap with that cell, weighted by the area of overlap. Refer to the IMOS SST products web page at http://imos.org.au/sstproducts.html for further information.",
+    "Documentation": "https://catalogue.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/4cbb9eeb-9ed3-4079-a180-2293a2c219b9",
+    "Contact": "info@aodn.org.au",
+    "ManagedBy": "AODN",
+    "UpdateFrequency": "As Needed",
+    "Tags": [],
+    "License": "http://creativecommons.org/licenses/by/4.0/",
+    "Resources": [
+      {
+        "Description": "",
+        "ARN": "",
+        "Region": "",
+        "Type": "",
+        "Explore": []
+      },
+      {
+        "Description": "",
+        "ARN": "",
+        "Region": "",
+        "Type": ""
+      },
+      {
+        "Description": "",
+        "ARN": "",
+        "Region": "",
+        "Type": ""
+      },
+      {
+        "Description": "",
+        "ARN": "",
+        "Region": "",
+        "Type": ""
+      }
+    ],
+    "DataAtWork": {
+      "Tutorials": [
+        {
+          "Title": "Accessing IMOS - SRS - SST - L3S - Multi Sensor - 3 day - day and night time - Australia",
+          "URL": "https://nbviewer.org/github/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_ghrsst_l3s_3day_daynighttime_single_sensor_australia.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_ghrsst_l3s_3day_daynighttime_single_sensor_australia.ipynb",
+          "Services": "",
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
+        },
+        {
+          "Title": "Accessing and search for any AODN dataset",
+          "URL": "https://nbviewer.org/github/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "Services": "",
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
+        }
+      ]
+    },
+    "Citation": "IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access]"
+  },
+  "parent_config": "satellite_ghrsst_main.json"
 }

@@ -435,14 +435,14 @@
   },
   "force_old_pq_del": true,
   "aws_opendata_registry": {
-    "Name": "SOOP SST",
-    "Description": "",
+    "Name": "IMOS - SOOP Underway CO2 Measurements Research Group - delayed mode data",
+    "Description": "The IMOS Ship of Opportunity Underway CO2 Measurements group is a research and data collection project working within the IMOS Ship of Opportunity Multi-Disciplinary Underway Network sub-facility. The CO2 group sample critical regions of the Southern Ocean and the Australian shelf waters have a major impact on CO2 uptake by the ocean. These are regions where biogeochemical cycling is predicted to be particularly sensitive to a changing climate. The pCO2 Underway System measures the fugacity of carbon dioxide (fCO2) along with other variables such as sea surface salinity (SSS) and sea surface temperature (SST) using an automated system. The data represented by this record are presented in delayed mode. \n\nThe RV Aurora Australis provides data on surface ocean CO2 for the Southern Ocean, while the Southern Surveyor and its replacement in 2014, RV Investigator, covers shelf and offshore waters around Australia from the tropics to the sea-ice edge. The  RV L'Astrolabe is also used to collect data on route from Tasmania to Dumont d'Urville station, Antarctica. The New Zealand National Institute of Water & Atmospheric Research Ltd. (NIWA) has supported the setup of underway CO2 measurements on the RV Tangaroa. The Tangaroa covers oceans adjacent to New Zealand.",
     "Documentation": "https://catalogue.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/63db5801-cc19-40ef-83b3-85ccba884cf7",
-    "Contact": "",
-    "ManagedBy": "",
-    "UpdateFrequency": "",
+    "Contact": "info@aodn.org.au",
+    "ManagedBy": "AODN",
+    "UpdateFrequency": "As Needed",
     "Tags": [],
-    "License": "",
+    "License": "http://creativecommons.org/licenses/by/4.0/",
     "Resources": [
       {
         "Description": "",
@@ -473,51 +473,23 @@
     "DataAtWork": {
       "Tutorials": [
         {
-          "Title": "",
-          "URL": "",
+          "Title": "Accessing IMOS - SOOP Underway CO2 Measurements Research Group - delayed mode data",
+          "URL": "https://nbviewer.org/github/aodn/aodn_cloud_optimised/blob/main/notebooks/vessel_sst_delayed_qc.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/vessel_sst_delayed_qc.ipynb",
           "Services": "",
-          "AuthorName": "",
-          "AuthorURL": ""
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
         },
         {
-          "Title": "",
-          "URL": "",
-          "AuthorName": "",
-          "AuthorURL": ""
-        },
-        {
-          "Title": "",
-          "URL": "",
-          "AuthorName": "",
-          "AuthorURL": ""
-        }
-      ],
-      "Tools & Applications": [
-        {
-          "Title": "",
-          "URL": "",
-          "AuthorName": "",
-          "AuthorURL": ""
-        },
-        {
-          "Title": "",
-          "URL": "",
-          "AuthorName": "",
-          "AuthorURL": ""
-        }
-      ],
-      "Publications": [
-        {
-          "Title": "IMOS - SOOP Expendable Bathythermographs (XBT) Research Group - XBT real-time data",
-          "URL": "https://catalogue.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/35234913-aa3c-48ec-b9a4-77f822f66ef8",
-          "AuthorName": ""
-        },
-        {
-          "Title": "",
-          "URL": "",
-          "AuthorName": ""
+          "Title": "Accessing and search for any AODN dataset",
+          "URL": "https://nbviewer.org/github/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "Services": "",
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
         }
       ]
-    }
+    },
+    "Citation": "IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access]"
   }
 }

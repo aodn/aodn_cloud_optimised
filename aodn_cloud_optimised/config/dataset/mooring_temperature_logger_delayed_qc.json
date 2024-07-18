@@ -8,7 +8,7 @@
       20
     ],
     "scheduler_vm_types": "t3.small",
-    "worker_vm_types": "t3.large",
+    "worker_vm_types": "t3.xlarge",
     "allow_ingress_from": "me",
     "compute_purchase_option": "spot_with_fallback",
     "worker_options": {
@@ -192,14 +192,14 @@
   },
   "force_old_pq_del": true,
   "aws_opendata_registry": {
-    "Name": "ANMN Temperature logger",
-    "Description": "",
+    "Name": "IMOS - Australian National Mooring Network (ANMN) Facility - Temperature and salinity time-series",
+    "Description": "The Australian National Mooring Network (ANMN) Facility is a series of national reference stations and regional moorings designed to monitor particular oceanographic phenomena in Australian coastal ocean waters. This collection contains time-series observations of temperature and salinity from moorings deployed by the ANMN. The primary parameters are temperature, pressure (when available) and depth of the instrument. A subset of this collection also includes conductivity and salinity. The observations were made using a range of temperature loggers, conductivity-temperature-depth (CTD) instruments, and temperature sensors on acoustic Doppler current profilers (ADCPs). We are also producing a gridded product of temperature time-series profiles based on these data. These will be available in a separate collection.",
     "Documentation": "https://catalogue.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/7e13b5f3-4a70-4e31-9e95-335efa491c5c",
-    "Contact": "",
-    "ManagedBy": "",
-    "UpdateFrequency": "",
+    "Contact": "info@aodn.org.au",
+    "ManagedBy": "AODN",
+    "UpdateFrequency": "As Needed",
     "Tags": [],
-    "License": "",
+    "License": "http://creativecommons.org/licenses/by/4.0/",
     "Resources": [
       {
         "Description": "",
@@ -230,51 +230,23 @@
     "DataAtWork": {
       "Tutorials": [
         {
-          "Title": "",
-          "URL": "",
+          "Title": "Accessing IMOS - Australian National Mooring Network (ANMN) Facility - Temperature and salinity time-series",
+          "URL": "https://nbviewer.org/github/aodn/aodn_cloud_optimised/blob/main/notebooks/mooring_temperature_logger_delayed_qc.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/mooring_temperature_logger_delayed_qc.ipynb",
           "Services": "",
-          "AuthorName": "",
-          "AuthorURL": ""
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
         },
         {
-          "Title": "",
-          "URL": "",
-          "AuthorName": "",
-          "AuthorURL": ""
-        },
-        {
-          "Title": "",
-          "URL": "",
-          "AuthorName": "",
-          "AuthorURL": ""
-        }
-      ],
-      "Tools & Applications": [
-        {
-          "Title": "",
-          "URL": "",
-          "AuthorName": "",
-          "AuthorURL": ""
-        },
-        {
-          "Title": "",
-          "URL": "",
-          "AuthorName": "",
-          "AuthorURL": ""
-        }
-      ],
-      "Publications": [
-        {
-          "Title": "IMOS - Australian National Mooring Network (ANMN) Facility - Temperature and salinity time-series",
-          "URL": "https://catalogue.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/7e13b5f3-4a70-4e31-9e95-335efa491c5c",
-          "AuthorName": ""
-        },
-        {
-          "Title": "",
-          "URL": "",
-          "AuthorName": ""
+          "Title": "Accessing and search for any AODN dataset",
+          "URL": "https://nbviewer.org/github/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "Services": "",
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
         }
       ]
-    }
+    },
+    "Citation": "IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access]"
   }
 }
