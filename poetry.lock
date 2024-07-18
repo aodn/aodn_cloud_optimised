@@ -209,6 +209,17 @@ files = [
 ]
 
 [[package]]
+name = "asciinema"
+version = "2.4.0"
+description = "Terminal session recorder"
+optional = false
+python-versions = "*"
+files = [
+    {file = "asciinema-2.4.0-py3-none-any.whl", hash = "sha256:249ccf108509d643ddaf38979dac48c99e9e251f597173d8553a30d7a6423104"},
+    {file = "asciinema-2.4.0.tar.gz", hash = "sha256:828e04c36ba622a7b8f8f912c8f0c1329538b6c7ed1c0d1b131bbbfe3a221707"},
+]
+
+[[package]]
 name = "asciitree"
 version = "0.3.3"
 description = "Draws ASCII trees."
@@ -5969,4 +5980,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10.14, <4.0"
-content-hash = "9158cc835496b65a213a7b4989684b3fb18e02d98a1db9e9e4a91e32d650c636"
+content-hash = "18e6de84e4ae2c8b31bd5b066febd9fd3a8272ca27581c5b04792ab83447d6c1"

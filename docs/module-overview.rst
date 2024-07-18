@@ -9,6 +9,14 @@ Generic Cloud Optimised Creation
 
 Create AWS Registry dataset entry
 ---------------------------------
+Terminal Recording
+~~~~~~~~~~~~~~~~~~
+.. asciinema:: _static/recordings/create_aws_registry.cast
+   :preload: 1
+   :theme: solarized-dark
+
+Module
+~~~~~~
 .. automodule:: aodn_cloud_optimised.bin.create_aws_registry_dataset
     :members:
     :undoc-members:

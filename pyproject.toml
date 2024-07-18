@@ -45,6 +45,8 @@ zarr = ">=2.18.2"
 geopandas = ">=0.14.4"
 coiled = ">=1.27.2"
 dask = ">=2024.6.0"
+colorama = ">=0.4.6"
+
 
 [tool.poetry.dev-dependencies]
 pytest = "^8.2.1"
@@ -56,7 +58,7 @@ moto = {version = ">=5.0.0", extras = ["ec2", "s3",  "server", "all"]}  # Add Mo
 fuzzywuzzy = ">=0.18.0"
 sphinx = ">=7.3.7"
 poetry-pre-commit-plugin = "^0.1.2"
-
+asciinema = ">=2.4.0"  # to record terminal sessions, useful for documentation
 
 #[tool.poetry.extras]
 #testing = ["pytest", "ipython", "ipdb"]
@@ -97,6 +99,7 @@ moto = {version = ">=5.0.0", extras = ["ec2", "s3",  "server", "all"]}  # Add Mo
 fuzzywuzzy = ">=0.18.0"
 sphinx = ">=7.3.7"
 poetry-pre-commit-plugin = "^0.1.2"
+asciinema = ">=2.4.0"  # to record terminal sessions, useful for documentation
 
 
 [tool.pre_commit]

@@ -282,14 +282,14 @@
   },
   "force_old_pq_del": true,
   "aws_opendata_registry": {
-    "Name": "ANMN CTD timeseries",
-    "Description": "",
+    "Name": "IMOS - Australian National Mooring Network (ANMN) - CTD Profiles",
+    "Description": "This collection includes conductivity-temperature-depth (CTD) profiles obtained at the National Reference Stations (NRS) as part of the water sampling program. The instruments used also measure dissolved oxygen, fluorescence, and turbidity. The collection also includes practical salinity, water density and artificial chlorophyll concentration, as computed from the measured properties. The data are processed in delayed mode, with automated quality control applied. The National Reference Station network is designed to provide baseline information, at timescales relevant to human response, that is required to understand how large-scale, long-term change and variability in the global ocean are affecting the ecosystems of Australia's coastal seas. The stations are operated by the Australian National Moorings Network (ANMN), a facility of the Integrated Marine Observing System (IMOS).",
     "Documentation": "https://catalogue.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/7b901002-b1dc-46c3-89f2-b4951cedca48",
-    "Contact": "",
-    "ManagedBy": "",
-    "UpdateFrequency": "",
+    "Contact": "info@aodn.org.au",
+    "ManagedBy": "AODN",
+    "UpdateFrequency": "As Needed",
     "Tags": [],
-    "License": "",
+    "License": "http://creativecommons.org/licenses/by/4.0/",
     "Resources": [
       {
         "Description": "",
@@ -320,51 +320,23 @@
     "DataAtWork": {
       "Tutorials": [
         {
-          "Title": "",
-          "URL": "",
+          "Title": "Accessing IMOS - Australian National Mooring Network (ANMN) - CTD Profiles",
+          "URL": "https://nbviewer.org/github/aodn/aodn_cloud_optimised/blob/main/notebooks/mooring_ctd_delayed_qc.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/mooring_ctd_delayed_qc.ipynb",
           "Services": "",
-          "AuthorName": "",
-          "AuthorURL": ""
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
         },
         {
-          "Title": "",
-          "URL": "",
-          "AuthorName": "",
-          "AuthorURL": ""
-        },
-        {
-          "Title": "",
-          "URL": "",
-          "AuthorName": "",
-          "AuthorURL": ""
-        }
-      ],
-      "Tools & Applications": [
-        {
-          "Title": "",
-          "URL": "",
-          "AuthorName": "",
-          "AuthorURL": ""
-        },
-        {
-          "Title": "",
-          "URL": "",
-          "AuthorName": "",
-          "AuthorURL": ""
-        }
-      ],
-      "Publications": [
-        {
-          "Title": "IMOS - Australian National Mooring Network (ANMN) - CTD Profiles",
-          "URL": "https://catalogue.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/7b901002-b1dc-46c3-89f2-b4951cedca48",
-          "AuthorName": ""
-        },
-        {
-          "Title": "",
-          "URL": "",
-          "AuthorName": ""
+          "Title": "Accessing and search for any AODN dataset",
+          "URL": "https://nbviewer.org/github/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "Services": "",
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
         }
       ]
-    }
+    },
+    "Citation": "IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access]"
   }
 }
