@@ -38,7 +38,9 @@ from colorama import init, Fore, Style
 import difflib
 
 
-def retrieve_geonetwork_metadata(uuid, geonetwork_base_url="https://catalogue-imos.aodn.org.au/geonetwork"):
+def retrieve_geonetwork_metadata(
+    uuid, geonetwork_base_url="https://catalogue-imos.aodn.org.au/geonetwork"
+):
     """
     Retrieves metadata from GeoNetwork using the provided UUID.
 
@@ -74,23 +76,22 @@ def retrieve_geonetwork_metadata(uuid, geonetwork_base_url="https://catalogue-im
     xml_data = response.content
     xml_file = io.BytesIO(xml_data)
     try:
-        res = xmltodict.parse(xml_file.read(), encoding='utf-8')
+        res = xmltodict.parse(xml_file.read(), encoding="utf-8")
     except xmltodict.expat.ExpatError as e:
         print(f"Failed to parse XML data. Error: {e}")
         return None
 
-    uuid = res['mdb:MD_Metadata']['mdb:metadataIdentifier']['mcc:MD_Identifier']['mcc:code']['gco:CharacterString']
-    title = \
-    res['mdb:MD_Metadata']['mdb:identificationInfo']['mri:MD_DataIdentification']['mri:citation']['cit:CI_Citation'][
-        'cit:title']['gco:CharacterString']
-    abstract = res['mdb:MD_Metadata']["mdb:identificationInfo"]["mri:MD_DataIdentification"]['mri:abstract'][
-        'gco:CharacterString']
+    uuid = res["mdb:MD_Metadata"]["mdb:metadataIdentifier"]["mcc:MD_Identifier"][
+        "mcc:code"
+    ]["gco:CharacterString"]
+    title = res["mdb:MD_Metadata"]["mdb:identificationInfo"][
+        "mri:MD_DataIdentification"
+    ]["mri:citation"]["cit:CI_Citation"]["cit:title"]["gco:CharacterString"]
+    abstract = res["mdb:MD_Metadata"]["mdb:identificationInfo"][
+        "mri:MD_DataIdentification"
+    ]["mri:abstract"]["gco:CharacterString"]
 
-    metadata = {
-        'title': title,
-        'abstract': abstract,
-        'uuid': uuid
-    }
+    metadata = {"title": title, "abstract": abstract, "uuid": uuid}
 
     return metadata
 
@@ -118,6 +119,7 @@ def list_json_files(directory):
 # Initialize Colorama for cross-platform color support
 init(autoreset=True)
 
+
 def update_nested_dict_key(dataset_config, keys, new_value):
     """
     Updates a key in a nested dictionary.
@@ -143,16 +145,28 @@ def update_nested_dict_key(dataset_config, keys, new_value):
     current_value = d.get(target_key, "")
 
     # Convert current and new values to strings for comparison
-    current_value_str = json.dumps(current_value, indent=4) if isinstance(current_value, dict) else str(current_value)
-    new_value_str = json.dumps(new_value, indent=4) if isinstance(new_value, dict) else str(new_value)
+    current_value_str = (
+        json.dumps(current_value, indent=4)
+        if isinstance(current_value, dict)
+        else str(current_value)
+    )
+    new_value_str = (
+        json.dumps(new_value, indent=4)
+        if isinstance(new_value, dict)
+        else str(new_value)
+    )
 
     if current_value_str == new_value_str:
-        print(f"{Fore.GREEN}{target_key} is already set to the new value. No update needed.{Style.RESET_ALL}")
+        print(
+            f"{Fore.GREEN}{target_key} is already set to the new value. No update needed.{Style.RESET_ALL}"
+        )
         return dataset_config
 
     if not current_value:
         d[target_key] = new_value
-        print(f"{Fore.GREEN}{target_key} was empty, set to: {new_value}{Style.RESET_ALL}")
+        print(
+            f"{Fore.GREEN}{target_key} was empty, set to: {new_value}{Style.RESET_ALL}"
+        )
     else:
         print(f"{Fore.YELLOW}Current {target_key}:{Style.RESET_ALL}")
         print(current_value)
@@ -161,25 +175,29 @@ def update_nested_dict_key(dataset_config, keys, new_value):
 
         # Compute the diff between current and new value using difflib
         diff = difflib.unified_diff(
-            current_value_str.splitlines(),
-            new_value_str.splitlines(),
-            lineterm=""
+            current_value_str.splitlines(), new_value_str.splitlines(), lineterm=""
         )
 
-        print(f"{Fore.MAGENTA}Difference between current and new {target_key}:{Style.RESET_ALL}")
+        print(
+            f"{Fore.MAGENTA}Difference between current and new {target_key}:{Style.RESET_ALL}"
+        )
         for line in diff:
-            if line.startswith('-'):
+            if line.startswith("-"):
                 print(Fore.RED + line + Style.RESET_ALL)
-            elif line.startswith('+'):
+            elif line.startswith("+"):
                 print(Fore.GREEN + line + Style.RESET_ALL)
-            elif line.startswith('@'):
+            elif line.startswith("@"):
                 print(Fore.CYAN + line + Style.RESET_ALL)
             else:
                 print(line)
 
-        choice = input(f"Do you want to overwrite the current {target_key}? (Y/N): ").strip().lower()
+        choice = (
+            input(f"Do you want to overwrite the current {target_key}? (Y/N): ")
+            .strip()
+            .lower()
+        )
 
-        if choice in ['y', 'yes']:
+        if choice in ["y", "yes"]:
             d[target_key] = new_value
             print(f"{Fore.GREEN}{target_key} has been overwritten.{Style.RESET_ALL}")
         else:
@@ -189,17 +207,15 @@ def update_nested_dict_key(dataset_config, keys, new_value):
 
 
 def populate_dataset_config_with_geonetwork_metadata(json_file):
-    """
-
-    """
+    """ """
     json_path = str(files("aodn_cloud_optimised.config.dataset").joinpath(json_file))
-    dataset_config = load_dataset_config(
-        json_path
-    )
+    dataset_config = load_dataset_config(json_path)
 
     uuid = dataset_config.get("metadata_uuid", None)
     if uuid is None:
-        raise ValueError("No metadata UUID found in the given JSON file. Process Aborted")
+        raise ValueError(
+            "No metadata UUID found in the given JSON file. Process Aborted"
+        )
 
     gn3_metadata = retrieve_geonetwork_metadata(uuid)
 
@@ -207,31 +223,49 @@ def populate_dataset_config_with_geonetwork_metadata(json_file):
         print("No Geonetwork metadata available")
         return
 
-    dataset_config = update_nested_dict_key(dataset_config, ["aws_opendata_registry", "Name"], gn3_metadata["title"])
-    dataset_config = update_nested_dict_key(dataset_config, ["aws_opendata_registry", "Description"], gn3_metadata["abstract"])
-    dataset_config = update_nested_dict_key(dataset_config, ["aws_opendata_registry", "Documentation"],
-                                            f"https://catalogue.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/{uuid}")
+    dataset_config = update_nested_dict_key(
+        dataset_config, ["aws_opendata_registry", "Name"], gn3_metadata["title"]
+    )
+    dataset_config = update_nested_dict_key(
+        dataset_config,
+        ["aws_opendata_registry", "Description"],
+        gn3_metadata["abstract"],
+    )
+    dataset_config = update_nested_dict_key(
+        dataset_config,
+        ["aws_opendata_registry", "Documentation"],
+        f"https://catalogue.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/{uuid}",
+    )
 
-    dataset_config = update_nested_dict_key(dataset_config, ["aws_opendata_registry", "Contact"],
-                                            "info@aodn.org.au")
-    dataset_config = update_nested_dict_key(dataset_config, ["aws_opendata_registry", "ManagedBy"],
-                                            "AODN")
-    dataset_config = update_nested_dict_key(dataset_config, ["aws_opendata_registry", "UpdateFrequency"],
-                                            "As Needed")
-    dataset_config = update_nested_dict_key(dataset_config, ["aws_opendata_registry", "License"],
-                                            "http://creativecommons.org/licenses/by/4.0/")
-    dataset_config = update_nested_dict_key(dataset_config, ["aws_opendata_registry", "Citation"],
-                                            "IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access]")
+    dataset_config = update_nested_dict_key(
+        dataset_config, ["aws_opendata_registry", "Contact"], "info@aodn.org.au"
+    )
+    dataset_config = update_nested_dict_key(
+        dataset_config, ["aws_opendata_registry", "ManagedBy"], "AODN"
+    )
+    dataset_config = update_nested_dict_key(
+        dataset_config, ["aws_opendata_registry", "UpdateFrequency"], "As Needed"
+    )
+    dataset_config = update_nested_dict_key(
+        dataset_config,
+        ["aws_opendata_registry", "License"],
+        "http://creativecommons.org/licenses/by/4.0/",
+    )
+    dataset_config = update_nested_dict_key(
+        dataset_config,
+        ["aws_opendata_registry", "Citation"],
+        "IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access]",
+    )
 
     data_at_work = {
         "Tutorials": [
             {
-                "Title": f"Accessing {dataset_config["aws_opendata_registry"]["Name"]}",
-                "URL": f"https://nbviewer.org/github/aodn/aodn_cloud_optimised/blob/main/notebooks/{dataset_config["dataset_name"]}.ipynb",
-                "NotebookURL": f"https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/{dataset_config["dataset_name"]}.ipynb",
+                "Title": f"Accessing {dataset_config['aws_opendata_registry']['Name']}",
+                "URL": f"https://nbviewer.org/github/aodn/aodn_cloud_optimised/blob/main/notebooks/{dataset_config['dataset_name']}.ipynb",
+                "NotebookURL": f"https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/{dataset_config['dataset_name']}.ipynb",
                 "Services": "",
                 "AuthorName": "Laurent Besnard",
-                "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
+                "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised",
             },
             {
                 "Title": f"Accessing and search for any AODN dataset",
@@ -239,16 +273,17 @@ def populate_dataset_config_with_geonetwork_metadata(json_file):
                 "NotebookURL": f"https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
                 "Services": "",
                 "AuthorName": "Laurent Besnard",
-                "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
+                "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised",
             },
         ]
     }
 
-    dataset_config = update_nested_dict_key(dataset_config, ["aws_opendata_registry", "DataAtWork"],
-                                            data_at_work)
+    dataset_config = update_nested_dict_key(
+        dataset_config, ["aws_opendata_registry", "DataAtWork"], data_at_work
+    )
 
     # Overwrite the original JSON file with the modified dataset_config
-    with open(json_path, 'w') as f:
+    with open(json_path, "w") as f:
         json.dump(dataset_config, f, indent=2)
 
     print(f"Updated JSON file saved at: {json_path}")
@@ -351,7 +386,9 @@ def main():
                 if 0 <= choice_idx < len(json_files):
                     output_dir = args.directory or tempfile.mkdtemp()
                     if args.geonetwork:
-                        populate_dataset_config_with_geonetwork_metadata(json_files[choice_idx])
+                        populate_dataset_config_with_geonetwork_metadata(
+                            json_files[choice_idx]
+                        )
                     convert_to_opendata_registry(json_files[choice_idx], output_dir)
                 else:
                     print("Invalid choice. Aborting.")
