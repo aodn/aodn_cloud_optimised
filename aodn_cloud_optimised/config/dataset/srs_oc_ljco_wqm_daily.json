@@ -642,33 +642,12 @@
     "UpdateFrequency": "As Needed",
     "Tags": [],
     "License": "http://creativecommons.org/licenses/by/4.0/",
-    "Resources": [
-      {
-        "Description": "",
-        "ARN": "",
-        "Region": "",
-        "Type": "",
-        "Explore": []
-      },
-      {
-        "Description": "",
-        "ARN": "",
-        "Region": "",
-        "Type": ""
-      },
-      {
-        "Description": "",
-        "ARN": "",
-        "Region": "",
-        "Type": ""
-      },
-      {
-        "Description": "",
-        "ARN": "",
-        "Region": "",
-        "Type": ""
-      }
-    ],
+    "Resources": {
+      "Description": "Cloud Optimised AODN dataset of IMOS - SRS Satellite Ocean Colour Sub-Facility - Lucinda Jetty Coastal Observatory (LJCO)",
+      "ARN": "arn:aws:s3:::imos-data-lab-optimised/cloud_optimised/cluster_testing/srs_oc_ljco_wqm_daily.parquet",
+      "Region": "ap-southeast-2",
+      "Type": "S3 Bucket"
+    },
     "DataAtWork": {
       "Tutorials": [
         {

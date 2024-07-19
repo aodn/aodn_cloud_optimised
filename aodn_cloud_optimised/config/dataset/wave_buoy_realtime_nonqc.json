@@ -226,33 +226,12 @@
     "UpdateFrequency": "As Needed",
     "Tags": [],
     "License": "http://creativecommons.org/licenses/by/4.0/",
-    "Resources": [
-      {
-        "Description": "",
-        "ARN": "",
-        "Region": "",
-        "Type": "",
-        "Explore": []
-      },
-      {
-        "Description": "",
-        "ARN": "",
-        "Region": "",
-        "Type": ""
-      },
-      {
-        "Description": "",
-        "ARN": "",
-        "Region": "",
-        "Type": ""
-      },
-      {
-        "Description": "",
-        "ARN": "",
-        "Region": "",
-        "Type": ""
-      }
-    ],
+    "Resources": {
+      "Description": "Cloud Optimised AODN dataset of Wave buoys Observations - Australia - near real-time",
+      "ARN": "arn:aws:s3:::imos-data-lab-optimised/cloud_optimised/cluster_testing/wave_buoy_realtime_nonqc.parquet",
+      "Region": "ap-southeast-2",
+      "Type": "S3 Bucket"
+    },
     "DataAtWork": {
       "Tutorials": [
         {

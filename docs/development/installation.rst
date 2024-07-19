@@ -57,6 +57,10 @@ See below how pre-commit works when a JSON file is badly indented for example:
 .. asciinema:: ../_static/recordings/precommit.cast
    :preload: 1
    :theme: solarized-dark
+   :autoplay: true
+   :speed: 0.80
+   :cols: 100
+   :rows: 30
 
 
 Dependencies Update

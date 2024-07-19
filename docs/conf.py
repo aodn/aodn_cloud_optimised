@@ -37,11 +37,25 @@ extensions = [
     "sphinx.ext.intersphinx",
     "sphinx_rtd_theme",
     "sphinxcontrib.asciinema",
+    "sphinx.ext.todo",
+    "sphinx.ext.inheritance_diagram",
+    "sphinx.ext.graphviz",
 ]
 
 napoleon_google_docstring = True
 napoleon_numpy_docstring = False
+todo_include_todos = True
 
+graphviz_output_format = "svg"
+
+inheritance_node_attrs = dict(fontsize=15, height=0.5, width=1)
+
+inheritance_edge_attrs = dict(fontsize=15)
+
+inheritance_graph_attrs = dict(
+    rankdir="TB",
+    size='""',
+)
 
 # Ensuring the code can be imported
 import os
