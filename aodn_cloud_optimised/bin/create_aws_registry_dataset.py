@@ -29,7 +29,11 @@ from argparse import RawTextHelpFormatter
 from importlib.resources import files
 
 from aodn_cloud_optimised.lib.CommonHandler import CommonHandler
-from aodn_cloud_optimised.lib.config import load_dataset_config
+from aodn_cloud_optimised.lib.config import (
+    load_dataset_config,
+    load_config,
+    load_variable_from_config,
+)
 import requests
 import xmltodict
 import io
@@ -208,6 +212,7 @@ def update_nested_dict_key(dataset_config, keys, new_value):
 
 def populate_dataset_config_with_geonetwork_metadata(json_file):
     """ """
+
     json_path = str(files("aodn_cloud_optimised.config.dataset").joinpath(json_file))
     dataset_config = load_dataset_config(json_path)
 
@@ -278,13 +283,36 @@ def populate_dataset_config_with_geonetwork_metadata(json_file):
         ]
     }
 
+    dataset_path_arn = os.path.join(
+        load_variable_from_config("BUCKET_OPTIMISED_DEFAULT"),
+        load_variable_from_config("ROOT_PREFIX_CLOUD_OPTIMISED_PATH"),
+        dataset_config["dataset_name"] + "." + dataset_config["cloud_optimised_format"],
+    )
+
+    dataset_location = {
+        "Description": f"Cloud Optimised AODN dataset of {dataset_config['aws_opendata_registry']['Name']}",
+        "ARN": f"arn:aws:s3:::{dataset_path_arn}",
+        "Region": "ap-southeast-2",
+        "Type": "S3 Bucket",
+    }
+
     dataset_config = update_nested_dict_key(
         dataset_config, ["aws_opendata_registry", "DataAtWork"], data_at_work
     )
 
+    dataset_config = update_nested_dict_key(
+        dataset_config, ["aws_opendata_registry", "Resources"], dataset_location
+    )
+
+    # dataset confi coming from load_dataset_config is the result of parent and child configuration. When writting back
+    # the configuration, we only want to write the child data back
+    dataset_config_child = load_config(json_path)
     # Overwrite the original JSON file with the modified dataset_config
     with open(json_path, "w") as f:
-        json.dump(dataset_config, f, indent=2)
+        dataset_config_child["aws_opendata_registry"] = dataset_config[
+            "aws_opendata_registry"
+        ]
+        json.dump(dataset_config_child, f, indent=2)
 
     print(f"Updated JSON file saved at: {json_path}")
 
