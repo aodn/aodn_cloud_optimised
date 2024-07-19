@@ -1,3 +1,4 @@
 toml
+graphviz
 sphinx-rtd-theme
 sphinxcontrib.asciinema
