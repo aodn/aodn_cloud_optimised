@@ -3,23 +3,33 @@ Module Overview
 
 Generic Cloud Optimised Creation
 --------------------------------
+The ``generic_cloud_optimised_creation`` script is installed as part of the `aodn_cloud_optimised` package.
+
+
 .. automodule:: aodn_cloud_optimised.bin.generic_cloud_optimised_creation
     :members:
     :undoc-members:
 
 Create AWS Registry dataset entry
 ---------------------------------
-Terminal Recording
-~~~~~~~~~~~~~~~~~~
+The ``cloud_optimised_create_aws_registry_dataset`` script is installed as part of the `aodn_cloud_optimised` package.
+
+
+Usage Example
+~~~~~~~~~~~~~
 .. asciinema:: _static/recordings/create_aws_registry.cast
    :preload: 1
    :theme: solarized-dark
+   :autoplay: true
+   :speed: 0.80
+   :cols: 100
+   :rows: 30
 
-Module
-~~~~~~
-.. automodule:: aodn_cloud_optimised.bin.create_aws_registry_dataset
-    :members:
-    :undoc-members:
+
+Definition
+~~~~~~~~~~
+
+.. autofunction:: aodn_cloud_optimised.bin.create_aws_registry_dataset.main
 
 
 Common Handler
@@ -28,8 +38,8 @@ Common Handler
     :members:
 
 
-Parquet Handler
----------------
+Parquet Handlers
+----------------
 
 handler steps
 ~~~~~~~~~~~~~
@@ -48,12 +58,34 @@ The conversion process is broken down into a series of ordered steps, each respo
 
 4. **postprocess**: Cleans up resources used during data processing.
 
-Handler definition
-~~~~~~~~~~~~~~~~~~
+
+Generic Parquet Handler definition
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: aodn_cloud_optimised.lib.GenericParquetHandler
    :members:
    :show-inheritance:
 
+.. inheritance-diagram:: aodn_cloud_optimised.lib.GenericParquetHandler
+
+
+Argo Parquet Handler
+~~~~~~~~~~~~~~~~~~~~
+
+.. automodule:: aodn_cloud_optimised.lib.ArgoHandler
+   :members:
+   :show-inheritance:
+
+.. inheritance-diagram:: aodn_cloud_optimised.lib.ArgoHandler
+
+
+Mooring Hourly Timeseries Parquet Handler
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. automodule:: aodn_cloud_optimised.lib.AnmnHourlyTsHandler
+   :members:
+   :show-inheritance:
+
+.. inheritance-diagram:: aodn_cloud_optimised.lib.AnmnHourlyTsHandler
 
 
 Zarr Handler
@@ -65,3 +97,5 @@ Handler definition
 ~~~~~~~~~~~~~~~~~~
 .. automodule:: aodn_cloud_optimised.lib.GenericZarrHandler
    :members:
+
+.. inheritance-diagram:: aodn_cloud_optimised.lib.GenericZarrHandler
