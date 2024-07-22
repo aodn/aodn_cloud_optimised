@@ -6,6 +6,10 @@
 Welcome to AODN Cloud Optimised's documentation!
 ================================================
 
+This project is hosted on GitHub. You can find the repository here:
+`aodn_cloud_optimised <https://github.com/aodn/aodn_cloud_optimised>`_.
+
+
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
