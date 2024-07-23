@@ -10,6 +10,30 @@ The ``generic_cloud_optimised_creation`` script is installed as part of the `aod
     :members:
     :undoc-members:
 
+.. _dataset-config-script:
+
+Create Dataset Configuration (semi-automatic)
+---------------------------------------------
+The ``cloud_optimised_create_dataset_config`` script is installed as part of the `aodn_cloud_optimised` package and
+helps greatly in the creation of a full dataset configuration. The file will need to be modified manually, see
+full documentation at :ref:`dataset-config-doc`
+
+Usage Example
+~~~~~~~~~~~~~
+Expand the video:
+
+.. asciinema:: _static/recordings/dataset_config.cast
+   :preload: 1
+   :theme: solarized-dark
+   :autoplay: true
+   :speed: 0.80
+
+
+Definition
+~~~~~~~~~~
+.. autofunction:: aodn_cloud_optimised.bin.create_dataset_config.main
+
+
 Create AWS Registry dataset entry
 ---------------------------------
 The ``cloud_optimised_create_aws_registry_dataset`` script is installed as part of the `aodn_cloud_optimised` package.
