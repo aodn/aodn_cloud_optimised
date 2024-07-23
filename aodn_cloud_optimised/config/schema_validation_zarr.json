@@ -58,6 +58,9 @@
         "worker_options"
       ]
     },
+    "batch_size": {
+      "type": "integer"
+    },
     "metadata_uuid": {
       "type": "string"
     },
