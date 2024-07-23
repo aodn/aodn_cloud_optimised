@@ -8,7 +8,7 @@ This script performs the following tasks:
 2. Reads and merges the validation schema template with the generated schema.
 3. Populates the dataset configuration with additional metadata including dataset name, metadata UUID, logger name,
    cloud-optimised format, cluster options, and batch size.
-4. Writes the dataset configuration to the appropriate module path as a JSON file.
+4. Writes the dataset configuration to the module path as a JSON file. READY TO BE ADDED TO GITHUB
 5. Optionally, fills up the AWS registry with Geonetwork metadata if a UUID is provided.
 
 Usage:
@@ -96,6 +96,35 @@ def generate_template(schema):
 
 
 def main():
+    """
+    Script to generate a dataset configuration from a NetCDF file stored in S3.
+
+    This script performs the following tasks:
+
+    1. Generates a JSON schema from the NetCDF file located in the S3 bucket.
+    2. Reads and merges the validation schema template with the generated schema.
+    3. Populates the dataset configuration with additional metadata including dataset name, metadata UUID, logger name,
+       cloud-optimised format, cluster options, and batch size.
+    4. Writes the dataset configuration to the module path as a JSON file. READY TO BE ADDED TO GITHUB
+    5. Optionally, fills up the AWS registry with Geonetwork metadata if a UUID is provided.
+
+    Usage:
+        cloud_optimised_create_dataset_config -f <NetCDF file object key> -c <cloud optimised format> -d <dataset name> [-b <S3 bucket name>] [-u <Geonetwork Metadata UUID>]
+
+    Arguments:
+        -f, --file: Object key for the NetCDF file (required).
+        -b, --bucket: S3 bucket name (optional, defaults to the value from config).
+        -c, --cloud-format: Cloud optimised format, either "zarr" or "parquet" (required).
+        -u, --uuid: Geonetwork Metadata UUID (optional).
+        -d, --dataset-name: Name of the dataset (required, no spaces or underscores).
+
+    Example:
+        cloud_optimised_create_dataset_config \
+            -f IMOS/SOOP/SOOP-TRV/VMQ9273_Solander/By_Cruise/Cruise_START-20100225T073727Z_END-20100225T131607Z/chlorophyll/IMOS_SOOP-TRV_B_20100225T073727Z_VMQ9273_FV01_END-20100225T131607Z.nc \
+            -d vessel_trv_realtime_qc \
+            -u 8af21108-c535-43bf-8dab-c1f45a26088c \
+            -c parquet
+    """
     # Load the default BUCKET_RAW_DEFAULT
     default_bucket = load_variable_from_config("BUCKET_RAW_DEFAULT")
 
@@ -148,7 +177,6 @@ def main():
 
     with open(temp_file_path, "r") as file:
         dataset_config_schema = json.load(file)
-
     os.remove(temp_file_path)
 
     dataset_config = {"schema": dataset_config_schema}
@@ -184,12 +212,13 @@ def main():
     }
     dataset_config["batch_size"] = 5
 
-    # default partition keys
-    dataset_config["partition_keys"] = ["timestamp", "polygon"]
+    if args.cloud_format == "parquet":
+        # default partition keys
+        dataset_config["partition_keys"] = ["timestamp", "polygon"]
 
-    dataset_config["schema"]["timestamp"] = {"type": "int64"}
-    dataset_config["schema"]["polygon"] = {"type": "string"}
-    dataset_config["schema"]["filename"] = {"type": "string"}
+        dataset_config["schema"]["timestamp"] = {"type": "int64"}
+        dataset_config["schema"]["polygon"] = {"type": "string"}
+        dataset_config["schema"]["filename"] = {"type": "string"}
 
     module_name = "aodn_cloud_optimised"
     spec = importlib.util.find_spec(module_name)

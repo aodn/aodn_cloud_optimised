@@ -1,3 +1,6 @@
+.. _dataset-config-doc:
+
+
 Dataset Configuration
 =====================
 Every dataset should be configured with a JSON file. A template exists at `config <https://github.com/aodn/aodn_cloud_optimised/tree/main/aodn_cloud_optimised/config/dataset/dataset_template.json>`__.
@@ -21,6 +24,11 @@ As a rule of thumb, for:
 
 
 All dataset configuration files are placed under: https://github.com/aodn/aodn_cloud_optimised/blob/main/aodn_cloud_optimised/config/dataset/
+
+Create Dataset Configuration (semi-automatic)
+---------------------------------------------
+See section :ref:`dataset-config-script` to help creating a dataset configuration.
+
 
 Parquet Configuration from NetCDF file
 --------------------------------------
