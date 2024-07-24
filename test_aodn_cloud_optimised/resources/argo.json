@@ -1,21 +1,23 @@
 {
-  "dataset_name": "argo_core",
-  "logger_name": "argo_core",
+  "dataset_name": "argo",
+  "logger_name": "argo",
+  "handler_class": "ArgoHandler",
   "cloud_optimised_format": "parquet",
   "cluster_options": {
     "n_workers": [
-      8,
-      20
+      2,
+      80
     ],
-    "scheduler_vm_types": "t3.small",
-    "worker_vm_types": "t3.large",
+    "scheduler_vm_types": "t3.xlarge",
+    "worker_vm_types": "t3.xlarge",
     "allow_ingress_from": "me",
     "compute_purchase_option": "spot_with_fallback",
     "worker_options": {
       "nthreads": 8,
-      "memory_limit": "32GB"
+      "memory_limit": "12GB"
     }
   },
+  "batch_size": 2500,
   "metadata_uuid": "4402cb50-e20a-44ee-93e6-4728259250d2",
   "gattrs_to_variables": [],
   "partition_keys": [
@@ -417,88 +419,39 @@
   "force_old_pq_del": false,
   "aws_opendata_registry": {
     "Name": "Argo Core",
-    "Description": "",
+    "Description": "Argo Australia aims to undertake real time monitoring of the broad ocean state around Australia by maintaining an array of profiling (Argo) floats that measure temperature, salinity and pressure down to 2000m every 10 days in real time. The data presented here, represent all Australian Argo profiles collected since 2000, and covers the oceans in the southern hemisphere worldwide. A typical Argo float mission is to profile from 2000 m depth to the sea surface every 10 days. On deployment, the float sinks to a depth of 1000 m and drifts with the ocean currents for 9 days. Then the float sinks deeper to its profile depth (usually 2000 m) before starting to ascend through the water column measuring temperature, salinity and pressure as it rises. Once at the surface it transmits location and profile data via satellite to land-based Argo data centres. After transmission the float sinks again and repeats the cycle. Each Argo float is identified by a unique identification number called a WMO ID. WMO (World Meteorological Organisation) ID Numbers are assigned to measurement stations and observing platforms to enable researchers to keep track of, and uniquely identify their floats. The average life of the latest model APEX Argo floats are around 3.7 years or approximately 135 cycles. These statistics are for floats with the standard alkaline battery configuration from an analysis by Kobayashi et al (2009). In the Australian Argo program, the floats are deployed with a combination of lithium and alkaline battery packs which extends float lifetime. Argo Australia floats usually last 5 years and several floats are approaching their 9th birthday and are still returning good data.\n\nThis data collection only provides access to the core data collected by Argo floats, i.e. temperature, salinity and pressure. To access biogeochemical (BGC) data recorded by selected floats, please access via this data collection - IMOS - Argo Profiles - biogeochemical data, https://catalogue-imos.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/2223b7f2-4bac-4ff1-9b1e-aae9ac58deef.",
     "Documentation": "https://catalogue.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/4402cb50-e20a-44ee-93e6-4728259250d2",
-    "Contact": "",
-    "ManagedBy": "",
-    "UpdateFrequency": "",
+    "Contact": "info@aodn.org.au",
+    "ManagedBy": "AODN",
+    "UpdateFrequency": "As Needed",
     "Tags": [],
-    "License": "",
-    "Resources": [
-      {
-        "Description": "",
-        "ARN": "",
-        "Region": "",
-        "Type": "",
-        "Explore": []
-      },
-      {
-        "Description": "",
-        "ARN": "",
-        "Region": "",
-        "Type": ""
-      },
-      {
-        "Description": "",
-        "ARN": "",
-        "Region": "",
-        "Type": ""
-      },
-      {
-        "Description": "",
-        "ARN": "",
-        "Region": "",
-        "Type": ""
-      }
-    ],
+    "License": "http://creativecommons.org/licenses/by/4.0/",
+    "Resources": {
+      "Description": "Cloud Optimised AODN dataset of Argo Core",
+      "ARN": "arn:aws:s3:::imos-data-lab-optimised/cloud_optimised/cluster_testing/argo.parquet",
+      "Region": "ap-southeast-2",
+      "Type": "S3 Bucket"
+    },
     "DataAtWork": {
       "Tutorials": [
         {
-          "Title": "",
-          "URL": "",
+          "Title": "Accessing Argo Core",
+          "URL": "https://nbviewer.org/github/aodn/aodn_cloud_optimised/blob/main/notebooks/argo.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/argo.ipynb",
           "Services": "",
-          "AuthorName": "",
-          "AuthorURL": ""
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
         },
         {
-          "Title": "",
-          "URL": "",
-          "AuthorName": "",
-          "AuthorURL": ""
-        },
-        {
-          "Title": "",
-          "URL": "",
-          "AuthorName": "",
-          "AuthorURL": ""
-        }
-      ],
-      "Tools & Applications": [
-        {
-          "Title": "",
-          "URL": "",
-          "AuthorName": "",
-          "AuthorURL": ""
-        },
-        {
-          "Title": "",
-          "URL": "",
-          "AuthorName": "",
-          "AuthorURL": ""
-        }
-      ],
-      "Publications": [
-        {
-          "Title": "IMOS - Argo",
-          "URL": "https://catalogue.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/4402cb50-e20a-44ee-93e6-4728259250d2",
-          "AuthorName": ""
-        },
-        {
-          "Title": "",
-          "URL": "",
-          "AuthorName": ""
+          "Title": "Accessing and search for any AODN dataset",
+          "URL": "https://nbviewer.org/github/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "Services": "",
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
         }
       ]
-    }
+    },
+    "Citation": "IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access]"
   }
 }

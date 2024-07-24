@@ -4,10 +4,10 @@
   "cloud_optimised_format": "parquet",
   "cluster_options": {
     "n_workers": [
-      8,
-      20
+      1,
+      25
     ],
-    "scheduler_vm_types": "t3.small",
+    "scheduler_vm_types": "t3.xlarge",
     "worker_vm_types": "t3.large",
     "allow_ingress_from": "me",
     "compute_purchase_option": "spot_with_fallback",
@@ -16,14 +16,15 @@
       "memory_limit": "32GB"
     }
   },
-  "batch_size": 600,
-  "metadata_uuid": "",
+  "batch_size": 500,
+  "metadata_uuid": "63db5801-cc19-40ef-83b3-85ccba884cf7",
   "gattrs_to_variables": [
     "platform_code"
   ],
   "partition_keys": [
     "timestamp",
-    "polygon"
+    "polygon",
+    "platform_code"
   ],
   "time_extent": {
     "time": "TIME",
@@ -82,6 +83,27 @@
       "sensor_depth": 1.899999976158142,
       "standard_name": "sea_surface_temperature",
       "ancillary_variables": "TEMP_quality_control"
+    },
+    "TEMP_2": {
+      "type": "float",
+      "long_name": "sea temperature",
+      "units": "celsius",
+      "instrument": "Seabird SBE38 (s/n 0434)",
+      "observation_type": "measured",
+      "distance_from_bow": 29.0,
+      "centerline_offset": 4.099999904632568,
+      "sensor_depth": 0.800000011920929,
+      "standard_name": "sea_surface_temperature",
+      "ancillary_variables": "TEMP_2_quality_control"
+    },
+    "TEMP_2_quality_control": {
+      "type": "string",
+      "standard_name": "sea_surface_temperature status_flag",
+      "long_name": "quality flags for sea_surface_temperature",
+      "quality_control_conventions": "IMOS Reference Table F",
+      "quality_control_set": 3,
+      "quality_control_flag_values": "B, C, D, E, F, G, H, J, K, L, M, Q, S, T, U, V, X, Z",
+      "quality_control_flag_meanings": "Value_out_of_bounds Time_not_sequential Failed_T_Tw_Td_test Failed_true_wind_recomputation_test Platform_velocity_unrealistic Value_exceeds_threshold Discontinuity Erroneous_value Suspect_value_(visual) Value_located_over_land Instrument_malfunction Pre-flagged_as_suspect Spike_in_data_(visual) Time_duplicate Suspect_value_(statistical) Step_in_data_(statistical) Spike_in_data_(statistical) Value_passed_all_tests"
     },
     "PSAL": {
       "type": "float",
@@ -190,6 +212,91 @@
       "type": "string",
       "standard_name": "wind_from_direction status_flag",
       "long_name": "quality flags for wind_from_direction",
+      "quality_control_conventions": "IMOS Reference Table F",
+      "quality_control_set": 3,
+      "quality_control_flag_values": "B, C, D, E, F, G, H, J, K, L, M, Q, S, T, U, V, X, Z",
+      "quality_control_flag_meanings": "Value_out_of_bounds Time_not_sequential Failed_T_Tw_Td_test Failed_true_wind_recomputation_test Platform_velocity_unrealistic Value_exceeds_threshold Discontinuity Erroneous_value Suspect_value_(visual) Value_located_over_land Instrument_malfunction Pre-flagged_as_suspect Spike_in_data_(visual) Time_duplicate Suspect_value_(statistical) Step_in_data_(statistical) Spike_in_data_(statistical) Value_passed_all_tests"
+    },
+    "PL_WSPD_quality_control": {
+      "type": "string",
+      "standard_name": "wind_speed status_flag",
+      "long_name": "quality flags for wind_speed",
+      "quality_control_conventions": "IMOS Reference Table F",
+      "quality_control_set": 3,
+      "quality_control_flag_values": "B, C, D, E, F, G, H, J, K, L, M, Q, S, T, U, V, X, Z",
+      "quality_control_flag_meanings": "Value_out_of_bounds Time_not_sequential Failed_T_Tw_Td_test Failed_true_wind_recomputation_test Platform_velocity_unrealistic Value_exceeds_threshold Discontinuity Erroneous_value Suspect_value_(visual) Value_located_over_land Instrument_malfunction Pre-flagged_as_suspect Spike_in_data_(visual) Time_duplicate Suspect_value_(statistical) Step_in_data_(statistical) Spike_in_data_(statistical) Value_passed_all_tests"
+    },
+    "PL_WDIR": {
+      "type": "float",
+      "long_name": "platform relative wind direction",
+      "units": "degrees (clockwise from true north)",
+      "instrument": "Vaisala WAV151 (s/n W29135)",
+      "sensor_height": 21.100000381469727,
+      "distance_from_bow": 20.5,
+      "centerline_offset": -9999.0,
+      "observation_type": "measured",
+      "standard_name": "wind_from_direction",
+      "ancillary_variables": "PL_WDIR_quality_control"
+    },
+    "PL_WDIR_quality_control": {
+      "type": "string",
+      "standard_name": "wind_from_direction status_flag",
+      "long_name": "quality flags for wind_from_direction",
+      "quality_control_conventions": "IMOS Reference Table F",
+      "quality_control_set": 3,
+      "quality_control_flag_values": "B, C, D, E, F, G, H, J, K, L, M, Q, S, T, U, V, X, Z",
+      "quality_control_flag_meanings": "Value_out_of_bounds Time_not_sequential Failed_T_Tw_Td_test Failed_true_wind_recomputation_test Platform_velocity_unrealistic Value_exceeds_threshold Discontinuity Erroneous_value Suspect_value_(visual) Value_located_over_land Instrument_malfunction Pre-flagged_as_suspect Spike_in_data_(visual) Time_duplicate Suspect_value_(statistical) Step_in_data_(statistical) Spike_in_data_(statistical) Value_passed_all_tests"
+    },
+    "PL_WSPD": {
+      "type": "float",
+      "long_name": "platform relative wind speed",
+      "units": "meter second-1",
+      "instrument": "Vaisala WAA151 (s/n W42236)",
+      "sensor_height": 21.100000381469727,
+      "distance_from_bow": 20.5,
+      "centerline_offset": -9999.0,
+      "observation_type": "measured",
+      "standard_name": "wind_speed",
+      "ancillary_variables": "PL_WSPD_quality_control"
+    },
+    "RAD_PAR": {
+      "type": "float",
+      "long_name": "photosynthetically active radiation",
+      "units": "microeinstein meter-2",
+      "instrument": "unknown",
+      "rad_direction": "downwelling",
+      "observation_type": "measured",
+      "distance_from_bow": -9999.0,
+      "centerline_offset": -9999.0,
+      "sensor_height": -9999.0,
+      "standard_name": "surface_downwelling_photosynthetic_radiative_flux_in_air",
+      "ancillary_variables": "RAD_PAR_quality_control"
+    },
+    "RAD_PAR_quality_control": {
+      "type": "string",
+      "standard_name": "surface_downwelling_photosynthetic_radiative_flux_in_air status_flag",
+      "long_name": "quality flags for surface_downwelling_photosynthetic_radiative_flux_in_air",
+      "quality_control_conventions": "IMOS Reference Table F",
+      "quality_control_set": 3,
+      "quality_control_flag_values": "B, C, D, E, F, G, H, J, K, L, M, Q, S, T, U, V, X, Z",
+      "quality_control_flag_meanings": "Value_out_of_bounds Time_not_sequential Failed_T_Tw_Td_test Failed_true_wind_recomputation_test Platform_velocity_unrealistic Value_exceeds_threshold Discontinuity Erroneous_value Suspect_value_(visual) Value_located_over_land Instrument_malfunction Pre-flagged_as_suspect Spike_in_data_(visual) Time_duplicate Suspect_value_(statistical) Step_in_data_(statistical) Spike_in_data_(statistical) Value_passed_all_tests"
+    },
+    "RELH": {
+      "type": "float",
+      "long_name": "relative humidity (starboard)",
+      "units": "percent",
+      "instrument": "Vaisala HMP233 (s/n X20303107)",
+      "observation_type": "measured",
+      "distance_from_bow": -9999.0,
+      "centerline_offset": -9999.0,
+      "sensor_height": 11.600000381469727,
+      "standard_name": "relative_humidity",
+      "ancillary_variables": "RELH_quality_control"
+    },
+    "RELH_quality_control": {
+      "type": "string",
+      "standard_name": "relative_humidity status_flag",
+      "long_name": "quality flags for relative_humidity",
       "quality_control_conventions": "IMOS Reference Table F",
       "quality_control_set": 3,
       "quality_control_flag_values": "B, C, D, E, F, G, H, J, K, L, M, Q, S, T, U, V, X, Z",
@@ -321,96 +428,47 @@
     }
   },
   "dataset_gattrs": {
-    "title": "Upper Ocean Thermal Data collected using XBT (expendable bathythermographs)",
-    "principal_investigator": "Cowley, Rebecca",
-    "principal_investigator_email": "rebecca.cowley@csiro.au",
-    "featureType": "profile"
+    "title": "",
+    "principal_investigator": "",
+    "principal_investigator_email": "",
+    "featureType": "trajectory"
   },
   "force_old_pq_del": true,
   "aws_opendata_registry": {
-    "Name": "SOOP SST",
-    "Description": "",
-    "Documentation": "https://catalogue.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/[uuid]",
-    "Contact": "",
-    "ManagedBy": "",
-    "UpdateFrequency": "",
+    "Name": "IMOS - SOOP Underway CO2 Measurements Research Group - delayed mode data",
+    "Description": "The IMOS Ship of Opportunity Underway CO2 Measurements group is a research and data collection project working within the IMOS Ship of Opportunity Multi-Disciplinary Underway Network sub-facility. The CO2 group sample critical regions of the Southern Ocean and the Australian shelf waters have a major impact on CO2 uptake by the ocean. These are regions where biogeochemical cycling is predicted to be particularly sensitive to a changing climate. The pCO2 Underway System measures the fugacity of carbon dioxide (fCO2) along with other variables such as sea surface salinity (SSS) and sea surface temperature (SST) using an automated system. The data represented by this record are presented in delayed mode. \n\nThe RV Aurora Australis provides data on surface ocean CO2 for the Southern Ocean, while the Southern Surveyor and its replacement in 2014, RV Investigator, covers shelf and offshore waters around Australia from the tropics to the sea-ice edge. The  RV L'Astrolabe is also used to collect data on route from Tasmania to Dumont d'Urville station, Antarctica. The New Zealand National Institute of Water & Atmospheric Research Ltd. (NIWA) has supported the setup of underway CO2 measurements on the RV Tangaroa. The Tangaroa covers oceans adjacent to New Zealand.",
+    "Documentation": "https://catalogue.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/63db5801-cc19-40ef-83b3-85ccba884cf7",
+    "Contact": "info@aodn.org.au",
+    "ManagedBy": "AODN",
+    "UpdateFrequency": "As Needed",
     "Tags": [],
-    "License": "",
-    "Resources": [
-      {
-        "Description": "",
-        "ARN": "",
-        "Region": "",
-        "Type": "",
-        "Explore": []
-      },
-      {
-        "Description": "",
-        "ARN": "",
-        "Region": "",
-        "Type": ""
-      },
-      {
-        "Description": "",
-        "ARN": "",
-        "Region": "",
-        "Type": ""
-      },
-      {
-        "Description": "",
-        "ARN": "",
-        "Region": "",
-        "Type": ""
-      }
-    ],
+    "License": "http://creativecommons.org/licenses/by/4.0/",
+    "Resources": {
+      "Description": "Cloud Optimised AODN dataset of IMOS - SOOP Underway CO2 Measurements Research Group - delayed mode data",
+      "ARN": "arn:aws:s3:::imos-data-lab-optimised/cloud_optimised/cluster_testing/vessel_sst_delayed_qc.parquet",
+      "Region": "ap-southeast-2",
+      "Type": "S3 Bucket"
+    },
     "DataAtWork": {
       "Tutorials": [
         {
-          "Title": "",
-          "URL": "",
+          "Title": "Accessing IMOS - SOOP Underway CO2 Measurements Research Group - delayed mode data",
+          "URL": "https://nbviewer.org/github/aodn/aodn_cloud_optimised/blob/main/notebooks/vessel_sst_delayed_qc.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/vessel_sst_delayed_qc.ipynb",
           "Services": "",
-          "AuthorName": "",
-          "AuthorURL": ""
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
         },
         {
-          "Title": "",
-          "URL": "",
-          "AuthorName": "",
-          "AuthorURL": ""
-        },
-        {
-          "Title": "",
-          "URL": "",
-          "AuthorName": "",
-          "AuthorURL": ""
-        }
-      ],
-      "Tools & Applications": [
-        {
-          "Title": "",
-          "URL": "",
-          "AuthorName": "",
-          "AuthorURL": ""
-        },
-        {
-          "Title": "",
-          "URL": "",
-          "AuthorName": "",
-          "AuthorURL": ""
-        }
-      ],
-      "Publications": [
-        {
-          "Title": "IMOS - SOOP Expendable Bathythermographs (XBT) Research Group - XBT real-time data",
-          "URL": "https://catalogue.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/35234913-aa3c-48ec-b9a4-77f822f66ef8",
-          "AuthorName": ""
-        },
-        {
-          "Title": "",
-          "URL": "",
-          "AuthorName": ""
+          "Title": "Accessing and search for any AODN dataset",
+          "URL": "https://nbviewer.org/github/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "Services": "",
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
         }
       ]
-    }
+    },
+    "Citation": "IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access]"
   }
 }

@@ -59,7 +59,7 @@ DATASET_CONFIG_CSV_AATAMS_JSON = os.path.join(
 )
 
 DATASET_CONFIG_NC_ANMN_JSON = os.path.join(
-    ROOT_DIR, "resources", "anmn_ctd_ts_fv01.json"
+    ROOT_DIR, "resources", "mooring_ctd_delayed_qc.json"
 )
 
 DATASET_CONFIG_NC_ARDC_JSON = os.path.join(
@@ -370,7 +370,7 @@ class TestGenericHandler(unittest.TestCase):
 
         self.assertEqual(
             decoded_meta["dataset_metadata"]["metadata_uuid"],
-            "2807f3aa-4db0-4924-b64b-354ae8c10b58",
+            "b299cdcd-3dee-48aa-abdd-e0fcdbb9cadc",
         )
         self.assertEqual(decoded_meta["dataset_metadata"]["title"], "ARDC")
 
