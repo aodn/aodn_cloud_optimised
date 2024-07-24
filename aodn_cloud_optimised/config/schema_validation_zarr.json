@@ -164,7 +164,7 @@
           "type": "string"
         },
         "Resources": {
-          "type": "array",
+          "type": "object",
           "items": {
             "type": "object",
             "properties": {
