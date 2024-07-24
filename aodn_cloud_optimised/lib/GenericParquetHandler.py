@@ -683,17 +683,20 @@ class GenericHandler(CommonHandler):
         if self.pyarrow_schema is not None:
             for column_name in df_columns:
                 if column_name not in pdf.schema.names:
-                    var_config = generate_json_schema_var_from_netcdf(
-                        s3_file_handle, column_name, s3_fs=self.s3_fs
-                    )
-                    # if df.index.name is not None and column_name in df.index.name:
-                    #    self.logger.warning(f'missing variable from provided pyarrow_schema, please add {column_name} : {df.index.dtype}')
-                    # else:
-                    #    #TODO: improve this to return all the varatts as well
-                    #    var_config = generate_json_schema_var_from_netcdf(self.input_object_key, column_name)
-                    self.logger.warning(
-                        f"{self.uuid_log}: {filename}; {column_name}: Variable missing from provided pyarrow_schema configuration. Please add to dataset configuration (ensure correct quoting): {var_config}"
-                    )
+                    try:
+                        var_config = generate_json_schema_var_from_netcdf(
+                            s3_file_handle, column_name, s3_fs=self.s3_fs
+                        )
+                        # if df.index.name is not None and column_name in df.index.name:
+                        #    self.logger.warning(f'missing variable from provided pyarrow_schema, please add {column_name} : {df.index.dtype}')
+                        # else:
+                        #    #TODO: improve this to return all the varatts as well
+                        #    var_config = generate_json_schema_var_from_netcdf(self.input_object_key, column_name)
+                        self.logger.warning(
+                            f"{self.uuid_log}: {filename}; {column_name}: Variable missing from provided pyarrow_schema configuration. Please add to dataset configuration (ensure correct quoting): {var_config}"
+                        )
+                    except TypeError as e:
+                        self.logger.info(f"{e}")
 
         for partition_key in partition_keys:
             if all(not elem for elem in pdf[partition_key].is_null()):

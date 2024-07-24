@@ -10,7 +10,7 @@ import xarray as xr
 def custom_encoder(obj):
     if isinstance(obj, np.generic):
         return obj.item()  # Convert NumPy scalar to its corresponding Python type
-    raise TypeError(f"Object of type {type(obj)} is not JSON serializable")
+    raise TypeError(f"Object {obj} of type {type(obj)} is not JSON serializable")
 
 
 def generate_json_schema_var_from_netcdf(nc_path, var_name, indent=2, s3_fs=None):
