@@ -1,6 +1,6 @@
 {
-  "dataset_name": "srs_ghrsst",
-  "logger_name": "srs_ghrsst",
+  "dataset_name": "srs_ghrsst_main",
+  "logger_name": "srs_ghrsst_main",
   "cloud_optimised_format": "zarr",
   "cluster_options": {
     "n_workers": [
