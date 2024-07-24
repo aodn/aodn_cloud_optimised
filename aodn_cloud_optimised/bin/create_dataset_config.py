@@ -29,21 +29,19 @@ Example:
         -c parquet
 """
 
-import os
 import argparse
-from aodn_cloud_optimised.lib.config import load_variable_from_config, merge_dicts
-from aodn_cloud_optimised.lib.schema import generate_json_schema_from_s3_netcdf
+import importlib.resources
+import importlib.util
+import json
+import os
+import uuid
+from collections import OrderedDict
+
 from aodn_cloud_optimised.bin.create_aws_registry_dataset import (
     populate_dataset_config_with_geonetwork_metadata,
 )
-
-import json
-import importlib.resources
-import uuid
-from collections import OrderedDict
-import importlib.util
-
-import re
+from aodn_cloud_optimised.lib.config import load_variable_from_config, merge_dicts
+from aodn_cloud_optimised.lib.schema import generate_json_schema_from_s3_netcdf
 
 
 def validate_dataset_name(value):
@@ -113,6 +111,9 @@ def main():
         "generic_cloud_optimised_creation",
         "--paths",
         "{os.path.dirname(nc_file_path).replace(f's3://{bucket}/','')}",
+        #"--filters",
+        #"FILTER_STRING_1",
+        #"FILTER_STRING_1",
         "--dataset-config",
         "{dataset_json}",
         "--clear-existing-data",

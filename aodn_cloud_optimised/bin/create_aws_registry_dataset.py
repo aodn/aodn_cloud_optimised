@@ -23,10 +23,17 @@ If the directory is not specified, a temporary directory is created.
 """
 
 import argparse
+import difflib
+import io
+import json
 import os
 import tempfile
 from argparse import RawTextHelpFormatter
 from importlib.resources import files
+
+import requests
+import xmltodict
+from colorama import init, Fore, Style
 
 from aodn_cloud_optimised.lib.CommonHandler import CommonHandler
 from aodn_cloud_optimised.lib.config import (
@@ -34,12 +41,6 @@ from aodn_cloud_optimised.lib.config import (
     load_config,
     load_variable_from_config,
 )
-import requests
-import xmltodict
-import io
-import json
-from colorama import init, Fore, Style
-import difflib
 
 
 def retrieve_geonetwork_metadata(
