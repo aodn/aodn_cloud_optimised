@@ -49,8 +49,14 @@ Project Pre-commit Integration
 
 The project utilises `pre-commit <https://pre-commit.com>`_ with various hooks for validating YAML/JSON files, ensuring good coding practices, and managing Python module dependencies.
 
-Ensure that every commit triggers pre-commit hooks. If hooks do not trigger, you may need to install pre-commit or reactivate your Python environment.
 
+
+.. note:: Important Note
+   :class: custom-note
+   :name: poetry-lock
+
+    Ensure that every commit triggers pre-commit hooks. If hooks do not trigger, you may need to install pre-commit or reactivate your Python environment
+    with ``pre-commit install``
 
 See below how pre-commit works when a JSON file is badly indented for example:
 
