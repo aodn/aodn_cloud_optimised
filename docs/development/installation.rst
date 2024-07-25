@@ -7,6 +7,7 @@ Clone the repository
 .. code-block:: bash
 
    gh repo clone aodn/aodn_cloud_optimised``
+   cd aodn_cloud_optimised
 
 Installation
 ------------
@@ -30,19 +31,32 @@ Requirements:
    mamba activate CloudOptimisedParquet
 
    poetry install --with dev
+   pre-commit install
 
-Option 2: Create a Virtual Environment of Your Choice
+.. note:: Important Note
+   :class: custom-note
+   :name: mamba-env
+
+   the conda/mamba env might have to be (re) activated after installation to have all the scripts available in the shell $PATH
+
+Option 2: Installation using Poetry's virtual environment
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Create a virtual environment of your choice and activate it:
 
 .. code-block:: bash
+   curl -sSL https://install.python-poetry.org | python3 -
 
-   pip install poetry
+   poetry shell
    poetry install --with dev
+   pre-commit install
 
-   #pre-commit install  # should be done automatically by poetry install
+.. note:: Important Note
+   :class: custom-note
+   :name: poetry-env
 
+   Using this method, the poetry virtual env will have to be (re) activated after being installed with ``poetry shell``
+   once in the directory
 
 Project Pre-commit Integration
 ------------------------------
