@@ -1,3 +1,3 @@
-from lib import ParquetDataQuery
+from .lib.ParquetDataQuery import ParquetDataQuery
 
 __all__ = ['ParquetDataQuery']
