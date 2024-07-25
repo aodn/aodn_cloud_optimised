@@ -1,4 +1,4 @@
 from .lib import ParquetDataQuery
 
 
-__all__ = ['ParquetDataQuery']
+__all__ = ["ParquetDataQuery"]
