@@ -277,7 +277,7 @@ def main():
     bucket = args.bucket
 
     # Construct the S3 file path
-    nc_file = os.path.join("s3://", bucket, obj_key)
+    nc_file = f"s3://{bucket.strip('/')}/{obj_key.strip('/')}"
 
     # Generate JSON schema from the NetCDF file
     temp_file_path = generate_json_schema_from_s3_netcdf(nc_file)
