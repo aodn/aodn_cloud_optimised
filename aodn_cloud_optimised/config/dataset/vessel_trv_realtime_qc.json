@@ -1,0 +1,301 @@
+{
+  "dataset_name": "vessel_trv_realtime_qc",
+  "logger_name": "vessel_trv_realtime_qc",
+  "cloud_optimised_format": "parquet",
+  "cluster_options": {
+    "n_workers": [
+      1,
+      50
+    ],
+    "scheduler_vm_types": "t3.large",
+    "worker_vm_types": "t3.medium",
+    "allow_ingress_from": "me",
+    "compute_purchase_option": "spot_with_fallback",
+    "worker_options": {
+      "nthreads": 4,
+      "memory_limit": "8GB"
+    }
+  },
+  "batch_size": 150,
+  "metadata_uuid": "8af21108-c535-43bf-8dab-c1f45a26088c",
+  "gattrs_to_variables": [
+    "platform_code"
+  ],
+  "partition_keys": [
+    "platform_code",
+    "timestamp",
+    "polygon"
+  ],
+  "time_extent": {
+    "time": "TIME",
+    "partition_timestamp_period": "M"
+  },
+  "spatial_extent": {
+    "lat": "LATITUDE",
+    "lon": "LONGITUDE",
+    "spatial_resolution": 15
+  },
+  "schema": {
+    "platform_code": {
+      "type": "string"
+    },
+    "timestamp": {
+      "type": "int64"
+    },
+    "polygon": {
+      "type": "string"
+    },
+    "filename": {
+      "type": "string"
+    },
+    "LATITUDE_quality_control": {
+      "type": "double",
+      "long_name": "LATITUDE quality control",
+      "standard_name": "latitude status_flag",
+      "quality_control_conventions": "IMOS standard set using the IODE flags",
+      "valid_min": 0.0,
+      "valid_max": 9.0,
+      "flag_values": [
+        0.0,
+        1.0,
+        2.0,
+        3.0,
+        4.0,
+        5.0,
+        6.0,
+        7.0,
+        8.0,
+        9.0
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values"
+    },
+    "LATITUDE": {
+      "type": "double",
+      "long_name": "latitude",
+      "standard_name": "latitude",
+      "units": "degrees_north",
+      "axis": "Y",
+      "valid_min": -90.0,
+      "valid_max": 90.0,
+      "reference_datum": "geographical coordinates, WGS84 projection",
+      "ancillary_variables": "LATITUDE_quality_control"
+    },
+    "LONGITUDE_quality_control": {
+      "type": "double",
+      "long_name": "LONGITUDE quality control",
+      "standard_name": "longitude status_flag",
+      "quality_control_conventions": "IMOS standard set using the IODE flags",
+      "valid_min": 0.0,
+      "valid_max": 9.0,
+      "flag_values": [
+        0.0,
+        1.0,
+        2.0,
+        3.0,
+        4.0,
+        5.0,
+        6.0,
+        7.0,
+        8.0,
+        9.0
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values"
+    },
+    "LONGITUDE": {
+      "type": "double",
+      "long_name": "longitude",
+      "standard_name": "longitude",
+      "units": "degrees_east",
+      "axis": "X",
+      "valid_min": -180.0,
+      "valid_max": 180.0,
+      "reference_datum": "geographical coordinates, WGS84 projection",
+      "ancillary_variables": "LONGITUDE_quality_control"
+    },
+    "DEPTH": {
+      "type": "double",
+      "long_name": "depth",
+      "standard_name": "depth",
+      "units": "metres",
+      "positive": "down",
+      "axis": "Z",
+      "reference_datum": "sea surface",
+      "valid_max": 30.0,
+      "valid_min": -10.0
+    },
+    "CPHL": {
+      "type": "double",
+      "long_name": "mass_concentration_of_inferred_chlorophyll_from_relative_fluorescence_units_in_sea_water_concentration_of_chlorophyll_in_sea_water",
+      "units": "micrograms per Litre",
+      "valid_min": 0.0,
+      "valid_max": 3.0,
+      "ancillary_variables": "CPHL_quality_control",
+      "sensor_depth": 1.9
+    },
+    "CPHL_quality_control": {
+      "type": "double",
+      "long_name": "mass_concentration_of_inferred_chlorophyll_from_relative_fluorescence_units_in_sea_waterconcentration_of_chlorophyll_in_sea_water status_flag",
+      "quality_control_conventions": "IMOS standard set using the IODE flags",
+      "valid_min": 0.0,
+      "valid_max": 9.0,
+      "flag_values": [
+        0.0,
+        1.0,
+        2.0,
+        3.0,
+        4.0,
+        5.0,
+        6.0,
+        7.0,
+        8.0,
+        9.0
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values"
+    },
+    "TURB": {
+      "type": "float",
+      "long_name": "sea_water_turbidity",
+      "standard_name": "sea_water_turbidity",
+      "units": "1",
+      "valid_min": 0.0,
+      "valid_max": 1000.0,
+      "ancillary_variables": "TURB_quality_control",
+      "sensor_depth": 1.9
+    },
+    "TURB_quality_control": {
+      "type": "float",
+      "long_name": "sea_water_turbidity quality control",
+      "standard_name": "sea_water_turbidity status_flag",
+      "quality_control_conventions": "IMOS standard set using the IODE flags",
+      "valid_min": 0.0,
+      "valid_max": 9.0,
+      "flag_values": [
+        0.0,
+        1.0,
+        2.0,
+        3.0,
+        4.0,
+        5.0,
+        6.0,
+        7.0,
+        8.0,
+        9.0
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values"
+    },
+    "TEMP": {
+      "type": "float",
+      "long_name": "seawater_intake_temperature",
+      "standard_name": "sea_water_temperature",
+      "units": "Celsius",
+      "valid_min": 15.0,
+      "valid_max": 32.0,
+      "ancillary_variables": "TEMP_quality_control",
+      "sensor_depth": 1.9
+    },
+    "TEMP_quality_control": {
+      "type": "float",
+      "long_name": "seawater_intake_temperature quality control",
+      "standard_name": "sea_water_temperature status_flag",
+      "quality_control_conventions": "IMOS standard set using the IODE flags",
+      "valid_min": 0.0,
+      "valid_max": 9.0,
+      "flag_values": [
+        0.0,
+        1.0,
+        2.0,
+        3.0,
+        4.0,
+        5.0,
+        6.0,
+        7.0,
+        8.0,
+        9.0
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values"
+    },
+    "TIME": {
+      "type": "timestamp[ns]",
+      "long_name": "time",
+      "standard_name": "time",
+      "observation_type": "measured",
+      "axis": "T",
+      "valid_min": 0.0,
+      "valid_max": 9999999999.0
+    },
+    "PSAL": {
+      "type": "float",
+      "long_name": "sea_water_salinity",
+      "standard_name": "sea_water_salinity",
+      "units": "1e-3",
+      "valid_min": 10.0,
+      "valid_max": 36.0,
+      "ancillary_variables": "PSAL_quality_control",
+      "sensor_depth": 1.9
+    },
+    "PSAL_quality_control": {
+      "type": "float",
+      "long_name": "sea_water_salinity quality control",
+      "standard_name": "sea_water_salinity status_flag",
+      "quality_control_conventions": "IMOS standard set using the IODE flags",
+      "valid_min": 0.0,
+      "valid_max": 9.0,
+      "flag_values": [
+        0.0,
+        1.0,
+        2.0,
+        3.0,
+        4.0,
+        5.0,
+        6.0,
+        7.0,
+        8.0,
+        9.0
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values"
+    }
+  },
+  "dataset_gattrs": {
+    "title": "FILL UP MANUALLY - CHECK DOCUMENTATION"
+  },
+  "force_old_pq_del": false,
+  "aws_opendata_registry": {
+    "Name": "Sensors on Tropical Research Vessels: Enhanced Measurements from Ships of Opportunity (SOOP)",
+    "Description": "The research vessels (RV Cape Ferguson and RV Solander) of the Australian Institute of Marine Science (AIMS) routinely record along-track (underway) measurements of near-surface water temperature, salinity, chlorophyll (fluorescence) and turbidity (NTU) during scientific operations in the tropical waters of northern Australia, particularly the Great Barrier Reef (GBR). All data records include sampling time (UTC), position (Latitude, Longitude) and water depth (under keel). \n\nData are recorded at 10 second intervals. Data are measured with a Seabird SBE38 thermometer, Seabird SBE21 thermosalinograph and Wetlabs ECO-FLNTU-RT (optical sensor for chlorophyll fluorescence and turbidity). The turbidity data (NTU) are currently regarded as provisional in the absence of local validation due to intermittent bubble contamination. The sampling intakes are located at depths of 1.9m (RV Cape Ferguson) and 2.5m (RV Solander).\n\nThe data is used to inform spatial patchiness of these variables and for ongoing validation of satellite ocean temperature and ocean colour products.\n\nThe IMOS Ships of Opportunity, Sensors on Tropical Research Vessels sub-Facility was discontinued in June 2022. Sea surface temperature data collected by Australian Institute of Marine Science research vessels continues to be provided via the IMOS Ships of Opportunity, Sea Surface Temperature Sensors for Australian Vessels sub-Facility records on the AODN Portal. The near real time sea surface temperature data are quality controlled by the Australian Bureau of Meteorology and uploaded onto the Global Telecommunication System (GTS) for global dissemination to be used in real time sea surface temperature analyses and climate data records. Access to the additional data collected by the AIMS research vessels, is provided on the AIMS data repository here: https://apps.aims.gov.au/metadata/view/8af21108-c535-43bf-8dab-c1f45a26088c.",
+    "Documentation": "https://catalogue.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/8af21108-c535-43bf-8dab-c1f45a26088c",
+    "Contact": "info@aodn.org.au",
+    "ManagedBy": "AODN",
+    "UpdateFrequency": "As Needed",
+    "Tags": [
+      "FILL UP MANUALLY - CHECK DOCUMENTATION"
+    ],
+    "License": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+    "Resources": {
+      "Description": "Cloud Optimised AODN dataset of Sensors on Tropical Research Vessels: Enhanced Measurements from Ships of Opportunity (SOOP)",
+      "ARN": "arn:aws:s3:::imos-data-lab-optimised/cloud_optimised/cluster_testing/vessel_trv_realtime_qc.parquet",
+      "Region": "ap-southeast-2",
+      "Type": "S3 Bucket"
+    },
+    "DataAtWork": {
+      "Tutorials": [
+        {
+          "Title": "Accessing Sensors on Tropical Research Vessels: Enhanced Measurements from Ships of Opportunity (SOOP)",
+          "URL": "https://nbviewer.org/github/aodn/aodn_cloud_optimised/blob/main/notebooks/vessel_trv_realtime_qc.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/vessel_trv_realtime_qc.ipynb",
+          "Services": "",
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
+        },
+        {
+          "Title": "Accessing and search for any AODN dataset",
+          "URL": "https://nbviewer.org/github/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "Services": "",
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
+        }
+      ]
+    },
+    "Citation": "IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access]"
+  }
+}
