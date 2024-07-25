@@ -47,6 +47,7 @@ coiled = ">=1.27.2"
 dask = ">=2024.6.0"
 colorama = ">=0.4.6"
 s3path = ">=0.5.7"
+matplotlib = "^3.9.1"
 
 
 [tool.poetry.dev-dependencies]
