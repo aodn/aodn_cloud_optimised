@@ -37,6 +37,8 @@ import os
 import uuid
 from collections import OrderedDict
 
+from s3path import PureS3Path
+
 from aodn_cloud_optimised.bin.create_aws_registry_dataset import (
     populate_dataset_config_with_geonetwork_metadata,
 )
@@ -277,7 +279,7 @@ def main():
     bucket = args.bucket
 
     # Construct the S3 file path
-    nc_file = f"s3://{bucket.strip('/')}/{obj_key.strip('/')}"
+    nc_file = PureS3Path.from_uri(f"s3://{bucket}").joinpath(obj_key).as_uri()
 
     # Generate JSON schema from the NetCDF file
     temp_file_path = generate_json_schema_from_s3_netcdf(nc_file)
