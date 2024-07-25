@@ -14,5 +14,6 @@ A currated list of Jupyter notebooks ready to be loaded in Google Colab
 - [vessel_co2_delayed_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/vessel_co2_delayed_qc.ipynb)
 - [vessel_fishsoop_realtime_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/vessel_fishsoop_realtime_qc.ipynb)
 - [vessel_sst_delayed_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/vessel_sst_delayed_qc.ipynb)
+- [vessel_trv_realtime_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/vessel_trv_realtime_qc.ipynb)
 - [vessel_xbt_realtime_nonqc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/vessel_xbt_realtime_nonqc.ipynb)
 - [wave_buoy_realtime_nonqc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/wave_buoy_realtime_nonqc.ipynb)

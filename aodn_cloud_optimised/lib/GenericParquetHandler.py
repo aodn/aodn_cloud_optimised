@@ -696,7 +696,9 @@ class GenericHandler(CommonHandler):
                             f"{self.uuid_log}: {filename}; {column_name}: Variable missing from provided pyarrow_schema configuration. Please add to dataset configuration (ensure correct quoting): {var_config}"
                         )
                     except TypeError as e:
-                        self.logger.info(f"{e}")
+                        self.logger.info(
+                            f"{self.uuid_log}: {filename}; {column_name} Error generating the JSON output to add to the configuration {e}"
+                        )
 
         for partition_key in partition_keys:
             if all(not elem for elem in pdf[partition_key].is_null()):

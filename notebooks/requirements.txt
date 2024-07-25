@@ -1,3 +1,4 @@
+cartopy;python_full_version >= "3.10" and python_version < "4.0"
 hvplot;python_full_version >= "3.10" and python_version < "4.0"
 holoviews;python_full_version >= "3.10" and python_version < "4.0"
 fuzzywuzzy; python_full_version >= "3.10" and python_version < "4.0"
