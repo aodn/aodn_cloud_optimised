@@ -1,3 +1,5 @@
+.. _install-doc:
+
 Contributing
 ============
 
@@ -45,6 +47,7 @@ Option 2: Installation using Poetry's virtual environment
 Create a virtual environment of your choice and activate it:
 
 .. code-block:: bash
+
    curl -sSL https://install.python-poetry.org | python3 -
 
    poetry shell
