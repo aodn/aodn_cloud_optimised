@@ -12,6 +12,7 @@ from coiled import Cluster
 from dask.distributed import Client
 from dask.distributed import LocalCluster
 from jsonschema import validate, ValidationError
+from s3path import PureS3Path
 
 from .config import load_variable_from_config, load_dataset_config
 from .logging import get_logger
@@ -91,7 +92,14 @@ class CommonHandler:
         self.logger = get_logger(logger_name)
 
         cloud_optimised_format = self.dataset_config.get("cloud_optimised_format")
-        self.cloud_optimised_output_path = f"s3://{os.path.join(self.optimised_bucket_name, self.root_prefix_cloud_optimised_path, self.dataset_name + '.' + cloud_optimised_format)}/"
+        self.cloud_optimised_output_path = (
+            PureS3Path.from_uri(f"s3://{self.optimised_bucket_name}")
+            .joinpath(
+                self.root_prefix_cloud_optimised_path,
+                f"{self.dataset_name}.{cloud_optimised_format}",
+            )
+            .as_uri()
+        )
 
         self.clear_existing_data = kwargs.get(
             "clear_existing_data", None

@@ -21,6 +21,13 @@ repos:
         args: ["--autofix", "--no-sort-keys"]
         exclude: ^aodn_cloud_optimised/config/dataset/dataset_template.json$
 
+  - repo: https://github.com/python-jsonschema/check-jsonschema
+    rev: 0.29.0
+    hooks:
+      - id: check-jsonschema
+        files: ^aodn_cloud_optimised/config/dataset/.*\.json$
+        exclude: ^aodn_cloud_optimised/config/dataset/dataset_template.json$
+        args: ["--schemafile", "aodn_cloud_optimised/config/schema_validation_common.json"]
 
   - repo: https://github.com/psf/black
     rev: 22.10.0

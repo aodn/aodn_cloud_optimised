@@ -10,6 +10,8 @@ import xarray as xr
 def custom_encoder(obj):
     if isinstance(obj, np.generic):
         return obj.item()  # Convert NumPy scalar to its corresponding Python type
+    elif isinstance(obj, np.ndarray):
+        return obj.tolist()  # Convert NumPy array to a list
     raise TypeError(f"Object {obj} of type {type(obj)} is not JSON serializable")
 
 
