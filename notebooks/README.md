@@ -1,8 +1,10 @@
-A currated list of Jupyter notebooks ready to be loaded in Google Colab
+A curated list of Jupyter notebooks ready to be loaded in Google Colab
 
+# Generic method to call any AODN parquet dataset
 - [GetAodnData.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb)
 
 
+# AODN Notebooks
 - [argo.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/argo.ipynb)
 - [model_sea_level_anomaly_gridded_realtime.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/model_sea_level_anomaly_gridded_realtime.ipynb)
 - [mooring_ctd_delayed_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/mooring_ctd_delayed_qc.ipynb)

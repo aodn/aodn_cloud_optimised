@@ -48,7 +48,6 @@ dask = ">=2024.6.0"
 colorama = ">=0.4.6"
 s3path = ">=0.5.7"
 
-
 [tool.poetry.dev-dependencies]
 pytest = "^8.2.1"
 ipdb = "^0.13"
@@ -60,6 +59,10 @@ fuzzywuzzy = ">=0.18.0"
 sphinx = ">=7.3.7"
 poetry-pre-commit-plugin = "^0.1.2"
 asciinema = ">=2.4.0"  # to record terminal sessions, useful for documentation
+matplotlib = "^3.9.1"
+termcolor = "^2.4.0"
+nbformat = "^5.10.4"
+
 
 #[tool.poetry.extras]
 #testing = ["pytest", "ipython", "ipdb"]
@@ -104,6 +107,8 @@ sphinx = ">=7.3.7"
 poetry-pre-commit-plugin = "^0.1.2"
 asciinema = ">=2.4.0"  # to record terminal sessions, useful for documentation
 matplotlib = "^3.9.1"
+termcolor = "^2.4.0"
+nbformat = "^5.10.4"
 
 
 [tool.pre_commit]

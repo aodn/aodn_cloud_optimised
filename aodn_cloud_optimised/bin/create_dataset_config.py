@@ -9,7 +9,10 @@ This script performs the following tasks:
 3. Populates the dataset configuration with additional metadata including dataset name, metadata UUID, logger name,
    cloud-optimised format, cluster options, and batch size.
 4. Writes the dataset configuration to the module path as a JSON file. READY TO BE ADDED TO GITHUB
-5. Optionally, fills up the AWS registry with Geonetwork metadata if a UUID is provided.
+5. A script is also created under the bin folder of the module (to be updated manually) and the entry is added to the pyproject.toml file
+6. Create a Jupyter Notebook from template (TO BE MODIFIED)
+7. Updates the notebooks/README.md with a new entry
+8. Optionally, fills up the AWS registry with Geonetwork metadata if a UUID is provided.
 
 Usage:
     cloud_optimised_create_dataset_config -f <NetCDF file object key> -c <cloud optimised format> -d <dataset name> [-b <S3 bucket name>] [-u <Geonetwork Metadata UUID>]
@@ -36,17 +39,35 @@ import json
 import os
 import uuid
 from collections import OrderedDict
+from importlib.resources import files
 
+import nbformat
 from s3path import PureS3Path
+from termcolor import colored
 
 from aodn_cloud_optimised.bin.create_aws_registry_dataset import (
     populate_dataset_config_with_geonetwork_metadata,
 )
+from aodn_cloud_optimised.lib.config import load_dataset_config
 from aodn_cloud_optimised.lib.config import load_variable_from_config, merge_dicts
 from aodn_cloud_optimised.lib.schema import generate_json_schema_from_s3_netcdf
 
 
 def validate_dataset_name(value):
+    """
+    Validate the provided dataset name.
+
+    Args:
+        value (str): The dataset name to validate.
+
+    Returns:
+        str: The validated dataset name.
+
+    Raises:
+        argparse.ArgumentTypeError: If the dataset name is not a string.
+        argparse.ArgumentTypeError: If the dataset name contains spaces.
+        argparse.ArgumentTypeError: If the dataset name does not contain at least one underscore.
+    """
     if not isinstance(value, str):
         raise argparse.ArgumentTypeError("Dataset name must be a string.")
     if " " in value:
@@ -59,6 +80,18 @@ def validate_dataset_name(value):
 
 
 def validate_uuid(value):
+    """
+    Validate the provided UUID.
+
+    Args:
+        value (str): The UUID string to validate.
+
+    Returns:
+        str: The validated UUID string.
+
+    Raises:
+        argparse.ArgumentTypeError: If the UUID string is not in a valid format.
+    """
     try:
         uuid.UUID(value)
     except ValueError:
@@ -67,6 +100,21 @@ def validate_uuid(value):
 
 
 def generate_template_value(schema):
+    """
+    Generate a template value based on the provided JSON schema.
+
+    Args:
+        schema (dict): The JSON schema to generate a template value for.
+
+    Returns:
+        Any: The generated template value based on the schema type. Possible types include:
+            - str: A placeholder string for manual filling.
+            - int: An integer value of 0.
+            - bool: A boolean value of False.
+            - list: A list containing a template value based on the array items' schema.
+            - dict: An OrderedDict with keys and template values based on the object properties' schema.
+            - None: If the schema type is not recognized.
+    """
     schema_type = schema["type"]
 
     if schema_type == "string":
@@ -89,6 +137,20 @@ def generate_template_value(schema):
 
 
 def generate_template(schema):
+    """
+    Generate a template dictionary based on the provided schema.
+
+    Args:
+        schema (dict): The schema dictionary containing a "properties" key,
+                       where each value is a subschema defining the structure of the template.
+
+    Returns:
+        dict: A dictionary with keys from the schema's "properties", and values generated
+              using the `generate_template_value` function based on the subschema.
+
+    Notes:
+        - The template values are generated using the `generate_template_value` function.
+    """
     template = {}
     for key, subschema in schema["properties"].items():
         template[key] = generate_template_value(subschema)
@@ -96,6 +158,15 @@ def generate_template(schema):
 
 
 def get_module_path():
+    """
+    Retrieve the file system path of the 'aodn_cloud_optimised' module.
+
+    Returns:
+        str: The file system path to the 'aodn_cloud_optimised' module.
+
+    Raises:
+        ModuleNotFoundError: If the module 'aodn_cloud_optimised' is not found.
+    """
     module_name = "aodn_cloud_optimised"
     spec = importlib.util.find_spec(module_name)
     module_path = spec.submodule_search_locations[0]
@@ -104,6 +175,18 @@ def get_module_path():
 
 
 def create_dataset_script(dataset_name, dataset_json, nc_file_path, bucket):
+    """
+    Create a Python script to run a cloud optimised creation command with the specified parameters.
+
+    Args:
+        dataset_name (str): The name of the dataset to be used in the script file name.
+        dataset_json (str): The path to the dataset configuration JSON file.
+        nc_file_path (str): The path to the NetCDF file (used to determine the directory path).
+        bucket (str): The name of the S3 bucket where the NetCDF file is located.
+
+    Returns:
+        str: The file system path to the created script.
+    """
     script_content = f"""#!/usr/bin/env python3
 import subprocess
 
@@ -141,6 +224,17 @@ if __name__ == "__main__":
 
 
 def update_pyproject_toml(dataset_name):
+    """
+    Update the `pyproject.toml` file to include a new script entry under the `[tool.poetry.scripts]` section.
+
+    Args:
+        dataset_name (str): The name of the dataset to be used for the new script entry.
+
+    Notes:
+        - If the `[tool.poetry.scripts]` section is not present in the `pyproject.toml`, it will be created.
+        - If the script entry already exists, no changes will be made.
+        - The script entries will be sorted alphabetically.
+    """
     # Locate the pyproject.toml file in the parent directory of the module path
     module_path = get_module_path()
     pyproject_path = os.path.abspath(
@@ -203,6 +297,267 @@ def update_pyproject_toml(dataset_name):
                 pyproject_file.write(script)
 
 
+def update_readme(dataset_name):
+    """
+    Update the `README.md` file to include a new notebook entry under the "AODN Notebooks" section.
+
+    Args:
+        dataset_name (str): The name of the dataset to be used for the new notebook entry.
+
+    Notes:
+        - If the "AODN Notebooks" section is not present in the `README.md`, it will be created.
+        - If the notebook entry already exists, no changes will be made.
+        - The notebook entries will be sorted alphabetically.
+    """
+    # Locate the README file
+    module_path = get_module_path()
+    readme_path = os.path.abspath(
+        os.path.join(module_path, os.pardir, "notebooks", "README.md")
+    )
+    notebook_url = f"- [{dataset_name}.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/{dataset_name}.ipynb)\n"
+
+    with open(readme_path, "r") as readme_file:
+        lines = readme_file.readlines()
+
+    # Initialize variables
+    notebooks_section = []
+    in_notebooks_section = False
+
+    for line in lines:
+        if line.strip() == "# AODN Notebooks":
+            in_notebooks_section = True
+            notebooks_section.append(line)
+            continue
+        if in_notebooks_section:
+            if line.strip() == "" or line.startswith("#"):
+                in_notebooks_section = False
+            else:
+                notebooks_section.append(line)
+
+    # Check if the notebook entry already exists
+    entry_exists = any(notebook_url.strip() in line for line in notebooks_section)
+    if entry_exists:
+        return
+
+    # Add the new notebook entry
+    notebooks_section.append(notebook_url)
+
+    # Sort the notebook entries alphabetically
+    sorted_notebooks = [notebooks_section[0]] + sorted(
+        notebooks_section[1:], key=lambda x: x.split(".ipynb")[0].strip()
+    )
+
+    # Write the updated README.md
+    with open(readme_path, "w") as readme_file:
+        in_notebooks_section = False
+        for line in lines:
+            if line.strip() == "# AODN Notebooks":
+                in_notebooks_section = True
+                readme_file.write(line)
+                for notebook in sorted_notebooks[1:]:
+                    readme_file.write(notebook)
+            elif in_notebooks_section and (line.strip() == "" or line.startswith("#")):
+                in_notebooks_section = False
+                readme_file.write(line)
+            elif not in_notebooks_section:
+                readme_file.write(line)
+
+        # If the # AODN Notebooks section was not found, add it at the end
+        if not any("# AODN Notebooks" in line for line in lines):
+            readme_file.write("\n# AODN Notebooks\n")
+            for notebook in sorted_notebooks[1:]:
+                readme_file.write(notebook)
+
+
+def next_steps(dataset_name):
+    """
+    Print the next steps for working with the new dataset, including tasks related to configuration files, scripts, notebooks, and AWS Registry.
+
+    Args:
+        dataset_name (str): The name of the dataset for which the next steps are to be printed.
+
+    """
+    json_config_path = str(
+        importlib.resources.files("aodn_cloud_optimised")
+        .joinpath("config")
+        .joinpath("dataset")
+        .joinpath(f"{dataset_name}.json")
+    )
+
+    script_path = str(
+        importlib.resources.files("aodn_cloud_optimised")
+        .joinpath("bin")
+        .joinpath(f"{dataset_name}.py")
+    )
+
+    notebook_path = str(
+        importlib.resources.files("aodn_cloud_optimised")
+        .joinpath("../")
+        .joinpath("notebooks")
+        .joinpath(f"{dataset_name}.ipynb")
+    )
+
+    # Title
+    print(colored("What to do next?", "white", "on_red", attrs=["bold", "underline"]))
+    print("")
+
+    # Step 1
+    print(
+        colored(
+            "1) Do a `git status` to see the new/modified files",
+            "yellow",
+            attrs=["bold"],
+        )
+    )
+    print("")
+
+    # Step 2
+    print(
+        colored(
+            f"2) Open the new dataset configuration JSON file", "yellow", attrs=["bold"]
+        )
+        + colored(f"{json_config_path}", "cyan", attrs=["bold"])
+    )
+    print(
+        colored("   2.1) Update all occurrences of ", "yellow")
+        + colored("'FILL UP MANUALLY - CHECK DOCUMENTATION'", "cyan", attrs=["bold"])
+    )
+    print(
+        colored(
+            "   2.2) Check AWS registry metadata in the dataset configuration", "yellow"
+        )
+    )
+    print("")
+
+    # Step 3
+    print(
+        colored("3) Open the newly created python script ", "yellow", attrs=["bold"])
+        + colored(f"{script_path}", "cyan", attrs=["bold"])
+    )
+    print(
+        colored(
+            "   3.1) Modify the cluster to local for testing, as well as the destination bucket and input path if necessary",
+            "yellow",
+        )
+    )
+    print(
+        colored(
+            "   3.2) Run the script locally on a sample, then with a remote cluster on more files. Do the next step and repeat",
+            "yellow",
+        )
+    )
+    print(
+        colored(
+            "   3.3) Check the log messages to add missing variables to the dataset configuration",
+            "yellow",
+        )
+    )
+    print(
+        colored(
+            "   3.4) Check the batch size, worker, and scheduler on Coiled to optimize the processing",
+            "yellow",
+        )
+    )
+    print("")
+
+    # Step 4
+    print(
+        colored(
+            "4) Create/Modify the notebook for this dataset ", "yellow", attrs=["bold"]
+        )
+        + colored(f"{notebook_path}", "cyan", attrs=["bold"])
+    )
+    print("")
+
+    # Step 5
+    print(
+        colored(
+            "5) Create a PR with the JSON config, Python script, pyproject.toml, and Jupyter notebook",
+            "yellow",
+            attrs=["bold"],
+        )
+    )
+    print("")
+
+    # Step 6
+    print(colored("6) Create the AWS Registry configuration", "yellow", attrs=["bold"]))
+    print(
+        colored(
+            "   https://aodn-cloud-optimised.readthedocs.io/en/latest/module-overview.html#create-aws-registry-dataset-entry",
+            "cyan",
+            attrs=["underline"],
+        )
+    )
+    print(
+        colored(
+            "   6.1) Submit a PR to https://github.com/awslabs/open-data-registry with the new registry file created",
+            "yellow",
+        )
+    )
+
+
+def create_notebook(dataset_name):
+    module_path = get_module_path()
+    notebook_path = str(
+        importlib.resources.files("aodn_cloud_optimised")
+        .joinpath("../")
+        .joinpath("notebooks")
+        .joinpath(f"{dataset_name}.ipynb")
+    )
+
+    notebook_parquet_template_path = str(
+        importlib.resources.files("aodn_cloud_optimised")
+        .joinpath("../")
+        .joinpath("notebooks")
+        .joinpath(f"template_parquet.ipynb")
+    )
+
+    notebook_parquet_zarr_path = str(
+        importlib.resources.files("aodn_cloud_optimised")
+        .joinpath("../")
+        .joinpath("notebooks")
+        .joinpath(f"template_zarr.ipynb")
+    )
+    dataset_config = load_dataset_config(
+        str(
+            files("aodn_cloud_optimised.config.dataset").joinpath(
+                f"{dataset_name}.json"
+            )
+        )
+    )
+    cloud_optimised_format = dataset_config.get("cloud_optimised_format")
+
+    if not os.path.exists(notebook_path):
+
+        if cloud_optimised_format == "parquet":
+            with open(notebook_parquet_template_path) as f:
+                template_nb = nbformat.read(f, as_version=4)
+        elif cloud_optimised_format == "ZARR":
+            with open(notebook_parquet_zarr_path) as f:
+                template_nb = nbformat.read(f, as_version=4)
+
+        # Create a copy of the template notebook
+        new_nb = nbformat.v4.new_notebook()
+        new_nb.cells = template_nb.cells.copy()
+
+        # Find the first code cell and modify its content
+        for cell in new_nb.cells:
+            if cell.cell_type == "code":
+                cell.source = f'dataset_name = "{dataset_name}"'
+                break
+        for cell in new_nb.cells:
+            if cell.cell_type == "markdown":
+                cell.source = (
+                    f"## Access {dataset_name.replace('_', ' ').title()} data in Parquet\n"
+                    f"A jupyter notebook to show how to access and plot the AODN {dataset_name} dataset available as a [Parquet](https://parquet.apache.org) dataset on S3"
+                )
+                break
+
+        # Save the new notebook
+        with open(notebook_path, "w") as f:
+            nbformat.write(new_nb, f)
+
+
 def main():
     """
     Script to generate a dataset configuration from a NetCDF file stored in S3.
@@ -215,7 +570,9 @@ def main():
        cloud-optimised format, cluster options, and batch size.
     4. Writes the dataset configuration to the module path as a JSON file. READY TO BE ADDED TO GITHUB
     5. A script is also created under the bin folder of the module (to be updated manually) and the entry is added to the pyproject.toml file
-    6. Optionally, fills up the AWS registry with Geonetwork metadata if a UUID is provided.
+    6. Create a Jupyter Notebook from template (TO BE MODIFIED)
+    7. Updates the notebooks/README.md with a new entry
+    8. Optionally, fills up the AWS registry with Geonetwork metadata if a UUID is provided.
 
     Usage:
         cloud_optimised_create_dataset_config -f <NetCDF file object key> -c <cloud optimised format> -d <dataset name> [-b <S3 bucket name>] [-u <Geonetwork Metadata UUID>]
@@ -329,9 +686,7 @@ def main():
         dataset_config["schema"]["polygon"] = {"type": "string"}
         dataset_config["schema"]["filename"] = {"type": "string"}
 
-    module_name = "aodn_cloud_optimised"
-    spec = importlib.util.find_spec(module_name)
-    module_path = spec.submodule_search_locations[0]
+    module_path = get_module_path()
 
     # write json config to module path
     with open(f"{module_path}/config/dataset/{args.dataset_name}.json", "w") as f:
@@ -345,6 +700,10 @@ def main():
     # fill up aws registry with GN3 uuid
     if args.uuid:
         populate_dataset_config_with_geonetwork_metadata(f"{args.dataset_name}.json")
+
+    update_readme(args.dataset_name)
+    create_notebook(args.dataset_name)
+    next_steps(args.dataset_name)
 
 
 if __name__ == "__main__":
