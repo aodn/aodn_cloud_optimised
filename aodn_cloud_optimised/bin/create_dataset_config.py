@@ -38,6 +38,7 @@ import uuid
 from collections import OrderedDict
 
 from s3path import PureS3Path
+from termcolor import colored
 
 from aodn_cloud_optimised.bin.create_aws_registry_dataset import (
     populate_dataset_config_with_geonetwork_metadata,
@@ -203,6 +204,188 @@ def update_pyproject_toml(dataset_name):
                 pyproject_file.write(script)
 
 
+def update_readme(dataset_name):
+    # Locate the README file
+    module_path = get_module_path()
+    readme_path = os.path.abspath(
+        os.path.join(module_path, os.pardir, "notebooks", "README.md")
+    )
+    notebook_url = f"- [{dataset_name}.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/{dataset_name}.ipynb)\n"
+
+    with open(readme_path, "r") as readme_file:
+        lines = readme_file.readlines()
+
+    # Initialize variables
+    notebooks_section = []
+    in_notebooks_section = False
+
+    for line in lines:
+        if line.strip() == "# AODN Notebooks":
+            in_notebooks_section = True
+            notebooks_section.append(line)
+            continue
+        if in_notebooks_section:
+            if line.strip() == "" or line.startswith("#"):
+                in_notebooks_section = False
+            else:
+                notebooks_section.append(line)
+
+    # Check if the notebook entry already exists
+    entry_exists = any(notebook_url.strip() in line for line in notebooks_section)
+    if entry_exists:
+        return
+
+    # Add the new notebook entry
+    notebooks_section.append(notebook_url)
+
+    # Sort the notebook entries alphabetically
+    sorted_notebooks = [notebooks_section[0]] + sorted(
+        notebooks_section[1:], key=lambda x: x.split(".ipynb")[0].strip()
+    )
+
+    # Write the updated README.md
+    with open(readme_path, "w") as readme_file:
+        in_notebooks_section = False
+        for line in lines:
+            if line.strip() == "# AODN Notebooks":
+                in_notebooks_section = True
+                readme_file.write(line)
+                for notebook in sorted_notebooks[1:]:
+                    readme_file.write(notebook)
+            elif in_notebooks_section and (line.strip() == "" or line.startswith("#")):
+                in_notebooks_section = False
+                readme_file.write(line)
+            elif not in_notebooks_section:
+                readme_file.write(line)
+
+        # If the # AODN Notebooks section was not found, add it at the end
+        if not any("# AODN Notebooks" in line for line in lines):
+            readme_file.write("\n# AODN Notebooks\n")
+            for notebook in sorted_notebooks[1:]:
+                readme_file.write(notebook)
+
+
+def next_steps(dataset_name):
+
+    json_config_path = str(
+        importlib.resources.files("aodn_cloud_optimised")
+        .joinpath("config")
+        .joinpath("dataset")
+        .joinpath(f"{dataset_name}.json")
+    )
+
+    script_path = str(
+        importlib.resources.files("aodn_cloud_optimised")
+        .joinpath("bin")
+        .joinpath(f"{dataset_name}.py")
+    )
+
+    notebook_path = str(
+        importlib.resources.files("aodn_cloud_optimised")
+        .joinpath("../")
+        .joinpath("notebooks")
+        .joinpath(f"{dataset_name}.ipynb")
+    )
+
+    # Title
+    print(colored("What to do next?", "white", "on_red", attrs=["bold", "underline"]))
+    print("")
+
+    # Step 1
+    print(
+        colored(
+            "1) Do a `git status` to see the new/modified files",
+            "yellow",
+            attrs=["bold"],
+        )
+    )
+    print("")
+
+    # Step 2
+    print(
+        colored(
+            f"2) Open the new dataset configuration JSON file", "yellow", attrs=["bold"]
+        )
+        + colored(f"{json_config_path}", "cyan", attrs=["bold"])
+    )
+    print(
+        colored("   2.1) Update all occurrences of ", "yellow")
+        + colored("'FILL UP MANUALLY - CHECK DOCUMENTATION'", "cyan", attrs=["bold"])
+    )
+    print(
+        colored(
+            "   2.2) Check AWS registry metadata in the dataset configuration", "yellow"
+        )
+    )
+    print("")
+
+    # Step 3
+    print(
+        colored("3) Open the newly created python script ", "yellow", attrs=["bold"])
+        + colored(f"{script_path}", "cyan", attrs=["bold"])
+    )
+    print(
+        colored(
+            "   3.1) Modify the cluster to local for testing, as well as the destination bucket and input path if necessary",
+            "yellow",
+        )
+    )
+    print(
+        colored(
+            "   3.2) Run the script locally on a sample, then with a remote cluster on more files. Do the next step and repeat",
+            "yellow",
+        )
+    )
+    print(
+        colored(
+            "   3.3) Check the log messages to add missing variables to the dataset configuration",
+            "yellow",
+        )
+    )
+    print(
+        colored(
+            "   3.4) Check the batch size, worker, and scheduler on Coiled to optimize the processing",
+            "yellow",
+        )
+    )
+    print("")
+
+    # Step 4
+    print(
+        colored(
+            "4) Create/Modify the notebook for this dataset ", "yellow", attrs=["bold"]
+        )
+        + colored(f"{notebook_path}", "cyan", attrs=["bold"])
+    )
+    print("")
+
+    # Step 5
+    print(
+        colored(
+            "5) Create a PR with the JSON config, Python script, pyproject.toml, and Jupyter notebook",
+            "yellow",
+            attrs=["bold"],
+        )
+    )
+    print("")
+
+    # Step 6
+    print(colored("6) Create the AWS Registry configuration", "yellow", attrs=["bold"]))
+    print(
+        colored(
+            "   https://aodn-cloud-optimised.readthedocs.io/en/latest/module-overview.html#create-aws-registry-dataset-entry",
+            "cyan",
+            attrs=["underline"],
+        )
+    )
+    print(
+        colored(
+            "   6.1) Submit a PR to https://github.com/awslabs/open-data-registry with the new registry file created",
+            "yellow",
+        )
+    )
+
+
 def main():
     """
     Script to generate a dataset configuration from a NetCDF file stored in S3.
@@ -329,9 +512,7 @@ def main():
         dataset_config["schema"]["polygon"] = {"type": "string"}
         dataset_config["schema"]["filename"] = {"type": "string"}
 
-    module_name = "aodn_cloud_optimised"
-    spec = importlib.util.find_spec(module_name)
-    module_path = spec.submodule_search_locations[0]
+    module_path = get_module_path()
 
     # write json config to module path
     with open(f"{module_path}/config/dataset/{args.dataset_name}.json", "w") as f:
@@ -345,6 +526,9 @@ def main():
     # fill up aws registry with GN3 uuid
     if args.uuid:
         populate_dataset_config_with_geonetwork_metadata(f"{args.dataset_name}.json")
+
+    update_readme(args.dataset_name)
+    next_steps(args.dataset_name)
 
 
 if __name__ == "__main__":
