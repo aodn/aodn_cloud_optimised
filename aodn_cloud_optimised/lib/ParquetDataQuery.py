@@ -17,11 +17,15 @@ import pyarrow as pa
 import pyarrow.compute as pc
 import pyarrow.parquet as pq
 import pyarrow.parquet as pq
+import s3fs
 from botocore import UNSIGNED
 from botocore.client import Config
 from fuzzywuzzy import fuzz
 from shapely import wkb
 from shapely.geometry import Polygon, MultiPolygon
+
+# Public folder, no SSO needed
+s3_file_system = s3fs.S3FileSystem(anon=True)
 
 
 def query_unique_value(dataset: pq.ParquetDataset, partition: str) -> set:
@@ -298,7 +302,9 @@ def get_schema_metadata(dname):
             The keys are metadata keys (decoded from bytes to UTF-8 strings),
             and the values are metadata values (parsed from JSON strings to Python objects).
     """
-    parquet_meta = pa.parquet.read_schema(os.path.join(dname, "_common_metadata"))
+    parquet_meta = pa.parquet.read_schema(
+        os.path.join(dname, "_common_metadata"), filesystem=s3_file_system
+    )
     # horrible ... but got to be done. The dictionary of metadata has to be a dictionnary with byte keys and byte values.
     # meaning that we can't have nested dictionaries ...
 
@@ -355,10 +361,14 @@ class Dataset:
         self.dname = (
             f"s3://{self.bucket_name}/{self.prefix}/{self.dataset_name}.parquet/"
         )
-        self.parquet_ds = pq.ParquetDataset(self.dname, partitioning="hive")
+        self.parquet_ds = pq.ParquetDataset(
+            self.dname, partitioning="hive", filesystem=s3_file_system
+        )
 
     def partition_keys_list(self):
-        dataset = pq.ParquetDataset(self.dname, format="parquet", partitioning="hive")
+        dataset = pq.ParquetDataset(
+            self.dname, partitioning="hive", filesystem=s3_file_system
+        )
         partition_keys = dataset.partitioning.schema
         return partition_keys
 
@@ -384,11 +394,11 @@ class Dataset:
         # TODO fix the whole logic as not everything is considered
 
         # time filter: doesnt require date_end
-        if date_end == None:
+        if date_end is None:
             now = datetime.now()
             date_end = now.strftime("%Y-%m-%d %H:%M:%S")
 
-        if date_start == None:
+        if date_start is None:
             filter_time = None
         else:
             filter_time = create_time_filter(
@@ -396,7 +406,7 @@ class Dataset:
             )
 
         # Geometry filter requires ALL optional args to be defined
-        if lat_min == None or lat_max == None or lon_min == None or lon_max == None:
+        if lat_min is None or lat_max is None or lon_min is None or lon_max is None:
             filter_geo = None
         else:
             filter_geo = create_bbox_filter(
@@ -408,7 +418,7 @@ class Dataset:
             )
 
         # scalar filter
-        if scalar_filter != None:
+        if scalar_filter is not None:
             expr = None
             for item in scalar_filter:
                 expr_1 = pc.field(item) == pa.scalar(scalar_filter[item])
