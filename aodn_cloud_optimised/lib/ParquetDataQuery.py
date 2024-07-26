@@ -24,7 +24,8 @@ from fuzzywuzzy import fuzz
 from shapely import wkb
 from shapely.geometry import Polygon, MultiPolygon
 
-s3_file_system = s3fs.S3FileSystem()
+# Public folder, no SSO needed
+s3_file_system = s3fs.S3FileSystem(anon=True)
 
 
 def query_unique_value(dataset: pq.ParquetDataset, partition: str) -> set:
