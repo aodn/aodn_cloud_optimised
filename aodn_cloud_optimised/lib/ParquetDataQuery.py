@@ -17,11 +17,14 @@ import pyarrow as pa
 import pyarrow.compute as pc
 import pyarrow.parquet as pq
 import pyarrow.parquet as pq
+import s3fs
 from botocore import UNSIGNED
 from botocore.client import Config
 from fuzzywuzzy import fuzz
 from shapely import wkb
 from shapely.geometry import Polygon, MultiPolygon
+
+s3_file_system = s3fs.S3File()
 
 
 def query_unique_value(dataset: pq.ParquetDataset, partition: str) -> set:
@@ -298,7 +301,9 @@ def get_schema_metadata(dname):
             The keys are metadata keys (decoded from bytes to UTF-8 strings),
             and the values are metadata values (parsed from JSON strings to Python objects).
     """
-    parquet_meta = pa.parquet.read_schema(os.path.join(dname, "_common_metadata"))
+    parquet_meta = pa.parquet.read_schema(
+        os.path.join(dname, "_common_metadata"), filesystem=s3_file_system
+    )
     # horrible ... but got to be done. The dictionary of metadata has to be a dictionnary with byte keys and byte values.
     # meaning that we can't have nested dictionaries ...
 
