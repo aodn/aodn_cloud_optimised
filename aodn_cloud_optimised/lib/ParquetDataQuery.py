@@ -17,7 +17,7 @@ import pyarrow as pa
 import pyarrow.compute as pc
 import pyarrow.parquet as pq
 import pyarrow.parquet as pq
-from pyarrow import fs
+import pyarrow.fs as fs
 from botocore import UNSIGNED
 from botocore.client import Config
 from fuzzywuzzy import fuzz
@@ -27,7 +27,7 @@ from shapely.geometry import Polygon, MultiPolygon
 # Use pyarrow build in s3 file system, you need to pass an file system otherwise it will use local which
 # decrease the speed a lot.
 # Public folder, no login needed
-s3_file_system = fs.S3FileSystem(region="ap-southeast-2", anonymous=True)
+s3_file_system = fs.S3FileSystem(region="ap-southeast-2", anonymous=True, scheme="http")
 
 
 def query_unique_value(dataset: pq.ParquetDataset, partition: str) -> set:
@@ -360,7 +360,9 @@ class Dataset:
         self.bucket_name = bucket_name
         self.prefix = prefix
         self.dataset_name = dataset_name
-        self.dname = f"{self.bucket_name}/{self.prefix}/{self.dataset_name}.parquet/"
+        self.dname = (
+            f"s3://{self.bucket_name}/{self.prefix}/{self.dataset_name}.parquet/"
+        )
         self.parquet_ds = pq.ParquetDataset(
             self.dname, partitioning="hive", filesystem=s3_file_system
         )
@@ -463,7 +465,7 @@ class Metadata:
         catalog = {}
 
         for dataset in folders_with_parquet:
-            dname = f"{self.bucket_name}/{dataset}"
+            dname = f"s3://{self.bucket_name}/{dataset}"
             try:
                 metadata = get_schema_metadata(dname)  # schema metadata
             except Exception as e:
