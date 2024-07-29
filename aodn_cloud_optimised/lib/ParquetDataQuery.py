@@ -454,11 +454,15 @@ class Dataset:
         if scalar_filter is not None:
             data_filter = data_filter & expr
 
-        # Pyarrow can infer file system from path prefix with s3 but it will try
-        # to scan local file system before infer and get a pyarrow s3 file system
-        # which is very slow to start, so we removed the s3 prefix and state the
-        # file system directly
-        return self._create_parquet_dataset(filters=data_filter).read_pandas()
+        # Set file system explicitly do not require folder prefix s3://
+        df = pd.read_parquet(
+            self.dname,
+            engine="pyarrow",
+            filters=data_filter,
+            filesystem=fs.S3FileSystem(region=REGION, anonymous=True),
+        )
+
+        return df
 
     def get_metadata(self):
         return get_schema_metadata(self.dname)
