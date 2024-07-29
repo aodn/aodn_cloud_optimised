@@ -453,10 +453,10 @@ class Dataset:
 
         # Pyarrow can infer file system from path prefix with s3 but it will try
         # to scan local file system before infer and get a pyarrow s3 file system
-        # which is very slow to start
+        # which is very slow to start, so we removed the s3 prefix and state the
         # file system directly
         df = pd.read_parquet(
-            "s3://" + self.dname,
+            self.dname,
             engine="pyarrow",
             filters=data_filter,
             filesystem=fs.S3FileSystem(region=REGION, anonymous=True),
