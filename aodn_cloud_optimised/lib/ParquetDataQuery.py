@@ -360,9 +360,7 @@ class Dataset:
         self.bucket_name = bucket_name
         self.prefix = prefix
         self.dataset_name = dataset_name
-        self.dname = (
-            f"s3://{self.bucket_name}/{self.prefix}/{self.dataset_name}.parquet/"
-        )
+        self.dname = f"{self.bucket_name}/{self.prefix}/{self.dataset_name}.parquet/"
         self.parquet_ds = pq.ParquetDataset(
             self.dname, partitioning="hive", filesystem=s3_file_system
         )
@@ -465,7 +463,7 @@ class Metadata:
         catalog = {}
 
         for dataset in folders_with_parquet:
-            dname = f"s3://{self.bucket_name}/{dataset}"
+            dname = f"{self.bucket_name}/{dataset}"
             try:
                 metadata = get_schema_metadata(dname)  # schema metadata
             except Exception as e:
