@@ -458,7 +458,7 @@ class Dataset:
         # to scan local file system before infer and get a pyarrow s3 file system
         # which is very slow to start, so we removed the s3 prefix and state the
         # file system directly
-        return self._create_parquet_dataset(filters=data_filter).read()
+        return self._create_parquet_dataset(filters=data_filter).read_pandas()
 
     def get_metadata(self):
         return get_schema_metadata(self.dname)
