@@ -27,7 +27,7 @@ from shapely.geometry import Polygon, MultiPolygon
 # Use pyarrow build in s3 file system, you need to pass an file system otherwise it will use local which
 # decrease the speed a lot.
 # Public folder, no login needed
-s3_file_system = fs.S3FileSystem(region="ap-southeast-2", anonymous=True, scheme="http")
+s3_file_system = fs.S3FileSystem(region="ap-southeast-2", anonymous=True)
 
 
 def query_unique_value(dataset: pq.ParquetDataset, partition: str) -> set:
