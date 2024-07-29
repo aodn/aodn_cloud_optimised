@@ -432,20 +432,23 @@ class Dataset:
             expr = None
             for item in scalar_filter:
                 expr_1 = pc.field(item) == pa.scalar(scalar_filter[item])
-                if type(expr) != pc.Expression:
+                if not isinstance(expr, pc.Expression):
                     expr = expr_1
                 else:
                     expr = expr_1 & expr
 
-        # merge filters together
-        if type(filter_time) != pc.Expression:
-            data_filter = filter_geo
-        elif type(filter_geo) != pc.Expression:
-            data_filter = filter_time
-        elif (type(filter_geo) != pc.Expression) & (type(filter_time) != pc.Expression):
-            data_filter = None
-        else:
+        # use isinstance as it support type check for subclasss relationship
+        # we want to merge type together, if both are expression then use and to join together
+        if isinstance(filter_geo, pc.Expression) & isinstance(
+            filter_time, pc.Expression
+        ):
             data_filter = filter_geo & filter_time
+        elif isinstance(filter_time, pc.Expression):
+            data_filter = filter_time
+        elif isinstance(filter_geo, pc.Expression):
+            data_filter = filter_geo
+        else:
+            data_filter = None
 
         # add scalar filter to data_filter
         if scalar_filter is not None:
