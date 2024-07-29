@@ -307,8 +307,7 @@ def get_schema_metadata(dname):
         os.path.join(dname, "_common_metadata"),
         # Pyarrow can infer file system from path prefix with s3 but it will try
         # to scan local file system before infer and get a pyarrow s3 file system
-        # which is very slow to start, so we removed the s3 prefix and state the
-        # file system directly
+        # which is very slow to start, read_schema no s3 prefix needed
         filesystem=fs.S3FileSystem(region=REGION, anonymous=True),
     )
     # horrible ... but got to be done. The dictionary of metadata has to be a dictionnary with byte keys and byte values.
@@ -370,14 +369,15 @@ class Dataset:
             partitioning="hive",
             # Pyarrow can infer file system from path prefix with s3 but it will try
             # to scan local file system before infer and get a pyarrow s3 file system
-            # which is very slow to start, so we removed the s3 prefix and state the
-            # file system directly
+            # which is very slow to start, ParquetDataset no s3 prefix needed
             filesystem=fs.S3FileSystem(region=REGION, anonymous=True),
         )
 
     def partition_keys_list(self):
         dataset = pq.ParquetDataset(
-            self.dname, partitioning="hive", filesystem=s3_file_system
+            self.dname,
+            partitioning="hive",
+            filesystem=fs.S3FileSystem(region=REGION, anonymous=True),
         )
         partition_keys = dataset.partitioning.schema
         return partition_keys
@@ -453,10 +453,10 @@ class Dataset:
 
         # Pyarrow can infer file system from path prefix with s3 but it will try
         # to scan local file system before infer and get a pyarrow s3 file system
-        # which is very slow to start, so we removed the s3 prefix and state the
+        # which is very slow to start
         # file system directly
         df = pd.read_parquet(
-            self.dname,
+            "s3://" + self.dname,
             engine="pyarrow",
             filters=data_filter,
             filesystem=fs.S3FileSystem(region=REGION, anonymous=True),
