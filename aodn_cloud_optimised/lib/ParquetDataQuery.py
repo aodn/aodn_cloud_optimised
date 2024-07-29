@@ -468,8 +468,8 @@ class Metadata:
             dname = f"s3://{self.bucket_name}/{dataset}"
             try:
                 metadata = get_schema_metadata(dname)  # schema metadata
-            except:
-                print(f"Error processing metadata from {dataset}")
+            except Exception as e:
+                print(f"Error processing metadata from {dataset}, {e}")
                 continue
 
             path_parts = dataset.strip("/").split("/")
