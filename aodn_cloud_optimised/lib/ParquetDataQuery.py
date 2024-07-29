@@ -364,9 +364,13 @@ class Dataset:
         self.prefix = prefix
         self.dataset_name = dataset_name
         self.dname = f"{self.bucket_name}/{self.prefix}/{self.dataset_name}.parquet/"
-        self.parquet_ds = pq.ParquetDataset(
+        self.parquet_ds = self._create_parquet_dataset()
+
+    def _create_parquet_dataset(self, filters=None):
+        return pq.ParquetDataset(
             self.dname,
             partitioning="hive",
+            filters=filters,
             # Pyarrow can infer file system from path prefix with s3 but it will try
             # to scan local file system before infer and get a pyarrow s3 file system
             # which is very slow to start, ParquetDataset no s3 prefix needed
@@ -374,11 +378,7 @@ class Dataset:
         )
 
     def partition_keys_list(self):
-        dataset = pq.ParquetDataset(
-            self.dname,
-            partitioning="hive",
-            filesystem=fs.S3FileSystem(region=REGION, anonymous=True),
-        )
+        dataset = self._create_parquet_dataset()
         partition_keys = dataset.partitioning.schema
         return partition_keys
 
@@ -458,12 +458,9 @@ class Dataset:
         # to scan local file system before infer and get a pyarrow s3 file system
         # which is very slow to start, so we removed the s3 prefix and state the
         # file system directly
-        df = pd.read_parquet(
-            self.dname,
-            engine="pyarrow",
-            filters=data_filter,
-            filesystem=fs.S3FileSystem(region=REGION, anonymous=True),
-        )
+        self.parquet_ds.read_pandas()
+        df = self._create_parquet_dataset(filters=data_filter).read()
+
         return df
 
     def get_metadata(self):
