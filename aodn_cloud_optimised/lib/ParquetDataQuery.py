@@ -24,11 +24,6 @@ from fuzzywuzzy import fuzz
 from shapely import wkb
 from shapely.geometry import Polygon, MultiPolygon
 
-# Use pyarrow build in s3 file system, you need to pass an file system otherwise it will use local which
-# decrease the speed a lot.
-# Public folder, no login needed
-s3_file_system = fs.S3FileSystem(region="ap-southeast-2", anonymous=True)
-
 
 def query_unique_value(dataset: pq.ParquetDataset, partition: str) -> set:
     """Query the unique values of a specified partition name from a ParquetDataset.
@@ -304,10 +299,13 @@ def get_schema_metadata(dname):
             The keys are metadata keys (decoded from bytes to UTF-8 strings),
             and the values are metadata values (parsed from JSON strings to Python objects).
     """
-    s3 = fs.S3FileSystem(region="ap-southeast-2", anonymous=True)
-
     parquet_meta = pa.parquet.read_schema(
-        os.path.join(dname, "_common_metadata"), filesystem=s3
+        os.path.join(dname, "_common_metadata"),
+        # Pyarrow can infer file system from path prefix with s3 but it will try
+        # to scan local file system before infer and get a pyarrow s3 file system
+        # which is very slow to start, so we removed the s3 prefix and state the
+        # file system directly
+        filesystem=fs.S3FileSystem(region="ap-southeast-2", anonymous=True),
     )
     # horrible ... but got to be done. The dictionary of metadata has to be a dictionnary with byte keys and byte values.
     # meaning that we can't have nested dictionaries ...
@@ -362,11 +360,15 @@ class Dataset:
         self.bucket_name = bucket_name
         self.prefix = prefix
         self.dataset_name = dataset_name
-        self.dname = (
-            f"s3://{self.bucket_name}/{self.prefix}/{self.dataset_name}.parquet/"
-        )
+        self.dname = f"{self.bucket_name}/{self.prefix}/{self.dataset_name}.parquet/"
         self.parquet_ds = pq.ParquetDataset(
-            self.dname, partitioning="hive", filesystem=s3_file_system
+            self.dname,
+            partitioning="hive",
+            # Pyarrow can infer file system from path prefix with s3 but it will try
+            # to scan local file system before infer and get a pyarrow s3 file system
+            # which is very slow to start, so we removed the s3 prefix and state the
+            # file system directly
+            filesystem=fs.S3FileSystem(region="ap-southeast-2", anonymous=True),
         )
 
     def partition_keys_list(self):
