@@ -17,15 +17,17 @@ import pyarrow as pa
 import pyarrow.compute as pc
 import pyarrow.parquet as pq
 import pyarrow.parquet as pq
-import s3fs
+from pyarrow import fs
 from botocore import UNSIGNED
 from botocore.client import Config
 from fuzzywuzzy import fuzz
 from shapely import wkb
 from shapely.geometry import Polygon, MultiPolygon
 
-# Public folder, no SSO needed
-s3_file_system = s3fs.S3FileSystem(anon=True)
+# Use pyarrow build in s3 file system, you need to pass an file system otherwise it will use local which
+# decrease the speed a lot.
+# Public folder, no login needed
+s3_file_system = fs.S3FileSystem(region="ap-southeast-2", anonymous=True)
 
 
 def query_unique_value(dataset: pq.ParquetDataset, partition: str) -> set:
