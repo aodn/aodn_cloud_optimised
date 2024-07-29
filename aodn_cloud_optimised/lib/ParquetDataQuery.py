@@ -18,11 +18,15 @@ import pyarrow.compute as pc
 import pyarrow.parquet as pq
 import pyarrow.parquet as pq
 import pyarrow.fs as fs
+
+from typing import Final
 from botocore import UNSIGNED
 from botocore.client import Config
 from fuzzywuzzy import fuzz
 from shapely import wkb
 from shapely.geometry import Polygon, MultiPolygon
+
+REGION: Final[str] = "ap-southeast-2"
 
 
 def query_unique_value(dataset: pq.ParquetDataset, partition: str) -> set:
@@ -305,7 +309,7 @@ def get_schema_metadata(dname):
         # to scan local file system before infer and get a pyarrow s3 file system
         # which is very slow to start, so we removed the s3 prefix and state the
         # file system directly
-        filesystem=fs.S3FileSystem(region="ap-southeast-2", anonymous=True),
+        filesystem=fs.S3FileSystem(region=REGION, anonymous=True),
     )
     # horrible ... but got to be done. The dictionary of metadata has to be a dictionnary with byte keys and byte values.
     # meaning that we can't have nested dictionaries ...
@@ -368,7 +372,7 @@ class Dataset:
             # to scan local file system before infer and get a pyarrow s3 file system
             # which is very slow to start, so we removed the s3 prefix and state the
             # file system directly
-            filesystem=fs.S3FileSystem(region="ap-southeast-2", anonymous=True),
+            filesystem=fs.S3FileSystem(region=REGION, anonymous=True),
         )
 
     def partition_keys_list(self):
@@ -444,7 +448,7 @@ class Dataset:
             data_filter = filter_geo & filter_time
 
         # add scalar filter to data_filter
-        if scalar_filter != None:
+        if scalar_filter is not None:
             data_filter = data_filter & expr
 
         # Pyarrow can infer file system from path prefix with s3 but it will try
@@ -455,7 +459,7 @@ class Dataset:
             self.dname,
             engine="pyarrow",
             filters=data_filter,
-            filesystem=fs.S3FileSystem(region="ap-southeast-2", anonymous=True),
+            filesystem=fs.S3FileSystem(region=REGION, anonymous=True),
         )
         return df
 
