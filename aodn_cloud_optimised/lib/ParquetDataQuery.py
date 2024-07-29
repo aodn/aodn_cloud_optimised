@@ -304,8 +304,10 @@ def get_schema_metadata(dname):
             The keys are metadata keys (decoded from bytes to UTF-8 strings),
             and the values are metadata values (parsed from JSON strings to Python objects).
     """
+    s3 = fs.S3FileSystem(region="ap-southeast-2", anonymous=True)
+
     parquet_meta = pa.parquet.read_schema(
-        os.path.join(dname, "_common_metadata"), filesystem=s3_file_system
+        os.path.join(dname, "_common_metadata"), filesystem=s3
     )
     # horrible ... but got to be done. The dictionary of metadata has to be a dictionnary with byte keys and byte values.
     # meaning that we can't have nested dictionaries ...
@@ -465,7 +467,7 @@ class Metadata:
         catalog = {}
 
         for dataset in folders_with_parquet:
-            dname = f"s3://{self.bucket_name}/{dataset}"
+            dname = f"{self.bucket_name}/{dataset}"
             try:
                 metadata = get_schema_metadata(dname)  # schema metadata
             except Exception as e:
