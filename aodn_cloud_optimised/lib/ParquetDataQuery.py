@@ -17,15 +17,16 @@ import pyarrow as pa
 import pyarrow.compute as pc
 import pyarrow.parquet as pq
 import pyarrow.parquet as pq
-import s3fs
+import pyarrow.fs as fs
+
+from typing import Final
 from botocore import UNSIGNED
 from botocore.client import Config
 from fuzzywuzzy import fuzz
 from shapely import wkb
 from shapely.geometry import Polygon, MultiPolygon
 
-# Public folder, no SSO needed
-s3_file_system = s3fs.S3FileSystem(anon=True)
+REGION: Final[str] = "ap-southeast-2"
 
 
 def query_unique_value(dataset: pq.ParquetDataset, partition: str) -> set:
@@ -220,7 +221,7 @@ def create_time_filter(parquet_ds, **kwargs):
     expr1 = pc.field("timestamp") >= np.int64(timestamp_start)
     expr2 = pc.field("timestamp") <= np.int64(timestamp_end)
 
-    # ARGO Specifiq:
+    # ARGO Specific:
     if "TIME" in parquet_ds.schema.names:
         time_varname = "TIME"
     elif "JULD" in parquet_ds.schema.names:
@@ -303,7 +304,11 @@ def get_schema_metadata(dname):
             and the values are metadata values (parsed from JSON strings to Python objects).
     """
     parquet_meta = pa.parquet.read_schema(
-        os.path.join(dname, "_common_metadata"), filesystem=s3_file_system
+        os.path.join(dname, "_common_metadata"),
+        # Pyarrow can infer file system from path prefix with s3 but it will try
+        # to scan local file system before infer and get a pyarrow s3 file system
+        # which is very slow to start, read_schema no s3 prefix needed
+        filesystem=fs.S3FileSystem(region=REGION, anonymous=True),
     )
     # horrible ... but got to be done. The dictionary of metadata has to be a dictionnary with byte keys and byte values.
     # meaning that we can't have nested dictionaries ...
@@ -358,17 +363,22 @@ class Dataset:
         self.bucket_name = bucket_name
         self.prefix = prefix
         self.dataset_name = dataset_name
-        self.dname = (
-            f"s3://{self.bucket_name}/{self.prefix}/{self.dataset_name}.parquet/"
-        )
-        self.parquet_ds = pq.ParquetDataset(
-            self.dname, partitioning="hive", filesystem=s3_file_system
+        self.dname = f"{self.bucket_name}/{self.prefix}/{self.dataset_name}.parquet/"
+        self.parquet_ds = self._create_parquet_dataset()
+
+    def _create_parquet_dataset(self, filters=None):
+        return pq.ParquetDataset(
+            self.dname,
+            partitioning="hive",
+            filters=filters,
+            # Pyarrow can infer file system from path prefix with s3 but it will try
+            # to scan local file system before infer and get a pyarrow s3 file system
+            # which is very slow to start, ParquetDataset no s3 prefix needed
+            filesystem=fs.S3FileSystem(region=REGION, anonymous=True),
         )
 
     def partition_keys_list(self):
-        dataset = pq.ParquetDataset(
-            self.dname, partitioning="hive", filesystem=s3_file_system
-        )
+        dataset = self._create_parquet_dataset()
         partition_keys = dataset.partitioning.schema
         return partition_keys
 
@@ -422,26 +432,36 @@ class Dataset:
             expr = None
             for item in scalar_filter:
                 expr_1 = pc.field(item) == pa.scalar(scalar_filter[item])
-                if type(expr) != pc.Expression:
+                if not isinstance(expr, pc.Expression):
                     expr = expr_1
                 else:
                     expr = expr_1 & expr
 
-        # merge filters together
-        if type(filter_time) != pc.Expression:
-            data_filter = filter_geo
-        elif type(filter_geo) != pc.Expression:
-            data_filter = filter_time
-        elif (type(filter_geo) != pc.Expression) & (type(filter_time) != pc.Expression):
-            data_filter = None
-        else:
+        # use isinstance as it support type check for subclasss relationship
+        # we want to merge type together, if both are expression then use and to join together
+        if isinstance(filter_geo, pc.Expression) & isinstance(
+            filter_time, pc.Expression
+        ):
             data_filter = filter_geo & filter_time
+        elif isinstance(filter_time, pc.Expression):
+            data_filter = filter_time
+        elif isinstance(filter_geo, pc.Expression):
+            data_filter = filter_geo
+        else:
+            data_filter = None
 
         # add scalar filter to data_filter
-        if scalar_filter != None:
+        if scalar_filter is not None:
             data_filter = data_filter & expr
 
-        df = pd.read_parquet(self.dname, engine="pyarrow", filters=data_filter)
+        # Set file system explicitly do not require folder prefix s3://
+        df = pd.read_parquet(
+            self.dname,
+            engine="pyarrow",
+            filters=data_filter,
+            filesystem=fs.S3FileSystem(region=REGION, anonymous=True),
+        )
+
         return df
 
     def get_metadata(self):
@@ -463,11 +483,11 @@ class Metadata:
         catalog = {}
 
         for dataset in folders_with_parquet:
-            dname = f"s3://{self.bucket_name}/{dataset}"
+            dname = f"{self.bucket_name}/{dataset}"
             try:
                 metadata = get_schema_metadata(dname)  # schema metadata
-            except:
-                print(f"Error processing metadata from {dataset}")
+            except Exception as e:
+                print(f"Error processing metadata from {dataset}, {e}")
                 continue
 
             path_parts = dataset.strip("/").split("/")
