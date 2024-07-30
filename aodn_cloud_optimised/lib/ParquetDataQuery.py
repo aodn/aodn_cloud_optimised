@@ -221,7 +221,7 @@ def create_time_filter(parquet_ds, **kwargs):
     expr1 = pc.field("timestamp") >= np.int64(timestamp_start)
     expr2 = pc.field("timestamp") <= np.int64(timestamp_end)
 
-    # ARGO Specifiq:
+    # ARGO Specific:
     if "TIME" in parquet_ds.schema.names:
         time_varname = "TIME"
     elif "JULD" in parquet_ds.schema.names:
