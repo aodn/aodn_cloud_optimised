@@ -442,7 +442,7 @@ class GenericHandler(CommonHandler):
                     # First time writing the dataset
                     else:
                         self.logger.info(
-                            f"{self.uuid_log}: Writing data to new a Zarr dataset"
+                            f"{self.uuid_log}: Writing data to a new Zarr dataset"
                         )
 
                         ds.to_zarr(
