@@ -303,8 +303,9 @@ def get_schema_metadata(dname):
             The keys are metadata keys (decoded from bytes to UTF-8 strings),
             and the values are metadata values (parsed from JSON strings to Python objects).
     """
+    name = dname.replace("s3://", "")
     parquet_meta = pa.parquet.read_schema(
-        os.path.join(dname, "_common_metadata"),
+        os.path.join(name, "_common_metadata"),
         # Pyarrow can infer file system from path prefix with s3 but it will try
         # to scan local file system before infer and get a pyarrow s3 file system
         # which is very slow to start, read_schema no s3 prefix needed
