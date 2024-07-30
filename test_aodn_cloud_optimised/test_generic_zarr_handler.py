@@ -2,6 +2,8 @@ import json
 import os
 import unittest
 from unittest.mock import patch
+import logging
+from io import StringIO
 
 import boto3
 import numpy as np
@@ -137,6 +139,12 @@ class TestGenericZarrHandler(unittest.TestCase):
 
     # TODO: find a solution to patch s3fs properly and not relying on changing the s3fs values in the code
     def test_zarr_nc_acorn_handler(self):
+        # Capture logs
+        log_stream = StringIO()
+        log_handler = logging.StreamHandler(log_stream)
+        logger = logging.getLogger()
+        logger.addHandler(log_handler)
+
         nc_obj_ls = s3_ls("imos-data", "acorn")
 
         # TODO: capture logging from handler as done in the test_generic_parquet_handler for SOOP SST.
@@ -148,12 +156,31 @@ class TestGenericZarrHandler(unittest.TestCase):
         with patch.object(self.handler_nc_acorn_file, "s3_fs", new=self.s3_fs):
             self.handler_nc_acorn_file.to_cloud_optimised(nc_obj_ls)
 
+        log_handler.flush()
+        captured_logs = log_stream.getvalue().strip().split("\n")
+
+        # Validate logs (add more specific assertions based on your logging format)
+        self.assertTrue(
+            any("Writing data to a new Zarr dataset" in log for log in captured_logs)
+        )
         # 2nd pass, process the same file a second time. Should be overwritten in ONE region slice
         # 2024-07-02 11:16:21,649 - INFO - GenericZarrHandler.py:303 - publish_cloud_optimised_fileset_batch - Duplicate values of TIME
         # 2024-07-02 11:16:21,650 - INFO - GenericZarrHandler.py:353 - publish_cloud_optimised_fileset_batch - Overwriting Zarr dataset in Region: {'TIME': slice(0, 4, None)}, Matching Indexes in new ds: [0 1 2 3]
         # 2024-07-02 11:16:22,573 - INFO - GenericZarrHandler.py:391 - publish_cloud_optimised_fileset_batch - Batch 1 processed and written to <fsspec.mapping.FSMap object at 0x78166762b730>
         with patch.object(self.handler_nc_acorn_file, "s3_fs", new=self.s3_fs):
             self.handler_nc_acorn_file.to_cloud_optimised(nc_obj_ls)
+
+        log_handler.flush()
+        captured_logs = log_stream.getvalue().strip().split("\n")
+
+        # Validate logs (add more specific assertions based on your logging format)
+        self.assertTrue(
+            any(
+                "Overwriting Zarr dataset in Region: {'TIME': slice(0, 4, None)}, Matching Indexes in new ds: [0 1 2 3]"
+                in log
+                for log in captured_logs
+            )
+        )
 
         # 3rd pass, create a non-contiguous list of files to reprocess. TWO region slices should happen. Look in the log
         # output of the unittest as it's hard to test!
@@ -166,6 +193,25 @@ class TestGenericZarrHandler(unittest.TestCase):
         nc_obj_ls_non_contiguous = nc_obj_ls[0:1] + nc_obj_ls[2:4]
         with patch.object(self.handler_nc_acorn_file, "s3_fs", new=self.s3_fs):
             self.handler_nc_acorn_file.to_cloud_optimised(nc_obj_ls_non_contiguous)
+
+        log_handler.flush()
+        captured_logs = log_stream.getvalue().strip().split("\n")
+
+        # Validate logs (add more specific assertions based on your logging format)
+        self.assertTrue(
+            any(
+                "Overwriting Zarr dataset in Region: {'TIME': slice(0, 1, None)}, Matching Indexes in new ds: [0]"
+                in log
+                for log in captured_logs
+            )
+        )
+        self.assertTrue(
+            any(
+                "Overwriting Zarr dataset in Region: {'TIME': slice(2, 4, None)}, Matching Indexes in new ds: [1 2]"
+                in log
+                for log in captured_logs
+            )
+        )
 
         # read zarr
         dataset_config = load_dataset_config(DATASET_CONFIG_NC_ACORN_JSON)
