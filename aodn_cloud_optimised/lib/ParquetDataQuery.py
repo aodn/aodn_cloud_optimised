@@ -7,6 +7,7 @@ import os
 import re
 from datetime import datetime
 from functools import lru_cache
+from typing import Final
 
 import boto3
 import geopandas as gpd
@@ -15,14 +16,13 @@ import numpy as np
 import pandas as pd
 import pyarrow as pa
 import pyarrow.compute as pc
-import pyarrow.parquet as pq
-import pyarrow.parquet as pq
 import pyarrow.fs as fs
-
-from typing import Final
+import pyarrow.parquet as pq
+import pyarrow.parquet as pq
 from botocore import UNSIGNED
 from botocore.client import Config
 from fuzzywuzzy import fuzz
+from s3path import PureS3Path
 from shapely import wkb
 from shapely.geometry import Polygon, MultiPolygon
 
@@ -304,6 +304,8 @@ def get_schema_metadata(dname):
             and the values are metadata values (parsed from JSON strings to Python objects).
     """
     name = dname.replace("s3://", "")
+    name = name.replace("anonymous@", "")
+
     parquet_meta = pa.parquet.read_schema(
         os.path.join(name, "_common_metadata"),
         # Pyarrow can infer file system from path prefix with s3 but it will try
@@ -349,8 +351,8 @@ def decode_and_load_json(metadata):
 ###################################################################################################################
 class GetAodn:
     def __init__(self):
-        self.bucket_name = "imos-data-lab-optimised"
-        self.prefix = "cloud_optimised/cluster_testing"
+        self.bucket_name = "aodn-cloud-optimised"
+        self.prefix = ""
 
     def get_dataset(self, dataset_name):
         return Dataset(self.bucket_name, self.prefix, dataset_name)
@@ -364,7 +366,11 @@ class Dataset:
         self.bucket_name = bucket_name
         self.prefix = prefix
         self.dataset_name = dataset_name
-        self.dname = f"{self.bucket_name}/{self.prefix}/{self.dataset_name}.parquet/"
+
+        # creating path with PureS3Path to handle windows, and handle empty self.prefix
+        self.dname = PureS3Path.from_uri(f"s3://anonymous@{self.bucket_name}/{self.prefix}/").joinpath(f"{self.dataset_name}.parquet/").as_uri()
+        self.dname = self.dname.replace("s3://anonymous%40", "")
+
         self.parquet_ds = self._create_parquet_dataset()
 
     def _create_parquet_dataset(self, filters=None):
@@ -484,7 +490,10 @@ class Metadata:
         catalog = {}
 
         for dataset in folders_with_parquet:
-            dname = f"{self.bucket_name}/{dataset}"
+            dname = PureS3Path.from_uri(f"s3://anonymous@{self.bucket_name}/{self.prefix}/").joinpath(
+                f"{dataset}").as_uri()
+            dname = dname.replace("s3://anonymous%40", "")
+
             try:
                 metadata = get_schema_metadata(dname)  # schema metadata
             except Exception as e:
@@ -501,6 +510,8 @@ class Metadata:
 
     @lru_cache(maxsize=None)
     def metadata_catalog(self):
+
+
         # print('Running metadata_catalog...')  # Debug output
         if "catalog" in self.__dict__:
             return self.catalog
@@ -511,14 +522,15 @@ class Metadata:
         s3 = boto3.client("s3", config=Config(signature_version=UNSIGNED))
         prefix = self.prefix
 
-        if not prefix.endswith("/"):
-            prefix += "/"
+        #if (prefix is not None) and (not prefix.endswith("/")):
+        #    prefix += "/"
 
         response = s3.list_objects_v2(
             Bucket=self.bucket_name, Prefix=prefix, Delimiter="/"
         )
 
         folders = []
+
         for prefix in response.get("CommonPrefixes", []):
             folder_path = prefix["Prefix"]
             if folder_path.endswith(".parquet/"):
