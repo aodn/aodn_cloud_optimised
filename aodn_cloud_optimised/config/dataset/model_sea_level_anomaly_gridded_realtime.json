@@ -4,8 +4,8 @@
   "cloud_optimised_format": "zarr",
   "cluster_options": {
     "n_workers": [
-      2,
-      8
+      1,
+      30
     ],
     "scheduler_vm_types": "t3.medium",
     "worker_vm_types": "t3.large",
@@ -16,7 +16,7 @@
       "memory_limit": "32GB"
     }
   },
-  "batch_size": 10,
+  "batch_size": 100,
   "metadata_uuid": "0c9eb39c-9cbe-4c6a-8a10-5867087e703a",
   "dimensions": {
     "time": {
