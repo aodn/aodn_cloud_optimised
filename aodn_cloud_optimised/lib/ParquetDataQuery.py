@@ -27,6 +27,8 @@ from shapely import wkb
 from shapely.geometry import Polygon, MultiPolygon
 
 REGION: Final[str] = "ap-southeast-2"
+BUCKET_OPTIMISED_DEFAULT = "aodn-cloud-optimised"
+ROOT_PREFIX_CLOUD_OPTIMISED_PATH = ""
 
 
 def query_unique_value(dataset: pq.ParquetDataset, partition: str) -> set:
@@ -351,8 +353,8 @@ def decode_and_load_json(metadata):
 ###################################################################################################################
 class GetAodn:
     def __init__(self):
-        self.bucket_name = "aodn-cloud-optimised"
-        self.prefix = ""
+        self.bucket_name = BUCKET_OPTIMISED_DEFAULT
+        self.prefix = ROOT_PREFIX_CLOUD_OPTIMISED_PATH
 
     def get_dataset(self, dataset_name):
         return Dataset(self.bucket_name, self.prefix, dataset_name)
