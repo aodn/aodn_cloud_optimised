@@ -368,7 +368,11 @@ class Dataset:
         self.dataset_name = dataset_name
 
         # creating path with PureS3Path to handle windows, and handle empty self.prefix
-        self.dname = PureS3Path.from_uri(f"s3://anonymous@{self.bucket_name}/{self.prefix}/").joinpath(f"{self.dataset_name}.parquet/").as_uri()
+        self.dname = (
+            PureS3Path.from_uri(f"s3://anonymous@{self.bucket_name}/{self.prefix}/")
+            .joinpath(f"{self.dataset_name}.parquet/")
+            .as_uri()
+        )
         self.dname = self.dname.replace("s3://anonymous%40", "")
 
         self.parquet_ds = self._create_parquet_dataset()
@@ -490,8 +494,11 @@ class Metadata:
         catalog = {}
 
         for dataset in folders_with_parquet:
-            dname = PureS3Path.from_uri(f"s3://anonymous@{self.bucket_name}/{self.prefix}/").joinpath(
-                f"{dataset}").as_uri()
+            dname = (
+                PureS3Path.from_uri(f"s3://anonymous@{self.bucket_name}/{self.prefix}/")
+                .joinpath(f"{dataset}")
+                .as_uri()
+            )
             dname = dname.replace("s3://anonymous%40", "")
 
             try:
@@ -511,7 +518,6 @@ class Metadata:
     @lru_cache(maxsize=None)
     def metadata_catalog(self):
 
-
         # print('Running metadata_catalog...')  # Debug output
         if "catalog" in self.__dict__:
             return self.catalog
@@ -522,7 +528,7 @@ class Metadata:
         s3 = boto3.client("s3", config=Config(signature_version=UNSIGNED))
         prefix = self.prefix
 
-        #if (prefix is not None) and (not prefix.endswith("/")):
+        # if (prefix is not None) and (not prefix.endswith("/")):
         #    prefix += "/"
 
         response = s3.list_objects_v2(
