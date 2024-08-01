@@ -365,7 +365,7 @@
     "License": "http://creativecommons.org/licenses/by/4.0/",
     "Resources": {
       "Description": "Cloud Optimised AODN dataset of IMOS - SOOP Expendable Bathythermographs (XBT) Research Group - XBT delayed mode data",
-      "ARN": "arn:aws:s3:::imos-data-lab-optimised/cloud_optimised/cluster_testing/vessel_xbt_delayed_qc.parquet",
+      "ARN": "arn:aws:s3:::aodn-cloud-optimised/vessel_xbt_delayed_qc.parquet",
       "Region": "ap-southeast-2",
       "Type": "S3 Bucket"
     },

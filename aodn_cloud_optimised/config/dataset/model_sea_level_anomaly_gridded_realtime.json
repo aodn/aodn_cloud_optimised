@@ -138,7 +138,7 @@
     "License": "http://creativecommons.org/licenses/by/4.0/",
     "Resources": {
       "Description": "Cloud Optimised AODN dataset of IMOS - OceanCurrent - Gridded sea level anomaly - Near real time",
-      "ARN": "arn:aws:s3:::imos-data-lab-optimised/cloud_optimised/cluster_testing/model_sea_level_anomaly_gridded_realtime.zarr",
+      "ARN": "arn:aws:s3:::aodn-cloud-optimised/model_sea_level_anomaly_gridded_realtime.zarr",
       "Region": "ap-southeast-2",
       "Type": "S3 Bucket"
     },
