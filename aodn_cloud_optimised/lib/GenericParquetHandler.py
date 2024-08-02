@@ -1046,7 +1046,7 @@ class GenericHandler(CommonHandler):
                 )
 
         self.s3_file_uri_list = s3_file_uri_list
-        client, cluster = self.create_cluster()
+        client, self.cluster = self.create_cluster()
 
         batch_size = self.get_batch_size(client=client)
 
@@ -1082,5 +1082,5 @@ class GenericHandler(CommonHandler):
 
             client.run_on_scheduler(gc.collect)  # GC!
 
-        self.close_cluster(client, cluster)
+        self.close_cluster(client, self.cluster)
         self.logger.handlers.clear()
