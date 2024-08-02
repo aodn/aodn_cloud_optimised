@@ -529,7 +529,7 @@ def cloud_optimised_creation(
     s3_file_uri_list: List[str],
     dataset_config: dict,
     **kwargs,
-) -> None:
+) -> str:
     """
     Iterate through a list of s3 file paths and create Cloud Optimised files for each file.
 
