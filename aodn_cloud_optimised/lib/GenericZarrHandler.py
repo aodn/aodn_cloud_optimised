@@ -300,22 +300,114 @@ class GenericHandler(CommonHandler):
                     #       local ram is being used! and not the cluster one! even if the function only does return ds
                     #       solution, open at the end with ds = preprocess(ds) afterwards
                     #
-                    ds = xr.open_mfdataset(
-                        batch_files,
-                        engine="h5netcdf",
-                        parallel=True,
-                        # preprocess=partial_preprocess, # this sometimes hangs the process
-                        concat_characters=True,
-                        mask_and_scale=True,
-                        decode_cf=True,
-                        decode_times=True,
-                        use_cftime=True,
-                        decode_coords=True,
-                        compat="override",
-                        coords="minimal",
-                        data_vars="minimal",
-                        drop_variables=drop_vars_list,
-                    )
+                    try:
+                        ds = xr.open_mfdataset(
+                            batch_files,
+                            engine="h5netcdf",
+                            parallel=True,
+                            # preprocess=partial_preprocess, # this sometimes hangs the process
+                            concat_characters=True,
+                            mask_and_scale=True,
+                            decode_cf=True,
+                            decode_times=True,
+                            use_cftime=True,
+                            decode_coords=True,
+                            compat="override",
+                            coords="minimal",
+                            data_vars="minimal",
+                            drop_variables=drop_vars_list,
+                        )
+                    except:
+                        self.logger.warning(
+                            f'{self.uuid_log}: The default engine "h5netcdf" could not be used. Falling back '
+                            f'to using "scipy" engine. This is an issue with old NetCDF files'
+                        )
+                        try:
+                            ds = xr.open_mfdataset(
+                                batch_files,
+                                engine="scipy",
+                                parallel=True,
+                                # preprocess=partial_preprocess, # this sometimes hangs the process
+                                concat_characters=True,
+                                mask_and_scale=True,
+                                decode_cf=True,
+                                decode_times=True,
+                                use_cftime=True,
+                                decode_coords=True,
+                                compat="override",
+                                coords="minimal",
+                                data_vars="minimal",
+                                drop_variables=drop_vars_list,
+                            )
+
+                        except:
+                            self.logger.warning(
+                                f'{self.uuid_log}: The engine "scipy" could not be used to concatenate the dataset together. '
+                                f"likely because the files to concatenate are NetCDF3 and NetCDF4 and should use different engines. Falling back "
+                                f"to opening the files individually with different engines"
+                            )
+
+                        # TODO: once xarray issue is fixed https://github.com/pydata/xarray/issues/8909,
+                        #  the follwing code could probably be removed. Only scipy and h5netcdf can be used for remote access
+                        # Open each file individually
+                        datasets = []
+                        for file in batch_files:
+                            try:
+                                # fs = fsspec.filesystem('s3')
+                                with self.s3_fs.open(
+                                    file, "rb"
+                                ) as f:  # Open the file-like object
+                                    ds = xr.open_dataset(
+                                        f,
+                                        engine="scipy",
+                                        mask_and_scale=True,
+                                        decode_cf=True,
+                                        decode_times=True,
+                                        use_cftime=True,
+                                        decode_coords=True,
+                                        drop_variables=drop_vars_list,
+                                    )
+
+                                self.logger.info(
+                                    f"{self.uuid_log}: Success opening {file} with scipy engine."
+                                )
+                            except Exception as e:
+                                self.logger.error(
+                                    f"{self.uuid_log}: Error opening {file}: {e} with scipy engine. Defaulting to h5netcdf"
+                                )
+                                ds = xr.open_dataset(
+                                    file,
+                                    engine="h5netcdf",
+                                    mask_and_scale=True,
+                                    decode_cf=True,
+                                    decode_times=True,
+                                    use_cftime=True,
+                                    decode_coords=True,
+                                    drop_variables=drop_vars_list,
+                                )
+                                self.logger.info(
+                                    f"{self.uuid_log}: Success opening {file} with h5netcdf engine."
+                                )
+
+                                # Apply preprocessing if needed
+                                # ds = partial_preprocess(ds)
+
+                            datasets.append(ds)
+
+                        # Concatenate the datasets
+                        self.logger.info(
+                            f"{self.uuid_log}: Successfully read all files with different engines. Concatenating them together"
+                        )
+                        ds = xr.concat(
+                            datasets,
+                            compat="override",
+                            coords="minimal",
+                            data_vars="minimal",
+                            dim=self.dimensions["time"]["name"],
+                        )
+                        self.logger.info(
+                            f"{self.uuid_log}: Successfully Concatenating files together"
+                        )
 
                     # TODO: create a simple jupyter notebook 2 show 2 different problems:
                     #       1) serialization issue if preprocess is within a class

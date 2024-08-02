@@ -27,7 +27,7 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = ">=3.10.14, <4.0"
-netCDF4 = "==1.6.5"  # hardpinned because of bug https://github.com/Unidata/netcdf4-python/issues/1342
+netCDF4 = ">=1.7.1"  # hardpinned because of bug https://github.com/Unidata/netcdf4-python/issues/1342
 numpy = "<2.0.0"
 pandas = ">=2.2.2"
 python-dateutil = ">=2.9.0"

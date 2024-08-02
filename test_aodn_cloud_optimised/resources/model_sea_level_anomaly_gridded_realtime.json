@@ -1,0 +1,167 @@
+{
+  "dataset_name": "model_sea_level_anomaly_gridded_realtime",
+  "logger_name": "model_sea_level_anomaly_gridded_realtime",
+  "cloud_optimised_format": "zarr",
+  "cluster_options": {
+    "n_workers": [
+      1,
+      30
+    ],
+    "scheduler_vm_types": "t3.medium",
+    "worker_vm_types": "t3.large",
+    "allow_ingress_from": "me",
+    "compute_purchase_option": "spot_with_fallback",
+    "worker_options": {
+      "nthreads": 8,
+      "memory_limit": "32GB"
+    }
+  },
+  "batch_size": 100,
+  "metadata_uuid": "0c9eb39c-9cbe-4c6a-8a10-5867087e703a",
+  "dimensions": {
+    "time": {
+      "name": "TIME",
+      "chunk": 5,
+      "rechunk": true
+    },
+    "latitude": {
+      "name": "LATITUDE",
+      "chunk": 351
+    },
+    "longitude": {
+      "name": "LONGITUDE",
+      "chunk": 641
+    }
+  },
+  "var_template_shape": "UCUR",
+  "vars_to_drop_no_common_dimension": [
+    "LATITUDE",
+    "LONGITUDE"
+  ],
+  "schema": {
+    "TIME": {
+      "type": "datetime64[ns]",
+      "axis": "T",
+      "long_name": "analysis time",
+      "standard_name": "time",
+      "coordinate_type": "TIME"
+    },
+    "LONGITUDE": {
+      "type": "double",
+      "axis": "X",
+      "long_name": "longitude",
+      "modulo": 360.0,
+      "projection": "geographic",
+      "reference_datum": "geographical coordinates, WGS84 projection",
+      "standard_name": "longitude",
+      "units": "degrees_east",
+      "valid_max": 360.0,
+      "valid_min": 0.0,
+      "coordinate_type": "X"
+    },
+    "LATITUDE": {
+      "type": "double",
+      "axis": "Y",
+      "long_name": "latitude",
+      "projection": "geographic",
+      "reference_datum": "geographical coordinates, WGS84 projection",
+      "standard_name": "latitude",
+      "units": "degrees_north",
+      "valid_max": 60.0,
+      "valid_min": -60.0,
+      "coordinate_type": "Y"
+    },
+    "start_time": {
+      "type": "datetime64[ns]",
+      "long_name": "start time of data window",
+      "coordinate_type": "TIME"
+    },
+    "end_time": {
+      "type": "timestamp[ns]",
+      "long_name": "end time of data window",
+      "coordinate_type": "TIME"
+    },
+    "GSLA": {
+      "type": "float",
+      "description": "Altimeter and tidegauge estimates of adjusted sea level anomaly mapped onto a grid using optimal interpolation (OI). For details of  the temporal and spatial covariance functions of the OI see the Reference. The anomaly field is mapped because the geoid is not known to sufficient precision, obliging us to remove the time-mean from all sea level observations. Sea level minus the tides and inverse barometer (IB) response, rather than total sea level, is mapped because it is the quantity from which geostrophic velocities can be estimated, and because total sea level has too much high-frequency energy to be mapped from altimeter data anyway.  To de-alias the altimeter data, we have subtracted the estimates provided by the space agencies of the various high frequency signals, evaluated at the sub-satellite point, as well as applying all the recommended corrections. The altimeters are individually edited for outliers, filtered along-track (see Reference for details) and de-biased by ensuring that the mean over the last month in the Australasian region closely tracks the reference (Jason-class) mission. Sub-tidal, IB-corrected estimates of coastal sea level are included in the OI by mapping the adjusted, de-tided tidegauge data onto a line of points along  the coast. The de-tiding uses a running-mean average. The IB adjustment is based on the Bureau of Meteorology atmospheric pressure analysis.",
+      "long_name": "gridded (adjusted) sea level anomaly",
+      "standard_name": "sea_surface_height_above_mean_sea_level",
+      "units": "m"
+    },
+    "GSL": {
+      "type": "float",
+      "description": "GSLA + OFAM3 mean dynamic height",
+      "long_name": "gridded (adjusted) sea level",
+      "standard_name": "sea_surface_height_above_geoid",
+      "units": "m"
+    },
+    "UCUR": {
+      "type": "float",
+      "description": "eastward geostrophic velocity derived from GSLA + UCUR_MEAN",
+      "long_name": "total eastward geostrophic velocity",
+      "standard_name": "surface_geostrophic_eastward_sea_water_velocity",
+      "units": "m/s"
+    },
+    "VCUR": {
+      "type": "float",
+      "description": "northward geostrophic velocity derived from GSLA + VCUR_MEAN",
+      "long_name": "total northward geostrophic velocity",
+      "standard_name": "surface_geostrophic_northward_sea_water_velocity",
+      "units": "m/s"
+    },
+    "UCUR_MEAN": {
+      "type": "float",
+      "description": "Mean velocity obtained from the 18year average of surface velocities from the OFAM3 spinup run, a non-data-assimilating version of the 0.1 degree Bluelink Model with atmospheric forcing from ERA Interim",
+      "long_name": "OFAM3 mean eastward geostrophic velocity",
+      "standard_name": "surface_geostrophic_eastward_sea_water_velocity",
+      "units": "m/s"
+    },
+    "VCUR_MEAN": {
+      "type": "float",
+      "description": "Mean velocity obtained from the 18year average of surface velocities from the OFAM3 spinup run, a non-data-assimilating version of the 0.1 degree Bluelink Model with atmospheric forcing from ERA Interim",
+      "long_name": "OFAM3 mean northward geostrophic velocity",
+      "standard_name": "surface_geostrophic_northward_sea_water_velocity",
+      "units": "m/s"
+    }
+  },
+  "dataset_gattrs": {
+    "title": "Ocean Current"
+  },
+  "aws_opendata_registry": {
+    "Name": "IMOS - OceanCurrent - Gridded sea level anomaly - Near real time",
+    "Description": "Gridded (adjusted) sea level anomaly (GSLA), gridded sea level (GSL) and surface geostrophic velocity (UCUR,VCUR) for the Australasian region. GSLA is mapped using optimal interpolation of detided, de-meaned, inverse-barometer-adjusted altimeter and tidegauge estimates of sea level. GSL is GSLA plus an estimate of the departure of mean sea level from the geoid \u2013 mean sea level (over 18 years of model time) of Ocean Forecasting Australia Model version 3 (OFAM3). The geostrophic velocities are derived from GSLA and the mean surface velocity from OFAM3. \n\n\nThe altimeter data window for input to the Delayed Mode (DM) maps is symmetrical about the map date. The width of the window is dependent on the number of altimeters flying at the time and ranges from 30 days to 14 days. The altimeter data window for Near Real Time (NRT) maps is asymmetrical about the analysis date (-21 to 4 days). For both NRT and DM, altimeter data is weighted by the difference between the analysis date of the map and the time of each altimeter observation.\n\nReferences: http://imos.aodn.org.au/oceancurrent",
+    "Documentation": "https://catalogue.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/0c9eb39c-9cbe-4c6a-8a10-5867087e703a",
+    "Contact": "info@aodn.org.au",
+    "ManagedBy": "AODN",
+    "UpdateFrequency": "As Needed",
+    "Tags": [],
+    "License": "http://creativecommons.org/licenses/by/4.0/",
+    "Resources": {
+      "Description": "Cloud Optimised AODN dataset of IMOS - OceanCurrent - Gridded sea level anomaly - Near real time",
+      "ARN": "arn:aws:s3:::aodn-cloud-optimised/model_sea_level_anomaly_gridded_realtime.zarr",
+      "Region": "ap-southeast-2",
+      "Type": "S3 Bucket"
+    },
+    "DataAtWork": {
+      "Tutorials": [
+        {
+          "Title": "Accessing IMOS - OceanCurrent - Gridded sea level anomaly - Near real time",
+          "URL": "https://nbviewer.org/github/aodn/aodn_cloud_optimised/blob/main/notebooks/model_sea_level_anomaly_gridded_realtime.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/model_sea_level_anomaly_gridded_realtime.ipynb",
+          "Services": "",
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
+        },
+        {
+          "Title": "Accessing and search for any AODN dataset",
+          "URL": "https://nbviewer.org/github/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "Services": "",
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
+        }
+      ]
+    },
+    "Citation": "IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access]"
+  }
+}
