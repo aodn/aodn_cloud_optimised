@@ -1047,6 +1047,10 @@ class GenericHandler(CommonHandler):
 
         self.s3_file_uri_list = s3_file_uri_list
         client, cluster = self.create_cluster()
+        if self.cluster_mode == "remote":
+            self.cluster_id = cluster.cluster_id
+        else:
+            self.cluster_id = cluster.name
 
         batch_size = self.get_batch_size(client=client)
 

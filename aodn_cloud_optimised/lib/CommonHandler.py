@@ -529,7 +529,7 @@ def cloud_optimised_creation(
     s3_file_uri_list: List[str],
     dataset_config: dict,
     **kwargs,
-) -> None:
+) -> str:
     """
     Iterate through a list of s3 file paths and create Cloud Optimised files for each file.
 
@@ -542,7 +542,7 @@ def cloud_optimised_creation(
             s3fs_session: An aiobotocore authenticated session
 
     Returns:
-        None
+        str: cluster_id for the cluster used. This will be a cluster name for local clusters and an id for Coiled clusters.
     """
 
     # this is optional! Default will use generic handler
@@ -587,9 +587,12 @@ def cloud_optimised_creation(
     start_whole_processing = timeit.default_timer()
     with handler_class(**kwargs_handler_class) as handler_instance:
         handler_instance.to_cloud_optimised(s3_file_uri_list)
+        cluster_id = handler_instance.cluster_id
 
     time_spent_processing = timeit.default_timer() - start_whole_processing
     logger.info(f"Processed entire dataset in {time_spent_processing}s")
+
+    return cluster_id
 
     # TODO: everything seems very slow using to_cloud_optimised. Maybe let's try to use to_cloud_optimised_single below?
     #       and comment above or do something. Will comment for now
