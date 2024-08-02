@@ -5,7 +5,7 @@ Notebooks
 import json
 import os
 import re
-from datetime import datetime
+from datetime import datetime, UTC
 from functools import lru_cache
 from typing import Final
 
@@ -68,8 +68,9 @@ def get_temporal_extent(parquet_ds):
     unique_timestamps = np.array([np.int64(string) for string in unique_timestamps])
     unique_timestamps = np.sort(unique_timestamps)
 
-    return datetime.fromtimestamp(unique_timestamps.min()), datetime.fromtimestamp(
-        unique_timestamps.max()
+    return (
+        datetime.fromtimestamp(unique_timestamps.min(), tz=UTC),
+        datetime.fromtimestamp(unique_timestamps.max(), tz=UTC),
     )
 
 

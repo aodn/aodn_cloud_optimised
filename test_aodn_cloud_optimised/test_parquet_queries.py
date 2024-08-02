@@ -1,7 +1,7 @@
 import json
 import os
 import unittest
-from datetime import datetime
+from datetime import datetime, timezone
 from unittest.mock import patch
 
 import boto3
@@ -183,7 +183,11 @@ class TestGenericHandler(unittest.TestCase):
         # test temporal extents
         res = aodn_instance.get_dataset("vessel_sst_delayed_qc").get_temporal_extent()
         self.assertEqual(
-            (datetime(2011, 1, 1, 11, 0), datetime(2011, 1, 1, 11, 0)), res
+            (
+                datetime(2011, 1, 1, 0, 0, tzinfo=timezone.utc),
+                datetime(2011, 1, 1, 0, 0, tzinfo=timezone.utc),
+            ),
+            res,
         )
 
         # test spatial extent
