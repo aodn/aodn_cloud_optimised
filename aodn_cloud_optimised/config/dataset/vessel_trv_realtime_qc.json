@@ -272,7 +272,7 @@
     "License": "FILL UP MANUALLY - CHECK DOCUMENTATION",
     "Resources": {
       "Description": "Cloud Optimised AODN dataset of Sensors on Tropical Research Vessels: Enhanced Measurements from Ships of Opportunity (SOOP)",
-      "ARN": "arn:aws:s3:::imos-data-lab-optimised/cloud_optimised/cluster_testing/vessel_trv_realtime_qc.parquet",
+      "ARN": "arn:aws:s3:::aodn-cloud-optimised/vessel_trv_realtime_qc.parquet",
       "Region": "ap-southeast-2",
       "Type": "S3 Bucket"
     },

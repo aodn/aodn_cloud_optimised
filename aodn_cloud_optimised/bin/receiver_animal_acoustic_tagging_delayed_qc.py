@@ -7,6 +7,8 @@ def main():
         "generic_cloud_optimised_creation",
         "--paths",
         "IMOS/AATAMS/acoustic_tagging/",
+        "--suffix",
+        ".csv",
         "--dataset-config",
         "receiver_animal_acoustic_tagging_delayed_qc.json",
         "--clear-existing-data",

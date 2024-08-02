@@ -843,6 +843,17 @@
       "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
       "quality_control_conventions": "IMOS standard set using the IODE flags"
     },
+    "IRRAD456": {
+      "type": "float",
+      "long_name": "downwelling_spectral_irradiance_in_sea_water_beam1",
+      "units": "uW cm-2 nm-1",
+      "valid_min": 0.0,
+      "valid_max": 1000.0,
+      "ancillary_variables": "IRRAD456_quality_control",
+      "observation_type": "computed",
+      "quality_control_set": 1,
+      "comment": "The real wavelength for this beam is 456.6 nm. Irradiance data have been corrected to account for suspected shift in Dark Count values since the calibration, that lead to many negative values. Uncorrected data are available in the FV00 file associated with this mission. "
+    },
     "IRRAD490": {
       "type": "double",
       "long_name": "downwelling_spectral_irradiance_in_sea_water_beam2",
@@ -1005,7 +1016,7 @@
     "Citation": "IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access]. If using data from gliders deployed from Onslow, Western Australia, please add to the citation - \"Department of Jobs, Tourism, Science and Innovation (DJTSI), Western Australian Government\"",
     "Resources": {
       "Description": "Cloud Optimised AODN dataset of Ocean Gliders - delayed mode glider deployments",
-      "ARN": "arn:aws:s3:::imos-data-lab-optimised/cloud_optimised/cluster_testing/slocum_glider_delayed_qc.parquet",
+      "ARN": "arn:aws:s3:::aodn-cloud-optimised/slocum_glider_delayed_qc.parquet",
       "Region": "ap-southeast-2",
       "Type": "S3 Bucket"
     },

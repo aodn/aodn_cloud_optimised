@@ -428,7 +428,7 @@
     "License": "http://creativecommons.org/licenses/by/4.0/",
     "Resources": {
       "Description": "Cloud Optimised AODN dataset of Argo Core",
-      "ARN": "arn:aws:s3:::imos-data-lab-optimised/cloud_optimised/cluster_testing/argo.parquet",
+      "ARN": "arn:aws:s3:::aodn-cloud-optimised/argo.parquet",
       "Region": "ap-southeast-2",
       "Type": "S3 Bucket"
     },

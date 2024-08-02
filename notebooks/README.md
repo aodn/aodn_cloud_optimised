@@ -8,6 +8,7 @@ A curated list of Jupyter notebooks ready to be loaded in Google Colab
 - [argo.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/argo.ipynb)
 - [model_sea_level_anomaly_gridded_realtime.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/model_sea_level_anomaly_gridded_realtime.ipynb)
 - [mooring_ctd_delayed_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/mooring_ctd_delayed_qc.ipynb)
+- [mooring_hourly_timeseries_delayed_qc](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/mooring_hourly_timeseries_delayed_qc.ipynb)
 - [mooring_temperature_logger_delayed_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/mooring_temperature_logger_delayed_qc.ipynb)
 - [radar_TurquoiseCoast_velocity_hourly_average_delayed_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/radar_TurquoiseCoast_velocity_hourly_average_delayed_qc.ipynb)
 - [receiver_animal_acoustic_tagging_delayed_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/receiver_animal_acoustic_tagging_delayed_qc.ipynb)
