@@ -27,6 +27,7 @@ from shapely import wkb
 from shapely.geometry import Polygon, MultiPolygon
 
 REGION: Final[str] = "ap-southeast-2"
+ENDPOINT_URL = f"https://s3.ap-southeast-2.amazonaws.com"
 BUCKET_OPTIMISED_DEFAULT = "aodn-cloud-optimised"
 ROOT_PREFIX_CLOUD_OPTIMISED_PATH = ""
 
@@ -313,8 +314,11 @@ def get_schema_metadata(dname):
         # Pyarrow can infer file system from path prefix with s3 but it will try
         # to scan local file system before infer and get a pyarrow s3 file system
         # which is very slow to start, read_schema no s3 prefix needed
-        filesystem=fs.S3FileSystem(region=REGION, anonymous=True),
+        filesystem=fs.S3FileSystem(
+            region=REGION, endpoint_override=ENDPOINT_URL, anonymous=True
+        ),
     )
+
     # horrible ... but got to be done. The dictionary of metadata has to be a dictionnary with byte keys and byte values.
     # meaning that we can't have nested dictionaries ...
 
@@ -380,6 +384,7 @@ class Dataset:
         self.parquet_ds = self._create_parquet_dataset()
 
     def _create_parquet_dataset(self, filters=None):
+
         return pq.ParquetDataset(
             self.dname,
             partitioning="hive",
@@ -387,7 +392,9 @@ class Dataset:
             # Pyarrow can infer file system from path prefix with s3 but it will try
             # to scan local file system before infer and get a pyarrow s3 file system
             # which is very slow to start, ParquetDataset no s3 prefix needed
-            filesystem=fs.S3FileSystem(region=REGION, anonymous=True),
+            filesystem=fs.S3FileSystem(
+                region=REGION, endpoint_override=ENDPOINT_URL, anonymous=True
+            ),
         )
 
     def partition_keys_list(self):
@@ -472,7 +479,9 @@ class Dataset:
             self.dname,
             engine="pyarrow",
             filters=data_filter,
-            filesystem=fs.S3FileSystem(region=REGION, anonymous=True),
+            filesystem=fs.S3FileSystem(
+                region=REGION, endpoint_override=ENDPOINT_URL, anonymous=True
+            ),
         )
 
         return df

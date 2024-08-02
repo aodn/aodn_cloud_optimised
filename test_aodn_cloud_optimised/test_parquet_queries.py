@@ -75,13 +75,14 @@ class TestGenericHandler(unittest.TestCase):
             ],
         }
 
+        # give all permissions to read on Action. Very important
         public_policy_cloud_optimised_data = {
             "Version": "2012-10-17",
             "Statement": [
                 {
                     "Effect": "Allow",
                     "Principal": "*",
-                    "Action": "s3:GetObject",
+                    "Action": "s3:*",
                     "Resource": f"arn:aws:s3:::{self.BUCKET_OPTIMISED_NAME}/*",
                 }
             ],
@@ -148,8 +149,13 @@ class TestGenericHandler(unittest.TestCase):
 
         self.server.stop()
 
+    @patch("aodn_cloud_optimised.lib.ParquetDataQuery.REGION", "us-east-1")
+    @patch(
+        "aodn_cloud_optimised.lib.ParquetDataQuery.ENDPOINT_URL",
+        "http://127.0.0.1:5555",
+    )
     def test_parquet_queries(self):
-        """Creating 2 Parquet dataset to then use the GetAodn Class to query data"""
+        """Creating 2 Parquet dataset and then use the GetAodn Class to query data"""
 
         # dataset 1
         nc_obj_ls = s3_ls("imos-data", "good_nc_ardc")
@@ -177,22 +183,17 @@ class TestGenericHandler(unittest.TestCase):
         # test temporal extents
         res = aodn_instance.get_dataset("vessel_sst_delayed_qc").get_temporal_extent()
         self.assertEqual(
-            (datetime(2008, 1, 1, 11, 0), datetime(2024, 7, 1, 10, 0)), res
+            (datetime(2011, 1, 1, 11, 0), datetime(2011, 1, 1, 11, 0)), res
         )
 
         # test spatial extent
-        # Define one of the expected polygon. It seems that the get_spatial_extent() never returns a list of polygons in the same order
-        expected_polygon = Polygon(
-            [(95, -50), (105, -50), (105, -40), (95, -40), (95, -50)]
+        expected_polygon_0 = Polygon(
+            [(160, -25), (170, -25), (170, -15), (160, -15), (160, -25)]
         )
 
         res = aodn_instance.get_dataset("vessel_sst_delayed_qc").get_spatial_extent()
 
-        # Check if the expected polygon is within the MultiPolygon
-        polygon_found = any(expected_polygon.equals(polygon) for polygon in res.geoms)
-
-        # Assert that the expected polygon is found in the MultiPolygon
-        self.assertTrue(polygon_found)
+        self.assertEqual(expected_polygon_0, res.geoms[0])
 
 
 if __name__ == "__main__":
