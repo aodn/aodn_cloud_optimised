@@ -141,6 +141,37 @@
       "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
       "quality_control_global": "A"
     },
+    "PRES_REL": {
+      "type": "float",
+      "ancillary_variables": "PRES_REL_quality_control",
+      "applied_offset": -10.135296821594238,
+      "long_name": "sea_water_pressure_due_to_sea_water",
+      "standard_name": "sea_water_pressure_due_to_sea_water",
+      "units": "dbar",
+      "valid_max": 12000.0,
+      "valid_min": -15.0
+    },
+    "PRES_REL_quality_control": {
+      "type": "float",
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "long_name": "quality flag for sea_water_pressure_due_to_sea_water",
+      "quality_control_conventions": "IMOS standard flags",
+      "quality_control_global": "A",
+      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
+      "standard_name": "sea_water_pressure_due_to_sea_water status_flag"
+    },
     "DEPTH": {
       "type": "float",
       "standard_name": "depth",
