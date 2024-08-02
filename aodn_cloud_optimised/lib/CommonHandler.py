@@ -587,10 +587,7 @@ def cloud_optimised_creation(
     start_whole_processing = timeit.default_timer()
     with handler_class(**kwargs_handler_class) as handler_instance:
         handler_instance.to_cloud_optimised(s3_file_uri_list)
-        if handler_instance.cluster_mode == "local":
-            cluster_id = handler_instance.cluster.name
-        else:
-            cluster_id = handler_instance.cluster.cluster_id
+        cluster_id = handler_instance.cluster_id
 
     time_spent_processing = timeit.default_timer() - start_whole_processing
     logger.info(f"Processed entire dataset in {time_spent_processing}s")
