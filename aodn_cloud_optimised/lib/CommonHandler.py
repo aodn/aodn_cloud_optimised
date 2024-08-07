@@ -469,10 +469,10 @@ class CommonHandler:
         yaml_data = yaml.dump(aws_registry_config)
 
         if target_directory:
-            file_path = os.path.join(target_directory, f"{self.dataset_name}.yaml")
+            file_path = os.path.join(target_directory, f"aodn_{self.dataset_name}.yaml")
         else:
             target_directory = tempfile.gettempdir()
-            file_path = os.path.join(target_directory, f"{self.dataset_name}.yaml")
+            file_path = os.path.join(target_directory, f"aodn_{self.dataset_name}.yaml")
 
         # Write the YAML data to the file
         with open(file_path, "w") as file:
