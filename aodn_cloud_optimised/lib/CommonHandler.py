@@ -476,7 +476,7 @@ class CommonHandler:
 
         # Write the YAML data to the file
         with open(file_path, "w") as file:
-            file.write(yaml_data)
+            file.write(yaml_data.lower())
 
         self.logger.info(f"Created AWS Registry file at: {file_path}")
 
