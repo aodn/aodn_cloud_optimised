@@ -103,6 +103,14 @@
     },
     "sst_standard_deviation": {
       "type": "float32"
+    },
+    "adi_dtime_from_sst": {
+      "type": "float32",
+      "drop_vars": true
+    },
+    "aerosol_dynamic_indicator": {
+      "type": "float32",
+      "drop_vars": true
     }
   },
   "dataset_gattrs": {

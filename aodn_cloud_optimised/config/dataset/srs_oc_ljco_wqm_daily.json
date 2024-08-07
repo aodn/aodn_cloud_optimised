@@ -634,13 +634,17 @@
   },
   "force_old_pq_del": true,
   "aws_opendata_registry": {
-    "Name": "IMOS - SRS Satellite Ocean Colour Sub-Facility - Lucinda Jetty Coastal Observatory (LJCO)",
+    "Name": "Satellite - Ocean Colour - Lucinda Jetty Coastal Observatory",
     "Description": "The Lucinda Jetty Coastal Observatory (LJCO) is located on the end of the 5.8 km long Lucinda Jetty (18.52 S, 146.39 E) in the coastal waters of the Great Barrier Reef World Heritage Area close to the Herbert River Estuary and the Hinchinbrook Channel in Queensland.\n\nThe observatory acquires continuous above and in-water optical measurements with the objective to support satellite ocean colour validation and algorithm development. Data collection and delivery was interrupted in 2011 with tropical cyclone Yasi.  Currently, LJCO is the only southern-hemisphere ocean colour validation site integrated into NASA\u2019s AERONET-OC global network of ground-based radiometers and one of a few sites globally that combines the acquisition of both atmospheric and in-water optical measurements. \n\nMounted instruments on the LJCO included:\n- Met Station (Vaisala WXT520)\n- Above-water radiometry\n--- CIMEL SeaPRISM\n--- Satlantic HyperOCR\n--- DALEC instrument (added in mid-2016 for continuous hyper-spectral radiometric measurements)\n-Instrument telemetry\n--- Power supply\n--- UPS\n--- NextG Router\n--- WETLabs DAPCS\n--- PC controller\n--- Automated winch\n- Underwater optics\n--- WETLabs WQM\n--- WETLabs Eco Triplet\n--- WETLabs ac-s\n--- WETLabs BB9\n- Campbell Scientific submersible pressure transducer\n\nThe above-water measurements collected at LJCO compromise of multi-spectral water-leaving radiance and atmospheric observations for retrieving aerosol optical properties using an autonomous CIMEL SeaPRISM radiometer, in addition to hyper-spectral down-welling radiance\nmeasurements using the a Satlantic Hyper-OCR. In mid 2016 continuous hyper-spectral radiometric measurements were added using the DALEC instrument.\n\nThe in-water optical measurements consist of conductivity, temperature, pressure, dissolved oxygen, chlorophyll fluorescence and turbidity using a WETLabs WQM, coloured dissolved organic matter (CDOM) fluorescence using a WETLabs EcoTriplet, as well as particulate and dissolved spectral absorption and attenuation coefficients using a WETLabs AC-S. Further, total backscattering coefficients are measured using a WETLabs BB9 radiometer. \n\nAdditional meteorological and sea state measurements are continuously recorded such as barometric pressure, relative humidity, air  emperature, wind speed and direction using a Vaisala WXT520 weather transmitter. Wave height and water temperature are measured with a Campbell Scientific submersible pressure transducer that is used to keep the caged in-water optical instruments at a constant depth.\n\nAll data streams are processed in delayed-mode with automatic quality control applied and made publicly available through the AODN portal; and the data presented here is the daily in-water generated products.",
-    "Documentation": "https://catalogue.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/4ac6bf81-cd37-4611-8da8-4d5ae5e2bda3",
+    "Documentation": "https://catalogue-imos.org.au/geonetwork/srv/eng/catalog.search#/metadata/4ac6bf81-cd37-4611-8da8-4d5ae5e2bda3",
     "Contact": "info@aodn.org.au",
     "ManagedBy": "AODN",
     "UpdateFrequency": "As Needed",
-    "Tags": [],
+    "Tags": [
+      "oceans",
+      "ocean currents",
+      "chemistry"
+    ],
     "License": "http://creativecommons.org/licenses/by/4.0/",
     "Resources": {
       "Description": "Cloud Optimised AODN dataset of IMOS - SRS Satellite Ocean Colour Sub-Facility - Lucinda Jetty Coastal Observatory (LJCO)",

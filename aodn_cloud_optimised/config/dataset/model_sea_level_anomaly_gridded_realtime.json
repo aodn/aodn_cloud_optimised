@@ -114,27 +114,33 @@
       "description": "Mean velocity obtained from the 18year average of surface velocities from the OFAM3 spinup run, a non-data-assimilating version of the 0.1 degree Bluelink Model with atmospheric forcing from ERA Interim",
       "long_name": "OFAM3 mean eastward geostrophic velocity",
       "standard_name": "surface_geostrophic_eastward_sea_water_velocity",
-      "units": "m/s"
+      "units": "m/s",
+      "drop_vars": true
     },
     "VCUR_MEAN": {
       "type": "float",
       "description": "Mean velocity obtained from the 18year average of surface velocities from the OFAM3 spinup run, a non-data-assimilating version of the 0.1 degree Bluelink Model with atmospheric forcing from ERA Interim",
       "long_name": "OFAM3 mean northward geostrophic velocity",
       "standard_name": "surface_geostrophic_northward_sea_water_velocity",
-      "units": "m/s"
+      "units": "m/s",
+      "drop_vars": true
     }
   },
   "dataset_gattrs": {
     "title": "Ocean Current"
   },
   "aws_opendata_registry": {
-    "Name": "IMOS - OceanCurrent - Gridded sea level anomaly - Near real time",
+    "Name": "OceanCurrent - Gridded sea level anomaly - Near real time",
     "Description": "Gridded (adjusted) sea level anomaly (GSLA), gridded sea level (GSL) and surface geostrophic velocity (UCUR,VCUR) for the Australasian region. GSLA is mapped using optimal interpolation of detided, de-meaned, inverse-barometer-adjusted altimeter and tidegauge estimates of sea level. GSL is GSLA plus an estimate of the departure of mean sea level from the geoid \u2013 mean sea level (over 18 years of model time) of Ocean Forecasting Australia Model version 3 (OFAM3). The geostrophic velocities are derived from GSLA and the mean surface velocity from OFAM3. \n\n\nThe altimeter data window for input to the Delayed Mode (DM) maps is symmetrical about the map date. The width of the window is dependent on the number of altimeters flying at the time and ranges from 30 days to 14 days. The altimeter data window for Near Real Time (NRT) maps is asymmetrical about the analysis date (-21 to 4 days). For both NRT and DM, altimeter data is weighted by the difference between the analysis date of the map and the time of each altimeter observation.\n\nReferences: http://imos.aodn.org.au/oceancurrent",
-    "Documentation": "https://catalogue.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/0c9eb39c-9cbe-4c6a-8a10-5867087e703a",
+    "Documentation": "https://catalogue-imos.org.au/geonetwork/srv/eng/catalog.search#/metadata/0c9eb39c-9cbe-4c6a-8a10-5867087e703a",
     "Contact": "info@aodn.org.au",
     "ManagedBy": "AODN",
     "UpdateFrequency": "As Needed",
-    "Tags": [],
+    "Tags": [
+      "oceans",
+      "ocean velocity",
+      "ocean sea surface height"
+    ],
     "License": "http://creativecommons.org/licenses/by/4.0/",
     "Resources": {
       "Description": "Cloud Optimised AODN dataset of IMOS - OceanCurrent - Gridded sea level anomaly - Near real time",
