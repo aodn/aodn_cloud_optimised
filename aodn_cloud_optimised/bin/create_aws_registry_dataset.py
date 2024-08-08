@@ -305,7 +305,6 @@ def populate_dataset_config_with_geonetwork_metadata(json_file):
         dataset_config, ["aws_opendata_registry", "Resources"], dataset_location
     )
 
-    breakpoint()
     # dataset confi coming from load_dataset_config is the result of parent and child configuration. When writing back
     # the configuration, we only want to write the child data back
     dataset_config_child = load_config(json_path)
