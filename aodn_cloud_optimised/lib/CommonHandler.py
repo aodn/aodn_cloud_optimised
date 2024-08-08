@@ -475,8 +475,8 @@ class CommonHandler:
             file_path = os.path.join(target_directory, f"aodn_{self.dataset_name}.yaml")
 
         # Write the YAML data to the file
-        with open(file_path, "w") as file:
-            file.write(yaml_data.lower())
+        with open(file_path.lower(), "w") as file:
+            file.write(yaml_data)
 
         self.logger.info(f"Created AWS Registry file at: {file_path}")
 

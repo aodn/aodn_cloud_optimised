@@ -447,19 +447,20 @@
       "atmosphere"
     ],
     "License": "http://creativecommons.org/licenses/by/4.0/",
-    "Resources": {
-      "Description": "Cloud Optimised AODN dataset of IMOS - SOOP Underway CO2 Measurements Research Group - delayed mode data",
-      "ARN": "arn:aws:s3:::aodn-cloud-optimised/vessel_sst_delayed_qc.parquet",
-      "Region": "ap-southeast-2",
-      "Type": "S3 Bucket"
-    },
+    "Resources": [
+      {
+        "Description": "Cloud Optimised AODN dataset of IMOS - SOOP Underway CO2 Measurements Research Group - delayed mode data",
+        "ARN": "arn:aws:s3:::aodn-cloud-optimised/vessel_sst_delayed_qc.parquet",
+        "Region": "ap-southeast-2",
+        "Type": "S3 Bucket"
+      }
+    ],
     "DataAtWork": {
       "Tutorials": [
         {
           "Title": "Accessing IMOS - SOOP Underway CO2 Measurements Research Group - delayed mode data",
           "URL": "https://nbviewer.org/github/aodn/aodn_cloud_optimised/blob/main/notebooks/vessel_sst_delayed_qc.ipynb",
           "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/vessel_sst_delayed_qc.ipynb",
-          "Services": "",
           "AuthorName": "Laurent Besnard",
           "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
         },
@@ -467,7 +468,6 @@
           "Title": "Accessing and search for any AODN dataset",
           "URL": "https://nbviewer.org/github/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
           "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
-          "Services": "",
           "AuthorName": "Laurent Besnard",
           "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
         }

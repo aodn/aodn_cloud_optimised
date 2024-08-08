@@ -7,7 +7,7 @@
       2,
       20
     ],
-    "scheduler_vm_types": "t3.small",
+    "scheduler_vm_types": "t3.large",
     "worker_vm_types": "t3.large",
     "allow_ingress_from": "me",
     "compute_purchase_option": "spot_with_fallback",
