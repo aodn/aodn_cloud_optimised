@@ -646,19 +646,20 @@
       "chemistry"
     ],
     "License": "http://creativecommons.org/licenses/by/4.0/",
-    "Resources": {
-      "Description": "Cloud Optimised AODN dataset of IMOS - SRS Satellite Ocean Colour Sub-Facility - Lucinda Jetty Coastal Observatory (LJCO)",
-      "ARN": "arn:aws:s3:::aodn-cloud-optimised/srs_oc_ljco_wqm_daily.parquet",
-      "Region": "ap-southeast-2",
-      "Type": "S3 Bucket"
-    },
+    "Resources": [
+      {
+        "Description": "Cloud Optimised AODN dataset of IMOS - SRS Satellite Ocean Colour Sub-Facility - Lucinda Jetty Coastal Observatory (LJCO)",
+        "ARN": "arn:aws:s3:::aodn-cloud-optimised/srs_oc_ljco_wqm_daily.parquet",
+        "Region": "ap-southeast-2",
+        "Type": "S3 Bucket"
+      }
+    ],
     "DataAtWork": {
       "Tutorials": [
         {
           "Title": "Accessing IMOS - SRS Satellite Ocean Colour Sub-Facility - Lucinda Jetty Coastal Observatory (LJCO)",
           "URL": "https://nbviewer.org/github/aodn/aodn_cloud_optimised/blob/main/notebooks/srs_oc_ljco_wqm_daily.ipynb",
           "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/srs_oc_ljco_wqm_daily.ipynb",
-          "Services": "",
           "AuthorName": "Laurent Besnard",
           "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
         },
@@ -666,7 +667,6 @@
           "Title": "Accessing and search for any AODN dataset",
           "URL": "https://nbviewer.org/github/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
           "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
-          "Services": "",
           "AuthorName": "Laurent Besnard",
           "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
         }

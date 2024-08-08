@@ -204,19 +204,20 @@
       "marine mammals"
     ],
     "License": "http://creativecommons.org/licenses/by/4.0/",
-    "Resources": {
-      "Description": "Cloud Optimised AODN dataset of IMOS - Animal Tracking Facility - Acoustic Tracking - Quality Controlled Detections (2007 - ongoing)",
-      "ARN": "arn:aws:s3:::aodn-cloud-optimised/receiver_animal_acoustic_tagging_delayed_qc.parquet",
-      "Region": "ap-southeast-2",
-      "Type": "S3 Bucket"
-    },
+    "Resources": [
+      {
+        "Description": "Cloud Optimised AODN dataset of IMOS - Animal Tracking Facility - Acoustic Tracking - Quality Controlled Detections (2007 - ongoing)",
+        "ARN": "arn:aws:s3:::aodn-cloud-optimised/receiver_animal_acoustic_tagging_delayed_qc.parquet",
+        "Region": "ap-southeast-2",
+        "Type": "S3 Bucket"
+      }
+    ],
     "DataAtWork": {
       "Tutorials": [
         {
           "Title": "Accessing IMOS - Animal Tracking Facility - Acoustic Tracking - Quality Controlled Detections (2007 - ongoing)",
           "URL": "https://nbviewer.org/github/aodn/aodn_cloud_optimised/blob/main/notebooks/receiver_animal_acoustic_tagging_delayed_qc.ipynb",
           "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/receiver_animal_acoustic_tagging_delayed_qc.ipynb",
-          "Services": "",
           "AuthorName": "Laurent Besnard",
           "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
         },
@@ -224,7 +225,6 @@
           "Title": "Accessing and search for any AODN dataset",
           "URL": "https://nbviewer.org/github/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
           "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
-          "Services": "",
           "AuthorName": "Laurent Besnard",
           "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
         }

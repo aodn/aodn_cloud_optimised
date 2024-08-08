@@ -269,7 +269,6 @@ def populate_dataset_config_with_geonetwork_metadata(json_file):
                 "Title": f"Accessing {dataset_config['aws_opendata_registry']['Name']}",
                 "URL": f"https://nbviewer.org/github/aodn/aodn_cloud_optimised/blob/main/notebooks/{dataset_config['dataset_name']}.ipynb",
                 "NotebookURL": f"https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/{dataset_config['dataset_name']}.ipynb",
-                "Services": "",
                 "AuthorName": "Laurent Besnard",
                 "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised",
             },
@@ -277,7 +276,6 @@ def populate_dataset_config_with_geonetwork_metadata(json_file):
                 "Title": f"Accessing and search for any AODN dataset",
                 "URL": f"https://nbviewer.org/github/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
                 "NotebookURL": f"https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
-                "Services": "",
                 "AuthorName": "Laurent Besnard",
                 "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised",
             },
@@ -290,12 +288,14 @@ def populate_dataset_config_with_geonetwork_metadata(json_file):
         dataset_config["dataset_name"] + "." + dataset_config["cloud_optimised_format"],
     )
 
-    dataset_location = {
-        "Description": f"Cloud Optimised AODN dataset of {dataset_config['aws_opendata_registry']['Name']}",
-        "ARN": f"arn:aws:s3:::{dataset_path_arn}",
-        "Region": "ap-southeast-2",
-        "Type": "S3 Bucket",
-    }
+    dataset_location = [
+        {
+            "Description": f"Cloud Optimised AODN dataset of {dataset_config['aws_opendata_registry']['Name']}",
+            "ARN": f"arn:aws:s3:::{dataset_path_arn}",
+            "Region": "ap-southeast-2",
+            "Type": "S3 Bucket",
+        },
+    ]
 
     dataset_config = update_nested_dict_key(
         dataset_config, ["aws_opendata_registry", "DataAtWork"], data_at_work
@@ -305,7 +305,8 @@ def populate_dataset_config_with_geonetwork_metadata(json_file):
         dataset_config, ["aws_opendata_registry", "Resources"], dataset_location
     )
 
-    # dataset confi coming from load_dataset_config is the result of parent and child configuration. When writting back
+    breakpoint()
+    # dataset confi coming from load_dataset_config is the result of parent and child configuration. When writing back
     # the configuration, we only want to write the child data back
     dataset_config_child = load_config(json_path)
     # Overwrite the original JSON file with the modified dataset_config

@@ -32,11 +32,13 @@
         }
       ]
     },
-    "Resources": {
-      "Description": "Cloud Optimised AODN dataset of IMOS - ACORN - Turquoise Coast HF ocean radar site (Western Australia, Australia) - Delayed mode sea water velocity",
-      "ARN": "arn:aws:s3:::aodn-cloud-optimised/radar_TurquoiseCoast_velocity_hourly_average_delayed_qc.zarr",
-      "Region": "ap-southeast-2",
-      "Type": "S3 Bucket"
-    }
+    "Resources": [
+      {
+        "Description": "Cloud Optimised AODN dataset of IMOS - ACORN - Turquoise Coast HF ocean radar site (Western Australia, Australia) - Delayed mode sea water velocity",
+        "ARN": "arn:aws:s3:::aodn-cloud-optimised/radar_TurquoiseCoast_velocity_hourly_average_delayed_qc.zarr",
+        "Region": "ap-southeast-2",
+        "Type": "S3 Bucket"
+      }
+    ]
   }
 }
