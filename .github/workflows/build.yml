@@ -76,9 +76,9 @@ jobs:
           poetry run coverage xml -o coverage.xml
 
       - name: Upload coverage report
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
-          name: coverage-report
+          name: coverage-report-${{ github.job }}-${{ github.run_number }}
           path: coverage.xml
 
       - name: Build package

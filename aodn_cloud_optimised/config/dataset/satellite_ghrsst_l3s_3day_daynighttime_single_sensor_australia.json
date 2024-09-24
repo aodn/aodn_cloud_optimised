@@ -22,7 +22,6 @@
           "Title": "Accessing IMOS - SRS - SST - L3S - Multi Sensor - 3 day - day and night time - Australia",
           "URL": "https://nbviewer.org/github/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_ghrsst_l3s_3day_daynighttime_single_sensor_australia.ipynb",
           "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_ghrsst_l3s_3day_daynighttime_single_sensor_australia.ipynb",
-          "Services": "",
           "AuthorName": "Laurent Besnard",
           "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
         },
@@ -30,17 +29,18 @@
           "Title": "Accessing and search for any AODN dataset",
           "URL": "https://nbviewer.org/github/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
           "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
-          "Services": "",
           "AuthorName": "Laurent Besnard",
           "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
         }
       ]
     },
-    "Resources": {
-      "Description": "Cloud Optimised AODN dataset of IMOS - SRS - SST - L3S - Multi Sensor - 3 day - day and night time - Australia",
-      "ARN": "arn:aws:s3:::aodn-cloud-optimised/satellite_ghrsst_l3s_3day_daynighttime_single_sensor_australia.zarr",
-      "Region": "ap-southeast-2",
-      "Type": "S3 Bucket"
-    }
+    "Resources": [
+      {
+        "Description": "Cloud Optimised AODN dataset of IMOS - SRS - SST - L3S - Multi Sensor - 3 day - day and night time - Australia",
+        "ARN": "arn:aws:s3:::aodn-cloud-optimised/satellite_ghrsst_l3s_3day_daynighttime_single_sensor_australia.zarr",
+        "Region": "ap-southeast-2",
+        "Type": "S3 Bucket"
+      }
+    ]
   }
 }
