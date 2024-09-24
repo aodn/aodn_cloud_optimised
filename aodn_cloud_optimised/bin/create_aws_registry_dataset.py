@@ -12,7 +12,6 @@ Important:
     If the -g option is provided, the script will download metadata from the GeoNetwork metadata
     record and prompt the user to choose to replace existing values or not.
 
-
 Args (optional):
     -f, --file (str): Name of a specific JSON file to convert.
     -d, --directory (str): Output directory to save converted YAML files.
