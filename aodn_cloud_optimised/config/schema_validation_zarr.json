@@ -108,7 +108,7 @@
     "var_template_shape": {
       "type": "string"
     },
-    "vars_drop_reprocess": {
+    "vars_to_drop_no_common_dimension": {
       "type": "array",
       "items": {
         "type": "string"
