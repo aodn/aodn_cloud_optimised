@@ -678,3 +678,17 @@ Adding the dataset to pyproject.toml
 TODO:
 - Explain pyproject.toml
 - individual scripts for full reprocessing
+
+.. note:: Important Note
+   :class: custom-note
+   :name: non-generic-handler
+
+    In order to test the new configuration, the newly created script needs to be installed in the environment.
+
+    1) Activate the virtual env
+
+    2) run    ```poetry install --with dev```
+
+    3) re-activate the virtual env
+
+    The new script will be available
