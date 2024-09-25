@@ -225,7 +225,7 @@
   "aws_opendata_registry": {
     "Name": "National Mooring Network - Temperature and salinity time-series",
     "Description": "The Australian National Mooring Network (ANMN) Facility is a series of national reference stations and regional moorings designed to monitor particular oceanographic phenomena in Australian coastal ocean waters. This collection contains time-series observations of temperature and salinity from moorings deployed by the ANMN. The primary parameters are temperature, pressure (when available) and depth of the instrument. A subset of this collection also includes conductivity and salinity. The observations were made using a range of temperature loggers, conductivity-temperature-depth (CTD) instruments, and temperature sensors on acoustic Doppler current profilers (ADCPs). We are also producing a gridded product of temperature time-series profiles based on these data. These will be available in a separate collection.",
-    "Documentation": "https://catalogue-imos.org.au/geonetwork/srv/eng/catalog.search#/metadata/7e13b5f3-4a70-4e31-9e95-335efa491c5c",
+    "Documentation": "https://catalogue-imos.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/7e13b5f3-4a70-4e31-9e95-335efa491c5c",
     "Contact": "info@aodn.org.au",
     "ManagedBy": "AODN",
     "UpdateFrequency": "As Needed",
