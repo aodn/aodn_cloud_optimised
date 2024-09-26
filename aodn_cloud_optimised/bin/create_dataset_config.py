@@ -154,6 +154,8 @@ def generate_template(schema):
     template = {}
     for key, subschema in schema["properties"].items():
         template[key] = generate_template_value(subschema)
+
+    del template["schema"]["schema"]  # some dirty code somewhere
     return template
 
 
@@ -532,9 +534,13 @@ def create_notebook(dataset_name):
         if cloud_optimised_format == "parquet":
             with open(notebook_parquet_template_path) as f:
                 template_nb = nbformat.read(f, as_version=4)
-        elif cloud_optimised_format == "ZARR":
+        elif cloud_optimised_format == "zarr":
             with open(notebook_parquet_zarr_path) as f:
                 template_nb = nbformat.read(f, as_version=4)
+        else:
+            raise ValueError(
+                f"ERROR: {cloud_optimised_format} is not a supported format (zarr/parquet)"
+            )
 
         # Create a copy of the template notebook
         new_nb = nbformat.v4.new_notebook()
@@ -646,7 +652,6 @@ def main():
     os.remove(temp_file_path)
 
     dataset_config = {"schema": dataset_config_schema}
-
     # Define the path to the validation schema file
     json_validation_path = str(
         importlib.resources.files("aodn_cloud_optimised")

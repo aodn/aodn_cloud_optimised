@@ -1,0 +1,176 @@
+{
+  "dataset_name": "satellite_ghrsst_l4_gamssa_1day_multi_sensor_world",
+  "logger_name": "satellite_ghrsst_l4_gamssa_1day_multi_sensor_world",
+  "cloud_optimised_format": "zarr",
+  "cluster_options": {
+    "n_workers": [
+      1,
+      30
+    ],
+    "scheduler_vm_types": "t3.medium",
+    "worker_vm_types": "t3.large",
+    "allow_ingress_from": "me",
+    "compute_purchase_option": "spot_with_fallback",
+    "worker_options": {
+      "nthreads": 8,
+      "memory_limit": "8GB"
+    }
+  },
+  "batch_size": 200,
+  "metadata_uuid": "2d496463-600c-465a-84a1-8a4ab76bd505",
+  "dimensions": {
+    "time": {
+      "name": "time",
+      "chunk": 5,
+      "rechunk": true
+    },
+    "latitude": {
+      "name": "lat",
+      "chunk": 720
+    },
+    "longitude": {
+      "name": "lon",
+      "chunk": 1440
+    }
+  },
+  "var_template_shape": "analysed_sst",
+  "vars_to_drop_no_common_dimension": [
+    "lon",
+    "lat"
+  ],
+  "schema": {
+    "time": {
+      "type": "timestamp[ns]",
+      "long_name": "reference time of SST field",
+      "standard_name": "time",
+      "axis": "T",
+      "comment": "Nominal time because observations are from different sources and are made at different times of the day",
+      "coverage_content_type": "coordinate"
+    },
+    "lat": {
+      "type": "float",
+      "long_name": "latitude",
+      "standard_name": "latitude",
+      "axis": "Y",
+      "comment": "Latitudes for locating data",
+      "valid_min": -90.0,
+      "valid_max": 90.0,
+      "units": "degrees_north",
+      "coverage_content_type": "coordinate"
+    },
+    "lon": {
+      "type": "float",
+      "long_name": "longitude",
+      "standard_name": "longitude",
+      "axis": "X",
+      "comment": "Longitudes for locating data",
+      "units": "degrees_east",
+      "coverage_content_type": "coordinate",
+      "valid_min": -180.0,
+      "valid_max": 180.0
+    },
+    "sea_ice_fraction": {
+      "type": "double",
+      "valid_min": 0,
+      "valid_max": 100,
+      "units": "1",
+      "long_name": "sea ice area fraction",
+      "standard_name": "sea_ice_area_fraction",
+      "comment": "Fractional sea ice cover from NCEP-ICE product (Grumbine, 1996) .",
+      "source": "SSMI-NCEP-Analysis-ICE-5min",
+      "coverage_content_type": "auxiliaryInformation",
+      "grid_mapping": "crs"
+    },
+    "analysed_sst": {
+      "type": "double",
+      "valid_min": -300,
+      "valid_max": 4500,
+      "clip_min": 269.88999396935105,
+      "clip_max": 305.59999317117035,
+      "units": "kelvin",
+      "long_name": "analysed sea surface temperature",
+      "standard_name": "sea_surface_foundation_temperature",
+      "comment": "Optimally interpolated analysis of SST observations.",
+      "source": "AMSR2-JAXA,AVHRRMTB_G-NAVO,VIIRS_NPP_OSPO,VIIRS_N20_OSPO,IN_SITU-GTS_BUOYS,IN_SITU-GTS_SHIP,ACCESS-G-WSP, NCEP-ICE",
+      "coverage_content_type": "physicalMeasurement",
+      "grid_mapping": "crs"
+    },
+    "analysis_error": {
+      "type": "double",
+      "valid_min": 0,
+      "valid_max": 32765,
+      "units": "kelvin",
+      "long_name": "estimated error standard deviation of analysed_sst",
+      "comment": "Calculated as analysis field error in OI analysis system and a function of the age and estimated standard deviation of all observations used to form analysed_sst value. See Beggs et al (2011) in http://www.bom.gov.au/jshess/papers.php?year=2011.",
+      "coverage_content_type": "auxiliaryInformation",
+      "grid_mapping": "crs"
+    },
+    "mask": {
+      "type": "float",
+      "valid_min": 1,
+      "valid_max": 8,
+      "long_name": "sea/land/lake/ice field composite mask",
+      "comment": "b0: 1 = grid cell is open sea water, b1: 1 = land is present in this grid cell, b2: 1 = lake surface is present in this grid cell, b3: 1 = sea ice is present in this grid cell, b4-b7: reserved for future grid mask data",
+      "source": "NAVOCEANO 1/120 deg land-sea mask. See https://www.ghrsst.org/products-and-services/tools/navo-ghrsst-pp-land-sea-mask/.",
+      "flag_meanings": "water land optional_lake_surface sea-ice",
+      "grid_mapping": "crs",
+      "flag_masks": [
+        1,
+        2,
+        4,
+        8
+      ]
+    },
+    "crs": {
+      "type": "int32",
+      "long_name": "coordinate reference system",
+      "grid_mapping_name": "latitude_longitude",
+      "semi_major_axis": 6379137.0,
+      "inverse_flattening": 298.257223563,
+      "epsg_code": "EPSG:4326"
+    }
+  },
+  "dataset_gattrs": {
+    "title": "FILL UP MANUALLY - CHECK DOCUMENTATION"
+  },
+  "aws_opendata_registry": {
+    "Name": "Satellite - Sea surface temperature - Level 4 - GAMSSA - Multi sensor - 1 day - World",
+    "Description": "An International Group for High-Resolution Sea Surface Temperature (GHRSST) Level 4 sea surface temperature analysis, produced daily on an operational basis at the Australian Bureau of Meteorology using optimal interpolation (OI) on a global 0.25 degree grid.  This Global Australian Multi-Sensor SST Analysis (GAMSSA) v1.0 system blends infra-red SST observations from the Advanced Very High Resolution Radiometer (AVHRR) on NOAA and METOP polar-orbiting satellites, microwave SST observations from the Advanced Microwave Scanning Radiometer-2 (AMSR-2) on GCOM-W, and in situ data from ships, and drifting and moored buoys from the Global Telecommunications System (GTS).  \n\nAll SST observations are filtered for those values suspected to be affected by diurnal warming by excluding cases which have experienced recent surface wind speeds of below 6 m/s during the day and less than 2 m/s during the night, thereby resulting in daily foundation SST estimates that are largely free of diurnal warming effects.",
+    "Documentation": "https://catalogue-imos.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/2d496463-600c-465a-84a1-8a4ab76bd505",
+    "Contact": "info@aodn.org.au",
+    "ManagedBy": "AODN",
+    "UpdateFrequency": "As Needed",
+    "Tags": [
+      "oceans",
+      "satellite imagery"
+    ],
+    "License": "http://creativecommons.org/licenses/by/4.0/",
+    "Resources": [
+      {
+        "Description": "Cloud Optimised AODN dataset of IMOS - SRS - SST - L4 - GAMSSA - World",
+        "ARN": "arn:aws:s3:::aodn-cloud-optimised/satellite_ghrsst_l4_gamssa_1day_multi_sensor_world.zarr",
+        "Region": "ap-southeast-2",
+        "Type": "S3 Bucket"
+      }
+    ],
+    "DataAtWork": {
+      "Tutorials": [
+        {
+          "Title": "Accessing IMOS - SRS - SST - L4 - GAMSSA - World",
+          "URL": "https://nbviewer.org/github/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_ghrsst_l4_gamssa_1day_multi_sensor_world.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_ghrsst_l4_gamssa_1day_multi_sensor_world.ipynb",
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
+        },
+        {
+          "Title": "Accessing and search for any AODN dataset",
+          "URL": "https://nbviewer.org/github/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
+        }
+      ]
+    },
+    "Citation": "IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access]"
+  }
+}

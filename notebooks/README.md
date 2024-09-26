@@ -13,6 +13,8 @@ A curated list of Jupyter notebooks ready to be loaded in Google Colab
 - [radar_TurquoiseCoast_velocity_hourly_average_delayed_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/radar_TurquoiseCoast_velocity_hourly_average_delayed_qc.ipynb)
 - [receiver_animal_acoustic_tagging_delayed_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/receiver_animal_acoustic_tagging_delayed_qc.ipynb)
 - [satellite_ghrsst_l3s_1day_daynighttime_single_sensor_australia.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_ghrsst_l3s_1day_daynighttime_single_sensor_australia.ipynb)
+- [satellite_ghrsst_l4_gamssa_1day_multi_sensor_world.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_ghrsst_l4_gamssa_1day_multi_sensor_world.ipynb)
+- [satellite_ghrsst_l4_ramssa_1day_multi_sensor_australia.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_ghrsst_l4_ramssa_1day_multi_sensor_australia.ipynb)
 - [slocum_glider_delayed_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/slocum_glider_delayed_qc.ipynb)
 - [vessel_co2_delayed_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/vessel_co2_delayed_qc.ipynb)
 - [vessel_fishsoop_realtime_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/vessel_fishsoop_realtime_qc.ipynb)

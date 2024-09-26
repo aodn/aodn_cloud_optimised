@@ -240,7 +240,7 @@ def populate_dataset_config_with_geonetwork_metadata(json_file):
     dataset_config = update_nested_dict_key(
         dataset_config,
         ["aws_opendata_registry", "Documentation"],
-        f"https://catalogue.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/{uuid}",
+        f"https://catalogue-imos.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/{uuid}",
     )
 
     dataset_config = update_nested_dict_key(

@@ -284,7 +284,7 @@
   "aws_opendata_registry": {
     "Name": "National Mooring Network - CTD profiles",
     "Description": "This collection includes conductivity-temperature-depth (CTD) profiles obtained at the National Reference Stations (NRS) as part of the water sampling program. The instruments used also measure dissolved oxygen, fluorescence, and turbidity. The collection also includes practical salinity, water density and artificial chlorophyll concentration, as computed from the measured properties. The data are processed in delayed mode, with automated quality control applied. The National Reference Station network is designed to provide baseline information, at timescales relevant to human response, that is required to understand how large-scale, long-term change and variability in the global ocean are affecting the ecosystems of Australia's coastal seas. The stations are operated by the Australian National Moorings Network (ANMN), a facility of the Integrated Marine Observing System (IMOS).",
-    "Documentation": "https://catalogue-imos.org.au/geonetwork/srv/eng/catalog.search#/metadata/7b901002-b1dc-46c3-89f2-b4951cedca48",
+    "Documentation": "https://catalogue-imos.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/7b901002-b1dc-46c3-89f2-b4951cedca48",
     "Contact": "info@aodn.org.au",
     "ManagedBy": "AODN",
     "UpdateFrequency": "As Needed",
