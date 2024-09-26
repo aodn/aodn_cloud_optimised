@@ -23,11 +23,14 @@ jobs:
         with:
           activate-environment: AodnCloudOptimised
           environment-file: environment.yml
+          auto-activate-base: false  # Prevent activating base env
 
       - name: Install dependencies
         shell: bash -el {0}
         run: |
           conda install --yes mamba
+          mamba env create --name AodnCloudOptimised --file environment.yml || true  # Create only if not exists
+          conda activate AodnCloudOptimised
           mamba env update --name AodnCloudOptimised --file environment.yml
 
       - name: Activate Conda environment
