@@ -1,0 +1,396 @@
+{
+  "dataset_name": "vessel_air_sea_flux_product_delayed",
+  "logger_name": "vessel_air_sea_flux_product_delayed",
+  "cloud_optimised_format": "parquet",
+  "cluster_options": {
+    "n_workers": [
+      1,
+      40
+    ],
+    "scheduler_vm_types": "t3.medium",
+    "worker_vm_types": "t3.large",
+    "allow_ingress_from": "me",
+    "compute_purchase_option": "spot_with_fallback",
+    "worker_options": {
+      "nthreads": 4,
+      "memory_limit": "8GB"
+    }
+  },
+  "batch_size": 150,
+  "metadata_uuid": "07818819-2e5c-4a12-9395-0082b57b2fe8",
+  "gattrs_to_variables": [
+    "platform_code",
+    "site"
+  ],
+  "partition_keys": [
+    "platform_code",
+    "timestamp",
+    "polygon"
+  ],
+  "time_extent": {
+    "time": "TIME",
+    "partition_timestamp_period": "Y"
+  },
+  "spatial_extent": {
+    "lat": "LATITUDE",
+    "lon": "LONGITUDE",
+    "spatial_resolution": 5
+  },
+  "schema": {
+    "timestamp": {
+      "type": "int64"
+    },
+    "polygon": {
+      "type": "string"
+    },
+    "filename": {
+      "type": "string"
+    },
+    "platform_code": {
+      "type": "string"
+    },
+    "TIME": {
+      "type": "timestamp[ns]",
+      "standard_name": "time",
+      "long_name": "time",
+      "axis": "T",
+      "valid_min": 0,
+      "valid_max": 90000.0,
+      "comment": "Relative julian days with decimal part as parts \nof the day"
+    },
+    "LATITUDE": {
+      "type": "float",
+      "standard_name": "latitude",
+      "long_name": "latitude",
+      "units": "degrees_north",
+      "axis": "Y",
+      "valid_min": -90,
+      "valid_max": 90,
+      "reference_datum": "geographical coordinates, WGS84"
+    },
+    "LONGITUDE": {
+      "type": "float",
+      "standard_name": "longitude",
+      "long_name": "longitude",
+      "units": "degrees_east",
+      "axis": "X",
+      "valid_min": -180,
+      "valid_max": 180,
+      "reference_datum": "geographical coordinates, WGS84"
+    },
+    "PL_CMP": {
+      "type": "float",
+      "long_name": "compass direction",
+      "units": "degrees_north",
+      "instrument": "Sperry gyro compasse Mk 37",
+      "observation_type": "measured"
+    },
+    "PL_CRS": {
+      "type": "float",
+      "standard_name": "platform_course",
+      "long_name": "platform course",
+      "units": "degrees (clockwise from true north)",
+      "instrument": "Seapath 200 position and reference unit",
+      "observation_type": "measured"
+    },
+    "PL_SPD": {
+      "type": "float",
+      "standard_name": "platform_speed_wrt_ground",
+      "long_name": "platform speed over ground",
+      "units": "meter second-1",
+      "instrument": "Seapath 200 position and reference unit",
+      "observation_type": "measured"
+    },
+    "WDIR": {
+      "type": "float",
+      "standard_name": "wind_to_direction",
+      "long_name": "earth relative wind direction (oceanographic)",
+      "units": "degree",
+      "observation_type": "calculated"
+    },
+    "WSPD": {
+      "type": "float",
+      "standard_name": "wind_speed",
+      "long_name": "earth relative wind speed",
+      "units": "meter second-1",
+      "observation_type": "calculated"
+    },
+    "WIND_H": {
+      "type": "float",
+      "long_name": "wind measurement height above water level",
+      "units": "meter"
+    },
+    "WIND_FLAG": {
+      "type": "int32",
+      "long_name": "wind sensor flag",
+      "comment": "1 - mainmast sensor, 2 - foremast sensor"
+    },
+    "ATMP": {
+      "type": "float",
+      "standard_name": "air_pressure",
+      "long_name": "atmospheric pressure",
+      "units": "hectopascal",
+      "mslp_indicator": "at sensor height",
+      "observation_type": "measured"
+    },
+    "ATMP_H": {
+      "type": "float",
+      "long_name": "atmospheric pressure measurement height above water level",
+      "units": "meter"
+    },
+    "ATMP_FLAG": {
+      "type": "int32",
+      "long_name": "air pressure sensor flag",
+      "comment": "1 - currently available the only sensor"
+    },
+    "AIRT": {
+      "type": "float",
+      "standard_name": "air_temperature",
+      "long_name": "air temperature",
+      "units": "celsius",
+      "observation_type": "measured"
+    },
+    "AIRT_H": {
+      "type": "float",
+      "long_name": "air temperature measurement height above water level",
+      "units": "meter"
+    },
+    "AIRT_FLAG": {
+      "type": "int32",
+      "long_name": "air temperature sensor flag",
+      "comment": "1 - starboard sensor, 2 - port sensor"
+    },
+    "RELH": {
+      "type": "float",
+      "standard_name": "relative_humidity",
+      "long_name": "relative humidity ",
+      "units": "percent",
+      "observation_type": "measured"
+    },
+    "RELH_H": {
+      "type": "float",
+      "long_name": "relative humidity measurement height above water level",
+      "units": "meter"
+    },
+    "RELH_FLAG": {
+      "type": "int32",
+      "long_name": "relative humidity sensor flag",
+      "comment": "1 - starboard sensor, 2 - port sensor"
+    },
+    "TEMP": {
+      "type": "float",
+      "standard_name": "sea_water_temperature",
+      "long_name": "sea water temperature from TSG",
+      "units": "celsius",
+      "observation_type": "measured"
+    },
+    "TEMP_H": {
+      "type": "float",
+      "long_name": "sea water temeperature measurement depth",
+      "units": "meter"
+    },
+    "TEMP_FLAG": {
+      "type": "int32",
+      "long_name": "sea water temeperature sensor flag",
+      "comment": "1 - currently available the only sensor"
+    },
+    "RAIN_AMOUNT": {
+      "type": "float",
+      "standard_name": "rainfall_rate",
+      "long_name": "rain rate",
+      "units": "millimeters hour-1",
+      "observation_type": "measured"
+    },
+    "RAIN_AMOUNT_H": {
+      "type": "float",
+      "long_name": "precipitation measurement height above water level",
+      "units": "meter"
+    },
+    "RAIN_AMOUNT_FLAG": {
+      "type": "int32",
+      "long_name": "precipitation sensor flag",
+      "comment": "1 - starboard sensor, 2 - port sensor"
+    },
+    "SW": {
+      "type": "float",
+      "standard_name": "surface_downwelling_shortwave_flux_in_air",
+      "long_name": "short wave radiation",
+      "units": "watts meter-2",
+      "observation_type": "measured"
+    },
+    "SW_H": {
+      "type": "float",
+      "long_name": "short-wave radiation measurement height above water level",
+      "units": "meter"
+    },
+    "SW_FLAG": {
+      "type": "int32",
+      "long_name": "short-wave radiation sensor flag",
+      "comment": "1 - starboard sensor, 2 - port sensor"
+    },
+    "LW": {
+      "type": "float",
+      "standard_name": "surface_downwelling_longwave_flux_in_air",
+      "long_name": "long wave radiation",
+      "units": "watts meter-2",
+      "observation_type": "measured"
+    },
+    "LW_H": {
+      "type": "float",
+      "long_name": "long-wave radiation measurement height above water level",
+      "units": "meter"
+    },
+    "LW_FLAG": {
+      "type": "int32",
+      "long_name": "long-wave radiation sensor flag",
+      "comment": "1 - starboard sensor, 2 - port sensor, 3 - average of both sensors"
+    },
+    "HS": {
+      "type": "float",
+      "standard_name": "surface_upward_sensible_heat_flux",
+      "long_name": "sensible heat flux",
+      "units": "watts meter-2",
+      "observation_type": "calculated"
+    },
+    "HL": {
+      "type": "float",
+      "standard_name": "surface_upward_latent_heat_flux",
+      "long_name": "latent heat flux",
+      "units": "watts meter-2",
+      "observation_type": "calculated"
+    },
+    "H_RAIN": {
+      "type": "float",
+      "long_name": "upward heat flux due to rainfall",
+      "units": "watts meter-2",
+      "observation_type": "calculated"
+    },
+    "TAU": {
+      "type": "float",
+      "standard_name": "magnitude_of_surface_downward_stress",
+      "long_name": "wind stress",
+      "units": "pascal",
+      "observation_type": "calculated"
+    },
+    "SST": {
+      "type": "float",
+      "standard_name": "sea_surface_skin_temperature",
+      "long_name": "sea skin temperature",
+      "units": "celsius",
+      "observation_type": "calculated"
+    },
+    "HEAT_NET": {
+      "type": "float",
+      "standard_name": "upward_heat_flux_in_air",
+      "long_name": "net heat flux",
+      "units": "watts meter-2",
+      "observation_type": "calculated"
+    },
+    "MASS_NET": {
+      "type": "float",
+      "standard_name": "upward_mass_flux_of_air",
+      "long_name": "net mass flux",
+      "units": "kilogram meter-2 second-1",
+      "observation_type": "calculated"
+    },
+    "LW_NET": {
+      "type": "float",
+      "standard_name": "surface_net_upward_longwave_flux",
+      "long_name": "net long-wave radiation",
+      "units": "watts meter-2",
+      "observation_type": "calculated"
+    },
+    "SW_NET": {
+      "type": "float",
+      "standard_name": "surface_net_upward_shortwave_flux",
+      "long_name": "net short-wave radiation",
+      "units": "watts meter-2",
+      "observation_type": "calculated"
+    },
+    "WSPD10M": {
+      "type": "float",
+      "standard_name": "wind_speed",
+      "long_name": "calculated neutral wind speed at 10 meters",
+      "units": "meter second-1",
+      "observation_type": "calculated"
+    },
+    "AIRT1_5M": {
+      "type": "float",
+      "standard_name": "air_temparature",
+      "long_name": "calculated air temperature at 1.5 meters",
+      "units": "celsius",
+      "observation_type": "calculated"
+    },
+    "AIRT2_0M": {
+      "type": "float",
+      "standard_name": "air_temparature",
+      "long_name": "calculated air temperature at 2.0 meters",
+      "units": "celsius",
+      "observation_type": "calculated"
+    },
+    "RELH1_5M": {
+      "type": "float",
+      "standard_name": "relative_humidity",
+      "long_name": "calculated relative humidity at 1.5 meters",
+      "units": "percent",
+      "observation_type": "calculated"
+    },
+    "RELH2_0M": {
+      "type": "float",
+      "standard_name": "relative_humidity",
+      "long_name": "calculated relative humidity at 2.0 meters",
+      "units": "percent",
+      "observation_type": "calculated"
+    },
+    "history": {
+      "type": "string",
+      "long_name": "file history information"
+    }
+  },
+  "dataset_gattrs": {
+    "title": "Heat and radiative flux data",
+    "author_email": "eric.schulz@bom.gov.au",
+    "author": "Eric Schulz",
+    "principal_investigator": "Eric Schulz"
+  },
+  "force_old_pq_del": false,
+  "aws_opendata_registry": {
+    "Name": "IMOS-SOOP-Air Sea Flux: Flux product",
+    "Description": "Enhancement of Measurements on Ships of Opportunity (SOOP)-Air Sea Flux sub-facility collects underway meteorological and oceanographic observations during scientific and Antarctic resupply voyages in the oceans adjacent to Australia. Data product is quality controlled bulk air-sea fluxes and input observations. Research Vessel Real Time Air-Sea Fluxes, equips the Marine National Facility (MNF) (Research Vessels Southern Surveyor and Investigator), the Australian Antarctic Division (Research and Supply Vessels Aurora Australis and Nuyina), and Research Vessel Tangaroa with \"climate quality\" meteorological measurement systems, capable of providing high quality air-sea flux measurements and delivered to researchers on a near real-time basis. Obtaining the full set of air-sea fluxes essential for climate studies requires observations of: wind, air and sea temperature, humidity, pressure, precipitation, long- and short-wave radiation. The existing ship meteorological sensor sets are completed with IMOS instruments and a comprehensive annual calibration program implemented. Data streams are fed into existing ship data management systems, and broadcast via satellite back to Australia routinely. The observations are quality controlled at the Bureau of Meteorology and air-sea fluxes calculated using the COARE Bulk Flux algorithm. A daily file of calculated bulk fluxes and the observations used in the calculation are generated shortly after 0000UTC and provided to IMOS.",
+    "Documentation": "https://catalogue-imos.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/07818819-2e5c-4a12-9395-0082b57b2fe8",
+    "Contact": "info@aodn.org.au",
+    "ManagedBy": "AODN",
+    "UpdateFrequency": "As Needed",
+    "Tags": [
+      "FILL UP MANUALLY - CHECK DOCUMENTATION"
+    ],
+    "License": "http://creativecommons.org/licenses/by/4.0/",
+    "Resources": [
+      {
+        "Description": "Cloud Optimised AODN dataset of IMOS-SOOP-Air Sea Flux: Flux product from the Research Vessel Tangaroa",
+        "ARN": "arn:aws:s3:::aodn-cloud-optimised/vessel_air_sea_flux_product_delayed.parquet",
+        "Region": "ap-southeast-2",
+        "Type": "S3 Bucket"
+      }
+    ],
+    "DataAtWork": {
+      "Tutorials": [
+        {
+          "Title": "Accessing IMOS-SOOP-Air Sea Flux: Flux product from the Research Vessel Tangaroa",
+          "URL": "https://nbviewer.org/github/aodn/aodn_cloud_optimised/blob/main/notebooks/vessel_air_sea_flux_product_delayed.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/vessel_air_sea_flux_product_delayed.ipynb",
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
+        },
+        {
+          "Title": "Accessing and search for any AODN dataset",
+          "URL": "https://nbviewer.org/github/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
+        }
+      ]
+    },
+    "Citation": "IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access]"
+  }
+}

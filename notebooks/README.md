@@ -16,6 +16,8 @@ A curated list of Jupyter notebooks ready to be loaded in Google Colab
 - [satellite_ghrsst_l4_gamssa_1day_multi_sensor_world.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_ghrsst_l4_gamssa_1day_multi_sensor_world.ipynb)
 - [satellite_ghrsst_l4_ramssa_1day_multi_sensor_australia.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_ghrsst_l4_ramssa_1day_multi_sensor_australia.ipynb)
 - [slocum_glider_delayed_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/slocum_glider_delayed_qc.ipynb)
+- [vessel_air_sea_flux_product_delayed.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/vessel_air_sea_flux_product_delayed.ipynb)
+- [vessel_air_sea_flux_sst_meteo_realtime.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/vessel_air_sea_flux_sst_meteo_realtime.ipynb)
 - [vessel_co2_delayed_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/vessel_co2_delayed_qc.ipynb)
 - [vessel_fishsoop_realtime_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/vessel_fishsoop_realtime_qc.ipynb)
 - [vessel_sst_delayed_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/vessel_sst_delayed_qc.ipynb)
