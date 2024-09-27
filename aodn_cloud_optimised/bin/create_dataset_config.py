@@ -155,7 +155,6 @@ def generate_template(schema):
     for key, subschema in schema["properties"].items():
         template[key] = generate_template_value(subschema)
 
-    del template["schema"]["schema"]  # some dirty code somewhere
     return template
 
 

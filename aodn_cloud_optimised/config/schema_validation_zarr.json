@@ -115,15 +115,7 @@
       }
     },
     "schema": {
-      "type": "object",
-      "properties": {
-        "schema": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        }
-      }
+      "type": "object"
     },
     "dataset_gattrs": {
       "type": "object",
