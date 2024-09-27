@@ -49,6 +49,9 @@
     "platform_code": {
       "type": "string"
     },
+    "site": {
+      "type": "string"
+    },
     "TIME": {
       "type": "timestamp[ns]",
       "standard_name": "time",
@@ -762,6 +765,49 @@
       "quality_control_set": 3,
       "quality_control_flag_values": "B, C, D, E, F, G, H, J, K, L, M, Q, S, T, U, V, X, Z",
       "quality_control_flag_meanings": "Value_out_of_bounds Time_not_sequential Failed_T_Tw_Td_test Failed_true_wind_recomputation_test Platform_velocity_unrealistic Value_exceeds_threshold Discontinuity Erroneous_value Suspect_value_(visual) Value_located_over_land Instrument_malfunction Pre-flagged_as_suspect Spike_in_data_(visual) Time_duplicate Suspect_value_(statistical) Step_in_data_(statistical) Spike_in_data_(statistical) Value_passed_all_tests"
+    },
+    "TS2_SD": {
+      "type": "float",
+      "long_name": "total expanded uncertainty for sea temperature (radiometric)",
+      "units": "celsius",
+      "instrument": "University of Southampton ISAR SST Radiometer (s/n ISAR5D_010)",
+      "observation_type": "measured",
+      "distance_from_bow": -41.112998962402344,
+      "centerline_offset": -11.770000457763672,
+      "sensor_depth": -19.593000411987305,
+      "comment": "This is the total expanded uncertainty for the ISAR radiometric skin SST (TS2) value, being a combination of random (type A), systematic (type B), instrument and measurement uncertainty.  The ISAR expanded uncertainty is an estimate of the SST that differs from its true value by less than the stated uncertainty in 95 % of cases, and can be considered as 2 times the standard deviation.  Note this is the absolute value of the uncertainty_sd value output from the Werenfrid Wimmer ISAR uncertainty code, documented in Wimmer, W., and I. Robinson, 2016, The ISAR instrument uncertainty model. J. Atmos. Oceanic Technol. doi:10.1175/JTECH-D-16-0096.1. http://journals.ametsoc.org/doi/abs/10.1175/JTECH-D-16-0096.1",
+      "standard_name": "sea_surface_temperature",
+      "ancillary_variables": "TS2_SD_quality_control"
+    },
+    "TS2_SD_quality_control": {
+      "type": "string",
+      "standard_name": "sea_surface_temperature status_flag",
+      "long_name": "quality flags for sea_surface_temperature",
+      "quality_control_conventions": "IMOS Reference Table F",
+      "quality_control_set": 3,
+      "quality_control_flag_values": "B, C, D, E, F, G, H, J, K, L, M, Q, S, T, U, V, X, Z",
+      "quality_control_flag_meanings": "Value_out_of_bounds Time_not_sequential Failed_T_Tw_Td_test Failed_true_wind_recomputation_test Platform_velocity_unrealistic Value_exceeds_threshold Discontinuity Erroneous_value Suspect_value_(visual) Value_located_over_land Instrument_malfunction Pre-flagged_as_suspect Spike_in_data_(visual) Time_duplicate Suspect_value_(statistical) Step_in_data_(statistical) Spike_in_data_(statistical) Value_passed_all_tests"
+    },
+    "TEMP_2_SD_quality_control": {
+      "type": "string",
+      "standard_name": "sea_surface_temperature status_flag",
+      "long_name": "quality flags for sea_surface_temperature",
+      "quality_control_conventions": "IMOS Reference Table F",
+      "quality_control_set": 3,
+      "quality_control_flag_values": "B, C, D, E, F, G, H, J, K, L, M, Q, S, T, U, V, X, Z",
+      "quality_control_flag_meanings": "Value_out_of_bounds Time_not_sequential Failed_T_Tw_Td_test Failed_true_wind_recomputation_test Platform_velocity_unrealistic Value_exceeds_threshold Discontinuity Erroneous_value Suspect_value_(visual) Value_located_over_land Instrument_malfunction Pre-flagged_as_suspect Spike_in_data_(visual) Time_duplicate Suspect_value_(statistical) Step_in_data_(statistical) Spike_in_data_(statistical) Value_passed_all_tests"
+    },
+    "TEMP_2_SD": {
+      "type": "float",
+      "long_name": "total expanded uncertainty for sea temperature (radiometric)",
+      "units": "celsius",
+      "instrument": "University of Southampton ISAR SST Radiometer (s/n ISAR5D_010)",
+      "observation_type": "measured",
+      "distance_from_bow": -41.112998962402344,
+      "centerline_offset": -11.770000457763672,
+      "sensor_depth": -19.593000411987305,
+      "comment": "This is the total expanded uncertainty for the ISAR radiometric skin SST (TEMP_2) value, being a combination of random (type A), systematic (type B), instrument and measurement uncertainty.  The ISAR expanded uncertainty is an estimate of the SST that differs from its true value by less than the stated uncertainty in 95 % of cases, and can be considered as 2 times the standard deviation.  Note this is the absolute value of the uncertainty_sd value output from the Werenfrid Wimmer ISAR uncertainty code, documented in Wimmer, W., and I. Robinson, 2016, The ISAR instrument uncertainty model. J. Atmos. Oceanic Technol. doi:10.1175/JTECH-D-16-0096.1. http://journals.ametsoc.org/doi/abs/10.1175/JTECH-D-16-0096.1",
+      "ancillary_variables": "TEMP_2_SD_quality_control"
     }
   },
   "dataset_gattrs": {

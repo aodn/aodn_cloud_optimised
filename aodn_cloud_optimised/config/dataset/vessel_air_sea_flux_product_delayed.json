@@ -16,7 +16,7 @@
       "memory_limit": "8GB"
     }
   },
-  "batch_size": 150,
+  "batch_size": 100,
   "metadata_uuid": "07818819-2e5c-4a12-9395-0082b57b2fe8",
   "gattrs_to_variables": [
     "platform_code",
@@ -47,6 +47,9 @@
       "type": "string"
     },
     "platform_code": {
+      "type": "string"
+    },
+    "site": {
       "type": "string"
     },
     "TIME": {
