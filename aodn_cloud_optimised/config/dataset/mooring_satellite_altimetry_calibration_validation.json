@@ -1,0 +1,343 @@
+{
+  "dataset_name": "mooring_satellite_altimetry_calibration_validation",
+  "logger_name": "mooring_satellite_altimetry_calibration_validation",
+  "cloud_optimised_format": "parquet",
+  "cluster_options": {
+    "n_workers": [
+      1,
+      20
+    ],
+    "scheduler_vm_types": "t3.small",
+    "worker_vm_types": "t3.large",
+    "allow_ingress_from": "me",
+    "compute_purchase_option": "spot_with_fallback",
+    "worker_options": {
+      "nthreads": 4,
+      "memory_limit": "8GB"
+    }
+  },
+  "batch_size": 60,
+  "metadata_uuid": "78d588ed-79dd-47e2-b806-d39025194e7e",
+  "gattrs_to_variables": [
+    "site_code",
+    "site",
+    "instrument",
+    "instrument_serial_number"
+  ],
+  "partition_keys": [
+    "site_code",
+    "instrument",
+    "timestamp",
+    "polygon"
+  ],
+  "time_extent": {
+    "time": "TIME",
+    "partition_timestamp_period": "Y"
+  },
+  "spatial_extent": {
+    "lat": "LATITUDE",
+    "lon": "LONGITUDE",
+    "spatial_resolution": 2
+  },
+  "schema": {
+    "timestamp": {
+      "type": "int64"
+    },
+    "polygon": {
+      "type": "string"
+    },
+    "filename": {
+      "type": "string"
+    },
+    "site_code": {
+      "type": "string"
+    },
+    "site": {
+      "type": "string"
+    },
+    "instrument": {
+      "type": "string"
+    },
+    "instrument_serial_number": {
+      "type": "string"
+    },
+    "TIME": {
+      "type": "timestamp[ns]",
+      "long_name": "time",
+      "standard_name": "time",
+      "axis": "T",
+      "valid_min": 0.0,
+      "valid_max": 90000.0,
+      "uncertainty": 1.1574074074074073e-05,
+      "local_time_zone": "+10"
+    },
+    "LONGITUDE": {
+      "type": "float",
+      "long_name": "longitude",
+      "standard_name": "longitude",
+      "units": "degrees_east",
+      "axis": "X",
+      "valid_min": -180.0,
+      "valid_max": 180.0,
+      "uncertainty": 0.0010000000474974513,
+      "reference_datum": "geographical coordinates, WGS84 projection"
+    },
+    "LATITUDE": {
+      "type": "float",
+      "long_name": "latitude",
+      "standard_name": "latitude",
+      "units": "degrees_north",
+      "axis": "Y",
+      "valid_min": -90.0,
+      "valid_max": 90.0,
+      "uncertainty": 0.0010000000474974513,
+      "reference_datum": "geographical coordinates, WGS84 projection"
+    },
+    "NOMINAL_DEPTH": {
+      "type": "float",
+      "long_name": "nominal depth",
+      "standard_name": "depth",
+      "units": "meters",
+      "axis": "Z",
+      "positive": "down",
+      "valid_min": 0.0,
+      "valid_max": 12000.0,
+      "uncertainty": 2.5,
+      "reference_datum": "Mean Sea Level (MSL)"
+    },
+    "TEMP": {
+      "type": "float",
+      "long_name": "Temperature in degrees C",
+      "units": "Celsius",
+      "standard_name": "sea_water_temperature",
+      "valid_min": -2.0,
+      "valid_max": 40.0,
+      "ancillary_variables": "TEMP_quality_control",
+      "uncertainty": 0.004999999888241291
+    },
+    "TEMP_quality_control": {
+      "type": "int32",
+      "standard_name": "sea_water_temperature status_flag",
+      "long_name": "quality control flag for sea_water_temperature",
+      "quality_control_conventions": "IMOS standard flags",
+      "quality_control_set": "1",
+      "valid_min": 0,
+      "valid_max": 9,
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed Not_used Not_used Not_used Missing_values"
+    },
+    "CNDC": {
+      "type": "float",
+      "long_name": "Conductivity",
+      "units": "S/m",
+      "standard_name": "sea_water_electrical_conductivity",
+      "valid_min": 0.0,
+      "valid_max": 10.0,
+      "ancillary_variables": "CNDC_quality_control"
+    },
+    "CNDC_quality_control": {
+      "type": "int32",
+      "standard_name": "sea_water_electrical_conductivity status_flag",
+      "long_name": "quality control flag for sea_water_electrical_conductivity",
+      "quality_control_conventions": "IMOS standard flags",
+      "quality_control_set": "1",
+      "valid_min": 0,
+      "valid_max": 9,
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed Not_used Not_used Not_used Missing_values"
+    },
+    "PRES": {
+      "type": "float",
+      "long_name": "Pressure in deciBars",
+      "units": "deciBars",
+      "standard_name": "sea_water_pressure",
+      "valid_min": 0.0,
+      "valid_max": 1000.0,
+      "ancillary_variables": "PRES_quality_control",
+      "uncertainty": 0.009999999776482582
+    },
+    "PRES_quality_control": {
+      "type": "int32",
+      "standard_name": "sea_water_pressure status_flag",
+      "long_name": "quality control flag for sea_water_pressure",
+      "quality_control_conventions": "IMOS standard flags",
+      "quality_control_set": "1",
+      "valid_min": 0,
+      "valid_max": 9,
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed Not_used Not_used Not_used Missing_values"
+    },
+    "PSAL": {
+      "type": "float",
+      "long_name": "sea_water_salinity",
+      "units": "1e-3",
+      "standard_name": "sea_water_salinity",
+      "valid_min": 10.0,
+      "valid_max": 50.0,
+      "ancillary_variables": "PSAL_quality_control",
+      "uncertainty": 0.009999999776482582
+    },
+    "PSAL_quality_control": {
+      "type": "int32",
+      "standard_name": "sea_water_salinity status_flag",
+      "long_name": "quality control flag for sea_water_salinity",
+      "quality_control_conventions": "IMOS standard flags",
+      "quality_control_set": "1",
+      "valid_min": 0,
+      "valid_max": 9,
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed Not_used Not_used Not_used Missing_values"
+    },
+    "UCUR": {
+      "type": "float",
+      "long_name": "eastward_sea_water_velocity",
+      "units": "m/s",
+      "standard_name": "eastward_sea_water_velocity",
+      "valid_min": -10.0,
+      "valid_max": 10.0,
+      "ancillary_variables": "UCUR_quality_control",
+      "uncertainty": 0.05000000074505806
+    },
+    "UCUR_quality_control": {
+      "type": "float",
+      "standard_name": "eastward_sea_water_velocity status_flag",
+      "long_name": "quality control flag for eastward_sea_water_velocity",
+      "quality_control_conventions": "IMOS standard flags",
+      "quality_control_set": "1",
+      "valid_min": 0,
+      "valid_max": 9,
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed Not_used Not_used Not_used Missing_values"
+    },
+    "VCUR": {
+      "type": "float",
+      "long_name": "northward_sea_water_velocity",
+      "units": "m/s",
+      "standard_name": "northward_sea_water_velocity",
+      "valid_min": -10.0,
+      "valid_max": 10.0,
+      "ancillary_variables": "VCUR_quality_control",
+      "uncertainty": 0.05000000074505806
+    },
+    "VCUR_quality_control": {
+      "type": "float",
+      "standard_name": "northward_sea_water_velocity status_flag",
+      "long_name": "quality control flag for northward_sea_water_velocity",
+      "quality_control_conventions": "IMOS standard flags",
+      "quality_control_set": 1.0,
+      "valid_min": 0,
+      "valid_max": 9,
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed Not_used Not_used Not_used Missing_values"
+    }
+  },
+  "dataset_gattrs": {
+    "title": "FILL UP MANUALLY - CHECK DOCUMENTATION"
+  },
+  "force_old_pq_del": false,
+  "aws_opendata_registry": {
+    "Name": "IMOS - SRS Satellite Altimetry Calibration and Validation Sub-Facility",
+    "Description": "High precision satellite altimeter missions including TOPEX/Poseidon (T/P), Jason-1 and now OSTM/Jason-2, have contributed fundamental advances in our understanding of regional and global ocean circulation and its role in the Earth's climate and regional applications. These altimeter satellites essentially observe the height of the global oceans \u2013 as such, they have become the tool of choice for scientists to measure sea level rise \u2013 both at regional and global scales as well as giving information about ocean currents and large- and small-scale variability. The determination of changes in global mean sea level is of fundamental importance in understanding the response of the ocean to a continuing warming climate \u2013 both through thermal expansion of the ocean, melting of the major ice sheets of Greenland and Antarctica, and mountain glaciers, and redistribution of water over the continents and atmosphere. As with all scientific observations, it is vital that the measurement tool is operating within its specifications \u2013 calibration and validation is therefore an important component in this regard. \n\nThis IMOS sub-facility provides the sole southern hemisphere in situ calibration site to provide an ongoing calibration and validation data stream directly to the international (NASA and CNES sponsored) Ocean Surface Topography Science Team (OSTST). This contribution, importantly, spans multiple altimeter missions, thus enabling the assimilation of multi-mission satellite data to determine ongoing changes in sea level with flow-on effects to other uses of this data. The OSTST collectively oversees the operation and calibration of the precision altimetry missions, and ensures each of these missions is performing as accurately as possible in order to meet mission objectives. The IMOS supported calibration site in Australia is one of four primary in situ calibration/validation sites that contribute to the OSTST. The remaining sites include Harvest (USA), Corsica (France), and Gavdos (Greece). The Australian calibration site includes two comparison points where in situ data is compared against the altimeter \u2013 Bass Strait and Storm Bay. These two locations both lie on descending (N -> S) pass 088 of the satellite altimeter, and thus share similar satellite orbit characteristics. The use of these two sites allows detailed investigation into the accuracy of the altimeter over two different wave climates. The average significant wave height at Storm Bay is approximately double that observed at the comparatively sheltered Bass Strait location. One of the ongoing issues with satellite altimeter missions is the \u201cSea-state bias\u201d correction which is related to wave shape and height. We plan to use the different wave climates at the two locations, coupled with the fact that some other things (such as orbit errors) are the same at both locations to improve the quality of this correction.",
+    "Documentation": "https://catalogue-imos.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/78d588ed-79dd-47e2-b806-d39025194e7e",
+    "Contact": "info@aodn.org.au",
+    "ManagedBy": "AODN",
+    "UpdateFrequency": "As Needed",
+    "Tags": [
+      "FILL UP MANUALLY - CHECK DOCUMENTATION"
+    ],
+    "License": "http://creativecommons.org/licenses/by/4.0/",
+    "Resources": [
+      {
+        "Description": "Cloud Optimised AODN dataset of IMOS - SRS Satellite Altimetry Calibration and Validation Sub-Facility",
+        "ARN": "arn:aws:s3:::aodn-cloud-optimised/mooring_satellite_altimetry_calibration_validation.parquet",
+        "Region": "ap-southeast-2",
+        "Type": "S3 Bucket"
+      }
+    ],
+    "DataAtWork": {
+      "Tutorials": [
+        {
+          "Title": "Accessing IMOS - SRS Satellite Altimetry Calibration and Validation Sub-Facility",
+          "URL": "https://nbviewer.org/github/aodn/aodn_cloud_optimised/blob/main/notebooks/mooring_satellite_altimetry_calibration_validation.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/mooring_satellite_altimetry_calibration_validation.ipynb",
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
+        },
+        {
+          "Title": "Accessing and search for any AODN dataset",
+          "URL": "https://nbviewer.org/github/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
+        }
+      ]
+    },
+    "Citation": "IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access]"
+  }
+}
