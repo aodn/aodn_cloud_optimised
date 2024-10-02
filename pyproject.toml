@@ -63,6 +63,7 @@ asciinema = ">=2.4.0"  # to record terminal sessions, useful for documentation
 matplotlib = "^3.9.1"
 termcolor = "^2.4.0"
 nbformat = "^5.10.4"
+gsw = ">=3.6.19"
 
 
 #[tool.poetry.extras]
@@ -117,6 +118,7 @@ matplotlib = "^3.9.1"
 termcolor = "^2.4.0"
 nbformat = "^5.10.4"
 cartopy = "^0.23.0"
+gsw = ">=3.6.19"
 
 
 [tool.pre_commit]
