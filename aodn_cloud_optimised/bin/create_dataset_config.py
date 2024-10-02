@@ -681,6 +681,7 @@ def main():
         "worker_options": {"nthreads": 4, "memory_limit": "8GB"},
     }
     dataset_config["batch_size"] = 5
+    dataset_config["spatial_extent"]["spatial_resolution"] = 5
 
     if args.cloud_format == "parquet":
         # default partition keys
