@@ -16,7 +16,7 @@
       "memory_limit": "8GB"
     }
   },
-  "batch_size": 20,
+  "batch_size": 50,
   "metadata_uuid": "af5d0ff9-bb9c-4b7c-a63c-854a630b6984",
   "object_key_info": {
     "key_pattern": ".*/IMOS/{campaign_name}/{dive_name}/hydro_netcdf/{filename}",
