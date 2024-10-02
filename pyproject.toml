@@ -73,6 +73,7 @@ nbformat = "^5.10.4"
 [tool.poetry.scripts]
 #cloud_optimised_srs_oc_ljco_to_parquet = "aodn_cloud_optimised.bin.srs_oc_ljco_to_parquet:main"
 cloud_optimised_argo = "aodn_cloud_optimised.bin.argo:main"
+cloud_optimised_autonomous_underwater_vehicle = "aodn_cloud_optimised.bin.autonomous_underwater_vehicle:main"
 cloud_optimised_create_aws_registry_dataset = "aodn_cloud_optimised.bin.create_aws_registry_dataset:main"
 cloud_optimised_create_dataset_config = "aodn_cloud_optimised.bin.create_dataset_config:main"
 cloud_optimised_model_sea_level_anomaly_gridded_realtime = "aodn_cloud_optimised.bin.model_sea_level_anomaly_gridded_realtime:main"

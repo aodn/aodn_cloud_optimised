@@ -1,0 +1,220 @@
+{
+  "dataset_name": "autonomous_underwater_vehicle",
+  "logger_name": "autonomous_underwater_vehicle",
+  "cloud_optimised_format": "parquet",
+  "cluster_options": {
+    "n_workers": [
+      1,
+      20
+    ],
+    "scheduler_vm_types": "t3.small",
+    "worker_vm_types": "t3.large",
+    "allow_ingress_from": "me",
+    "compute_purchase_option": "spot_with_fallback",
+    "worker_options": {
+      "nthreads": 4,
+      "memory_limit": "8GB"
+    }
+  },
+  "batch_size": 20,
+  "metadata_uuid": "af5d0ff9-bb9c-4b7c-a63c-854a630b6984",
+  "object_key_info": {
+    "key_pattern": ".*/IMOS/{campaign_name}/{dive_name}/hydro_netcdf/{filename}",
+    "extraction_code": "def extract_info_from_key(key):\n    parts = key.split('/')\n    return {'campaign_name': parts[-4], 'dive_name': parts[-3]}"
+  },
+  "gattrs_to_variables": [],
+  "partition_keys": [
+    "campaign_name",
+    "dive_name",
+    "timestamp",
+    "polygon"
+  ],
+  "time_extent": {
+    "time": "TIME",
+    "partition_timestamp_period": "Y"
+  },
+  "spatial_extent": {
+    "lat": "LATITUDE",
+    "lon": "LONGITUDE",
+    "spatial_resolution": 5
+  },
+  "schema": {
+    "timestamp": {
+      "type": "int64"
+    },
+    "polygon": {
+      "type": "string"
+    },
+    "filename": {
+      "type": "string"
+    },
+    "campaign_name": {
+      "type": "string"
+    },
+    "dive_name": {
+      "type": "string"
+    },
+    "TIME": {
+      "type": "timestamp[ns]",
+      "standard_name": "time",
+      "long_name": "time",
+      "axis": "T",
+      "valid_min": 0,
+      "valid_max": 90000.0,
+      "comments": "Time synchronised before diving. There after standard PC clock",
+      "quality_control_set": 1,
+      "quality_control_indicator": 1,
+      "uncertainty": 1.1574074074074073e-05,
+      "local_time_zone": "+8"
+    },
+    "LATITUDE": {
+      "type": "double",
+      "standard_name": "latitude",
+      "long_name": "latitude",
+      "units": "degrees_north",
+      "axis": "Y",
+      "valid_min": -90.0,
+      "valid_max": 90.0,
+      "comments": "Initial pos from GPS, thereafter position data is generated using SLAM image based naviagation. Relative uncertainty much smaller that the absolute uncertainty quoted here.",
+      "quality_control_set": 1,
+      "quality_control_indicator": 1,
+      "uncertainty": "20m circle",
+      "reference": "geographical coordinates, WGS84 projection"
+    },
+    "LONGITUDE": {
+      "type": "double",
+      "standard_name": "longitude",
+      "long_name": "longitude",
+      "units": "degrees_east",
+      "axis": "X",
+      "valid_min": -180.0,
+      "valid_max": 180.0,
+      "comments": "Initial pos from GPS, thereafter position data is generated using SLAM image based naviagation. Relative uncertainty much smaller that the absolute uncertainty quoted here.",
+      "quality_control_set": 1,
+      "quality_control_indicator": 1,
+      "uncertainty": "20m circle",
+      "reference": "geographical coordinates, WGS84 projection"
+    },
+    "DEPTH": {
+      "type": "double",
+      "standard_name": "depth",
+      "long_name": "depth below sea surface",
+      "units": "meters",
+      "axis": "Z",
+      "positive": "down",
+      "valid_min": 0,
+      "valid_max": 12000,
+      "comments": "Digi-quartz pressure sensor.",
+      "quality_control_set": 1,
+      "quality_control_indicator": 1,
+      "uncertainty": 0,
+      "reference": "Current sea surface"
+    },
+    "PSAL": {
+      "type": "double",
+      "standard_name": "sea_water_salinity",
+      "long_name": "corrected sea water salinity",
+      "units": "1e-3",
+      "valid_min": 2.0,
+      "valid_max": 42.0,
+      "quality_control_set": 1,
+      "quality_control_indicator": 0,
+      "uncertainty": 0,
+      "reference": "PSS 1978 (Practical Salinity Scale)"
+    },
+    "TEMP": {
+      "type": "double",
+      "standard_name": "sea_water_temperature",
+      "long_name": "Sea water temperature",
+      "units": "Celsius",
+      "valid_min": -20.0,
+      "valid_max": 60.0,
+      "quality_control_set": 1,
+      "quality_control_indicator": 0,
+      "uncertainty": 0,
+      "reference": "ITS90 (International Temperature Standard 1990)"
+    },
+    "OPBS": {
+      "type": "float",
+      "standard_name": "",
+      "long_name": "Optical backscatter",
+      "units": "m-1 sr-1",
+      "valid_min": 0.0,
+      "valid_max": 9000.0,
+      "comments": "Ecopuck BB2FLPIZ",
+      "quality_control_set": 1,
+      "quality_control_indicator": 0,
+      "uncertainty": 0,
+      "reference": ""
+    },
+    "CPHL": {
+      "type": "float",
+      "standard_name": "concentration_of_chlorophyll_in_sea_water",
+      "long_name": "Chlorophyll concentration in seawater.",
+      "units": "mg m-3",
+      "valid_min": 0.0,
+      "valid_max": 50.0,
+      "comments": "Ecopuck BB2FLPIZ",
+      "quality_control_set": 1,
+      "quality_control_indicator": 0,
+      "uncertainty": 0,
+      "reference": ""
+    },
+    "CDOM": {
+      "type": "float",
+      "standard_name": "",
+      "long_name": "Concentration of disolved organic matter",
+      "units": "mg m-3",
+      "valid_min": 0.0,
+      "valid_max": 450.0,
+      "comments": "Ecopuck BB2FLPIZ",
+      "quality_control_set": 1,
+      "quality_control_indicator": 0,
+      "uncertainty": 0,
+      "reference": ""
+    }
+  },
+  "dataset_gattrs": {
+    "title": "FILL UP MANUALLY - CHECK DOCUMENTATION"
+  },
+  "force_old_pq_del": false,
+  "aws_opendata_registry": {
+    "Name": "IMOS - Autonomous Underwater Vehicle (AUV) Facility",
+    "Description": "The IMOS Autonomous Underwater Vehicle (AUV) Facility operates multiple ocean-going AUVs capable of undertaking high resolution, geo-referenced survey work. AUV Sirius is a modified version of a mid-size robotic vehicle Seabed built at the Woods Hole Oceanographic Institution. This class of AUV has been designed specifically for low speed, high resolution imaging and is passively stable in pitch and roll. AUV Nimbus is a custom design with the aim of deploying off smaller vessels than Sirius whilst remaining able to operate in similar environments. AUV Iver is an extended Ocean Server Iver2 class platform with additional navigation and imaging sensors but lacks the ability to work over complex underwater terrain. Based on its small size, it can be deployed from RHIBs and other small vessels. The main objective of the IMOS AUV Facility is to support sustained observations of the benthos, in support of the IMOS integrated benthic monitoring program. . The AUV facility is based at the Australian Centre for Field Robotics (ACFR) within the School of Aerospace, Mechanical and Mechatronic Engineering at the University of Sydney.\n\nThis IMOS Facility finished in June 2023, with data still available through the AODN Portal.",
+    "Documentation": "https://catalogue-imos.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/af5d0ff9-bb9c-4b7c-a63c-854a630b6984",
+    "Contact": "info@aodn.org.au",
+    "ManagedBy": "AODN",
+    "UpdateFrequency": "As Needed",
+    "Tags": [
+      "FILL UP MANUALLY - CHECK DOCUMENTATION"
+    ],
+    "License": "http://creativecommons.org/licenses/by/4.0/",
+    "Resources": [
+      {
+        "Description": "Cloud Optimised AODN dataset of IMOS - Autonomous Underwater Vehicle (AUV) Facility",
+        "ARN": "arn:aws:s3:::aodn-cloud-optimised/autonomous_underwater_vehicle.parquet",
+        "Region": "ap-southeast-2",
+        "Type": "S3 Bucket"
+      }
+    ],
+    "DataAtWork": {
+      "Tutorials": [
+        {
+          "Title": "Accessing IMOS - Autonomous Underwater Vehicle (AUV) Facility",
+          "URL": "https://nbviewer.org/github/aodn/aodn_cloud_optimised/blob/main/notebooks/autonomous_underwater_vehicle.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/autonomous_underwater_vehicle.ipynb",
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
+        },
+        {
+          "Title": "Accessing and search for any AODN dataset",
+          "URL": "https://nbviewer.org/github/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
+        }
+      ]
+    },
+    "Citation": "IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access]"
+  }
+}
