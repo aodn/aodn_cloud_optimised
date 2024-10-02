@@ -11,6 +11,7 @@ from typing import Final
 
 import boto3
 import geopandas as gpd
+import gsw  # TEOS-10 library
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -290,6 +291,82 @@ def plot_spatial_extent(parquet_ds):
     gdf.plot(color="red", alpha=0.5)  # Adjust color and alpha as needed
 
     # Show the plot
+    plt.show()
+
+
+def plot_ts_diagram(df, temp_col="TEMP", psal_col="PSAL", depth_col="DEPTH"):
+    """
+    Plots a T-S (Temperature-Salinity) diagram with density contours.
+
+    Args:
+        df (pd.DataFrame): DataFrame containing temperature, salinity, and depth columns.
+        temp_col (str): Column name for temperature data (default is 'TEMP').
+        psal_col (str): Column name for salinity data (default is 'PSAL').
+        depth_col (str): Column name for depth data (default is 'DEPTH').
+    """
+    # Filter data where PSAL >= 25
+    filtered_df = df[(df[psal_col] >= 25)]
+
+    fig, ax = plt.subplots(figsize=(10, 6))
+
+    # Define the colormap for depth
+    depths = filtered_df[depth_col]
+    cmap = plt.get_cmap(
+        "viridis_r"
+    )  # Reverse the colormap to make deeper depths darker
+    norm = plt.Normalize(
+        vmin=depths.min(), vmax=depths.max()
+    )  # Normalize the depth values for color mapping
+
+    # Plot the T-S diagram, color-coded by DEPTH
+    sc = ax.scatter(
+        filtered_df[psal_col],
+        filtered_df[temp_col],
+        c=depths,
+        cmap=cmap,
+        norm=norm,
+        s=10,
+        label="Data",
+    )
+
+    # Generate temperature and salinity grids for contour plot
+    temp_range = np.linspace(
+        filtered_df[temp_col].min(), filtered_df[temp_col].max(), 100
+    )
+    psal_range = np.linspace(
+        filtered_df[psal_col].min(), filtered_df[psal_col].max(), 100
+    )
+    TEMP_grid, PSAL_grid = np.meshgrid(temp_range, psal_range)
+
+    # Compute density anomaly (sigma0) using gsw (pressure=0 for surface)
+    density = gsw.sigma0(
+        PSAL_grid, TEMP_grid
+    )  # Sigma0 = density anomaly (kg/m^3 - 1000)
+
+    # Plot density contours
+    density_levels = np.arange(
+        density.min(), density.max(), 1
+    )  # Customize levels if needed
+    contour = ax.contour(
+        PSAL_grid,
+        TEMP_grid,
+        density,
+        levels=density_levels,
+        colors="k",
+        linestyles="--",
+    )
+    ax.clabel(contour, fmt="%1.1f", fontsize=10)  # Add contour labels
+
+    # Create a colorbar for depth
+    cbar = plt.colorbar(sc, ax=ax, label="Depth (m)", orientation="vertical")
+
+    ax.set_xlabel("Salinity (PSAL)")
+    ax.set_ylabel("Temperature (TEMP)")
+    ax.set_title("T-S Diagram with Density Contours")
+
+    plt.xticks(rotation=45)
+
+    plt.tight_layout()
     plt.show()
 
 

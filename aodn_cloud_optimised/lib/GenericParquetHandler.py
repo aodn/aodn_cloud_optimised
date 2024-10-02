@@ -457,7 +457,51 @@ class GenericHandler(CommonHandler):
 
         df["filename"] = os.path.basename(f.path)
 
+        if "object_key_info" in self.dataset_config:
+            extracted_info = self.get_variables_from_object_key(f)
+            self.logger.info(f"{extracted_info}")
+            for var_name in extracted_info:
+                self.logger.info(
+                    f"{self.uuid_log}: {f.path}: Adding extracted info from object key as variable {var_name}: {extracted_info[var_name]}"
+                )
+
+                df[var_name] = extracted_info[var_name]
+
         return df
+
+    def get_variables_from_object_key(self, f) -> dict:
+        """
+        Extract variables from an object key using a dynamically defined extraction function.
+
+        This method retrieves the extraction code from the dataset configuration,
+        executes it to define the extraction function in a local scope, and
+        uses this function to extract information from the given object key.
+
+        Args:
+            f (object): An object that has a `path` attribute, representing the object key
+                        from which to extract variables.
+
+        Returns:
+            dict: A dictionary containing the extracted variables. The contents depend on
+                  the implementation of the extraction function specified in the dataset
+                  configuration.
+
+        Raises:
+            KeyError: If the extraction function defined in the extraction code does not
+                       exist in the local scope.
+            Exception: Any exception raised by the dynamically executed extraction function
+                       if the input does not meet its requirements.
+        """
+        # Access the extraction code from the config
+        extraction_code = self.dataset_config["object_key_info"]["extraction_code"]
+
+        # Define a local scope to execute the extraction code
+        local_scope = {}
+
+        # Execute the extraction code
+        exec(extraction_code, {}, local_scope)
+        # Call the function defined in the extraction code and return the dictionary
+        return local_scope["extract_info_from_key"](f.path)
 
     def _rm_bad_timestamp_df(self, df: pd.DataFrame, f) -> pd.DataFrame:
         """
@@ -984,6 +1028,10 @@ class GenericHandler(CommonHandler):
 
             generator = self.preprocess_data(s3_file_handle)
             for df, ds in generator:
+                if df.empty:
+                    raise ValueError(
+                        f"{self.uuid_log}: {filename} Data corruption, Empty dataframe detected: {df}"
+                    )
 
                 self.publish_cloud_optimised(df, ds, s3_file_handle)
                 # self.push_metadata_aws_registry()  # Deprecated

@@ -238,6 +238,68 @@ the schema definition:
        }
     }
 
+Object key path as variables
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This section explains the configuration for extracting information from object keys when some information are missing from the
+NetCDF files but available from the filepath.
+
+The following JSON snippet illustrates how to specify the `object_key_info` in your configuration:
+
+.. code:: json
+
+   ...
+      "object_key_info": {
+        "key_pattern": ".*/IMOS/{campaign_name}/{dive_name}/hydro_netcdf/{filename}",
+        "extraction_code": "def extract_info_from_key(key):\n    parts = key.split('/')\n    return {'campaign_name': parts[-4], 'dive_name': parts[-3]}"
+        },
+
+In this example, `campaign_name` and `dive_name` are extracted from the path. The `extraction_code` returns a dictionary of variables.
+
+After extraction, `campaign_name` and `dive_name` should be added as string variables, and they can also be included in the `partition_keys`.
+
+The following snippet shows how to define these keys in your JSON configuration:
+
+.. code:: json
+
+   ...
+     "partition_keys": [
+       "campaign_name"
+     ],
+    "schema": {
+   ...
+       "campaign_name": {
+         "type": "string"
+       }
+    }
+
+
+The ``extract_info_from_key`` function should always be structured as follows:
+
+.. code:: python
+
+    def extract_info_from_key(key):
+        """
+        Extract information from a key string while ensuring a consistent return structure.
+
+        Args:
+            key (str): The input string containing information formatted with slashes.
+
+        Returns:
+            dict: A dictionary with the extracted information, including predefined keys
+                  with default values if information is not available.
+        """
+        parts = key.split('/')
+
+        return {
+            'campaign_name': parts[-4] if len(parts) > 3 else None,
+            'dive_name': parts[-3] if len(parts) > 2 else None,
+            'project_id': parts[-2] if len(parts) > 1 else None,
+            'file_type': parts[-1] if len(parts) > 0 else None,
+            'timestamp': None  # This could be added or derived if applicable
+        }
+
+
 Filename as variable
 ~~~~~~~~~~~~~~~~~~~~
 
