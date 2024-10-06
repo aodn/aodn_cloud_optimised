@@ -30,7 +30,7 @@ Requirements:
 .. code-block:: bash
 
    mamba env create --file=environment.yml
-   mamba activate CloudOptimisedParquet
+   mamba activate AodnCloudOptimised
 
    poetry install --with dev
    pre-commit install
@@ -120,7 +120,8 @@ Modify `pyproject.toml <https://github.com/aodn/aodn_cloud_optimised/blob/main/p
    :name: poetry-requirements
 
     When modules are updated, it can be good practice to also update the ``requirements.txt`` file used to create the Mamba env.
-    It is not done automatically yet.
+    It is not done automatically yet. When a Coiled cluster is called, if the ``requirements.txt``, this could lead to a failure
+    to spin the cluster
 
     .. code-block:: bash
 
