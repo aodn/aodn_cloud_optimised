@@ -12,9 +12,7 @@ from typing import Final
 import boto3
 import geopandas as gpd
 import gsw  # TEOS-10 library
-import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 import pyarrow as pa
 import pyarrow.compute as pc
 import pyarrow.fs as fs
@@ -291,6 +289,144 @@ def plot_spatial_extent(parquet_ds):
     gdf.plot(color="red", alpha=0.5)  # Adjust color and alpha as needed
 
     # Show the plot
+    plt.show()
+
+
+import matplotlib.pyplot as plt
+import pandas as pd
+import cartopy.crs as ccrs  # For coastline plotting
+import cartopy.feature as cfeature
+
+
+def plot_gridded_variable(
+    ds,
+    start_date,
+    lon_slice,
+    lat_slice,
+    var_name="sea_surface_temperature",
+    n_days=6,
+    coastline_resolution="110m",
+):
+    """
+    Plots a variable (e.g., SST) data for 6 consecutive days starting from start_date with coastlines.
+
+    Parameters:
+    - ds: xarray.Dataset containing the data.
+    - start_date: str, start date in 'YYYY-MM-DD' format.
+    - lon_slice: tuple, longitude slice (start_lon, end_lon). (min val, max val)
+    - lat_slice: tuple, latitude slice (start_lat, end_lat). (min val, max val)
+    - var_name: str, variable name to plot (default is 'sea_surface_temperature').
+    - coastline_resolution: str, resolution of the coastlines ('110m', '50m', '10m').
+    """
+
+    # Decide on the slice order
+    if ds.lat[0] < ds.lat[-1]:
+        lat_slice = lat_slice
+    elif ds.lat[0] > ds.lat[-1]:
+        # We reverse the slice
+        lat_slice = lat_slice[::-1]
+
+    # Parse the start date
+    start_date_parsed = pd.to_datetime(start_date)
+
+    # Ensure the dataset has a time dimension and it's sorted
+    assert "time" in ds.dims, "Dataset does not have a 'time' dimension"
+    ds = ds.sortby("time")
+
+    # Find the nearest date in the dataset
+    nearest_date = ds.sel(time=start_date_parsed, method="nearest").time
+    print(f"Nearest date in dataset: {nearest_date}")
+
+    # Get the index of the nearest date
+    nearest_date_index = (
+        ds.time.where(ds.time == nearest_date, drop=True).squeeze().values
+    )
+
+    # Find the position of the nearest date in the time array
+    nearest_date_position = int((ds.time == nearest_date_index).argmax().values)
+
+    # Get the next n_days date values including the nearest date
+    dates = ds.time[nearest_date_position : nearest_date_position + n_days].values
+    dates = [pd.Timestamp(date) for date in dates]
+
+    # Retrieve variable-specific metadata
+    var_long_name = ds[var_name].attrs.get("long_name", var_name)
+    print(f"Variable Long Name: {var_long_name}")
+
+    # Create subplots with Cartopy for coastlines
+    fig, axes = plt.subplots(
+        nrows=int(n_days / 3),
+        ncols=3,
+        figsize=(18, 10),
+        subplot_kw={"projection": ccrs.PlateCarree()},
+    )
+    axes = axes.flatten()
+
+    # Set up a variable for the colormap
+    cmap = plt.get_cmap("coolwarm")
+
+    # Create a placeholder for the color data range
+    vmin, vmax = float("inf"), float("-inf")
+
+    # First pass: gather all the data to find vmin and vmax
+    for date in dates:
+        try:
+            data = ds[var_name].sel(
+                time=date.strftime("%Y-%m-%d"),
+                lon=slice(lon_slice[0], lon_slice[1]),
+                lat=slice(lat_slice[0], lat_slice[1]),
+            )
+
+            # Retrieve and check units for the current plot
+            var_units = ds[var_name].attrs.get("units", "unknown units")
+            # print(f"Plotting data for date: {date.strftime('%Y-%m-%d')} with units: {var_units}")
+
+            # Convert Kelvin to Celsius if needed
+            if var_units.lower() == "kelvin":
+                data = data - 273.15
+                var_units = "°C"  # Change units in the label
+                # print("Converted data from Kelvin to Celsius.")
+
+            # Update vmin and vmax for colorbar scaling
+            vmin = min(vmin, data.min().values)
+            vmax = max(vmax, data.max().values)
+
+            # Plot the data without a colorbar
+            img = data.plot(
+                ax=axes[dates.index(date)],
+                cmap=cmap,
+                vmin=vmin,
+                vmax=vmax,
+                add_colorbar=False,
+            )
+
+            # Add coastlines with specified resolution and gridlines
+            ax = axes[dates.index(date)]
+            ax.coastlines(resolution=coastline_resolution)
+            ax.add_feature(cfeature.BORDERS, linestyle=":")
+            ax.gridlines(draw_labels=True, dms=True, x_inline=False, y_inline=False)
+
+            # Set the title with the date
+            ax.set_title(date.strftime("%Y-%m-%d"))
+
+        except TypeError as err:
+            # Print traceback for the TypeError
+            print(f"{err}")
+            ax.set_title(f"No data for {date.strftime('%Y-%m-%d')}")
+            ax.axis("off")
+
+    # Create a single colorbar for all plots
+    cbar_ax = fig.add_axes(
+        [1, 0.15, 0.02, 0.7]
+    )  # Adjust the size and position of the colorbar
+    cbar = fig.colorbar(img, cax=cbar_ax, orientation="vertical")
+    cbar.set_label(f"{var_long_name} ({var_units})")
+    cbar.set_ticks([vmin, (vmin + vmax) / 2, vmax])
+    cbar.ax.set_yticklabels([f"{vmin:.2f}", f"{(vmin + vmax) / 2:.2f}", f"{vmax:.2f}"])
+
+    # Adjust layout to give more space for the colorbar
+    plt.subplots_adjust(right=0.85)  # Adjust this value as necessary
+    plt.tight_layout()
     plt.show()
 
 
