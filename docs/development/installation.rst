@@ -126,6 +126,7 @@ Modify `pyproject.toml <https://github.com/aodn/aodn_cloud_optimised/blob/main/p
     .. code-block:: bash
 
         poetry export -f requirements.txt --without-hashes -o requirements.txt
+        poetry export -f requirements.txt --without-hashes --with dev -o notebooks/requirements.txt
 
 Handling Pre-commit Hook Issues:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
