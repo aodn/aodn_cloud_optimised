@@ -36,7 +36,8 @@
   "var_template_shape": "analysed_sst",
   "vars_to_drop_no_common_dimension": [
     "lon",
-    "lat"
+    "lat",
+    "crs"
   ],
   "schema": {
     "time": {

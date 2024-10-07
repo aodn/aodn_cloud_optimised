@@ -66,6 +66,27 @@
       "comment": "A typical reference time for data",
       "standard_name": "time"
     },
+    "sea_ice_fraction": {
+      "type": "double",
+      "valid_min": 0,
+      "valid_max": 100,
+      "units": "1",
+      "long_name": "sea ice area fraction",
+      "standard_name": "sea_ice_area_fraction",
+      "comment": "Fractional sea ice cover from NCEP-ICE product (Grumbine, 1996) .",
+      "source": "SSMI-NCEP-Analysis-ICE-5min",
+      "coverage_content_type": "auxiliaryInformation",
+      "grid_mapping": "crs"
+    },
+    "sea_ice_fraction_dtime_from_sst": {
+      "type": "double",
+      "long_name": "time difference of sea ice fraction measurement from sst measurement",
+      "units": "hour",
+      "comment": "The time difference in hours is estimated from the SST and sea ice data sets",
+      "source": "SSMI-NCEP-Analysis-ICE-5min",
+      "valid_min": -127,
+      "valid_max": 127
+    },
     "sea_surface_temperature": {
       "type": "double",
       "long_name": "sea surface foundation temperature",
