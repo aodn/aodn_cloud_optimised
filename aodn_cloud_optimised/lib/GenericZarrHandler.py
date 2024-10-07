@@ -56,9 +56,86 @@ def preprocess_xarray(ds, dataset_config):
     #     filename=((dimensions["time"]["name"],), [filename])
     # )  # add new filename variable with time dimension
 
+    # Drop variables not in the list
     vars_to_drop = set(ds.data_vars) - set(schema)
     ds_filtered = ds.drop_vars(vars_to_drop)
     ds = ds_filtered
+
+    ##########
+    var_required = schema.copy()
+    var_required.pop(dimensions["time"]["name"])
+    var_required.pop(dimensions["latitude"]["name"])
+    var_required.pop(dimensions["longitude"]["name"])
+
+    # TODO: make the variable below something more generic? a parameter?
+    var_template_shape = dataset_config.get("var_template_shape")
+
+    try:
+        warnings.filterwarnings("error", category=RuntimeWarning)
+        nan_array = np.full(ds[var_template_shape].shape, np.nan, dtype=np.float64)
+        # the following commented line returned some RuntimeWarnings every now and then.
+        # nan_array = np.empty(
+        #    ds[var_template_shape].shape) * np.nan  # np.full_like( (1, 4500, 6000), np.nan, dtype=object)
+    except RuntimeWarning as rw:
+        raise TypeError
+
+    for variable_name in var_required:
+        datatype = var_required[variable_name].get("type")
+
+        # if variable doesn't exist
+        if variable_name not in ds:
+            # self.logger.warning(
+            #     f"{filename}: add missing {variable_name} to xarray dataset"
+            # )
+            logger.warning(
+                f"Add missing {variable_name} to xarray dataset with NaN values"
+            )
+
+            # check the type of the variable (numerical of string)
+            if np.issubdtype(datatype, np.number):
+                # Add the missing variable  to the dataset
+                ds[variable_name] = (
+                    (
+                        dimensions["time"]["name"],
+                        dimensions["latitude"]["name"],
+                        dimensions["longitude"]["name"],
+                    ),
+                    nan_array,
+                )
+
+            else:
+                # for strings variables, it's quite likely that the variables don't have any dimensions associated.
+                # This can be an issue to know which datapoint is associated to which string value.
+                # In this case we might have to repeat the string the times of ('TIME')
+                # ds[variable_name] = (
+                #    (dimensions["time"]["name"],),
+                #    empty_string_array,
+                # )
+                logger.warning(f"{variable_name} is not np.number")
+
+            ds[variable_name] = ds[variable_name].astype(datatype)
+
+        # if variable already exists
+        else:
+
+            if (
+                datatype == "timestamp[ns]"
+            ):  # Timestamps do not have an astype method. But numpy.datetime64 do.
+                datatype = "datetime64[ns]"
+
+            elif not np.issubdtype(datatype, np.number):
+                # we repeat the string variable to match the size of the TIME dimension
+                ds[variable_name] = (
+                    (dimensions["time"]["name"],),
+                    np.full_like(
+                        ds[dimensions["time"]["name"]],
+                        ds[variable_name],
+                        dtype="<S1",
+                    ),
+                )
+
+            ds[variable_name] = ds[variable_name].astype(datatype)
+
     return ds
 
 
@@ -126,106 +203,106 @@ class GenericHandler(CommonHandler):
         )
 
     # TODO: Unused at the moment
-    def preprocess_xarray(self, ds) -> xr.Dataset:
-        """
-        Perform preprocessing on the input dataset (`ds`) and return an xarray Dataset.
-
-        :param ds: Input xarray Dataset.
-
-        :return:
-            Preprocessed xarray Dataset.
-        """
-
-        # Drop variables not in the list
-        # TODO: add a warning message
-        vars_to_drop = set(ds.data_vars) - set(self.schema)
-        ds_filtered = ds.drop_vars(vars_to_drop)
-        ds = ds_filtered
-
-        # https://github.com/pydata/xarray/issues/2313
-        # filename = ds.encoding["source"]
-
-        # self.logger.info(f"{filename}: xarray preprocessing")
-
-        # Add a new dimension 'filename' with a filename value
-        filename = None
-        if filename is not None:
-            ds = ds.assign(
-                filename=((self.dimensions["time"]["name"],), [filename])
-            )  # add new filename variable with time dimension
-
-        var_required = self.schema.copy()
-        var_required.pop(self.dimensions["time"]["name"])
-        var_required.pop(self.dimensions["latitude"]["name"])
-        var_required.pop(self.dimensions["longitude"]["name"])
-
-        # TODO: make the variable below something more generic? a parameter?
-        var_template_shape = self.dataset_config.get("var_template_shape")
-
-        try:
-            warnings.filterwarnings("error", category=RuntimeWarning)
-            nan_array = np.full(ds[var_template_shape].shape, np.nan, dtype=np.float64)
-            # the following commented line returned some RuntimeWarnings every now and then.
-            # nan_array = np.empty(
-            #    ds[var_template_shape].shape) * np.nan  # np.full_like( (1, 4500, 6000), np.nan, dtype=object)
-        except RuntimeWarning as rw:
-            raise TypeError
-
-        for variable_name in var_required:
-            datatype = var_required[variable_name].get("type")
-
-            # if variable doesn't exist
-            if variable_name not in ds:
-                # self.logger.warning(
-                #     f"{filename}: add missing {variable_name} to xarray dataset"
-                # )
-                self.logger.warning(f"add missing {variable_name} to xarray dataset")
-
-                # check the type of the variable (numerical of string)
-                if np.issubdtype(datatype, np.number):
-                    # Add the missing variable  to the dataset
-                    ds[variable_name] = (
-                        (
-                            self.dimensions["time"]["name"],
-                            self.dimensions["latitude"]["name"],
-                            self.dimensions["longitude"]["name"],
-                        ),
-                        nan_array,
-                    )
-
-                else:
-                    # for strings variables, it's quite likely that the variables don't have any dimensions associated.
-                    # This can be an issue to know which datapoint is associated to which string value.
-                    # In this case we might have to repeat the string the times of ('TIME')
-                    ds[variable_name] = (
-                        (self.dimensions["time"]["name"],),
-                        empty_string_array,
-                    )
-
-                ds[variable_name] = ds[variable_name].astype(datatype)
-
-            # if variable already exists
-            else:
-
-                if (
-                    datatype == "timestamp[ns]"
-                ):  # Timestamps do not have an astype method. But numpy.datetime64 do.
-                    datatype = "datetime64[ns]"
-
-                elif not np.issubdtype(datatype, np.number):
-                    # we repeat the string variable to match the size of the TIME dimension
-                    ds[variable_name] = (
-                        (self.dimensions["time"]["name"],),
-                        np.full_like(
-                            ds[self.dimensions["time"]["name"]],
-                            ds[variable_name],
-                            dtype="<S1",
-                        ),
-                    )
-
-                ds[variable_name] = ds[variable_name].astype(datatype)
-
-        return ds
+    # def preprocess_xarray(self, ds) -> xr.Dataset:
+    #     """
+    #     Perform preprocessing on the input dataset (`ds`) and return an xarray Dataset.
+    #
+    #     :param ds: Input xarray Dataset.
+    #
+    #     :return:
+    #         Preprocessed xarray Dataset.
+    #     """
+    #
+    #     # Drop variables not in the list
+    #     # TODO: add a warning message
+    #     vars_to_drop = set(ds.data_vars) - set(self.schema)
+    #     ds_filtered = ds.drop_vars(vars_to_drop)
+    #     ds = ds_filtered
+    #
+    #     # https://github.com/pydata/xarray/issues/2313
+    #     # filename = ds.encoding["source"]
+    #
+    #     # self.logger.info(f"{filename}: xarray preprocessing")
+    #
+    #     # Add a new dimension 'filename' with a filename value
+    #     filename = None
+    #     if filename is not None:
+    #         ds = ds.assign(
+    #             filename=((self.dimensions["time"]["name"],), [filename])
+    #         )  # add new filename variable with time dimension
+    #
+    #     var_required = self.schema.copy()
+    #     var_required.pop(self.dimensions["time"]["name"])
+    #     var_required.pop(self.dimensions["latitude"]["name"])
+    #     var_required.pop(self.dimensions["longitude"]["name"])
+    #
+    #     # TODO: make the variable below something more generic? a parameter?
+    #     var_template_shape = self.dataset_config.get("var_template_shape")
+    #
+    #     try:
+    #         warnings.filterwarnings("error", category=RuntimeWarning)
+    #         nan_array = np.full(ds[var_template_shape].shape, np.nan, dtype=np.float64)
+    #         # the following commented line returned some RuntimeWarnings every now and then.
+    #         # nan_array = np.empty(
+    #         #    ds[var_template_shape].shape) * np.nan  # np.full_like( (1, 4500, 6000), np.nan, dtype=object)
+    #     except RuntimeWarning as rw:
+    #         raise TypeError
+    #
+    #     for variable_name in var_required:
+    #         datatype = var_required[variable_name].get("type")
+    #
+    #         # if variable doesn't exist
+    #         if variable_name not in ds:
+    #             # self.logger.warning(
+    #             #     f"{filename}: add missing {variable_name} to xarray dataset"
+    #             # )
+    #             self.logger.warning(f"add missing {variable_name} to xarray dataset")
+    #
+    #             # check the type of the variable (numerical of string)
+    #             if np.issubdtype(datatype, np.number):
+    #                 # Add the missing variable  to the dataset
+    #                 ds[variable_name] = (
+    #                     (
+    #                         self.dimensions["time"]["name"],
+    #                         self.dimensions["latitude"]["name"],
+    #                         self.dimensions["longitude"]["name"],
+    #                     ),
+    #                     nan_array,
+    #                 )
+    #
+    #             else:
+    #                 # for strings variables, it's quite likely that the variables don't have any dimensions associated.
+    #                 # This can be an issue to know which datapoint is associated to which string value.
+    #                 # In this case we might have to repeat the string the times of ('TIME')
+    #                 ds[variable_name] = (
+    #                     (self.dimensions["time"]["name"],),
+    #                     empty_string_array,
+    #                 )
+    #
+    #             ds[variable_name] = ds[variable_name].astype(datatype)
+    #
+    #         # if variable already exists
+    #         else:
+    #
+    #             if (
+    #                 datatype == "timestamp[ns]"
+    #             ):  # Timestamps do not have an astype method. But numpy.datetime64 do.
+    #                 datatype = "datetime64[ns]"
+    #
+    #             elif not np.issubdtype(datatype, np.number):
+    #                 # we repeat the string variable to match the size of the TIME dimension
+    #                 ds[variable_name] = (
+    #                     (self.dimensions["time"]["name"],),
+    #                     np.full_like(
+    #                         ds[self.dimensions["time"]["name"]],
+    #                         ds[variable_name],
+    #                         dtype="<S1",
+    #                     ),
+    #                 )
+    #
+    #             ds[variable_name] = ds[variable_name].astype(datatype)
+    #
+    #     return ds
 
     def publish_cloud_optimised_fileset_batch(self, s3_file_uri_list):
         """
@@ -305,7 +382,7 @@ class GenericHandler(CommonHandler):
                             batch_files,
                             engine="h5netcdf",
                             parallel=True,
-                            # preprocess=partial_preprocess, # this sometimes hangs the process
+                            preprocess=partial_preprocess,  # this sometimes hangs the process
                             concat_characters=True,
                             mask_and_scale=True,
                             decode_cf=True,
@@ -327,7 +404,7 @@ class GenericHandler(CommonHandler):
                                 batch_files,
                                 engine="scipy",
                                 parallel=True,
-                                # preprocess=partial_preprocess, # this sometimes hangs the process
+                                preprocess=partial_preprocess,  # this sometimes hangs the process
                                 concat_characters=True,
                                 mask_and_scale=True,
                                 decode_cf=True,
