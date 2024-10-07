@@ -356,6 +356,7 @@ class GenericHandler(CommonHandler):
             partial_preprocess = partial(
                 preprocess_xarray, dataset_config=self.dataset_config
             )
+            partial_preprocess_already_run = False
 
             drop_vars_list = [
                 var_name
@@ -394,6 +395,8 @@ class GenericHandler(CommonHandler):
                             data_vars="minimal",
                             drop_variables=drop_vars_list,
                         )
+
+                        partial_preprocess_already_run = True
                     except:
                         self.logger.warning(
                             f'{self.uuid_log}: The default engine "h5netcdf" could not be used. Falling back '
@@ -416,6 +419,8 @@ class GenericHandler(CommonHandler):
                                 data_vars="minimal",
                                 drop_variables=drop_vars_list,
                             )
+
+                            partial_preprocess_already_run = True
 
                         except:
                             self.logger.warning(
@@ -490,7 +495,9 @@ class GenericHandler(CommonHandler):
                     #       1) serialization issue if preprocess is within a class
                     #       2) blowing of memory if preprocess function is outside of a class and only does return ds
 
-                    ds = preprocess_xarray(ds, self.dataset_config)
+                    # If ds open with mf_dataset with the partial preprocess_xarray, no need to re-run it again!
+                    if partial_preprocess_already_run == False:
+                        ds = preprocess_xarray(ds, self.dataset_config)
 
                     # NOTE: if I comment the next line, i get some errors with the latest chunk for some variables
                     ds = ds.chunk(
