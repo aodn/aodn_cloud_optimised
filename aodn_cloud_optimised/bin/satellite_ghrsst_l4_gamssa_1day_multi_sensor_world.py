@@ -9,7 +9,6 @@ def main():
         "IMOS/SRS/SST/ghrsst/L4/GAMSSA/",
         # "--filters",
         # "FILTER_STRING_1",
-        # "FILTER_STRING_1",
         "--dataset-config",
         "satellite_ghrsst_l4_gamssa_1day_multi_sensor_world.json",
         "--clear-existing-data",
