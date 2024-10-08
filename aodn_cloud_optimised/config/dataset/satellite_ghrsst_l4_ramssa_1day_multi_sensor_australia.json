@@ -21,16 +21,16 @@
   "dimensions": {
     "time": {
       "name": "time",
-      "chunk": 5,
+      "chunk": 3,
       "rechunk": true
     },
     "latitude": {
       "name": "lat",
-      "chunk": 720
+      "chunk": 360
     },
     "longitude": {
       "name": "lon",
-      "chunk": 1440
+      "chunk": 720
     }
   },
   "var_template_shape": "analysed_sst",
