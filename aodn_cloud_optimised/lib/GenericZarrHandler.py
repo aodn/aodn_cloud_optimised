@@ -70,6 +70,10 @@ def preprocess_xarray(ds, dataset_config):
     # TODO: make the variable below something more generic? a parameter?
     var_template_shape = dataset_config.get("var_template_shape")
 
+    # retrieve filename from ds
+    var = next(var for var in ds)
+    filename = os.path.basename(ds[var].encoding["source"])
+    logger.info(f"Applying preprocessing on dataset from {filename}")
     try:
         warnings.filterwarnings("error", category=RuntimeWarning)
         nan_array = np.full(ds[var_template_shape].shape, np.nan, dtype=np.float64)
@@ -84,9 +88,7 @@ def preprocess_xarray(ds, dataset_config):
 
         # if variable doesn't exist
         if variable_name not in ds:
-            # self.logger.warning(
-            #     f"{filename}: add missing {variable_name} to xarray dataset"
-            # )
+
             logger.warning(
                 f"Add missing {variable_name} to xarray dataset with NaN values"
             )
@@ -116,26 +118,27 @@ def preprocess_xarray(ds, dataset_config):
             ds[variable_name] = ds[variable_name].astype(datatype)
 
         # if variable already exists
-        else:
+        # else:
+        #
+        #     if (
+        #         datatype == "timestamp[ns]"
+        #     ):  # Timestamps do not have an astype method. But numpy.datetime64 do.
+        #         datatype = "datetime64[ns]"
+        #
+        #     elif not np.issubdtype(datatype, np.number):
+        #         # we repeat the string variable to match the size of the TIME dimension
+        #         ds[variable_name] = (
+        #             (dimensions["time"]["name"],),
+        #             np.full_like(
+        #                 ds[dimensions["time"]["name"]],
+        #                 ds[variable_name],
+        #                 dtype="<S1",
+        #             ),
+        #         )
+        #
+        #     ds[variable_name] = ds[variable_name].astype(datatype)
 
-            if (
-                datatype == "timestamp[ns]"
-            ):  # Timestamps do not have an astype method. But numpy.datetime64 do.
-                datatype = "datetime64[ns]"
-
-            elif not np.issubdtype(datatype, np.number):
-                # we repeat the string variable to match the size of the TIME dimension
-                ds[variable_name] = (
-                    (dimensions["time"]["name"],),
-                    np.full_like(
-                        ds[dimensions["time"]["name"]],
-                        ds[variable_name],
-                        dtype="<S1",
-                    ),
-                )
-
-            ds[variable_name] = ds[variable_name].astype(datatype)
-
+    logger.info(f"Succesfully applied preprocessing to dataset from {filename}")
     return ds
 
 
@@ -363,9 +366,10 @@ class GenericHandler(CommonHandler):
                 for var_name, attrs in self.schema.items()
                 if attrs.get("drop_vars", False)
             ]
-            self.logger.warning(
-                f"{self.uuid_log}: Dropping variables: {drop_vars_list} from the dataset"
-            )
+            if drop_vars_list:
+                self.logger.warning(
+                    f"{self.uuid_log}: Dropping variables: {drop_vars_list} from the dataset"
+                )
 
             with dask.config.set(
                 **{
@@ -497,6 +501,9 @@ class GenericHandler(CommonHandler):
 
                     # If ds open with mf_dataset with the partial preprocess_xarray, no need to re-run it again!
                     if partial_preprocess_already_run == False:
+                        self.logger.warning(
+                            f"{self.uuid_log}: partial_preprocess_already_run is False"
+                        )
                         ds = preprocess_xarray(ds, self.dataset_config)
 
                     # NOTE: if I comment the next line, i get some errors with the latest chunk for some variables
