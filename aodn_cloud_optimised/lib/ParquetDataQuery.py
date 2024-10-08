@@ -10,6 +10,7 @@ from functools import lru_cache
 from typing import Final
 
 import boto3
+import pandas as pd
 import geopandas as gpd
 import gsw  # TEOS-10 library
 import numpy as np
@@ -263,6 +264,49 @@ def get_spatial_extent(parquet_ds: pq.ParquetDataset) -> MultiPolygon:
     multi_polygon = MultiPolygon(polygon_array_partitions.tolist())
 
     return multi_polygon
+
+
+def create_timeseries(ds, var_name, lat, lon, start_time, end_time):
+    """
+    Creates a time series plot of a given variable at a specific latitude and longitude over a specified time range.
+    Also returns the time series data as a pandas DataFrame.
+
+    Parameters:
+    - ds: xarray.Dataset containing the data.
+    - var_name: str, the name of the variable to plot (e.g., 'analysed_sst').
+    - lat: float, latitude value.
+    - lon: float, longitude value.
+    - start_time: str, start date in 'YYYY-MM-DD' format.
+    - end_time: str, end date in 'YYYY-MM-DD' format.
+
+    Returns:
+    - A plot of the variable's time series at the specified location and time range.
+    - A pandas DataFrame containing the time series data.
+    """
+
+    # First, slice the dataset to the time range
+    time_sliced_data = ds[var_name].sel(time=slice(start_time, end_time))
+
+    # Then, select the nearest latitude and longitude
+    selected_data = time_sliced_data.sel(lat=lat, lon=lon, method="nearest")
+
+    # Convert the selected data to a pandas DataFrame
+    time_series_df = selected_data.to_dataframe().reset_index()
+
+    # Plot the selected data
+    selected_data.plot()
+
+    # Dynamic title based on the selected lat/lon and time range
+    plt.title(
+        f'{ds[var_name].attrs.get("long_name", var_name)} at lat={selected_data.lat.values}, '
+        f"lon={selected_data.lon.values} from {start_time} to {end_time}"
+    )
+    plt.xlabel("Time")
+    plt.ylabel(f'{ds[var_name].attrs.get("units", "unitless")}')
+    plt.show()
+
+    # Return the plot and the pandas DataFrame
+    return time_series_df
 
 
 def plot_spatial_extent(parquet_ds):
