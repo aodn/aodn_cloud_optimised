@@ -73,7 +73,12 @@ def preprocess_xarray(ds, dataset_config):
 
     # retrieve filename from ds
     var = next(var for var in ds)
-    filename = os.path.basename(ds[var].encoding["source"])
+    try:
+        filename = os.path.basename(ds[var].encoding["source"])
+    except KeyError as e:
+        logger.warning(f"Error from Xarray to retrieve the unique filename.\n {e}")
+        filename = "UNKOWN_FILENAME.nc"
+
     logger.info(f"Applying preprocessing on dataset from {filename}")
     try:
         warnings.filterwarnings("error", category=RuntimeWarning)
