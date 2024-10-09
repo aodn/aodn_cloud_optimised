@@ -5,15 +5,19 @@ Notebooks
 import json
 import os
 import re
-from datetime import datetime, timezone
+from datetime import datetime, timedelta
+from datetime import timezone
 from functools import lru_cache
 from typing import Final
 
 import boto3
-import pandas as pd
+import cartopy.crs as ccrs  # For coastline plotting
+import cartopy.feature as cfeature
 import geopandas as gpd
 import gsw  # TEOS-10 library
+import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import pyarrow as pa
 import pyarrow.compute as pc
 import pyarrow.fs as fs
@@ -266,6 +270,44 @@ def get_spatial_extent(parquet_ds: pq.ParquetDataset) -> MultiPolygon:
     return multi_polygon
 
 
+def validate_date(date_str: str) -> bool:
+    """
+    Validates if a date string is in 'YYYY-MM-DD' format and checks if it's a valid date.
+
+    Args:
+        date_str (str): The date string to validate.
+
+    Returns:
+        bool: True if the date is valid, False otherwise.
+    """
+    try:
+        datetime.strptime(date_str, "%Y-%m-%d")
+        return True
+    except ValueError:
+        return False
+
+
+def normalize_date(date_str: str) -> str:
+    """
+    Converts an invalid date to a valid one by rolling over.
+
+    Args:
+        date_str (str): The input date string in 'YYYY-MM-DD' format.
+
+    Returns:
+        str: A valid date string in 'YYYY-MM-DD' format.
+    """
+    try:
+        # Try to parse the date, this will throw an error if the date is invalid
+        date_obj = datetime.strptime(date_str, "%Y-%m-%d")
+    except ValueError:
+        # Handle invalid dates by using the normalization strategy
+        year, month, day = map(int, date_str.split("-"))
+        date_obj = datetime(year, month, 1) + timedelta(days=day - 1)
+
+    return date_obj.strftime("%Y-%m-%d")
+
+
 def create_timeseries(ds, var_name, lat, lon, start_time, end_time):
     """
     Creates a time series plot of a given variable at a specific latitude and longitude over a specified time range.
@@ -283,6 +325,9 @@ def create_timeseries(ds, var_name, lat, lon, start_time, end_time):
     - A plot of the variable's time series at the specified location and time range.
     - A pandas DataFrame containing the time series data.
     """
+
+    start_time = normalize_date(start_time)
+    end_time = normalize_date(end_time)
 
     # First, slice the dataset to the time range
     time_sliced_data = ds[var_name].sel(time=slice(start_time, end_time))
@@ -334,12 +379,6 @@ def plot_spatial_extent(parquet_ds):
 
     # Show the plot
     plt.show()
-
-
-import matplotlib.pyplot as plt
-import pandas as pd
-import cartopy.crs as ccrs  # For coastline plotting
-import cartopy.feature as cfeature
 
 
 def plot_gridded_variable(
