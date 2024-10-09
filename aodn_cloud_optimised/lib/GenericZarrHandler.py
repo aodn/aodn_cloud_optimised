@@ -119,25 +119,25 @@ def preprocess_xarray(ds, dataset_config):
             ds[variable_name] = ds[variable_name].astype(datatype)
 
         # if variable already exists
-        # else:
-        #
-        #     if (
-        #         datatype == "timestamp[ns]"
-        #     ):  # Timestamps do not have an astype method. But numpy.datetime64 do.
-        #         datatype = "datetime64[ns]"
-        #
-        #     elif not np.issubdtype(datatype, np.number):
-        #         # we repeat the string variable to match the size of the TIME dimension
-        #         ds[variable_name] = (
-        #             (dimensions["time"]["name"],),
-        #             np.full_like(
-        #                 ds[dimensions["time"]["name"]],
-        #                 ds[variable_name],
-        #                 dtype="<S1",
-        #             ),
-        #         )
-        #
-        #     ds[variable_name] = ds[variable_name].astype(datatype)
+        else:
+
+            if (
+                datatype == "timestamp[ns]"
+            ):  # Timestamps do not have an astype method. But numpy.datetime64 do.
+                datatype = "datetime64[ns]"
+
+            elif not np.issubdtype(datatype, np.number):
+                # we repeat the string variable to match the size of the TIME dimension
+                ds[variable_name] = (
+                    (dimensions["time"]["name"],),
+                    np.full_like(
+                        ds[dimensions["time"]["name"]],
+                        ds[variable_name],
+                        dtype="<S1",
+                    ),
+                )
+
+            ds[variable_name] = ds[variable_name].astype(datatype)
 
     logger.info(f"Succesfully applied preprocessing to dataset from {filename}")
     return ds
