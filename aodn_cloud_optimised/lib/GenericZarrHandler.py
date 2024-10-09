@@ -1,6 +1,7 @@
 import importlib.resources
 import os
 import uuid
+import traceback
 import warnings
 from functools import partial
 
@@ -647,7 +648,7 @@ class GenericHandler(CommonHandler):
 
                 except Exception as e:
                     self.logger.error(
-                        f"{self.uuid_log}: An unexpected error occurred: {e}"
+                        f"{self.uuid_log}: An unexpected error occurred: {e}.\n {traceback.format_exc()}"
                     )
                     if "ds" in locals():
                         self.postprocess(ds)
