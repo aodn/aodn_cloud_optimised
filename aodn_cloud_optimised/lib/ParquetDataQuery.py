@@ -329,6 +329,8 @@ def create_timeseries(ds, var_name, lat, lon, start_time, end_time):
     start_time = normalize_date(start_time)
     end_time = normalize_date(end_time)
 
+    ds = ds.sortby("time")
+
     # First, slice the dataset to the time range
     time_sliced_data = ds[var_name].sel(time=slice(start_time, end_time))
 
@@ -401,6 +403,8 @@ def plot_gridded_variable(
     - var_name: str, variable name to plot (default is 'sea_surface_temperature').
     - coastline_resolution: str, resolution of the coastlines ('110m', '50m', '10m').
     """
+
+    ds = ds.sortby("time")
 
     # Decide on the slice order
     if ds.lat[0] < ds.lat[-1]:
