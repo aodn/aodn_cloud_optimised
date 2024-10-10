@@ -38,7 +38,7 @@ def main():
         "IMOS/SRS/SST/ghrsst/L3S-1dS/dn/2021",
         "IMOS/SRS/SST/ghrsst/L3S-1dS/dn/2022",
         "IMOS/SRS/SST/ghrsst/L3S-1dS/dn/2023",
-        "IMOS/SRS/SST/ghrsst/L3S-1dS/dn/2024"
+        "IMOS/SRS/SST/ghrsst/L3S-1dS/dn/2024",
         # "--filters",
         # "FILTER_STRING_1",
         # "FILTER_STRING_1",
