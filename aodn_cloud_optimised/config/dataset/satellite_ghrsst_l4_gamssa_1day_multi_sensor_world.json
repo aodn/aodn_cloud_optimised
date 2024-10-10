@@ -16,27 +16,28 @@
       "memory_limit": "8GB"
     }
   },
-  "batch_size": 200,
+  "batch_size": 300,
   "metadata_uuid": "2d496463-600c-465a-84a1-8a4ab76bd505",
   "dimensions": {
     "time": {
       "name": "time",
-      "chunk": 5,
+      "chunk": 3,
       "rechunk": true
     },
     "latitude": {
       "name": "lat",
-      "chunk": 720
+      "chunk": 360
     },
     "longitude": {
       "name": "lon",
-      "chunk": 1440
+      "chunk": 720
     }
   },
   "var_template_shape": "analysed_sst",
   "vars_to_drop_no_common_dimension": [
     "lon",
-    "lat"
+    "lat",
+    "crs"
   ],
   "schema": {
     "time": {
@@ -120,14 +121,6 @@
         4,
         8
       ]
-    },
-    "crs": {
-      "type": "int32",
-      "long_name": "coordinate reference system",
-      "grid_mapping_name": "latitude_longitude",
-      "semi_major_axis": 6379137.0,
-      "inverse_flattening": 298.257223563,
-      "epsg_code": "EPSG:4326"
     }
   },
   "dataset_gattrs": {
