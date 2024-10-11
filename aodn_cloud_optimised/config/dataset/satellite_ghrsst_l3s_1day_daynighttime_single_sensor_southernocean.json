@@ -4,8 +4,8 @@
   "cloud_optimised_format": "zarr",
   "cluster_options": {
     "n_workers": [
-      1,
-      40
+      5,
+      60
     ],
     "scheduler_vm_types": "t3.medium",
     "worker_vm_types": "t3.large",

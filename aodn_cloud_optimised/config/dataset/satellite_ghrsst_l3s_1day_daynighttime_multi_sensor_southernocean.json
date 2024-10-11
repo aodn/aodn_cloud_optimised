@@ -4,19 +4,19 @@
   "cloud_optimised_format": "zarr",
   "cluster_options": {
     "n_workers": [
-      2,
+      10,
       40
     ],
-    "scheduler_vm_types": "t3.medium",
-    "worker_vm_types": "t3.large",
+    "scheduler_vm_types": "t3.large",
+    "worker_vm_types": "t3.xlarge",
     "allow_ingress_from": "me",
     "compute_purchase_option": "spot_with_fallback",
     "worker_options": {
       "nthreads": 8,
-      "memory_limit": "6GB"
+      "memory_limit": "16GB"
     }
   },
-  "batch_size": 30,
+  "batch_size": 80,
   "metadata_uuid": "",
   "dimensions": {
     "time": {
@@ -26,11 +26,11 @@
     },
     "latitude": {
       "name": "lat",
-      "chunk": 1000
+      "chunk": 500
     },
     "longitude": {
       "name": "lon",
-      "chunk": 1000
+      "chunk": 500
     }
   },
   "var_template_shape": "sea_surface_temperature",
@@ -65,6 +65,25 @@
       "axis": "T",
       "comment": "A typical reference time for data",
       "standard_name": "time"
+    },
+    "sea_ice_fraction": {
+      "type": "double",
+      "long_name": "sea ice fraction",
+      "units": "1",
+      "comment": "Fractional sea ice cover (Unitless). For spatial resolution refer to the source.",
+      "standard_name": "sea_ice_area_fraction",
+      "source": "SSMI-NCEP-Analysis-ICE-5min",
+      "valid_min": -127,
+      "valid_max": 127
+    },
+    "sea_ice_fraction_dtime_from_sst": {
+      "type": "double",
+      "long_name": "time difference of sea ice fraction measurement from sst measurement",
+      "units": "hour",
+      "comment": "The time difference in hours is estimated from the SST and sea ice data sets",
+      "source": "SSMI-NCEP-Analysis-ICE-5min",
+      "valid_min": -127,
+      "valid_max": 127
     },
     "sea_surface_temperature": {
       "type": "double",
@@ -109,25 +128,6 @@
       "units": "hour",
       "comment": "The hours between the wind speed measurement and the SST observation",
       "source": "ACCESSG-ABOM-Analysis-WSP;various;ACCESSG-ABOM-Forecast-WSP",
-      "valid_min": -127,
-      "valid_max": 127
-    },
-    "sea_ice_fraction": {
-      "type": "double",
-      "long_name": "sea ice fraction",
-      "units": "1",
-      "comment": "Fractional sea ice cover (Unitless). For spatial resolution refer to the source.",
-      "standard_name": "sea_ice_area_fraction",
-      "source": "SSMI-NCEP-Analysis-ICE-5min",
-      "valid_min": -127,
-      "valid_max": 127
-    },
-    "sea_ice_fraction_dtime_from_sst": {
-      "type": "double",
-      "long_name": "time difference of sea ice fraction measurement from sst measurement",
-      "units": "hour",
-      "comment": "The time difference in hours is estimated from the SST and sea ice data sets",
-      "source": "SSMI-NCEP-Analysis-ICE-5min",
       "valid_min": -127,
       "valid_max": 127
     },

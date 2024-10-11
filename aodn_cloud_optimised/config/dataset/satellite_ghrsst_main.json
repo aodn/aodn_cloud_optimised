@@ -26,11 +26,11 @@
     },
     "latitude": {
       "name": "lat",
-      "chunk": 1000
+      "chunk": 500
     },
     "longitude": {
       "name": "lon",
-      "chunk": 1000
+      "chunk": 500
     }
   },
   "var_template_shape": "sea_surface_temperature",
