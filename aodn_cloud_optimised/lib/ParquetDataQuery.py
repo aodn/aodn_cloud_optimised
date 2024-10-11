@@ -23,6 +23,7 @@ import pyarrow.compute as pc
 import pyarrow.fs as fs
 import pyarrow.parquet as pq
 import pyarrow.parquet as pq
+import seaborn as sns
 from botocore import UNSIGNED
 from botocore.client import Config
 from fuzzywuzzy import fuzz
@@ -331,6 +332,33 @@ def create_timeseries(ds, var_name, lat, lon, start_time, end_time):
 
     ds = ds.sortby("time")
 
+    # Get latitude, longitude, and time extents
+    lat_min, lat_max = ds["lat"].min().item(), ds["lat"].max().item()
+    lon_min, lon_max = ds["lon"].min().item(), ds["lon"].max().item()
+    time_min, time_max = pd.to_datetime(ds["time"].min().item()), pd.to_datetime(
+        ds["time"].max().item()
+    )
+
+    # Test if latitude and longitude are within bounds
+    if not (lat_min <= lat <= lat_max):
+        raise ValueError(
+            f"Latitude {lat} is out of bounds. Dataset latitude extent is ({lat_min}, {lat_max})"
+        )
+    if not (lon_min <= lon <= lon_max):
+        raise ValueError(
+            f"Longitude {lon} is out of bounds. Dataset longitude extent is ({lon_min}, {lon_max})"
+        )
+
+    # Test if start_time and end_time are within bounds
+    if not (time_min <= pd.to_datetime(start_time) <= time_max):
+        raise ValueError(
+            f"Start time {start_time} is out of bounds. Dataset time extent is ({time_min.date()}, {time_max.date()})"
+        )
+    if not (time_min <= pd.to_datetime(end_time) <= time_max):
+        raise ValueError(
+            f"End time {end_time} is out of bounds. Dataset time extent is ({time_min.date()}, {time_max.date()})"
+        )
+
     # First, slice the dataset to the time range
     time_sliced_data = ds[var_name].sel(time=slice(start_time, end_time))
 
@@ -383,6 +411,39 @@ def plot_spatial_extent(parquet_ds):
     plt.show()
 
 
+def plot_time_coverage(ds):
+    """
+    Plots the time coverage of the given xarray dataset.
+
+    Args:
+        ds (xarray.Dataset): The input dataset containing a 'time' dimension.
+    """
+    # Convert the time dimension to a pandas DataFrame
+    time_series = pd.to_datetime(ds["time"].values)
+
+    # Create a DataFrame with the year and month as separate columns
+    time_df = pd.DataFrame({"year": time_series.year, "month": time_series.month})
+
+    # Create a pivot table counting the occurrences of data points per year-month combination
+    coverage = time_df.groupby(["year", "month"]).size().unstack(fill_value=0)
+
+    # Plot using a heatmap (like GitHub green dots)
+    plt.figure(figsize=(10, 6))
+    sns.heatmap(coverage.T, cmap="Greens", cbar=False, linewidths=0.5, square=True)
+
+    # Customize plot
+    plt.title("Time Coverage (per month)")
+    plt.xlabel("Year")
+    plt.ylabel("Month")
+    plt.yticks(
+        ticks=range(1, 13), labels=[f"{i:02d}" for i in range(1, 13)], rotation=0
+    )
+
+    # Show the plot
+    plt.tight_layout()
+    plt.show()
+
+
 def plot_gridded_variable(
     ds,
     start_date,
@@ -410,8 +471,22 @@ def plot_gridded_variable(
     if ds.lat[0] < ds.lat[-1]:
         lat_slice = lat_slice
     elif ds.lat[0] > ds.lat[-1]:
-        # We reverse the slice
+        # Reverse the slice
         lat_slice = lat_slice[::-1]
+
+    # Get latitude and longitude extents
+    lat_min, lat_max = ds["lat"].min().item(), ds["lat"].max().item()
+    lon_min, lon_max = ds["lon"].min().item(), ds["lon"].max().item()
+
+    # Test if lat_slice and lon_slice are within bounds
+    if not (lat_min <= lat_slice[0] <= lat_max and lat_min <= lat_slice[1] <= lat_max):
+        raise ValueError(
+            f"Latitude slice {lat_slice} is out of bounds. Dataset latitude extent is ({lat_min}, {lat_max})"
+        )
+    if not (lon_min <= lon_slice[0] <= lon_max and lon_min <= lon_slice[1] <= lon_max):
+        raise ValueError(
+            f"Longitude slice {lon_slice} is out of bounds. Dataset longitude extent is ({lon_min}, {lon_max})"
+        )
 
     # Parse the start date
     start_date_parsed = pd.to_datetime(start_date)
@@ -464,21 +539,55 @@ def plot_gridded_variable(
                 lat=slice(lat_slice[0], lat_slice[1]),
             )
 
+            # Check for NaNs
+            if data.isnull().all():
+                print(
+                    f"No valid data for {date.strftime('%Y-%m-%d')}, skipping this date."
+                )
+                continue
+
             # Retrieve and check units for the current plot
             var_units = ds[var_name].attrs.get("units", "unknown units")
-            # print(f"Plotting data for date: {date.strftime('%Y-%m-%d')} with units: {var_units}")
 
             # Convert Kelvin to Celsius if needed
             if var_units.lower() == "kelvin":
                 data = data - 273.15
                 var_units = "°C"  # Change units in the label
-                # print("Converted data from Kelvin to Celsius.")
 
             # Update vmin and vmax for colorbar scaling
             vmin = min(vmin, data.min().values)
             vmax = max(vmax, data.max().values)
 
-            # Plot the data without a colorbar
+        except Exception as err:
+            print(f"Error processing date {date.strftime('%Y-%m-%d')}: {err}")
+            continue
+
+    # Check if vmin or vmax are still invalid (if no data was found)
+    if not np.isfinite(vmin) or not np.isfinite(vmax):
+        raise ValueError(
+            "No valid data found in the selected range of dates and coordinates."
+        )
+
+    # Plot each date after determining vmin and vmax
+    for date in dates:
+        try:
+            data = ds[var_name].sel(
+                time=date.strftime("%Y-%m-%d"),
+                lon=slice(lon_slice[0], lon_slice[1]),
+                lat=slice(lat_slice[0], lat_slice[1]),
+            )
+
+            # Skip if no valid data is found for the date
+            if data.isnull().all():
+                print(f"No data for {date.strftime('%Y-%m-%d')}, skipping plot.")
+                continue
+
+            var_units = ds[var_name].attrs.get("units", "unknown units")
+            if var_units.lower() == "kelvin":
+                data = data - 273.15
+                var_units = "°C"
+
+            # Plot the data
             img = data.plot(
                 ax=axes[dates.index(date)],
                 cmap=cmap,
@@ -487,7 +596,7 @@ def plot_gridded_variable(
                 add_colorbar=False,
             )
 
-            # Add coastlines with specified resolution and gridlines
+            # Add coastlines and gridlines
             ax = axes[dates.index(date)]
             ax.coastlines(resolution=coastline_resolution)
             ax.add_feature(cfeature.BORDERS, linestyle=":")
@@ -496,23 +605,20 @@ def plot_gridded_variable(
             # Set the title with the date
             ax.set_title(date.strftime("%Y-%m-%d"))
 
-        except TypeError as err:
-            # Print traceback for the TypeError
-            print(f"{err}")
+        except Exception as err:
+            print(f"Error processing date {date.strftime('%Y-%m-%d')}: {err}")
             ax.set_title(f"No data for {date.strftime('%Y-%m-%d')}")
             ax.axis("off")
 
     # Create a single colorbar for all plots
-    cbar_ax = fig.add_axes(
-        [1, 0.15, 0.02, 0.7]
-    )  # Adjust the size and position of the colorbar
+    cbar_ax = fig.add_axes([1, 0.15, 0.02, 0.7])
     cbar = fig.colorbar(img, cax=cbar_ax, orientation="vertical")
     cbar.set_label(f"{var_long_name} ({var_units})")
     cbar.set_ticks([vmin, (vmin + vmax) / 2, vmax])
     cbar.ax.set_yticklabels([f"{vmin:.2f}", f"{(vmin + vmax) / 2:.2f}", f"{vmax:.2f}"])
 
     # Adjust layout to give more space for the colorbar
-    plt.subplots_adjust(right=0.85)  # Adjust this value as necessary
+    plt.subplots_adjust(right=0.85)
     plt.tight_layout()
     plt.show()
 
