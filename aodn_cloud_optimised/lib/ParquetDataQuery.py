@@ -298,15 +298,13 @@ def normalize_date(date_str: str) -> str:
     Returns:
         str: A valid date string in 'YYYY-MM-DD' format.
     """
-    try:
-        # Try to parse the date, this will throw an error if the date is invalid
-        date_obj = datetime.strptime(date_str, "%Y-%m-%d")
-    except ValueError:
-        # Handle invalid dates by using the normalization strategy
-        year, month, day = map(int, date_str.split("-"))
-        date_obj = datetime(year, month, 1) + timedelta(days=day - 1)
+    # Use pd.to_datetime to handle normalization and invalid dates
+    date_obj = pd.to_datetime(date_str, errors="coerce")
 
-    return date_obj.strftime("%Y-%m-%d")
+    if pd.isna(date_obj):
+        raise ValueError(f"Invalid date: {date_str}")
+
+    return date_obj.strftime("%Y-%m-%d %H:%M:%S")
 
 
 def create_timeseries(ds, var_name, lat, lon, start_time, end_time):
@@ -352,11 +350,13 @@ def create_timeseries(ds, var_name, lat, lon, start_time, end_time):
     # Test if start_time and end_time are within bounds
     if not (time_min <= pd.to_datetime(start_time) <= time_max):
         raise ValueError(
-            f"Start time {start_time} is out of bounds. Dataset time extent is ({time_min.date()}, {time_max.date()})"
+            f"Start time {start_time} is out of bounds. Dataset time extent is ({time_min.strftime('%Y-%m-%d %H:%M:%S')}, {time_max.strftime('%Y-%m-%d %H:%M:%S')})"
+            # f"Start time {start_time} is out of bounds. Dataset time extent is ({time_min.date()}, {time_max.date()})"
         )
     if not (time_min <= pd.to_datetime(end_time) <= time_max):
         raise ValueError(
-            f"End time {end_time} is out of bounds. Dataset time extent is ({time_min.date()}, {time_max.date()})"
+            f"End time {end_time} is out of bounds. Dataset time extent is ({time_min.strftime('%Y-%m-%d %H:%M:%S')}, {time_max.strftime('%Y-%m-%d %H:%M:%S')})"
+            # f"End time {end_time} is out of bounds. Dataset time extent is ({time_min.date()}, {time_max.date()})"
         )
 
     # First, slice the dataset to the time range
@@ -411,15 +411,15 @@ def plot_spatial_extent(parquet_ds):
     plt.show()
 
 
-def plot_time_coverage(ds):
+def plot_time_coverage(ds, time_var="time"):
     """
     Plots the time coverage of the given xarray dataset.
 
     Args:
         ds (xarray.Dataset): The input dataset containing a 'time' dimension.
     """
-    # Convert the time dimension to a pandas DataFrame
-    time_series = pd.to_datetime(ds["time"].values)
+    # Convert the time dimension to a pandas DatetimeIndex
+    time_series = pd.to_datetime(ds[time_var].values)
 
     # Create a DataFrame with the year and month as separate columns
     time_df = pd.DataFrame({"year": time_series.year, "month": time_series.month})
@@ -427,21 +427,29 @@ def plot_time_coverage(ds):
     # Create a pivot table counting the occurrences of data points per year-month combination
     coverage = time_df.groupby(["year", "month"]).size().unstack(fill_value=0)
 
-    # Plot using a heatmap (like GitHub green dots)
+    # Only include the available months and years in the dataset
     plt.figure(figsize=(10, 6))
-    sns.heatmap(coverage.T, cmap="Greens", cbar=False, linewidths=0.5, square=True)
+    heatmap = sns.heatmap(
+        coverage.T, cmap="Greens", cbar=True, linewidths=0.5, square=True
+    )
 
     # Customize plot
     plt.title("Time Coverage (per month)")
     plt.xlabel("Year")
     plt.ylabel("Month")
-    plt.yticks(
-        ticks=range(1, 13), labels=[f"{i:02d}" for i in range(1, 13)], rotation=0
-    )
 
-    # Show the plot
-    plt.tight_layout()
-    plt.show()
+    # Set the color bar title
+    colorbar = heatmap.collections[0].colorbar
+    colorbar.set_label("N Data Points per Month")
+
+    # Adjust y-axis ticks to only show months that are present in the dataset
+    available_months = coverage.columns.get_level_values(0).unique()
+    plt.yticks(
+        ticks=range(len(available_months)),
+        labels=[f"{i:02d}" for i in available_months],
+        rotation=45,
+    )
+    plt.xticks(rotation=45)
 
 
 def plot_gridded_variable(
@@ -617,8 +625,9 @@ def plot_gridded_variable(
     cbar.set_ticks([vmin, (vmin + vmax) / 2, vmax])
     cbar.ax.set_yticklabels([f"{vmin:.2f}", f"{(vmin + vmax) / 2:.2f}", f"{vmax:.2f}"])
 
+    fig.suptitle(f"{var_long_name} Over Time", fontsize=16, fontweight="bold")
     # Adjust layout to give more space for the colorbar
-    plt.subplots_adjust(right=0.85)
+    plt.subplots_adjust(right=0.85, top=0.9)
     plt.tight_layout()
     plt.show()
 
