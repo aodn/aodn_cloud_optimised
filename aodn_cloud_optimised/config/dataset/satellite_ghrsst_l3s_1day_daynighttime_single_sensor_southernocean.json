@@ -1,0 +1,276 @@
+{
+  "dataset_name": "satellite_ghrsst_l3s_1day_daynighttime_single_sensor_southernocean",
+  "logger_name": "satellite_ghrsst_l3s_1day_daynighttime_single_sensor_southernocean",
+  "cloud_optimised_format": "zarr",
+  "cluster_options": {
+    "n_workers": [
+      5,
+      60
+    ],
+    "scheduler_vm_types": "t3.medium",
+    "worker_vm_types": "t3.large",
+    "allow_ingress_from": "me",
+    "compute_purchase_option": "spot_with_fallback",
+    "worker_options": {
+      "nthreads": 8,
+      "memory_limit": "6GB"
+    }
+  },
+  "batch_size": 30,
+  "metadata_uuid": "165a23d7-5ef3-4cab-9e02-90c8adb941dd",
+  "dimensions": {
+    "time": {
+      "name": "time",
+      "chunk": 5,
+      "rechunk": false
+    },
+    "latitude": {
+      "name": "lat",
+      "chunk": 250
+    },
+    "longitude": {
+      "name": "lon",
+      "chunk": 250
+    }
+  },
+  "var_template_shape": "sea_surface_temperature",
+  "vars_to_drop_no_common_dimension": [
+    "lat",
+    "lon"
+  ],
+  "schema": {
+    "lat": {
+      "type": "float",
+      "long_name": "latitude",
+      "units": "degrees_north",
+      "valid_min": -90.0,
+      "valid_max": 90.0,
+      "axis": "Y",
+      "comment": "Latitudes for locating data",
+      "standard_name": "latitude"
+    },
+    "lon": {
+      "type": "float",
+      "long_name": "longitude",
+      "units": "degrees_east",
+      "valid_min": -180.0,
+      "valid_max": 360.0,
+      "axis": "X",
+      "comment": "Longitudes for locating data",
+      "standard_name": "longitude"
+    },
+    "time": {
+      "type": "timestamp[ns]",
+      "long_name": "reference time of sst file",
+      "axis": "T",
+      "comment": "A typical reference time for data",
+      "standard_name": "time"
+    },
+    "sea_ice_fraction": {
+      "type": "double",
+      "valid_min": 0,
+      "valid_max": 100,
+      "units": "1",
+      "long_name": "sea ice area fraction",
+      "standard_name": "sea_ice_area_fraction",
+      "comment": "Fractional sea ice cover from NCEP-ICE product (Grumbine, 1996) .",
+      "source": "SSMI-NCEP-Analysis-ICE-5min",
+      "coverage_content_type": "auxiliaryInformation",
+      "grid_mapping": "crs"
+    },
+    "sea_ice_fraction_dtime_from_sst": {
+      "type": "double",
+      "long_name": "time difference of sea ice fraction measurement from sst measurement",
+      "units": "hour",
+      "comment": "The time difference in hours is estimated from the SST and sea ice data sets",
+      "source": "SSMI-NCEP-Analysis-ICE-5min",
+      "valid_min": -127,
+      "valid_max": 127
+    },
+    "sea_surface_temperature": {
+      "type": "double",
+      "long_name": "sea surface foundation temperature",
+      "units": "kelvin",
+      "comment": "An estimate of the foundation temperature of the upper few meters of the ocean in the absence of diurnal variation",
+      "standard_name": "sea_surface_foundation_temperature",
+      "valid_min": -32767,
+      "valid_max": 32767
+    },
+    "sst_dtime": {
+      "type": "double",
+      "long_name": "time difference from reference time",
+      "units": "second",
+      "comment": "time plus sst_dtime gives seconds after 00:00:00 UTC January 1, 1981",
+      "valid_min": -2147483645,
+      "valid_max": 2147483645
+    },
+    "dt_analysis": {
+      "type": "double",
+      "long_name": "deviation from last SST analysis",
+      "units": "kelvin",
+      "comment": "The difference between this SST and the previous day's SST",
+      "source": "ABOM-L4LRfnd-GLOB-GAMSSA_28km",
+      "valid_min": -127,
+      "valid_max": 127
+    },
+    "wind_speed": {
+      "type": "double",
+      "long_name": "wind speed",
+      "units": "m s-1",
+      "comment": "Typically represent surface winds (10 meters above the sea surface)",
+      "standard_name": "wind_speed",
+      "source": "ACCESSG-ABOM-Forecast-WSP",
+      "height": "10m",
+      "valid_min": -127,
+      "valid_max": 127
+    },
+    "wind_speed_dtime_from_sst": {
+      "type": "double",
+      "long_name": "time difference of wind speed measurement from sst measurement",
+      "units": "hour",
+      "comment": "The hours between the wind speed measurement and the SST observation",
+      "source": "ACCESSG-ABOM-Forecast-WSP",
+      "valid_min": -127,
+      "valid_max": 127
+    },
+    "satellite_zenith_angle": {
+      "type": "double",
+      "long_name": "satellite zenith angle",
+      "units": "angular_degree",
+      "comment": "The satellite zenith angle at the time of the SST observations",
+      "valid_min": -127,
+      "valid_max": 127
+    },
+    "l2p_flags": {
+      "type": "float",
+      "long_name": "L2P flags",
+      "valid_min": 0,
+      "valid_max": 32767,
+      "comment": "These flags are important to properly use the data.  Data not flagged as microwave are sourced from an infrared sensor. The lake and river flags are currently not set, but defined in GDS2.0r4. The aerosol flag indicates high aerosol concentration. The analysis flag indicates high difference from analysis temperatures (differences greater than Analysis Limit). The lowwind flag indicates regions of low wind speed (typically less than the low Wind Limit) per NWP model. The highwind flag indicates regions of high wind speed (typically greater than the high Wind Limit) per NWP model. See wind limits in the comment field for the actual values. The edge flag indicates pixel sizes that are larger than Pixel Spread times the size of the pixel in the center of the field of view in either lat or lon direction. The terminator flag indicates that the sun is near the horizon. The reflector flag indicates that the satellite would receive direct reflected sunlight if the earth was a perfect mirror. The swath flag is used in gridded files to indicate if the pixel could have been seen by the satellite. delta_dn indicates that the day.night sst algorithm was different from the standard algorithm. Other flags may be populated and are for internal use and the definitions may change, so should not be relied on. Flags greater than 64 only apply to non-land pixels",
+      "flag_meanings": "microwave land ice lake river reserved aerosol analysis lowwind highwind edge terminator reflector swath delta_dn",
+      "flag_values": [
+        1,
+        2,
+        4,
+        8,
+        16,
+        32,
+        64,
+        128,
+        256,
+        512,
+        1024,
+        2048,
+        4096,
+        8192,
+        16384
+      ]
+    },
+    "quality_level": {
+      "type": "float",
+      "long_name": "quality level of SST pixel",
+      "valid_min": 0,
+      "valid_max": 5,
+      "comment": "These are the overall quality indicators and are used for all GHRSST SSTs.In this case they are a function of distance to cloud, satellite zenith angle, and day/night",
+      "flag_meanings": "no_data bad_data worst_quality low_quality acceptable_quality best_quality",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "units": "1"
+    },
+    "sses_bias": {
+      "type": "double",
+      "long_name": "SSES bias estimate",
+      "units": "kelvin",
+      "comment": "Bias estimate derived from L2P bias per https://www.ghrsst.org/ghrsst/tags-and-wgs/stval-wg/sses-description-of-schemes/",
+      "valid_min": -127,
+      "valid_max": 127
+    },
+    "sses_standard_deviation": {
+      "type": "double",
+      "long_name": "SSES standard deviation estimate",
+      "units": "kelvin",
+      "comment": "Standard deviation estimate derived from L2P standard deviation per https://www.ghrsst.org/ghrsst/tags-and-wgs/stval-wg/sses-description-of-schemes/",
+      "valid_min": -127,
+      "valid_max": 127
+    },
+    "sses_count": {
+      "type": "double",
+      "long_name": "SSES count",
+      "units": "count",
+      "comment": "Weighted representative number of swath pixels. EXPERIMENTAL_FIELD",
+      "valid_min": -127,
+      "valid_max": 127
+    },
+    "sst_count": {
+      "type": "double",
+      "long_name": "Number of SST measurements",
+      "units": "count",
+      "comment": "Unweighted count of number of contributory SST measurements. EXPERIMENTAL_FIELD",
+      "valid_min": -127,
+      "valid_max": 127
+    },
+    "sst_mean": {
+      "type": "double",
+      "long_name": "Unweighted SST mean",
+      "units": "kelvin",
+      "comment": "Unweighted mean of contributory SST measurements. EXPERIMENTAL_FIELD",
+      "valid_min": -32767,
+      "valid_max": 32767
+    },
+    "sst_standard_deviation": {
+      "type": "double",
+      "long_name": "Unweighted SST standard deviation",
+      "units": "kelvin",
+      "valid_min": -127,
+      "valid_max": 127
+    }
+  },
+  "dataset_gattrs": {
+    "title": "FILL UP MANUALLY - CHECK DOCUMENTATION"
+  },
+  "aws_opendata_registry": {
+    "Name": "Satellite - Sea surface temperature - Level 3 - Single sensor - 1 day - Day and night time - Southern Ocean",
+    "Description": "This is a single-sensor SSTfnd product for a single 24 hour period, derived using observations from AVHRR instruments on all available NOAA polar-orbiting satellites.  It is provided as a 0.02deg x 0.02deg cylindrical equidistant projected map over the Southern Ocean region 3\u00b0E to 158\u00b0W, 27\u00b0S to 78\u00b0S.  Each grid cell contains the 24 hour average of all the highest available quality SSTs that overlap with that cell, weighted by the area of overlap.  The diagram at https://help.aodn.org.au/satellite-data-product-information/ indicates where this product fits within the GHRSST suite of NOAA/AVHRR products. The SSTfnd is derived by adding a constant 0.17 degC to the SSTskin observations after rejecting observations with low surface wind speeds (<6m/s by day and <2m/s at night) (see http://www.bom.gov.au/amoj/docs/2011/beggs.pdf). Matchups with buoy SSTfnd observations indicate typical 2014 biases of < 0.01 degC and standard deviations of 0.6 degC. Refer to the IMOS SST products web page at http://imos.org.au/sstproducts.html and Beggs et al. (2013) at http://imos.org.au/sstdata_references.html for further information.",
+    "Documentation": "https://catalogue-imos.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/165a23d7-5ef3-4cab-9e02-90c8adb941dd",
+    "Contact": "info@aodn.org.au",
+    "ManagedBy": "AODN",
+    "UpdateFrequency": "As Needed",
+    "Tags": [
+      "FILL UP MANUALLY - CHECK DOCUMENTATION"
+    ],
+    "License": "http://creativecommons.org/licenses/by/4.0/",
+    "Resources": [
+      {
+        "Description": "Cloud Optimised AODN dataset of IMOS - SRS - SST - L3S - Single Sensor - 1 day - day and night time - Southern Ocean",
+        "ARN": "arn:aws:s3:::aodn-cloud-optimised/satellite_ghrsst_l3s_1day_daynighttime_single_sensor_southernocean.zarr",
+        "Region": "ap-southeast-2",
+        "Type": "S3 Bucket"
+      }
+    ],
+    "DataAtWork": {
+      "Tutorials": [
+        {
+          "Title": "Accessing IMOS - SRS - SST - L3S - Single Sensor - 1 day - day and night time - Southern Ocean",
+          "URL": "https://nbviewer.org/github/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_ghrsst_l3s_1day_daynighttime_single_sensor_southernocean.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_ghrsst_l3s_1day_daynighttime_single_sensor_southernocean.ipynb",
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
+        },
+        {
+          "Title": "Accessing and search for any AODN dataset",
+          "URL": "https://nbviewer.org/github/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
+        }
+      ]
+    },
+    "Citation": "IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access]"
+  }
+}
