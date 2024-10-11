@@ -6,13 +6,13 @@ def main():
     command = [
         "generic_cloud_optimised_creation",
         "--paths",
-        "IMOS/SRS/SST/ghrsst/L3S-1dS/dn/1992",
-        "IMOS/SRS/SST/ghrsst/L3S-1dS/dn/1993",
-        "IMOS/SRS/SST/ghrsst/L3S-1dS/dn/1994",
-        "IMOS/SRS/SST/ghrsst/L3S-1dS/dn/1995",
-        "IMOS/SRS/SST/ghrsst/L3S-1dS/dn/1996",
-        "IMOS/SRS/SST/ghrsst/L3S-1dS/dn/1997",
-        "IMOS/SRS/SST/ghrsst/L3S-1dS/dn/1998",
+        # "IMOS/SRS/SST/ghrsst/L3S-1dS/dn/1992",  # OK
+        # "IMOS/SRS/SST/ghrsst/L3S-1dS/dn/1993",  # OK
+        # "IMOS/SRS/SST/ghrsst/L3S-1dS/dn/1994",  # OK
+        # "IMOS/SRS/SST/ghrsst/L3S-1dS/dn/1995",  # OK
+        # "IMOS/SRS/SST/ghrsst/L3S-1dS/dn/1996",  # OK
+        # "IMOS/SRS/SST/ghrsst/L3S-1dS/dn/1997",  # OK
+        # "IMOS/SRS/SST/ghrsst/L3S-1dS/dn/1998",   # OK
         "IMOS/SRS/SST/ghrsst/L3S-1dS/dn/1999",
         "IMOS/SRS/SST/ghrsst/L3S-1dS/dn/2000",
         "IMOS/SRS/SST/ghrsst/L3S-1dS/dn/2001",
@@ -44,7 +44,7 @@ def main():
         # "FILTER_STRING_1",
         "--dataset-config",
         "satellite_ghrsst_l3s_1day_daynighttime_single_sensor_southernocean.json",
-        "--clear-existing-data",
+        # "--clear-existing-data",
         "--cluster-mode",
         "remote",
     ]

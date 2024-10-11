@@ -6,13 +6,13 @@ def main():
     command = [
         "generic_cloud_optimised_creation",
         "--paths",
-        "IMOS/SRS/SST/ghrsst/L3SM-1dS/dn/2023",
-        "IMOS/SRS/SST/ghrsst/L3SM-1dS/dn/2022",
-        "IMOS/SRS/SST/ghrsst/L3SM-1dS/dn/2021",
-        "IMOS/SRS/SST/ghrsst/L3SM-1dS/dn/2020",
-        "IMOS/SRS/SST/ghrsst/L3SM-1dS/dn/2019",
-        "IMOS/SRS/SST/ghrsst/L3SM-1dS/dn/2018",
-        "IMOS/SRS/SST/ghrsst/L3SM-1dS/dn/2024",
+        "IMOS/SRS/SST/ghrsst/L3SM-1dS/dn/2018",  # OK
+        "IMOS/SRS/SST/ghrsst/L3SM-1dS/dn/2019",  # OK
+        "IMOS/SRS/SST/ghrsst/L3SM-1dS/dn/2020",  # OK
+        "IMOS/SRS/SST/ghrsst/L3SM-1dS/dn/2021",  # 2021031* required a t3.large scheduler, otherwise it would fail!!
+        "IMOS/SRS/SST/ghrsst/L3SM-1dS/dn/2022",  # OK
+        "IMOS/SRS/SST/ghrsst/L3SM-1dS/dn/2023",  # OK
+        "IMOS/SRS/SST/ghrsst/L3SM-1dS/dn/2024",  # OK
         # "--filters",
         # "FILTER_STRING_1",
         # "FILTER_STRING_1",
