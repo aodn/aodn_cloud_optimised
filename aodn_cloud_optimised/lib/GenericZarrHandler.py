@@ -349,6 +349,15 @@ class GenericHandler(CommonHandler):
         s3_file_handle_list = create_fileset(s3_file_uri_list, self.s3_fs)
 
         time_dimension_name = self.dimensions["time"]["name"]
+        drop_vars_list = [
+            var_name
+            for var_name, attrs in self.schema.items()
+            if attrs.get("drop_vars", False)
+        ]
+
+        partial_preprocess = partial(
+            preprocess_xarray, dataset_config=self.dataset_config
+        )
 
         batch_size = self.get_batch_size(client=self.client)
 
@@ -360,22 +369,12 @@ class GenericHandler(CommonHandler):
             self.logger.info(f"{self.uuid_log}: Processing batch {idx + 1}...")
             self.logger.info(batch_files)
 
-            # batch_filenames = [os.path.basename(f.full_name) for f in batch_files]
-
-            partial_preprocess = partial(
-                preprocess_xarray, dataset_config=self.dataset_config
-            )
-            partial_preprocess_already_run = False
-
-            drop_vars_list = [
-                var_name
-                for var_name, attrs in self.schema.items()
-                if attrs.get("drop_vars", False)
-            ]
             if drop_vars_list:
                 self.logger.warning(
                     f"{self.uuid_log}: Dropping variables: {drop_vars_list} from the dataset"
                 )
+
+            partial_preprocess_already_run = False
 
             with dask.config.set(
                 **{
@@ -389,23 +388,12 @@ class GenericHandler(CommonHandler):
                     #       solution, open at the end with ds = preprocess(ds) afterwards
                     #
                     try:
-                        ds = xr.open_mfdataset(
+                        ds = self._open_mfds(
+                            partial_preprocess,
+                            drop_vars_list,
                             batch_files,
                             engine="h5netcdf",
-                            parallel=True,
-                            preprocess=partial_preprocess,  # this sometimes hangs the process
-                            concat_characters=True,
-                            mask_and_scale=True,
-                            decode_cf=True,
-                            decode_times=True,
-                            use_cftime=True,
-                            decode_coords=True,
-                            compat="override",
-                            coords="minimal",
-                            data_vars="minimal",
-                            drop_variables=drop_vars_list,
                         )
-
                         partial_preprocess_already_run = True
                     except:
                         self.logger.warning(
@@ -413,23 +401,12 @@ class GenericHandler(CommonHandler):
                             f'to using "scipy" engine. This is an issue with old NetCDF files'
                         )
                         try:
-                            ds = xr.open_mfdataset(
+                            ds = self._open_mfds(
+                                partial_preprocess,
+                                drop_vars_list,
                                 batch_files,
                                 engine="scipy",
-                                parallel=True,
-                                preprocess=partial_preprocess,  # this sometimes hangs the process
-                                concat_characters=True,
-                                mask_and_scale=True,
-                                decode_cf=True,
-                                decode_times=True,
-                                use_cftime=True,
-                                decode_coords=True,
-                                compat="override",
-                                coords="minimal",
-                                data_vars="minimal",
-                                drop_variables=drop_vars_list,
                             )
-
                             partial_preprocess_already_run = True
 
                         except:
@@ -449,15 +426,8 @@ class GenericHandler(CommonHandler):
                                 with self.s3_fs.open(
                                     file, "rb"
                                 ) as f:  # Open the file-like object
-                                    ds = xr.open_dataset(
-                                        f,
-                                        engine="scipy",
-                                        mask_and_scale=True,
-                                        decode_cf=True,
-                                        decode_times=True,
-                                        use_cftime=True,
-                                        decode_coords=True,
-                                        drop_variables=drop_vars_list,
+                                    ds = self._open_ds(
+                                        f, drop_vars_list, engine="scypy"
                                     )
 
                                 self.logger.info(
@@ -467,16 +437,10 @@ class GenericHandler(CommonHandler):
                                 self.logger.error(
                                     f"{self.uuid_log}: Error opening {file}: {e} with scipy engine. Defaulting to h5netcdf"
                                 )
-                                ds = xr.open_dataset(
-                                    file,
-                                    engine="h5netcdf",
-                                    mask_and_scale=True,
-                                    decode_cf=True,
-                                    decode_times=True,
-                                    use_cftime=True,
-                                    decode_coords=True,
-                                    drop_variables=drop_vars_list,
+                                ds = self._open_ds(
+                                    file, drop_vars_list, engine="h5netcdf"
                                 )
+
                                 self.logger.info(
                                     f"{self.uuid_log}: Success opening {file} with h5netcdf engine."
                                 )
@@ -524,7 +488,7 @@ class GenericHandler(CommonHandler):
                         )
 
                         # NOTE: In the next section, we need to figure out if we're reprocessing existing data.
-                        #       For this, the logic is open the original zarr store and compare with the new ds from
+                        #       For this, the logic is to open the original zarr store and compare with the new ds from
                         #       this batch if they have time values in common.
                         #       If this is the case, we need then to find the CONTIGUOUS regions as we can't assume that
                         #       the data is well ordered. The logic below is looking for the matching regions and indexes
@@ -548,83 +512,18 @@ class GenericHandler(CommonHandler):
 
                         # Handle the 2 scenarios, reprocessing of a batch, or append new data
                         if len(common_time_values) > 0:
-                            self.logger.info(
-                                f"{self.uuid_log}: Duplicate values of {self.dimensions['time']['name']}"
+                            self._handle_duplicate_regions(
+                                ds,
+                                idx,
+                                common_time_values,
+                                time_values_org,
+                                time_values_new,
+                                time_dimension_name,
                             )
-                            # Get indices of common time values in the original dataset
-                            common_indices = np.nonzero(
-                                np.isin(time_values_org, common_time_values)
-                            )[0]
-
-                            # regions must be CONTIGIOUS!! very important. so looking for different regions
-                            # Define regions as slices for the common time values
-                            regions = []
-                            matching_indexes = []
-
-                            start = common_indices[0]
-                            for i in range(1, len(common_indices)):
-                                if common_indices[i] != common_indices[i - 1] + 1:
-                                    end = common_indices[i - 1]
-                                    regions.append(
-                                        {time_dimension_name: slice(start, end + 1)}
-                                    )
-                                    matching_indexes.append(
-                                        np.where(
-                                            np.isin(
-                                                time_values_new,
-                                                time_values_org[start : end + 1],
-                                            )
-                                        )[0]
-                                    )
-                                    start = common_indices[i]
-
-                            # Append the last region
-                            end = common_indices[-1]
-                            regions.append({time_dimension_name: slice(start, end + 1)})
-                            matching_indexes.append(
-                                np.where(
-                                    np.isin(
-                                        time_values_new,
-                                        time_values_org[start : end + 1],
-                                    )
-                                )[0]
-                            )
-
-                            # Process region by region if necessary
-                            for region, indexes in zip(regions, matching_indexes):
-                                self.logger.info(
-                                    f"{self.uuid_log}: Overwriting Zarr dataset in Region: {region}, Matching Indexes in new ds: {indexes}"
-                                )
-                                ds.isel(**{time_dimension_name: indexes}).drop_vars(
-                                    self.vars_to_drop_no_common_dimension
-                                ).to_zarr(
-                                    self.store,
-                                    write_empty_chunks=False,
-                                    region=region,
-                                    compute=True,
-                                    consolidated=True,
-                                    safe_chunks=False,
-                                )
-
-                                self.logger.info(
-                                    f"{self.uuid_log}: Batch {idx + 1} successfully published to {self.store}"
-                                )
 
                         # No reprocessing needed
                         else:
-                            self.logger.info(
-                                f"{self.uuid_log}: Appending data to Zarr dataset"
-                            )
-
-                            ds.to_zarr(
-                                self.store,
-                                mode="a",  # append mode for the next batches
-                                write_empty_chunks=False,  # TODO: could True fix the issue when some variables dont exists? I doubt
-                                compute=True,  # Compute the result immediately
-                                consolidated=True,
-                                append_dim=time_dimension_name,
-                                safe_chunks=False,
-                            )
+                            self._append_zarr_store(ds, time_dimension_name)
 
                             self.logger.info(
                                 f"Batch {idx + 1} successfully published to {self.store}"
@@ -632,18 +531,7 @@ class GenericHandler(CommonHandler):
 
                     # First time writing the dataset
                     else:
-                        self.logger.info(
-                            f"{self.uuid_log}: Writing data to a new Zarr dataset"
-                        )
-
-                        ds.to_zarr(
-                            self.store,
-                            mode="w",  # Overwrite mode for the first batch
-                            write_empty_chunks=False,
-                            compute=True,  # Compute the result immediately
-                            consolidated=True,
-                            safe_chunks=False,
-                        )
+                        self._write_new_zarr_store(ds)
 
                     self.logger.info(
                         f"{self.uuid_log}: Batch {idx + 1} successfully published to Zarr store: {self.store}"
@@ -660,6 +548,135 @@ class GenericHandler(CommonHandler):
                     )
                     if "ds" in locals():
                         self.postprocess(ds)
+
+    def _handle_duplicate_regions(
+        self,
+        ds,
+        idx,
+        common_time_values,
+        time_values_org,
+        time_values_new,
+        time_dimension_name,
+    ):
+        self.logger.info(
+            f"{self.uuid_log}: Duplicate values of {self.dimensions['time']['name']}"
+        )
+        # Get indices of common time values in the original dataset
+        common_indices = np.nonzero(np.isin(time_values_org, common_time_values))[0]
+
+        # regions must be CONTIGIOUS!! very important. so looking for different regions
+        # Define regions as slices for the common time values
+        regions = []
+        matching_indexes = []
+
+        start = common_indices[0]
+        for i in range(1, len(common_indices)):
+            if common_indices[i] != common_indices[i - 1] + 1:
+                end = common_indices[i - 1]
+                regions.append({time_dimension_name: slice(start, end + 1)})
+                matching_indexes.append(
+                    np.where(
+                        np.isin(
+                            time_values_new,
+                            time_values_org[start : end + 1],
+                        )
+                    )[0]
+                )
+                start = common_indices[i]
+
+        # Append the last region
+        end = common_indices[-1]
+        regions.append({time_dimension_name: slice(start, end + 1)})
+        matching_indexes.append(
+            np.where(
+                np.isin(
+                    time_values_new,
+                    time_values_org[start : end + 1],
+                )
+            )[0]
+        )
+
+        for region, indexes in zip(regions, matching_indexes):
+            self.logger.info(
+                f"{self.uuid_log}: Overwriting Zarr dataset in Region: {region}, Matching Indexes in new ds: {indexes}"
+            )
+            ds.isel(**{time_dimension_name: indexes}).drop_vars(
+                self.vars_to_drop_no_common_dimension
+            ).to_zarr(
+                self.store,
+                write_empty_chunks=False,
+                region=region,
+                compute=True,
+                consolidated=True,
+                safe_chunks=False,
+            )
+            self.logger.info(
+                f"{self.uuid_log}: Batch {idx + 1} successfully published to {self.store}"
+            )
+
+    def _open_mfds(
+        self, partial_preprocess, drop_vars_list, batch_files, engine="h5netcdf"
+    ):
+        ds = xr.open_mfdataset(
+            batch_files,
+            engine=engine,
+            parallel=True,
+            preprocess=partial_preprocess,  # this sometimes hangs the process
+            concat_characters=True,
+            mask_and_scale=True,
+            decode_cf=True,
+            decode_times=True,
+            use_cftime=True,
+            decode_coords=True,
+            compat="override",
+            coords="minimal",
+            data_vars="minimal",
+            drop_variables=drop_vars_list,
+        )
+        return ds
+
+    def _open_ds(self, file, drop_vars_list, engine="h5netcdf"):
+        ds = xr.open_dataset(
+            file,
+            engine=engine,
+            mask_and_scale=True,
+            decode_cf=True,
+            decode_times=True,
+            use_cftime=True,
+            decode_coords=True,
+            drop_variables=drop_vars_list,
+        )
+        return ds
+
+    def _write_new_zarr_store(self, ds):
+        """
+        Writes the dataset to a new Zarr store.
+        """
+        self.logger.info(f"{self.uuid_log}: Writing data to a new Zarr dataset.")
+        ds.to_zarr(
+            self.store,
+            mode="w",  # Overwrite mode for the first batch
+            write_empty_chunks=False,
+            compute=True,  # Compute the result immediately
+            consolidated=True,
+            safe_chunks=False,
+        )
+
+    def _append_zarr_store(self, ds, time_dimension_name):
+        """
+        Append the dataset to an existing Zarr store.
+        """
+        self.logger.info(f"{self.uuid_log}: Appending data to Zarr dataset")
+
+        ds.to_zarr(
+            self.store,
+            mode="a",  # append mode for the next batches
+            write_empty_chunks=False,  # TODO: could True fix the issue when some variables dont exists? I doubt
+            compute=True,  # Compute the result immediately
+            consolidated=True,
+            append_dim=time_dimension_name,
+            safe_chunks=False,
+        )
 
     def to_cloud_optimised(self, s3_file_uri_list=None):
         """
