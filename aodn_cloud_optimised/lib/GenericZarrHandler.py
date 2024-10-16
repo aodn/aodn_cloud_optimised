@@ -603,6 +603,7 @@ class GenericHandler(CommonHandler):
                                     region=region,
                                     compute=True,
                                     consolidated=True,
+                                    safe_chunks=False,
                                 )
 
                                 self.logger.info(
@@ -622,6 +623,7 @@ class GenericHandler(CommonHandler):
                                 compute=True,  # Compute the result immediately
                                 consolidated=True,
                                 append_dim=time_dimension_name,
+                                safe_chunks=False,
                             )
 
                             self.logger.info(
@@ -640,6 +642,7 @@ class GenericHandler(CommonHandler):
                             write_empty_chunks=False,
                             compute=True,  # Compute the result immediately
                             consolidated=True,
+                            safe_chunks=False,
                         )
 
                     self.logger.info(
