@@ -199,7 +199,14 @@ class CommonHandler:
 
                 # TODO: check how many files need to be processed! Could be useful?
                 cluster = Cluster(**cluster_options)
-                client = Client(cluster)
+                with dask.config.set(
+                    **{
+                        "array.slicing.split_large_chunks": False,
+                        "distributed.scheduler.worker-saturation": "inf",
+                        "dataframe.shuffle.method": "p2p",
+                    }
+                ):
+                    client = Client(cluster)
                 self.logger.info(
                     f"Coiled Cluster dask dashboard available at {cluster.dashboard_link}"
                 )
