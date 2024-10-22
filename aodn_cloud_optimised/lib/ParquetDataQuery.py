@@ -419,6 +419,8 @@ def plot_time_coverage(ds, time_var="time"):
         ds (xarray.Dataset): The input dataset containing a 'time' dimension.
     """
     # Convert the time dimension to a pandas DatetimeIndex
+    ds = ds.sortby("time")
+
     time_series = pd.to_datetime(ds[time_var].values)
 
     # Create a DataFrame with the year and month as separate columns

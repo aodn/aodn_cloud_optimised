@@ -129,7 +129,9 @@ def main():
 
     # Apply filters
     for filter_str in args.filters:
-        nc_obj_ls = [s for s in nc_obj_ls if filter_str in s]
+        nc_obj_ls = list(
+            dict.fromkeys([s for s in nc_obj_ls if filter_str in s])
+        )  # make the list unique!
 
     if not nc_obj_ls:
         raise ValueError("No files found matching the specified criteria.")
