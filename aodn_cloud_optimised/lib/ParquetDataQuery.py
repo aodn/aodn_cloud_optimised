@@ -432,7 +432,7 @@ def plot_time_coverage(ds, time_var="time"):
     # Only include the available months and years in the dataset
     plt.figure(figsize=(10, 6))
     heatmap = sns.heatmap(
-        coverage.T, cmap="Greens", cbar=True, linewidths=0.5, square=True
+        coverage.T, cmap="Greens", cbar=True, linewidths=0.5, square=True, vmin=0
     )
 
     # Customize plot
