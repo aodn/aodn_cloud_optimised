@@ -11,6 +11,7 @@ Development
    :caption: Contents:
 
    installation
+   debug
    dataset-configuration
    documentation-build
    notebooks
