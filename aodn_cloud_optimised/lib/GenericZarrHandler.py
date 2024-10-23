@@ -58,7 +58,13 @@ def preprocess_xarray(ds, dataset_config):
 
     # Drop variables not in the list
     vars_to_drop = set(ds.data_vars) - set(schema)
-    ds_filtered = ds.drop_vars(vars_to_drop)
+
+    # Add variables with "drop_vars": true in the schema to vars_to_drop
+    for var_name, var_details in schema.items():
+        if var_details.get("drop_vars", False):
+            vars_to_drop.add(var_name)
+
+    ds_filtered = ds.drop_vars(vars_to_drop, errors="ignore")
     ds = ds_filtered
 
     ##########
@@ -66,6 +72,11 @@ def preprocess_xarray(ds, dataset_config):
     var_required.pop(dimensions["time"]["name"])
     var_required.pop(dimensions["latitude"]["name"])
     var_required.pop(dimensions["longitude"]["name"])
+
+    # Remove variables with "drop_vars": true from the var_required list
+    for var_name, var_details in schema.items():
+        if var_details.get("drop_vars", False):
+            var_required.pop(var_name, None)
 
     # TODO: make the variable below something more generic? a parameter?
     var_template_shape = dataset_config.get("var_template_shape")
@@ -291,7 +302,7 @@ class GenericHandler(CommonHandler):
                     )
                     partial_preprocess_already_run = True
 
-                except Exception as e:
+                except (ValueError, TypeError) as e:
                     self.logger.debug(
                         f'{self.uuid_log}: The default engine "h5netcdf" could not be used. Falling back '
                         f'to using "scipy" engine. This is an issue with old NetCDF files'
@@ -340,7 +351,7 @@ class GenericHandler(CommonHandler):
                             continue
 
                 # NOTE: if I comment the next line, i get some errors with the latest chunk for some variables
-                ds = ds.chunk(chunks=self.chunks)
+                # ds = ds.chunk(chunks=self.chunks)
 
                 # TODO: create a simple jupyter notebook 2 show 2 different problems:
                 #       1) serialization issue if preprocess is within a class
@@ -467,7 +478,7 @@ class GenericHandler(CommonHandler):
             ##########################################
 
             ds.isel(**{time_dimension_name: indexes}).drop_vars(
-                self.vars_to_drop_no_common_dimension
+                self.vars_to_drop_no_common_dimension, errors="ignore"
             ).pad(**{time_dimension_name: (0, amount_to_pad)}).to_zarr(
                 self.store,
                 write_empty_chunks=self.write_empty_chunks,
@@ -529,7 +540,7 @@ class GenericHandler(CommonHandler):
                 f"{self.uuid_log}: Success opening {file} with scipy engine."
             )
             return ds
-        except Exception as e:
+        except (ValueError, TypeError) as e:
             self.logger.debug(
                 f"{self.uuid_log}: Error opening {file}: {e} with scipy engine. Defaulting to h5netcdf"
             )
@@ -603,23 +614,31 @@ class GenericHandler(CommonHandler):
         # if preprocess is called after the open_mfdataset, then data_vars should probably be set to "all" as some variables
         # might be changed to NaN for a specific batch, if some variables aren't common to all NetCDF
 
-        ds = xr.open_mfdataset(
-            batch_files,
-            engine=engine,
-            parallel=True,
-            preprocess=partial_preprocess,  # this sometimes hangs the process. to monitor
-            data_vars="all",  # EXTREMELY IMPORTANT! Could lead to some variables being empty silently when writing to zarr
-            concat_characters=True,
-            mask_and_scale=True,
-            decode_cf=True,
-            decode_times=True,
-            use_cftime=True,
-            decode_coords=True,
-            compat="override",
-            coords="minimal",
-            drop_variables=drop_vars_list,
-            chunks="auto",
-        )
+        open_mfdataset_params = {
+            "engine": engine,
+            "parallel": True,
+            "preprocess": partial_preprocess,  # this sometimes hangs the process. to monitor
+            "data_vars": "all",
+            # EXTREMELY IMPORTANT! Could lead to some variables being empty silently when writing to zarr
+            "concat_characters": True,
+            "mask_and_scale": True,
+            "decode_cf": True,
+            "decode_times": True,
+            "use_cftime": True,
+            "decode_coords": True,
+            "compat": "override",
+            "coords": "minimal",
+            "drop_variables": drop_vars_list,
+        }
+
+        ds = xr.open_mfdataset(batch_files, **open_mfdataset_params)
+        try:
+            ds.chunk(chunks="auto")
+        except Exception as err:
+            self.logger.warning(
+                f"{self.uuid_log}:{err}\n Defaulting to open files without chunks option"
+            )
+
         # Notes:
         # Option 1: The preprocess argument in xr.open_mfdataset applies the function to each chunk of the dataset during the opening process
         # Option 2: The map_blocks function applies a function to each block (or chunk) of the dataset after the dataset has already been loaded.
@@ -644,7 +663,7 @@ class GenericHandler(CommonHandler):
         #
         # using map_blocks has no issues spawning as many workers as possible.
         # This is less efficient that using preprocess. The scheduler memory is less used, however the cpu usage is high
-        # ds = ds.map_blocks(partial_preprocess)
+        # ds = ds.map_blocks(partial_preprocess)  ## EXTREMELY DANGEROUS TO USE. CORRUPTS SOME DATA CHUNKS SILENTLY while it's working fine with preprocess
         # ds = preprocess_xarray(ds, self.dataset_config)
         return ds
 
@@ -672,17 +691,25 @@ class GenericHandler(CommonHandler):
         The reason is that this function is used when we have to use xr.concatenate, which can't handle
         <class 'dask.delayed.Delayed'>.
         """
-        ds = xr.open_dataset(
-            file,
-            engine=engine,
-            mask_and_scale=True,
-            decode_cf=True,
-            decode_times=True,
-            use_cftime=True,
-            decode_coords=True,
-            drop_variables=drop_vars_list,
-            chunks="auto",
-        )
+
+        open_dataset_params = {
+            "engine": engine,
+            "mask_and_scale": True,
+            "decode_cf": True,
+            "decode_times": True,
+            "use_cftime": True,
+            "decode_coords": True,
+            "drop_variables": drop_vars_list,
+        }
+
+        ds = xr.open_dataset(file, **open_dataset_params)
+
+        try:
+            ds.chunk(chunks="auto")
+        except Exception as err:
+            self.logger.warning(
+                f"{self.uuid_log}:{err}\n Defaulting to open files without chunks option"
+            )
 
         # ds = ds.map_blocks(partial_preprocess)
         ds = preprocess_xarray(ds, self.dataset_config)
@@ -708,6 +735,12 @@ class GenericHandler(CommonHandler):
     def _write_ds(self, ds, idx):
         time_dimension_name = self.dimensions["time"]["name"]
         ds = ds.sortby(time_dimension_name)
+        ds = ds.chunk(chunks=self.chunks)
+
+        # TODO: see https://github.com/pydata/xarray/issues/5219  https://github.com/pydata/xarray/issues/5286
+        for var in ds:
+            if "chunks" in ds[var].encoding:
+                del ds[var].encoding["chunks"]
 
         # Write the dataset to Zarr
         if prefix_exists(self.cloud_optimised_output_path):

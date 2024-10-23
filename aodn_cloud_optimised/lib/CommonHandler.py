@@ -217,6 +217,7 @@ class CommonHandler:
                 )
                 # Create a local Dask cluster as a fallback
                 cluster = LocalCluster(**local_cluster_options)
+
                 client = Client(cluster)
                 self.cluste_mode = "local"
                 self.logger.info(
@@ -224,8 +225,8 @@ class CommonHandler:
                 )
         elif self.cluster_mode == "local":
             self.logger.info("Creating a local Dask cluster")
-
             cluster = LocalCluster(**local_cluster_options)
+
             client = Client(cluster)
             self.logger.info(
                 f"Local Cluster dask dashboard available at {cluster.dashboard_link}"
