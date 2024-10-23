@@ -45,7 +45,8 @@ repos:
         args: ["-f", "requirements.txt", "--quiet"]
         verbose: false
       - id: poetry-lock
-        args: ["--no-update"]
+        #args: ["--no-update"]
+        args: ["--check"]
         verbose: true
       - id: poetry-install
         args: ["--quiet"]
