@@ -1,12 +1,11 @@
 import importlib.resources
 import os
-import uuid
 import traceback
+import uuid
 import warnings
 from functools import partial
 
 import boto3
-import dask
 import fsspec
 import numpy as np
 import s3fs
@@ -59,7 +58,13 @@ def preprocess_xarray(ds, dataset_config):
 
     # Drop variables not in the list
     vars_to_drop = set(ds.data_vars) - set(schema)
-    ds_filtered = ds.drop_vars(vars_to_drop)
+
+    # Add variables with "drop_vars": true in the schema to vars_to_drop
+    for var_name, var_details in schema.items():
+        if var_details.get("drop_vars", False):
+            vars_to_drop.add(var_name)
+
+    ds_filtered = ds.drop_vars(vars_to_drop, errors="ignore")
     ds = ds_filtered
 
     ##########
@@ -67,6 +72,11 @@ def preprocess_xarray(ds, dataset_config):
     var_required.pop(dimensions["time"]["name"])
     var_required.pop(dimensions["latitude"]["name"])
     var_required.pop(dimensions["longitude"]["name"])
+
+    # Remove variables with "drop_vars": true from the var_required list
+    for var_name, var_details in schema.items():
+        if var_details.get("drop_vars", False):
+            var_required.pop(var_name, None)
 
     # TODO: make the variable below something more generic? a parameter?
     var_template_shape = dataset_config.get("var_template_shape")
@@ -76,7 +86,7 @@ def preprocess_xarray(ds, dataset_config):
     try:
         filename = os.path.basename(ds[var].encoding["source"])
     except KeyError as e:
-        logger.warning(f"Error from Xarray to retrieve the unique filename.\n {e}")
+        logger.debug(f"Original filename not available in xarray dataset.\n {e}")
         filename = "UNKOWN_FILENAME.nc"
 
     logger.info(f"Applying preprocessing on dataset from {filename}")
@@ -211,107 +221,10 @@ class GenericHandler(CommonHandler):
             root=f"{self.cloud_optimised_output_path}", s3=self.s3_fs, check=False
         )
 
-    # TODO: Unused at the moment
-    # def preprocess_xarray(self, ds) -> xr.Dataset:
-    #     """
-    #     Perform preprocessing on the input dataset (`ds`) and return an xarray Dataset.
-    #
-    #     :param ds: Input xarray Dataset.
-    #
-    #     :return:
-    #         Preprocessed xarray Dataset.
-    #     """
-    #
-    #     # Drop variables not in the list
-    #     # TODO: add a warning message
-    #     vars_to_drop = set(ds.data_vars) - set(self.schema)
-    #     ds_filtered = ds.drop_vars(vars_to_drop)
-    #     ds = ds_filtered
-    #
-    #     # https://github.com/pydata/xarray/issues/2313
-    #     # filename = ds.encoding["source"]
-    #
-    #     # self.logger.info(f"{filename}: xarray preprocessing")
-    #
-    #     # Add a new dimension 'filename' with a filename value
-    #     filename = None
-    #     if filename is not None:
-    #         ds = ds.assign(
-    #             filename=((self.dimensions["time"]["name"],), [filename])
-    #         )  # add new filename variable with time dimension
-    #
-    #     var_required = self.schema.copy()
-    #     var_required.pop(self.dimensions["time"]["name"])
-    #     var_required.pop(self.dimensions["latitude"]["name"])
-    #     var_required.pop(self.dimensions["longitude"]["name"])
-    #
-    #     # TODO: make the variable below something more generic? a parameter?
-    #     var_template_shape = self.dataset_config.get("var_template_shape")
-    #
-    #     try:
-    #         warnings.filterwarnings("error", category=RuntimeWarning)
-    #         nan_array = np.full(ds[var_template_shape].shape, np.nan, dtype=np.float64)
-    #         # the following commented line returned some RuntimeWarnings every now and then.
-    #         # nan_array = np.empty(
-    #         #    ds[var_template_shape].shape) * np.nan  # np.full_like( (1, 4500, 6000), np.nan, dtype=object)
-    #     except RuntimeWarning as rw:
-    #         raise TypeError
-    #
-    #     for variable_name in var_required:
-    #         datatype = var_required[variable_name].get("type")
-    #
-    #         # if variable doesn't exist
-    #         if variable_name not in ds:
-    #             # self.logger.warning(
-    #             #     f"{filename}: add missing {variable_name} to xarray dataset"
-    #             # )
-    #             self.logger.warning(f"add missing {variable_name} to xarray dataset")
-    #
-    #             # check the type of the variable (numerical of string)
-    #             if np.issubdtype(datatype, np.number):
-    #                 # Add the missing variable  to the dataset
-    #                 ds[variable_name] = (
-    #                     (
-    #                         self.dimensions["time"]["name"],
-    #                         self.dimensions["latitude"]["name"],
-    #                         self.dimensions["longitude"]["name"],
-    #                     ),
-    #                     nan_array,
-    #                 )
-    #
-    #             else:
-    #                 # for strings variables, it's quite likely that the variables don't have any dimensions associated.
-    #                 # This can be an issue to know which datapoint is associated to which string value.
-    #                 # In this case we might have to repeat the string the times of ('TIME')
-    #                 ds[variable_name] = (
-    #                     (self.dimensions["time"]["name"],),
-    #                     empty_string_array,
-    #                 )
-    #
-    #             ds[variable_name] = ds[variable_name].astype(datatype)
-    #
-    #         # if variable already exists
-    #         else:
-    #
-    #             if (
-    #                 datatype == "timestamp[ns]"
-    #             ):  # Timestamps do not have an astype method. But numpy.datetime64 do.
-    #                 datatype = "datetime64[ns]"
-    #
-    #             elif not np.issubdtype(datatype, np.number):
-    #                 # we repeat the string variable to match the size of the TIME dimension
-    #                 ds[variable_name] = (
-    #                     (self.dimensions["time"]["name"],),
-    #                     np.full_like(
-    #                         ds[self.dimensions["time"]["name"]],
-    #                         ds[variable_name],
-    #                         dtype="<S1",
-    #                     ),
-    #                 )
-    #
-    #             ds[variable_name] = ds[variable_name].astype(datatype)
-    #
-    #     return ds
+        # to_zarr common options
+        self.safe_chunks = True
+        self.write_empty_chunks = False
+        self.consolidated = True
 
     def publish_cloud_optimised_fileset_batch(self, s3_file_uri_list):
         """
@@ -349,6 +262,15 @@ class GenericHandler(CommonHandler):
         s3_file_handle_list = create_fileset(s3_file_uri_list, self.s3_fs)
 
         time_dimension_name = self.dimensions["time"]["name"]
+        drop_vars_list = [
+            var_name
+            for var_name, attrs in self.schema.items()
+            if attrs.get("drop_vars", False)
+        ]
+
+        partial_preprocess = partial(
+            preprocess_xarray, dataset_config=self.dataset_config
+        )
 
         batch_size = self.get_batch_size(client=self.client)
 
@@ -360,303 +282,541 @@ class GenericHandler(CommonHandler):
             self.logger.info(f"{self.uuid_log}: Processing batch {idx + 1}...")
             self.logger.info(batch_files)
 
-            # batch_filenames = [os.path.basename(f.full_name) for f in batch_files]
-
-            partial_preprocess = partial(
-                preprocess_xarray, dataset_config=self.dataset_config
-            )
-            partial_preprocess_already_run = False
-
-            drop_vars_list = [
-                var_name
-                for var_name, attrs in self.schema.items()
-                if attrs.get("drop_vars", False)
-            ]
             if drop_vars_list:
                 self.logger.warning(
                     f"{self.uuid_log}: Dropping variables: {drop_vars_list} from the dataset"
                 )
 
-            with dask.config.set(
-                **{
-                    "array.slicing.split_large_chunks": False,
-                    "distributed.scheduler.worker-saturation": "inf",
-                }
-            ):
+            partial_preprocess_already_run = False
+
+            try:
+                # TODO(DONE): if using preprocess function within mfdataset (has to be outside the class otherwise
+                #  parallelizing issues), the local ram is being used! and not the cluster one! even if the function
+                #  only does return ds solution, open at the end with ds = preprocess(ds) afterwards
+
                 try:
-                    # TODO: if using preprocess function within mfdataset (has to be outside the class otherwise parallelizing issues), the
-                    #       local ram is being used! and not the cluster one! even if the function only does return ds
-                    #       solution, open at the end with ds = preprocess(ds) afterwards
-                    #
+                    ds = self._open_mfds(
+                        partial_preprocess,
+                        drop_vars_list,
+                        batch_files,
+                    )
+                    partial_preprocess_already_run = True
+
+                except (ValueError, TypeError) as e:
+                    self.logger.debug(
+                        f'{self.uuid_log}: The default engine "h5netcdf" could not be used. Falling back '
+                        f'to using "scipy" engine. This is an issue with old NetCDF files'
+                    )
+
                     try:
-                        ds = xr.open_mfdataset(
+                        ds = self._open_mfds(
+                            partial_preprocess,
+                            drop_vars_list,
                             batch_files,
-                            engine="h5netcdf",
-                            parallel=True,
-                            preprocess=partial_preprocess,  # this sometimes hangs the process
-                            concat_characters=True,
-                            mask_and_scale=True,
-                            decode_cf=True,
-                            decode_times=True,
-                            use_cftime=True,
-                            decode_coords=True,
-                            compat="override",
-                            coords="minimal",
-                            data_vars="minimal",
-                            drop_variables=drop_vars_list,
+                            engine="scipy",
                         )
-
                         partial_preprocess_already_run = True
-                    except:
+
+                    except Exception as e:
                         self.logger.warning(
-                            f'{self.uuid_log}: The default engine "h5netcdf" could not be used. Falling back '
-                            f'to using "scipy" engine. This is an issue with old NetCDF files'
+                            f'{self.uuid_log}: The engine "scipy" could not be used to concatenate the dataset together. '
+                            f"likely because the files to concatenate are NetCDF3 and NetCDF4 and should use different engines. Falling back "
+                            f"to opening the files individually with different engines"
                         )
-                        try:
-                            ds = xr.open_mfdataset(
-                                batch_files,
-                                engine="scipy",
-                                parallel=True,
-                                preprocess=partial_preprocess,  # this sometimes hangs the process
-                                concat_characters=True,
-                                mask_and_scale=True,
-                                decode_cf=True,
-                                decode_times=True,
-                                use_cftime=True,
-                                decode_coords=True,
-                                compat="override",
-                                coords="minimal",
-                                data_vars="minimal",
-                                drop_variables=drop_vars_list,
-                            )
-
-                            partial_preprocess_already_run = True
-
-                        except:
-                            self.logger.warning(
-                                f'{self.uuid_log}: The engine "scipy" could not be used to concatenate the dataset together. '
-                                f"likely because the files to concatenate are NetCDF3 and NetCDF4 and should use different engines. Falling back "
-                                f"to opening the files individually with different engines"
-                            )
 
                         # TODO: once xarray issue is fixed https://github.com/pydata/xarray/issues/8909,
                         #  the follwing code could probably be removed. Only scipy and h5netcdf can be used for remote access
-                        # Open each file individually
-                        datasets = []
-                        for file in batch_files:
-                            try:
-                                # fs = fsspec.filesystem('s3')
-                                with self.s3_fs.open(
-                                    file, "rb"
-                                ) as f:  # Open the file-like object
-                                    ds = xr.open_dataset(
-                                        f,
-                                        engine="scipy",
-                                        mask_and_scale=True,
-                                        decode_cf=True,
-                                        decode_times=True,
-                                        use_cftime=True,
-                                        decode_coords=True,
-                                        drop_variables=drop_vars_list,
-                                    )
-
-                                self.logger.info(
-                                    f"{self.uuid_log}: Success opening {file} with scipy engine."
-                                )
-                            except Exception as e:
-                                self.logger.error(
-                                    f"{self.uuid_log}: Error opening {file}: {e} with scipy engine. Defaulting to h5netcdf"
-                                )
-                                ds = xr.open_dataset(
-                                    file,
-                                    engine="h5netcdf",
-                                    mask_and_scale=True,
-                                    decode_cf=True,
-                                    decode_times=True,
-                                    use_cftime=True,
-                                    decode_coords=True,
-                                    drop_variables=drop_vars_list,
-                                )
-                                self.logger.info(
-                                    f"{self.uuid_log}: Success opening {file} with h5netcdf engine."
-                                )
-
-                                # Apply preprocessing if needed
-                                # ds = partial_preprocess(ds)
-
-                            datasets.append(ds)
-
-                        # Concatenate the datasets
-                        self.logger.info(
-                            f"{self.uuid_log}: Successfully read all files with different engines. Concatenating them together"
-                        )
-                        ds = xr.concat(
-                            datasets,
-                            compat="override",
-                            coords="minimal",
-                            data_vars="minimal",
-                            dim=self.dimensions["time"]["name"],
-                        )
-                        self.logger.info(
-                            f"{self.uuid_log}: Successfully Concatenating files together"
-                        )
-
-                    # TODO: create a simple jupyter notebook 2 show 2 different problems:
-                    #       1) serialization issue if preprocess is within a class
-                    #       2) blowing of memory if preprocess function is outside of a class and only does return ds
-
-                    # If ds open with mf_dataset with the partial preprocess_xarray, no need to re-run it again!
-                    if partial_preprocess_already_run == False:
-                        self.logger.warning(
-                            f"{self.uuid_log}: partial_preprocess_already_run is False"
-                        )
-                        ds = preprocess_xarray(ds, self.dataset_config)
-
-                    # NOTE: if I comment the next line, i get some errors with the latest chunk for some variables
-                    ds = ds.chunk(
-                        chunks=self.chunks
-                    )  # careful with chunk size, had an issue
-
-                    # Write the dataset to Zarr
-                    if prefix_exists(self.cloud_optimised_output_path):
-                        self.logger.info(
-                            f"{self.uuid_log}: Appending data to existing Zarr"
-                        )
-
-                        # NOTE: In the next section, we need to figure out if we're reprocessing existing data.
-                        #       For this, the logic is open the original zarr store and compare with the new ds from
-                        #       this batch if they have time values in common.
-                        #       If this is the case, we need then to find the CONTIGUOUS regions as we can't assume that
-                        #       the data is well ordered. The logic below is looking for the matching regions and indexes
-
-                        ds_org = xr.open_zarr(
-                            self.store,
-                            consolidated=True,
-                            decode_cf=True,
-                            decode_times=True,
-                            use_cftime=True,
-                            decode_coords=True,
-                        )
-
-                        time_values_org = ds_org[time_dimension_name].values
-                        time_values_new = ds[time_dimension_name].values
-
-                        # Find common time values
-                        common_time_values = np.intersect1d(
-                            time_values_org, time_values_new
-                        )
-
-                        # Handle the 2 scenarios, reprocessing of a batch, or append new data
-                        if len(common_time_values) > 0:
+                        try:
+                            ds = self._concatenate_files_different_engines(
+                                batch_files, partial_preprocess, drop_vars_list
+                            )
                             self.logger.info(
-                                f"{self.uuid_log}: Duplicate values of {self.dimensions['time']['name']}"
+                                f"{self.uuid_log}: Successfully Concatenating files together"
                             )
-                            # Get indices of common time values in the original dataset
-                            common_indices = np.nonzero(
-                                np.isin(time_values_org, common_time_values)
-                            )[0]
-
-                            # regions must be CONTIGIOUS!! very important. so looking for different regions
-                            # Define regions as slices for the common time values
-                            regions = []
-                            matching_indexes = []
-
-                            start = common_indices[0]
-                            for i in range(1, len(common_indices)):
-                                if common_indices[i] != common_indices[i - 1] + 1:
-                                    end = common_indices[i - 1]
-                                    regions.append(
-                                        {time_dimension_name: slice(start, end + 1)}
-                                    )
-                                    matching_indexes.append(
-                                        np.where(
-                                            np.isin(
-                                                time_values_new,
-                                                time_values_org[start : end + 1],
-                                            )
-                                        )[0]
-                                    )
-                                    start = common_indices[i]
-
-                            # Append the last region
-                            end = common_indices[-1]
-                            regions.append({time_dimension_name: slice(start, end + 1)})
-                            matching_indexes.append(
-                                np.where(
-                                    np.isin(
-                                        time_values_new,
-                                        time_values_org[start : end + 1],
-                                    )
-                                )[0]
+                            partial_preprocess_already_run = True
+                            # if this works, we get out of this try except, and keep the processing as usual
+                        except Exception as e:
+                            # in this case, none of the above worked!! we try then to process each file one by one
+                            # including writing to zarr, hence we do continue afterward to go to the next batch
+                            self.logger.warning(
+                                f"{self.uuid_log}: {e}.\n {traceback.format_exc()}"
                             )
-
-                            # Process region by region if necessary
-                            for region, indexes in zip(regions, matching_indexes):
-                                self.logger.info(
-                                    f"{self.uuid_log}: Overwriting Zarr dataset in Region: {region}, Matching Indexes in new ds: {indexes}"
-                                )
-                                ds.isel(**{time_dimension_name: indexes}).drop_vars(
-                                    self.vars_to_drop_no_common_dimension
-                                ).to_zarr(
-                                    self.store,
-                                    write_empty_chunks=False,
-                                    region=region,
-                                    compute=True,
-                                    consolidated=True,
-                                )
-
-                                self.logger.info(
-                                    f"{self.uuid_log}: Batch {idx + 1} successfully published to {self.store}"
-                                )
-
-                        # No reprocessing needed
-                        else:
                             self.logger.info(
-                                f"{self.uuid_log}: Appending data to Zarr dataset"
+                                f"{self.uuid_log}: None of the mfdataset with different engines worked, including concatenation. Falling back to processing files individually"
                             )
 
-                            ds.to_zarr(
-                                self.store,
-                                mode="a",  # append mode for the next batches
-                                write_empty_chunks=False,  # TODO: could True fix the issue when some variables dont exists? I doubt
-                                compute=True,  # Compute the result immediately
-                                consolidated=True,
-                                append_dim=time_dimension_name,
+                            self._process_individual_file_fallback(
+                                batch_files, partial_preprocess, drop_vars_list, idx
                             )
+                            continue
 
-                            self.logger.info(
-                                f"Batch {idx + 1} successfully published to {self.store}"
-                            )
+                # NOTE: if I comment the next line, i get some errors with the latest chunk for some variables
+                # ds = ds.chunk(chunks=self.chunks)
 
-                    # First time writing the dataset
-                    else:
-                        self.logger.info(
-                            f"{self.uuid_log}: Writing data to a new Zarr dataset"
-                        )
+                # TODO: create a simple jupyter notebook 2 show 2 different problems:
+                #       1) serialization issue if preprocess is within a class
+                #       2) blowing of memory if preprocess function is outside of a class and only does return ds
 
-                        ds.to_zarr(
-                            self.store,
-                            mode="w",  # Overwrite mode for the first batch
-                            write_empty_chunks=False,
-                            compute=True,  # Compute the result immediately
-                            consolidated=True,
-                        )
+                # If ds open with mf_dataset with the partial preprocess_xarray, no need to re-run it again!
+                if not partial_preprocess_already_run:
+                    # TODO: can probably be removed as partial_preprocess_already_run should always be True now
+                    self.logger.debug(
+                        f"{self.uuid_log}: partial_preprocess_already_run is False"
+                    )
+                    ds = preprocess_xarray(ds, self.dataset_config)
+                    # The map_blocks function applies a function to each block (or chunk) of the dataset after
+                    # the dataset has already been loaded.
+                    # ds = ds.map_blocks(partial_preprocess)
 
+                # Write the dataset to Zarr
+                self._write_ds(ds, idx)
+
+                self.logger.info(
+                    f"{self.uuid_log}: Batch {idx + 1} successfully published to Zarr store: {self.store}"
+                )
+
+            except MergeError as e:
+                self.logger.error(f"{self.uuid_log}: Failed to merge datasets: {e}")
+                if "ds" in locals():
+                    self.postprocess(ds)
+
+            except Exception as e:
+                self.logger.error(
+                    f"{self.uuid_log}: An unexpected error occurred: {e}.\n {traceback.format_exc()}"
+                )
+                try:
                     self.logger.info(
-                        f"{self.uuid_log}: Batch {idx + 1} successfully published to Zarr store: {self.store}"
+                        f"{self.uuid_log}: None of the methods to process files as a batch worked. Falling back to "
+                        f"processing files individually"
+                    )
+                    # in this case, none of the above worked!! we try then to process each file one by one
+                    # including writing to zarr
+                    self._process_individual_file_fallback(
+                        batch_files, partial_preprocess, drop_vars_list, idx
                     )
 
-                except MergeError as e:
-                    self.logger.error(f"{self.uuid_log}: Failed to merge datasets: {e}")
-                    if "ds" in locals():
-                        self.postprocess(ds)
-
                 except Exception as e:
+                    # Nothing could work. Workers failed ... Desperate times
                     self.logger.error(
                         f"{self.uuid_log}: An unexpected error occurred: {e}.\n {traceback.format_exc()}"
                     )
-                    if "ds" in locals():
-                        self.postprocess(ds)
+
+                if "ds" in locals():
+                    self.postprocess(ds)
+
+    def _handle_duplicate_regions(
+        self,
+        ds,
+        idx,
+        common_time_values,
+        time_values_org,
+        time_values_new,
+    ):
+        time_dimension_name = self.dimensions["time"]["name"]
+
+        self.logger.info(
+            f"{self.uuid_log}: Duplicate values of {self.dimensions['time']['name']} already existing in dataset. Overwriting"
+        )
+        # Get indices of common time values in the original dataset
+        common_indices = np.nonzero(np.isin(time_values_org, common_time_values))[0]
+
+        # regions must be CONTIGIOUS!! very important. so looking for different regions
+        # Define regions as slices for the common time values
+        regions = []
+        matching_indexes = []
+
+        start = common_indices[0]
+        for i in range(1, len(common_indices)):
+            if common_indices[i] != common_indices[i - 1] + 1:
+                end = common_indices[i - 1]
+                regions.append({time_dimension_name: slice(start, end + 1)})
+                matching_indexes.append(
+                    np.where(
+                        np.isin(
+                            time_values_new,
+                            time_values_org[start : end + 1],
+                        )
+                    )[0]
+                )
+                start = common_indices[i]
+
+        # Append the last region
+        end = common_indices[-1]
+        regions.append({time_dimension_name: slice(start, end + 1)})
+        matching_indexes.append(
+            np.where(
+                np.isin(
+                    time_values_new,
+                    time_values_org[start : end + 1],
+                )
+            )[0]
+        )
+
+        n_region = 0
+        for region, indexes in zip(regions, matching_indexes):
+            self.logger.info(
+                f"{self.uuid_log}: Region {n_region + 1} from Batch {idx + 1} - Overwriting Zarr dataset in Region: {region}, Matching Indexes in new ds: {indexes}"
+            )
+
+            ##########################################
+            # extremely rare!! only happened once, and why??
+            s = regions[0][time_dimension_name]
+            region_num_elements = s.stop - s.start
+            matching_indexes_array_size = np.size(matching_indexes[0])
+
+            if matching_indexes_array_size != region_num_elements:
+                amount_to_pad = region_num_elements - matching_indexes_array_size
+
+                self.logger.error(
+                    f"{self.uuid_log}: Duplicate values of {time_dimension_name} dimension "
+                    f"found in original Zarr dataset. writing {matching_indexes_array_size} index value in a bigger region {region}. Trying to pad the dataset with"
+                    f"an extra {amount_to_pad} index of NaN"
+                )
+            else:
+                amount_to_pad = 0
+                ds = ds.pad(time=(0, amount_to_pad))
+            ##########################################
+
+            ds.isel(**{time_dimension_name: indexes}).drop_vars(
+                self.vars_to_drop_no_common_dimension, errors="ignore"
+            ).pad(**{time_dimension_name: (0, amount_to_pad)}).to_zarr(
+                self.store,
+                write_empty_chunks=self.write_empty_chunks,
+                region=region,
+                compute=True,
+                consolidated=self.consolidated,
+                safe_chunks=self.safe_chunks,
+            )
+            self.logger.info(
+                f"{self.uuid_log}: Region {n_region + 1} from Batch {idx + 1} - successfully published to {self.store}"
+            )
+            n_region += 1
+
+        self.logger.info(
+            f"{self.uuid_log}: All existing Regions from Batch {idx + 1} were successfully published to {self.store}"
+        )
+        self.logger.info(
+            f"{self.uuid_log}: Looking for dataset indexes left to be published from Batch {idx + 1} to {self.store}"
+        )
+        # Now find the time values in ds that were NOT reprocessed
+        # These are the time values not found in any of the common regions
+        unprocessed_time_values = np.setdiff1d(time_values_new, common_time_values)
+
+        # Return a dataset with the unprocessed time values
+        if len(unprocessed_time_values) > 0:
+            self.logger.info(
+                f"{self.uuid_log}: Found indexes left to be published from Batch {idx + 1} to {self.store}"
+            )
+            ds_unprocessed = ds.sel({time_dimension_name: unprocessed_time_values})
+            self._write_ds(ds_unprocessed, idx)
+            return ds_unprocessed
+        else:
+            return None
+
+    def _open_file_with_fallback(self, file, partial_preprocess, drop_vars_list):
+        """Attempts to open a file using the specified engines.
+
+        Tries to open the given file with the 'scipy' engine. If an exception occurs,
+        it falls back to using the 'h5netcdf' engine. Logs success or failure messages
+        accordingly.
+
+        Args:
+            file (str): The file path to be opened.
+            partial_preprocess (bool): Flag indicating whether to apply partial preprocessing.
+            drop_vars_list (list): List of variables to drop from the dataset.
+
+        Returns:
+            xr.Dataset: The opened dataset.
+
+        Raises:
+            Exception: Propagates any exceptions raised by the dataset opening operations.
+        """
+        try:
+            with self.s3_fs.open(file, "rb") as f:  # Open the file-like object
+                ds = self._open_ds(
+                    f, partial_preprocess, drop_vars_list, engine="scipy"
+                )
+            self.logger.info(
+                f"{self.uuid_log}: Success opening {file} with scipy engine."
+            )
+            return ds
+        except (ValueError, TypeError) as e:
+            self.logger.debug(
+                f"{self.uuid_log}: Error opening {file}: {e} with scipy engine. Defaulting to h5netcdf"
+            )
+            ds = self._open_ds(
+                file, partial_preprocess, drop_vars_list, engine="h5netcdf"
+            )
+            self.logger.info(
+                f"{self.uuid_log}: Success opening {file} with h5netcdf engine."
+            )
+            return ds
+
+    def _process_individual_file_fallback(
+        self, batch_files, partial_preprocess, drop_vars_list, idx
+    ):
+        """Processes individual files from a batch, applying fallback mechanisms.
+
+        Iterates over a batch of files, attempts to open each file using the
+        '_open_file_with_fallback' method, and writes the resulting dataset to storage
+        using the '_write_ds' method.
+        """
+        for file in batch_files:
+            ds = self._open_file_with_fallback(file, partial_preprocess, drop_vars_list)
+            self._write_ds(ds, idx)
+
+    def _concatenate_files_different_engines(
+        self, batch_files, partial_preprocess, drop_vars_list
+    ):
+        """Concatenates datasets opened from a batch of files using different engines.
+
+        Attempts to open each file in the provided batch with the 'scipy' engine, falling
+        back to the 'h5netcdf' engine if needed. Collects all datasets and concatenates them
+        into a single dataset, logging progress throughout the process.
+
+        Args:
+            batch_files (list): A list of file paths to be concatenated.
+            partial_preprocess (bool): Flag indicating whether to apply partial preprocessing.
+            drop_vars_list (list): List of variables to drop from each dataset.
+
+        Returns:
+            xr.Dataset: A single concatenated dataset containing all successfully opened files.
+        """
+        datasets = []
+        for file in batch_files:
+            ds = self._open_file_with_fallback(file, partial_preprocess, drop_vars_list)
+            datasets.append(ds)
+
+        # Concatenate the datasets
+        self.logger.info(
+            f"{self.uuid_log}: Successfully read all files with different engines. Concatenating them together"
+        )
+
+        ds = xr.concat(
+            datasets,
+            compat="override",
+            coords="minimal",
+            data_vars="all",
+            dim=self.dimensions["time"]["name"],
+        )
+        self.logger.info(f"{self.uuid_log}: Successfully Concatenating files together")
+        return ds
+
+    def _open_mfds(
+        self, partial_preprocess, drop_vars_list, batch_files, engine="h5netcdf"
+    ):
+
+        # Note:
+        # if using preprocess within open_mfdataset, data_vars should probably be set to "minimal" as the preprocess
+        # function will create the missing variables anyway. However I noticed that in some cases, some variables gets
+        # "emptied" such as 20190205111000-ABOM-L3S_GHRSST-SSTfnd-MultiSensor-1d_dn_Southern.nc when processed within a
+        # batch. Need to be careful
+        # if preprocess is called after the open_mfdataset, then data_vars should probably be set to "all" as some variables
+        # might be changed to NaN for a specific batch, if some variables aren't common to all NetCDF
+
+        open_mfdataset_params = {
+            "engine": engine,
+            "parallel": True,
+            "preprocess": partial_preprocess,  # this sometimes hangs the process. to monitor
+            "data_vars": "all",
+            # EXTREMELY IMPORTANT! Could lead to some variables being empty silently when writing to zarr
+            "concat_characters": True,
+            "mask_and_scale": True,
+            "decode_cf": True,
+            "decode_times": True,
+            "use_cftime": True,
+            "decode_coords": True,
+            "compat": "override",
+            "coords": "minimal",
+            "drop_variables": drop_vars_list,
+        }
+
+        ds = xr.open_mfdataset(batch_files, **open_mfdataset_params)
+        try:
+            ds.chunk(chunks="auto")
+        except Exception as err:
+            self.logger.warning(
+                f"{self.uuid_log}:{err}\n Defaulting to open files without chunks option"
+            )
+
+        # Notes:
+        # Option 1: The preprocess argument in xr.open_mfdataset applies the function to each chunk of the dataset during the opening process
+        # Option 2: The map_blocks function applies a function to each block (or chunk) of the dataset after the dataset has already been loaded.
+
+        # Option 1: Using `preprocess` in `open_mfdataset`
+        # - Applies preprocessing during dataset loading (chunk-wise).
+        # - Efficient and cheaper for simple preprocessing tasks.
+        # - Avoids loading the entire dataset into memory at once.
+        # - Limited flexibility for complex transformations.
+        # - Better for parallelized loading and preprocessing of chunks.
+
+        # Option 2: Using `ds.map_blocks`
+        # - Applies preprocessing after dataset is loaded (on blocks).
+        # - Offers more control and flexibility for complex tasks.
+        # - Can increase memory usage since the dataset is already in memory.
+        # - Better for post-load operations and complex block-wise transformations.
+
+        # Notes 2:
+        # using preprocess, it seems that on some rare occasions, we can have probably has some serialization.
+        # complexity. Some processing/memory seems to fallback onto the local machine (not even the scheduler)
+        # also, it appears that workers aren't always spun.
+        #
+        # using map_blocks has no issues spawning as many workers as possible.
+        # This is less efficient that using preprocess. The scheduler memory is less used, however the cpu usage is high
+        # ds = ds.map_blocks(partial_preprocess)  ## EXTREMELY DANGEROUS TO USE. CORRUPTS SOME DATA CHUNKS SILENTLY while it's working fine with preprocess
+        # ds = preprocess_xarray(ds, self.dataset_config)
+        return ds
+
+    # @delayed  # to open and chunk each dataset lazily. cant work xarray concatenation
+    def _open_ds(self, file, partial_preprocess, drop_vars_list, engine="h5netcdf"):
+        """Open and preprocess a single file as a xarray dataset.
+
+        This method opens a dataset from a specified file using xarray and preprocesses it
+        according to the provided configuration. It supports various engines for decoding
+        and handling variables.
+
+        Args:
+            file (str): The file path or URI of the dataset to open.
+            partial_preprocess (function): A function to preprocess the dataset, applied to
+                the dataset after it is opened.
+            drop_vars_list (list of str): A list of variable names to drop from the dataset.
+            engine (str, optional): The engine to use for reading the dataset. Defaults to
+                "h5netcdf".
+
+        Returns:
+            xr.Dataset: The opened and preprocessed xarray dataset.
+
+        Note:
+        This function can't have the @delayed decorator.
+        The reason is that this function is used when we have to use xr.concatenate, which can't handle
+        <class 'dask.delayed.Delayed'>.
+        """
+
+        open_dataset_params = {
+            "engine": engine,
+            "mask_and_scale": True,
+            "decode_cf": True,
+            "decode_times": True,
+            "use_cftime": True,
+            "decode_coords": True,
+            "drop_variables": drop_vars_list,
+        }
+
+        ds = xr.open_dataset(file, **open_dataset_params)
+
+        try:
+            ds.chunk(chunks="auto")
+        except Exception as err:
+            self.logger.warning(
+                f"{self.uuid_log}:{err}\n Defaulting to open files without chunks option"
+            )
+
+        # ds = ds.map_blocks(partial_preprocess)
+        ds = preprocess_xarray(ds, self.dataset_config)
+        return ds
+
+    def _find_duplicated_values(self, ds_org):
+        # Find duplicates
+        time_dimension_name = self.dimensions["time"]["name"]
+        time_values_org = ds_org[time_dimension_name].values
+
+        unique, counts = np.unique(time_values_org, return_counts=True)
+        duplicates = unique[counts > 1]
+
+        # Raise error if duplicates are found
+        if len(duplicates) > 0:
+            self.logger.error(
+                f"{self.uuid_log}: Duplicate values of {time_dimension_name} dimension "
+                f"found in original Zarr dataset. Could lead to a corrupted dataset: {duplicates}"
+            )
+
+        return True
+
+    def _write_ds(self, ds, idx):
+        time_dimension_name = self.dimensions["time"]["name"]
+        ds = ds.sortby(time_dimension_name)
+        ds = ds.chunk(chunks=self.chunks)
+
+        # TODO: see https://github.com/pydata/xarray/issues/5219  https://github.com/pydata/xarray/issues/5286
+        for var in ds:
+            if "chunks" in ds[var].encoding:
+                del ds[var].encoding["chunks"]
+
+        # Write the dataset to Zarr
+        if prefix_exists(self.cloud_optimised_output_path):
+            self.logger.info(f"{self.uuid_log}: Appending data to existing Zarr")
+
+            # NOTE: In the next section, we need to figure out if we're reprocessing existing data.
+            #       For this, the logic is to open the original zarr store and compare with the new ds from
+            #       this batch if they have time values in common.
+            #       If this is the case, we need then to find the CONTIGUOUS regions as we can't assume that
+            #       the data is well-ordered. The logic below is looking for the matching regions and indexes
+
+            with xr.open_zarr(
+                self.store,
+                consolidated=True,
+                decode_cf=True,
+                decode_times=True,
+                use_cftime=True,
+                decode_coords=True,
+            ) as ds_org:
+
+                self._find_duplicated_values(ds_org)
+
+                time_values_org = ds_org[time_dimension_name].values
+                time_values_new = ds[time_dimension_name].values
+
+                # Find common time values
+                common_time_values = np.intersect1d(time_values_org, time_values_new)
+
+                # Handle the 2 scenarios, reprocessing of a batch, or append new data
+                if len(common_time_values) > 0:
+                    self._handle_duplicate_regions(
+                        ds, idx, common_time_values, time_values_org, time_values_new
+                    )
+
+                # No reprocessing needed
+                else:
+                    self._append_zarr_store(ds)
+
+                    self.logger.info(
+                        f"Batch {idx + 1} successfully published to {self.store}"
+                    )
+
+        # First time writing the dataset
+        else:
+            self._write_new_zarr_store(ds)
+
+    def _write_new_zarr_store(self, ds):
+        """
+        Writes the dataset to a new Zarr store.
+        """
+        self.logger.info(f"{self.uuid_log}: Writing data to a new Zarr dataset.")
+        ds.to_zarr(
+            self.store,
+            mode="w",  # Overwrite mode for the first batch
+            write_empty_chunks=self.write_empty_chunks,
+            compute=True,  # Compute the result immediately
+            consolidated=self.consolidated,
+            safe_chunks=self.safe_chunks,
+        )
+
+    def _append_zarr_store(self, ds):
+        time_dimension_name = self.dimensions["time"]["name"]
+        """
+        Append the dataset to an existing Zarr store.
+        """
+        self.logger.info(f"{self.uuid_log}: Appending data to Zarr dataset")
+
+        ds.to_zarr(
+            self.store,
+            mode="a",
+            write_empty_chunks=self.write_empty_chunks,
+            compute=True,  # Compute the result immediately
+            consolidated=self.consolidated,
+            append_dim=time_dimension_name,
+            safe_chunks=self.safe_chunks,
+        )
 
     def to_cloud_optimised(self, s3_file_uri_list=None):
         """
@@ -690,6 +850,10 @@ class GenericHandler(CommonHandler):
 
         # Multiple file processing with cluster
         if s3_file_uri_list is not None:
+            s3_file_uri_list = list(
+                dict.fromkeys(s3_file_uri_list)
+            )  # ensure the list is unique!
+
             self.s3_file_uri_list = s3_file_uri_list
             # creating a cluster to process multiple files at once
             self.client, self.cluster = self.create_cluster()

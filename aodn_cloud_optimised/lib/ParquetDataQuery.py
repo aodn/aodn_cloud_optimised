@@ -419,6 +419,8 @@ def plot_time_coverage(ds, time_var="time"):
         ds (xarray.Dataset): The input dataset containing a 'time' dimension.
     """
     # Convert the time dimension to a pandas DatetimeIndex
+    ds = ds.sortby("time")
+
     time_series = pd.to_datetime(ds[time_var].values)
 
     # Create a DataFrame with the year and month as separate columns
@@ -430,7 +432,7 @@ def plot_time_coverage(ds, time_var="time"):
     # Only include the available months and years in the dataset
     plt.figure(figsize=(10, 6))
     heatmap = sns.heatmap(
-        coverage.T, cmap="Greens", cbar=True, linewidths=0.5, square=True
+        coverage.T, cmap="Greens", cbar=True, linewidths=0.5, square=True, vmin=0
     )
 
     # Customize plot
