@@ -415,7 +415,7 @@ class GenericHandler(CommonHandler):
         time_dimension_name = self.dimensions["time"]["name"]
 
         self.logger.info(
-            f"{self.uuid_log}: Duplicate values of {self.dimensions['time']['name']}"
+            f"{self.uuid_log}: Duplicate values of {self.dimensions['time']['name']} already existing in dataset. Overwriting"
         )
         # Get indices of common time values in the original dataset
         common_indices = np.nonzero(np.isin(time_values_org, common_time_values))[0]
