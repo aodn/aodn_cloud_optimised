@@ -4,16 +4,16 @@
   "cloud_optimised_format": "zarr",
   "cluster_options": {
     "n_workers": [
-      5,
-      60
+      1,
+      80
     ],
-    "scheduler_vm_types": "t3.medium",
-    "worker_vm_types": "t3.large",
+    "scheduler_vm_types": "t3.large",
+    "worker_vm_types": "t3.xlarge",
     "allow_ingress_from": "me",
     "compute_purchase_option": "spot_with_fallback",
     "worker_options": {
       "nthreads": 8,
-      "memory_limit": "6GB"
+      "memory_limit": "16GB"
     }
   },
   "batch_size": 30,

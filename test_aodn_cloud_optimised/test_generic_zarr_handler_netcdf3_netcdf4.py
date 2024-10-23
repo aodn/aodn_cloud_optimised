@@ -150,7 +150,6 @@ class TestGenericZarrHandler(unittest.TestCase):
         logger.addHandler(log_handler)
 
         nc_obj_ls = s3_ls("imos-data", "gsla")
-
         with patch.object(self.handler_nc_gsla_file, "s3_fs", new=self.s3_fs):
             self.handler_nc_gsla_file.to_cloud_optimised(nc_obj_ls)
 
