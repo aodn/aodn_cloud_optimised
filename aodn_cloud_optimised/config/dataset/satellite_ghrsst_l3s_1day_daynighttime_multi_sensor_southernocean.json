@@ -8,7 +8,7 @@
       120
     ],
     "scheduler_vm_types": "t3.2xlarge",
-    "worker_vm_types": "t3.xlarge",
+    "worker_vm_types": "t3.2xlarge",
     "allow_ingress_from": "me",
     "compute_purchase_option": "spot_with_fallback",
     "worker_options": {
@@ -16,7 +16,7 @@
       "memory_limit": "32GB"
     }
   },
-  "batch_size": 60,
+  "batch_size": 20,
   "metadata_uuid": "",
   "dimensions": {
     "time": {
