@@ -16,7 +16,7 @@
       "memory_limit": "32GB"
     }
   },
-  "batch_size": 20,
+  "batch_size": 15,
   "metadata_uuid": "",
   "dimensions": {
     "time": {
