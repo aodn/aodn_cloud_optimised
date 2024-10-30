@@ -62,4 +62,8 @@ See [ReadTheDocs - Dev](https://aodn-cloud-optimised.readthedocs.io/en/latest/de
 See [ReadTheDocs - Usage](https://aodn-cloud-optimised.readthedocs.io/en/latest/usage.html)
 
 ## Notebooks
-[Notebooks](https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/) can directly be imported into Google Colab.
+[Notebooks](https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/) can directly be imported into Google Colab
+
+You can also click on the binder button right below to spin the environment and execute the notebooks (note that Binder is free with limited resources)
+
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/aodn/aodn_cloud_optimised/main?filepath=notebooks)
