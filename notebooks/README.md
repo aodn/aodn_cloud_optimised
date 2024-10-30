@@ -1,4 +1,10 @@
+[![Google Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/aodn/aodn_cloud_optimised/)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/aodn/aodn_cloud_optimised/main?filepath=notebooks)
+
 A curated list of Jupyter notebooks ready to be loaded in Google Colab
+
+You can also click on the binder/colab button above to spin the environment and execute the notebooks (note that Binder is free with limited resources)
+
 
 # Generic method to call any AODN parquet dataset
 - [GetAodnData.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb)
