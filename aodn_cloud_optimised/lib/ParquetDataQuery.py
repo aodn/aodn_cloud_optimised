@@ -384,30 +384,50 @@ def create_timeseries(ds, var_name, lat, lon, start_time, end_time):
     return time_series_df
 
 
-def plot_spatial_extent(parquet_ds):
-    """Retrieve the spatial extent (multi-polygon) from a Parquet dataset.
+#
+def plot_spatial_extent(parquet_ds, coastline_resolution="110m"):
+    """Retrieve the spatial extent (multi-polygon) from a Parquet dataset and plot it alongside the coastline.
 
     This function retrieves the spatial extent (multi-polygon) represented by unique polygons
-    found in the 'polygon' partition of the given Parquet dataset.
+    found in the 'polygon' partition of the given Parquet dataset and plots it with the coastline.
 
     Args:
         parquet_ds (pyarrow.parquet.ParquetDataset): The Parquet dataset containing polygon partitions.
+        coastline_resolution (str): The resolution of the coastline to plot ('110m', '50m', '10m').
 
     Returns:
-        shapely.geometry.MultiPolygon: A multi-polygon representing the spatial extent.
+        None
     """
     multi_polygon = get_spatial_extent(parquet_ds)
 
-    #%config InlineBackend.figure_format = 'retina'
-    #%config InlineBackend.rc = {'figure.figsize': (10.0, 8.0)}
+    # Create a GeoDataFrame for the MultiPolygon
+    gdf = gpd.GeoDataFrame(geometry=[multi_polygon], crs="EPSG:4326")  # Assuming WGS84
 
-    # Assuming 'multi_polygon' is your MultiPolygon object
-    gdf = gpd.GeoDataFrame(geometry=[multi_polygon])
+    fig = plt.figure(figsize=(10, 8))
+    ax = fig.add_subplot(
+        1, 1, 1, projection=ccrs.PlateCarree()
+    )  # Corrected subplot index
 
-    # Plot the MultiPolygon with customized color and transparency
-    gdf.plot(color="red", alpha=0.5)  # Adjust color and alpha as needed
+    # Add coastline
+    ax.add_feature(
+        cfeature.COASTLINE.with_scale(coastline_resolution), linewidth=1, color="blue"
+    )
 
-    # Show the plot
+    gdf.plot(
+        ax=ax,
+        color="red",
+        alpha=0.5,
+        label="Spatial Extent",
+        transform=ccrs.PlateCarree(),
+    )
+
+    ax.add_feature(cfeature.BORDERS, linestyle=":", edgecolor="gray")
+    ax.add_feature(cfeature.LAND, edgecolor="black")
+    ax.add_feature(cfeature.OCEAN, facecolor="lightblue")
+
+    ax.set_title("Spatial Extent and Coastline")
+    ax.legend()
+
     plt.show()
 
 

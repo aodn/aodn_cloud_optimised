@@ -43,6 +43,11 @@ def preprocess_xarray(ds, dataset_config):
     #          was actually running locally and using ALL of the local ram. Complete nonsense. So this function was made
     #          as a test. It should be run after the xarray dataset is opened. More testing required as
     #          self.preprocess_xarray() was pretty complete function.
+    #
+    # VERY IMPORTANT:
+    # this function doesn't run in the cluster, see
+    # https://discourse.pangeo.io/t/remote-cluster-with-dask-distributed-uses-the-deployment-machines-memory-and-internet-bandwitch/4637
+    # https://github.com/dask/distributed/discussions/8913
 
     logger_name = dataset_config.get("logger_name", "generic")
     dimensions = dataset_config.get("dimensions")
@@ -357,7 +362,7 @@ class GenericHandler(CommonHandler):
                 #       1) serialization issue if preprocess is within a class
                 #       2) blowing of memory if preprocess function is outside of a class and only does return ds
 
-                # If ds open with mf_dataset with the partial preprocess_xarray, no need to re-run it again!
+                # If ds open with open_mfdataset with the partial preprocess_xarray, no need to re-run it again!
                 if not partial_preprocess_already_run:
                     # TODO: can probably be removed as partial_preprocess_already_run should always be True now
                     self.logger.debug(
@@ -599,6 +604,8 @@ class GenericHandler(CommonHandler):
             data_vars="all",
             dim=self.dimensions["time"]["name"],
         )
+        ds = ds.unify_chunks()
+        # ds = ds.persist()
         self.logger.info(f"{self.uuid_log}: Successfully Concatenating files together")
         return ds
 
@@ -638,6 +645,10 @@ class GenericHandler(CommonHandler):
             self.logger.warning(
                 f"{self.uuid_log}:{err}\n Defaulting to open files without chunks option"
             )
+
+        ds = ds.unify_chunks()
+        # ds = ds.map_blocks(partial_preprocess)
+        # ds = ds.persist()
 
         # Notes:
         # Option 1: The preprocess argument in xr.open_mfdataset applies the function to each chunk of the dataset during the opening process
@@ -712,7 +723,9 @@ class GenericHandler(CommonHandler):
             )
 
         # ds = ds.map_blocks(partial_preprocess)
+        ds = ds.unify_chunks()
         ds = preprocess_xarray(ds, self.dataset_config)
+        # ds = ds.persist()
         return ds
 
     def _find_duplicated_values(self, ds_org):
