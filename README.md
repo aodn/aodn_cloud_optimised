@@ -1,5 +1,4 @@
 # AODN Cloud Optimised Conversion
-this is a test
 
 ![Build Status](https://github.com/aodn/aodn_cloud_optimised/actions/workflows/build.yml/badge.svg)
 ![Test Status](https://github.com/aodn/aodn_cloud_optimised/actions/workflows/test-mamba.yml/badge.svg)
