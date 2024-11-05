@@ -37,6 +37,13 @@ RUN echo "alias ll='ls -la'" >> ~/.bashrc && \
 # Configure the shell to automatically activate the venv
 RUN echo "source ${VIRTUAL_ENV}/bin/activate" >> ~/.bashrc
 
-#ENTRYPOINT ["bash"]
+# Logging message
+COPY motd /etc/motd
+
+# Set permissions on the motd file
+RUN chmod 644 /etc/motd
+
+# Ensure the MOTD is displayed on login
+RUN echo "cat /etc/motd" >> /root/.bashrc
 
 CMD ["/usr/bin/bash"]

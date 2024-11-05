@@ -1,0 +1,9 @@
+Welcome to the aodn_cloud_optimised container!
+
+1/ Setup AWS
+Mount the host ~/.aws folder
+Make sure to connect to AWS via:
+aws sso loging --profile $AWS_PROFILE --no-browser
+
+2/ Setup Coiled
+coiled setup
