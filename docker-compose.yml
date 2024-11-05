@@ -1,0 +1,16 @@
+services:
+  aodn_cloud_optimised:
+    container_name: aodn_cloud_optimised
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8284:80"
+    volumes:
+      - ${PWD}:/app/shared
+      - $HOME/.aws:/root/.aws:ro  # Mount the .aws directory in read-only mode
+      #- /tmp/aodn_cloud_optimised/config:/app/aodn_cloud_optimised/config  # Mount config folder
+    environment:
+      - AWS_PROFILE=${AWS_PROFILE}
+    stdin_open: true  # Keep STDIN open for interactive sessions
+    tty: true
