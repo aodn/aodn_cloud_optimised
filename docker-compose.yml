@@ -1,9 +1,10 @@
 services:
   aodn_cloud_optimised:
     container_name: aodn_cloud_optimised
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: "ghcr.io/aodn/aodn_cloud_optimised:latest"
+#    build:
+      #context: .
+#      dockerfile: Dockerfile
     ports:
       - "8284:80"
     volumes:
