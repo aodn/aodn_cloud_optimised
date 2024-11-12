@@ -2,6 +2,7 @@ import importlib
 import os
 import tempfile
 import timeit
+from enum import Enum
 from typing import List
 
 import dask
@@ -75,6 +76,8 @@ class CommonHandler:
         # Cluster options
         valid_clusters = ["remote", "local", None]
         self.cluster_mode = kwargs.get("cluster_mode", "local")
+        if isinstance(self.cluster_mode, Enum):
+            self.cluster_mode = self.cluster_mode.value
 
         if self.cluster_mode not in valid_clusters:
             raise ValueError(
@@ -92,6 +95,12 @@ class CommonHandler:
         self.logger = get_logger(logger_name)
 
         cloud_optimised_format = self.dataset_config.get("cloud_optimised_format")
+
+        optimised_bucket = kwargs.get("optimised_bucket", None)
+        if optimised_bucket:
+            self.optimised_bucket_name = optimised_bucket.bucket_name
+
+
         self.cloud_optimised_output_path = (
             PureS3Path.from_uri(f"s3://{self.optimised_bucket_name}")
             .joinpath(
@@ -592,11 +601,17 @@ def cloud_optimised_creation(
     kwargs_handler_class["dataset_config"] = dataset_config
     kwargs_handler_class["clear_existing_data"] = handler_clear_existing_data_arg
 
+    kwargs_handler_class["optimised_bucket"] = kwargs.get("optimised_bucket", None)
+    kwargs_handler_class["source_bucket"] = kwargs.get("source_bucket", None)
+
     # Creating an instance of the specified class with the provided arguments
     start_whole_processing = timeit.default_timer()
     with handler_class(**kwargs_handler_class) as handler_instance:
         handler_instance.to_cloud_optimised(s3_file_uri_list)
-        cluster_id = handler_instance.cluster_id
+        if kwargs_handler_class["cluster_mode"].value:
+            cluster_id = handler_instance.cluster_id
+        else:
+            cluster_id = None
 
     time_spent_processing = timeit.default_timer() - start_whole_processing
     logger.info(f"Processed entire dataset in {time_spent_processing}s")
