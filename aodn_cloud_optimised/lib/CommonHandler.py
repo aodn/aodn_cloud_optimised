@@ -100,7 +100,6 @@ class CommonHandler:
         if optimised_bucket:
             self.optimised_bucket_name = optimised_bucket.bucket_name
 
-
         self.cloud_optimised_output_path = (
             PureS3Path.from_uri(f"s3://{self.optimised_bucket_name}")
             .joinpath(
