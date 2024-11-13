@@ -108,7 +108,7 @@ class CommonHandler:
         self.cluster_options = self.dataset_config.get("cluster_options", None)
 
         self.s3_fs = s3fs.S3FileSystem(
-            anon=False, session=kwargs.get("s3fs_session")
+            anon=False, default_cache_type=None, session=kwargs.get("s3fs_session")
         )  # variable overwritten in unittest to use moto server
 
         self.uuid_log = None
