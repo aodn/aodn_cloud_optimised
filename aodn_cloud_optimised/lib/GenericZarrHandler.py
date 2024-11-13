@@ -15,6 +15,7 @@ from dask.diagnostics import ProgressBar
 from dask.distributed import Client
 from rechunker import rechunk
 from xarray.core.merge import MergeError
+from dask import array as da
 
 from aodn_cloud_optimised.lib.CommonHandler import CommonHandler
 from aodn_cloud_optimised.lib.logging import get_logger
@@ -40,12 +41,8 @@ def preprocess_xarray(ds, dataset_config):
     #       running the class method with xarray as preprocess=self.preprocess_xarray lead to many issues
     #       1) serialization of the arguments with pickle.
     #       2) Running in a dask remote cluster, it seemed like the preprocess function (if donne within mfdataset)
-    #          was actually running locally and using ALL of the local ram. Complete nonsense. So this function was made
-    #          as a test. It should be run after the xarray dataset is opened. More testing required as
-    #          self.preprocess_xarray() was pretty complete function.
-    #
-    # VERY IMPORTANT:
-    # this function doesn't run in the cluster, see
+    #          was actually running locally and using ALL of the local ram. Complete nonsense.
+    # https://github.com/fsspec/filesystem_spec/issues/1747
     # https://discourse.pangeo.io/t/remote-cluster-with-dask-distributed-uses-the-deployment-machines-memory-and-internet-bandwitch/4637
     # https://github.com/dask/distributed/discussions/8913
 
@@ -97,7 +94,7 @@ def preprocess_xarray(ds, dataset_config):
     logger.info(f"Applying preprocessing on dataset from {filename}")
     try:
         warnings.filterwarnings("error", category=RuntimeWarning)
-        nan_array = np.full(ds[var_template_shape].shape, np.nan, dtype=np.float64)
+        nan_array = da.full(ds[var_template_shape].shape, da.nan, dtype=da.float64)
         # the following commented line returned some RuntimeWarnings every now and then.
         # nan_array = np.empty(
         #    ds[var_template_shape].shape) * np.nan  # np.full_like( (1, 4500, 6000), np.nan, dtype=object)
@@ -150,7 +147,7 @@ def preprocess_xarray(ds, dataset_config):
                 # we repeat the string variable to match the size of the TIME dimension
                 ds[variable_name] = (
                     (dimensions["time"]["name"],),
-                    np.full_like(
+                    da.full_like(
                         ds[dimensions["time"]["name"]],
                         ds[variable_name],
                         dtype="<S1",
@@ -159,7 +156,7 @@ def preprocess_xarray(ds, dataset_config):
 
             ds[variable_name] = ds[variable_name].astype(datatype)
 
-    logger.info(f"Succesfully applied preprocessing to dataset from {filename}")
+    logger.info(f"Successfully applied preprocessing to dataset from {filename}")
     return ds
 
 
@@ -261,11 +258,6 @@ class GenericHandler(CommonHandler):
         if s3_file_uri_list is None:
             raise ValueError("input_objects is not defined")
 
-        self.logger.info(
-            "Listing all objects to process and creating a s3_file_handle_list"
-        )
-        s3_file_handle_list = create_fileset(s3_file_uri_list, self.s3_fs)
-
         time_dimension_name = self.dimensions["time"]["name"]
         drop_vars_list = [
             var_name
@@ -279,10 +271,17 @@ class GenericHandler(CommonHandler):
 
         batch_size = self.get_batch_size(client=self.client)
 
-        for idx, batch_files in enumerate(
-            self.batch_process_fileset(s3_file_handle_list, batch_size=batch_size)
+        for idx, batch_uri_list in enumerate(
+            self.batch_process_fileset(s3_file_uri_list, batch_size=batch_size)
         ):
+
             self.uuid_log = str(uuid.uuid4())  # value per batch
+
+            self.logger.info(
+                f"{self.uuid_log}: Listing all objects to process and creating a s3_file_handle_list"
+            )
+
+            batch_files = create_fileset(batch_uri_list, self.s3_fs)
 
             self.logger.info(f"{self.uuid_log}: Processing batch {idx + 1}...")
             self.logger.info(batch_files)
@@ -296,8 +295,7 @@ class GenericHandler(CommonHandler):
 
             try:
                 # TODO(DONE): if using preprocess function within mfdataset (has to be outside the class otherwise
-                #  parallelizing issues), the local ram is being used! and not the cluster one! even if the function
-                #  only does return ds solution, open at the end with ds = preprocess(ds) afterwards
+                #  parallelizing issues)
 
                 try:
                     ds = self._open_mfds(
@@ -355,13 +353,6 @@ class GenericHandler(CommonHandler):
                             )
                             continue
 
-                # NOTE: if I comment the next line, i get some errors with the latest chunk for some variables
-                # ds = ds.chunk(chunks=self.chunks)
-
-                # TODO: create a simple jupyter notebook 2 show 2 different problems:
-                #       1) serialization issue if preprocess is within a class
-                #       2) blowing of memory if preprocess function is outside of a class and only does return ds
-
                 # If ds open with open_mfdataset with the partial preprocess_xarray, no need to re-run it again!
                 if not partial_preprocess_already_run:
                     # TODO: can probably be removed as partial_preprocess_already_run should always be True now
@@ -369,9 +360,6 @@ class GenericHandler(CommonHandler):
                         f"{self.uuid_log}: partial_preprocess_already_run is False"
                     )
                     ds = preprocess_xarray(ds, self.dataset_config)
-                    # The map_blocks function applies a function to each block (or chunk) of the dataset after
-                    # the dataset has already been loaded.
-                    # ds = ds.map_blocks(partial_preprocess)
 
                 # Write the dataset to Zarr
                 self._write_ds(ds, idx)
@@ -647,38 +635,12 @@ class GenericHandler(CommonHandler):
             )
 
         ds = ds.unify_chunks()
-        # ds = ds.map_blocks(partial_preprocess)
+        # ds = ds.map_blocks(partial_preprocess) ## EXTREMELY DANGEROUS TO USE. CORRUPTS SOME DATA CHUNKS SILENTLY while it's working fine with preprocess
         # ds = ds.persist()
 
-        # Notes:
-        # Option 1: The preprocess argument in xr.open_mfdataset applies the function to each chunk of the dataset during the opening process
-        # Option 2: The map_blocks function applies a function to each block (or chunk) of the dataset after the dataset has already been loaded.
-
-        # Option 1: Using `preprocess` in `open_mfdataset`
-        # - Applies preprocessing during dataset loading (chunk-wise).
-        # - Efficient and cheaper for simple preprocessing tasks.
-        # - Avoids loading the entire dataset into memory at once.
-        # - Limited flexibility for complex transformations.
-        # - Better for parallelized loading and preprocessing of chunks.
-
-        # Option 2: Using `ds.map_blocks`
-        # - Applies preprocessing after dataset is loaded (on blocks).
-        # - Offers more control and flexibility for complex tasks.
-        # - Can increase memory usage since the dataset is already in memory.
-        # - Better for post-load operations and complex block-wise transformations.
-
-        # Notes 2:
-        # using preprocess, it seems that on some rare occasions, we can have probably has some serialization.
-        # complexity. Some processing/memory seems to fallback onto the local machine (not even the scheduler)
-        # also, it appears that workers aren't always spun.
-        #
-        # using map_blocks has no issues spawning as many workers as possible.
-        # This is less efficient that using preprocess. The scheduler memory is less used, however the cpu usage is high
-        # ds = ds.map_blocks(partial_preprocess)  ## EXTREMELY DANGEROUS TO USE. CORRUPTS SOME DATA CHUNKS SILENTLY while it's working fine with preprocess
-        # ds = preprocess_xarray(ds, self.dataset_config)
         return ds
 
-    # @delayed  # to open and chunk each dataset lazily. cant work xarray concatenation
+    # @delayed  # to open and chunk each dataset lazily. cant work with xarray concatenation
     def _open_ds(self, file, partial_preprocess, drop_vars_list, engine="h5netcdf"):
         """Open and preprocess a single file as a xarray dataset.
 
