@@ -30,6 +30,7 @@ from fuzzywuzzy import fuzz
 from s3path import PureS3Path
 from shapely import wkb
 from shapely.geometry import Polygon, MultiPolygon
+from matplotlib.colors import LogNorm, Normalize
 
 REGION: Final[str] = "ap-southeast-2"
 ENDPOINT_URL = f"https://s3.ap-southeast-2.amazonaws.com"
@@ -307,7 +308,17 @@ def normalize_date(date_str: str) -> str:
     return date_obj.strftime("%Y-%m-%d %H:%M:%S")
 
 
-def create_timeseries(ds, var_name, lat, lon, start_time, end_time):
+def create_timeseries(
+    ds,
+    var_name,
+    lat,
+    lon,
+    start_time,
+    end_time,
+    lat_name="lat",
+    lon_name="lon",
+    time_name="time",
+):
     """
     Creates a time series plot of a given variable at a specific latitude and longitude over a specified time range.
     Also returns the time series data as a pandas DataFrame.
@@ -328,13 +339,13 @@ def create_timeseries(ds, var_name, lat, lon, start_time, end_time):
     start_time = normalize_date(start_time)
     end_time = normalize_date(end_time)
 
-    ds = ds.sortby("time")
+    ds = ds.sortby(time_name)
 
     # Get latitude, longitude, and time extents
-    lat_min, lat_max = ds["lat"].min().item(), ds["lat"].max().item()
-    lon_min, lon_max = ds["lon"].min().item(), ds["lon"].max().item()
-    time_min, time_max = pd.to_datetime(ds["time"].min().item()), pd.to_datetime(
-        ds["time"].max().item()
+    lat_min, lat_max = ds[lat_name].min().item(), ds[lat_name].max().item()
+    lon_min, lon_max = ds[lon_name].min().item(), ds[lon_name].max().item()
+    time_min, time_max = pd.to_datetime(ds[time_name].min().item()), pd.to_datetime(
+        ds[time_name].max().item()
     )
 
     # Test if latitude and longitude are within bounds
@@ -360,10 +371,12 @@ def create_timeseries(ds, var_name, lat, lon, start_time, end_time):
         )
 
     # First, slice the dataset to the time range
-    time_sliced_data = ds[var_name].sel(time=slice(start_time, end_time))
+    time_sliced_data = ds[var_name].sel({time_name: slice(start_time, end_time)})
 
     # Then, select the nearest latitude and longitude
-    selected_data = time_sliced_data.sel(lat=lat, lon=lon, method="nearest")
+    selected_data = time_sliced_data.sel(
+        {lat_name: lat, lon_name: lon}, method="nearest"
+    )
 
     # Convert the selected data to a pandas DataFrame
     time_series_df = selected_data.to_dataframe().reset_index()
@@ -373,9 +386,10 @@ def create_timeseries(ds, var_name, lat, lon, start_time, end_time):
 
     # Dynamic title based on the selected lat/lon and time range
     plt.title(
-        f'{ds[var_name].attrs.get("long_name", var_name)} at lat={selected_data.lat.values}, '
-        f"lon={selected_data.lon.values} from {start_time} to {end_time}"
+        f'{ds[var_name].attrs.get("long_name", var_name)} at {lat_name}={selected_data[lat_name].values}, '
+        f"{lon_name}={selected_data[lon_name].values} from {start_time} to {end_time}"
     )
+
     plt.xlabel("Time")
     plt.ylabel(f'{ds[var_name].attrs.get("units", "unitless")}')
     plt.show()
@@ -481,7 +495,11 @@ def plot_gridded_variable(
     lat_slice,
     var_name="sea_surface_temperature",
     n_days=6,
+    lat_name="lat",
+    lon_name="lon",
+    time_name="time",
     coastline_resolution="110m",
+    log_scale=False,  # Optional argument to use a logarithmic color scale
 ):
     """
     Plots a variable (e.g., SST) data for 6 consecutive days starting from start_date with coastlines.
@@ -493,20 +511,21 @@ def plot_gridded_variable(
     - lat_slice: tuple, latitude slice (start_lat, end_lat). (min val, max val)
     - var_name: str, variable name to plot (default is 'sea_surface_temperature').
     - coastline_resolution: str, resolution of the coastlines ('110m', '50m', '10m').
+    - log_scale: bool, whether to use a logarithmic color scale (default is False).
     """
 
-    ds = ds.sortby("time")
+    ds = ds.sortby(time_name)
 
     # Decide on the slice order
-    if ds.lat[0] < ds.lat[-1]:
+    if ds[lat_name][0] < ds[lat_name][-1]:
         lat_slice = lat_slice
-    elif ds.lat[0] > ds.lat[-1]:
+    elif ds[lat_name][0] > ds[lat_name][-1]:
         # Reverse the slice
         lat_slice = lat_slice[::-1]
 
     # Get latitude and longitude extents
-    lat_min, lat_max = ds["lat"].min().item(), ds["lat"].max().item()
-    lon_min, lon_max = ds["lon"].min().item(), ds["lon"].max().item()
+    lat_min, lat_max = ds[lat_name].min().item(), ds[lat_name].max().item()
+    lon_min, lon_max = ds[lon_name].min().item(), ds[lon_name].max().item()
 
     # Test if lat_slice and lon_slice are within bounds
     if not (lat_min <= lat_slice[0] <= lat_max and lat_min <= lat_slice[1] <= lat_max):
@@ -522,23 +541,23 @@ def plot_gridded_variable(
     start_date_parsed = pd.to_datetime(start_date)
 
     # Ensure the dataset has a time dimension and it's sorted
-    assert "time" in ds.dims, "Dataset does not have a 'time' dimension"
-    ds = ds.sortby("time")
+    assert time_name in ds.dims, "Dataset does not have a 'time' dimension"
+    ds = ds.sortby(time_name)
 
     # Find the nearest date in the dataset
-    nearest_date = ds.sel(time=start_date_parsed, method="nearest").time
+    nearest_date = ds.sel({time_name: start_date_parsed}, method="nearest")[time_name]
     print(f"Nearest date in dataset: {nearest_date}")
 
     # Get the index of the nearest date
     nearest_date_index = (
-        ds.time.where(ds.time == nearest_date, drop=True).squeeze().values
+        ds[time_name].where(ds[time_name] == nearest_date, drop=True).squeeze().values
     )
 
     # Find the position of the nearest date in the time array
-    nearest_date_position = int((ds.time == nearest_date_index).argmax().values)
+    nearest_date_position = int((ds[time_name] == nearest_date_index).argmax().values)
 
     # Get the next n_days date values including the nearest date
-    dates = ds.time[nearest_date_position : nearest_date_position + n_days].values
+    dates = ds[time_name][nearest_date_position : nearest_date_position + n_days].values
     dates = [pd.Timestamp(date) for date in dates]
 
     # Retrieve variable-specific metadata
@@ -564,9 +583,11 @@ def plot_gridded_variable(
     for date in dates:
         try:
             data = ds[var_name].sel(
-                time=date.strftime("%Y-%m-%d"),
-                lon=slice(lon_slice[0], lon_slice[1]),
-                lat=slice(lat_slice[0], lat_slice[1]),
+                {
+                    time_name: date.strftime("%Y-%m-%d"),
+                    lon_name: slice(lon_slice[0], lon_slice[1]),
+                    lat_name: slice(lat_slice[0], lat_slice[1]),
+                }
             )
 
             # Check for NaNs
@@ -588,6 +609,16 @@ def plot_gridded_variable(
             vmin = min(vmin, data.min().values)
             vmax = max(vmax, data.max().values)
 
+            # Set the color scale norm based on whether log_scale is True or False
+            if log_scale:
+                norm = LogNorm(vmin=vmin, vmax=vmax)  # Logarithmic scale
+                cbar_label = f"Log({var_long_name}) ({var_units})"  # Colorbar label for log scale
+            else:
+                norm = Normalize(vmin=vmin, vmax=vmax)  # Linear scale
+                cbar_label = (
+                    f"{var_long_name} ({var_units})"  # Colorbar label for linear scale
+                )
+
         except Exception as err:
             print(f"Error processing date {date.strftime('%Y-%m-%d')}: {err}")
             continue
@@ -602,9 +633,11 @@ def plot_gridded_variable(
     for date in dates:
         try:
             data = ds[var_name].sel(
-                time=date.strftime("%Y-%m-%d"),
-                lon=slice(lon_slice[0], lon_slice[1]),
-                lat=slice(lat_slice[0], lat_slice[1]),
+                {
+                    time_name: date.strftime("%Y-%m-%d"),
+                    lon_name: slice(lon_slice[0], lon_slice[1]),
+                    lat_name: slice(lat_slice[0], lat_slice[1]),
+                }
             )
 
             # Skip if no valid data is found for the date
@@ -623,6 +656,7 @@ def plot_gridded_variable(
                 cmap=cmap,
                 vmin=vmin,
                 vmax=vmax,
+                norm=norm,
                 add_colorbar=False,
             )
 
@@ -643,7 +677,12 @@ def plot_gridded_variable(
     # Create a single colorbar for all plots
     cbar_ax = fig.add_axes([1, 0.15, 0.02, 0.7])
     cbar = fig.colorbar(img, cax=cbar_ax, orientation="vertical")
-    cbar.set_label(f"{var_long_name} ({var_units})")
+    # Set the colorbar label and title based on the scale type
+    if log_scale:
+        cbar.set_label(f"Log({var_long_name}) ({var_units})")
+    else:
+        cbar.set_label(f"{var_long_name} ({var_units})")
+
     cbar.set_ticks([vmin, (vmin + vmax) / 2, vmax])
     cbar.ax.set_yticklabels([f"{vmin:.2f}", f"{(vmin + vmax) / 2:.2f}", f"{vmax:.2f}"])
 
