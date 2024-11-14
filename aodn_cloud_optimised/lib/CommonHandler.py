@@ -116,7 +116,7 @@ class CommonHandler:
         self.cluster_options = self.dataset_config.get("cluster_options", None)
 
         self.s3_fs = s3fs.S3FileSystem(
-            anon=False, session=kwargs.get("s3fs_session")
+            anon=False, default_cache_type=None, session=kwargs.get("s3fs_session")
         )  # variable overwritten in unittest to use moto server
 
         self.uuid_log = None
@@ -227,7 +227,7 @@ class CommonHandler:
                 cluster = LocalCluster(**local_cluster_options)
 
                 client = Client(cluster)
-                self.cluste_mode = "local"
+                self.cluster_mode = "local"
                 self.logger.info(
                     f"Local Cluster dask dashboard available at {cluster.dashboard_link}"
                 )
@@ -239,6 +239,10 @@ class CommonHandler:
             self.logger.info(
                 f"Local Cluster dask dashboard available at {cluster.dashboard_link}"
             )
+        elif self.cluster_mode == "none":
+            client = None
+            cluster = None
+            return client, cluster
 
         client.forward_logging()
         return client, cluster
@@ -260,6 +264,9 @@ class CommonHandler:
             Info: Logs a message when the Dask client and cluster are closed successfully.
             Error: Logs a message if there is an error while closing the Dask client or cluster.
         """
+        if client is None:
+            return
+
         try:
             client.close()
             self.logger.info("Successfully closed Dask client.")

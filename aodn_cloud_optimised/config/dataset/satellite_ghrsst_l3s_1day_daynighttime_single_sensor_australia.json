@@ -5,19 +5,19 @@
   "parent_config": "satellite_ghrsst_main.json",
   "cluster_options": {
     "n_workers": [
-      1,
-      80
+      60,
+      180
     ],
-    "scheduler_vm_types": "t3.large",
-    "worker_vm_types": "t3.xlarge",
+    "scheduler_vm_types": "m7i.2xlarge",
+    "worker_vm_types": "m7i.2xlarge",
     "allow_ingress_from": "me",
     "compute_purchase_option": "spot_with_fallback",
     "worker_options": {
       "nthreads": 8,
-      "memory_limit": "16GB"
+      "memory_limit": "32GB"
     }
   },
-  "batch_size": 30,
+  "batch_size": 100,
   "aws_opendata_registry": {
     "Name": "Satellite - Sea surface temperature - Level 3 - Single sensor - 1 day - Day and night time",
     "Description": "This is a single-sensor multi-satellite  SSTfnd product for a single 24 hour period, derived using observations from AVHRR instruments on all available NOAA polar-orbiting satellites.  It is provided as a 0.02deg x 0.02deg cylindrical equidistant projected map over the region 70\u00b0E to 170\u00b0W, 20\u00b0N to 70\u00b0S.  Each grid cell contains the 24 hour average of all the highest available quality SSTs that overlap with that cell, weighted by the area of overlap.  The diagram at https://help.aodn.org.au/satellite-data-product-information/ indicates where this product fits within the GHRSST suite of NOAA/AVHRR products. The SSTfnd is derived by adding a constant 0.17 degC to the SSTskin observations after rejecting observations with low surface wind speeds (<6m/s by day and <2m/s at night) (see http://www.bom.gov.au/amoj/docs/2011/beggs.pdf). Matchups with buoy SSTfnd observations indicate typical 2014 biases of < 0.01 degC and standard deviations of 0.6 degC. Refer to the IMOS SST products web page at http://imos.org.au/sstproducts.html and Beggs et al. (2013) at http://imos.org.au/sstdata_references.html for further information.",

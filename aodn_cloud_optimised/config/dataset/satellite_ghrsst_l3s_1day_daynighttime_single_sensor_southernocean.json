@@ -4,11 +4,11 @@
   "cloud_optimised_format": "zarr",
   "cluster_options": {
     "n_workers": [
-      1,
+      8,
       120
     ],
-    "scheduler_vm_types": "t3.2xlarge",
-    "worker_vm_types": "t3.xlarge",
+    "scheduler_vm_types": "m6i.2xlarge",
+    "worker_vm_types": "m6i.2xlarge",
     "allow_ingress_from": "me",
     "compute_purchase_option": "spot_with_fallback",
     "worker_options": {
@@ -16,7 +16,7 @@
       "memory_limit": "32GB"
     }
   },
-  "batch_size": 15,
+  "batch_size": 100,
   "metadata_uuid": "165a23d7-5ef3-4cab-9e02-90c8adb941dd",
   "dimensions": {
     "time": {
