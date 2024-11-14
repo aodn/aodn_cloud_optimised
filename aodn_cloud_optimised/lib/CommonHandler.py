@@ -15,6 +15,7 @@ from dask.distributed import LocalCluster
 from jsonschema import validate, ValidationError
 from s3path import PureS3Path
 
+from .clusterLib import ClusterMode
 from .config import load_variable_from_config, load_dataset_config
 from .logging import get_logger
 
@@ -75,7 +76,7 @@ class CommonHandler:
 
         # Cluster options
         valid_clusters = ["remote", "local", None]
-        self.cluster_mode = kwargs.get("cluster_mode", "local")
+        self.cluster_mode = kwargs.get("cluster_mode", ClusterMode.NONE)
         if isinstance(self.cluster_mode, Enum):
             self.cluster_mode = self.cluster_mode.value
 

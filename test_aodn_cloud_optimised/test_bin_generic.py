@@ -12,7 +12,7 @@ from moto import mock_aws
 from moto.moto_server.threaded_moto_server import ThreadedMotoServer
 
 from aodn_cloud_optimised.bin.generic_cloud_optimised_creation import main
-from aodn_cloud_optimised.lib.cluster_lib import ClusterMode
+from aodn_cloud_optimised.lib.clusterLib import ClusterMode
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
