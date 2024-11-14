@@ -219,7 +219,7 @@ class CommonHandler:
                 cluster = LocalCluster(**local_cluster_options)
 
                 client = Client(cluster)
-                self.cluste_mode = "local"
+                self.cluster_mode = "local"
                 self.logger.info(
                     f"Local Cluster dask dashboard available at {cluster.dashboard_link}"
                 )
@@ -231,6 +231,10 @@ class CommonHandler:
             self.logger.info(
                 f"Local Cluster dask dashboard available at {cluster.dashboard_link}"
             )
+        elif self.cluster_mode == "none":
+            client = None
+            cluster = None
+            return client, cluster
 
         client.forward_logging()
         return client, cluster
@@ -252,6 +256,9 @@ class CommonHandler:
             Info: Logs a message when the Dask client and cluster are closed successfully.
             Error: Logs a message if there is an error while closing the Dask client or cluster.
         """
+        if client is None:
+            return
+
         try:
             client.close()
             self.logger.info("Successfully closed Dask client.")

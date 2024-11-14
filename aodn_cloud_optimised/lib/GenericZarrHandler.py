@@ -834,8 +834,11 @@ class GenericHandler(CommonHandler):
             self.client, self.cluster = self.create_cluster()
             if self.cluster_mode == "remote":
                 self.cluster_id = self.cluster.cluster_id
-            else:
+            elif self.cluster_mode == "local":
                 self.cluster_id = self.cluster.name
+            elif self.cluster_mode == "none":
+                self.cluster_id = None
+
             self.publish_cloud_optimised_fileset_batch(s3_file_uri_list)
             self.close_cluster(self.client, self.cluster)
 
