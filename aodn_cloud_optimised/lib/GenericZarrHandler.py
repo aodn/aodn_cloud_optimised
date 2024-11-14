@@ -45,7 +45,6 @@ def preprocess_xarray(ds, dataset_config):
     # https://github.com/fsspec/filesystem_spec/issues/1747
     # https://discourse.pangeo.io/t/remote-cluster-with-dask-distributed-uses-the-deployment-machines-memory-and-internet-bandwitch/4637
     # https://github.com/dask/distributed/discussions/8913
-
     logger_name = dataset_config.get("logger_name", "generic")
     dimensions = dataset_config.get("dimensions")
     schema = dataset_config.get("schema")
@@ -138,8 +137,8 @@ def preprocess_xarray(ds, dataset_config):
         # if variable already exists
         else:
 
-            if (
-                datatype == "timestamp[ns]"
+            if (datatype == "timestamp[ns]") or (
+                datatype == "datetime64[ns]"
             ):  # Timestamps do not have an astype method. But numpy.datetime64 do.
                 datatype = "datetime64[ns]"
 
@@ -634,8 +633,9 @@ class GenericHandler(CommonHandler):
             ds.chunk(chunks="auto")
         except Exception as err:
             self.logger.warning(
-                f"{self.uuid_log}:{err}\n Defaulting to open files without chunks option"
+                f"{self.uuid_log}:{err}\n Defaulting to open files without auto chunks option"
             )
+            ds.chunk(chunks=self.chunks)
 
         ds = ds.unify_chunks()
         # ds = ds.map_blocks(partial_preprocess) ## EXTREMELY DANGEROUS TO USE. CORRUPTS SOME DATA CHUNKS SILENTLY while it's working fine with preprocess
@@ -680,15 +680,21 @@ class GenericHandler(CommonHandler):
 
         ds = xr.open_dataset(file, **open_dataset_params)
 
+        # got to do ds.chunks here as we can get a
+        # *** NotImplementedError: Can not use auto rechunking with object dtype. We are unable to estimate the size in bytes of object data
+        # for GSLA files
+        # https://github.com/pydata/xarray/issues/4055
         try:
             ds.chunk(chunks="auto")
         except Exception as err:
             self.logger.warning(
-                f"{self.uuid_log}:{err}\n Defaulting to open files without chunks option"
+                f"{self.uuid_log}:{err}\n Defaulting to open files without auto chunks option"
             )
+            ds.chunk(chunks=self.chunks)
 
         # ds = ds.map_blocks(partial_preprocess)
         ds = ds.unify_chunks()
+
         ds = preprocess_xarray(ds, self.dataset_config)
         # ds = ds.persist()
         return ds
