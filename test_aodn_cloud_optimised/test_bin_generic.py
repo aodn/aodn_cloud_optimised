@@ -12,6 +12,7 @@ from moto import mock_aws
 from moto.moto_server.threaded_moto_server import ThreadedMotoServer
 
 from aodn_cloud_optimised.bin.generic_cloud_optimised_creation import main
+from aodn_cloud_optimised.lib.cluster_lib import ClusterMode
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -128,7 +129,7 @@ class TestGenericCloudOptimisedCreation(unittest.TestCase):
             dataset_config=DATASET_CONFIG_NC_ACORN_JSON,
             clear_existing_data=True,
             force_previous_parquet_deletion=False,
-            cluster_mode="local",
+            cluster_mode=ClusterMode.LOCAL,
             optimised_bucket_name=self.BUCKET_OPTIMISED_NAME,
             root_prefix_cloud_optimised_path="testing",
             bucket_raw="imos-data",

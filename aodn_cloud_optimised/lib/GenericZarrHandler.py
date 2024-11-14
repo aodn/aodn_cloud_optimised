@@ -277,7 +277,10 @@ class GenericHandler(CommonHandler):
             preprocess_xarray, dataset_config=self.dataset_config
         )
 
-        batch_size = self.get_batch_size(client=self.client)
+        if self.cluster_mode:
+            batch_size = self.get_batch_size(client=self.client)
+        else:
+            batch_size = 1
 
         for idx, batch_files in enumerate(
             self.batch_process_fileset(s3_file_handle_list, batch_size=batch_size)
@@ -868,14 +871,19 @@ class GenericHandler(CommonHandler):
             )  # ensure the list is unique!
 
             self.s3_file_uri_list = s3_file_uri_list
-            # creating a cluster to process multiple files at once
-            self.client, self.cluster = self.create_cluster()
-            if self.cluster_mode == "remote":
-                self.cluster_id = self.cluster.cluster_id
-            else:
-                self.cluster_id = self.cluster.name
+
+            if self.cluster_mode:
+                # creating a cluster to process multiple files at once
+                self.client, self.cluster = self.create_cluster()
+                if self.cluster_mode == "remote":
+                    self.cluster_id = self.cluster.cluster_id
+                else:
+                    self.cluster_id = self.cluster.name
+
             self.publish_cloud_optimised_fileset_batch(s3_file_uri_list)
-            self.close_cluster(self.client, self.cluster)
+
+            if self.cluster_mode:
+                self.close_cluster(self.client, self.cluster)
 
     @staticmethod
     def filter_rechunk_dimensions(dimensions):
