@@ -559,7 +559,7 @@ def create_notebook(dataset_name):
             if cell.cell_type == "markdown":
                 cell.source = (
                     f"## Access {dataset_name.replace('_', ' ').title()} data in {cloud_optimised_format.title()}\n"
-                    f"A jupyter notebook to show how to access and plot the AODN {dataset_name} dataset available as a {cloud_format_url} dataset on S3.\n"
+                    f"A jupyter notebook to show how to access and plot the AODN {dataset_name} dataset available as a {cloud_format_url} dataset on S3.\n\n"
                     f"More information about the dataset available {metadata_url}."
                 )
                 break
