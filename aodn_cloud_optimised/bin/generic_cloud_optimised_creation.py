@@ -38,7 +38,7 @@ Arguments:
 import argparse
 from importlib.resources import files
 
-from aodn_cloud_optimised.lib import cluster_lib
+from aodn_cloud_optimised.lib import clusterLib
 from aodn_cloud_optimised.lib.CommonHandler import cloud_optimised_creation
 from aodn_cloud_optimised.lib.config import (
     load_variable_from_config,
@@ -92,7 +92,7 @@ def main():
     )
     parser.add_argument(
         "--cluster-mode",
-        type=cluster_lib.parse_cluster_mode,
+        type=clusterLib.parse_cluster_mode,
         default=None,
         choices=["local", "remote"],
         help="Cluster mode to use. Options: 'local' or 'remote'. Default is None.",
