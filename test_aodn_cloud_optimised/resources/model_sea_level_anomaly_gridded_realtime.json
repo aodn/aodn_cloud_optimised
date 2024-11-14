@@ -74,12 +74,14 @@
     "start_time": {
       "type": "datetime64[ns]",
       "long_name": "start time of data window",
-      "coordinate_type": "TIME"
+      "coordinate_type": "TIME",
+      "drop_vars": true
     },
     "end_time": {
       "type": "timestamp[ns]",
       "long_name": "end time of data window",
-      "coordinate_type": "TIME"
+      "coordinate_type": "TIME",
+      "drop_vars": true
     },
     "GSLA": {
       "type": "float",
