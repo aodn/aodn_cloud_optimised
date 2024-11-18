@@ -471,16 +471,23 @@ class GenericHandler(CommonHandler):
                 amount_to_pad = 0
                 ds = ds.pad(time=(0, amount_to_pad))
             ##########################################
+            for var in ds:
+                if "chunks" in ds[var].encoding:
+                    del ds[var].encoding["chunks"]
 
+            # TODO:
+            # compute() was added as unittests failed on github, but not locally. related to
+            # https://github.com/pydata/xarray/issues/5219
             ds.isel(**{time_dimension_name: indexes}).drop_vars(
                 self.vars_to_drop_no_common_dimension, errors="ignore"
-            ).pad(**{time_dimension_name: (0, amount_to_pad)}).to_zarr(
+            ).pad(**{time_dimension_name: (0, amount_to_pad)}).compute().to_zarr(
                 self.store,
                 write_empty_chunks=self.write_empty_chunks,
                 region=region,
                 compute=True,
                 consolidated=self.consolidated,
                 safe_chunks=self.safe_chunks,
+                mode="r+",
             )
             self.logger.info(
                 f"{self.uuid_log}: Region {n_region + 1} from Batch {idx + 1} - successfully published to {self.store}"

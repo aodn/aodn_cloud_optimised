@@ -90,11 +90,13 @@ def main():
         help="Flag to force the search of previous equivalent parquet file created. Much slower. Default is False. "
         "Only for Parquet processing.",
     )
+
+    cluster_options = [mode.value for mode in clusterLib.ClusterMode]
     parser.add_argument(
         "--cluster-mode",
-        type=clusterLib.parse_cluster_mode,
-        default=None,
-        choices=["local", "remote"],
+        # type=clusterLib.parse_cluster_mode,
+        default=clusterLib.ClusterMode.NONE.value,
+        choices=cluster_options,
         help="Cluster mode to use. Options: 'local' or 'remote'. Default is None.",
     )
 
