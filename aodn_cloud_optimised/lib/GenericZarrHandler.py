@@ -484,6 +484,7 @@ class GenericHandler(CommonHandler):
                 compute=True,
                 consolidated=self.consolidated,
                 safe_chunks=self.safe_chunks,
+                mode="r+",
             )
             self.logger.info(
                 f"{self.uuid_log}: Region {n_region + 1} from Batch {idx + 1} - successfully published to {self.store}"
