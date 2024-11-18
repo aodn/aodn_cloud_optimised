@@ -475,6 +475,9 @@ class GenericHandler(CommonHandler):
                 if "chunks" in ds[var].encoding:
                     del ds[var].encoding["chunks"]
 
+            # TODO:
+            # compute() was added as unittests failed on github, but not locally. related to
+            # https://github.com/pydata/xarray/issues/5219
             ds.isel(**{time_dimension_name: indexes}).drop_vars(
                 self.vars_to_drop_no_common_dimension, errors="ignore"
             ).pad(**{time_dimension_name: (0, amount_to_pad)}).compute().to_zarr(
