@@ -477,7 +477,7 @@ class GenericHandler(CommonHandler):
 
             ds.isel(**{time_dimension_name: indexes}).drop_vars(
                 self.vars_to_drop_no_common_dimension, errors="ignore"
-            ).pad(**{time_dimension_name: (0, amount_to_pad)}).to_zarr(
+            ).pad(**{time_dimension_name: (0, amount_to_pad)}).compute().to_zarr(
                 self.store,
                 write_empty_chunks=self.write_empty_chunks,
                 region=region,
