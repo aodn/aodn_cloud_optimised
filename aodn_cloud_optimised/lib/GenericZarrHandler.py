@@ -471,6 +471,9 @@ class GenericHandler(CommonHandler):
                 amount_to_pad = 0
                 ds = ds.pad(time=(0, amount_to_pad))
             ##########################################
+            for var in ds:
+                if "chunks" in ds[var].encoding:
+                    del ds[var].encoding["chunks"]
 
             ds.isel(**{time_dimension_name: indexes}).drop_vars(
                 self.vars_to_drop_no_common_dimension, errors="ignore"
