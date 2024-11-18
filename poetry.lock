@@ -6003,6 +6003,24 @@ files = [
 ]
 
 [[package]]
+name = "windrose"
+version = "1.9.2"
+description = "Python Matplotlib, Numpy library to manage wind data, draw windrose (also known as a polar rose plot)"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "windrose-1.9.2-py3-none-any.whl", hash = "sha256:0f93d22233b281929dff9621366121622a02dd7b7f345e16a869e9947b9559fd"},
+    {file = "windrose-1.9.2.tar.gz", hash = "sha256:70200afe01721bfe4a10ea26cbcc3e5c23800566921bbb8a34b0f68ade488bfa"},
+]
+
+[package.dependencies]
+matplotlib = ">=3"
+numpy = ">=1.21"
+
+[package.extras]
+extras = ["pandas", "scipy"]
+
+[[package]]
 name = "wrapt"
 version = "1.16.0"
 description = "Module for decorators, wrappers and monkey patching."
@@ -6369,4 +6387,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10, <4.0"
-content-hash = "628724fe40d48f470b6ac722bfecd194aeeb1454304ed4c9ab2aa5d0071e306b"
+content-hash = "030a2a0fdb600e46b680a0109fd388b55fbf366c0ae9a628e0923609dd21049c"

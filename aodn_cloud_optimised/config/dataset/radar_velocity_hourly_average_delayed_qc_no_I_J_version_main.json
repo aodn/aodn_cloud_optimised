@@ -1,10 +1,10 @@
 {
-  "dataset_name": "radar_velocity_hourly_average_delayed_qc_main",
-  "logger_name": "radar_velocity_hourly_average_delayed_qc_main",
+  "dataset_name": "radar_velocity_hourly_average_delayed_qc_no_I_J_version_main",
+  "logger_name": "radar_velocity_hourly_average_delayed_qc_no_I_J_version_main",
   "cloud_optimised_format": "zarr",
   "cluster_options": {
     "n_workers": [
-      2,
+      1,
       20
     ],
     "scheduler_vm_types": "t3.large",
@@ -16,11 +16,9 @@
       "memory_limit": "16GB"
     }
   },
-  "batch_size": 1000,
+  "batch_size": 20,
   "var_template_shape": "UCUR",
   "vars_to_drop_no_common_dimension": [
-    "I",
-    "J",
     "LATITUDE",
     "LONGITUDE",
     "GDOP"
@@ -45,12 +43,6 @@
       "valid_min": -90.0,
       "valid_max": 90.0,
       "reference_datum": "geographical coordinates, WGS84 datum"
-    },
-    "I": {
-      "type": "int32"
-    },
-    "J": {
-      "type": "int32"
     },
     "LONGITUDE": {
       "type": "double",
