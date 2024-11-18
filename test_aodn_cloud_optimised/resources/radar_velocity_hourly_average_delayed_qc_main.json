@@ -26,11 +26,11 @@
     },
     "latitude": {
       "name": "J",
-      "chunk": 60
+      "chunk": 59
     },
     "longitude": {
       "name": "I",
-      "chunk": 59
+      "chunk": 60
     }
   },
   "var_template_shape": "UCUR",
