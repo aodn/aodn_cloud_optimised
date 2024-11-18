@@ -73,7 +73,8 @@
       "type": "float32"
     },
     "NOBS1": {
-      "type": "float32"
+      "type": "float32",
+      "drop_vars": true
     },
     "NOBS2": {
       "type": "float32"
