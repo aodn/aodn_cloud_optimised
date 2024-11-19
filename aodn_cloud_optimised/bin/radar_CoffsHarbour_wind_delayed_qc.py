@@ -6,9 +6,12 @@ def main():
     command = [
         "generic_cloud_optimised_creation",
         "--paths",
-        "IMOS/ACORN/gridded_1h-avg-current-map_QC/TURQ/",
+        "IMOS/ACORN/gridded_1h-avg-wind-map_QC/COF/",
+        # "--filters",
+        # "FILTER_STRING_1",
+        # "FILTER_STRING_1",
         "--dataset-config",
-        "radar_TurquoiseCoast_velocity_hourly_average_delayed_qc.json",
+        "radar_CoffsHarbour_wind_delayed_qc.json",
         "--clear-existing-data",
         "--cluster-mode",
         "remote",
@@ -16,3 +19,7 @@ def main():
 
     # Run the command
     subprocess.run(command, check=True)
+
+
+if __name__ == "__main__":
+    main()

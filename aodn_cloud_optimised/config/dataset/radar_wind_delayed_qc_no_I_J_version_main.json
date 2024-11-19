@@ -1,0 +1,149 @@
+{
+  "dataset_name": "radar_wind_delayed_qc_no_I_J_version_main",
+  "logger_name": "radar_wind_delayed_qc_no_I_J_version_main",
+  "cloud_optimised_format": "zarr",
+  "cluster_options": {
+    "n_workers": [
+      1,
+      20
+    ],
+    "scheduler_vm_types": "t3.small",
+    "worker_vm_types": "t3.medium",
+    "allow_ingress_from": "me",
+    "compute_purchase_option": "spot_with_fallback",
+    "worker_options": {
+      "nthreads": 4,
+      "memory_limit": "8GB"
+    }
+  },
+  "batch_size": 5,
+  "var_template_shape": "WDIR",
+  "vars_to_drop_no_common_dimension": [],
+  "schema": {
+    "TIME": {
+      "type": "timestamp[ns]",
+      "standard_name": "time",
+      "long_name": "time",
+      "axis": "T",
+      "valid_min": 0.0,
+      "valid_max": 999999.0,
+      "comment": "Given time lies at the middle of the 1 hour averaging period.",
+      "local_time_zone": 8.0
+    },
+    "LATITUDE": {
+      "type": "double",
+      "standard_name": "latitude",
+      "long_name": "latitude",
+      "reference_datum": "geographical coordinates, WGS84 datum",
+      "units": "degree_north",
+      "axis": "Y",
+      "valid_min": -90.0,
+      "valid_max": 90.0
+    },
+    "LONGITUDE": {
+      "type": "double",
+      "standard_name": "longitude",
+      "long_name": "longitude",
+      "reference_datum": "geographical coordinates, WGS84 datum",
+      "units": "degree_east",
+      "axis": "X",
+      "valid_min": -180.0,
+      "valid_max": 180.0
+    },
+    "WDIR": {
+      "type": "float",
+      "standard_name": "wind_to_direction",
+      "long_name": "Direction towards which the wind is blowing based on short wave direction",
+      "units": "degrees clockwise from true north",
+      "valid_min": 0.0,
+      "valid_max": 360.0,
+      "ancillary_variables": "WDIR_quality_control"
+    },
+    "WDIR_quality_control": {
+      "type": "float",
+      "quality_control_set": 1,
+      "quality_control_indicator": 1,
+      "long_name": "quality flag for Direction towards which the wind is blowing based on short wave direction",
+      "quality_control_conventions": "IMOS standard set using the IODE flags",
+      "valid_min": 0,
+      "valid_max": 10,
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data probably_bad_data bad_data value_changed value_below_detection value_in_excess interpolated_value missing_value uncertain_phenomenon"
+    },
+    "WWAV": {
+      "type": "float",
+      "standard_name": "sea_surface_wind_wave_to_direction",
+      "long_name": "Short wave direction towards which the wave is propagating",
+      "units": "degrees clockwise from true north",
+      "valid_min": 0.0,
+      "valid_max": 360.0,
+      "ancillary_variables": "WWAV_quality_control"
+    },
+    "WWAV_quality_control": {
+      "type": "float",
+      "quality_control_set": 1,
+      "quality_control_indicator": 1,
+      "long_name": "quality flag for short wave direction towards which the wave is propagating",
+      "quality_control_conventions": "IMOS standard set using the IODE flags",
+      "valid_min": 0,
+      "valid_max": 10,
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data probably_bad_data bad_data value_changed value_below_detection value_in_excess interpolated_value missing_value uncertain_phenomenon"
+    },
+    "WWDS": {
+      "type": "float",
+      "long_name": "Short wave directional spreading using Donelan model",
+      "units": "degrees",
+      "valid_min": 0.0,
+      "valid_max": 90.0,
+      "ancillary_variables": "WWDS_quality_control"
+    },
+    "WWDS_quality_control": {
+      "type": "float",
+      "quality_control_set": 1,
+      "quality_control_indicator": 1,
+      "long_name": "quality flag for short wave spread",
+      "quality_control_conventions": "IMOS standard set using the IODE flags",
+      "valid_min": 0,
+      "valid_max": 10,
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data probably_bad_data bad_data value_changed value_below_detection value_in_excess interpolated_value missing_value uncertain_phenomenon"
+    }
+  }
+}
