@@ -628,8 +628,8 @@ def plot_gridded_radar_velocity(
 def plot_gridded_variable(
     ds,
     start_date,
-    lon_slice,
-    lat_slice,
+    lon_slice=None,
+    lat_slice=None,
     var_name="sea_surface_temperature",
     n_days=6,
     lat_name="lat",
@@ -653,6 +653,16 @@ def plot_gridded_variable(
 
     ds = ds.sortby(time_name)
 
+    # Get latitude and longitude extents
+    lat_min, lat_max = ds[lat_name].min().item(), ds[lat_name].max().item()
+    lon_min, lon_max = ds[lon_name].min().item(), ds[lon_name].max().item()
+
+    if lat_slice is None:
+        lat_slice = (lat_min, lat_max)
+
+    if lon_slice is None:
+        lon_slice = (lon_min, lon_max)
+
     # Decide on the slice order
     if ds[lat_name][0] < ds[lat_name][-1]:
         lat_slice = lat_slice
@@ -660,15 +670,12 @@ def plot_gridded_variable(
         # Reverse the slice
         lat_slice = lat_slice[::-1]
 
-    # Get latitude and longitude extents
-    lat_min, lat_max = ds[lat_name].min().item(), ds[lat_name].max().item()
-    lon_min, lon_max = ds[lon_name].min().item(), ds[lon_name].max().item()
-
     # Test if lat_slice and lon_slice are within bounds
     if not (lat_min <= lat_slice[0] <= lat_max and lat_min <= lat_slice[1] <= lat_max):
         raise ValueError(
             f"Latitude slice {lat_slice} is out of bounds. Dataset latitude extent is ({lat_min}, {lat_max})"
         )
+
     if not (lon_min <= lon_slice[0] <= lon_max and lon_min <= lon_slice[1] <= lon_max):
         raise ValueError(
             f"Longitude slice {lon_slice} is out of bounds. Dataset longitude extent is ({lon_min}, {lon_max})"
@@ -721,7 +728,7 @@ def plot_gridded_variable(
         try:
             data = ds[var_name].sel(
                 {
-                    time_name: date.strftime("%Y-%m-%d"),
+                    time_name: date.strftime("%Y-%m-%d %H:%M:%S"),
                     lon_name: slice(lon_slice[0], lon_slice[1]),
                     lat_name: slice(lat_slice[0], lat_slice[1]),
                 }
@@ -730,7 +737,7 @@ def plot_gridded_variable(
             # Check for NaNs
             if data.isnull().all():
                 print(
-                    f"No valid data for {date.strftime('%Y-%m-%d')}, skipping this date."
+                    f"No valid data for {date.strftime('%Y-%m-%d %H:%M:%S')}, skipping this date."
                 )
                 continue
 
@@ -771,7 +778,7 @@ def plot_gridded_variable(
         try:
             data = ds[var_name].sel(
                 {
-                    time_name: date.strftime("%Y-%m-%d"),
+                    time_name: date.strftime("%Y-%m-%d %H:%M:%S"),
                     lon_name: slice(lon_slice[0], lon_slice[1]),
                     lat_name: slice(lat_slice[0], lat_slice[1]),
                 }
@@ -779,7 +786,9 @@ def plot_gridded_variable(
 
             # Skip if no valid data is found for the date
             if data.isnull().all():
-                print(f"No data for {date.strftime('%Y-%m-%d')}, skipping plot.")
+                print(
+                    f"No data for {date.strftime('%Y-%m-%d %H:%M:%S')}, skipping plot."
+                )
                 continue
 
             var_units = ds[var_name].attrs.get("units", "unknown units")
@@ -804,11 +813,11 @@ def plot_gridded_variable(
             ax.gridlines(draw_labels=True, dms=True, x_inline=False, y_inline=False)
 
             # Set the title with the date
-            ax.set_title(date.strftime("%Y-%m-%d"))
+            ax.set_title(date.strftime("%Y-%m-%d %H:%M:%S"))
 
         except Exception as err:
-            print(f"Error processing date {date.strftime('%Y-%m-%d')}: {err}")
-            ax.set_title(f"No data for {date.strftime('%Y-%m-%d')}")
+            print(f"Error processing date {date.strftime('%Y-%m-%d %H:%M:%S')}: {err}")
+            ax.set_title(f"No data for {date.strftime('%Y-%m-%d %H:%M:%S')}")
             ax.axis("off")
 
     # Create a single colorbar for all plots
