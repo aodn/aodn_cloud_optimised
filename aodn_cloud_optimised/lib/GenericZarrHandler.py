@@ -50,7 +50,6 @@ def preprocess_xarray(ds, dataset_config):
     schema = dataset_config.get("schema")
 
     logger = get_logger(logger_name)
-
     # TODO: get filename; Should be from https://github.com/pydata/xarray/issues/9142
 
     # ds = ds.assign(
@@ -67,6 +66,14 @@ def preprocess_xarray(ds, dataset_config):
 
     ds_filtered = ds.drop_vars(vars_to_drop, errors="ignore")
     ds = ds_filtered
+
+    if not ds.data_vars:
+        logger.error(
+            f"The dataset has no data variable left. Check the configuration dataset"
+        )
+        raise ValueError(
+            f"The dataset has no data variable left. Check the configuration dataset"
+        )
 
     ##########
     var_required = schema.copy()
