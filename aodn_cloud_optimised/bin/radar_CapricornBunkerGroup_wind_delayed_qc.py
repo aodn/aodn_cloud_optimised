@@ -6,7 +6,7 @@ def main():
     command = [
         "generic_cloud_optimised_creation",
         "--paths",
-        "IMOS/ACORN/gridded_1h-avg-wind-map_QC/CBG/2009/08/01",
+        "IMOS/ACORN/gridded_1h-avg-wind-map_QC/CBG/",
         # "--filters",
         # "FILTER_STRING_1",
         # "FILTER_STRING_1",
