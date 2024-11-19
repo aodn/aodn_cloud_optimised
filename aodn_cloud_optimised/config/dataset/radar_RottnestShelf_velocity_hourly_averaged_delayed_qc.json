@@ -7,7 +7,7 @@
     "time": {
       "name": "TIME",
       "chunk": 1500,
-      "rechunk": true
+      "rechunk": false
     },
     "latitude": {
       "name": "LATITUDE",
@@ -17,6 +17,9 @@
       "name": "LONGITUDE",
       "chunk": 62
     }
+  },
+  "dataset_gattrs": {
+    "title": ""
   },
   "aws_opendata_registry": {
     "Name": "Ocean Radar - Rottnest Shelf site - Sea water velocity - Delayed mode",

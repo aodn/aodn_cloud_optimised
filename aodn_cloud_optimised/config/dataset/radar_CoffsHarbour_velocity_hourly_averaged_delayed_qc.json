@@ -7,7 +7,7 @@
     "time": {
       "name": "TIME",
       "chunk": 1500,
-      "rechunk": true
+      "rechunk": false
     },
     "latitude": {
       "name": "LATITUDE",
@@ -17,6 +17,9 @@
       "name": "LONGITUDE",
       "chunk": 114
     }
+  },
+  "dataset_gattrs": {
+    "title": ""
   },
   "aws_opendata_registry": {
     "Name": "Ocean Radar - Coffs Harbour site - Sea water velocity - Delayed mode",

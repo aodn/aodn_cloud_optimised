@@ -7,7 +7,7 @@
     "time": {
       "name": "TIME",
       "chunk": 1500,
-      "rechunk": true
+      "rechunk": false
     },
     "latitude": {
       "name": "J",
@@ -17,6 +17,9 @@
       "name": "I",
       "chunk": 73
     }
+  },
+  "dataset_gattrs": {
+    "title": ""
   },
   "aws_opendata_registry": {
     "Name": "Ocean Radar - Coral Coast site - Sea water velocity - Delayed mode",
