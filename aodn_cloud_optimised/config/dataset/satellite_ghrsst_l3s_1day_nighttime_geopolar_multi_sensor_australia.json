@@ -2,7 +2,7 @@
   "dataset_name": "satellite_ghrsst_l3s_1day_nighttime_geopolar_multi_sensor_australia",
   "logger_name": "satellite_ghrsst_l3s_1day_nighttime_geopolar_multi_sensor_australia",
   "cloud_optimised_format": "zarr",
-  "cluster_options": {
+  "coiled_cluster_options": {
     "n_workers": [
       1,
       20

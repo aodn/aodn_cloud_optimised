@@ -1,7 +1,7 @@
 {
   "dataset_name": "satellite_ocean_colour_1day_aqua_main",
   "cloud_optimised_format": "zarr",
-  "cluster_options": {
+  "coiled_cluster_options": {
     "n_workers": [
       10,
       100

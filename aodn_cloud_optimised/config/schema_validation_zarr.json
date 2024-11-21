@@ -10,7 +10,7 @@
     "cloud_optimised_format": {
       "type": "string"
     },
-    "cluster_options": {
+    "coiled_cluster_options": {
       "type": "object",
       "properties": {
         "n_workers": {
@@ -251,7 +251,7 @@
   },
   "required": [
     "dataset_name",
-    "cluster_options",
+    "coiled_cluster_options",
     "cloud_optimised_format",
     "dimensions",
     "var_template_shape",

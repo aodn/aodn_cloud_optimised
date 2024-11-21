@@ -2,7 +2,7 @@
   "dataset_name": "radar_velocity_hourly_average_delayed_qc_main",
   "logger_name": "radar_velocity_hourly_average_delayed_qc_main",
   "cloud_optimised_format": "zarr",
-  "cluster_options": {
+  "coiled_cluster_options": {
     "n_workers": [
       2,
       20
@@ -16,7 +16,7 @@
       "memory_limit": "16GB"
     }
   },
-  "batch_size": 1000,
+  "batch_size": 1500,
   "var_template_shape": "UCUR",
   "vars_to_drop_no_common_dimension": [
     "I",

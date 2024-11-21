@@ -2,7 +2,7 @@
   "dataset_name": "srs_oc_ljco_wqm_daily",
   "logger_name": "srs_oc_ljco_wqm_daily",
   "cloud_optimised_format": "parquet",
-  "cluster_options": {
+  "coiled_cluster_options": {
     "n_workers": [
       8,
       20

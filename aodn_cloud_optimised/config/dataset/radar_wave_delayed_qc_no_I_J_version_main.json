@@ -2,7 +2,7 @@
   "dataset_name": "radar_wave_delayed_qc_no_I_J_version_main",
   "logger_name": "radar_wave_delayed_qc_no_I_J_version_main",
   "cloud_optimised_format": "zarr",
-  "cluster_options": {
+  "coiled_cluster_options": {
     "n_workers": [
       1,
       20
@@ -16,7 +16,7 @@
       "memory_limit": "8GB"
     }
   },
-  "batch_size": 5,
+  "batch_size": 1500,
   "var_template_shape": "VDIRT",
   "vars_to_drop_no_common_dimension": [],
   "schema": {

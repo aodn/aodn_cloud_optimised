@@ -2,7 +2,7 @@
   "dataset_name": "radar_wind_delayed_qc_no_I_J_version_main",
   "logger_name": "radar_wind_delayed_qc_no_I_J_version_main",
   "cloud_optimised_format": "zarr",
-  "cluster_options": {
+  "coiled_cluster_options": {
     "n_workers": [
       1,
       20
@@ -16,7 +16,18 @@
       "memory_limit": "8GB"
     }
   },
-  "batch_size": 5,
+  "ec2_cluster_options": {
+    "n_workers": 1,
+    "scheduler_instance_type": "t3.xlarge",
+    "worker_instance_type": "t3.2xlarge",
+    "security": false,
+    "docker_image": "ghcr.io/aodn/aodn_cloud_optimised:latest"
+  },
+  "ec2_adapt_options": {
+    "minimum": 1,
+    "maximum": 120
+  },
+  "batch_size": 1500,
   "var_template_shape": "WDIR",
   "vars_to_drop_no_common_dimension": [],
   "schema": {

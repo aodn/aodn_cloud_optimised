@@ -2,7 +2,7 @@
   "dataset_name": "satellite_ghrsst_l3c_1day_nighttime_himawari8",
   "logger_name": "satellite_ghrsst_l3c_1day_nighttime_himawari8",
   "parent_config": "satellite_ghrsst_main.json",
-  "cluster_options": {
+  "coiled_cluster_options": {
     "n_workers": [
       1,
       20
