@@ -44,6 +44,7 @@ xarray = { version = ">=2024.9.0", extras = ["complete"] }
 zarr = ">=2.18.3"
 geopandas = ">=0.14.4"
 coiled = ">=1.53.0"
+dask-cloudprovider = ">=2024.9.1"
 dask = ">=2024.9.1"
 dask-expr = ">=1.1.15"  # needs to be added for coiled otherwise an old version is used and not updated
 colorama = ">=0.4.6"
