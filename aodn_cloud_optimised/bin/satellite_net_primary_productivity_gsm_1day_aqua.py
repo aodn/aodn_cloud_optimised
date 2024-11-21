@@ -13,7 +13,7 @@ def main():
         "satellite_net_primary_productivity_gsm_1day_aqua.json",
         "--clear-existing-data",
         "--cluster-mode",
-        "remote",
+        "coiled",
     ]
 
     # Run the command

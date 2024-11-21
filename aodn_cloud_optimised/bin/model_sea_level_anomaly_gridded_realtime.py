@@ -11,7 +11,7 @@ def main():
         "model_sea_level_anomaly_gridded_realtime.json",
         "--clear-existing-data",
         "--cluster-mode",
-        "remote",
+        "coiled",
     ]
 
     # Run the command

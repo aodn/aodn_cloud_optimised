@@ -9,7 +9,7 @@ def main():
     command = [
         "generic_cloud_optimised_creation",
         "--paths",
-        "IMOS/SRS/OC/gridded/aqua/P1D/2024",
+        "IMOS/SRS/OC/gridded/aqua/P1D/",
         "--filters",
         "aust.chl_oci.nc",
         "--dataset-config",

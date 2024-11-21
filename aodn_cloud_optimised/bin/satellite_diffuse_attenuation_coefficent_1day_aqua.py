@@ -13,7 +13,7 @@ def main():
         "satellite_diffuse_attenuation_coefficent_1day_aqua.json",
         "--clear-existing-data",
         "--cluster-mode",
-        "remote",
+        "coiled",
     ]
 
     # Run the command

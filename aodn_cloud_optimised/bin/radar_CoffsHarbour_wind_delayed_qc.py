@@ -14,7 +14,7 @@ def main():
         "radar_CoffsHarbour_wind_delayed_qc.json",
         "--clear-existing-data",
         "--cluster-mode",
-        "remote",
+        "coiled",
     ]
 
     # Run the command

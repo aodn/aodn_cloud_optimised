@@ -13,7 +13,7 @@ def main():
         "vessel_air_sea_flux_product_delayed.json",
         "--clear-existing-data",
         "--cluster-mode",
-        "remote",
+        "coiled",
     ]
 
     # Run the command

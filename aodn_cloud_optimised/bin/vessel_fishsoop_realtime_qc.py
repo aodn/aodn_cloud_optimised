@@ -11,7 +11,7 @@ def main():
         "vessel_fishsoop_realtime_qc.json",
         "--clear-existing-data",
         "--cluster-mode",
-        "remote",
+        "coiled",
     ]
 
     # Run the command

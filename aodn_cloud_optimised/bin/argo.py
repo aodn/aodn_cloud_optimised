@@ -21,7 +21,7 @@ def main():
     #     # "--clear-existing-data",
     #     "--force-previous-parquet-deletion",
     #     "--cluster-mode",
-    #     "remote",
+    #     "coiled",
     # ]
     #
     # # Run the command
@@ -38,7 +38,7 @@ def main():
         "argo.json",
         "--force-previous-parquet-deletion",
         "--cluster-mode",
-        "remote",
+        "coiled",
     ]
     subprocess.run(command, check=True)
 
@@ -56,7 +56,7 @@ def main():
         "argo.json",
         "--force-previous-parquet-deletion",
         "--cluster-mode",
-        "remote",
+        "coiled",
     ]
     subprocess.run(command, check=True)
 
@@ -73,6 +73,6 @@ def main():
         "argo.json",
         "--force-previous-parquet-deletion",
         "--cluster-mode",
-        "remote",
+        "coiled",
     ]
     subprocess.run(command, check=True)

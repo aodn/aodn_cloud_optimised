@@ -11,7 +11,7 @@ def main():
         "srs_oc_ljco_wqm_daily.json",
         "--clear-existing-data",
         "--cluster-mode",
-        "remote",
+        "coiled",
     ]
 
     # Run the command

@@ -14,7 +14,7 @@ def main():
         "vessel_trv_realtime_qc.json",
         "--clear-existing-data",
         "--cluster-mode",
-        "remote",
+        "coiled",
     ]
 
     # Run the command

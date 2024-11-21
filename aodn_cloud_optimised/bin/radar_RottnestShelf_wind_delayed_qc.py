@@ -6,15 +6,15 @@ def main():
     command = [
         "generic_cloud_optimised_creation",
         "--paths",
-        "IMOS/ACORN/gridded_1h-avg-wind-map_QC/ROT/",
-        # "--filters",
-        # "FILTER_STRING_1",
+        "IMOS/ACORN/gridded_1h-avg-wind-map_QC/ROT/2010/04/01",
+        "--filters",
+        "20100401T0",
         # "FILTER_STRING_1",
         "--dataset-config",
         "radar_RottnestShelf_wind_delayed_qc.json",
         "--clear-existing-data",
         "--cluster-mode",
-        "remote",
+        "ec2",
     ]
 
     # Run the command

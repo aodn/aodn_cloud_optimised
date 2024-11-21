@@ -11,7 +11,7 @@ def main():
         "radar_TurquoiseCoast_velocity_hourly_average_delayed_qc.json",
         "--clear-existing-data",
         "--cluster-mode",
-        "remote",
+        "coiled",
     ]
 
     # Run the command

@@ -28,7 +28,7 @@ def main():
         "satellite_nanoplankton_fraction_oc3_1day_aqua.json",
         "--clear-existing-data",
         "--cluster-mode",
-        "remote",
+        "coiled",
     ]
 
     # Run the command

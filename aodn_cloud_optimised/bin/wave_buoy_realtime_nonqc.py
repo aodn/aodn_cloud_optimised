@@ -13,7 +13,7 @@ def main():
         "wave_buoy_realtime_nonqc.json",
         "--clear-existing-data",
         "--cluster-mode",
-        "remote",
+        "coiled",
     ]
 
     # Run the command

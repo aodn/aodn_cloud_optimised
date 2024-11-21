@@ -14,7 +14,7 @@ def main():
         "radar_Newcastle_velocity_hourly_averaged_delayed_qc.json",
         "--clear-existing-data",
         "--cluster-mode",
-        "remote",
+        "coiled",
     ]
 
     # Run the command

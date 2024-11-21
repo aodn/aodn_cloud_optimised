@@ -895,7 +895,7 @@ def main():
         "autonomous_underwater_vehicle.json",
         "--clear-existing-data",
         "--cluster-mode",
-        "remote",
+        "coiled",
     ]
 
     # Run the command

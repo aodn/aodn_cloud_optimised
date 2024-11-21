@@ -13,7 +13,7 @@ def main():
         "satellite_chlorophylla_gsm_1day_aqua.json",
         "--clear-existing-data",
         "--cluster-mode",
-        "remote",
+        "coiled",
     ]
 
     # Run the command

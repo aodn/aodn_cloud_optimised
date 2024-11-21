@@ -13,7 +13,7 @@ def main():
         "satellite_optical_water_type_1day_aqua.json",
         "--clear-existing-data",
         "--cluster-mode",
-        "remote",
+        "coiled",
     ]
 
     # Run the command

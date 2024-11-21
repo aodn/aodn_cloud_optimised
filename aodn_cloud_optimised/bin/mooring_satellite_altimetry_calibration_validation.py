@@ -14,7 +14,7 @@ def main():
         "mooring_satellite_altimetry_calibration_validation.json",
         "--clear-existing-data",
         "--cluster-mode",
-        "remote",
+        "coiled",
     ]
 
     # Run the command

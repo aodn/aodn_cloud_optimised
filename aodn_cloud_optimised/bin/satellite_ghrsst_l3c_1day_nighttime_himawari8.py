@@ -14,7 +14,7 @@ def main():
         "satellite_ghrsst_l3c_1day_nighttime_himawari8.json",
         "--clear-existing-data",
         "--cluster-mode",
-        "remote",
+        "coiled",
     ]
 
     # Run the command

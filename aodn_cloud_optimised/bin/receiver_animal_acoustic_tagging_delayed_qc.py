@@ -13,7 +13,7 @@ def main():
         "receiver_animal_acoustic_tagging_delayed_qc.json",
         "--clear-existing-data",
         "--cluster-mode",
-        "remote",
+        "coiled",
     ]
 
     # Run the command

@@ -48,7 +48,7 @@ def main():
         "satellite_ghrsst_l3s_1day_daynighttime_single_sensor_southernocean.json",
         "--clear-existing-data",
         "--cluster-mode",
-        "remote",
+        "coiled",
     ]
 
     # Run the command
