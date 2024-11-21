@@ -40,8 +40,8 @@ def preprocess_xarray(ds, dataset_config):
     # TODO: this is part a rewritten function available in the GenericHandler class below.
     #       running the class method with xarray as preprocess=self.preprocess_xarray lead to many issues
     #       1) serialization of the arguments with pickle.
-    #       2) Running in a dask remote cluster, it seemed like the preprocess function (if donne within mfdataset)
-    #          was actually running locally and using ALL of the local ram. Complete nonsense.
+    #       2) Running in a dask remote cluster, for some netcdf files, xarray would send the data back to the local machine
+    #          and using ALL of the local ram. Complete nonsense. s3fs bug
     # https://github.com/fsspec/filesystem_spec/issues/1747
     # https://discourse.pangeo.io/t/remote-cluster-with-dask-distributed-uses-the-deployment-machines-memory-and-internet-bandwitch/4637
     # https://github.com/dask/distributed/discussions/8913
@@ -50,7 +50,6 @@ def preprocess_xarray(ds, dataset_config):
     schema = dataset_config.get("schema")
 
     logger = get_logger(logger_name)
-
     # TODO: get filename; Should be from https://github.com/pydata/xarray/issues/9142
 
     # ds = ds.assign(
@@ -67,6 +66,14 @@ def preprocess_xarray(ds, dataset_config):
 
     ds_filtered = ds.drop_vars(vars_to_drop, errors="ignore")
     ds = ds_filtered
+
+    if not ds.data_vars:
+        logger.error(
+            f"The dataset has no data variable left. Check the configuration dataset"
+        )
+        raise ValueError(
+            f"The dataset has no data variable left. Check the configuration dataset"
+        )
 
     ##########
     var_required = schema.copy()
@@ -850,15 +857,17 @@ class GenericHandler(CommonHandler):
             if self.cluster_mode:
                 # creating a cluster to process multiple files at once
                 self.client, self.cluster = self.create_cluster()
-                if self.cluster_mode == "remote":
+                if self.cluster_mode == "coiled":
                     self.cluster_id = self.cluster.cluster_id
                 else:
                     self.cluster_id = self.cluster.name
+            else:
+                self.cluster_id = "local_execution"
 
             self.publish_cloud_optimised_fileset_batch(s3_file_uri_list)
 
             if self.cluster_mode:
-                self.close_cluster(self.client, self.cluster)
+                self.cluster_manager.close_cluster(self.client, self.cluster)
 
     @staticmethod
     def filter_rechunk_dimensions(dimensions):

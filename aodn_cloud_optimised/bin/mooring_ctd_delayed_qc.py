@@ -18,7 +18,7 @@ def main():
         "mooring_ctd_delayed_qc.json",
         "--clear-existing-data",
         "--cluster-mode",
-        "remote",
+        "coiled",
     ]
 
     # Run the command

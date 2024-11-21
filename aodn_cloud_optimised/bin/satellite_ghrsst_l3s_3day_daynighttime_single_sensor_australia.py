@@ -11,7 +11,7 @@ def main():
         "satellite_ghrsst_l3s_3day_daynighttime_single_sensor_australia.json",
         "--clear-existing-data",
         "--cluster-mode",
-        "remote",
+        "coiled",
     ]
 
     # Run the command

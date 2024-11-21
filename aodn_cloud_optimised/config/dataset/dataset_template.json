@@ -4,7 +4,7 @@
 
     "cloud_optimised_format": "parquet",
 
-    "cluster_options" : {
+    "coiled_cluster_options" : {
         "n_workers": [8, 20],
         "scheduler_vm_types": "t3.small",
         "worker_vm_types": "t3.large",

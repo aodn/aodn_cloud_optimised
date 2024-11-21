@@ -2,7 +2,7 @@
   "dataset_name": "satellite_ghrsst_l4_gamssa_1day_multi_sensor_world",
   "logger_name": "satellite_ghrsst_l4_gamssa_1day_multi_sensor_world",
   "cloud_optimised_format": "zarr",
-  "cluster_options": {
+  "coiled_cluster_options": {
     "n_workers": [
       1,
       30

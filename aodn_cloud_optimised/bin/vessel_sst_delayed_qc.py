@@ -11,7 +11,7 @@ def main():
         "vessel_sst_delayed_qc.json",
         "--clear-existing-data",
         "--cluster-mode",
-        "remote",
+        "coiled",
     ]
 
     # Run the command

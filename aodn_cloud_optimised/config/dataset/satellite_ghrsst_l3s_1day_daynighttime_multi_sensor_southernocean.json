@@ -2,7 +2,7 @@
   "dataset_name": "satellite_ghrsst_l3s_1day_daynighttime_multi_sensor_southernocean",
   "logger_name": "satellite_ghrsst_l3s_1day_daynighttime_multi_sensor_southernocean",
   "cloud_optimised_format": "zarr",
-  "cluster_options": {
+  "coiled_cluster_options": {
     "n_workers": [
       1,
       120
@@ -240,7 +240,8 @@
     "ManagedBy": "FILL UP MANUALLY - CHECK DOCUMENTATION",
     "UpdateFrequency": "FILL UP MANUALLY - CHECK DOCUMENTATION",
     "Tags": [
-      "FILL UP MANUALLY - CHECK DOCUMENTATION"
+      "oceans",
+      "satellite imagery"
     ],
     "License": "FILL UP MANUALLY - CHECK DOCUMENTATION",
     "Resources": [

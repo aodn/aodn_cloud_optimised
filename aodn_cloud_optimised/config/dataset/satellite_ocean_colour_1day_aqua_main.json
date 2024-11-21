@@ -1,0 +1,38 @@
+{
+  "dataset_name": "satellite_ocean_colour_1day_aqua_main",
+  "cloud_optimised_format": "zarr",
+  "coiled_cluster_options": {
+    "n_workers": [
+      10,
+      100
+    ],
+    "scheduler_vm_types": "m7i.xlarge",
+    "worker_vm_types": "m7i.2xlarge",
+    "allow_ingress_from": "me",
+    "compute_purchase_option": "spot_with_fallback",
+    "worker_options": {
+      "nthreads": 8,
+      "memory_limit": "32GB"
+    }
+  },
+  "batch_size": 100,
+  "dimensions": {
+    "time": {
+      "name": "time",
+      "chunk": 5,
+      "rechunk": false
+    },
+    "latitude": {
+      "name": "latitude",
+      "chunk": 500
+    },
+    "longitude": {
+      "name": "longitude",
+      "chunk": 500
+    }
+  },
+  "vars_to_drop_no_common_dimension": [
+    "latitude",
+    "longitude"
+  ]
+}

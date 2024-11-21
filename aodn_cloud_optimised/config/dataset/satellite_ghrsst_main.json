@@ -2,7 +2,7 @@
   "dataset_name": "srs_ghrsst_main",
   "logger_name": "srs_ghrsst_main",
   "cloud_optimised_format": "zarr",
-  "cluster_options": {
+  "coiled_cluster_options": {
     "n_workers": [
       1,
       40

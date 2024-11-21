@@ -204,7 +204,7 @@ def main():
         "{dataset_json}",
         "--clear-existing-data",
         "--cluster-mode",
-        "remote",
+        "coiled",
     ]
 
     # Run the command
@@ -678,7 +678,7 @@ def main():
     dataset_config["metadata_uuid"] = args.uuid
     dataset_config["logger_name"] = args.dataset_name
     dataset_config["cloud_optimised_format"] = args.cloud_format
-    dataset_config["cluster_options"] = {
+    dataset_config["coiled_cluster_options"] = {
         "n_workers": [1, 20],
         "scheduler_vm_types": "t3.small",
         "worker_vm_types": "t3.medium",

@@ -2,7 +2,7 @@
   "dataset_name": "autonomous_underwater_vehicle",
   "logger_name": "autonomous_underwater_vehicle",
   "cloud_optimised_format": "parquet",
-  "cluster_options": {
+  "coiled_cluster_options": {
     "n_workers": [
       1,
       20

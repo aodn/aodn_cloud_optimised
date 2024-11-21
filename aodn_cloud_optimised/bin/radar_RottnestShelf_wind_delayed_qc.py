@@ -1,0 +1,25 @@
+#!/usr/bin/env python3
+import subprocess
+
+
+def main():
+    command = [
+        "generic_cloud_optimised_creation",
+        "--paths",
+        "IMOS/ACORN/gridded_1h-avg-wind-map_QC/ROT/2010/04/01",
+        "--filters",
+        "20100401T0",
+        # "FILTER_STRING_1",
+        "--dataset-config",
+        "radar_RottnestShelf_wind_delayed_qc.json",
+        "--clear-existing-data",
+        "--cluster-mode",
+        "ec2",
+    ]
+
+    # Run the command
+    subprocess.run(command, check=True)
+
+
+if __name__ == "__main__":
+    main()

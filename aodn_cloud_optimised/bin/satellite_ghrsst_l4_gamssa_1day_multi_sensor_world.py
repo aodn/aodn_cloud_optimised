@@ -13,7 +13,7 @@ def main():
         "satellite_ghrsst_l4_gamssa_1day_multi_sensor_world.json",
         "--clear-existing-data",
         "--cluster-mode",
-        "remote",
+        "coiled",
     ]
 
     # Run the command

@@ -33,7 +33,7 @@ def main():
         "satellite_ghrsst_l4_ramssa_1day_multi_sensor_australia.json",
         "--clear-existing-data",
         "--cluster-mode",
-        "remote",
+        "coiled",
     ]
 
     # Run the command

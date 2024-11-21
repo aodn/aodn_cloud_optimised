@@ -5,6 +5,7 @@ import re
 import timeit
 import traceback
 import uuid
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from typing import Tuple, Generator
 
@@ -1095,10 +1096,14 @@ class GenericHandler(CommonHandler):
 
         self.s3_file_uri_list = s3_file_uri_list
         client, cluster = self.create_cluster()
-        if self.cluster_mode == "remote":
-            self.cluster_id = cluster.cluster_id
+
+        if self.cluster_mode:
+            if self.cluster_mode == "coiled":
+                self.cluster_id = cluster.cluster_id
+            else:
+                self.cluster_id = cluster.name
         else:
-            self.cluster_id = cluster.name
+            self.cluster_id = "local_execution"
 
         batch_size = self.get_batch_size(client=client)
 
@@ -1114,16 +1119,32 @@ class GenericHandler(CommonHandler):
             )
 
             batch = s3_file_uri_list[i : i + batch_size]
-            batch_tasks = [
-                client.submit(task, f, idx + 1, pure=False)
-                for idx, f in enumerate(
-                    batch
-                )  # Use pure=False for multiprocessing. More efficient to avoid GIL contention
-            ]
 
-            # timeout = batch_size * 120  # Initial timeout
-            done, not_done = wait(batch_tasks, return_when="ALL_COMPLETED")
+            if client:
+                # Use Dask client for distributed processing
+                batch_tasks = [
+                    client.submit(task, f, idx + 1, pure=False)
+                    for idx, f in enumerate(
+                        batch
+                    )  # Use pure=False for multiprocessing. More efficient to avoid GIL contention
+                ]
 
+                # timeout = batch_size * 120  # Initial timeout
+                done, not_done = wait(batch_tasks, return_when="ALL_COMPLETED")
+            else:
+                # Fall back to local processing with ThreadPoolExecutor
+                self.logger.info(
+                    "{self.uuid_log}: No client detected; using local processing."
+                )
+                with ThreadPoolExecutor() as executor:
+                    batch_tasks = [
+                        executor.submit(task, f, idx + 1) for idx, f in enumerate(batch)
+                    ]
+                    for future in as_completed(batch_tasks):
+                        try:
+                            future.result()
+                        except Exception as e:
+                            self.logger.error(f"Error processing task: {e}")
             ii += 1
 
             # Cleanup memory
@@ -1132,7 +1153,8 @@ class GenericHandler(CommonHandler):
             # Trigger garbage collection
             gc.collect()
 
-            client.run_on_scheduler(gc.collect)  # GC!
+            if client:
+                client.run_on_scheduler(gc.collect)  # GC!
 
-        self.close_cluster(client, cluster)
+        self.cluster_manager.close_cluster(client, cluster)
         self.logger.handlers.clear()

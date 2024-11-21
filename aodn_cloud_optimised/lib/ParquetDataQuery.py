@@ -31,6 +31,7 @@ from s3path import PureS3Path
 from shapely import wkb
 from shapely.geometry import Polygon, MultiPolygon
 from matplotlib.colors import LogNorm, Normalize
+from windrose import WindroseAxes
 
 REGION: Final[str] = "ap-southeast-2"
 ENDPOINT_URL = f"https://s3.ap-southeast-2.amazonaws.com"
@@ -453,7 +454,7 @@ def plot_time_coverage(ds, time_var="time"):
         ds (xarray.Dataset): The input dataset containing a 'time' dimension.
     """
     # Convert the time dimension to a pandas DatetimeIndex
-    ds = ds.sortby("time")
+    ds = ds.sortby(time_var)
 
     time_series = pd.to_datetime(ds[time_var].values)
 
@@ -488,11 +489,147 @@ def plot_time_coverage(ds, time_var="time"):
     plt.xticks(rotation=45)
 
 
+def plot_radar_velocity_rose(ds, time_start, time_end, time_name="TIME"):
+    """
+    Plots a wind rose of speed averages over a specified time range.
+
+    Parameters:
+    - ds: xarray.Dataset
+        The input dataset containing UCUR, VCUR, LONGITUDE, LATITUDE, and TIME variables.
+    - time_start: str
+        The starting time in the format 'YYYY-MM-DDTHH:MM:SS'.
+    - time_end: str
+        The ending time in the format 'YYYY-MM-DDTHH:MM:SS'.
+    - time_name: str, optional
+        The name of the time coordinate in the dataset. Default is "TIME".
+    """
+    # Select the data in the specified time range
+    subset = ds.sel({time_name: slice(time_start, time_end)})
+
+    # Calculate average speed and direction
+    u_avg = subset.UCUR.mean(dim=time_name).values
+    v_avg = subset.VCUR.mean(dim=time_name).values
+    speed_avg = np.sqrt(u_avg**2 + v_avg**2)
+
+    # Calculate direction in degrees (meteorological convention)
+    direction = (np.arctan2(-u_avg, -v_avg) * 180 / np.pi) % 360
+
+    # Flatten data for wind rose plotting
+    speed_flat = speed_avg.flatten()
+    direction_flat = direction.flatten()
+
+    # Create the wind rose plot
+    fig = plt.figure(figsize=(8, 8))
+    ax = WindroseAxes.from_ax()
+    ax.bar(
+        direction_flat,
+        speed_flat,
+        bins=np.arange(0, np.nanmax(speed_flat) + 1, 1),
+        cmap=plt.cm.viridis,
+        normed=True,
+    )
+
+    # Add labels and legend
+    ax.set_title(f"Velocity Rose: {time_start} to {time_end}")
+    ax.set_legend(title="Speed (m/s)", loc="lower right", bbox_to_anchor=(1.2, 0))
+
+    # Show the plot
+    plt.show()
+
+
+def plot_gridded_radar_velocity(
+    ds, time_start, time_name="TIME", coastline_resolution="50m"
+):
+    """
+    Plotting function for ACORN data with coastlines.
+
+    Parameters:
+    - ds: xarray.Dataset
+        The input dataset.
+    - time_start: str
+        The starting time in the format '2021-02-21T01:00:00'.
+    - time_name: str, optional
+        The name of the time coordinate in the dataset. Default is "TIME".
+    - coastline_resolution: str, optional
+        The resolution of the coastlines. Options are "10m", "50m", "110m". Default is "110m".
+    """
+    ds = ds.sortby(time_name)
+
+    # Create a 3x2 grid of subplots with Cartopy projections
+    fig, axes = plt.subplots(
+        nrows=3,
+        ncols=2,
+        figsize=(15, 15),
+        subplot_kw={"projection": ccrs.PlateCarree()},
+    )
+
+    # Locate the time index for the starting time
+    ii = 0
+    iTime = list(ds[time_name].values).index(
+        ds.sel({time_name: time_start}, method="nearest")[time_name]
+    )
+
+    # Create a colorbar axis
+    cbar_ax = fig.add_axes(
+        [0.92, 0.15, 0.02, 0.7]
+    )  # Adjust the position and size of the colorbar
+
+    for i in range(3):
+        for j in range(2):
+            # Extract data for plotting
+            uData = ds.UCUR[iTime + ii, :, :]
+            vData = ds.VCUR[iTime + ii, :, :]
+            speed = np.sqrt(uData**2 + vData**2)
+            lonData = ds.LONGITUDE.values
+            latData = ds.LATITUDE.values
+
+            # Plot speed as a filled contour
+            p = axes[i, j].pcolor(
+                lonData, latData, speed, transform=ccrs.PlateCarree(), cmap="viridis"
+            )
+
+            # Plot velocity vectors
+            # axes[i, j].quiver(
+            #     lonData, latData, uData, vData,
+            #     transform=ccrs.PlateCarree(), scale=1, scale_units='xy', units='width'
+            # )
+            axes[i, j].quiver(
+                lonData,
+                latData,
+                uData,
+                vData,
+                transform=ccrs.PlateCarree(),
+                units="width",
+            )
+
+            # Add coastlines
+            axes[i, j].coastlines(resolution=coastline_resolution)
+
+            # Add gridlines and title
+            axes[i, j].gridlines(
+                draw_labels=True, linestyle="--", color="gray", alpha=0.5
+            )
+            axes[i, j].set_title(
+                f"{np.datetime_as_string(ds[time_name].values[iTime + ii])}"
+            )
+
+            ii += 1
+
+    # Add a common colorbar
+    fig.colorbar(p, cax=cbar_ax, label="Speed (m/s)")
+
+    # Adjust layout for better appearance
+    plt.tight_layout(rect=[0, 0, 0.9, 1])  # Leave space for the colorbar
+
+    # Show the plot
+    plt.show()
+
+
 def plot_gridded_variable(
     ds,
     start_date,
-    lon_slice,
-    lat_slice,
+    lon_slice=None,
+    lat_slice=None,
     var_name="sea_surface_temperature",
     n_days=6,
     lat_name="lat",
@@ -516,6 +653,16 @@ def plot_gridded_variable(
 
     ds = ds.sortby(time_name)
 
+    # Get latitude and longitude extents
+    lat_min, lat_max = ds[lat_name].min().item(), ds[lat_name].max().item()
+    lon_min, lon_max = ds[lon_name].min().item(), ds[lon_name].max().item()
+
+    if lat_slice is None:
+        lat_slice = (lat_min, lat_max)
+
+    if lon_slice is None:
+        lon_slice = (lon_min, lon_max)
+
     # Decide on the slice order
     if ds[lat_name][0] < ds[lat_name][-1]:
         lat_slice = lat_slice
@@ -523,15 +670,12 @@ def plot_gridded_variable(
         # Reverse the slice
         lat_slice = lat_slice[::-1]
 
-    # Get latitude and longitude extents
-    lat_min, lat_max = ds[lat_name].min().item(), ds[lat_name].max().item()
-    lon_min, lon_max = ds[lon_name].min().item(), ds[lon_name].max().item()
-
     # Test if lat_slice and lon_slice are within bounds
     if not (lat_min <= lat_slice[0] <= lat_max and lat_min <= lat_slice[1] <= lat_max):
         raise ValueError(
             f"Latitude slice {lat_slice} is out of bounds. Dataset latitude extent is ({lat_min}, {lat_max})"
         )
+
     if not (lon_min <= lon_slice[0] <= lon_max and lon_min <= lon_slice[1] <= lon_max):
         raise ValueError(
             f"Longitude slice {lon_slice} is out of bounds. Dataset longitude extent is ({lon_min}, {lon_max})"
@@ -584,7 +728,7 @@ def plot_gridded_variable(
         try:
             data = ds[var_name].sel(
                 {
-                    time_name: date.strftime("%Y-%m-%d"),
+                    time_name: date.strftime("%Y-%m-%d %H:%M:%S"),
                     lon_name: slice(lon_slice[0], lon_slice[1]),
                     lat_name: slice(lat_slice[0], lat_slice[1]),
                 }
@@ -593,7 +737,7 @@ def plot_gridded_variable(
             # Check for NaNs
             if data.isnull().all():
                 print(
-                    f"No valid data for {date.strftime('%Y-%m-%d')}, skipping this date."
+                    f"No valid data for {date.strftime('%Y-%m-%d %H:%M:%S')}, skipping this date."
                 )
                 continue
 
@@ -634,7 +778,7 @@ def plot_gridded_variable(
         try:
             data = ds[var_name].sel(
                 {
-                    time_name: date.strftime("%Y-%m-%d"),
+                    time_name: date.strftime("%Y-%m-%d %H:%M:%S"),
                     lon_name: slice(lon_slice[0], lon_slice[1]),
                     lat_name: slice(lat_slice[0], lat_slice[1]),
                 }
@@ -642,7 +786,9 @@ def plot_gridded_variable(
 
             # Skip if no valid data is found for the date
             if data.isnull().all():
-                print(f"No data for {date.strftime('%Y-%m-%d')}, skipping plot.")
+                print(
+                    f"No data for {date.strftime('%Y-%m-%d %H:%M:%S')}, skipping plot."
+                )
                 continue
 
             var_units = ds[var_name].attrs.get("units", "unknown units")
@@ -667,11 +813,11 @@ def plot_gridded_variable(
             ax.gridlines(draw_labels=True, dms=True, x_inline=False, y_inline=False)
 
             # Set the title with the date
-            ax.set_title(date.strftime("%Y-%m-%d"))
+            ax.set_title(date.strftime("%Y-%m-%d %H:%M:%S"))
 
         except Exception as err:
-            print(f"Error processing date {date.strftime('%Y-%m-%d')}: {err}")
-            ax.set_title(f"No data for {date.strftime('%Y-%m-%d')}")
+            print(f"Error processing date {date.strftime('%Y-%m-%d %H:%M:%S')}: {err}")
+            ax.set_title(f"No data for {date.strftime('%Y-%m-%d %H:%M:%S')}")
             ax.axis("off")
 
     # Create a single colorbar for all plots

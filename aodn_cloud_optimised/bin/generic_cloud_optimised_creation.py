@@ -9,13 +9,13 @@ and supports different cluster modes.
 Usage Examples:
   generic_cloud_optimised_creation --paths 'IMOS/ANMN/NSW' 'IMOS/ANMN/PA'
   --filters '_hourly-timeseries_' 'FV02' --dataset-config 'mooring_hourly_timeseries_delayed_qc.json'
-  --clear-existing-data --cluster-mode 'remote'
+  --clear-existing-data --cluster-mode 'coiled'
 
   generic_cloud_optimised_creation --paths 'IMOS/ANMN/NSW' 'IMOS/ANMN/QLD'
   --dataset-config 'mooring_ctd_delayed_qc.json'
 
   generic_cloud_optimised_creation --paths 'IMOS/ACORN/gridded_1h-avg-current-map_QC/TURQ/2024'
-  --dataset-config 'radar_TurquoiseCoast_velocity_hourly_average_delayed_qc.json' --clear-existing-data --cluster-mode 'remote'
+  --dataset-config 'radar_TurquoiseCoast_velocity_hourly_average_delayed_qc.json' --clear-existing-data --cluster-mode 'coiled'
 
 Arguments:
   --paths: List of S3 paths to process. Example: 'IMOS/ANMN/NSW' 'IMOS/ANMN/PA'
@@ -25,7 +25,7 @@ Arguments:
   --clear-existing-data: Flag to clear existing data. Default is False.
   --force-previous-parquet-deletion: Flag to force the search of previous equivalent parquet file created. Much slower.
                                      Default is False. Only for Parquet processing.
-  --cluster-mode: Cluster mode to use. Options: 'local' or 'remote'. Default is 'local'.
+  --cluster-mode: Cluster mode to use. Options: 'local' or 'coiled'. Default is 'local'.
   --optimised-bucket-name: Bucket name where cloud optimised object will be created. Default is the value of
                            BUCKET_OPTIMISED_DEFAULT from the config.
   --root-prefix-cloud-optimised-path: Prefix value for the root location of the cloud optimised objects. Default is the
@@ -51,9 +51,9 @@ def main():
     parser = argparse.ArgumentParser(
         description="Process S3 paths and create cloud-optimized datasets.",
         epilog="Examples:\n"
-        "  generic_cloud_optimised_creation --paths 'IMOS/ANMN/NSW' 'IMOS/ANMN/PA' --filters '_hourly-timeseries_' 'FV02' --dataset-config 'mooring_hourly_timeseries_delayed_qc.json' --clear-existing-data --cluster-mode 'remote'\n"
+        "  generic_cloud_optimised_creation --paths 'IMOS/ANMN/NSW' 'IMOS/ANMN/PA' --filters '_hourly-timeseries_' 'FV02' --dataset-config 'mooring_hourly_timeseries_delayed_qc.json' --clear-existing-data --cluster-mode 'coiled'\n"
         "  generic_cloud_optimised_creation --paths 'IMOS/ANMN/NSW' 'IMOS/ANMN/QLD' --dataset-config 'mooring_ctd_delayed_qc.json'\n"
-        "  generic_cloud_optimised_creation --paths 'IMOS/ACORN/gridded_1h-avg-current-map_QC/TURQ/2024' --dataset-config 'radar_TurquoiseCoast_velocity_hourly_average_delayed_qc.json' --clear-existing-data --cluster-mode 'remote'\n",
+        "  generic_cloud_optimised_creation --paths 'IMOS/ACORN/gridded_1h-avg-current-map_QC/TURQ/2024' --dataset-config 'radar_TurquoiseCoast_velocity_hourly_average_delayed_qc.json' --clear-existing-data --cluster-mode 'coiled'\n",
         formatter_class=argparse.RawTextHelpFormatter,
     )
 
@@ -91,13 +91,13 @@ def main():
         "Only for Parquet processing.",
     )
 
-    cluster_options = [mode.value for mode in clusterLib.ClusterMode]
+    coiled_cluster_options = [mode.value for mode in clusterLib.ClusterMode]
     parser.add_argument(
         "--cluster-mode",
         # type=clusterLib.parse_cluster_mode,
         default=clusterLib.ClusterMode.NONE.value,
-        choices=cluster_options,
-        help="Cluster mode to use. Options: 'local' or 'remote'. Default is None.",
+        choices=coiled_cluster_options,
+        help="Cluster mode to use. Options: 'local' or 'coiled'. Default is None.",
     )
 
     parser.add_argument(

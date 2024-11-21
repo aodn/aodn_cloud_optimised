@@ -2,7 +2,7 @@
   "dataset_name": "vessel_air_sea_flux_sst_meteo_realtime",
   "logger_name": "vessel_air_sea_flux_sst_meteo_realtime",
   "cloud_optimised_format": "parquet",
-  "cluster_options": {
+  "coiled_cluster_options": {
     "n_workers": [
       1,
       20

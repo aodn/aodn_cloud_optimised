@@ -2,7 +2,7 @@
   "dataset_name": "satellite_ghrsst_l4_ramssa_1day_multi_sensor_australia",
   "logger_name": "satellite_ghrsst_l4_ramssa_1day_multi_sensor_australia",
   "cloud_optimised_format": "zarr",
-  "cluster_options": {
+  "coiled_cluster_options": {
     "n_workers": [
       1,
       30

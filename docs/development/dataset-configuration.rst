@@ -564,12 +564,15 @@ See :ref:`creating_the_schema` section above. As for Parquet...
 Cluster options
 ---------------
 
-In order to create the dataset on a remote cluster (Coiled), the
+In order to create the dataset on a remote cluster, the
 following configuration needs to be added:
+
+Coiled Cluster configuration
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code:: json
 
-     "cluster_options" : {
+     "coiled_cluster_options" : {
        "n_workers": [2, 20],
        "scheduler_vm_types": "t3.small",
        "worker_vm_types": "t3.large",
@@ -600,6 +603,25 @@ documentation <https://docs.coiled.io/user_guide/clusters/index.html>`__
     Too big of a ``batch_size`` with a too small of a ``worker_vm_types``
     will lead to out of memory issues, and higher Global Interpreter Lock
     (GIL)
+
+
+EC2 Cluster configuration
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code:: json
+
+  "ec2_cluster_options": {
+    "n_workers": 1,
+    "scheduler_instance_type": "t3.xlarge",
+    "worker_instance_type": "t3.2xlarge",
+    "security": false,
+    "docker_image": "ghcr.io/aodn/aodn_cloud_optimised:latest"
+  },
+  "ec2_adapt_options": {
+    "minimum": 1,
+    "maximum": 120
+  },
+  "batch_size": 1500,
 
 .. _aws-opendata-registry-1:
 

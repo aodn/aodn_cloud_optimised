@@ -3,7 +3,7 @@
   "logger_name": "mooring_hourly_timeseries_delayed_qc",
   "handler_class": "AnmnHourlyTsHandler",
   "cloud_optimised_format": "parquet",
-  "cluster_options": {
+  "coiled_cluster_options": {
     "n_workers": [
       1,
       20

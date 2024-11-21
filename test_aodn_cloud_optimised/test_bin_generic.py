@@ -151,7 +151,7 @@ class TestGenericCloudOptimisedCreation(unittest.TestCase):
 
             # Validate logs (add more specific assertions based on your logging format)
             self.assertTrue(
-                any("Local Cluster dask dashboard" in log for log in captured_logs)
+                any("Cluster dask dashboard" in log for log in captured_logs)
             )
             self.assertTrue(any("Processing batch 1" in log for log in captured_logs))
             self.assertTrue(

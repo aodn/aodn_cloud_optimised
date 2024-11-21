@@ -13,7 +13,7 @@ def main():
         "vessel_air_sea_flux_sst_meteo_realtime.json",
         "--clear-existing-data",
         "--cluster-mode",
-        "remote",
+        "coiled",
     ]
 
     # Run the command

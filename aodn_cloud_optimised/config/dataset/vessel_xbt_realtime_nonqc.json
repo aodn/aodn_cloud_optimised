@@ -2,7 +2,7 @@
   "dataset_name": "vessel_xbt_realtime_nonqc",
   "logger_name": "vessel_xbt_realtime_nonqc",
   "cloud_optimised_format": "parquet",
-  "cluster_options": {
+  "coiled_cluster_options": {
     "n_workers": [
       8,
       20

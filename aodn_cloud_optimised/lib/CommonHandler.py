@@ -5,17 +5,15 @@ import timeit
 from enum import Enum
 from typing import List
 
-import dask
 import s3fs
 import xarray as xr
 import yaml
-from coiled import Cluster
 from dask.distributed import Client
 from dask.distributed import LocalCluster
 from jsonschema import validate, ValidationError
 from s3path import PureS3Path
 
-from .clusterLib import ClusterMode
+from .clusterLib import ClusterMode, ClusterManager
 from .config import load_variable_from_config, load_dataset_config
 from .logging import get_logger
 
@@ -37,7 +35,7 @@ class CommonHandler:
                 optimised_bucket_name (str, optional): Name of the optimised bucket. Defaults to the value in the configuration.
                 root_prefix_cloud_optimised_path (str, optional): Root prefix path of the location of cloud optimised files. Defaults to the value in the configuration.
                 force_previous_parquet_deletion (bool, optional): Force the deletion of existing cloud optimised files (slow). Defaults to False.
-                cluster_mode (str, optional): Specifies the type of cluster to create ("remote", "local", or None). Defaults to "local".
+                cluster_mode (str, optional): Specifies the type of cluster to create ("coiled", "ec2", "local", or None). Defaults to "local".
                 dataset_config (dict): Configuration dictionary for the dataset.
                 clear_existing_data (bool, optional): Flag to clear existing data. Defaults to None.
 
@@ -45,7 +43,7 @@ class CommonHandler:
             start_time (float): The start time of the handler.
             optimised_bucket_name (str): Name of the optimised bucket.
             root_prefix_cloud_optimised_path (str): Root prefix path of the location of cloud optimised files.
-            cluster_mode (str): Specifies the type of cluster to create ("remote", "local", or None).
+            cluster_mode (str): Specifies the type of cluster to create ("coiled", "local", or None).
             dataset_config (dict): Configuration dictionary for the dataset.
             cloud_optimised_format (str): Format for cloud optimised files.
             dataset_name (str): Name of the dataset.
@@ -53,7 +51,7 @@ class CommonHandler:
             logger (logging.Logger): Logger for logging information, warnings, and errors.
             cloud_optimised_output_path (str): S3 path for cloud optimised output.
             clear_existing_data (bool): Flag to clear existing data.
-            cluster_options (dict): Options for the cluster configuration.
+            coiled_cluster_options (dict): Options for the cluster configuration.
             s3_fs (s3fs.S3FileSystem): S3 file system object for accessing S3.
 
         Raises:
@@ -75,7 +73,7 @@ class CommonHandler:
         )
 
         # Cluster options
-        valid_clusters = ["remote", "local", None]
+        valid_clusters = [mode.value for mode in ClusterMode]
         self.cluster_mode = kwargs.get("cluster_mode", ClusterMode.NONE)
         if isinstance(self.cluster_mode, Enum):
             self.cluster_mode = self.cluster_mode.value
@@ -114,7 +112,16 @@ class CommonHandler:
             "clear_existing_data", None
         )  # setting to True will recreate the zarr from scratch at every run!
 
-        self.cluster_options = self.dataset_config.get("cluster_options", None)
+        self.coiled_cluster_options = self.dataset_config.get(
+            "coiled_cluster_options", None
+        )
+
+        self.cluster_manager = ClusterManager(
+            cluster_mode=self.cluster_mode,
+            dataset_name=self.dataset_name,
+            dataset_config=self.dataset_config,
+            logger=self.logger,
+        )
 
         self.s3_fs = s3fs.S3FileSystem(
             anon=False, default_cache_type=None, session=kwargs.get("s3fs_session")
@@ -146,15 +153,15 @@ class CommonHandler:
         Create a Dask cluster based on the specified cluster_mode.
 
         This method creates a Dask cluster either remotely using the Coiled service or locally
-        depending on the value of the cluster_mode attribute. If remote cluster creation fails,
+        depending on the value of the cluster_mode attribute. If coiled/ec2 cluster creation fails,
         it falls back to creating a local cluster.
 
         Attributes:
-            cluster_mode (str): Specifies the type of cluster to create ("remote" or "local").
+            cluster_mode (str): Specifies the type of cluster to create ("coiled" or "local").
             logger (logging.Logger): Logger for logging information, warnings, and errors.
             dataset_config (dict): Configuration dictionary containing cluster options.
-            dataset_name (str): Name of the dataset used for naming the remote cluster.
-            cluster (Cluster): The created Dask cluster (either remote or local).
+            dataset_name (str): Name of the dataset used for naming the coiled cluster.
+            cluster (Cluster): The created Dask cluster (either coiled or local).
             client (Client): Dask client connected to the created cluster.
 
         Raises:
@@ -172,110 +179,15 @@ class CommonHandler:
         # TODO: quite crazy, but if client and cluster become self.client and self.cluster, then they can't be used
         #       with self.client.submit as they can't be serialize ... what a bloody pain in .. seriously
 
-        local_cluster_options = self.dataset_config.get(
-            "local_cluster_options",
-            {
-                "n_workers": 2,
-                "memory_limit": "8GB",
-                "threads_per_worker": 2,
-            },
-        )
-        dask_distributed_config = load_dataset_config(
-            str(
-                importlib.resources.files("aodn_cloud_optimised.config").joinpath(
-                    "distributed.yaml"
-                )
-            )
-        )
+        (
+            client,
+            cluster,
+            self.cluster_mode,
+        ) = (
+            self.cluster_manager.create_cluster()
+        )  # self.cluster_mode is overwritten if necessary
 
-        dask.config.set(
-            dask_distributed_config
-        )  # to retrieve logging from workers locally
-
-        if self.cluster_mode == "remote":
-            try:
-                self.logger.info("Creating a remote cluster")
-                cluster_options = self.dataset_config.get("cluster_options", None)
-                if cluster_options is None:
-                    self.logger.error("No cluster options provided in dataset_config")
-
-                cluster_options["name"] = f"Processing_{self.dataset_name}"
-
-                if self.s3_file_uri_list is not None:
-                    # overwrite n_workers value to 1 when only one file needs to be processed
-                    if len(self.s3_file_uri_list) == 1:
-                        cluster_options["n_workers"] = 1
-
-                # TODO: check how many files need to be processed! Could be useful?
-                cluster = Cluster(**cluster_options)
-                with dask.config.set(
-                    **{
-                        "array.slicing.split_large_chunks": False,
-                        "distributed.scheduler.worker-saturation": "inf",
-                        "dataframe.shuffle.method": "p2p",
-                    }
-                ):
-                    client = Client(cluster)
-                self.logger.info(
-                    f"Coiled Cluster dask dashboard available at {cluster.dashboard_link}"
-                )
-
-            except Exception as e:
-                self.logger.warning(
-                    f"Failed to create a Coiled cluster: {e}. Falling back to local cluster."
-                )
-                # Create a local Dask cluster as a fallback
-                cluster = LocalCluster(**local_cluster_options)
-
-                client = Client(cluster)
-                self.cluster_mode = "local"
-                self.logger.info(
-                    f"Local Cluster dask dashboard available at {cluster.dashboard_link}"
-                )
-        elif self.cluster_mode == "local":
-            self.logger.info("Creating a local Dask cluster")
-            cluster = LocalCluster(**local_cluster_options)
-
-            client = Client(cluster)
-            self.logger.info(
-                f"Local Cluster dask dashboard available at {cluster.dashboard_link}"
-            )
-        elif self.cluster_mode == "none":
-            client = None
-            cluster = None
-            return client, cluster
-
-        client.forward_logging()
         return client, cluster
-
-    def close_cluster(self, client, cluster):
-        """
-        Close the Dask cluster and client.
-
-        This method attempts to close the Dask client and cluster if they are currently open.
-        It logs successful closure operations and catches any exceptions that occur during
-        the process, logging them as errors.
-
-        Attributes:
-            client (Client): The Dask client connected to the cluster.
-            cluster (Cluster): The Dask cluster (either remote or local).
-            logger (logging.Logger): Logger for logging information and errors.
-
-        Logs:
-            Info: Logs a message when the Dask client and cluster are closed successfully.
-            Error: Logs a message if there is an error while closing the Dask client or cluster.
-        """
-        if client is None:
-            return
-
-        try:
-            client.close()
-            self.logger.info("Successfully closed Dask client.")
-
-            cluster.close()
-            self.logger.info("Successfully closed Dask cluster.")
-        except Exception as e:
-            self.logger.error(f"Error while closing the cluster or client: {e}")
 
     def get_batch_size(self, client=None):
         """
@@ -326,41 +238,48 @@ class CommonHandler:
             )
 
             return batch_size
+        else:
+            batch_size = 1
+            self.logger.warning(
+                f"batch size missing from dataset configuration. Defaulting to {batch_size}"
+            )
 
-        n_workers = self.dataset_config.get("cluster_options", {}).get("n_workers", [])
-        max_n_workers = max(n_workers) if n_workers else None
-        n_workers = max_n_workers  #
+        # TODO: delete the rest below. we shouldnt do this!
 
-        # retrieve the number of threads
-        worker_options = self.dataset_config.get("cluster_options", {}).get(
-            "worker_options", {}
-        )
-
-        # Retrieve nthreads if it exists
-        n_threads = worker_options.get("nthreads", 1)
-
-        # but overwrite values from above if the client exists
-        if client is not None:
-            scheduler_info = client.scheduler_info()
-            nthreads_info = client.nthreads()
-
-            # Calculate the average number of threads per worker
-            if nthreads_info:
-                total_threads = sum(nthreads_info.values())
-                num_workers = len(nthreads_info)
-                n_threads = total_threads / num_workers
-            else:
-                n_threads = 1
-
-            # local cluster
-            if isinstance(client.cluster, LocalCluster):
-                # Calculate the number of workers available in the local cluster. For remote we keep the dataset config max value
-                n_workers = len(scheduler_info["workers"])
-
-        batch_size = int(n_workers * n_threads)  # too big?
-
-        self.logger.info(f"Computed optimal batch size:  {batch_size}")
-        return batch_size
+        # n_workers = self.dataset_config.get("coiled_cluster_options", {}).get("n_workers", [])
+        # max_n_workers = max(n_workers) if n_workers else None
+        # n_workers = max_n_workers  #
+        #
+        # # retrieve the number of threads
+        # worker_options = self.dataset_config.get("coiled_cluster_options", {}).get(
+        #     "worker_options", {}
+        # )
+        #
+        # # Retrieve nthreads if it exists
+        # n_threads = worker_options.get("nthreads", 1)
+        #
+        # # but overwrite values from above if the client exists
+        # if client is not None:
+        #     scheduler_info = client.scheduler_info()
+        #     nthreads_info = client.nthreads()
+        #
+        #     # Calculate the average number of threads per worker
+        #     if nthreads_info:
+        #         total_threads = sum(nthreads_info.values())
+        #         num_workers = len(nthreads_info)
+        #         n_threads = total_threads / num_workers
+        #     else:
+        #         n_threads = 1
+        #
+        #     # local cluster
+        #     if isinstance(client.cluster, LocalCluster):
+        #         # Calculate the number of workers available in the local cluster. For remote we keep the dataset config max value
+        #         n_workers = len(scheduler_info["workers"])
+        #
+        # batch_size = int(n_workers * n_threads)  # too big?
+        #
+        # self.logger.info(f"Computed optimal batch size:  {batch_size}")
+        # return batch_size
 
     @staticmethod
     def batch_process_fileset(fileset, batch_size=10):
@@ -615,7 +534,7 @@ def cloud_optimised_creation(
     start_whole_processing = timeit.default_timer()
     with handler_class(**kwargs_handler_class) as handler_instance:
         handler_instance.to_cloud_optimised(s3_file_uri_list)
-        if kwargs_handler_class["cluster_mode"].value:
+        if kwargs_handler_class["cluster_mode"]:
             cluster_id = handler_instance.cluster_id
         else:
             cluster_id = None
@@ -650,13 +569,13 @@ def cloud_optimised_creation(
     #         except Exception as e:
     #             logger.error(f"{i}/{len(s3_file_uri_list)} issue with {f}: {e}")
     #
-    #     local_cluster_options = {
+    #     local_coiled_cluster_options = {
     #         "n_workers": 2,
     #         "memory_limit": "8GB",
     #         "threads_per_worker": 2,
     #     }
     #
-    #     cluster = LocalCluster(**local_cluster_options)
+    #     cluster = LocalCluster(**local_coiled_cluster_options)
     #     client = Client(cluster)
     #
     #     client.amm.start()  # Start Active Memory Manager

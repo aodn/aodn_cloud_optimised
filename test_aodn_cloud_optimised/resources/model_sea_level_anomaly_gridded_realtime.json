@@ -2,7 +2,7 @@
   "dataset_name": "model_sea_level_anomaly_gridded_realtime",
   "logger_name": "model_sea_level_anomaly_gridded_realtime",
   "cloud_optimised_format": "zarr",
-  "cluster_options": {
+  "coiled_cluster_options": {
     "n_workers": [
       1,
       30
