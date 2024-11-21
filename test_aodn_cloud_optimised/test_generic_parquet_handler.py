@@ -208,7 +208,7 @@ class TestGenericHandler(unittest.TestCase):
             root_prefix_cloud_optimised_path=self.ROOT_PREFIX_CLOUD_OPTIMISED_PATH,
             dataset_config=dataset_aatams_csv_config,
             clear_existing_data=True,
-            cluster_mode="local",
+            # cluster_mode="local",  # TEST without the localcluster
         )
 
     def _upload_to_s3(self, bucket_name, key, file_path):
