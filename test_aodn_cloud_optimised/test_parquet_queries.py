@@ -11,7 +11,7 @@ from moto.moto_server.threaded_moto_server import ThreadedMotoServer
 from shapely.geometry import Polygon
 
 from aodn_cloud_optimised.lib.GenericParquetHandler import GenericHandler
-from aodn_cloud_optimised.lib.ParquetDataQuery import GetAodn
+from aodn_cloud_optimised.lib.DataQuery import GetAodn
 from aodn_cloud_optimised.lib.config import load_dataset_config
 from aodn_cloud_optimised.lib.s3Tools import s3_ls
 
@@ -149,9 +149,9 @@ class TestGenericHandler(unittest.TestCase):
 
         self.server.stop()
 
-    @patch("aodn_cloud_optimised.lib.ParquetDataQuery.REGION", "us-east-1")
+    @patch("aodn_cloud_optimised.lib.DataQuery.REGION", "us-east-1")
     @patch(
-        "aodn_cloud_optimised.lib.ParquetDataQuery.ENDPOINT_URL",
+        "aodn_cloud_optimised.lib.DataQuery.ENDPOINT_URL",
         "http://127.0.0.1:5555",
     )
     def test_parquet_queries(self):

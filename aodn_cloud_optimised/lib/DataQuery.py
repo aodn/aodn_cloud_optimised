@@ -5,8 +5,7 @@ Notebooks
 import json
 import os
 import re
-from datetime import datetime, timedelta
-from datetime import timezone
+from datetime import datetime, timezone
 from functools import lru_cache
 from typing import Final
 
@@ -22,15 +21,14 @@ import pyarrow as pa
 import pyarrow.compute as pc
 import pyarrow.fs as fs
 import pyarrow.parquet as pq
-import pyarrow.parquet as pq
 import seaborn as sns
 from botocore import UNSIGNED
 from botocore.client import Config
 from fuzzywuzzy import fuzz
+from matplotlib.colors import LogNorm, Normalize
 from s3path import PureS3Path
 from shapely import wkb
 from shapely.geometry import Polygon, MultiPolygon
-from matplotlib.colors import LogNorm, Normalize
 from windrose import WindroseAxes
 
 REGION: Final[str] = "ap-southeast-2"
