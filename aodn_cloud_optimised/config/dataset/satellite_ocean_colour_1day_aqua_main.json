@@ -3,7 +3,7 @@
   "cloud_optimised_format": "zarr",
   "coiled_cluster_options": {
     "n_workers": [
-      10,
+      1,
       100
     ],
     "scheduler_vm_types": "m7i.xlarge",

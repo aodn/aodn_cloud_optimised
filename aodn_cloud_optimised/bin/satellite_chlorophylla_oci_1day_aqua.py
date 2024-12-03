@@ -2,21 +2,20 @@
 import subprocess
 
 
-## issue opening files in batch with h5netcdf. The ds does not have any variables, To investigate
-
-
 def main():
+    imos_paths = [f"IMOS/SRS/OC/gridded/aqua/P1D/{year}" for year in range(2002, 2025)]
+
     command = [
         "generic_cloud_optimised_creation",
         "--paths",
-        "IMOS/SRS/OC/gridded/aqua/P1D/",
+        *imos_paths,
         "--filters",
         "aust.chl_oci.nc",
         "--dataset-config",
         "satellite_chlorophylla_oci_1day_aqua.json",
         "--clear-existing-data",
         "--cluster-mode",
-        "local",
+        "coiled",
     ]
 
     # Run the command

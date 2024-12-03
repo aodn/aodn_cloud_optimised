@@ -3,10 +3,12 @@ import subprocess
 
 
 def main():
+    imos_paths = [f"IMOS/SRS/OC/gridded/aqua/P1D/{year}" for year in range(2002, 2025)]
+
     command = [
         "generic_cloud_optimised_creation",
         "--paths",
-        "IMOS/SRS/OC/gridded/aqua/P1D/",
+        *imos_paths,
         "--filters",
         "aust.chl_gsm.nc",
         "--dataset-config",

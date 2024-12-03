@@ -3,15 +3,17 @@ import subprocess
 
 
 def main():
+    imos_paths = [f"IMOS/SRS/OC/gridded/aqua/P1D/{year}" for year in range(2009, 2025)]
+
     command = [
         "generic_cloud_optimised_creation",
         "--paths",
-        "IMOS/SRS/OC/gridded/aqua/P1D/",
+        *imos_paths,
         "--filters",
         "aust.K_490.nc",
         "--dataset-config",
         "satellite_diffuse_attenuation_coefficent_1day_aqua.json",
-        "--clear-existing-data",
+        # "--clear-existing-data",
         "--cluster-mode",
         "coiled",
     ]

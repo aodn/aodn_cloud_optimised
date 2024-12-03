@@ -5,17 +5,11 @@ import uuid
 import warnings
 from functools import partial
 
-import boto3
-import fsspec
 import numpy as np
 import s3fs
 import xarray as xr
-import zarr
-from dask.diagnostics import ProgressBar
-from dask.distributed import Client
-from rechunker import rechunk
-from xarray.core.merge import MergeError
 from dask import array as da
+from xarray.core.merge import MergeError
 
 from aodn_cloud_optimised.lib.CommonHandler import CommonHandler
 from aodn_cloud_optimised.lib.logging import get_logger
