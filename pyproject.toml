@@ -40,7 +40,7 @@ pyarrow = "==17.0.0"
 rechunker = ">=0.5.2"
 s3fs = ">=2024.9.0"
 shapely = ">=2.0.4"
-xarray = { version = ">=2024.9.0", extras = ["complete"] }
+xarray = { version = "==2024.9.0", extras = ["complete"] }
 zarr = ">=2.18.3"
 geopandas = ">=0.14.4"
 coiled = ">=1.53.0"
@@ -103,7 +103,7 @@ cloud_optimised_radar_RottnestShelf_wind_delayed_qc = "aodn_cloud_optimised.bin.
 cloud_optimised_radar_SouthAustraliaGulfs_velocity_hourly_averaged_delayed_qc = "aodn_cloud_optimised.bin.radar_SouthAustraliaGulfs_velocity_hourly_averaged_delayed_qc:main"
 cloud_optimised_radar_SouthAustraliaGulfs_wave_delayed_qc = "aodn_cloud_optimised.bin.radar_SouthAustraliaGulfs_wave_delayed_qc:main"
 cloud_optimised_radar_SouthAustraliaGulfs_wind_delayed_qc = "aodn_cloud_optimised.bin.radar_SouthAustraliaGulfs_wind_delayed_qc:main"
-cloud_optimised_radar_TurquoiseCoast_velocity_hourly_average_delayed_qc = "aodn_cloud_optimised.bin.radar_TurquoiseCoast_velocity_hourly_average_delayed_qc:main"
+cloud_optimised_radar_TurquoiseCoast_velocity_hourly_averaged_delayed_qc = "aodn_cloud_optimised.bin.radar_TurquoiseCoast_velocity_hourly_averaged_delayed_qc:main"
 cloud_optimised_receiver_animal_acoustic_tagging_delayed_qc = "aodn_cloud_optimised.bin.receiver_animal_acoustic_tagging_delayed_qc:main"
 cloud_optimised_satellite_chlorophylla_carder_1day_aqua = "aodn_cloud_optimised.bin.satellite_chlorophylla_carder_1day_aqua:main"
 cloud_optimised_satellite_chlorophylla_gsm_1day_aqua = "aodn_cloud_optimised.bin.satellite_chlorophylla_gsm_1day_aqua:main"

@@ -8,7 +8,7 @@ def main():
         "--paths",
         "IMOS/ACORN/gridded_1h-avg-current-map_QC/TURQ/",
         "--dataset-config",
-        "radar_TurquoiseCoast_velocity_hourly_average_delayed_qc.json",
+        "radar_TurquoiseCoast_velocity_hourly_averaged_delayed_qc.json",
         "--clear-existing-data",
         "--cluster-mode",
         "coiled",

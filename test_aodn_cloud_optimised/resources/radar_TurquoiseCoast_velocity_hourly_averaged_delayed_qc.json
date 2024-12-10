@@ -1,7 +1,7 @@
 {
-  "dataset_name": "radar_TurquoiseCoast_velocity_hourly_average_delayed_qc",
-  "logger_name": "radar_TurquoiseCoast_velocity_hourly_average_delayed_qc",
-  "parent_config": "radar_velocity_hourly_average_delayed_qc_main.json",
+  "dataset_name": "radar_TurquoiseCoast_velocity_hourly_averaged_delayed_qc",
+  "logger_name": "radar_TurquoiseCoast_velocity_hourly_averaged_delayed_qc",
+  "parent_config": "radar_velocity_hourly_averaged_delayed_qc_main.json",
   "metadata_uuid": "055342fc-f970-4be7-a764-8903220d42fb",
   "aws_opendata_registry": {
     "Name": "IMOS - ACORN - Turquoise Coast HF ocean radar site (Western Australia, Australia) - Delayed mode sea water velocity",
@@ -16,8 +16,8 @@
       "Tutorials": [
         {
           "Title": "Accessing IMOS - ACORN - Turquoise Coast HF ocean radar site (Western Australia, Australia) - Delayed mode sea water velocity",
-          "URL": "https://nbviewer.org/github/aodn/aodn_cloud_optimised/blob/main/notebooks/radar_TurquoiseCoast_velocity_hourly_average_delayed_qc.ipynb",
-          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/radar_TurquoiseCoast_velocity_hourly_average_delayed_qc.ipynb",
+          "URL": "https://nbviewer.org/github/aodn/aodn_cloud_optimised/blob/main/notebooks/radar_TurquoiseCoast_velocity_hourly_averaged_delayed_qc.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/radar_TurquoiseCoast_velocity_hourly_averaged_delayed_qc.ipynb",
           "AuthorName": "Laurent Besnard",
           "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
         },
@@ -33,7 +33,7 @@
     "Resources": [
       {
         "Description": "Cloud Optimised AODN dataset of IMOS - ACORN - Turquoise Coast HF ocean radar site (Western Australia, Australia) - Delayed mode sea water velocity",
-        "ARN": "arn:aws:s3:::aodn-cloud-optimised/radar_TurquoiseCoast_velocity_hourly_average_delayed_qc.zarr",
+        "ARN": "arn:aws:s3:::aodn-cloud-optimised/radar_TurquoiseCoast_velocity_hourly_averaged_delayed_qc.zarr",
         "Region": "ap-southeast-2",
         "Type": "S3 Bucket"
       }

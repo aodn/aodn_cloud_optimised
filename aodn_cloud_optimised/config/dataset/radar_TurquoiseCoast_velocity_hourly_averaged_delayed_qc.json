@@ -1,12 +1,12 @@
 {
-  "dataset_name": "radar_TurquoiseCoast_velocity_hourly_average_delayed_qc",
-  "logger_name": "radar_TurquoiseCoast_velocity_hourly_average_delayed_qc",
+  "dataset_name": "radar_TurquoiseCoast_velocity_hourly_averaged_delayed_qc",
+  "logger_name": "radar_TurquoiseCoast_velocity_hourly_averaged_delayed_qc",
   "parent_config": "radar_velocity_hourly_average_delayed_qc_main.json",
   "metadata_uuid": "055342fc-f970-4be7-a764-8903220d42fb",
   "dimensions": {
     "time": {
       "name": "TIME",
-      "chunk": 1500,
+      "chunk": 100,
       "rechunk": false
     },
     "latitude": {
@@ -39,8 +39,8 @@
       "Tutorials": [
         {
           "Title": "Accessing IMOS - ACORN - Turquoise Coast HF ocean radar site (Western Australia, Australia) - Delayed mode sea water velocity",
-          "URL": "https://nbviewer.org/github/aodn/aodn_cloud_optimised/blob/main/notebooks/radar_TurquoiseCoast_velocity_hourly_average_delayed_qc.ipynb",
-          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/radar_TurquoiseCoast_velocity_hourly_average_delayed_qc.ipynb",
+          "URL": "https://nbviewer.org/github/aodn/aodn_cloud_optimised/blob/main/notebooks/radar_TurquoiseCoast_velocity_hourly_averaged_delayed_qc.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/radar_TurquoiseCoast_velocity_hourly_averaged_delayed_qc.ipynb",
           "AuthorName": "Laurent Besnard",
           "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
         },

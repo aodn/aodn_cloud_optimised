@@ -1,6 +1,6 @@
 {
-  "dataset_name": "radar_velocity_hourly_average_delayed_qc_main.json",
-  "logger_name": "radar_velocity_hourly_average_delayed_qc_main.json",
+  "dataset_name": "radar_velocity_hourly_averaged_delayed_qc_main.json",
+  "logger_name": "radar_velocity_hourly_averaged_delayed_qc_main.json",
   "cloud_optimised_format": "zarr",
   "coiled_cluster_options": {
     "n_workers": [
