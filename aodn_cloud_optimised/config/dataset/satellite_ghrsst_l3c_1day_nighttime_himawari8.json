@@ -4,19 +4,19 @@
   "parent_config": "satellite_ghrsst_main.json",
   "coiled_cluster_options": {
     "n_workers": [
-      1,
-      20
+      30,
+      150
     ],
-    "scheduler_vm_types": "t3.small",
-    "worker_vm_types": "t3.medium",
+    "scheduler_vm_types": "m7i.xlarge",
+    "worker_vm_types": "m7i.2xlarge",
     "allow_ingress_from": "me",
     "compute_purchase_option": "spot_with_fallback",
     "worker_options": {
-      "nthreads": 4,
-      "memory_limit": "8GB"
+      "nthreads": 16,
+      "memory_limit": "64GB"
     }
   },
-  "batch_size": 5,
+  "batch_size": 125,
   "metadata_uuid": "72b65fb8-84e1-4a56-b32c-7f15970903d2",
   "schema": {
     "time": {
@@ -197,7 +197,7 @@
     }
   },
   "dataset_gattrs": {
-    "title": "FILL UP MANUALLY - CHECK DOCUMENTATION"
+    "title": ""
   },
   "aws_opendata_registry": {
     "Name": "IMOS - SRS - SST - L3C - Himawari-8 - 1 day - night time - Australia",

@@ -3,7 +3,7 @@ import subprocess
 
 
 def main():
-    imos_paths = [f"IMOS/SRS/OC/gridded/aqua/P1D/{year}" for year in range(2012, 2025)]
+    imos_paths = [f"IMOS/SRS/OC/gridded/aqua/P1D/{year}" for year in range(2002, 2025)]
 
     command = [
         "generic_cloud_optimised_creation",
@@ -15,7 +15,7 @@ def main():
         "satellite_chlorophylla_oc3_1day_aqua.json",
         "--clear-existing-data",
         "--cluster-mode",
-        "local",
+        "coiled",
     ]
 
     # Run the command

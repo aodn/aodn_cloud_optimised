@@ -3,36 +3,27 @@ import subprocess
 
 
 def main():
-    command = [
-        "generic_cloud_optimised_creation",
-        "--paths",
-        "IMOS/SRS/OC/gridded/aqua/P1D/2009",
-        "IMOS/SRS/OC/gridded/aqua/P1D/2010",
-        "IMOS/SRS/OC/gridded/aqua/P1D/2011",
-        "IMOS/SRS/OC/gridded/aqua/P1D/2012",
-        "IMOS/SRS/OC/gridded/aqua/P1D/2013",
-        "IMOS/SRS/OC/gridded/aqua/P1D/2014",
-        "IMOS/SRS/OC/gridded/aqua/P1D/2015",
-        "IMOS/SRS/OC/gridded/aqua/P1D/2016",
-        "IMOS/SRS/OC/gridded/aqua/P1D/2017",
-        "IMOS/SRS/OC/gridded/aqua/P1D/2018",
-        "IMOS/SRS/OC/gridded/aqua/P1D/2019",
-        "IMOS/SRS/OC/gridded/aqua/P1D/2020",
-        "IMOS/SRS/OC/gridded/aqua/P1D/2021",
-        "IMOS/SRS/OC/gridded/aqua/P1D/2022",
-        "IMOS/SRS/OC/gridded/aqua/P1D/2023",
-        "IMOS/SRS/OC/gridded/aqua/P1D/2024",
-        "--filters",
-        "aust.nanop_brewin2012in.nc",
-        "--dataset-config",
-        "satellite_nanoplankton_fraction_oc3_1day_aqua.json",
-        "--clear-existing-data",
-        "--cluster-mode",
-        "coiled",
-    ]
 
-    # Run the command
-    subprocess.run(command, check=True)
+    for i, year in enumerate(range(2002, 2025)):
+        # Prepare the command
+        command = [
+            "generic_cloud_optimised_creation",
+            "--paths",
+            f"IMOS/SRS/OC/gridded/aqua/P1D/{year}",
+            "--filters",
+            "aust.nanop_brewin2012in.nc",
+            "--dataset-config",
+            "satellite_nanoplankton_fraction_oc3_1day_aqua.json",
+            "--cluster-mode",
+            "coiled",
+        ]
+
+        # Add --clear-existing-data for the first iteration only
+        if i == 0:
+            command.append("--clear-existing-data")
+
+        # Run the command
+        subprocess.run(command, check=True)
 
 
 if __name__ == "__main__":

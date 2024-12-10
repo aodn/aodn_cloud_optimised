@@ -3,22 +3,25 @@ import subprocess
 
 
 def main():
-    command = [
-        "generic_cloud_optimised_creation",
-        "--paths",
-        "IMOS/ACORN/gridded_1h-avg-wind-map_QC/ROT/2010/04/01",
-        "--filters",
-        "20100401T0",
-        # "FILTER_STRING_1",
-        "--dataset-config",
-        "radar_RottnestShelf_wind_delayed_qc.json",
-        "--clear-existing-data",
-        "--cluster-mode",
-        "ec2",
-    ]
+    for i, year in enumerate(range(2007, 2025)):
+        command = [
+            "generic_cloud_optimised_creation",
+            "--paths",
+            f"IMOS/ACORN/gridded_1h-avg-wind-map_QC/ROT/{year}",
+            # "--filters",
+            # ".nc",
+            "--dataset-config",
+            "radar_RottnestShelf_wind_delayed_qc.json",
+            "--cluster-mode",
+            "coiled",
+        ]
 
-    # Run the command
-    subprocess.run(command, check=True)
+        # Add --clear-existing-data for the first iteration only
+        if i == 0:
+            command.append("--clear-existing-data")
+
+        # Run the command
+        subprocess.run(command, check=True)
 
 
 if __name__ == "__main__":

@@ -1,12 +1,12 @@
 {
   "dataset_name": "radar_RottnestShelf_velocity_hourly_averaged_delayed_qc",
   "logger_name": "radar_RottnestShelf_velocity_hourly_averaged_delayed_qc",
-  "parent_config": "radar_velocity_hourly_average_delayed_qc_no_I_J_version_main.json",
+  "parent_config": "radar_velocity_hourly_averaged_delayed_qc_no_I_J_version_main.json",
   "metadata_uuid": "028b9801-279f-427c-964b-0ffcdf310b59",
   "dimensions": {
     "time": {
       "name": "TIME",
-      "chunk": 1500,
+      "chunk": 100,
       "rechunk": false
     },
     "latitude": {
