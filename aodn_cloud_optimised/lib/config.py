@@ -14,7 +14,9 @@ def merge_dicts(parent, child):
     :return: The merged dictionary with child's values taking precedence.
     """
     for key, value in child.items():
-        if isinstance(value, dict) and key in parent:
+        if key == "schema" and value:  # dont merge child and parent schema
+            parent[key] = value
+        elif isinstance(value, dict) and key in parent:
             parent[key] = merge_dicts(parent[key], value)
         else:
             parent[key] = value
