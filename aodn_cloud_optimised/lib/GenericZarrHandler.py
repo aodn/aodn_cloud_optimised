@@ -479,9 +479,10 @@ class GenericHandler(CommonHandler):
             # TODO:
             # compute() was added as unittests failed on github, but not locally. related to
             # https://github.com/pydata/xarray/issues/5219
+            # import ipdb;ipdb.set_trace()
             ds.isel(**{time_dimension_name: indexes}).drop_vars(
                 self.vars_to_drop_no_common_dimension, errors="ignore"
-            ).pad(**{time_dimension_name: (0, amount_to_pad)}).compute().to_zarr(
+            ).pad(**{time_dimension_name: (0, amount_to_pad)}).to_zarr(
                 self.store,
                 write_empty_chunks=self.write_empty_chunks,
                 region=region,
@@ -638,12 +639,12 @@ class GenericHandler(CommonHandler):
 
         ds = xr.open_mfdataset(batch_files, **open_mfdataset_params)
         try:
-            ds.chunk(chunks="auto")
+            ds = ds.chunk(chunks="auto")
         except Exception as err:
             self.logger.warning(
                 f"{self.uuid_log}:{err}\n Defaulting to open files without auto chunks option"
             )
-            ds.chunk(chunks=self.chunks)
+            ds = ds.chunk(chunks=self.chunks)
 
         ds = ds.unify_chunks()
         # ds = ds.map_blocks(partial_preprocess) ## EXTREMELY DANGEROUS TO USE. CORRUPTS SOME DATA CHUNKS SILENTLY while it's working fine with preprocess
@@ -693,12 +694,12 @@ class GenericHandler(CommonHandler):
         # for GSLA files
         # https://github.com/pydata/xarray/issues/4055
         try:
-            ds.chunk(chunks="auto")
+            ds = ds.chunk(chunks="auto")
         except Exception as err:
             self.logger.warning(
                 f"{self.uuid_log}:{err}\n Defaulting to open files without auto chunks option"
             )
-            ds.chunk(chunks=self.chunks)
+            ds = ds.chunk(chunks=self.chunks)
 
         # ds = ds.map_blocks(partial_preprocess)
         ds = ds.unify_chunks()
@@ -799,10 +800,10 @@ class GenericHandler(CommonHandler):
         Append the dataset to an existing Zarr store.
         """
         self.logger.info(f"{self.uuid_log}: Appending data to Zarr dataset")
-
+        # import ipdb; ipdb.set_trace()
         ds.to_zarr(
             self.store,
-            mode="a",
+            mode="a-",
             write_empty_chunks=self.write_empty_chunks,
             compute=True,  # Compute the result immediately
             consolidated=self.consolidated,
