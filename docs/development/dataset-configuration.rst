@@ -449,9 +449,9 @@ Zarr Configuration from NetCDF
 ------------------------------
 
 As an example, we’ll explain the
-``aodn_cloud_optimised.config.radar_velocity_hourly_average_delayed_qc_main.json``
+``aodn_cloud_optimised.config.radar_velocity_hourly_averaged_delayed_qc_main.json``
 config file.
-https://github.com/aodn/aodn_cloud_optimised/blob/main/aodn_cloud_optimised/config/dataset/radar_velocity_hourly_average_delayed_qc_main.json
+https://github.com/aodn/aodn_cloud_optimised/blob/main/aodn_cloud_optimised/config/dataset/radar_velocity_hourly_averaged_delayed_qc_main.json
 
 .. note:: Important Note
    :class: custom-note
@@ -460,8 +460,8 @@ https://github.com/aodn/aodn_cloud_optimised/blob/main/aodn_cloud_optimised/conf
    It is possible to have a main config and a child config to avoid duplication. This is especially useful for IMOS Zarr datasets such as the ones from the Radar and GHRSST datasets, which are similar in terms of metadata.
 
    See for example the two related configuration files:
-   `radar_velocity_hourly_average_delayed_qc_main.json <https://github.com/aodn/aodn_cloud_optimised/blob/main/aodn_cloud_optimised/config/dataset/radar_velocity_hourly_average_delayed_qc_main.json>`__
-   `radar_TurquoiseCoast_velocity_hourly_average_delayed_qc.json <https://github.com/aodn/aodn_cloud_optimised/blob/main/aodn_cloud_optimised/config/dataset/radar_TurquoiseCoast_velocity_hourly_average_delayed_qc.json>`__
+   `radar_velocity_hourly_averaged_delayed_qc_main.json <https://github.com/aodn/aodn_cloud_optimised/blob/main/aodn_cloud_optimised/config/dataset/radar_velocity_hourly_averaged_delayed_qc_main.json>`__
+   `radar_TurquoiseCoast_velocity_hourly_averaged_delayed_qc.json <https://github.com/aodn/aodn_cloud_optimised/blob/main/aodn_cloud_optimised/config/dataset/radar_TurquoiseCoast_velocity_hourly_averaged_delayed_qc.json>`__
 
 .. _the-basics-1:
 
@@ -473,8 +473,8 @@ The first section to add is
 .. code:: json
 
    {
-     "dataset_name": "radar_velocity_hourly_average_delayed_qc_main",
-     "logger_name": "radar_velocity_hourly_average_delayed_qc_main",
+     "dataset_name": "radar_velocity_hourly_averaged_delayed_qc_main",
+     "logger_name": "radar_velocity_hourly_averaged_delayed_qc_main",
      "cloud_optimised_format": "zarr",
      "metadata_uuid": "a681fdba-c6d9-44ab-90b9-113b0ed03536",
      ...
