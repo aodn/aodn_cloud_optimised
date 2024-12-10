@@ -15,7 +15,7 @@ Usage Examples:
   --dataset-config 'mooring_ctd_delayed_qc.json'
 
   generic_cloud_optimised_creation --paths 'IMOS/ACORN/gridded_1h-avg-current-map_QC/TURQ/2024'
-  --dataset-config 'radar_TurquoiseCoast_velocity_hourly_average_delayed_qc.json' --clear-existing-data --cluster-mode 'coiled'
+  --dataset-config 'radar_TurquoiseCoast_velocity_hourly_averaged_delayed_qc.json' --clear-existing-data --cluster-mode 'coiled'
 
 Arguments:
   --paths: List of S3 paths to process. Example: 'IMOS/ANMN/NSW' 'IMOS/ANMN/PA'
@@ -37,6 +37,7 @@ Arguments:
 
 import argparse
 from importlib.resources import files
+import warnings
 
 from aodn_cloud_optimised.lib import clusterLib
 from aodn_cloud_optimised.lib.CommonHandler import cloud_optimised_creation
@@ -53,7 +54,7 @@ def main():
         epilog="Examples:\n"
         "  generic_cloud_optimised_creation --paths 'IMOS/ANMN/NSW' 'IMOS/ANMN/PA' --filters '_hourly-timeseries_' 'FV02' --dataset-config 'mooring_hourly_timeseries_delayed_qc.json' --clear-existing-data --cluster-mode 'coiled'\n"
         "  generic_cloud_optimised_creation --paths 'IMOS/ANMN/NSW' 'IMOS/ANMN/QLD' --dataset-config 'mooring_ctd_delayed_qc.json'\n"
-        "  generic_cloud_optimised_creation --paths 'IMOS/ACORN/gridded_1h-avg-current-map_QC/TURQ/2024' --dataset-config 'radar_TurquoiseCoast_velocity_hourly_average_delayed_qc.json' --clear-existing-data --cluster-mode 'coiled'\n",
+        "  generic_cloud_optimised_creation --paths 'IMOS/ACORN/gridded_1h-avg-current-map_QC/TURQ/2024' --dataset-config 'radar_TurquoiseCoast_velocity_hourly_averaged_delayed_qc.json' --clear-existing-data --cluster-mode 'coiled'\n",
         formatter_class=argparse.RawTextHelpFormatter,
     )
 
@@ -91,13 +92,13 @@ def main():
         "Only for Parquet processing.",
     )
 
-    coiled_cluster_options = [mode.value for mode in clusterLib.ClusterMode]
+    cluster_options = [mode.value for mode in clusterLib.ClusterMode]
     parser.add_argument(
         "--cluster-mode",
         # type=clusterLib.parse_cluster_mode,
         default=clusterLib.ClusterMode.NONE.value,
-        choices=coiled_cluster_options,
-        help="Cluster mode to use. Options: 'local' or 'coiled'. Default is None.",
+        choices=cluster_options,
+        help=f"Cluster mode to use. Options: {cluster_options}. Default is None.",
     )
 
     parser.add_argument(
@@ -138,7 +139,8 @@ def main():
         )  # make the list unique!
 
     if not nc_obj_ls:
-        raise ValueError("No files found matching the specified criteria.")
+        warnings.warn("No files found matching the specified criteria.")
+        return False
 
     # Load dataset config
     dataset_config_path = args.dataset_config
