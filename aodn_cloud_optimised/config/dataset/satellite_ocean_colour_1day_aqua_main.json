@@ -3,19 +3,19 @@
   "cloud_optimised_format": "zarr",
   "coiled_cluster_options": {
     "n_workers": [
-      10,
-      100
+      25,
+      150
     ],
-    "scheduler_vm_types": "m7i.xlarge",
+    "scheduler_vm_types": "m7i.2xlarge",
     "worker_vm_types": "m7i.2xlarge",
     "allow_ingress_from": "me",
     "compute_purchase_option": "spot_with_fallback",
     "worker_options": {
-      "nthreads": 8,
-      "memory_limit": "32GB"
+      "nthreads": 32,
+      "memory_limit": "64GB"
     }
   },
-  "batch_size": 100,
+  "batch_size": 125,
   "dimensions": {
     "time": {
       "name": "time",

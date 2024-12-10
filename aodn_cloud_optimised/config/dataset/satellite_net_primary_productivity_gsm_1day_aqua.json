@@ -4,7 +4,6 @@
   "parent_config": "satellite_ocean_colour_1day_aqua_main.json",
   "metadata_uuid": "27cc65c0-d453-4ba3-a0d6-55e4449fee8c",
   "var_template_shape": "npp_vgpm_eppley_gsm",
-  "vars_to_drop_no_common_dimension": [],
   "schema": {
     "time": {
       "type": "timestamp[ns]",

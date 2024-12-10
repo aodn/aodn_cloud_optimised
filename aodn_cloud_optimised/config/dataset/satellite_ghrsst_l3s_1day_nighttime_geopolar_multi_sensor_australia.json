@@ -1,42 +1,23 @@
 {
   "dataset_name": "satellite_ghrsst_l3s_1day_nighttime_geopolar_multi_sensor_australia",
   "logger_name": "satellite_ghrsst_l3s_1day_nighttime_geopolar_multi_sensor_australia",
-  "cloud_optimised_format": "zarr",
+  "parent_config": "satellite_ghrsst_main.json",
   "coiled_cluster_options": {
     "n_workers": [
-      1,
-      20
+      30,
+      150
     ],
-    "scheduler_vm_types": "t3.small",
-    "worker_vm_types": "t3.medium",
+    "scheduler_vm_types": "m7i.xlarge",
+    "worker_vm_types": "m7i.2xlarge",
     "allow_ingress_from": "me",
     "compute_purchase_option": "spot_with_fallback",
     "worker_options": {
-      "nthreads": 4,
-      "memory_limit": "8GB"
+      "nthreads": 16,
+      "memory_limit": "64GB"
     }
   },
-  "batch_size": 5,
+  "batch_size": 125,
   "metadata_uuid": "7d8d046b-6002-4897-b781-04e7324d6af8",
-  "dimensions": {
-    "time": {
-      "name": "FILL UP MANUALLY - CHECK DOCUMENTATION",
-      "chunk": 0,
-      "rechunk": false
-    },
-    "latitude": {
-      "name": "FILL UP MANUALLY - CHECK DOCUMENTATION",
-      "chunk": 0
-    },
-    "longitude": {
-      "name": "FILL UP MANUALLY - CHECK DOCUMENTATION",
-      "chunk": 0
-    }
-  },
-  "var_template_shape": "FILL UP MANUALLY - CHECK DOCUMENTATION",
-  "vars_to_drop_no_common_dimension": [
-    "FILL UP MANUALLY - CHECK DOCUMENTATION"
-  ],
   "schema": {
     "lon": {
       "type": "float",
@@ -229,7 +210,7 @@
     }
   },
   "dataset_gattrs": {
-    "title": "FILL UP MANUALLY - CHECK DOCUMENTATION"
+    "title": ""
   },
   "aws_opendata_registry": {
     "Name": "IMOS - SRS - SST - L3S - GeoPolar Multi Sensor - 1 day - night time - Australia",

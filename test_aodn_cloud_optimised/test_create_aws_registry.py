@@ -16,7 +16,7 @@ ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 DATASET_CONFIG_NC_ACORN_JSON = os.path.join(
     ROOT_DIR,
     "resources",
-    "radar_TurquoiseCoast_velocity_hourly_average_delayed_qc.json",
+    "radar_TurquoiseCoast_velocity_hourly_averaged_delayed_qc.json",
 )
 DATASET_CONFIG_NC_ACORN_JSON = Path(DATASET_CONFIG_NC_ACORN_JSON)
 
@@ -59,7 +59,7 @@ class TestGenericCloudOptimisedCreation(unittest.TestCase):
             )
             self.assertTrue(
                 any(
-                    "radar_TurquoiseCoast_velocity_hourly_average_delayed_qc.yaml"
+                    "radar_TurquoiseCoast_velocity_hourly_averaged_delayed_qc.yaml"
                     in log
                     for log in captured_logs
                 )

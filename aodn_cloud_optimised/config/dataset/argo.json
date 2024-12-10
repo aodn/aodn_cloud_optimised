@@ -17,7 +17,7 @@
       "memory_limit": "12GB"
     }
   },
-  "batch_size": 2500,
+  "batch_size": 300,
   "metadata_uuid": "4402cb50-e20a-44ee-93e6-4728259250d2",
   "gattrs_to_variables": [],
   "partition_keys": [

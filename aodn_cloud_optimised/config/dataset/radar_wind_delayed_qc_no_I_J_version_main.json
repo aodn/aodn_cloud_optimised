@@ -4,16 +4,16 @@
   "cloud_optimised_format": "zarr",
   "coiled_cluster_options": {
     "n_workers": [
-      1,
-      20
+      12,
+      80
     ],
-    "scheduler_vm_types": "t3.small",
-    "worker_vm_types": "t3.medium",
+    "scheduler_vm_types": "m7i.large",
+    "worker_vm_types": "m7i.xlarge",
     "allow_ingress_from": "me",
     "compute_purchase_option": "spot_with_fallback",
     "worker_options": {
-      "nthreads": 4,
-      "memory_limit": "8GB"
+      "nthreads": 16,
+      "memory_limit": "64GB"
     }
   },
   "ec2_cluster_options": {
@@ -27,7 +27,7 @@
     "minimum": 1,
     "maximum": 120
   },
-  "batch_size": 1500,
+  "batch_size": 3000,
   "var_template_shape": "WDIR",
   "vars_to_drop_no_common_dimension": [],
   "schema": {

@@ -15,7 +15,7 @@ ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 DATASET_CONFIG_NC_ACORN_JSON = os.path.join(
     ROOT_DIR,
     "resources",
-    "radar_TurquoiseCoast_velocity_hourly_average_delayed_qc.json",
+    "radar_TurquoiseCoast_velocity_hourly_averaged_delayed_qc.json",
 )
 
 

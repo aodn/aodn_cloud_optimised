@@ -4,6 +4,7 @@
   "parent_config": "satellite_ocean_colour_1day_aqua_main.json",
   "metadata_uuid": "24055e3a-94e5-40bb-b97f-7519f0482d6a",
   "var_template_shape": "chl_oci",
+  "batch_size": 125,
   "schema": {
     "time": {
       "type": "timestamp[ns]",

@@ -1,13 +1,13 @@
 {
   "dataset_name": "radar_CapricornBunkerGroup_velocity_hourly_averaged_delayed_qc",
   "logger_name": "radar_CapricornBunkerGroup_velocity_hourly_averaged_delayed_qc",
-  "parent_config": "radar_velocity_hourly_average_delayed_qc_no_I_J_version_main.json",
+  "parent_config": "radar_velocity_hourly_averaged_delayed_qc_no_I_J_version_main.json",
   "metadata_uuid": "8a2d2824-0557-4110-a561-01ec35a9583d",
   "dimensions": {
     "time": {
       "name": "TIME",
-      "chunk": 1500,
-      "rechunk": true
+      "chunk": 100,
+      "rechunk": false
     },
     "latitude": {
       "name": "LATITUDE",

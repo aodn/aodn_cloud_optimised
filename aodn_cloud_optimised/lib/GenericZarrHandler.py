@@ -5,17 +5,11 @@ import uuid
 import warnings
 from functools import partial
 
-import boto3
-import fsspec
 import numpy as np
 import s3fs
 import xarray as xr
-import zarr
-from dask.diagnostics import ProgressBar
-from dask.distributed import Client
-from rechunker import rechunk
-from xarray.core.merge import MergeError
 from dask import array as da
+from xarray.core.merge import MergeError
 
 from aodn_cloud_optimised.lib.CommonHandler import CommonHandler
 from aodn_cloud_optimised.lib.logging import get_logger
@@ -485,9 +479,10 @@ class GenericHandler(CommonHandler):
             # TODO:
             # compute() was added as unittests failed on github, but not locally. related to
             # https://github.com/pydata/xarray/issues/5219
+            # import ipdb;ipdb.set_trace()
             ds.isel(**{time_dimension_name: indexes}).drop_vars(
                 self.vars_to_drop_no_common_dimension, errors="ignore"
-            ).pad(**{time_dimension_name: (0, amount_to_pad)}).compute().to_zarr(
+            ).pad(**{time_dimension_name: (0, amount_to_pad)}).to_zarr(
                 self.store,
                 write_empty_chunks=self.write_empty_chunks,
                 region=region,
@@ -644,12 +639,12 @@ class GenericHandler(CommonHandler):
 
         ds = xr.open_mfdataset(batch_files, **open_mfdataset_params)
         try:
-            ds.chunk(chunks="auto")
+            ds = ds.chunk(chunks="auto")
         except Exception as err:
             self.logger.warning(
                 f"{self.uuid_log}:{err}\n Defaulting to open files without auto chunks option"
             )
-            ds.chunk(chunks=self.chunks)
+            ds = ds.chunk(chunks=self.chunks)
 
         ds = ds.unify_chunks()
         # ds = ds.map_blocks(partial_preprocess) ## EXTREMELY DANGEROUS TO USE. CORRUPTS SOME DATA CHUNKS SILENTLY while it's working fine with preprocess
@@ -699,12 +694,12 @@ class GenericHandler(CommonHandler):
         # for GSLA files
         # https://github.com/pydata/xarray/issues/4055
         try:
-            ds.chunk(chunks="auto")
+            ds = ds.chunk(chunks="auto")
         except Exception as err:
             self.logger.warning(
                 f"{self.uuid_log}:{err}\n Defaulting to open files without auto chunks option"
             )
-            ds.chunk(chunks=self.chunks)
+            ds = ds.chunk(chunks=self.chunks)
 
         # ds = ds.map_blocks(partial_preprocess)
         ds = ds.unify_chunks()
@@ -805,10 +800,10 @@ class GenericHandler(CommonHandler):
         Append the dataset to an existing Zarr store.
         """
         self.logger.info(f"{self.uuid_log}: Appending data to Zarr dataset")
-
+        # import ipdb; ipdb.set_trace()
         ds.to_zarr(
             self.store,
-            mode="a",
+            mode="a-",
             write_empty_chunks=self.write_empty_chunks,
             compute=True,  # Compute the result immediately
             consolidated=self.consolidated,
@@ -889,80 +884,83 @@ class GenericHandler(CommonHandler):
 
         return rechunk_dimensions
 
-    def rechunk(self, max_mem="8.0GB"):
-        """
-        Rechunk a Zarr dataset stored on S3.
-
-        Parameters:
-        - max_mem (str, optional): Maximum memory to use during rechunking (default is '8.0GB').
-
-        Returns:
-        None
-
-        Example:
-        >>> gridded_handler_instance.rechunk(max_mem='12.0GB')
-
-        This method rechunks a Zarr dataset stored on S3 using Dask and the specified target chunks.
-        The rechunked data is stored in a new Zarr dataset on S3.
-        The intermediate and previous rechunked data are deleted before the rechunking process.
-        The 'max_mem' parameter controls the maximum memory to use during rechunking.
-
-        Note: The target chunks for rechunking are determined based on the dimensions and chunking information.
-        """
-        # with worker_client():
-        with Client() as client:
-
-            target_chunks = self.filter_rechunk_dimensions(
-                self.dimensions
-            )  # only return a dict with the dimensions to rechunk
-
-            # s3 = s3fs.S3FileSystem(anon=False)
-
-            org_url = (
-                self.cloud_optimised_output_path
-            )  # f's3://{self.optimised_bucket_name}/zarr/{self.dataset_name}.zarr'
-            # org_store = s3fs.S3Map(root=f'{org_url}', s3=s3, check=False)
-
-            target_url = org_url.replace(
-                f"{self.dataset_name}", f"{self.dataset_name}_rechunked"
-            )
-            target_store = s3fs.S3Map(root=f"{target_url}", s3=self.s3_fs, check=False)
-            # zarr.consolidate_metadata(org_store)
-
-            ds = xr.open_zarr(fsspec.get_mapper(org_url, anon=True), consolidated=True)
-
-            temp_url = org_url.replace(
-                f"{self.dataset_name}", f"{self.dataset_name}_intermediate"
-            )
-
-            temp_store = s3fs.S3Map(root=f"{temp_url}", s3=self.s3_fs, check=False)
-
-            # delete previous version of intermediate and rechunked data
-            s3_client = boto3.resource("s3")
-            bucket = s3_client.Bucket(f"{self.optimised_bucket_name}")
-            self.logger.info("Delete previous rechunked version in progress")
-
-            bucket.objects.filter(
-                Prefix=temp_url.replace(f"s3://{self.optimised_bucket_name}/", "")
-            ).delete()
-            bucket.objects.filter(
-                Prefix=target_url.replace(f"s3://{self.optimised_bucket_name}/", "")
-            ).delete()
-            self.logger.info(
-                f"Rechunking in progress with target chunks: {target_chunks}"
-            )
-
-            options = dict(overwrite=True)
-            array_plan = rechunk(
-                ds,
-                target_chunks,
-                max_mem,
-                target_store,
-                temp_store=temp_store,
-                temp_options=options,
-                target_options=options,
-            )
-            with ProgressBar():
-                self.logger.info(f"{array_plan.execute()}")
-
-            zarr.consolidate_metadata(target_store)
+    # TODO:
+    # The following function is not quite ready.
+    # Also to be defined if this is needed.
+    # def rechunk(self, max_mem="8.0GB"):
+    #     """
+    #     Rechunk a Zarr dataset stored on S3.
+    #
+    #     Parameters:
+    #     - max_mem (str, optional): Maximum memory to use during rechunking (default is '8.0GB').
+    #
+    #     Returns:
+    #     None
+    #
+    #     Example:
+    #     >>> gridded_handler_instance.rechunk(max_mem='12.0GB')
+    #
+    #     This method rechunks a Zarr dataset stored on S3 using Dask and the specified target chunks.
+    #     The rechunked data is stored in a new Zarr dataset on S3.
+    #     The intermediate and previous rechunked data are deleted before the rechunking process.
+    #     The 'max_mem' parameter controls the maximum memory to use during rechunking.
+    #
+    #     Note: The target chunks for rechunking are determined based on the dimensions and chunking information.
+    #     """
+    #     # with worker_client():
+    #     with Client() as client:
+    #
+    #         target_chunks = self.filter_rechunk_dimensions(
+    #             self.dimensions
+    #         )  # only return a dict with the dimensions to rechunk
+    #
+    #         # s3 = s3fs.S3FileSystem(anon=False)
+    #
+    #         org_url = (
+    #             self.cloud_optimised_output_path
+    #         )  # f's3://{self.optimised_bucket_name}/zarr/{self.dataset_name}.zarr'
+    #         # org_store = s3fs.S3Map(root=f'{org_url}', s3=s3, check=False)
+    #
+    #         target_url = org_url.replace(
+    #             f"{self.dataset_name}", f"{self.dataset_name}_rechunked"
+    #         )
+    #         target_store = s3fs.S3Map(root=f"{target_url}", s3=self.s3_fs, check=False)
+    #         # zarr.consolidate_metadata(org_store)
+    #
+    #         ds = xr.open_zarr(fsspec.get_mapper(org_url, anon=True), consolidated=True)
+    #
+    #         temp_url = org_url.replace(
+    #             f"{self.dataset_name}", f"{self.dataset_name}_intermediate"
+    #         )
+    #
+    #         temp_store = s3fs.S3Map(root=f"{temp_url}", s3=self.s3_fs, check=False)
+    #
+    #         # delete previous version of intermediate and rechunked data
+    #         s3_client = boto3.resource("s3")
+    #         bucket = s3_client.Bucket(f"{self.optimised_bucket_name}")
+    #         self.logger.info("Delete previous rechunked version in progress")
+    #
+    #         bucket.objects.filter(
+    #             Prefix=temp_url.replace(f"s3://{self.optimised_bucket_name}/", "")
+    #         ).delete()
+    #         bucket.objects.filter(
+    #             Prefix=target_url.replace(f"s3://{self.optimised_bucket_name}/", "")
+    #         ).delete()
+    #         self.logger.info(
+    #             f"Rechunking in progress with target chunks: {target_chunks}"
+    #         )
+    #
+    #         options = dict(overwrite=True)
+    #         array_plan = rechunk(
+    #             ds,
+    #             target_chunks,
+    #             max_mem,
+    #             target_store,
+    #             temp_store=temp_store,
+    #             temp_options=options,
+    #             target_options=options,
+    #         )
+    #         with ProgressBar():
+    #             self.logger.info(f"{array_plan.execute()}")
+    #
+    #         zarr.consolidate_metadata(target_store)

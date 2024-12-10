@@ -6,7 +6,7 @@
   "dimensions": {
     "time": {
       "name": "TIME",
-      "chunk": 1500,
+      "chunk": 100,
       "rechunk": false
     },
     "latitude": {
