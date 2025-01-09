@@ -5,7 +5,7 @@
   "coiled_cluster_options": {
     "n_workers": [
       12,
-      80
+      120
     ],
     "scheduler_vm_types": "m7i.large",
     "worker_vm_types": "m7i.xlarge",
@@ -16,7 +16,7 @@
       "memory_limit": "64GB"
     }
   },
-  "batch_size": 3000,
+  "batch_size": 6000,
   "var_template_shape": "UCUR",
   "vars_to_drop_no_common_dimension": [
     "I",
