@@ -304,7 +304,9 @@ class GenericHandler(CommonHandler):
 
             try:
                 ds = self.try_open_dataset(
-                    batch_files, partial_preprocess, drop_vars_list
+                    batch_files,
+                    partial_preprocess,
+                    drop_vars_list,  # , engine="h5netcdf"
                 )
                 partial_preprocess_already_run = True
 
@@ -335,61 +337,151 @@ class GenericHandler(CommonHandler):
                 if "ds" in locals():
                     self.postprocess(ds)
 
-    def try_open_dataset(self, batch_files, partial_preprocess, drop_vars_list):
+    # def try_open_dataset(self, batch_files, partial_preprocess, drop_vars_list, engine="h5netcdf"):
+    #     try:
+    #         # First attempt: Try using the default engine (h5netcdf)
+    #         return self._open_mfds(partial_preprocess, drop_vars_list, batch_files, engine=engine)
+    #
+    #     except (ValueError, TypeError):
+    #         # if issue, first we check that it's an issue with the data, and not the wrong engine.
+    #         tb = traceback.format_exc()
+    #         match_grid_not_consistent = re.search(
+    #             r"Coordinate variable (\w+) is neither monotonically increasing nor monotonically decreasing on all datasets",
+    #             tb,
+    #         )
+    #         match_not_netcdf4_signature = re.search(r"is not the signature of a valid netCDF4 file", tb)
+    #         match_not_netcdf3_signature = re.search(r"is not a valid NetCDF 3 file", tb)
+    #
+    #         if match_grid_not_consistent:
+    #             variable_name = match_grid_not_consistent.group(1)
+    #
+    #             # Handle coordinate variable issue and retry with a clean batch
+    #             return self.handle_coordinate_variable_issue(batch_files, variable_name, partial_preprocess, drop_vars_list,
+    #                                                          engine)
+    #         elif match_not_netcdf4_signature:
+    #             # we recall the function but with scipy!
+    #             try:
+    #                 self.try_open_dataset_scipy_fallback(batch_files, partial_preprocess, drop_vars_list)
+    #
+    #                 # if the above succeeds, it returns a ds even if there was an issue with grid inconsistency.
+    #                 # otherwise, we're doing a fallback
+    #             except Exception:
+    #                 return self.handle_multi_engine_fallback(
+    #                     batch_files, partial_preprocess, drop_vars_list
+    #                 )
+    #
+    # def try_open_dataset_scipy_fallback(self, batch_files, partial_preprocess, drop_vars_list, engine="scipy"):
+    #     try:
+    #         return self._open_mfds(partial_preprocess, drop_vars_list, batch_files, engine=engine)
+    #
+    #     except (ValueError, TypeError):
+    #         # if issue, first we check that it's an issue with the data, and not the wrong engine.
+    #         tb = traceback.format_exc()
+    #         match_grid_not_consistent = re.search(
+    #             r"Coordinate variable (\w+) is neither monotonically increasing nor monotonically decreasing on all datasets",
+    #             tb,
+    #         )
+    #         match_not_netcdf4_signature = re.search(r"is not the signature of a valid netCDF4 file", tb)
+    #         match_not_netcdf3_signature = re.search(r"is not a valid NetCDF 3 file", tb)
+    #
+    #         if match_grid_not_consistent:
+    #             variable_name = match_grid_not_consistent.group(1)
+    #
+    #             # Handle coordinate variable issue and retry with a clean batch
+    #             return self.handle_coordinate_variable_issue(batch_files, variable_name, partial_preprocess, drop_vars_list,
+    #                                                          engine)
+    #         elif match_not_netcdf3_signature:
+    #             raise ValueError
+
+    def try_open_dataset(
+        self,
+        batch_files,
+        partial_preprocess,
+        drop_vars_list,
+        primary_engine="h5netcdf",
+        fallback_engine="scipy",
+    ):
+        def handle_engine(engine):
+            try:
+                return self._open_mfds(
+                    partial_preprocess, drop_vars_list, batch_files, engine=engine
+                )
+            except (ValueError, TypeError):
+                # Capture and inspect the traceback; 3 known scenarios
+                tb = traceback.format_exc()
+                match_grid_not_consistent = re.search(
+                    r"Coordinate variable (\w+) is neither monotonically increasing nor monotonically decreasing on all datasets",
+                    tb,
+                )
+                match_not_netcdf4_signature = re.search(
+                    r"is not the signature of a valid netCDF4 file", tb
+                )
+                match_not_netcdf3_signature = re.search(
+                    r"is not a valid NetCDF 3 file", tb
+                )
+
+                if match_grid_not_consistent:
+                    variable_name = match_grid_not_consistent.group(1)
+                    return self.handle_coordinate_variable_issue(
+                        batch_files,
+                        variable_name,
+                        partial_preprocess,
+                        drop_vars_list,
+                        engine,
+                    )
+                elif engine == primary_engine and match_not_netcdf4_signature:
+                    # Indicates a possible format issue; Tried to open a NetCDF3 files with h5netcdf; fallback to the next engine
+                    raise ValueError("Switch to fallback engine")
+                elif engine == fallback_engine and match_not_netcdf3_signature:
+                    # Should be a NetCDF3, but didn't work with scipy!
+                    # Final failure point for fallback engine
+                    raise ValueError(f"Invalid NetCDF file format in {batch_files}")
+                else:
+                    # Unknown or unhandled error
+                    raise
+
         try:
-            return self._open_mfds(partial_preprocess, drop_vars_list, batch_files)
-        except (ValueError, TypeError):
-            return self.handle_coordinate_variable_issue(
-                batch_files, partial_preprocess, drop_vars_list
-            )
+            # First attempt with the primary engine
+            return handle_engine(primary_engine)
+        except ValueError as e:
+            if str(e) == "Switch to fallback engine":
+                try:
+                    # Second attempt with the fallback engine
+                    return handle_engine(fallback_engine)
+                except Exception:
+                    # If fallback also fails, handle multi-engine fallback
+                    return self.handle_multi_engine_fallback(
+                        batch_files, partial_preprocess, drop_vars_list
+                    )
 
     def handle_coordinate_variable_issue(
+        self, batch_files, variable_name, partial_preprocess, drop_vars_list, engine
+    ):
+
+        self.logger.error(
+            f"{self.uuid_log}: Detected issue with variable: {variable_name}. Inconsistent grid"
+        )
+        self.logger.warning(
+            f"{self.uuid_log}: Running variable consistency check across files in batch"
+        )
+        problematic_files = self.check_variable_values_parallel(
+            batch_files, variable_name
+        )
+        clean_batch_files = [
+            file for file in batch_files if file not in problematic_files
+        ]
+        self.logger.warning(
+            f"{self.uuid_log}: Processing batch without problematic files"
+        )
+        return self._open_mfds(
+            partial_preprocess, drop_vars_list, clean_batch_files, engine
+        )
+
+    def handle_multi_engine_fallback(
         self, batch_files, partial_preprocess, drop_vars_list
     ):
-        tb = traceback.format_exc()
-        match = re.search(
-            r"Coordinate variable (\w+) is neither monotonically increasing nor monotonically decreasing on all datasets",
-            tb,
-        )
-        if match:
-            variable_name = match.group(1)
-            self.logger.error(
-                f"{self.uuid_log}: Detected issue with variable: {variable_name}. Inconsistent grid"
-            )
-            self.logger.warning(
-                f"{self.uuid_log}: Running variable consistency check across files in batch"
-            )
-            problematic_files = self.check_variable_values_parallel(
-                batch_files, variable_name
-            )
-            clean_batch_files = [
-                file for file in batch_files if file not in problematic_files
-            ]
-            return self._open_mfds(
-                partial_preprocess, drop_vars_list, clean_batch_files
-            )
-        else:
-            self.logger.debug(
-                f'{self.uuid_log}: The default engine "h5netcdf" could not be used. Falling back to "scipy".',
-                exc_info=True,
-            )
-            return self.try_open_with_scipy(
-                batch_files, partial_preprocess, drop_vars_list
-            )
-
-    def try_open_with_scipy(self, batch_files, partial_preprocess, drop_vars_list):
-        try:
-            return self._open_mfds(
-                partial_preprocess, drop_vars_list, batch_files, engine="scipy"
-            )
-        except Exception:
-            return self.handle_scipy_fallback(
-                batch_files, partial_preprocess, drop_vars_list
-            )
-
-    def handle_scipy_fallback(self, batch_files, partial_preprocess, drop_vars_list):
         self.logger.warning(
-            f'{self.uuid_log}: The "scipy" engine could not be used to concatenate the dataset together. '
+            f'{self.uuid_log}: Neither "h5netcdf" or "scipy" engine could not be used to concatenate the dataset together. '
             f"Falling back to opening files individually with different engines."
         )
         try:
@@ -418,77 +510,6 @@ class GenericHandler(CommonHandler):
             self.logger.error(
                 f"{self.uuid_log}: An unexpected error occurred during fallback processing: {e}.\n {traceback.format_exc()}"
             )
-
-    def _handle_coordinate_variable_issue(
-        self, traceback_str, batch_files, partial_preprocess, drop_vars_list
-    ):
-        """
-        Handle issues with coordinate variables being non-monotonic.
-
-        Args:
-            traceback_str (str): The traceback string to search for coordinate variable issues.
-            batch_files (list): The list of files to process.
-            partial_preprocess (callable): The preprocessing function.
-            drop_vars_list (list): The list of variables to drop.
-
-        Returns:
-            Tuple[bool, Optional[xarray.Dataset]]: Whether the issue was handled and the resulting dataset.
-        """
-        match = re.search(
-            r"Coordinate variable (\w+) is neither monotonically increasing nor monotonically decreasing on all datasets",
-            traceback_str,
-        )
-        if match:
-            variable_name = match.group(1)
-            self.logger.warning(
-                f"{self.uuid_log}: Detected issue with variable: {variable_name}. Inconsistent grid"
-            )
-            self.logger.warning(
-                f"{self.uuid_log}: Running variable consistency check across files in batch"
-            )
-            problematic_files = self.check_variable_values_parallel(
-                batch_files, variable_name
-            )
-
-            # Filter out problematic files
-            clean_batch_files = [
-                file for file in batch_files if file not in problematic_files
-            ]
-
-            # Retry opening the dataset
-            ds = self._open_mfds(partial_preprocess, drop_vars_list, clean_batch_files)
-            return True, ds
-        return False, None
-
-    def valueerror_check(self, batch_files, partial_preprocess, drop_vars_list):
-        tb = traceback.format_exc()
-        match = re.search(
-            r"Coordinate variable (\w+) is neither monotonically increasing nor monotonically decreasing on all datasets",
-            tb,
-        )
-        if match:
-            # Extract the variable name causing the issue
-            variable_name = match.group(1)
-            self.logger.error(
-                f"{self.uuid_log}: Detected issue with variable: {variable_name}. Inconsistent grid"
-            )
-            self.logger.warning(
-                f"{self.uuid_log}: Running variable consistency check across files in batch"
-            )
-            problematic_files = self.check_variable_values_parallel(
-                batch_files, variable_name
-            )
-
-            # Filter batch_files to exclude problematic_files and re-run function
-            clean_batch_files = [
-                file for file in batch_files if file not in problematic_files
-            ]
-            ds = self._open_mfds(
-                partial_preprocess,
-                drop_vars_list,
-                clean_batch_files,
-            )
-            partial_preprocess_already_run = True
 
     def check_variable_values_dask(self, file_path, reference_values, variable_name):
         """
@@ -710,7 +731,7 @@ class GenericHandler(CommonHandler):
             )
             return ds
         except (ValueError, TypeError) as e:
-            self.logger.debug(
+            self.logger.info(
                 f"{self.uuid_log}: Error opening {file}: {e} with scipy engine. Defaulting to h5netcdf"
             )
             ds = self._open_ds(
