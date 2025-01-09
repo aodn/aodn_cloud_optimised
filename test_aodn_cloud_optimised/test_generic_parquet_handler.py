@@ -421,7 +421,7 @@ class TestGenericHandler(unittest.TestCase):
         log_handler.flush()
         captured_logs = log_stream.getvalue().strip().split("\n")
 
-        # Validate logs (add more specific assertions based on your logging format)
+        # Validate logs
         self.assertTrue(
             any(
                 "All values of the time variable were bad" in log
@@ -441,7 +441,7 @@ class TestGenericHandler(unittest.TestCase):
 
         log_handler.flush()
         captured_logs = log_stream.getvalue().strip().split("\n")
-        # Validate logs (add more specific assertions based on your logging format)
+        # Validate logs
         self.assertTrue(
             any(
                 "time issues with the input file. File not processed" in log

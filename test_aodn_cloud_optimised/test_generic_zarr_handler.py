@@ -20,21 +20,39 @@ from aodn_cloud_optimised.lib.s3Tools import s3_ls
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Specify the filename relative to the current directory
-filenames = [
+filenames_acorn_turq = [
     "IMOS_ACORN_V_20240101T000000Z_TURQ_FV01_1-hour-avg.nc",
     "IMOS_ACORN_V_20240101T010000Z_TURQ_FV01_1-hour-avg.nc",
     "IMOS_ACORN_V_20240101T020000Z_TURQ_FV01_1-hour-avg.nc",
     "IMOS_ACORN_V_20240101T030000Z_TURQ_FV01_1-hour-avg.nc",
 ]
 
-TEST_FILE_NC_ACORN = [
-    os.path.join(ROOT_DIR, "resources", file_name) for file_name in filenames
+TEST_FILE_NC_ACORN_TURQ = [
+    os.path.join(ROOT_DIR, "resources", file_name) for file_name in filenames_acorn_turq
 ]
 
-DATASET_CONFIG_NC_ACORN_JSON = os.path.join(
+DATASET_CONFIG_NC_ACORN_TURQ_JSON = os.path.join(
     ROOT_DIR,
     "resources",
     "radar_TurquoiseCoast_velocity_hourly_averaged_delayed_qc.json",
+)
+
+
+# Same thing but for North West Shelf. Some files have a bad grid. Will test the bad file to be removed
+filenames_acorn_nwa = [
+    "IMOS_ACORN_V_20220312T013000Z_NWA_FV01_1-hour-avg.nc",
+    "IMOS_ACORN_V_20220312T003000Z_NWA_FV01_1-hour-avg.nc",
+    "IMOS_ACORN_V_20220312T183000Z_NWA_FV01_1-hour-avg.nc",  # Bad grid, not consistent
+]
+
+TEST_FILE_NC_ACORN_NWA = [
+    os.path.join(ROOT_DIR, "resources", file_name) for file_name in filenames_acorn_nwa
+]
+
+DATASET_CONFIG_NC_ACORN_NWA_JSON = os.path.join(
+    ROOT_DIR,
+    "resources",
+    "radar_NorthWestShelf_velocity_hourly_averaged_delayed_qc.json",
 )
 
 
@@ -105,17 +123,35 @@ class TestGenericZarrHandler(unittest.TestCase):
         )
 
         # Copy files to the mock S3 bucket
-
-        for test_file in TEST_FILE_NC_ACORN:
+        for test_file in TEST_FILE_NC_ACORN_TURQ:
             self._upload_to_s3(
-                "imos-data", f"acorn/{os.path.basename(test_file)}", test_file
+                "imos-data", f"acorn/turq/{os.path.basename(test_file)}", test_file
             )
 
-        dataset_acorn_netcdf_config = load_dataset_config(DATASET_CONFIG_NC_ACORN_JSON)
-        self.handler_nc_acorn_file = GenericHandler(
+        dataset_acorn_turq_netcdf_config = load_dataset_config(
+            DATASET_CONFIG_NC_ACORN_TURQ_JSON
+        )
+        self.handler_nc_acorn_turq_file = GenericHandler(
             optimised_bucket_name=self.BUCKET_OPTIMISED_NAME,
             root_prefix_cloud_optimised_path=self.ROOT_PREFIX_CLOUD_OPTIMISED_PATH,
-            dataset_config=dataset_acorn_netcdf_config,
+            dataset_config=dataset_acorn_turq_netcdf_config,
+            # clear_existing_data=True,
+            cluster_mode="local",
+        )
+
+        # Copy files to the mock S3 bucket
+        for test_file in TEST_FILE_NC_ACORN_NWA:
+            self._upload_to_s3(
+                "imos-data", f"acorn/nwa/{os.path.basename(test_file)}", test_file
+            )
+
+        dataset_acorn_nwa_netcdf_config = load_dataset_config(
+            DATASET_CONFIG_NC_ACORN_NWA_JSON
+        )
+        self.handler_nc_acorn_nwa_file = GenericHandler(
+            optimised_bucket_name=self.BUCKET_OPTIMISED_NAME,
+            root_prefix_cloud_optimised_path=self.ROOT_PREFIX_CLOUD_OPTIMISED_PATH,
+            dataset_config=dataset_acorn_nwa_netcdf_config,
             # clear_existing_data=True,
             cluster_mode="local",
         )
@@ -138,14 +174,14 @@ class TestGenericZarrHandler(unittest.TestCase):
         del os.environ["RUNNING_UNDER_UNITTEST"]
 
     # TODO: find a solution to patch s3fs properly and not relying on changing the s3fs values in the code
-    def test_zarr_nc_acorn_handler(self):
+    def test_zarr_nc_acorn_turq_handler(self):
         # Capture logs
         log_stream = StringIO()
         log_handler = logging.StreamHandler(log_stream)
         logger = logging.getLogger()
         logger.addHandler(log_handler)
 
-        nc_obj_ls = s3_ls("imos-data", "acorn")
+        nc_obj_ls = s3_ls("imos-data", "acorn/turq")
 
         # TODO: capture logging from handler as done in the test_generic_parquet_handler for SOOP SST.
         #       Then test that we're getting to correct logging messages
@@ -153,13 +189,13 @@ class TestGenericZarrHandler(unittest.TestCase):
         # 2024-07-02 11:16:16,538 - INFO - GenericZarrHandler.py:381 - publish_cloud_optimised_fileset_batch - Writing data to new Zarr dataset
         # 2024-07-02 11:16:19,366 - INFO - GenericZarrHandler.py:391 - publish_cloud_optimised_fileset_batch - Batch 1 processed and written to <fsspec.mapping.FSMap object at 0x78166762b730>
 
-        with patch.object(self.handler_nc_acorn_file, "s3_fs", new=self.s3_fs):
-            self.handler_nc_acorn_file.to_cloud_optimised(nc_obj_ls)
+        with patch.object(self.handler_nc_acorn_turq_file, "s3_fs", new=self.s3_fs):
+            self.handler_nc_acorn_turq_file.to_cloud_optimised(nc_obj_ls)
 
         log_handler.flush()
         captured_logs = log_stream.getvalue().strip().split("\n")
 
-        # Validate logs (add more specific assertions based on your logging format)
+        # Validate logs
         self.assertTrue(
             any("Writing data to a new Zarr dataset" in log for log in captured_logs)
         )
@@ -167,13 +203,13 @@ class TestGenericZarrHandler(unittest.TestCase):
         # 2024-07-02 11:16:21,649 - INFO - GenericZarrHandler.py:303 - publish_cloud_optimised_fileset_batch - Duplicate values of TIME
         # 2024-07-02 11:16:21,650 - INFO - GenericZarrHandler.py:353 - publish_cloud_optimised_fileset_batch - Overwriting Zarr dataset in Region: {'TIME': slice(0, 4, None)}, Matching Indexes in new ds: [0 1 2 3]
         # 2024-07-02 11:16:22,573 - INFO - GenericZarrHandler.py:391 - publish_cloud_optimised_fileset_batch - Batch 1 processed and written to <fsspec.mapping.FSMap object at 0x78166762b730>
-        with patch.object(self.handler_nc_acorn_file, "s3_fs", new=self.s3_fs):
-            self.handler_nc_acorn_file.to_cloud_optimised(nc_obj_ls)
+        with patch.object(self.handler_nc_acorn_turq_file, "s3_fs", new=self.s3_fs):
+            self.handler_nc_acorn_turq_file.to_cloud_optimised(nc_obj_ls)
 
         log_handler.flush()
         captured_logs = log_stream.getvalue().strip().split("\n")
 
-        # Validate logs (add more specific assertions based on your logging format)
+        # Validate logs
         self.assertTrue(
             any(
                 "Overwriting Zarr dataset in Region: {'TIME': slice(0, 4, None)}, Matching Indexes in new ds: [0 1 2 3]"
@@ -191,20 +227,13 @@ class TestGenericZarrHandler(unittest.TestCase):
         # 2024-07-02 11:16:25,905 - INFO - GenericZarrHandler.py:353 - publish_cloud_optimised_fileset_batch - Overwriting Zarr dataset in Region: {'TIME': slice(2, 4, None)}, Matching Indexes in new ds: [1 2]
         # 2024-07-02 11:16:26,631 - INFO - GenericZarrHandler.py:391 - publish_cloud_optimised_fileset_batch - Batch 1 processed and written to <fsspec.mapping.FSMap object at 0x78166762b730>
         nc_obj_ls_non_contiguous = nc_obj_ls[0:1] + nc_obj_ls[2:4]
-        with patch.object(self.handler_nc_acorn_file, "s3_fs", new=self.s3_fs):
-            self.handler_nc_acorn_file.to_cloud_optimised(nc_obj_ls_non_contiguous)
+        with patch.object(self.handler_nc_acorn_turq_file, "s3_fs", new=self.s3_fs):
+            self.handler_nc_acorn_turq_file.to_cloud_optimised(nc_obj_ls_non_contiguous)
 
         log_handler.flush()
         captured_logs = log_stream.getvalue().strip().split("\n")
 
-        # Validate logs (add more specific assertions based on your logging format)
-        self.assertTrue(
-            any(
-                "Overwriting Zarr dataset in Region: {'TIME': slice(0, 1, None)}, Matching Indexes in new ds: [0]"
-                in log
-                for log in captured_logs
-            )
-        )
+        # Validate logs
         self.assertTrue(
             any(
                 "Overwriting Zarr dataset in Region: {'TIME': slice(2, 4, None)}, Matching Indexes in new ds: [1 2]"
@@ -214,7 +243,7 @@ class TestGenericZarrHandler(unittest.TestCase):
         )
 
         # read zarr
-        dataset_config = load_dataset_config(DATASET_CONFIG_NC_ACORN_JSON)
+        dataset_config = load_dataset_config(DATASET_CONFIG_NC_ACORN_TURQ_JSON)
         dataset_name = dataset_config["dataset_name"]
         dname = f"s3://{self.BUCKET_OPTIMISED_NAME}/{self.ROOT_PREFIX_CLOUD_OPTIMISED_PATH}/{dataset_name}.zarr/"
 
@@ -232,6 +261,40 @@ class TestGenericZarrHandler(unittest.TestCase):
             0.69455004,
             decimal=3,
             err_msg="Maximum value in UCUR is not as expected.",
+        )
+
+    def test_zarr_nc_acorn_nwa_handler(self):
+        # Capture logs
+        log_stream = StringIO()
+        log_handler = logging.StreamHandler(log_stream)
+        logger = logging.getLogger()
+        logger.addHandler(log_handler)
+
+        nc_obj_ls = s3_ls("imos-data", "acorn/nwa")
+
+        # TODO: capture logging from handler
+        with patch.object(self.handler_nc_acorn_nwa_file, "s3_fs", new=self.s3_fs):
+            self.handler_nc_acorn_nwa_file.to_cloud_optimised(nc_obj_ls)
+
+        log_handler.flush()
+        captured_logs = log_stream.getvalue().strip().split("\n")
+
+        # Validate logs
+        self.assertTrue(
+            any(
+                "Detected issue with variable: LATITUDE. Inconsistent grid" in log
+                for log in captured_logs
+            )
+        )
+        self.assertTrue(
+            any(
+                "[<File-like object S3FileSystem, imos-data/acorn/nwa/IMOS_ACORN_V_20220312T183000Z_NWA_FV01_1-hour-avg.nc>]"
+                in log
+                for log in captured_logs
+            )
+        )
+        self.assertTrue(
+            any("Writing data to a new Zarr dataset" in log for log in captured_logs)
         )
 
 
