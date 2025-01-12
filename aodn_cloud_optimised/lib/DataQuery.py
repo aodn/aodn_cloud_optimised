@@ -1041,6 +1041,7 @@ class Dataset:
         lon_min=None,
         lon_max=None,
         scalar_filter=None,
+        columns=None,
     ):
         # TODO fix the whole logic as not everything is considered
 
@@ -1100,6 +1101,7 @@ class Dataset:
             self.dname,
             engine="pyarrow",
             filters=data_filter,
+            columns=columns,
             filesystem=fs.S3FileSystem(
                 region=REGION, endpoint_override=ENDPOINT_URL, anonymous=True
             ),
