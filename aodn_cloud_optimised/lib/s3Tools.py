@@ -1,7 +1,10 @@
-import boto3
-from urllib.parse import urlparse
-import s3fs
 import logging
+from urllib.parse import urlparse
+
+import boto3
+import s3fs
+from botocore import UNSIGNED
+from botocore.config import Config
 
 
 def s3_ls(bucket, prefix, suffix=".nc", s3_path=True) -> list:
@@ -33,7 +36,9 @@ def s3_ls(bucket, prefix, suffix=".nc", s3_path=True) -> list:
 
     logger.info(f"Listing S3 objects in {bucket} under {prefix} ending with {suffix}")
 
-    s3 = boto3.client("s3")
+    # DONE: allow S3 connection publicly. Is this a regression doing so?
+    # s3 = boto3.client("s3")
+    s3 = boto3.client("s3", config=Config(signature_version=UNSIGNED))
 
     paginator = s3.get_paginator("list_objects_v2")
     pages = paginator.paginate(Bucket=bucket, Prefix=prefix)

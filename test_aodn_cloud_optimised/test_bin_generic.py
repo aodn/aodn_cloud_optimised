@@ -149,7 +149,7 @@ class TestGenericCloudOptimisedCreation(unittest.TestCase):
             log_handler.flush()
             captured_logs = log_stream.getvalue().strip().split("\n")
 
-            # Validate logs (add more specific assertions based on your logging format)
+            # Validate logs
             self.assertTrue(
                 any("Cluster dask dashboard" in log for log in captured_logs)
             )

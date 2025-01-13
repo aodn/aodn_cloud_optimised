@@ -1,5 +1,6 @@
 import importlib.resources
 import os
+import re
 import traceback
 import uuid
 import warnings
@@ -19,6 +20,53 @@ from aodn_cloud_optimised.lib.s3Tools import (
     prefix_exists,
     create_fileset,
 )
+
+
+def check_variable_values_dask(
+    file_path, reference_values, variable_name, dataset_config, uuid_log
+):
+    """
+    Check if the values of a specified variable in a single file are consistent with the reference.
+
+    Args:
+        file_path (str): File path to check.
+        reference_values (np.ndarray): Reference values for the variable.
+        variable_name (str): Name of the variable to check.
+
+    Returns:
+        tuple: (file_path, bool) where bool indicates if the file is problematic.
+
+    Comment:
+        this variable cannot be in the class below. Otherwise, the self cannot be serialized when calling future
+    """
+    logger_name = dataset_config.get("logger_name", "generic")
+    logger = get_logger(logger_name)
+    try:
+        ds = xr.open_dataset(file_path)
+        variable_values = ds[variable_name].values
+        ds.close()
+
+        logger.debug(
+            f"{uuid_log}: {file_path} checking {variable_name} is consistent with the reference values."
+        )
+
+        logger.debug(f"{uuid_log}: reference values\n{reference_values}.")
+
+        res = not np.array_equal(variable_values, reference_values)
+
+        if res is True:
+            logger.error(
+                f"{uuid_log}: {file_path} - {variable_name} is NOT consistent with the reference values."
+            )
+            logger.error(f"{uuid_log}: variable values\n{variable_values}.")
+        else:
+            logger.debug(f"{uuid_log}: variable values\n{variable_values}.")
+
+        # Check if the values are identical
+        return file_path, res
+    except Exception as e:
+        logger.error(f"{uuid_log}: Failed to open {file_path}: {e}")
+        return file_path, True
 
 
 def preprocess_xarray(ds, dataset_config):
@@ -44,11 +92,6 @@ def preprocess_xarray(ds, dataset_config):
     schema = dataset_config.get("schema")
 
     logger = get_logger(logger_name)
-    # TODO: get filename; Should be from https://github.com/pydata/xarray/issues/9142
-
-    # ds = ds.assign(
-    #     filename=((dimensions["time"]["name"],), [filename])
-    # )  # add new filename variable with time dimension
 
     # Drop variables not in the list
     vars_to_drop = set(ds.data_vars) - set(schema)
@@ -87,9 +130,19 @@ def preprocess_xarray(ds, dataset_config):
     var = next(var for var in ds)
     try:
         filename = os.path.basename(ds[var].encoding["source"])
+
     except KeyError as e:
         logger.debug(f"Original filename not available in xarray dataset.\n {e}")
         filename = "UNKOWN_FILENAME.nc"
+
+    # TODO: get filename; Should be from https://github.com/pydata/xarray/issues/9142
+    ds = ds.assign(
+        filename=((dimensions["time"]["name"],), [filename])
+    )  # add new filename variable with time dimension
+
+    # TODO: when filename is added, this can be used to find the equivalent data already stored as CO, and create a NAN
+    # version to push back as CO in order to "delete". If UNKOWN_FILENAME.nc, either run an error, or have another approach,
+    # Maybe the file to delete, would be a filename, OR the physical og NetCDF, which means then that we have all of the info in it, and simply making it NAN
 
     logger.info(f"Applying preprocessing on dataset from {filename}")
     try:
@@ -297,76 +350,21 @@ class GenericHandler(CommonHandler):
             partial_preprocess_already_run = False
 
             try:
-                # TODO(DONE): if using preprocess function within mfdataset (has to be outside the class otherwise
-                #  parallelizing issues)
+                ds = self.try_open_dataset(
+                    batch_files,
+                    partial_preprocess,
+                    drop_vars_list,
+                )
+                partial_preprocess_already_run = True
 
-                try:
-                    ds = self._open_mfds(
-                        partial_preprocess,
-                        drop_vars_list,
-                        batch_files,
-                    )
-                    partial_preprocess_already_run = True
-
-                except (ValueError, TypeError) as e:
-                    self.logger.debug(
-                        f'{self.uuid_log}: The default engine "h5netcdf" could not be used. Falling back '
-                        f'to using "scipy" engine. This is an issue with old NetCDF files'
-                    )
-
-                    try:
-                        ds = self._open_mfds(
-                            partial_preprocess,
-                            drop_vars_list,
-                            batch_files,
-                            engine="scipy",
-                        )
-                        partial_preprocess_already_run = True
-
-                    except Exception as e:
-                        self.logger.warning(
-                            f'{self.uuid_log}: The engine "scipy" could not be used to concatenate the dataset together. '
-                            f"likely because the files to concatenate are NetCDF3 and NetCDF4 and should use different engines. Falling back "
-                            f"to opening the files individually with different engines"
-                        )
-
-                        # TODO: once xarray issue is fixed https://github.com/pydata/xarray/issues/8909,
-                        #  the follwing code could probably be removed. Only scipy and h5netcdf can be used for remote access
-                        try:
-                            ds = self._concatenate_files_different_engines(
-                                batch_files, partial_preprocess, drop_vars_list
-                            )
-                            self.logger.info(
-                                f"{self.uuid_log}: Successfully Concatenating files together"
-                            )
-                            partial_preprocess_already_run = True
-                            # if this works, we get out of this try except, and keep the processing as usual
-                        except Exception as e:
-                            # in this case, none of the above worked!! we try then to process each file one by one
-                            # including writing to zarr, hence we do continue afterward to go to the next batch
-                            self.logger.warning(
-                                f"{self.uuid_log}: {e}.\n {traceback.format_exc()}"
-                            )
-                            self.logger.info(
-                                f"{self.uuid_log}: None of the mfdataset with different engines worked, including concatenation. Falling back to processing files individually"
-                            )
-
-                            self._process_individual_file_fallback(
-                                batch_files, partial_preprocess, drop_vars_list, idx
-                            )
-                            continue
-
-                # If ds open with open_mfdataset with the partial preprocess_xarray, no need to re-run it again!
                 if not partial_preprocess_already_run:
-                    # TODO: can probably be removed as partial_preprocess_already_run should always be True now
+                    # Likely redundant now, but retained for safety
                     self.logger.debug(
                         f"{self.uuid_log}: partial_preprocess_already_run is False"
                     )
                     ds = preprocess_xarray(ds, self.dataset_config)
 
-                # Write the dataset to Zarr
                 self._write_ds(ds, idx)
-
                 self.logger.info(
                     f"{self.uuid_log}: Batch {idx + 1} successfully published to Zarr store: {self.store}"
                 )
@@ -380,25 +378,192 @@ class GenericHandler(CommonHandler):
                 self.logger.error(
                     f"{self.uuid_log}: An unexpected error occurred: {e}.\n {traceback.format_exc()}"
                 )
-                try:
-                    self.logger.info(
-                        f"{self.uuid_log}: None of the methods to process files as a batch worked. Falling back to "
-                        f"processing files individually"
-                    )
-                    # in this case, none of the above worked!! we try then to process each file one by one
-                    # including writing to zarr
-                    self._process_individual_file_fallback(
-                        batch_files, partial_preprocess, drop_vars_list, idx
-                    )
-
-                except Exception as e:
-                    # Nothing could work. Workers failed ... Desperate times
-                    self.logger.error(
-                        f"{self.uuid_log}: An unexpected error occurred: {e}.\n {traceback.format_exc()}"
-                    )
-
+                self.fallback_to_individual_processing(
+                    batch_files, partial_preprocess, drop_vars_list, idx
+                )
                 if "ds" in locals():
                     self.postprocess(ds)
+
+    def try_open_dataset(
+        self,
+        batch_files,
+        partial_preprocess,
+        drop_vars_list,
+        primary_engine="h5netcdf",
+        fallback_engine="scipy",
+    ):
+        def handle_engine(engine):
+            try:
+                return self._open_mfds(
+                    partial_preprocess, drop_vars_list, batch_files, engine=engine
+                )
+            except (ValueError, TypeError):
+                # Capture and inspect the traceback; 3 known scenarios
+                tb = traceback.format_exc()
+                match_grid_not_consistent = re.search(
+                    r"Coordinate variable (\w+) is neither monotonically increasing nor monotonically decreasing on all datasets",
+                    tb,
+                )
+                match_not_netcdf4_signature = re.search(
+                    r"is not the signature of a valid netCDF4 file", tb
+                )
+                match_not_netcdf3_signature = re.search(
+                    r"is not a valid NetCDF 3 file", tb
+                )
+
+                if match_grid_not_consistent:
+                    variable_name = match_grid_not_consistent.group(1)
+                    return self.handle_coordinate_variable_issue(
+                        batch_files,
+                        variable_name,
+                        partial_preprocess,
+                        drop_vars_list,
+                        engine,
+                    )
+                elif engine == primary_engine and match_not_netcdf4_signature:
+                    # Indicates a possible format issue; Tried to open a NetCDF3 files with h5netcdf; fallback to the next engine
+                    raise ValueError("Switch to fallback engine")
+                elif engine == fallback_engine and match_not_netcdf3_signature:
+                    # Should be a NetCDF3, but didn't work with scipy!
+                    # Final failure point for fallback engine
+                    raise ValueError(f"Invalid NetCDF file format in {batch_files}")
+                else:
+                    # Unknown or unhandled error
+                    raise
+
+        try:
+            # First attempt with the primary engine
+            return handle_engine(primary_engine)
+        except ValueError as e:
+            if str(e) == "Switch to fallback engine":
+                try:
+                    # Second attempt with the fallback engine
+                    return handle_engine(fallback_engine)
+                except Exception:
+                    # If fallback also fails, handle multi-engine fallback
+                    return self.handle_multi_engine_fallback(
+                        batch_files, partial_preprocess, drop_vars_list
+                    )
+
+    def handle_coordinate_variable_issue(
+        self, batch_files, variable_name, partial_preprocess, drop_vars_list, engine
+    ):
+
+        self.logger.error(
+            f"{self.uuid_log}: Detected issue with variable: {variable_name}. Inconsistent grid"
+        )
+        self.logger.warning(
+            f"{self.uuid_log}: Running variable consistency check across files in batch"
+        )
+        problematic_files = self.check_variable_values_parallel(
+            batch_files, variable_name
+        )
+        clean_batch_files = [
+            file for file in batch_files if file not in problematic_files
+        ]
+        self.logger.warning(
+            f"{self.uuid_log}: Processing batch without problematic files"
+        )
+        self.logger.info(
+            f"{self.uuid_log}: Processing the following files:\n{clean_batch_files}"
+        )
+
+        return self._open_mfds(
+            partial_preprocess, drop_vars_list, clean_batch_files, engine
+        )
+
+    def handle_multi_engine_fallback(
+        self, batch_files, partial_preprocess, drop_vars_list
+    ):
+        self.logger.warning(
+            f'{self.uuid_log}: Neither "h5netcdf" or "scipy" engine could not be used to concatenate the dataset together. '
+            f"Falling back to opening files individually with different engines."
+        )
+        try:
+            ds = self._concatenate_files_different_engines(
+                batch_files, partial_preprocess, drop_vars_list
+            )
+            self.logger.info(
+                f"{self.uuid_log}: Successfully concatenated files together."
+            )
+            return ds
+        except Exception as e:
+            self.logger.warning(f"{self.uuid_log}: {e}.\n {traceback.format_exc()}")
+            raise RuntimeError("Fallback to individual processing needed.")
+
+    def fallback_to_individual_processing(
+        self, batch_files, partial_preprocess, drop_vars_list, idx
+    ):
+        self.logger.info(
+            f"{self.uuid_log}: None of the batch processing methods worked. Falling back to processing files individually."
+        )
+        try:
+            self._process_individual_file_fallback(
+                batch_files, partial_preprocess, drop_vars_list, idx
+            )
+        except Exception as e:
+            self.logger.error(
+                f"{self.uuid_log}: An unexpected error occurred during fallback processing: {e}.\n {traceback.format_exc()}"
+            )
+
+    def check_variable_values_parallel(self, file_paths, variable_name):
+        """
+        Check the values of a specified variable in all files using a Coiled cluster.
+
+        Args:
+            file_paths (list): List of file paths to check.
+            variable_name (str): Name of the variable to check.
+
+        Returns:
+            list: List of file paths with inconsistent variable values.
+        """
+        # Open the first file and store its variable values as the reference
+        try:
+            reference_ds = xr.open_dataset(file_paths[0])
+            reference_values = reference_ds[variable_name].values
+            reference_ds.close()
+        except Exception as e:
+            self.logger.error(
+                f"{self.uuid_log}: Failed to open the first file {file_paths[0]}: {e}"
+            )
+            return file_paths  # If the first file fails, consider all files problematic
+
+        if self.cluster_mode:
+            # Use Dask to process files in parallel
+            futures = self.client.map(
+                check_variable_values_dask,
+                file_paths[1:],
+                reference_values=reference_values,
+                variable_name=variable_name,
+                dataset_config=self.dataset_config,
+                uuid_log=self.uuid_log,
+            )
+            results = self.client.gather(futures)
+        else:
+            # TODO: not running on a cluster. But if that's the case, most likely this will run a file one by one,
+            #       so it will break anyway as no reference values. Hopefully this won't happen. alternative would be
+            #       to have a ref value directly taken from the original zarr? but that would work only if the zarr
+            #       already exist... to annoying/complicated to implement as it shouldn't happen. easier to debug if it
+            #       does
+            results = [
+                check_variable_values_dask(
+                    file_path,
+                    reference_values,
+                    variable_name,
+                    self.dataset_config,
+                    self.uuid_log,
+                )
+                for file_path in file_paths[1:]
+            ]
+
+        # Collect problematic files
+        problematic_files = [
+            file_path for file_path, is_problematic in results if is_problematic
+        ]
+        self.logger.error(
+            f"{self.uuid_log}: Contact the data provider. The following files don't have a consistent grid with the rest of the dataset:\n{problematic_files}"
+        )
+        return problematic_files
 
     def _handle_duplicate_regions(
         self,
@@ -479,7 +644,6 @@ class GenericHandler(CommonHandler):
             # TODO:
             # compute() was added as unittests failed on github, but not locally. related to
             # https://github.com/pydata/xarray/issues/5219
-            # import ipdb;ipdb.set_trace()
             ds.isel(**{time_dimension_name: indexes}).drop_vars(
                 self.vars_to_drop_no_common_dimension, errors="ignore"
             ).pad(**{time_dimension_name: (0, amount_to_pad)}).to_zarr(
@@ -536,23 +700,22 @@ class GenericHandler(CommonHandler):
             Exception: Propagates any exceptions raised by the dataset opening operations.
         """
         try:
+            engine = "scipy"
             with self.s3_fs.open(file, "rb") as f:  # Open the file-like object
-                ds = self._open_ds(
-                    f, partial_preprocess, drop_vars_list, engine="scipy"
-                )
+                ds = self._open_ds(f, partial_preprocess, drop_vars_list, engine=engine)
             self.logger.info(
-                f"{self.uuid_log}: Success opening {file} with scipy engine."
+                f"{self.uuid_log}: Success opening {file} with {engine} engine."
             )
             return ds
         except (ValueError, TypeError) as e:
-            self.logger.debug(
+            self.logger.info(
                 f"{self.uuid_log}: Error opening {file}: {e} with scipy engine. Defaulting to h5netcdf"
             )
-            ds = self._open_ds(
-                file, partial_preprocess, drop_vars_list, engine="h5netcdf"
-            )
+            engine = "h5netcdf"
+
+            ds = self._open_ds(file, partial_preprocess, drop_vars_list, engine=engine)
             self.logger.info(
-                f"{self.uuid_log}: Success opening {file} with h5netcdf engine."
+                f"{self.uuid_log}: Success opening {file} with {engine} engine."
             )
             return ds
 
