@@ -297,6 +297,24 @@ class TestGenericZarrHandler(unittest.TestCase):
             any("Writing data to a new Zarr dataset" in log for log in captured_logs)
         )
 
+        # read zarr
+        dataset_config = load_dataset_config(DATASET_CONFIG_NC_ACORN_NWA_JSON)
+        dataset_name = dataset_config["dataset_name"]
+        dname = f"s3://{self.BUCKET_OPTIMISED_NAME}/{self.ROOT_PREFIX_CLOUD_OPTIMISED_PATH}/{dataset_name}.zarr/"
+
+        ds = xr.open_zarr(self.s3_fs.get_mapper(dname), consolidated=True)
+        self.assertEqual(ds.UCUR.standard_name, "eastward_sea_water_velocity")
+
+        expected = np.array(
+            ["2022-03-12T00:29:59.999993088", "2022-03-12T01:30:00.000000000"],
+            dtype="datetime64[ns]",
+        )
+        assert np.allclose(
+            ds.TIME.values.astype("datetime64[ns]").astype(float),
+            expected.astype(float),
+            atol=1e-9,
+        ), f"TIME values are not as expected: {expected}"
+
 
 if __name__ == "__main__":
     unittest.main()
