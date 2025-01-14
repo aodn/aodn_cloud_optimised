@@ -1134,7 +1134,7 @@ class GenericHandler(CommonHandler):
             else:
                 # Fall back to local processing with ThreadPoolExecutor
                 self.logger.info(
-                    "{self.uuid_log}: No client detected; using local processing."
+                    f"{self.uuid_log}: No client detected; using local processing."
                 )
                 with ThreadPoolExecutor() as executor:
                     batch_tasks = [
