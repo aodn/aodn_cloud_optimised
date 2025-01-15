@@ -51,16 +51,17 @@ colorama = ">=0.4.6"
 s3path = ">=0.5.7"
 python-levenshtein = "^0.25.1"
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
+poetry = ">=2.0.1"
 pytest = "^8.2.1"
 ipdb = "^0.13"
 ipython = "^7.5.3"
 coverage = "^7.5.3"
-pre-commit = "^3.7.1"
+pre-commit = "^4.0.1"
 moto = {version = ">=5.0.0", extras = ["ec2", "s3",  "server", "all"]}  # Add Moto with optional dependencies
 fuzzywuzzy = ">=0.18.0"
 sphinx = ">=7.3.7"
-poetry-pre-commit-plugin = "^0.1.2"
+poetry-pre-commit-plugin = ">=0.2.1"
 asciinema = ">=2.4.0"  # to record terminal sessions, useful for documentation
 matplotlib = "^3.9.1"
 cartopy = ">=0.23.0"
@@ -69,6 +70,7 @@ nbformat = "^5.10.4"
 gsw = ">=3.6.19"
 seaborn = ">=0.13.2"
 windrose = ">=1.9.2"
+
 
 
 #[tool.poetry.extras]
@@ -138,22 +140,6 @@ generic_cloud_optimised_creation = "aodn_cloud_optimised.bin.generic_cloud_optim
 #[tool.poetry.include]
 #data = ["aodn_cloud_optimised/config/*.json", "aodn_cloud_optimised/config/dataset/*.json"]
 
-[tool.poetry.group.dev.dependencies]
-pytest = "^8.2.1"
-ipdb = "^0.13"
-ipython = "^7.5.3"
-coverage = "^7.5.3"
-pre-commit = "^3.7.1"
-moto = {version = ">=5.0.0", extras = ["ec2", "s3",  "server", "all"]}  # Add Moto with optional dependencies
-fuzzywuzzy = ">=0.18.0"
-sphinx = ">=7.3.7"
-poetry-pre-commit-plugin = "^0.1.2"
-asciinema = ">=2.4.0"  # to record terminal sessions, useful for documentation
-matplotlib = "^3.9.1"
-termcolor = "^2.4.0"
-nbformat = "^5.10.4"
-cartopy = "^0.23.0"
-gsw = ">=3.6.19"
 
 
 [tool.pre_commit]
