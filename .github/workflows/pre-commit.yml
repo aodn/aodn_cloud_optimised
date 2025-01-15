@@ -24,13 +24,14 @@ jobs:
         virtualenvs-create: true
         virtualenvs-in-project: true
         installer-parallel: true
+        version: 2.0.1
 
     - name: Clear Poetry Cache
       run: |
         poetry cache clear pypi --all
 
     - name: Run pre-commit
-      uses: pre-commit/action@v3.0.0
+      uses: pre-commit/action@v3.0.1
       with:
         extra_args: --all-files
         hooks: |

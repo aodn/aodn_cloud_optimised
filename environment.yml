@@ -13,5 +13,5 @@ dependencies:
   - scipy
   - pip<24.1
   - pip:
-    - poetry
+    - poetry==2.0.1
     - -r requirements.txt
