@@ -9,8 +9,7 @@ import subprocess
 
 
 def main():
-    # for i, year in enumerate(range(2007, 2025)):
-    for i, year in enumerate(range(2017, 2025)):
+    for i, year in enumerate(range(2007, 2025)):
         command = [
             "generic_cloud_optimised_creation",
             "--paths",
@@ -24,8 +23,8 @@ def main():
         ]
 
         # Add --clear-existing-data for the first iteration only
-        # if i == 0:
-        #     command.append("--clear-existing-data")
+        if i == 0:
+            command.append("--clear-existing-data")
 
         # Run the command
         subprocess.run(command, check=True)
