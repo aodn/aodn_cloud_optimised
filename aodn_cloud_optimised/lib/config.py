@@ -5,7 +5,7 @@ from importlib.resources import files
 
 import yaml
 
-from aodn_cloud_optimised.bin.create_aws_registry_dataset import list_json_files
+from aodn_cloud_optimised.lib.common import list_json_files
 
 
 def merge_dicts(parent, child):

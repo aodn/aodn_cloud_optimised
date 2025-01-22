@@ -41,6 +41,7 @@ from aodn_cloud_optimised.lib.config import (
     load_config,
     load_variable_from_config,
 )
+from aodn_cloud_optimised.lib.common import list_json_files
 
 
 def retrieve_geonetwork_metadata(
@@ -99,26 +100,6 @@ def retrieve_geonetwork_metadata(
     metadata = {"title": title, "abstract": abstract, "uuid": uuid}
 
     return metadata
-
-
-def list_json_files(directory):
-    """
-    List all JSON files in the specified directory, excluding files ending with '_main.json' and 'template.json'.
-
-    Args:
-        directory (str): Directory path to search for JSON files.
-
-    Returns:
-        list: List of JSON file names.
-    """
-    json_files = [
-        f
-        for f in os.listdir(directory)
-        if f.endswith(".json")
-        and not (f.endswith("_main.json") or f == "dataset_template.json")
-    ]
-    json_files.sort()
-    return json_files
 
 
 # Initialize Colorama for cross-platform color support
