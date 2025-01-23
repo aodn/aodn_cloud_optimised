@@ -1,8 +1,11 @@
 import json
-import yaml
 import os
 from collections import OrderedDict
 from importlib.resources import files
+
+import yaml
+
+from aodn_cloud_optimised.lib.common import list_json_files
 
 
 def merge_dicts(parent, child):
@@ -83,16 +86,18 @@ def load_variable_from_file(file_path, variable_name) -> str:
 
 def load_variable_from_config(variable_name) -> str:
     """
-    Load a specific variable from the common configuration file.
+    Load a specific variable from the common library configuration file.
 
     :param variable_name: Name of the variable to retrieve.
     :return: The value of the specified variable.
     :raises KeyError: If the variable is not found in the configuration file.
     """
     # Obtain the file path using the context manager
-    with files("aodn_cloud_optimised").joinpath("config").joinpath(
-        "common.json"
-    ) as common_config_path:
+    with (
+        files("aodn_cloud_optimised")
+        .joinpath("config")
+        .joinpath("common.json") as common_config_path
+    ):
         return load_variable_from_file(str(common_config_path), variable_name)
 
 
@@ -130,3 +135,35 @@ def load_dataset_config(config_path) -> dict:
             )
 
     return dataset_config
+
+
+def get_notebook_url(uuid: str):
+    """
+    Retrieve the jupyter notebook url based on a metadata uuid value
+
+    :param uuid: string of the metadata uuid to search for
+    :return: the equivalent url of the jupyter notebook
+    :raise ValueError: if the uuid is not part of the AODN Cloud Otimised configuration
+    """
+    json_directory = str(files("aodn_cloud_optimised.config.dataset")._paths[0])
+
+    json_files = list_json_files(json_directory)
+    if json_files:
+        for json_file in json_files:
+            json_path = str(
+                files("aodn_cloud_optimised.config.dataset").joinpath(json_file)
+            )
+            uuid_file = load_variable_from_file(json_path, "metadata_uuid")
+            if uuid_file == uuid:
+                dataset_config_key = load_variable_from_file(
+                    json_path, "aws_opendata_registry"
+                )
+
+                return dataset_config_key["DataAtWork"]["Tutorials"][0]["URL"]
+
+        return ValueError(
+            f"metadata uuid {uuid} is unknown by the AODN Cloud Optimised library"
+        )
+
+    else:
+        return ValueError("No json config files to look for")
