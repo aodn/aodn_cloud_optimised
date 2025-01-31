@@ -18,6 +18,7 @@
       "chunk": 62
     }
   },
+  "batch_size": 1500,
   "dataset_gattrs": {
     "title": ""
   },
