@@ -11,7 +11,7 @@ def main():
         # "FILTER_STRING_1",
         # "FILTER_STRING_1",
         "--dataset-config",
-        "animal_ctd_sat_relay_tagging_delayed_qc.json",
+        "animal_ctd_satellite_relay_tagging_delayed_qc.json",
         "--clear-existing-data",
         "--cluster-mode",
         "coiled",

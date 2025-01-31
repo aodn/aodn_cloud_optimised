@@ -1,6 +1,6 @@
 {
-  "dataset_name": "animal_ctd_sat_relay_tagging_delayed_qc",
-  "logger_name": "animal_ctd_sat_relay_tagging_delayed_qc",
+  "dataset_name": "animal_ctd_satellite_relay_tagging_delayed_qc",
+  "logger_name": "animal_ctd_satellite_relay_tagging_delayed_qc",
   "handler_class": "ArgoHandler",
   "cloud_optimised_format": "parquet",
   "coiled_cluster_options": {
@@ -445,7 +445,7 @@
     "Resources": [
       {
         "Description": "Cloud Optimised AODN dataset of Satellite Relay Tagging Program - Southern Ocean - MEOP Quality Controlled CTD Profiles",
-        "ARN": "arn:aws:s3:::aodn-cloud-optimised/animal_ctd_sat_relay_tagging_delayed_qc.parquet",
+        "ARN": "arn:aws:s3:::aodn-cloud-optimised/animal_ctd_satellite_relay_tagging_delayed_qc.parquet",
         "Region": "ap-southeast-2",
         "Type": "S3 Bucket"
       }
@@ -454,8 +454,8 @@
       "Tutorials": [
         {
           "Title": "Accessing Satellite Relay Tagging Program - Southern Ocean - MEOP Quality Controlled CTD Profiles",
-          "URL": "https://nbviewer.org/github/aodn/aodn_cloud_optimised/blob/main/notebooks/animal_ctd_sat_relay_tagging_delayed_qc.ipynb",
-          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/animal_ctd_sat_relay_tagging_delayed_qc.ipynb",
+          "URL": "https://nbviewer.org/github/aodn/aodn_cloud_optimised/blob/main/notebooks/animal_ctd_satellite_relay_tagging_delayed_qc.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/animal_ctd_satellite_relay_tagging_delayed_qc.ipynb",
           "AuthorName": "Laurent Besnard",
           "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
         },
