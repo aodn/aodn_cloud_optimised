@@ -7,9 +7,10 @@ import traceback
 import uuid
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
-from typing import Tuple, Generator
+from typing import Generator, Tuple
 
 import boto3
+import cftime
 import numpy as np
 import pandas as pd
 import pyarrow as pa
@@ -19,14 +20,14 @@ from dask.distributed import wait
 from shapely.geometry import Point, Polygon
 
 from aodn_cloud_optimised.lib.s3Tools import (
-    delete_objects_in_prefix,
-    split_s3_path,
-    prefix_exists,
     create_fileset,
+    delete_objects_in_prefix,
+    prefix_exists,
+    split_s3_path,
 )
+
 from .CommonHandler import CommonHandler
 from .schema import create_pyarrow_schema, generate_json_schema_var_from_netcdf
-
 
 # TODO: improve log for parallism by adding a uuid for each task
 
@@ -369,6 +370,30 @@ class GenericHandler(CommonHandler):
 
         return df
 
+    def _fix_datetimejulian(self, df: pd.DataFrame) -> pd.DataFrame:
+        # For example, MEOP CTD has time values as cftime.DatetimeJulian which couldnt be converted automatically back to datetime.datetime
+        for column in df.columns:
+            if df[column].dtype in [
+                "datetime64[ns]",
+                "O",
+            ]:
+                # Check if all values are cftime.DatetimeJulian
+                if all(isinstance(x, cftime.DatetimeJulian) for x in df[column]):
+                    var = [
+                        datetime(
+                            dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second
+                        )
+                        for dt in df[column].values
+                    ]
+                    #
+                    # Convert cftime.DatetimeJulian to datetime.datetime
+                    df[column] = var
+                    self.logger.debug(
+                        f"{self.uuid_log}: converted {column} to correct cftime"
+                    )
+
+        return df
+
     def _add_timestamp_df(self, df: pd.DataFrame, f) -> pd.DataFrame:
         """
         Adds timestamp to the DataFrame.
@@ -379,6 +404,7 @@ class GenericHandler(CommonHandler):
         Returns:
             pd.DataFrame: DataFrame with added columns.
         """
+
         time_varname = self.dataset_config["time_extent"].get("time", "TIME")
         # look for the variable or column with datetime64 type
         if isinstance(df.index, pd.MultiIndex) and (time_varname in df.index.names):
@@ -663,6 +689,7 @@ class GenericHandler(CommonHandler):
             None
         """
         partition_keys = self.dataset_config["partition_keys"]
+        df = self._fix_datetimejulian(df)
         df = self._add_timestamp_df(df, s3_file_handle)
         df = self._add_columns_df(df, ds, s3_file_handle)
         df = self._rm_bad_timestamp_df(df, s3_file_handle)
@@ -1119,6 +1146,8 @@ class GenericHandler(CommonHandler):
             )
 
             batch = s3_file_uri_list[i : i + batch_size]
+
+            self.logger.info(f"{self.uuid_log}: Files in batch {ii + 1}:\n {batch}")
 
             if client:
                 # Use Dask client for distributed processing

@@ -1,0 +1,473 @@
+{
+  "dataset_name": "animal_ctd_satellite_relay_tagging_delayed_qc",
+  "logger_name": "animal_ctd_satellite_relay_tagging_delayed_qc",
+  "handler_class": "ArgoHandler",
+  "cloud_optimised_format": "parquet",
+  "coiled_cluster_options": {
+    "n_workers": [
+      40,
+      50
+    ],
+    "scheduler_vm_types": "m7i.large",
+    "worker_vm_types": "m7i.large",
+    "allow_ingress_from": "me",
+    "compute_purchase_option": "spot_with_fallback",
+    "worker_options": {
+      "nthreads": 8,
+      "memory_limit": "16GB"
+    }
+  },
+  "batch_size": 60,
+  "metadata_uuid": "95d6314c-cfc7-40ae-b439-85f14541db71",
+  "gattrs_to_variables": [
+    "wmo_platform_code",
+    "smru_platform_code",
+    "species",
+    "location",
+    "instr_id"
+  ],
+  "partition_keys": [
+    "timestamp",
+    "PLATFORM_NUMBER",
+    "polygon"
+  ],
+  "time_extent": {
+    "time": "JULD",
+    "partition_timestamp_period": "Y"
+  },
+  "spatial_extent": {
+    "lat": "LATITUDE",
+    "lon": "LONGITUDE",
+    "spatial_resolution": 5
+  },
+  "schema": {
+    "DATA_TYPE": {
+      "type": "string",
+      "comment": "Data type"
+    },
+    "FORMAT_VERSION": {
+      "type": "string",
+      "comment": "File format version"
+    },
+    "HANDBOOK_VERSION": {
+      "type": "string",
+      "comment": "Data handbook version"
+    },
+    "REFERENCE_DATE_TIME": {
+      "type": "string",
+      "comment": "Date of reference for Julian days",
+      "conventions": "YYYYMMDDHHMISS"
+    },
+    "DATE_CREATION": {
+      "type": "string",
+      "comment": "Date of file creation",
+      "conventions": "YYYYMMDDHHMISS"
+    },
+    "DATE_UPDATE": {
+      "type": "string",
+      "long_name": "Date of update of this file",
+      "conventions": "YYYYMMDDHHMISS"
+    },
+    "PLATFORM_NUMBER": {
+      "type": "string",
+      "long_name": "Float unique identifier",
+      "conventions": "WMO float identifier : A9IIIII"
+    },
+    "PROJECT_NAME": {
+      "type": "string",
+      "comment": "Name of the project"
+    },
+    "PI_NAME": {
+      "type": "string",
+      "comment": "Name of the principal investigator"
+    },
+    "STATION_PARAMETERS": {
+      "type": "string",
+      "long_name": "List of available parameters for the station",
+      "conventions": "Argo reference table 3"
+    },
+    "CYCLE_NUMBER": {
+      "type": "double",
+      "long_name": "Float cycle number",
+      "units": "1",
+      "conventions": "0..N, 0 : launch cycle (if exists), 1 : first complete cycle"
+    },
+    "DIRECTION": {
+      "type": "string",
+      "long_name": "Direction of the station profiles",
+      "conventions": "A: ascending profiles, D: descending profiles"
+    },
+    "DATA_CENTRE": {
+      "type": "string",
+      "long_name": "Data centre in charge of float data processing",
+      "conventions": "Argo reference table 4"
+    },
+    "DC_REFERENCE": {
+      "type": "string",
+      "long_name": "Station unique identifier in data centre",
+      "conventions": "Data centre convention"
+    },
+    "DATA_STATE_INDICATOR": {
+      "type": "string",
+      "long_name": "Degree of processing the data have passed through",
+      "conventions": "Argo reference table 6"
+    },
+    "DATA_MODE": {
+      "type": "string",
+      "long_name": "Delayed mode or real time data",
+      "conventions": "R : real time; D : delayed mode; A : real time with adjustment"
+    },
+    "INST_REFERENCE": {
+      "type": "string",
+      "long_name": "Instrument type",
+      "conventions": "Brand, type, serial number"
+    },
+    "WMO_INST_TYPE": {
+      "type": "string",
+      "long_name": "Coded instrument type",
+      "conventions": "Argo reference table 8"
+    },
+    "JULD": {
+      "type": "timestamp[ns]",
+      "standard_name": "time",
+      "long_name": "Julian day (UTC) of the station relative to REFERENCE_DATE_TIME",
+      "conventions": "Relative julian days with decimal part (as parts of day)",
+      "axis": "T"
+    },
+    "JULD_QC": {
+      "type": "string",
+      "long_name": "Quality on Date and Time",
+      "conventions": "Argo reference table 2"
+    },
+    "JULD_LOCATION": {
+      "type": "string",
+      "long_name": "Julian day (UTC) of the location relative to REFERENCE_DATE_TIME",
+      "conventions": "Relative julian days with decimal part (as parts of day)"
+    },
+    "LATITUDE": {
+      "type": "double",
+      "long_name": "Latitude of the station, best estimate",
+      "units": "degree_north",
+      "valid_min": -90.0,
+      "valid_max": 90.0
+    },
+    "LONGITUDE": {
+      "type": "double",
+      "long_name": "Longitude of the station, best estimate",
+      "units": "degree_east",
+      "valid_min": -180.0,
+      "valid_max": 180.0
+    },
+    "POSITION_QC": {
+      "type": "string",
+      "long_name": "Quality on position (latitude and longitude)",
+      "conventions": "Argo reference table 2"
+    },
+    "POSITIONING_SYSTEM": {
+      "type": "string",
+      "long_name": "Positioning system"
+    },
+    "PROFILE_PRES_QC": {
+      "type": "string",
+      "long_name": "Global quality flag of PRES profile",
+      "conventions": "Argo reference table 2a"
+    },
+    "PROFILE_PSAL_QC": {
+      "type": "string",
+      "long_name": "Global quality flag of PSAL profile",
+      "conventions": "Argo reference table 2a"
+    },
+    "PROFILE_TEMP_QC": {
+      "type": "string",
+      "long_name": "Global quality flag of TEMP profile",
+      "conventions": "Argo reference table 2a"
+    },
+    "PRES": {
+      "type": "float",
+      "long_name": "SEA PRESSURE",
+      "units": "decibar",
+      "valid_min": 0.0,
+      "valid_max": 12000.0,
+      "comment": "In situ measurement, sea surface = 0"
+    },
+    "PRES_QC": {
+      "type": "string",
+      "long_name": "quality flag",
+      "conventions": "Argo reference table 2"
+    },
+    "PRES_ADJUSTED": {
+      "type": "float",
+      "long_name": "SEA PRESSURE",
+      "units": "decibar",
+      "valid_min": 0.0,
+      "valid_max": 12000.0,
+      "comment": "In situ measurement, sea surface = 0"
+    },
+    "PRES_ADJUSTED_QC": {
+      "type": "string",
+      "long_name": "quality flag",
+      "conventions": "Argo reference table 2"
+    },
+    "PRES_ADJUSTED_ERROR": {
+      "type": "float",
+      "long_name": "SEA PRESSURE",
+      "units": "decibar",
+      "comment": "Contains the error on the adjusted values as determined by the delayed mode QC process."
+    },
+    "TEMP": {
+      "type": "float",
+      "long_name": "SEA TEMPERATURE IN SITU ITS-90 SCALE",
+      "units": "degree_Celsius",
+      "valid_min": -2.0,
+      "valid_max": 40.0,
+      "comment": "In situ measurement"
+    },
+    "TEMP_QC": {
+      "type": "string",
+      "long_name": "quality flag",
+      "conventions": "Argo reference table 2"
+    },
+    "TEMP_ADJUSTED": {
+      "type": "float",
+      "long_name": "SEA TEMPERATURE IN SITU ITS-90 SCALE",
+      "units": "degree_Celsius",
+      "valid_min": -2.0,
+      "valid_max": 40.0,
+      "comment": "In situ measurement"
+    },
+    "TEMP_ADJUSTED_QC": {
+      "type": "string",
+      "long_name": "quality flag",
+      "conventions": "Argo reference table 2"
+    },
+    "TEMP_ADJUSTED_ERROR": {
+      "type": "float",
+      "long_name": "SEA TEMPERATURE ERROR IN SITU ITS-90 SCALE",
+      "units": "degree_Celsius",
+      "comment": "Contains the error on the adjusted values as determined by the delayed mode QC process."
+    },
+    "PSAL": {
+      "type": "float",
+      "long_name": "PRACTICAL SALINITY",
+      "units": "1e-3",
+      "valid_min": 0.0,
+      "valid_max": 42.0,
+      "comment": "In situ measurement"
+    },
+    "PSAL_QC": {
+      "type": "string",
+      "long_name": "quality flag",
+      "conventions": "Argo reference table 2"
+    },
+    "PSAL_ADJUSTED": {
+      "type": "float",
+      "long_name": "ADJUSTED PRACTICAL SALINITY",
+      "units": "1e-3",
+      "valid_min": 0.0,
+      "valid_max": 42.0,
+      "comment": "In situ measurement"
+    },
+    "PSAL_ADJUSTED_QC": {
+      "type": "string",
+      "long_name": "quality flag",
+      "conventions": "Argo reference table 2"
+    },
+    "PSAL_ADJUSTED_ERROR": {
+      "type": "float",
+      "long_name": "PRACTICAL SALINITY ERROR",
+      "units": "1e-3",
+      "comment": "Contains the error on the adjusted values as determined by the delayed mode QC process."
+    },
+    "PROFILE_CHLA_QC": {
+      "type": "string",
+      "long_name": "Global quality flag of CHLA profile",
+      "conventions": "Argo reference table 2a"
+    },
+    "CHLA": {
+      "type": "float",
+      "long_name": "CHLOROPHYLL-A",
+      "units": "mg/m3",
+      "valid_min": 0.0,
+      "valid_max": 10.0,
+      "comment": "In situ measurement"
+    },
+    "CHLA_QC": {
+      "type": "string",
+      "long_name": "quality flag",
+      "conventions": "Sea-mammal reference table 2"
+    },
+    "CHLA_ADJUSTED": {
+      "type": "float",
+      "long_name": "CHLOROPHYLL-A",
+      "units": "mg/m3",
+      "valid_min": 0.0,
+      "valid_max": 10.0,
+      "comment": "In situ measurement"
+    },
+    "CHLA_ADJUSTED_ERROR": {
+      "type": "float",
+      "long_name": "CHLOROPHYLL-A",
+      "units": "mg/m3",
+      "comment": "Contains the error on the adjusted values as determined by the delayed mode QC process."
+    },
+    "CHLA_ADJUSTED_QC": {
+      "type": "string",
+      "long_name": "quality flag",
+      "conventions": "Sea-mammal reference table 2"
+    },
+    "PROFILE_DOXY_QC": {
+      "type": "string",
+      "long_name": "Global quality flag of DOXY profile",
+      "conventions": "Argo reference table 2a"
+    },
+    "DOXY": {
+      "type": "float",
+      "long_name": "DISSOLVED OXYGEN",
+      "units": "micromole/kg",
+      "valid_min": 0.0,
+      "valid_max": 600.0,
+      "comment": "In situ measurement"
+    },
+    "DOXY_QC": {
+      "type": "string",
+      "long_name": "quality flag",
+      "conventions": "Sea-mammal reference table 2"
+    },
+    "DOXY_ADJUSTED": {
+      "type": "float",
+      "long_name": "DISSOLVED OXYGEN",
+      "units": "micromole/kg",
+      "valid_min": 0.0,
+      "valid_max": 600.0,
+      "comment": "In situ measurement"
+    },
+    "DOXY_ADJUSTED_QC": {
+      "type": "string",
+      "long_name": "quality flag",
+      "conventions": "Sea-mammal reference table 2"
+    },
+    "DOXY_ADJUSTED_ERROR": {
+      "type": "float",
+      "long_name": "DISSOLVED OXYGEN",
+      "units": "micromole/kg",
+      "comment": "Contains the error on the adjusted values as determined by the delayed mode QC process."
+    },
+    "PROFILE_LIGHT_QC": {
+      "type": "string",
+      "long_name": "Global quality flag of LIGHT profile",
+      "conventions": "Argo reference table 2a"
+    },
+    "LIGHT": {
+      "type": "float",
+      "long_name": "ln(PPFD)",
+      "units": "umol m-2 s-1",
+      "valid_min": 0.0,
+      "valid_max": 600.0,
+      "comment": "In situ measurement"
+    },
+    "LIGHT_QC": {
+      "type": "string",
+      "long_name": "quality flag",
+      "conventions": "Sea-mammal reference table 2"
+    },
+    "LIGHT_ADJUSTED": {
+      "type": "float",
+      "long_name": "ln(PPFD)",
+      "units": "umol m-2 s-1",
+      "valid_min": 0.0,
+      "valid_max": 600.0,
+      "comment": "In situ measurement"
+    },
+    "LIGHT_ADJUSTED_ERROR": {
+      "type": "float",
+      "long_name": "ln(PPFD)",
+      "units": "umol m-2 s-1",
+      "comment": "Contains the error on the adjusted values as determined by the delayed mode QC process."
+    },
+    "LIGHT_ADJUSTED_QC": {
+      "type": "string",
+      "long_name": "quality flag",
+      "conventions": "Sea-mammal reference table 2"
+    },
+    "PARAMETER": {
+      "type": "string",
+      "long_name": "List of parameters with calibration information",
+      "conventions": "Argo reference table 3"
+    },
+    "SCIENTIFIC_CALIB_EQUATION": {
+      "type": "string",
+      "long_name": "Calibration equation for this parameter"
+    },
+    "SCIENTIFIC_CALIB_COEFFICIENT": {
+      "type": "string",
+      "long_name": "SRDL identifier in the SMRU database"
+    },
+    "timestamp": {
+      "type": "int64"
+    },
+    "polygon": {
+      "type": "string"
+    },
+    "filename": {
+      "type": "string"
+    },
+    "wmo_platform_code": {
+      "type": "string"
+    },
+    "smru_platform_code": {
+      "type": "string"
+    },
+    "species": {
+      "type": "string"
+    },
+    "location": {
+      "type": "string"
+    },
+    "instr_id": {
+      "type": "string"
+    }
+  },
+  "dataset_gattrs": {
+    "title": "Satellite Relay Tagging Program - Southern Ocean - MEOP Quality Controlled CTD Profiles"
+  },
+  "force_old_pq_del": false,
+  "aws_opendata_registry": {
+    "Name": "Satellite Relay Tagging Program - Southern Ocean - MEOP Quality Controlled CTD Profiles",
+    "Description": "CTD (Conductivity-Temperature_Depth)-Satellite Relay Data Loggers (CTD-SRDLs) are used to explore how marine animal behaviour relates to their oceanic environment. Loggers developed at the University of St Andrews Sea Mammal Research Unit transmit data in near real-time via the Argo satellite system. Data represented here was collected in the Southern Ocean, from elephant, fur and Weddell Seals. In 2024 data was added from flatback and olive ridley turtles, from a pilot study co-funded by the Royal Australian Navy in collaboration with the Australian Institute of Marine Science and Indigenous Ranger groups.\n\nData parameters measured by the instruments include time, conductivity (salinity), temperature, pressure and depth. The data represented by this record have been Qc'd and are the Australian subset of the MEOP-CTD database (MEOP: Marine Mammals Exploring the Oceans Pole to Pole), complemented with the most recent Southern Ocean deployment data. This Australian subset of the Southern Ocean database represents about one quarter of the entire MEOP-CTD database, which currently is about 52,000 profiles obtained from 275 CTD-SRDL tag deployments. The Australian dataset originated in 2004, and was initially collected by Mark Hindell's team based at the University of Tasmania, and in later years his data has formed part of the Animal Tracking Facility of Integrated Marine Observing System (IMOS).",
+    "Documentation": "https://catalogue-imos.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/95d6314c-cfc7-40ae-b439-85f14541db71",
+    "Contact": "info@aodn.org.au",
+    "ManagedBy": "AODN",
+    "UpdateFrequency": "As Needed",
+    "Tags": [
+      "FILL UP MANUALLY - CHECK DOCUMENTATION"
+    ],
+    "License": "http://creativecommons.org/licenses/by/4.0/",
+    "Resources": [
+      {
+        "Description": "Cloud Optimised AODN dataset of Satellite Relay Tagging Program - Southern Ocean - MEOP Quality Controlled CTD Profiles",
+        "ARN": "arn:aws:s3:::aodn-cloud-optimised/animal_ctd_satellite_relay_tagging_delayed_qc.parquet",
+        "Region": "ap-southeast-2",
+        "Type": "S3 Bucket"
+      }
+    ],
+    "DataAtWork": {
+      "Tutorials": [
+        {
+          "Title": "Accessing Satellite Relay Tagging Program - Southern Ocean - MEOP Quality Controlled CTD Profiles",
+          "URL": "https://nbviewer.org/github/aodn/aodn_cloud_optimised/blob/main/notebooks/animal_ctd_satellite_relay_tagging_delayed_qc.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/animal_ctd_satellite_relay_tagging_delayed_qc.ipynb",
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
+        },
+        {
+          "Title": "Accessing and search for any AODN dataset",
+          "URL": "https://nbviewer.org/github/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
+        }
+      ]
+    },
+    "Citation": "IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access]"
+  }
+}

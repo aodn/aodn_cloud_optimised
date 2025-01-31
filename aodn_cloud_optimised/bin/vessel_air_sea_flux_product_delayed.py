@@ -2,6 +2,7 @@
 import subprocess
 
 
+# TODO: blow up of scheduler memory after 27/71 batches. very annoying why memory is not flushes... Quick fix is to increate the memory scheduler, go from small to large
 def main():
     command = [
         "generic_cloud_optimised_creation",

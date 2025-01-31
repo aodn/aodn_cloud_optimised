@@ -2,6 +2,7 @@
 A currated list of functions used to facilitate reading AODN parquet files. These are used by the various Jupyter
 Notebooks
 """
+
 import json
 import os
 import re
@@ -28,7 +29,7 @@ from fuzzywuzzy import fuzz
 from matplotlib.colors import LogNorm, Normalize
 from s3path import PureS3Path
 from shapely import wkb
-from shapely.geometry import Polygon, MultiPolygon
+from shapely.geometry import MultiPolygon, Polygon
 from windrose import WindroseAxes
 
 REGION: Final[str] = "ap-southeast-2"
@@ -343,8 +344,9 @@ def create_timeseries(
     # Get latitude, longitude, and time extents
     lat_min, lat_max = ds[lat_name].min().item(), ds[lat_name].max().item()
     lon_min, lon_max = ds[lon_name].min().item(), ds[lon_name].max().item()
-    time_min, time_max = pd.to_datetime(ds[time_name].min().item()), pd.to_datetime(
-        ds[time_name].max().item()
+    time_min, time_max = (
+        pd.to_datetime(ds[time_name].min().item()),
+        pd.to_datetime(ds[time_name].max().item()),
     )
 
     # Test if latitude and longitude are within bounds
@@ -385,12 +387,12 @@ def create_timeseries(
 
     # Dynamic title based on the selected lat/lon and time range
     plt.title(
-        f'{ds[var_name].attrs.get("long_name", var_name)} at {lat_name}={selected_data[lat_name].values}, '
+        f"{ds[var_name].attrs.get('long_name', var_name)} at {lat_name}={selected_data[lat_name].values}, "
         f"{lon_name}={selected_data[lon_name].values} from {start_time} to {end_time}"
     )
 
     plt.xlabel("Time")
-    plt.ylabel(f'{ds[var_name].attrs.get("units", "unitless")}')
+    plt.ylabel(f"{ds[var_name].attrs.get('units', 'unitless')}")
     plt.show()
 
     # Return the plot and the pandas DataFrame
@@ -837,7 +839,7 @@ def plot_gridded_variable(
     plt.show()
 
 
-def plot_ts_diagram(df, temp_col="TEMP", psal_col="PSAL", depth_col="DEPTH"):
+def plot_ts_diagram(df, temp_col="TEMP", psal_col="PSAL", z_col="DEPTH"):
     """
     Plots a T-S (Temperature-Salinity) diagram with density contours.
 
@@ -853,7 +855,7 @@ def plot_ts_diagram(df, temp_col="TEMP", psal_col="PSAL", depth_col="DEPTH"):
     fig, ax = plt.subplots(figsize=(10, 6))
 
     # Define the colormap for depth
-    depths = filtered_df[depth_col]
+    depths = filtered_df[z_col]
     cmap = plt.get_cmap(
         "viridis_r"
     )  # Reverse the colormap to make deeper depths darker
@@ -901,7 +903,7 @@ def plot_ts_diagram(df, temp_col="TEMP", psal_col="PSAL", depth_col="DEPTH"):
     ax.clabel(contour, fmt="%1.1f", fontsize=10)  # Add contour labels
 
     # Create a colorbar for depth
-    cbar = plt.colorbar(sc, ax=ax, label="Depth (m)", orientation="vertical")
+    cbar = plt.colorbar(sc, ax=ax, label=f"{z_col}", orientation="vertical")
 
     ax.set_xlabel("Salinity (PSAL)")
     ax.set_ylabel("Temperature (TEMP)")
@@ -1005,7 +1007,6 @@ class Dataset:
         self.parquet_ds = self._create_parquet_dataset()
 
     def _create_parquet_dataset(self, filters=None):
-
         return pq.ParquetDataset(
             self.dname,
             partitioning="hive",
@@ -1151,7 +1152,6 @@ class Metadata:
 
     @lru_cache(maxsize=None)
     def metadata_catalog(self):
-
         # print('Running metadata_catalog...')  # Debug output
         if "catalog" in self.__dict__:
             return self.catalog
@@ -1182,7 +1182,6 @@ class Metadata:
     def find_datasets_with_attribute(
         self, target_value, target_key="standard_name", data_dict=None, threshold=80
     ):
-
         matching_datasets = []
         # https://stackoverflow.com/questions/56535948/python-why-cant-you-use-a-self-variable-as-an-optional-argument-in-a-method
         if data_dict == None:

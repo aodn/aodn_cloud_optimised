@@ -80,6 +80,7 @@ windrose = ">=1.9.2"
 
 [tool.poetry.scripts]
 #cloud_optimised_srs_oc_ljco_to_parquet = "aodn_cloud_optimised.bin.srs_oc_ljco_to_parquet:main"
+cloud_optimised_animal_ctd_satellite_relay_tagging_delayed_qc = "aodn_cloud_optimised.bin.animal_ctd_satellite_relay_tagging_delayed_qc:main"
 cloud_optimised_argo = "aodn_cloud_optimised.bin.argo:main"
 cloud_optimised_autonomous_underwater_vehicle = "aodn_cloud_optimised.bin.autonomous_underwater_vehicle:main"
 cloud_optimised_create_aws_registry_dataset = "aodn_cloud_optimised.bin.create_aws_registry_dataset:main"
@@ -106,7 +107,7 @@ cloud_optimised_radar_SouthAustraliaGulfs_velocity_hourly_averaged_delayed_qc = 
 cloud_optimised_radar_SouthAustraliaGulfs_wave_delayed_qc = "aodn_cloud_optimised.bin.radar_SouthAustraliaGulfs_wave_delayed_qc:main"
 cloud_optimised_radar_SouthAustraliaGulfs_wind_delayed_qc = "aodn_cloud_optimised.bin.radar_SouthAustraliaGulfs_wind_delayed_qc:main"
 cloud_optimised_radar_TurquoiseCoast_velocity_hourly_averaged_delayed_qc = "aodn_cloud_optimised.bin.radar_TurquoiseCoast_velocity_hourly_averaged_delayed_qc:main"
-cloud_optimised_receiver_animal_acoustic_tagging_delayed_qc = "aodn_cloud_optimised.bin.receiver_animal_acoustic_tagging_delayed_qc:main"
+cloud_optimised_animal_acoustic_tracking_delayed_qc = "aodn_cloud_optimised.bin.animal_acoustic_tracking_delayed_qc:main"
 cloud_optimised_satellite_chlorophylla_carder_1day_aqua = "aodn_cloud_optimised.bin.satellite_chlorophylla_carder_1day_aqua:main"
 cloud_optimised_satellite_chlorophylla_gsm_1day_aqua = "aodn_cloud_optimised.bin.satellite_chlorophylla_gsm_1day_aqua:main"
 cloud_optimised_satellite_chlorophylla_oc3_1day_aqua = "aodn_cloud_optimised.bin.satellite_chlorophylla_oc3_1day_aqua:main"

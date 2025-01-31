@@ -1,5 +1,5 @@
 {
-  "dataset_name": "radar_SouthAustraliaGulfs_velocity_hourly_averaged_delayed_qc",
+  "dataset_name": "radar_SouthAustraliaGulfs_velocity_hourly_averaged_delayed_qc_test",
   "logger_name": "radar_SouthAustraliaGulfs_velocity_hourly_averaged_delayed_qc",
   "parent_config": "radar_velocity_hourly_averaged_delayed_qc_no_I_J_version_main.json",
   "metadata_uuid": "cb2e22b5-ebb9-460b-8cff-b446fe14ea2f",
