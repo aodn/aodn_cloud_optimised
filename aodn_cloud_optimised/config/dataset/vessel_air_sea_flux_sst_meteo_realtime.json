@@ -922,6 +922,15 @@
       "standard_name": "visibility_in_air",
       "ancillary_variables": "VIS_quality_control"
     },
+    "VIS_quality_control": {
+      "type": "string",
+      "standard_name": "visibility_in_air status_flag",
+      "long_name": "quality flags for visibility_in_air",
+      "quality_control_conventions": "IMOS Reference Table F",
+      "quality_control_set": 3,
+      "quality_control_flag_values": "B, C, D, E, F, G, H, J, K, L, M, Q, S, T, U, V, X, Z",
+      "quality_control_flag_meanings": "Value_out_of_bounds Time_not_sequential Failed_T_Tw_Td_test Failed_true_wind_recomputation_test Platform_velocity_unrealistic Value_exceeds_threshold Discontinuity Erroneous_value Suspect_value_(visual) Value_located_over_land Instrument_malfunction Pre-flagged_as_suspect Spike_in_data_(visual) Time_duplicate Suspect_value_(statistical) Step_in_data_(statistical) Spike_in_data_(statistical) Value_passed_all_tests"
+    },
     "WX": {
       "type": "float",
       "long_name": "present weather",
