@@ -4,19 +4,19 @@
   "cloud_optimised_format": "parquet",
   "coiled_cluster_options": {
     "n_workers": [
-      1,
-      40
+      70,
+      160
     ],
-    "scheduler_vm_types": "t3.medium",
-    "worker_vm_types": "t3.large",
+    "scheduler_vm_types": "m7i.xlarge",
+    "worker_vm_types": "m7i.xlarge",
     "allow_ingress_from": "me",
     "compute_purchase_option": "spot_with_fallback",
     "worker_options": {
-      "nthreads": 4,
-      "memory_limit": "8GB"
+      "nthreads": 8,
+      "memory_limit": "32GB"
     }
   },
-  "batch_size": 100,
+  "batch_size": 400,
   "metadata_uuid": "07818819-2e5c-4a12-9395-0082b57b2fe8",
   "gattrs_to_variables": [
     "platform_code",

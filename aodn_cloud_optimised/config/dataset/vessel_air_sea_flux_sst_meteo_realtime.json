@@ -4,16 +4,16 @@
   "cloud_optimised_format": "parquet",
   "coiled_cluster_options": {
     "n_workers": [
-      1,
-      20
+      25,
+      60
     ],
-    "scheduler_vm_types": "t3.medium",
-    "worker_vm_types": "t3.large",
+    "scheduler_vm_types": "m7i.large",
+    "worker_vm_types": "m7i.large",
     "allow_ingress_from": "me",
     "compute_purchase_option": "spot_with_fallback",
     "worker_options": {
-      "nthreads": 4,
-      "memory_limit": "8GB"
+      "nthreads": 8,
+      "memory_limit": "32GB"
     }
   },
   "batch_size": 200,
@@ -808,6 +808,135 @@
       "sensor_depth": -19.593000411987305,
       "comment": "This is the total expanded uncertainty for the ISAR radiometric skin SST (TEMP_2) value, being a combination of random (type A), systematic (type B), instrument and measurement uncertainty.  The ISAR expanded uncertainty is an estimate of the SST that differs from its true value by less than the stated uncertainty in 95 % of cases, and can be considered as 2 times the standard deviation.  Note this is the absolute value of the uncertainty_sd value output from the Werenfrid Wimmer ISAR uncertainty code, documented in Wimmer, W., and I. Robinson, 2016, The ISAR instrument uncertainty model. J. Atmos. Oceanic Technol. doi:10.1175/JTECH-D-16-0096.1. http://journals.ametsoc.org/doi/abs/10.1175/JTECH-D-16-0096.1",
       "ancillary_variables": "TEMP_2_SD_quality_control"
+    },
+    "RRATE": {
+      "type": "float",
+      "long_name": "rain rate (IMOS)",
+      "units": "millimeter minute-1",
+      "instrument": "OSi ORG-815-DR (s/n 08060286)",
+      "sensor_height": 13.800000190734863,
+      "distance_from_bow": 3.299999952316284,
+      "centerline_offset": -1.5,
+      "observation_type": "measured",
+      "standard_name": "rainfall_rate",
+      "ancillary_variables": "RRATE_quality_control"
+    },
+    "RRATE_quality_control": {
+      "type": "string",
+      "standard_name": "rainfall_rate status_flag",
+      "long_name": "quality flags for rainfall_rate",
+      "quality_control_conventions": "IMOS Reference Table F",
+      "quality_control_set": 3,
+      "quality_control_flag_values": "B, C, D, E, F, G, H, J, K, L, M, Q, S, T, U, V, X, Z",
+      "quality_control_flag_meanings": "Value_out_of_bounds Time_not_sequential Failed_T_Tw_Td_test Failed_true_wind_recomputation_test Platform_velocity_unrealistic Value_exceeds_threshold Discontinuity Erroneous_value Suspect_value_(visual) Value_located_over_land Instrument_malfunction Pre-flagged_as_suspect Spike_in_data_(visual) Time_duplicate Suspect_value_(statistical) Step_in_data_(statistical) Spike_in_data_(statistical) Value_passed_all_tests"
+    },
+    "PL_CMP_quality_control": {
+      "type": "string",
+      "long_name": "quality flags for compass direction",
+      "quality_control_conventions": "IMOS Reference Table F",
+      "quality_control_set": 3,
+      "quality_control_flag_values": "B, C, D, E, F, G, H, J, K, L, M, Q, S, T, U, V, X, Z",
+      "quality_control_flag_meanings": "Value_out_of_bounds Time_not_sequential Failed_T_Tw_Td_test Failed_true_wind_recomputation_test Platform_velocity_unrealistic Value_exceeds_threshold Discontinuity Erroneous_value Suspect_value_(visual) Value_located_over_land Instrument_malfunction Pre-flagged_as_suspect Spike_in_data_(visual) Time_duplicate Suspect_value_(statistical) Step_in_data_(statistical) Spike_in_data_(statistical) Value_passed_all_tests"
+    },
+    "PL_CMP": {
+      "type": "float",
+      "long_name": "compass direction",
+      "units": "degrees_north",
+      "instrument": "Sperry gyro compasse Mk 37",
+      "observation_type": "measured",
+      "ancillary_variables": "PL_CMP_quality_control"
+    },
+    "RAD_PAR_3": {
+      "type": "float",
+      "long_name": "photosynthetically active radiation",
+      "units": "microeinstein meter-2",
+      "instrument": "Licor LI-190SZ",
+      "rad_direction": "downwelling",
+      "observation_type": "measured",
+      "distance_from_bow": 37.70000076293945,
+      "centerline_offset": 10.5,
+      "sensor_height": 18.5,
+      "standard_name": "surface_downwelling_photosynthetic_radiative_flux_in_air",
+      "ancillary_variables": "RAD_PAR_3_quality_control"
+    },
+    "RAD_PAR_4": {
+      "type": "float",
+      "long_name": "photosynthetically active radiation",
+      "units": "microeinstein meter-2",
+      "instrument": "Licor LI-190SZ",
+      "rad_direction": "downwelling",
+      "observation_type": "measured",
+      "distance_from_bow": 37.70000076293945,
+      "centerline_offset": -10.5,
+      "sensor_height": 18.5,
+      "standard_name": "surface_downwelling_photosynthetic_radiative_flux_in_air",
+      "ancillary_variables": "RAD_PAR_4_quality_control"
+    },
+    "RAD_PAR_3_quality_control": {
+      "type": "string",
+      "standard_name": "surface_downwelling_photosynthetic_radiative_flux_in_air status_flag",
+      "long_name": "quality flags for surface_downwelling_photosynthetic_radiative_flux_in_air",
+      "quality_control_conventions": "IMOS Reference Table F",
+      "quality_control_set": 3,
+      "quality_control_flag_values": "B, C, D, E, F, G, H, J, K, L, M, Q, S, T, U, V, X, Z",
+      "quality_control_flag_meanings": "Value_out_of_bounds Time_not_sequential Failed_T_Tw_Td_test Failed_true_wind_recomputation_test Platform_velocity_unrealistic Value_exceeds_threshold Discontinuity Erroneous_value Suspect_value_(visual) Value_located_over_land Instrument_malfunction Pre-flagged_as_suspect Spike_in_data_(visual) Time_duplicate Suspect_value_(statistical) Step_in_data_(statistical) Spike_in_data_(statistical) Value_passed_all_tests"
+    },
+    "RAD_PAR_4_quality_control": {
+      "type": "string",
+      "standard_name": "surface_downwelling_photosynthetic_radiative_flux_in_air status_flag",
+      "long_name": "quality flags for surface_downwelling_photosynthetic_radiative_flux_in_air",
+      "quality_control_conventions": "IMOS Reference Table F",
+      "quality_control_set": 3,
+      "quality_control_flag_values": "B, C, D, E, F, G, H, J, K, L, M, Q, S, T, U, V, X, Z",
+      "quality_control_flag_meanings": "Value_out_of_bounds Time_not_sequential Failed_T_Tw_Td_test Failed_true_wind_recomputation_test Platform_velocity_unrealistic Value_exceeds_threshold Discontinuity Erroneous_value Suspect_value_(visual) Value_located_over_land Instrument_malfunction Pre-flagged_as_suspect Spike_in_data_(visual) Time_duplicate Suspect_value_(statistical) Step_in_data_(statistical) Spike_in_data_(statistical) Value_passed_all_tests"
+    },
+    "RAD_UV": {
+      "type": "float",
+      "long_name": "ultraviolet radiation",
+      "units": "watts meter-2",
+      "instrument": "Eppley UVB",
+      "rad_direction": "downwelling",
+      "observation_type": "measured",
+      "distance_from_bow": -9999.0,
+      "centerline_offset": -9999.0,
+      "sensor_height": -9999.0,
+      "ancillary_variables": "RAD_UV_quality_control"
+    },
+    "RAD_UV_quality_control": {
+      "type": "string",
+      "long_name": "quality flags for ultraviolet radiation",
+      "quality_control_conventions": "IMOS Reference Table F",
+      "quality_control_set": 3,
+      "quality_control_flag_values": "B, C, D, E, F, G, H, J, K, L, M, Q, S, T, U, V, X, Z",
+      "quality_control_flag_meanings": "Value_out_of_bounds Time_not_sequential Failed_T_Tw_Td_test Failed_true_wind_recomputation_test Platform_velocity_unrealistic Value_exceeds_threshold Discontinuity Erroneous_value Suspect_value_(visual) Value_located_over_land Instrument_malfunction Pre-flagged_as_suspect Spike_in_data_(visual) Time_duplicate Suspect_value_(statistical) Step_in_data_(statistical) Spike_in_data_(statistical) Value_passed_all_tests"
+    },
+    "VIS": {
+      "type": "float",
+      "long_name": "visibility",
+      "units": "meter",
+      "instrument": "OSi OWI-430 WIVIS (s/n 0810024)",
+      "observation_type": "measured",
+      "distance_from_bow": 47.0,
+      "centerline_offset": -8.0,
+      "sensor_height": 17.0,
+      "standard_name": "visibility_in_air",
+      "ancillary_variables": "VIS_quality_control"
+    },
+    "WX": {
+      "type": "float",
+      "long_name": "present weather",
+      "units": "WMO code (table 4677)",
+      "instrument": "Osi OWI-430 WIVIS (s/n 0810024)",
+      "observation_type": "measured",
+      "ancillary_variables": "WX_quality_control"
+    },
+    "WX_quality_control": {
+      "type": "string",
+      "long_name": "quality flags for present weather",
+      "quality_control_conventions": "IMOS Reference Table F",
+      "quality_control_set": 3,
+      "quality_control_flag_values": "B, C, D, E, F, G, H, J, K, L, M, Q, S, T, U, V, X, Z",
+      "quality_control_flag_meanings": "Value_out_of_bounds Time_not_sequential Failed_T_Tw_Td_test Failed_true_wind_recomputation_test Platform_velocity_unrealistic Value_exceeds_threshold Discontinuity Erroneous_value Suspect_value_(visual) Value_located_over_land Instrument_malfunction Pre-flagged_as_suspect Spike_in_data_(visual) Time_duplicate Suspect_value_(statistical) Step_in_data_(statistical) Spike_in_data_(statistical) Value_passed_all_tests"
     }
   },
   "dataset_gattrs": {

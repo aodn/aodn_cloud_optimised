@@ -4,11 +4,11 @@
   "cloud_optimised_format": "parquet",
   "coiled_cluster_options": {
     "n_workers": [
-      4,
-      20
+      20,
+      40
     ],
-    "scheduler_vm_types": "t3.small",
-    "worker_vm_types": "t3.large",
+    "scheduler_vm_types": "m7i.large",
+    "worker_vm_types": "m7i.large",
     "allow_ingress_from": "me",
     "compute_purchase_option": "spot_with_fallback",
     "worker_options": {
@@ -16,7 +16,7 @@
       "memory_limit": "32GB"
     }
   },
-  "batch_size": 20,
+  "batch_size": 80,
   "metadata_uuid": "541d4f15-122a-443d-ab4e-2b5feb08d6a0",
   "gattrs_to_variables": [],
   "partition_keys": [
