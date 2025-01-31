@@ -21,7 +21,7 @@ ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 TEST_FILE_NC = os.path.join(ROOT_DIR, "resources", "ct64-M001-09_prof.nc")
 
 DATASET_CONFIG = os.path.join(
-    ROOT_DIR, "resources", "animal_ctd_sat_relay_tagging_meop_delayed_qc.json"
+    ROOT_DIR, "resources", "animal_ctd_satellite_relay_tagging_delayed_qc.json"
 )
 
 

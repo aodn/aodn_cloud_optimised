@@ -29,7 +29,7 @@ from fuzzywuzzy import fuzz
 from matplotlib.colors import LogNorm, Normalize
 from s3path import PureS3Path
 from shapely import wkb
-from shapely.geometry import Polygon, MultiPolygon
+from shapely.geometry import MultiPolygon, Polygon
 from windrose import WindroseAxes
 
 REGION: Final[str] = "ap-southeast-2"
