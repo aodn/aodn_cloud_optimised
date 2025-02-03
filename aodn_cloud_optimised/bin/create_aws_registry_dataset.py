@@ -31,17 +31,18 @@ import tempfile
 from argparse import RawTextHelpFormatter
 from importlib.resources import files
 
+import pandas as pd
 import requests
 import xmltodict
-from colorama import init, Fore, Style
+from colorama import Fore, Style, init
 
+from aodn_cloud_optimised.lib.common import list_json_files
 from aodn_cloud_optimised.lib.CommonHandler import CommonHandler
 from aodn_cloud_optimised.lib.config import (
-    load_dataset_config,
     load_config,
+    load_dataset_config,
     load_variable_from_config,
 )
-from aodn_cloud_optimised.lib.common import list_json_files
 
 
 def retrieve_geonetwork_metadata(
@@ -192,6 +193,63 @@ def update_nested_dict_key(dataset_config, keys, new_value):
     return dataset_config
 
 
+def populate_dataset_config_with_metadata_from_csv(json_file, csv_path):
+    json_path = str(files("aodn_cloud_optimised.config.dataset").joinpath(json_file))
+    dataset_config = load_dataset_config(json_path)
+
+    csv_data = pd.read_csv(
+        csv_path,
+        index_col="Cloud_Optimised_Collection_Name",
+        encoding="ISO-8859-1",
+        na_filter=False,
+    )
+
+    dataset_name = dataset_config["dataset_name"]
+    try:
+        csv_dataset = csv_data.loc[dataset_name]
+    except Exception as err:
+        print(f"{dataset_name} NOT FOUND in CSV file")
+        return
+
+    if not csv_dataset["AWS_Title"] == "":
+        dataset_config = update_nested_dict_key(
+            dataset_config,
+            ["aws_opendata_registry", "Name"],
+            csv_dataset["AWS_Title"],
+        )
+    else:
+        Warning(f"AWS_Title for {dataset_name} is missing from {csv_path}")
+
+    if not csv_dataset["AWS_Tags"] == "":
+        aws_tags = [keyword.strip() for keyword in csv_dataset["AWS_Tags"].split(";")]
+        dataset_config = update_nested_dict_key(
+            dataset_config, ["aws_opendata_registry", "Tags"], aws_tags
+        )
+    else:
+        Warning(f"AWS_Tags for {dataset_name} is missing from {csv_path}")
+
+    if not csv_dataset["AWS_Citation"] == "":
+        dataset_config = update_nested_dict_key(
+            dataset_config,
+            ["aws_opendata_registry", "Citation"],
+            csv_dataset["AWS_Citation"],
+        )
+    else:
+        Warning(f"AWS_Citation for {dataset_name} is missing from {csv_path}")
+
+    # dataset config coming from load_dataset_config is the result of parent and child configuration. When writing back
+    # the configuration, we only want to write the child data back
+    dataset_config_child = load_config(json_path)
+    # Overwrite the original JSON file with the modified dataset_config
+    with open(json_path, "w") as f:
+        dataset_config_child["aws_opendata_registry"] = dataset_config[
+            "aws_opendata_registry"
+        ]
+        json.dump(dataset_config_child, f, indent=2)
+
+    print(f"Updated JSON file saved at: {json_path}")
+
+
 def populate_dataset_config_with_geonetwork_metadata(json_file):
     """ """
 
@@ -286,7 +344,7 @@ def populate_dataset_config_with_geonetwork_metadata(json_file):
         dataset_config, ["aws_opendata_registry", "Resources"], dataset_location
     )
 
-    # dataset confi coming from load_dataset_config is the result of parent and child configuration. When writing back
+    # dataset config coming from load_dataset_config is the result of parent and child configuration. When writing back
     # the configuration, we only want to write the child data back
     dataset_config_child = load_config(json_path)
     # Overwrite the original JSON file with the modified dataset_config
@@ -371,6 +429,12 @@ def main():
         help="Retrieve metadata from Geonetwork instance to populate OpenData Registry format. Interactive mode",
     )
 
+    parser.add_argument(
+        "-c",
+        "--csv-path",
+        help="Add specific metadata from an external CSV file",
+    )
+
     args = parser.parse_args()
 
     json_directory = str(files("aodn_cloud_optimised.config.dataset")._paths[0])
@@ -382,6 +446,14 @@ def main():
             for file in json_files:
                 if args.geonetwork:
                     populate_dataset_config_with_geonetwork_metadata(file)
+
+                if args.csv_path:
+                    if os.path.exists(args.csv_path):
+                        populate_dataset_config_with_metadata_from_csv(
+                            file, args.csv_path
+                        )
+                    else:
+                        raise ValueError(f"{args.csv_path} does not exist")
                 convert_to_opendata_registry(file, output_dir)
         else:
             print(f"No JSON files found in {json_directory}.")
@@ -389,6 +461,11 @@ def main():
         output_dir = args.directory or tempfile.mkdtemp()
         if args.geonetwork:
             populate_dataset_config_with_geonetwork_metadata(args.file)
+        if args.csv_path:
+            if os.path.exists(args.csv_path):
+                populate_dataset_config_with_metadata_from_csv(args.file, args.csv_path)
+            else:
+                raise ValueError(f"{args.csv_path} does not exist")
 
         convert_to_opendata_registry(args.file, output_dir)
     else:
@@ -406,6 +483,15 @@ def main():
                         populate_dataset_config_with_geonetwork_metadata(
                             json_files[choice_idx]
                         )
+
+                    if args.csv_path:
+                        if os.path.exists(args.csv_path):
+                            populate_dataset_config_with_metadata_from_csv(
+                                json_files[choice_idx], args.csv_path
+                            )
+                        else:
+                            raise ValueError(f"{args.csv_path} does not exist")
+
                     convert_to_opendata_registry(json_files[choice_idx], output_dir)
                 else:
                     print("Invalid choice. Aborting.")
