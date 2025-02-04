@@ -27,6 +27,7 @@ import difflib
 import io
 import json
 import os
+import sys
 import tempfile
 from argparse import RawTextHelpFormatter
 from importlib.resources import files
@@ -375,29 +376,7 @@ def convert_to_opendata_registry(json_file, output_directory):
     handler.create_metadata_aws_registry(target_directory=output_directory)
 
 
-def main():
-    """
-    Main function to convert JSON files to AWS OpenData Registry format.
-
-    The script can be run in different ways:
-
-    1. Convert a specific JSON file to AWS OpenData Registry format.
-    2. Convert all JSON files in the directory.
-    3. Run interactively to list all available JSON files and prompt the user to choose one to convert.
-
-    Important:
-        If the -g option is provided, the script will download metadata from the GeoNetwork metadata
-        record and prompt the user to choose to replace existing values or not.
-
-
-    Args (optional):
-        -f, --file (str): Name of a specific JSON file to convert.
-        -d, --directory (str): Output directory to save converted YAML files.
-        -a, --all: Convert all JSON files in the directory.
-        -g, --geonetwork: Retrieve metadata fields from GeoNetwork3 metadata record
-
-    If the directory is not specified, a temporary directory is created.
-    """
+def parse_args(arg_list: list[str] | None):
     parser = argparse.ArgumentParser(
         description="""
         Create AWS OpenData Registry YAML files from the dataset configuration, ready to be added to the OpenData Github
@@ -437,7 +416,35 @@ def main():
 
     args = parser.parse_args()
 
+    return args
+
+
+def main(arg_list: list[str] | None = None):
+    """
+    Main function to convert JSON files to AWS OpenData Registry format.
+
+    The script can be run in different ways:
+
+    1. Convert a specific JSON file to AWS OpenData Registry format.
+    2. Convert all JSON files in the directory.
+    3. Run interactively to list all available JSON files and prompt the user to choose one to convert.
+
+    Important:
+        If the -g option is provided, the script will download metadata from the GeoNetwork metadata
+        record and prompt the user to choose to replace existing values or not.
+
+
+    Args (optional):
+        -f, --file (str): Name of a specific JSON file to convert.
+        -d, --directory (str): Output directory to save converted YAML files.
+        -a, --all: Convert all JSON files in the directory.
+        -g, --geonetwork: Retrieve metadata fields from GeoNetwork3 metadata record
+
+    If the directory is not specified, a temporary directory is created.
+    """
     json_directory = str(files("aodn_cloud_optimised.config.dataset")._paths[0])
+
+    args = parse_args(sys.argv[1:])
 
     if args.all:
         json_files = list_json_files(json_directory)

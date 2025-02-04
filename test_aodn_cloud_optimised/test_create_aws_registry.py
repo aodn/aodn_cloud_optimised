@@ -20,6 +20,10 @@ DATASET_CONFIG_NC_ACORN_JSON = os.path.join(
 )
 DATASET_CONFIG_NC_ACORN_JSON = Path(DATASET_CONFIG_NC_ACORN_JSON)
 
+CSV_EXTRA_INFO = os.path.join(ROOT_DIR, "resources", "IMOSPortalCollections.csv")
+
+CSV_EXTRA_INFO = Path(CSV_EXTRA_INFO)
+
 
 class TestGenericCloudOptimisedCreation(unittest.TestCase):
     def setUp(self):
@@ -36,7 +40,12 @@ class TestGenericCloudOptimisedCreation(unittest.TestCase):
     def test_main(self, mock_parse_args):
         # Prepare mock arguments
         mock_parse_args.return_value = MagicMock(
-            file=DATASET_CONFIG_NC_ACORN_JSON, directory=self.tempdir, all=False
+            file=DATASET_CONFIG_NC_ACORN_JSON,
+            directory=self.tempdir,
+            all=False,
+            csv_path=CSV_EXTRA_INFO,
+            geonetwork=False,
+            # csv_path=None,
         )
 
         # Capture logs
