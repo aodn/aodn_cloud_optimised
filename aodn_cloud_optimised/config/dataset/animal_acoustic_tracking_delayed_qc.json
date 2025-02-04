@@ -201,7 +201,8 @@
     "UpdateFrequency": "As Needed",
     "Tags": [
       "oceans",
-      "marine mammals"
+      "marine mammals",
+      "biology"
     ],
     "License": "http://creativecommons.org/licenses/by/4.0/",
     "Resources": [
@@ -230,6 +231,6 @@
         }
       ]
     },
-    "Citation": "IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access]"
+    "Citation": "The citation in a list of references is: \"IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access].\""
   }
 }

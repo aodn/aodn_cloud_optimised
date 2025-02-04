@@ -179,14 +179,16 @@
   },
   "force_old_pq_del": false,
   "aws_opendata_registry": {
-    "Name": "IMOS - Autonomous Underwater Vehicle (AUV) Facility",
+    "Name": "Autonomous underwater vehicles",
     "Description": "The IMOS Autonomous Underwater Vehicle (AUV) Facility operates multiple ocean-going AUVs capable of undertaking high resolution, geo-referenced survey work. AUV Sirius is a modified version of a mid-size robotic vehicle Seabed built at the Woods Hole Oceanographic Institution. This class of AUV has been designed specifically for low speed, high resolution imaging and is passively stable in pitch and roll. AUV Nimbus is a custom design with the aim of deploying off smaller vessels than Sirius whilst remaining able to operate in similar environments. AUV Iver is an extended Ocean Server Iver2 class platform with additional navigation and imaging sensors but lacks the ability to work over complex underwater terrain. Based on its small size, it can be deployed from RHIBs and other small vessels. The main objective of the IMOS AUV Facility is to support sustained observations of the benthos, in support of the IMOS integrated benthic monitoring program. . The AUV facility is based at the Australian Centre for Field Robotics (ACFR) within the School of Aerospace, Mechanical and Mechatronic Engineering at the University of Sydney.\n\nThis IMOS Facility finished in June 2023, with data still available through the AODN Portal.",
     "Documentation": "https://catalogue-imos.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/af5d0ff9-bb9c-4b7c-a63c-854a630b6984",
     "Contact": "info@aodn.org.au",
     "ManagedBy": "AODN",
     "UpdateFrequency": "As Needed",
     "Tags": [
-      "FILL UP MANUALLY - CHECK DOCUMENTATION"
+      "oceans",
+      "chemistry",
+      "chemical biology"
     ],
     "License": "http://creativecommons.org/licenses/by/4.0/",
     "Resources": [
@@ -215,6 +217,6 @@
         }
       ]
     },
-    "Citation": "IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access]"
+    "Citation": "The citation in a list of references is: \"IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access].\""
   }
 }
