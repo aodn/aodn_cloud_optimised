@@ -12,6 +12,7 @@ dependencies:
   - h5py
   - scipy
   - pip<24.1
+  - virtualenv==20.28.1 # https://github.com/python-poetry/poetry/issues/10056#issuecomment-2594269592
   - pip:
-    - poetry==2.0.1
-    - -r requirements.txt
+      - poetry==2.0.1
+      - -r requirements.txt
