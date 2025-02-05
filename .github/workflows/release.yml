@@ -78,6 +78,8 @@ jobs:
 
       - name: Push version bump
         run: |
+          git fetch origin main
+          git rebase origin/main
           git push origin HEAD:main
 
       # build the package after bumping version
