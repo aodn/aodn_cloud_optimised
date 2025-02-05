@@ -33,7 +33,7 @@ jobs:
       #----------------------------------------------
       - name: Load cached venv
         id: cached-poetry-dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: .venv
           key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
@@ -66,10 +66,12 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
+
       # Bump version
       - name: Bump version
         id: bump_version
         run: |
+          git fetch origin main
           NEW_VERSION=$(poetry version patch | awk '{print $NF}')
           echo "New version: $NEW_VERSION"
           echo "new_version=$NEW_VERSION" >> $GITHUB_ENV
@@ -85,7 +87,6 @@ jobs:
       # build the package after bumping version
       - name: Build package
         run: poetry build
-
 
       - name: Delete existing tag (if any)
         run: |
