@@ -4,7 +4,7 @@ import subprocess
 
 def main():
     # dataset starts in 2015
-    for i, year in enumerate(range(2022, 2025)):
+    for i, year in enumerate(range(2015, 2025)):
         # Prepare the command
         command = [
             "generic_cloud_optimised_creation",
@@ -19,8 +19,8 @@ def main():
         ]
 
         # Add --clear-existing-data for the first iteration only
-        #         if i == 0:
-        # command.append("--clear-existing-data")
+        if i == 0:
+            command.append("--clear-existing-data")
 
         # Run the command
         subprocess.run(command, check=True)
