@@ -212,43 +212,61 @@ def populate_dataset_config_with_metadata_from_csv(json_file, csv_path):
         print(f"{dataset_name} NOT FOUND in CSV file")
         return
 
-    if not csv_dataset["AWS_Title"] == "":
-        dataset_config = update_nested_dict_key(
-            dataset_config,
-            ["aws_opendata_registry", "Name"],
-            csv_dataset["AWS_Title"],
-        )
+    if csv_dataset["AWS_Registry_Ready"] == "Done":
+
+        if not csv_dataset["AWS_Title"] == "":
+            dataset_config = update_nested_dict_key(
+                dataset_config,
+                ["aws_opendata_registry", "Name"],
+                csv_dataset["AWS_Title"],
+            )
+        else:
+            Warning(f"AWS_Title for {dataset_name} is missing from {csv_path}")
+
+        if not csv_dataset["AWS_Tags"] == "":
+            aws_tags = [
+                keyword.strip() for keyword in csv_dataset["AWS_Tags"].split(";")
+            ]
+            dataset_config = update_nested_dict_key(
+                dataset_config, ["aws_opendata_registry", "Tags"], aws_tags
+            )
+        else:
+            Warning(f"AWS_Tags for {dataset_name} is missing from {csv_path}")
+
+        if not csv_dataset["AWS_Citation"] == "":
+            dataset_config = update_nested_dict_key(
+                dataset_config,
+                ["aws_opendata_registry", "Citation"],
+                csv_dataset["AWS_Citation"],
+            )
+        else:
+            Warning(f"AWS_Citation for {dataset_name} is missing from {csv_path}")
+
+        # dataset config coming from load_dataset_config is the result of parent and child configuration. When writing back
+        # the configuration, we only want to write the child data back
+        dataset_config_child = load_config(json_path)
+        # Overwrite the original JSON file with the modified dataset_config
+        with open(json_path, "w") as f:
+            dataset_config_child["aws_opendata_registry"] = dataset_config[
+                "aws_opendata_registry"
+            ]
+            json.dump(dataset_config_child, f, indent=2)
+
+        print(f"Updated JSON file saved at: {json_path}")
+
+        if csv_dataset["Cloud_Optimised_Conversion_Status"] == "Done":
+            return True
+        else:
+            print(
+                f"{Fore.RED}{dataset_name} hasn't been converted yet to CO{Style.RESET_ALL}"
+            )
+            return False
     else:
-        Warning(f"AWS_Title for {dataset_name} is missing from {csv_path}")
 
-    if not csv_dataset["AWS_Tags"] == "":
-        aws_tags = [keyword.strip() for keyword in csv_dataset["AWS_Tags"].split(";")]
-        dataset_config = update_nested_dict_key(
-            dataset_config, ["aws_opendata_registry", "Tags"], aws_tags
+        print(
+            f"{Fore.RED}{dataset_name} hasn't been checked/done yet by Metadata expert.{Style.RESET_ALL}"
         )
-    else:
-        Warning(f"AWS_Tags for {dataset_name} is missing from {csv_path}")
-
-    if not csv_dataset["AWS_Citation"] == "":
-        dataset_config = update_nested_dict_key(
-            dataset_config,
-            ["aws_opendata_registry", "Citation"],
-            csv_dataset["AWS_Citation"],
-        )
-    else:
-        Warning(f"AWS_Citation for {dataset_name} is missing from {csv_path}")
-
-    # dataset config coming from load_dataset_config is the result of parent and child configuration. When writing back
-    # the configuration, we only want to write the child data back
-    dataset_config_child = load_config(json_path)
-    # Overwrite the original JSON file with the modified dataset_config
-    with open(json_path, "w") as f:
-        dataset_config_child["aws_opendata_registry"] = dataset_config[
-            "aws_opendata_registry"
-        ]
-        json.dump(dataset_config_child, f, indent=2)
-
-    print(f"Updated JSON file saved at: {json_path}")
+        return False
 
 
 def populate_dataset_config_with_geonetwork_metadata(json_file):
@@ -456,12 +474,20 @@ def main(arg_list: list[str] | None = None):
 
                 if args.csv_path:
                     if os.path.exists(args.csv_path):
-                        populate_dataset_config_with_metadata_from_csv(
+                        res = populate_dataset_config_with_metadata_from_csv(
                             file, args.csv_path
                         )
+
+                        if res:
+                            convert_to_opendata_registry(
+                                file, output_dir
+                            )  # if res is True, it means the metadata record has been checked by Metadata Expert and ready to be published
                     else:
                         raise ValueError(f"{args.csv_path} does not exist")
-                convert_to_opendata_registry(file, output_dir)
+                else:
+                    convert_to_opendata_registry(
+                        file, output_dir
+                    )  # if no csv_path provided, we assume that all records need to be con
         else:
             print(f"No JSON files found in {json_directory}.")
     elif args.file:
