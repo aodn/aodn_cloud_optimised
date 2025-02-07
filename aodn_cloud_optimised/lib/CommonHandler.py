@@ -410,7 +410,7 @@ class CommonHandler:
             return
 
         aws_registry_config = self.dataset_config["aws_opendata_registry"]
-        yaml_data = yaml.dump(aws_registry_config)
+        yaml_data = yaml.dump(aws_registry_config, sort_keys=False)
 
         if target_directory:
             file_path = os.path.join(target_directory, f"aodn_{self.dataset_name}.yaml")

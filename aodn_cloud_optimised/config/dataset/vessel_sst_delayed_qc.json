@@ -458,7 +458,7 @@
     "DataAtWork": {
       "Tutorials": [
         {
-          "Title": "Accessing IMOS - SOOP Underway CO2 Measurements Research Group - delayed mode data",
+          "Title": "Accessing IMOS - SOOP Sea Surface Temperature - delayed mode data",
           "URL": "https://nbviewer.org/github/aodn/aodn_cloud_optimised/blob/main/notebooks/vessel_sst_delayed_qc.ipynb",
           "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/vessel_sst_delayed_qc.ipynb",
           "AuthorName": "Laurent Besnard",
