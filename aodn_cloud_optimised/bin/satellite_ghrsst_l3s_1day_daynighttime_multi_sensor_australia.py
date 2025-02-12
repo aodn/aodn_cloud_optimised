@@ -14,7 +14,7 @@ def main():
             "--dataset-config",
             "satellite_ghrsst_l3s_1day_daynighttime_multi_sensor_australia.json",
             "--cluster-mode",
-            "remote",
+            "coiled",
         ]
 
         # Add --clear-existing-data for the first iteration only
