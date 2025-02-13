@@ -5,12 +5,12 @@ A curated list of Jupyter notebooks ready to be loaded in Google Colab
 
 You can also click on the binder/colab button above to spin the environment and execute the notebooks (note that Binder is free with limited resources)
 
-
 # Generic method to call any AODN parquet dataset
+
 - [GetAodnData.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb)
 
-
 # AODN Notebooks
+
 - [animal_ctd_satellite_relay_tagging_delayed_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/animal_ctd_satellite_relay_tagging_delayed_qc.ipynb)
 - [argo.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/argo.ipynb)
 - [autonomous_underwater_vehicle.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/autonomous_underwater_vehicle.ipynb)
@@ -43,10 +43,14 @@ You can also click on the binder/colab button above to spin the environment and 
 - [satellite_chlorophylla_oci_1day_aqua.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_chlorophylla_oci_1day_aqua.ipynb)
 - [satellite_diffuse_attenuation_coefficent_1day_aqua.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_diffuse_attenuation_coefficent_1day_aqua.ipynb)
 - [satellite_ghrsst_l3c_1day_nighttime_himawari8.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_ghrsst_l3c_1day_nighttime_himawari8.ipynb)
+- [satellite_ghrsst_l3s_1day_daynighttime_multi_sensor_australia.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_ghrsst_l3s_1day_daynighttime_multi_sensor_australia.ipynb)
 - [satellite_ghrsst_l3s_1day_daynighttime_multi_sensor_southernocean.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_ghrsst_l3s_1day_daynighttime_multi_sensor_southernocean.ipynb)
 - [satellite_ghrsst_l3s_1day_daynighttime_single_sensor_australia.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_ghrsst_l3s_1day_daynighttime_single_sensor_australia.ipynb)
 - [satellite_ghrsst_l3s_1day_daynighttime_single_sensor_southernocean.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_ghrsst_l3s_1day_daynighttime_single_sensor_southernocean.ipynb)
 - [satellite_ghrsst_l3s_1day_nighttime_geopolar_multi_sensor_australia.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_ghrsst_l3s_1day_nighttime_geopolar_multi_sensor_australia.ipynb)
+- [satellite_ghrsst_l3s_1month_daytime_single_sensor_australia.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_ghrsst_l3s_1month_daytime_single_sensor_australia.ipynb)
+- [satellite_ghrsst_l3s_3day_daynighttime_multi_sensor_australia.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_ghrsst_l3s_3day_daynighttime_multi_sensor_australia.ipynb)
+- [satellite_ghrsst_l3s_6day_daynighttime_single_sensor_australia.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_ghrsst_l3s_6day_daynighttime_single_sensor_australia.ipynb)
 - [satellite_ghrsst_l4_gamssa_1day_multi_sensor_world.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_ghrsst_l4_gamssa_1day_multi_sensor_world.ipynb)
 - [satellite_ghrsst_l4_ramssa_1day_multi_sensor_australia.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_ghrsst_l4_ramssa_1day_multi_sensor_australia.ipynb)
 - [satellite_nanoplankton_fraction_oc3_1day_aqua.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_nanoplankton_fraction_oc3_1day_aqua.ipynb)

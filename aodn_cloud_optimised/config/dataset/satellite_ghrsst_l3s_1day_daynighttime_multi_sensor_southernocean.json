@@ -4,7 +4,7 @@
   "cloud_optimised_format": "zarr",
   "coiled_cluster_options": {
     "n_workers": [
-      20,
+      60,
       120
     ],
     "scheduler_vm_types": "m7i.xlarge",
@@ -16,7 +16,7 @@
       "memory_limit": "64GB"
     }
   },
-  "batch_size": 60,
+  "batch_size": 100,
   "metadata_uuid": "",
   "dimensions": {
     "time": {
