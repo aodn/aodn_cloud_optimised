@@ -4,7 +4,7 @@
   "cloud_optimised_format": "zarr",
   "metadata_uuid": "4cbb9eeb-9ed3-4079-a180-2293a2c219b9",
   "parent_config": "satellite_ghrsst_main.json",
-  "cluster_options": {
+  "coiled_cluster_options": {
     "n_workers": [
       60,
       180
