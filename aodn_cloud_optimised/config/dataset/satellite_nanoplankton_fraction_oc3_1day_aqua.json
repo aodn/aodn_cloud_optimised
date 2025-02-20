@@ -4,7 +4,7 @@
   "parent_config": "satellite_ocean_colour_1day_aqua_main.json",
   "metadata_uuid": "9fde091c-9d38-4b2f-ba23-c262c21a41a2",
   "var_template_shape": "nanop_brewin2012in",
-  "vars_to_drop_no_common_dimension": [],
+  "vars_incompatible_with_region": [],
   "schema": {
     "time": {
       "type": "timestamp[ns]",

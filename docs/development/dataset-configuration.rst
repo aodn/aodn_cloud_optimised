@@ -521,7 +521,7 @@ dataset which fall into this condition:
 
 .. code:: json
 
-       "vars_to_drop_no_common_dimension": ["I", "J", "LATITUDE", "LONGITUDE", "GDOP"],
+       "vars_incompatible_with_region": ["I", "J", "LATITUDE", "LONGITUDE", "GDOP"],
 
 Also, when a dataset to be converted to ZARR has some variables which
 aren’t always in the dataset, it is at the moment (July 2024) good
@@ -531,7 +531,7 @@ practice to drop them:
 
        "wind_speed_dtime_from_sst": {
          "type": "float32",
-         "drop_vars": true
+         "drop_var": true
        },
 
 .. note:: Important Note
@@ -551,7 +551,7 @@ practice to drop them:
     This behavior has been managed by simplifying the `preprocess` function and calling it post ``mfdataset`` call.
 
     However, we're currently dropping **ALL** variables which aren't present across all the NetCDF files. This is done by
-    adding ``"drop_vars": true`` in the schema definition for any variable to drop. In the future, this should be fixed!
+    adding ``"drop_var": true`` in the schema definition for any variable to drop. In the future, this should be fixed!
 
 
 Creating the Schema

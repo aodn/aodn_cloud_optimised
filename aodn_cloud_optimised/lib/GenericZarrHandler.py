@@ -96,9 +96,9 @@ def preprocess_xarray(ds, dataset_config):
     # Drop variables not in the list
     vars_to_drop = set(ds.data_vars) - set(schema)
 
-    # Add variables with "drop_vars": true in the schema to vars_to_drop
+    # Add variables with "drop_var": true in the schema to vars_to_drop
     for var_name, var_details in schema.items():
-        if var_details.get("drop_vars", False):
+        if var_details.get("drop_var", False):
             vars_to_drop.add(var_name)
 
     ds_filtered = ds.drop_vars(vars_to_drop, errors="ignore")
@@ -118,9 +118,9 @@ def preprocess_xarray(ds, dataset_config):
     var_required.pop(dimensions["latitude"]["name"])
     var_required.pop(dimensions["longitude"]["name"])
 
-    # Remove variables with "drop_vars": true from the var_required list
+    # Remove variables with "drop_var": true from the var_required list
     for var_name, var_details in schema.items():
-        if var_details.get("drop_vars", False):
+        if var_details.get("drop_var", False):
             var_required.pop(var_name, None)
 
     # TODO: make the variable below something more generic? a parameter?
@@ -248,8 +248,8 @@ class GenericHandler(CommonHandler):
 
         self.dimensions = self.dataset_config.get("dimensions")
         self.rechunk_drop_vars = kwargs.get("rechunk_drop_vars", None)
-        self.vars_to_drop_no_common_dimension = self.dataset_config.get(
-            "vars_to_drop_no_common_dimension", None
+        self.vars_incompatible_with_region = self.dataset_config.get(
+            "vars_incompatible_with_region", None
         )
 
         self.chunks = {
@@ -315,7 +315,7 @@ class GenericHandler(CommonHandler):
         drop_vars_list = [
             var_name
             for var_name, attrs in self.schema.items()
-            if attrs.get("drop_vars", False)
+            if attrs.get("drop_var", False)
         ]
 
         partial_preprocess = partial(
@@ -645,7 +645,7 @@ class GenericHandler(CommonHandler):
             # compute() was added as unittests failed on github, but not locally. related to
             # https://github.com/pydata/xarray/issues/5219
             ds.isel(**{time_dimension_name: indexes}).drop_vars(
-                self.vars_to_drop_no_common_dimension, errors="ignore"
+                self.vars_incompatible_with_region, errors="ignore"
             ).pad(**{time_dimension_name: (0, amount_to_pad)}).to_zarr(
                 self.store,
                 write_empty_chunks=self.write_empty_chunks,

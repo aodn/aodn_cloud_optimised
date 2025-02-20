@@ -34,7 +34,7 @@
     }
   },
   "var_template_shape": "sea_surface_temperature",
-  "vars_to_drop_no_common_dimension": [
+  "vars_incompatible_with_region": [
     "lat",
     "lon"
   ],

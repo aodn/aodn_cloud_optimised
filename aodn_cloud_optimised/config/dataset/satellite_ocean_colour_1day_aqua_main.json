@@ -31,7 +31,7 @@
       "chunk": 500
     }
   },
-  "vars_to_drop_no_common_dimension": [
+  "vars_incompatible_with_region": [
     "latitude",
     "longitude"
   ]

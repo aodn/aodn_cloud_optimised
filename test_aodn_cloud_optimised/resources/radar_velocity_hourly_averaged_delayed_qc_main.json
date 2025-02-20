@@ -34,7 +34,7 @@
     }
   },
   "var_template_shape": "UCUR",
-  "vars_to_drop_no_common_dimension": [
+  "vars_incompatible_with_region": [
     "I",
     "J",
     "LATITUDE",
@@ -74,7 +74,7 @@
     },
     "NOBS1": {
       "type": "float32",
-      "drop_vars": true
+      "drop_var": true
     },
     "NOBS2": {
       "type": "float32"
