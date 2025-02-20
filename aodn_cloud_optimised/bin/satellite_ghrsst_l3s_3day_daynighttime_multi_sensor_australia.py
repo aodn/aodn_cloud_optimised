@@ -3,7 +3,7 @@ import subprocess
 
 
 def main():
-    for i, year in enumerate(range(2013, 2025)):
+    for i, year in enumerate(range(2013, 2026)):
         command = [
             "generic_cloud_optimised_creation",
             "--paths",
@@ -13,9 +13,8 @@ def main():
             # "FILTER_STRING_1",
             "--dataset-config",
             "satellite_ghrsst_l3s_3day_daynighttime_multi_sensor_australia.json",
-            "--clear-existing-data",
             "--cluster-mode",
-            "remote",
+            "coiled",
         ]
 
         # Add --clear-existing-data for the first iteration only
