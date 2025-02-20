@@ -36,14 +36,16 @@
     "title": ""
   },
   "aws_opendata_registry": {
-    "Name": "IMOS - SRS - MODIS - 01 day - Chlorophyll-a concentration (OC3 model)",
+    "Name": "Satellite - Ocean Colour -  MODIS - 1 day - Chlorophyll-a concentration (OC3 model)",
     "Description": "The Aqua satellite platform carries a MODIS sensor that observes sunlight reflected from within the ocean surface layer at multiple wavelengths. These multi-spectral measurements are used to infer the concentration of chlorophyll-a (Chl-a), most typically due to phytoplankton, present in the water. \n\nThere are multiple retrieval algorithms for estimating Chl-a. These data use the OC3 method recommended by the NASA Ocean Biology Processing Group and implemented in the SeaDAS processing software l2gen. The OC3 algorithm is described at http://oceancolor.gsfc.nasa.gov/cms/atbd/chlor_a (and links therein).",
     "Documentation": "https://catalogue-imos.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/d7a14921-8f3f-4522-9a54-e7d1df969c8a",
     "Contact": "info@aodn.org.au",
     "ManagedBy": "AODN",
     "UpdateFrequency": "As Needed",
     "Tags": [
-      "FILL UP MANUALLY - CHECK DOCUMENTATION"
+      "oceans",
+      "satellite imagery",
+      "biology"
     ],
     "License": "http://creativecommons.org/licenses/by/4.0/",
     "Resources": [
@@ -72,6 +74,6 @@
         }
       ]
     },
-    "Citation": "IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access]"
+    "Citation": "The citation in a list of references is: \"IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access].\""
   }
 }

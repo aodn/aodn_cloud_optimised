@@ -29,7 +29,7 @@
   },
   "batch_size": 3000,
   "var_template_shape": "WDIR",
-  "vars_to_drop_no_common_dimension": [],
+  "vars_incompatible_with_region": [],
   "schema": {
     "TIME": {
       "type": "timestamp[ns]",

@@ -108,7 +108,7 @@
     "var_template_shape": {
       "type": "string"
     },
-    "vars_to_drop_no_common_dimension": {
+    "vars_incompatible_with_region": {
       "type": "array",
       "items": {
         "type": "string"
@@ -255,7 +255,7 @@
     "cloud_optimised_format",
     "dimensions",
     "var_template_shape",
-    "vars_to_drop_no_common_dimension",
+    "vars_incompatible_with_region",
     "schema"
   ]
 }

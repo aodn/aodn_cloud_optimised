@@ -154,7 +154,7 @@
     "var_template_shape": {
       "type": "string"
     },
-    "vars_to_drop_no_common_dimension": {
+    "vars_incompatible_with_region": {
       "type": "array",
       "items": {
         "type": "string"

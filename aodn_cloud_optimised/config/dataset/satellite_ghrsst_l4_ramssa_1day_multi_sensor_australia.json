@@ -34,7 +34,7 @@
     }
   },
   "var_template_shape": "analysed_sst",
-  "vars_to_drop_no_common_dimension": [
+  "vars_incompatible_with_region": [
     "lon",
     "lat",
     "crs"
@@ -126,7 +126,8 @@
       "grid_mapping_name": "latitude_longitude",
       "semi_major_axis": 6379137.0,
       "inverse_flattening": 298.257223563,
-      "epsg_code": "EPSG:4326"
+      "epsg_code": "EPSG:4326",
+      "drop_var": true
     }
   },
   "dataset_gattrs": {

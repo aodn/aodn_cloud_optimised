@@ -18,7 +18,7 @@
   },
   "batch_size": 6000,
   "var_template_shape": "UCUR",
-  "vars_to_drop_no_common_dimension": [
+  "vars_incompatible_with_region": [
     "LATITUDE",
     "LONGITUDE",
     "GDOP"
