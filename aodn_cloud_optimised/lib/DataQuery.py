@@ -6,7 +6,7 @@ Notebooks
 import json
 import os
 import re
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from functools import lru_cache
 from typing import Final
 
@@ -16,6 +16,7 @@ import cartopy.feature as cfeature
 import geopandas as gpd
 import gsw  # TEOS-10 library
 import matplotlib.pyplot as plt
+import matplotlib.ticker as mticker
 import numpy as np
 import pandas as pd
 import pyarrow as pa
@@ -56,7 +57,7 @@ def query_unique_value(dataset: pq.ParquetDataset, partition: str) -> set:
     return unique_values
 
 
-def get_temporal_extent(parquet_ds):
+def get_temporal_extent_v1(parquet_ds):
     """Calculate the temporal extent (start and end timestamps) of a Parquet dataset.
 
     This function determines the temporal extent of a Parquet dataset based on unique timestamps
@@ -78,6 +79,39 @@ def get_temporal_extent(parquet_ds):
         datetime.fromtimestamp(unique_timestamps.min(), tz=timezone.utc),
         datetime.fromtimestamp(unique_timestamps.max(), tz=timezone.utc),
     )
+
+
+def get_temporal_extent(parquet_ds):
+    """Calculate the temporal extent (start and end timestamps) of a Parquet dataset. Slow but accurate version
+
+    This function determines the temporal extent of a Parquet dataset
+    Args:
+        parquet_ds (pyarrow.parquet.ParquetDataset): The Parquet dataset to analyze.
+
+    Returns:
+        tuple: A tuple containing the temporal extent of the dataset.
+               The first element is the datetime corresponding to the minimum timestamp value,
+               and the second element is the datetime corresponding to the maximum timestamp value.
+    """
+    dname = f"s3://anonymous@{parquet_ds.__dict__['_base_dir']}"
+    unique_timestamps = query_unique_value(parquet_ds, "timestamp")
+    unique_timestamps = np.array([np.int64(string) for string in unique_timestamps])
+    unique_timestamps = np.sort(unique_timestamps)
+
+    if "TIME" in parquet_ds.schema.names:
+        time_varname = "TIME"
+    elif "JULD" in parquet_ds.schema.names:
+        time_varname = "JULD"
+
+    expr = pc.field("timestamp") == np.int64(unique_timestamps.max())
+    df = pd.read_parquet(dname, engine="pyarrow", columns=[time_varname], filters=expr)
+    time_max = df[time_varname].max()
+
+    expr = pc.field("timestamp") == np.int64(unique_timestamps.min())
+    df = pd.read_parquet(dname, engine="pyarrow", columns=[time_varname], filters=expr)
+    time_min = df[time_varname].min()
+
+    return time_min, time_max
 
 
 def get_timestamps_boundary_values(
@@ -439,6 +473,14 @@ def plot_spatial_extent(parquet_ds, coastline_resolution="110m"):
     ax.add_feature(cfeature.BORDERS, linestyle=":", edgecolor="gray")
     ax.add_feature(cfeature.LAND, edgecolor="black")
     ax.add_feature(cfeature.OCEAN, facecolor="lightblue")
+
+    # Add grid lines
+
+    gl = ax.gridlines(draw_labels=True, dms=True, x_inline=False, y_inline=False)
+    gl.xlocator = mticker.FixedLocator(range(-180, 181, 10))  # Longitudes every 10°
+    gl.ylocator = mticker.FixedLocator(range(-90, 91, 10))  # Latitudes every 10°
+    gl.xlabel_style = {"size": 10, "color": "black"}
+    gl.ylabel_style = {"size": 10, "color": "black"}
 
     ax.set_title("Spatial Extent and Coastline")
     ax.legend()
