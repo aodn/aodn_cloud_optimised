@@ -7,6 +7,8 @@ def main():
         "generic_cloud_optimised_creation",
         "--paths",
         "IMOS/SOOP/SOOP-SST/",
+        "--filters",
+        "1-min-avg",
         "--dataset-config",
         "vessel_sst_delayed_qc.json",
         "--clear-existing-data",

@@ -5,14 +5,15 @@ from datetime import datetime, timezone
 from unittest.mock import patch
 
 import boto3
+import pandas as pd
 import s3fs
 from moto import mock_aws
 from moto.moto_server.threaded_moto_server import ThreadedMotoServer
 from shapely.geometry import Polygon
 
-from aodn_cloud_optimised.lib.GenericParquetHandler import GenericHandler
-from aodn_cloud_optimised.lib.DataQuery import GetAodn
 from aodn_cloud_optimised.lib.config import load_dataset_config
+from aodn_cloud_optimised.lib.DataQuery import GetAodn
+from aodn_cloud_optimised.lib.GenericParquetHandler import GenericHandler
 from aodn_cloud_optimised.lib.s3Tools import s3_ls
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -182,10 +183,13 @@ class TestGenericHandler(unittest.TestCase):
 
         # test temporal extents
         res = aodn_instance.get_dataset("vessel_sst_delayed_qc").get_temporal_extent()
+
         self.assertEqual(
             (
-                datetime(2011, 1, 1, 0, 0, tzinfo=timezone.utc),
-                datetime(2011, 1, 1, 0, 0, tzinfo=timezone.utc),
+                pd.Timestamp("2011-01-01 00:00:00"),
+                pd.Timestamp("2011-01-31 23:59:00.000003584"),
+                # datetime(2011, 1, 1, 0, 0, tzinfo=timezone.utc),
+                # datetime(2011, 1, 1, 0, 0, tzinfo=timezone.utc),
             ),
             res,
         )

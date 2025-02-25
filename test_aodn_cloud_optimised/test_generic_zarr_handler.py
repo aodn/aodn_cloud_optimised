@@ -288,6 +288,13 @@ class TestGenericZarrHandler(unittest.TestCase):
         )
         self.assertTrue(
             any(
+                "imos-data/acorn/nwa/IMOS_ACORN_V_20220312T183000Z_NWA_FV01_1-hour-avg.nc> - LATITUDE is NOT consistent with the reference values"
+                in log
+                for log in captured_logs
+            )
+        )
+        self.assertTrue(
+            any(
                 "[<File-like object S3FileSystem, imos-data/acorn/nwa/IMOS_ACORN_V_20220312T183000Z_NWA_FV01_1-hour-avg.nc>]"
                 in log
                 for log in captured_logs
