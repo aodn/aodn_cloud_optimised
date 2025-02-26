@@ -11,6 +11,7 @@ You can also click on the binder/colab button above to spin the environment and 
 
 # AODN Notebooks
 
+- [animal_acoustic_tracking_delayed_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/animal_acoustic_tracking_delayed_qc.ipynb)
 - [animal_ctd_satellite_relay_tagging_delayed_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/animal_ctd_satellite_relay_tagging_delayed_qc.ipynb)
 - [argo.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/argo.ipynb)
 - [autonomous_underwater_vehicle.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/autonomous_underwater_vehicle.ipynb)
@@ -36,7 +37,6 @@ You can also click on the binder/colab button above to spin the environment and 
 - [radar_SouthAustraliaGulfs_wave_delayed_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/radar_SouthAustraliaGulfs_wave_delayed_qc.ipynb)
 - [radar_SouthAustraliaGulfs_wind_delayed_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/radar_SouthAustraliaGulfs_wind_delayed_qc.ipynb)
 - [radar_TurquoiseCoast_velocity_hourly_averaged_delayed_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/radar_TurquoiseCoast_velocity_hourly_averaged_delayed_qc.ipynb)
-- [animal_acoustic_tracking_delayed_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/animal_acoustic_tracking_delayed_qc.ipynb)
 - [satellite_chlorophylla_carder_1day_aqua.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_chlorophylla_carder_1day_aqua.ipynb)
 - [satellite_chlorophylla_gsm_1day_aqua.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_chlorophylla_gsm_1day_aqua.ipynb)
 - [satellite_chlorophylla_oc3_1day_aqua.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_chlorophylla_oc3_1day_aqua.ipynb)
