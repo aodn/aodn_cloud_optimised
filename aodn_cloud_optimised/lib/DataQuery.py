@@ -531,7 +531,7 @@ def plot_time_coverage(ds, time_var="time"):
     plt.xticks(rotation=45)
 
 
-def plot_radar_velocity_rose(ds, time_start, time_end, time_name="TIME"):
+def plot_radar_water_velocity_rose(ds, time_start, time_end, time_name="TIME"):
     """
     Plots a wind rose of speed averages over a specified time range.
 
@@ -579,7 +579,7 @@ def plot_radar_velocity_rose(ds, time_start, time_end, time_name="TIME"):
     plt.show()
 
 
-def plot_gridded_radar_velocity(
+def plot_radar_water_velocity_gridded(
     ds, time_start, time_name="TIME", coastline_resolution="50m"
 ):
     """
