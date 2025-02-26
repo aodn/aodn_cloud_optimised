@@ -415,7 +415,9 @@ def next_steps(dataset_name):
     # Step 2
     print(
         colored(
-            f"2) Open the new dataset configuration JSON file", "yellow", attrs=["bold"]
+            f"2) Open the new dataset configuration JSON file ",
+            "yellow",
+            attrs=["bold"],
         )
         + colored(f"{json_config_path}", "cyan", attrs=["bold"])
     )
@@ -426,6 +428,12 @@ def next_steps(dataset_name):
     print(
         colored(
             "   2.2) Check AWS registry metadata in the dataset configuration", "yellow"
+        )
+    )
+    print(
+        colored(
+            "   2.3) The above can be done semi-auto with the Excel IMOSPortalcollections on teams (exported as CSV), and called with `cloud_optimised_create_aws_registry_dataset -a -c IMOSPortalcollections\(CloudOptimisedPublication\).csv`",
+            "yellow",
         )
     )
     print("")
@@ -493,6 +501,22 @@ def next_steps(dataset_name):
         colored(
             "   6.1) Submit a PR to https://github.com/awslabs/open-data-registry with the new registry file created",
             "yellow",
+        )
+    )
+
+    print(
+        colored(
+            "   6.1) Submit a PR to https://github.com/awslabs/open-data-registry with the new registry file created",
+            "yellow",
+        )
+    )
+
+    print(
+        colored(
+            "\n\nhttps://aodn-cloud-optimised.readthedocs.io/en/latest/ For more info",
+            "white",
+            "on_red",
+            attrs=["bold", "underline"],
         )
     )
 
