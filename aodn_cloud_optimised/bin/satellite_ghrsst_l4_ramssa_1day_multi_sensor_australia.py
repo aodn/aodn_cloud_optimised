@@ -3,7 +3,7 @@ import subprocess
 
 
 def main():
-    imos_paths = [f"IMOS/SRS/SST/ghrsst/L4/RAMSSA/{year}" for year in range(2006, 2025)]
+    imos_paths = [f"IMOS/SRS/SST/ghrsst/L4/RAMSSA/{year}" for year in range(2006, 2026)]
 
     command = [
         "generic_cloud_optimised_creation",

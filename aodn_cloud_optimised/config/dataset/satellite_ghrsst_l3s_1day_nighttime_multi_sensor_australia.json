@@ -3,7 +3,7 @@
   "logger_name": "satellite_ghrsst_l3s_1day_nighttime_multi_sensor_australia",
   "parent_config": "satellite_ghrsst_main.json",
   "metadata_uuid": "d3e3bce3-adb4-433a-a192-93abc91899d3",
-  "batch_size": 100,
+  "batch_size": 30,
   "dimensions": {
     "time": {
       "name": "time",
