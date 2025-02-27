@@ -4,11 +4,11 @@
   "cloud_optimised_format": "zarr",
   "coiled_cluster_options": {
     "n_workers": [
-      8,
-      120
+      50,
+      200
     ],
-    "scheduler_vm_types": "m6i.2xlarge",
-    "worker_vm_types": "m6i.2xlarge",
+    "scheduler_vm_types": "m7i.2xlarge",
+    "worker_vm_types": "m7i.2xlarge",
     "allow_ingress_from": "me",
     "compute_purchase_option": "spot_with_fallback",
     "worker_options": {
