@@ -38,6 +38,7 @@ class CommonHandler:
                 cluster_mode (str, optional): Specifies the type of cluster to create ("coiled", "ec2", "local", or None). Defaults to "local".
                 dataset_config (dict): Configuration dictionary for the dataset.
                 clear_existing_data (bool, optional): Flag to clear existing data. Defaults to None.
+                raise_error (bool, optional): raise error if logger.error
 
         Attributes:
             start_time (float): The start time of the handler.
@@ -58,6 +59,7 @@ class CommonHandler:
             ValueError: If an invalid cluster_mode is specified.
         """
         self.start_time = timeit.default_timer()
+        self.raise_error = kwargs.get("raise_error", False)
 
         # TODO: remove this variable, not used anymore.
         # self.raw_bucket_name = kwargs.get(
@@ -91,7 +93,7 @@ class CommonHandler:
         self.schema = self.dataset_config.get("schema")
 
         logger_name = self.dataset_config.get("logger_name", "generic")
-        self.logger = get_logger(logger_name)
+        self.logger = get_logger(logger_name, raise_error=self.raise_error)
 
         cloud_optimised_format = self.dataset_config.get("cloud_optimised_format")
 
@@ -473,7 +475,7 @@ def cloud_optimised_creation(
     s3_file_uri_list: List[str],
     dataset_config: dict,
     **kwargs,
-) -> str:
+) -> bool:
     """
     Iterate through a list of s3 file paths and create Cloud Optimised files for each file.
 
@@ -516,14 +518,14 @@ def cloud_optimised_creation(
         ),
         "cluster_mode": kwargs.get("cluster_mode", "local"),
         "s3fs_session": kwargs.get("s3fs_session", None),
-        "raise_error": kwargs.get("raise_error", None),
+        "raise_error": kwargs.get("raise_error", False),
     }
 
     # Filter out None values
     filtered_kwargs = {k: v for k, v in kwargs_handler_class.items() if v is not None}
     kwargs_handler_class = filtered_kwargs
     logger_name = dataset_config.get("logger_name", "generic")
-    logger = get_logger(logger_name)
+    logger = get_logger(logger_name, raise_error=kwargs.get("raise_error", False))
 
     kwargs_handler_class["dataset_config"] = dataset_config
     kwargs_handler_class["clear_existing_data"] = handler_clear_existing_data_arg
@@ -543,7 +545,7 @@ def cloud_optimised_creation(
     time_spent_processing = timeit.default_timer() - start_whole_processing
     logger.info(f"Processed entire dataset in {time_spent_processing}s")
 
-    return cluster_id
+    return True
 
     # TODO: everything seems very slow using to_cloud_optimised. Maybe let's try to use to_cloud_optimised_single below?
     #       and comment above or do something. Will comment for now

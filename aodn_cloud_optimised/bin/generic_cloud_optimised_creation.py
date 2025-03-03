@@ -133,7 +133,7 @@ def main():
     parser.add_argument(
         "--raise-error",
         action="store_true",
-        help="Flag to exit the code on the first error.Default is False.",
+        help="Flag to exit the code on the first error. Default is False.",
     )
     args = parser.parse_args()
 
@@ -163,7 +163,7 @@ def main():
     )
 
     # Call cloud_optimised_creation
-    cloud_optimised_creation(
+    res = cloud_optimised_creation(
         nc_obj_ls,
         dataset_config=dataset_config,
         handler_class=None,
@@ -174,6 +174,8 @@ def main():
         root_prefix_cloud_optimised_path=args.root_prefix_cloud_optimised_path,
         raise_error=args.raise_error,
     )
+
+    return res
 
 
 if __name__ == "__main__":
