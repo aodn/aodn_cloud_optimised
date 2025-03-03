@@ -7,7 +7,7 @@ from botocore import UNSIGNED
 from botocore.config import Config
 
 
-def s3_ls(bucket, prefix, suffix=".nc", s3_path=True) -> list:
+def s3_ls(bucket, prefix, suffix=".nc", s3_path=True, exclude=None) -> list:
     """
     Return a list of object keys under a specific prefix in the specified S3 bucket
     with the specified suffix.
@@ -47,6 +47,9 @@ def s3_ls(bucket, prefix, suffix=".nc", s3_path=True) -> list:
 
     for page in pages:
         for obj in page.get("Contents", []):
+            if exclude and exclude in obj["Key"]:
+                continue
+
             if obj["Key"].endswith(suffix):
                 if s3_path:
                     s3_objs.append(f"s3://{bucket}/{obj['Key']}")
