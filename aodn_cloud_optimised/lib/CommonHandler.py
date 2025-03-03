@@ -516,6 +516,7 @@ def cloud_optimised_creation(
         ),
         "cluster_mode": kwargs.get("cluster_mode", "local"),
         "s3fs_session": kwargs.get("s3fs_session", None),
+        "raise_error": kwargs.get("raise_error", None),
     }
 
     # Filter out None values
