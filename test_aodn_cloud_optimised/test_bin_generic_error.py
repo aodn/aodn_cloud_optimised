@@ -21,6 +21,7 @@ filenames = [
     "IMOS_ACORN_V_20240101T010000Z_TURQ_FV01_1-hour-avg.nc",
     "IMOS_ACORN_V_20240101T020000Z_TURQ_FV01_1-hour-avg.nc",
     "IMOS_ACORN_V_20240101T030000Z_TURQ_FV01_1-hour-avg.nc",
+    "DUMMY.nc",
 ]
 
 TEST_FILE_NC_ACORN = [
@@ -30,7 +31,8 @@ TEST_FILE_NC_ACORN = [
 DATASET_CONFIG_NC_ACORN_JSON = os.path.join(
     ROOT_DIR,
     "resources",
-    "radar_TurquoiseCoast_velocity_hourly_averaged_delayed_qc.json",
+    # "radar_TurquoiseCoast_velocity_hourly_averaged_delayed_qc.json",
+    "wave_buoy_realtime_nonqc.json",
 )
 
 
@@ -39,7 +41,6 @@ class TestGenericCloudOptimisedCreation(unittest.TestCase):
     def setUp(self):
         # TODO: remove this abomination for unittesting. but it works. Only for zarr !
         os.environ["RUNNING_UNDER_UNITTEST"] = "true"
-
         # Create a mock S3 service
         self.BUCKET_OPTIMISED_NAME = "optimised-bucket"
         self.ROOT_PREFIX_CLOUD_OPTIMISED_PATH = "testing"
@@ -124,14 +125,16 @@ class TestGenericCloudOptimisedCreation(unittest.TestCase):
         # Prepare mock arguments
         mock_parse_args.return_value = MagicMock(
             paths=["IMOS/ACORN/gridded_1h-avg-current-map_QC"],
-            filters=["TURQ"],
+            # filters=["TURQ"],
+            filters=[".nc"],
             exclude="FV02",
             suffix=".nc",
-            raise_error=False,
+            raise_error=True,
             dataset_config=DATASET_CONFIG_NC_ACORN_JSON,
             clear_existing_data=True,
             force_previous_parquet_deletion=False,
-            cluster_mode=ClusterMode.LOCAL,
+            # cluster_mode=ClusterMode.LOCAL,
+            cluster_mode=ClusterMode.NONE,
             optimised_bucket_name=self.BUCKET_OPTIMISED_NAME,
             root_prefix_cloud_optimised_path="testing",
             bucket_raw="imos-data",
@@ -143,30 +146,15 @@ class TestGenericCloudOptimisedCreation(unittest.TestCase):
         logger = logging.getLogger()
         logger.addHandler(log_handler)
 
-        try:
-            # Run main function
+        with self.assertRaises(Exception) as context:
             main()
 
-            # Get captured logs
-            log_handler.flush()
-            captured_logs = log_stream.getvalue().strip().split("\n")
+        # with self.assertRaises(SystemExit) as cm:
+        #     main()
+        # self.assertEqual(cm.exception.code, 1)  # Verify exit code
 
-            # Validate logs
-            self.assertTrue(
-                any("Cluster dask dashboard" in log for log in captured_logs)
-            )
-            self.assertTrue(any("Processing batch 1" in log for log in captured_logs))
-            self.assertTrue(
-                any(
-                    "Batch 1 successfully published to Zarr store" in log
-                    for log in captured_logs
-                )
-            )
-            self.assertFalse(any("ERROR" in log for log in captured_logs))
-
-        finally:
-            # Restore stdout
-            sys.stdout = sys.__stdout__
+        # Restore stdout
+        # sys.stdout = sys.__stdout__
 
 
 if __name__ == "__main__":

@@ -1,8 +1,25 @@
 import inspect
 import logging
 import os
+import sys
 import tempfile
 from datetime import datetime
+
+
+class ExitOnErrorLogger(logging.Logger):
+    """Custom logger that exits on error if raise_error is set."""
+
+    def __init__(self, name, raise_error=True):
+        super().__init__(name)
+
+        self.raise_error = raise_error
+
+    def error(self, msg, *args, **kwargs):
+
+        super(ExitOnErrorLogger, self).error(msg, *args, **kwargs)
+        if self.raise_error:
+            raise Exception("Error in Cloud Optimised process. Forcing script exit")
+            # sys.exit(1)
 
 
 class CustomFormatter(logging.Formatter):
@@ -57,13 +74,16 @@ class CustomFormatter(logging.Formatter):
         return formatter.format(record)
 
 
-def get_logger(logger_name: str, log_level: int = logging.DEBUG) -> logging.Logger:
+def get_logger(
+    logger_name: str, log_level: int = logging.DEBUG, raise_error: bool = False
+) -> logging.Logger:
     """
     Get or create a logger with colored output for console, and non-colored output for file.
 
     Args:
         logger_name (str): Name of the logger.
         log_level (int, optional): Logging level for the logger (default is logging.DEBUG).
+        raise_error (bool, optional): if True, sys.exit(1) on any log.error
 
     Returns:
         logging.Logger: The logger object.
@@ -72,7 +92,12 @@ def get_logger(logger_name: str, log_level: int = logging.DEBUG) -> logging.Logg
     existing_logger = logging.getLogger(logger_name)
 
     if not existing_logger.handlers:
-        logger = logging.getLogger(logger_name)
+        if raise_error:
+            # Use the custom logger
+            logger = ExitOnErrorLogger(logger_name)
+        else:
+            logger = logging.getLogger(logger_name)
+
         logger.setLevel(log_level)
 
         # Console handler with color
@@ -94,4 +119,6 @@ def get_logger(logger_name: str, log_level: int = logging.DEBUG) -> logging.Logg
         file_handler.setLevel(log_level)
         logger.addHandler(file_handler)
 
-    return existing_logger
+        return logger
+    else:
+        return existing_logger

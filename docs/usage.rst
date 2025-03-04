@@ -22,6 +22,7 @@ As a standalone bash script
       --filters [FILTERS ...]
                             Optional filter strings to apply on the S3 paths. Example: '_hourly-timeseries_' 'FV02'
       --suffix SUFFIX       Optional suffix used by s3_ls to filter S3 objects. Default is .nc. Example: '.nc'
+      --exclude EXCLUDE     Optional string to exclude files listed by s3_ls to filter S3 objects. '_FV01_'
       --dataset-config DATASET_CONFIG
                             Path to the dataset config JSON file. Example: 'mooring_hourly_timeseries_delayed_qc.json'
       --clear-existing-data
@@ -36,6 +37,8 @@ As a standalone bash script
                             Prefix value for the root location of the cloud optimised objects, such as s3://optimised-bucket-name/root-prefix-cloud-optimised-path/... Default is 'cloud_optimised/cluster_testing'
       --bucket-raw BUCKET_RAW
                             Bucket name where input object files will be searched for. Default is 'imos-data'
+      --raise-error         Flag to exit the code on the first error. Default is False.
+
 
     Examples:
       generic_cloud_optimised_creation --paths 'IMOS/ANMN/NSW' 'IMOS/ANMN/PA' --filters '_hourly-timeseries_' 'FV02' --dataset-config 'mooring_hourly_timeseries_delayed_qc.json' --clear-existing-data --cluster-mode 'remote'

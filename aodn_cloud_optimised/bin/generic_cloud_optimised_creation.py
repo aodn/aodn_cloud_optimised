@@ -75,6 +75,13 @@ def main():
         default=".nc",
         help="Optional suffix used by s3_ls to filter S3 objects. Default is .nc. Example: '.nc'",
     )
+
+    parser.add_argument(
+        "--exclude",
+        default=None,
+        help="Optional string to exclude files listed by s3_ls to filter S3 objects. '_FV01_'",
+    )
+
     parser.add_argument(
         "--dataset-config",
         required=True,
@@ -123,6 +130,11 @@ def main():
         f"Default is '{load_variable_from_config('BUCKET_RAW_DEFAULT')}'",
     )
 
+    parser.add_argument(
+        "--raise-error",
+        action="store_true",
+        help="Flag to exit the code on the first error. Default is False.",
+    )
     args = parser.parse_args()
 
     bucket_raw_value = args.bucket_raw
@@ -130,7 +142,9 @@ def main():
     # Gather S3 paths
     nc_obj_ls = []
     for path in args.paths:
-        nc_obj_ls += s3_ls(bucket_raw_value, path, suffix=args.suffix)
+        nc_obj_ls += s3_ls(
+            bucket_raw_value, path, suffix=args.suffix, exclude=args.exclude
+        )
 
     # Apply filters
     for filter_str in args.filters:
@@ -149,7 +163,7 @@ def main():
     )
 
     # Call cloud_optimised_creation
-    cloud_optimised_creation(
+    res = cloud_optimised_creation(
         nc_obj_ls,
         dataset_config=dataset_config,
         handler_class=None,
@@ -158,7 +172,10 @@ def main():
         cluster_mode=args.cluster_mode,
         optimised_bucket_name=args.optimised_bucket_name,
         root_prefix_cloud_optimised_path=args.root_prefix_cloud_optimised_path,
+        raise_error=args.raise_error,
     )
+
+    return res
 
 
 if __name__ == "__main__":

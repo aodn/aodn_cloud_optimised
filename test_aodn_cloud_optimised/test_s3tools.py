@@ -63,6 +63,14 @@ class TestS3Tools(unittest.TestCase):
             ["s3://test-bucket/prefix/file1.nc", "s3://test-bucket/prefix/file2.nc"],
         )
 
+    def test_s3_ls_exclude(self):
+        result = s3_ls(self.bucket_name, "prefix", exclude="e2")
+
+        self.assertEqual(
+            result,
+            ["s3://test-bucket/prefix/file1.nc"],
+        )
+
     def test_split(self):
         bucket_name, key = split_s3_path("s3://test-bucket/prefix/file1.nc")
         self.assertEqual(bucket_name, "test-bucket")
