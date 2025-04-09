@@ -19,7 +19,6 @@ class ExitOnErrorLogger(logging.Logger):
         super(ExitOnErrorLogger, self).error(msg, *args, **kwargs)
         if self.raise_error:
             raise Exception("Error in Cloud Optimised process. Forcing script exit")
-            # sys.exit(1)
 
 
 class CustomFormatter(logging.Formatter):
