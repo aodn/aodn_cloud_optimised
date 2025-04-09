@@ -36,14 +36,15 @@ Arguments:
 """
 
 import argparse
-from importlib.resources import files
+import sys
 import warnings
+from importlib.resources import files
 
 from aodn_cloud_optimised.lib import clusterLib
 from aodn_cloud_optimised.lib.CommonHandler import cloud_optimised_creation
 from aodn_cloud_optimised.lib.config import (
-    load_variable_from_config,
     load_dataset_config,
+    load_variable_from_config,
 )
 from aodn_cloud_optimised.lib.s3Tools import s3_ls
 
@@ -175,8 +176,4 @@ def main():
         raise_error=args.raise_error,
     )
 
-    return res
-
-
-if __name__ == "__main__":
-    main()
+    sys.exit(0 if res else 1)
