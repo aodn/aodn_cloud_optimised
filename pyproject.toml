@@ -45,7 +45,7 @@ zarr = "==2.18.3"
 geopandas = ">=0.14.4"
 coiled = ">=1.90.4"
 dask-cloudprovider = ">=2024.9.1"
-dask = ">=2025.1.0"
+dask = ">=2025.3.0"
 dask-expr = ">=2.0.0"                                      # needs to be added for coiled otherwise an old version is used and not updated
 colorama = ">=0.4.6"
 s3path = ">=0.5.7"
