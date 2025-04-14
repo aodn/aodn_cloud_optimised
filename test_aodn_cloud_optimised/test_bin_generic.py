@@ -120,7 +120,8 @@ class TestGenericCloudOptimisedCreation(unittest.TestCase):
         del os.environ["RUNNING_UNDER_UNITTEST"]
 
     @patch("argparse.ArgumentParser.parse_args")
-    def test_main(self, mock_parse_args):
+    @patch("sys.exit")
+    def test_main(self, mock_exit, mock_parse_args):
         # Prepare mock arguments
         mock_parse_args.return_value = MagicMock(
             paths=["IMOS/ACORN/gridded_1h-avg-current-map_QC"],
@@ -163,6 +164,9 @@ class TestGenericCloudOptimisedCreation(unittest.TestCase):
                 )
             )
             self.assertFalse(any("ERROR" in log for log in captured_logs))
+
+            # Ensure sys.exit was called with 0 (success)
+            mock_exit.assert_called_with(0)
 
         finally:
             # Restore stdout
