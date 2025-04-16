@@ -10,6 +10,14 @@ You can also click on the binder/colab button above to spin the environment and 
 - [GetAodnData.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb)
 
 # AODN Notebooks
+- [satellite_chlorophylla_oc3_1day_noaa20.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_chlorophylla_oc3_1day_noaa20.ipynb)
+- [satellite_chlorophylla_oc3_1day_snpp.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_chlorophylla_oc3_1day_snpp.ipynb)
+- [satellite_chlorophylla_oci_1day_noaa20.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_chlorophylla_oci_1day_noaa20.ipynb)
+- [satellite_chlorophylla_oci_1day_snpp.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_chlorophylla_oci_1day_snpp.ipynb)
+- [satellite_diffuse_attenuation_coefficent_1day_noaa20.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_diffuse_attenuation_coefficent_1day_noaa20.ipynb)
+- [satellite_diffuse_attenuation_coefficent_1day_snpp.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_diffuse_attenuation_coefficent_1day_snpp.ipynb)
+- [satellite_chlorophylla_gsm_1day_noaa20.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_chlorophylla_gsm_1day_noaa20.ipynb)
+- [satellite_chlorophylla_gsm_1day_snpp.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_chlorophylla_gsm_1day_snpp.ipynb)
 
 - [animal_acoustic_tracking_delayed_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/animal_acoustic_tracking_delayed_qc.ipynb)
 - [animal_ctd_satellite_relay_tagging_delayed_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/animal_ctd_satellite_relay_tagging_delayed_qc.ipynb)
