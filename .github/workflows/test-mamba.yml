@@ -19,26 +19,15 @@ jobs:
           submodules: "true"
 
       - name: Set up Miniconda
-        uses: conda-incubator/setup-miniconda@v3
+        uses: mamba-org/setup-micromamba@v2
         with:
-          activate-environment: AodnCloudOptimised
-          conda-solver: libmamba
           environment-file: environment.yml
-          auto-activate-base: false # Prevent activating base env
-
-      - name: Install dependencies
-        shell: bash -el {0}
-        run: |
-          conda install --yes mamba
-          mamba env create --name AodnCloudOptimised --file environment.yml || true  # Create only if not exists
-          conda activate AodnCloudOptimised
-          mamba env update --name AodnCloudOptimised --file environment.yml
+          generate-run-shell: true
+          init-shell: bash
 
       - name: Activate Conda environment
         shell: bash -el {0}
         run: |
-          conda init
-          conda activate AodnCloudOptimised
           poetry install --no-interaction
 
       - name: Run pytest and coverage
