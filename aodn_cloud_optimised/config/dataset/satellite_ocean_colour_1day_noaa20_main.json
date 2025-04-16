@@ -1,0 +1,38 @@
+{
+  "dataset_name": "satellite_ocean_colour_1day_noaa20_main",
+  "cloud_optimised_format": "zarr",
+  "coiled_cluster_options": {
+    "n_workers": [
+      25,
+      150
+    ],
+    "scheduler_vm_types": "m7i.2xlarge",
+    "worker_vm_types": "m7i.2xlarge",
+    "allow_ingress_from": "me",
+    "compute_purchase_option": "spot_with_fallback",
+    "worker_options": {
+      "nthreads": 32,
+      "memory_limit": "64GB"
+    }
+  },
+  "batch_size": 125,
+  "dimensions": {
+    "time": {
+      "name": "time",
+      "chunk": 5,
+      "rechunk": false
+    },
+    "latitude": {
+      "name": "latitude",
+      "chunk": 600
+    },
+    "longitude": {
+      "name": "longitude",
+      "chunk": 800
+    }
+  },
+  "vars_incompatible_with_region": [
+    "latitude",
+    "longitude"
+  ]
+}
