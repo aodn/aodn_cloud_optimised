@@ -2,9 +2,9 @@ name: mamba environment testing
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   build-linux:
@@ -16,14 +16,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          submodules: 'true'
+          submodules: "true"
 
       - name: Set up Miniconda
         uses: conda-incubator/setup-miniconda@v3
         with:
           activate-environment: AodnCloudOptimised
+          conda-solver: libmamba
           environment-file: environment.yml
-          auto-activate-base: false  # Prevent activating base env
+          auto-activate-base: false # Prevent activating base env
 
       - name: Install dependencies
         shell: bash -el {0}
@@ -46,11 +47,11 @@ jobs:
           coverage report --fail-under=60
           coverage xml -o coverage.xml
 
-#      - name: Upload coverage report
-        #uses: actions/upload-artifact@v2
-        #with:
-          #name: coverage-report
-#          path: coverage.xml
+      #      - name: Upload coverage report
+      #uses: actions/upload-artifact@v2
+      #with:
+      #name: coverage-report
+      #          path: coverage.xml
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v4.0.1
         with:
