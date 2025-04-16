@@ -3,7 +3,7 @@ import subprocess
 
 
 def main():
-    for i, year in enumerate(range(2007, 2025)):
+    for i, year in enumerate(range(2009, 2025)):
         command = [
             "generic_cloud_optimised_creation",
             "--paths",
@@ -22,7 +22,3 @@ def main():
 
         # Run the command
         subprocess.run(command, check=True)
-
-
-if __name__ == "__main__":
-    main()

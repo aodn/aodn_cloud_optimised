@@ -432,7 +432,7 @@ def next_steps(dataset_name):
     )
     print(
         colored(
-            "   2.3) The above can be done semi-auto with the Excel IMOSPortalcollections on teams (exported as CSV), and called with `cloud_optimised_create_aws_registry_dataset -a -c IMOSPortalcollections\(CloudOptimisedPublication\).csv`",
+            "   2.3) The above can be done semi-auto with the Excel IMOSPortalcollections on teams (exported as CSV), and called with `cloud_optimised_create_aws_registry_dataset -a -c IMOSPortalcollections(CloudOptimisedPublication).csv`",
             "yellow",
         )
     )
