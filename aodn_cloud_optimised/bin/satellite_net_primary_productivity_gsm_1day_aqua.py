@@ -19,12 +19,8 @@ def main():
         ]
 
         # # Add --clear-existing-data for the first iteration only
-        # if i == 0:
-        #     command.append("--clear-existing-data")
+        if i == 0:
+            command.append("--clear-existing-data")
 
         # Run the command
         subprocess.run(command, check=True)
-
-
-if __name__ == "__main__":
-    main()

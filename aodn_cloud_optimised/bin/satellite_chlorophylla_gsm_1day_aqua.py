@@ -20,7 +20,3 @@ def main():
 
     # Run the command
     subprocess.run(command, check=True)
-
-
-if __name__ == "__main__":
-    main()
