@@ -101,7 +101,7 @@ def get_logger(
 
     # Console handler with color
     color_formatter = CustomFormatter(use_color=True)
-    
+
     # Check for handler types to avoid duplicates
     existing_handler_types = {type(h) for h in logger.handlers}
 
