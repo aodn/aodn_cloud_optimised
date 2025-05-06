@@ -78,46 +78,58 @@ def get_logger(
 ) -> logging.Logger:
     """
     Get or create a logger with colored output for console, and non-colored output for file.
+    Preserves existing handlers like Prefect's APILogHandler.
 
     Args:
         logger_name (str): Name of the logger.
         log_level (int, optional): Logging level for the logger (default is logging.DEBUG).
-        raise_error (bool, optional): if True, sys.exit(1) on any log.error
+        raise_error (bool, optional): if True, raise exception on any log.error
 
     Returns:
         logging.Logger: The logger object.
     """
+    print(f"[DEBUG] Initializing logger: {logger_name}")
 
-    existing_logger = logging.getLogger(logger_name)
+    logger = logging.getLogger(logger_name)
 
-    if not existing_logger.handlers:
-        if raise_error:
-            # Use the custom logger
-            logger = ExitOnErrorLogger(logger_name)
-        else:
-            logger = logging.getLogger(logger_name)
+    if raise_error and not isinstance(logger, ExitOnErrorLogger):
+        print(f"[DEBUG] Monkey-patching logger class for: {logger_name}")
+        logger.__class__ = ExitOnErrorLogger
+        logger.raise_error = True
 
-        logger.setLevel(log_level)
+    logger.setLevel(log_level)
 
-        # Console handler with color
-        color_formatter = CustomFormatter(use_color=True)
+    # Console handler with color
+    color_formatter = CustomFormatter(use_color=True)
+    
+    # Check for handler types to avoid duplicates
+    existing_handler_types = {type(h) for h in logger.handlers}
+
+    # Add StreamHandler only if it doesn't already exist
+    if logging.StreamHandler not in existing_handler_types:
+        print("[DEBUG] Adding StreamHandler...")
         stream_handler = logging.StreamHandler()
-        stream_handler.setFormatter(color_formatter)
+        stream_handler.setFormatter(CustomFormatter(color_formatter))
         stream_handler.setLevel(log_level)
         logger.addHandler(stream_handler)
+        print("[DEBUG] StreamHandler added.")
+    else:
+        print("[DEBUG] StreamHandler already present.")
 
-        # Create a temporary file for logging with prefix and date
+    # Add FileHandler only if it doesn't already exist
+    if logging.FileHandler not in existing_handler_types:
+        print("[DEBUG] Adding FileHandler...")
         date_str = datetime.now().strftime("%Y-%m-%d")
         temp_file_name = f"cloud_optimised_{logger_name}_{date_str}.log"
         temp_path = os.path.join(tempfile.gettempdir(), temp_file_name)
 
-        # File handler without color
-        file_formatter = CustomFormatter(use_color=False)
         file_handler = logging.FileHandler(temp_path)
-        file_handler.setFormatter(file_formatter)
+        file_handler.setFormatter(CustomFormatter(use_color=False))
         file_handler.setLevel(log_level)
         logger.addHandler(file_handler)
 
-        return logger
+        print(f"[DEBUG] FileHandler added. Log file path: {temp_path}")
     else:
-        return existing_logger
+        print("[DEBUG] FileHandler already present.")
+
+    return logger
