@@ -2378,15 +2378,15 @@ files = [
 
 [[package]]
 name = "hypothesis"
-version = "6.131.13"
+version = "6.131.14"
 description = "A library for property-based testing"
 optional = false
 python-versions = ">=3.9"
 groups = ["main"]
 markers = "python_version <= \"3.11\" or python_version >= \"3.12\""
 files = [
-    {file = "hypothesis-6.131.13-py3-none-any.whl", hash = "sha256:2b8d162606d17b6a04c5f1689d767e1e60b7c0a7918ea6ff5e61e3b4a545befb"},
-    {file = "hypothesis-6.131.13.tar.gz", hash = "sha256:eb55d676e4df6ce37f9b6909f1919ca8e0c77e11d1f43b9cb9031170899fce3e"},
+    {file = "hypothesis-6.131.14-py3-none-any.whl", hash = "sha256:4cb939361a75c5946fe3e049d69737b00bde3908f162da6dcea5b2a326cea0a2"},
+    {file = "hypothesis-6.131.14.tar.gz", hash = "sha256:347edc46cfe9bfcfb0598c4c927ed8fd573edfc8bacd2162023c4cf16accb702"},
 ]
 
 [package.dependencies]
@@ -6796,15 +6796,15 @@ zstd = ["zstandard (>=0.18.0)"]
 
 [[package]]
 name = "virtualenv"
-version = "20.31.1"
+version = "20.30.0"
 description = "Virtual Python Environment builder"
 optional = false
 python-versions = ">=3.8"
 groups = ["main", "dev"]
 markers = "python_version <= \"3.11\" or python_version >= \"3.12\""
 files = [
-    {file = "virtualenv-20.31.1-py3-none-any.whl", hash = "sha256:f448cd2f1604c831afb9ea238021060be2c0edbcad8eb0a4e8b4e14ff11a5482"},
-    {file = "virtualenv-20.31.1.tar.gz", hash = "sha256:65442939608aeebb9284cd30baca5865fcd9f12b58bb740a24b220030df46d26"},
+    {file = "virtualenv-20.30.0-py3-none-any.whl", hash = "sha256:e34302959180fca3af42d1800df014b35019490b119eba981af27f2fa486e5d6"},
+    {file = "virtualenv-20.30.0.tar.gz", hash = "sha256:800863162bcaa5450a6e4d721049730e7f2dae07720e0902b0e4040bd6f9ada8"},
 ]
 
 [package.dependencies]
@@ -7444,4 +7444,4 @@ cffi = ["cffi (>=1.11)"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10, <4.0"
-content-hash = "33dfa3c1927f15a097149b7104e521fe3650ac4d80fd4057f0c7e97ea7c31235"
+content-hash = "62c1d69918c023bf4f8447a69563910d66de58e9cc00eb2c054af85457c12590"
