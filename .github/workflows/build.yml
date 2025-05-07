@@ -86,6 +86,10 @@ jobs:
         run: |
           poetry build
 
+          # add freeze step see https://github.com/python-poetry/poetry/issues/2778
+          poetry self add poetry-plugin-freeze
+          poetry freeze-wheel
+
       - name: Verify build
         run: |
           pip install dist/*.whl
