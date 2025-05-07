@@ -31,7 +31,7 @@ class ArgoHandler(GenericHandler):
         if not fp.path.endswith("_prof.nc"):
             raise ValueError
 
-        with xr.open_dataset(fp) as ds:
+        with xr.open_dataset(fp, engine="scipy") as ds:
             # create dataframe
             prof_variables = []
             param_variables = []
