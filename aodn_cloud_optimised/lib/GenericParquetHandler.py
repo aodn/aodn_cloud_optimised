@@ -660,7 +660,7 @@ class GenericHandler(CommonHandler):
                                 #       degree different from Degrees. Should maybe do some fuzzy and have 90% of
                                 #       similarity? Maybe dangerous. In the meantime, waiting to take a decision with
                                 #       rest of the team, I prefer to set errors to 0
-                                self.logger.error(
+                                self.logger.warning(
                                     f"{self.uuid_log}: Attribute '{attr}' for variable '{var_name}' does not match: expected '{expected_attr}', found '{file_attr}'"
                                 )
                                 # TODO: Uncomment below once found a good system
