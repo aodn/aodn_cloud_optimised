@@ -1387,6 +1387,37 @@ class GetAodn:
         self.bucket_name = BUCKET_OPTIMISED_DEFAULT
         self.prefix = ROOT_PREFIX_CLOUD_OPTIMISED_PATH
 
+    def list_datasets(self):
+        """
+        Lists the top-level 'folders' (datasets) available in the S3 bucket under the configured prefix.
+
+        Returns:
+            list: A list of dataset names (folder names).
+        """
+        s3 = boto3.client("s3", config=Config(signature_version=UNSIGNED))
+        
+        s3_prefix = self.prefix
+        if s3_prefix and not s3_prefix.endswith("/"):
+            s3_prefix += "/"
+        
+        paginator = s3.get_paginator('list_objects_v2')
+        datasets = []
+
+        for page in paginator.paginate(Bucket=self.bucket_name, Prefix=s3_prefix, Delimiter="/"):
+            for common_prefix in page.get("CommonPrefixes", []):
+                folder_path = common_prefix["Prefix"]  # Full path from bucket root
+                # Extract the folder name relative to s3_prefix
+                relative_folder_path = folder_path
+                if s3_prefix: # if s3_prefix is not empty
+                    relative_folder_path = folder_path[len(s3_prefix):]
+                
+                # Remove trailing slash to get the dataset name
+                dataset_name = relative_folder_path.rstrip('/')
+                if dataset_name: # Ensure it's not an empty string if prefix itself was listed
+                    datasets.append(dataset_name)
+        
+        return sorted(list(set(datasets))) # Sort and ensure uniqueness
+
     def get_dataset(self, dataset_name, data_format="parquet"):
         if data_format == "parquet":
             return ParquetDataSource(self.bucket_name, self.prefix, dataset_name)
