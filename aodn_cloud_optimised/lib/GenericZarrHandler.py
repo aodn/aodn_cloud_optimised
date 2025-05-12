@@ -106,10 +106,10 @@ def preprocess_xarray(ds, dataset_config):
 
     if not ds.data_vars:
         logger.error(
-            f"The dataset has no data variable left. Check the configuration dataset"
+            "The dataset has no data variables left. Check the dataset configuration."
         )
         raise ValueError(
-            f"The dataset has no data variable left. Check the configuration dataset"
+            "The dataset has no data variables left. Check the dataset configuration."
         )
 
     ##########
