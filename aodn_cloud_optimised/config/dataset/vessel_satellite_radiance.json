@@ -1,0 +1,333 @@
+{
+  "dataset_name": "vessel_satellite_radiance",
+  "logger_name": "vessel_satellite_radiance",
+  "cloud_optimised_format": "zarr",
+  "coiled_cluster_options": {
+    "n_workers": [
+      1,
+      20
+    ],
+    "scheduler_vm_types": "m7i.large",
+    "worker_vm_types": "m7i.xlarge",
+    "allow_ingress_from": "me",
+    "compute_purchase_option": "spot_with_fallback",
+    "worker_options": {
+      "nthreads": 4,
+      "memory_limit": "16GB"
+    }
+  },
+  "batch_size": 1,
+  "metadata_uuid": "28f8bfed-ca6a-472a-84e4-42563ce4df3f",
+  "dimensions": {
+    "time": {
+      "name": "TIME",
+      "chunk": 0,
+      "rechunk": false
+    },
+    "WAVELENGTH_Ed": {
+      "name": "WAVELENGTH_Ed",
+      "chunk": 0,
+      "size": 200
+    },
+    "WAVELENGTH_Lu": {
+      "name": "WAVELENGTH_Lu",
+      "chunk": 0,
+      "size": 200
+    },
+    "WAVELENGTH_Lsky": {
+      "name": "WAVELENGTH_Lsky",
+      "chunk": 0,
+      "size": 200
+    }
+  },
+  "var_template_shape": "Ed",
+  "vars_incompatible_with_region": [
+    "WAVELENGTH_Ed",
+    "WAVELENGTH_Lu",
+    "WAVELENGTH_Lsky"
+  ],
+  "gatts_to_variable": {
+    "file_version": {
+      "destination_name": "quality_control_version",
+      "dimensions": "TIME",
+      "length": 49
+    },
+    "platform_code": {
+      "destination_name": "platform_code",
+      "dimensions": "TIME",
+      "length": 7
+    }
+  },
+  "schema": {
+    "TIME": {
+      "type": "timestamp[ns]",
+      "long_name": "UTC time",
+      "standard_name": "time",
+      "axis": "T",
+      "valid_min": 0.0,
+      "valid_max": 10000000000.0
+    },
+    "WAVELENGTH_Ed": {
+      "type": "float",
+      "long_name": "downwelling irradiance wavelength",
+      "standard_name": "radiation_wavelength",
+      "units": "nm",
+      "valid_min": 398.0,
+      "valid_max": 1062.0,
+      "comment": "This is the wavelength at which the downwelling irradiance was measured."
+    },
+    "WAVELENGTH_Lu": {
+      "type": "float",
+      "long_name": "upwelling radiance wavelength",
+      "standard_name": "radiation_wavelength",
+      "units": "nm",
+      "valid_min": 398.0,
+      "valid_max": 1062.0,
+      "comment": "This is the wavelength at which the upwelling radiance was measured."
+    },
+    "WAVELENGTH_Lsky": {
+      "type": "float",
+      "long_name": "sky radiance wavelength",
+      "standard_name": "radiation_wavelength",
+      "units": "nm",
+      "valid_min": 398.0,
+      "valid_max": 1062.0,
+      "comment": "This is the wavelength at which the sky radiance was measured."
+    },
+    "LATITUDE": {
+      "type": "double",
+      "long_name": "latitude",
+      "standard_name": "latitude",
+      "units": "degrees_north",
+      "axis": "Y",
+      "reference_datum": "geographical coordinates, WGS84 projection",
+      "valid_min": -90.0,
+      "valid_max": 90.0
+    },
+    "LONGITUDE": {
+      "type": "double",
+      "long_name": "longitude",
+      "standard_name": "longitude",
+      "units": "degrees_east",
+      "axis": "X",
+      "valid_min": -180.0,
+      "valid_max": 180.0,
+      "reference_datum": "geographical coordinates, WGS84 projection"
+    },
+    "relaz": {
+      "type": "double",
+      "dims": [
+        "TIME"
+      ],
+      "long_name": "relative solar azimuth",
+      "units": "degrees"
+    },
+    "sza": {
+      "type": "double",
+      "dims": [
+        "TIME"
+      ],
+      "long_name": "solar zenith angle",
+      "units": "degrees"
+    },
+    "pitch": {
+      "type": "double",
+      "dims": [
+        "TIME"
+      ],
+      "long_name": "DALEC pitch",
+      "units": "degrees"
+    },
+    "pitchsd": {
+      "type": "double",
+      "dims": [
+        "TIME"
+      ],
+      "long_name": "DALEC pitch standard deviation",
+      "units": "degrees"
+    },
+    "roll": {
+      "type": "double",
+      "dims": [
+        "TIME"
+      ],
+      "long_name": "DALEC roll",
+      "units": "degrees"
+    },
+    "rollsd": {
+      "type": "double",
+      "dims": [
+        "TIME"
+      ],
+      "long_name": "DALEC roll standard deviation",
+      "units": "degrees"
+    },
+    "gearpos": {
+      "type": "double",
+      "dims": [
+        "TIME"
+      ],
+      "long_name": "DALEC gear position",
+      "units": "degrees"
+    },
+    "Ed": {
+      "type": "float",
+      "dims": [
+        "WAVELENGTH_Ed",
+        "TIME"
+      ],
+      "long_name": "Surface Downwelling Irradiance in air",
+      "standard_name": "surface_downwelling_spectral_radiative_flux_in_air",
+      "units": "W m^-2 nm^-1",
+      "cell_method": "LATITUDE: LONGITUDE: TIME: point",
+      "ancillary_variables": "LATITUDE LONGITUDE relaz sza pitch pitchsd roll rollsd gearpos Ed_quality_control",
+      "valid_min": 0.0,
+      "valid_max": 10.0
+    },
+    "Lu": {
+      "type": "float",
+      "dims": [
+        "WAVELENGTH_Lu",
+        "TIME"
+      ],
+      "long_name": "Surface upwelling spectral radiance in air emerging from Sea Water",
+      "standard_name": "surface_upwelling_spectral_radiance_in_air_emerging_from_sea_water",
+      "units": "W m^-2 nm^-1 sr^-1",
+      "cell_method": "LATITUDE: LONGITUDE: TIME: point",
+      "ancillary_variables": "LATITUDE LONGITUDE relaz sza pitch pitchsd roll rollsd gearpos Lu_quality_control",
+      "valid_min": 0.0,
+      "valid_max": 10.0
+    },
+    "Lsky": {
+      "type": "float",
+      "dims": [
+        "WAVELENGTH_Lsky",
+        "TIME"
+      ],
+      "long_name": "Downwelling spectral radiance in air",
+      "standard_name": "downwelling_spectral_radiance_in_air",
+      "units": "W m^-2 nm^-1 sr^-1",
+      "cell_method": "LATITUDE: LONGITUDE: TIME: point",
+      "ancillary_variables": "LATITUDE LONGITUDE relaz sza pitch pitchsd roll rollsd gearpos Lsky_quality_control",
+      "valid_min": 0.0,
+      "valid_max": 10.0
+    },
+    "Ed_quality_control": {
+      "type": "int32",
+      "dims": [
+        "WAVELENGTH_Ed",
+        "TIME"
+      ],
+      "long_name": "Surface Downwelling Irradiance Quality Control",
+      "standard_name": "surface_downwelling_spectral_radiative_flux_in_air status_flag",
+      "flag_meanings": "No_QC_was_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "valid_min": 0,
+      "valid_max": 9,
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "quality_control_conventions": "IMOS standard flags"
+    },
+    "Lu_quality_control": {
+      "type": "int32",
+      "dims": [
+        "WAVELENGTH_Lu",
+        "TIME"
+      ],
+      "long_name": "Surface upwelling spectral radiance in air emerging from Sea Water Quality Control",
+      "standard_name": "surface_upwelling_spectral_radiance_in_air_emerging_from_sea_water status_flag",
+      "flag_meanings": "No_QC_was_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "valid_min": 0,
+      "valid_max": 9,
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "quality_control_conventions": "IMOS standard flags"
+    },
+    "Lsky_quality_control": {
+      "type": "int32",
+      "dims": [
+        "WAVELENGTH_Lsky",
+        "TIME"
+      ],
+      "long_name": "Downwelling spectral radiance in air Quality Control",
+      "standard_name": "downwelling_spectral_radiance_in_air status_flag",
+      "flag_meanings": "No_QC_was_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "valid_min": 0,
+      "valid_max": 9,
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "quality_control_conventions": "IMOS standard flags"
+    }
+  },
+  "dataset_gattrs": {
+    "title": "FILL UP MANUALLY - CHECK DOCUMENTATION"
+  },
+  "aws_opendata_registry": {
+    "Name": "IMOS - Satellite Remote Sensing - Ocean Colour - Ships of Opportunity - Radiometer Sub-Facility",
+    "Description": "Calibrated DALEC Transect data The Dynamic above water radiance and irradiance collector (DALEC) is a radiometrically calibrated hyperspectral radiometer developed by In situ Marine Optics for autonomous ship based deployment. It contains three Zeiss UV-Vis enhanced spectroradiometers designed to measure near-simultaneous spectral upwelling radiance (Lu), downwelling radiance (Lsky) and downwelling irradiance (Ed). DALEC0001 is deployed on the foremast of the RV Southern Surveyor (VLHJ) and on the RV Solander. Spectra are collected during daylight hours when the ship is at sea subject to suitable sea conditions. Ancillary attitude data for the DALEC included in the dataset are pitch (degrees), pitch standard deviation (degrees), roll (degrees), roll standard deviation (degrees) and gear position (degrees from the bow). The dataset begins July 2011 and is on-going.",
+    "Documentation": "https://catalogue-imos.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/28f8bfed-ca6a-472a-84e4-42563ce4df3f",
+    "Contact": "info@aodn.org.au",
+    "ManagedBy": "AODN",
+    "UpdateFrequency": "As Needed",
+    "Tags": [
+      "FILL UP MANUALLY - CHECK DOCUMENTATION"
+    ],
+    "License": "http://creativecommons.org/licenses/by/4.0/",
+    "Resources": [
+      {
+        "Description": "Cloud Optimised AODN dataset of IMOS - Satellite Remote Sensing - Ocean Colour - Ships of Opportunity - Radiometer Sub-Facility",
+        "ARN": "arn:aws:s3:::aodn-cloud-optimised/vessel_satellite_radiance.zarr",
+        "Region": "ap-southeast-2",
+        "Type": "S3 Bucket"
+      }
+    ],
+    "DataAtWork": {
+      "Tutorials": [
+        {
+          "Title": "Accessing IMOS - Satellite Remote Sensing - Ocean Colour - Ships of Opportunity - Radiometer Sub-Facility",
+          "URL": "https://nbviewer.org/github/aodn/aodn_cloud_optimised/blob/main/notebooks/vessel_satellite_radiance.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/vessel_satellite_radiance.ipynb",
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
+        },
+        {
+          "Title": "Accessing and search for any AODN dataset",
+          "URL": "https://nbviewer.org/github/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
+        }
+      ]
+    },
+    "Citation": "IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access]"
+  }
+}
