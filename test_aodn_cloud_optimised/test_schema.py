@@ -144,7 +144,7 @@ class TestNetCDFSchemaGeneration(unittest.TestCase):
 
         try:
             loaded_schema_file = generate_json_schema_from_s3_netcdf(
-                self.nc_s3_path, s3_fs=self.s3_fs
+                self.nc_s3_path, s3_fs=self.s3_fs, cloud_format="parquet"
             )
             assert_file_contents_equal(loaded_schema_file, TEST_FILE_NC_ANMN_SCHEMA)
 

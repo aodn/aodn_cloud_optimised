@@ -142,3 +142,4 @@ dmypy.json
 # subsetting-ui
 /subsetting-ui/api/static/
 pygeoapi/aodn-geoapi/resources/pygeoapi-api.yml
+.aider*

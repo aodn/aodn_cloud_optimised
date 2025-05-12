@@ -87,7 +87,9 @@ def extract_variable_schema(dataset, var_name):
     return schema
 
 
-def generate_json_schema_from_s3_netcdf(s3_object_address, indent=2, s3_fs=None):
+def generate_json_schema_from_s3_netcdf(
+    s3_object_address, cloud_format, indent=2, s3_fs=None
+):
     """
     Extracts variable names, types, and attributes from a NetCDF file in S3 and returns a JSON-formatted schema.
 
@@ -114,14 +116,27 @@ def generate_json_schema_from_s3_netcdf(s3_object_address, indent=2, s3_fs=None)
         var_dtype = dataset.variables[var_name].dtype
         dtype_str = convert_dtype_to_str(var_dtype)
         var_attrs = extract_serialisable_attrs(dataset.variables[var_name].attrs)
-        schema[var_name] = {"type": dtype_str, **var_attrs}
+        if cloud_format == "zarr":
+            schema[var_name] = {
+                "type": dtype_str,
+                "dims": list(dataset[var_name].dims),
+                **var_attrs,
+            }
+        else:
+            schema[var_name] = {
+                "type": dtype_str,
+                **var_attrs,
+            }
 
     # Process coordinates
     for coord_name in dataset.coords:
         coord_dtype = dataset.coords[coord_name].dtype
         dtype_str = convert_dtype_to_str(coord_dtype)
         coord_attrs = extract_serialisable_attrs(dataset.coords[coord_name].attrs)
-        schema[coord_name] = {"type": dtype_str, **coord_attrs}
+        schema[coord_name] = {
+            "type": dtype_str,
+            **coord_attrs,
+        }
 
     # Convert the pyarrow_schema dictionary to a JSON-formatted string with indentation
     json_str = json.dumps(schema, indent=indent)

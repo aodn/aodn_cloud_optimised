@@ -167,7 +167,7 @@ class TestGenericZarrHandler(unittest.TestCase):
 
         # Validate logs
         self.assertTrue(
-            any("Writing data to a new Zarr dataset" in log for log in captured_logs)
+            any("Writing data to a new Zarr store at" in log for log in captured_logs)
         )
         # 2nd pass, process the same file a second time. Should be overwritten in ONE region slice
         # 2024-07-02 11:16:21,649 - INFO - GenericZarrHandler.py:303 - publish_cloud_optimised_fileset_batch - Duplicate values of TIME
@@ -184,7 +184,7 @@ class TestGenericZarrHandler(unittest.TestCase):
         # Validate logs
         self.assertTrue(
             any(
-                "Region 1 from Batch 4 - Overwriting Zarr dataset in Region: {'TIME': slice(3, 4, None)}, Matching Indexes in new ds: [0]"
+                "Batch 4, Region 1 - Overwriting Zarr dataset in region: {'TIME': slice(3, 4, None)}, with matching indexes in the new dataset: [0]"
                 in log
                 for log in captured_logs
             )

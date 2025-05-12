@@ -89,6 +89,9 @@
             },
             "chunk": {
               "type": "integer"
+            },
+            "size": {
+              "type": "integer"
             }
           }
         },
@@ -99,6 +102,9 @@
               "type": "string"
             },
             "chunk": {
+              "type": "integer"
+            },
+            "size": {
               "type": "integer"
             }
           }
