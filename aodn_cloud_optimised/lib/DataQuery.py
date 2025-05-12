@@ -1228,31 +1228,87 @@ class ZarrDataSource(DataSource):
     def _build_data_path(self):
         # creating path with PureS3Path to handle windows, and handle empty self.prefix
         dname_uri = (
-            PureS3Path.from_uri(f"s3://anonymous@{self.bucket_name}/{self.prefix}/")
+            PureS3Path.from_uri(f"s3://{self.bucket_name}/{self.prefix}/") # Removed anonymous@
             .joinpath(f"{self.dataset_name}.zarr/")
             .as_uri()
         )
-        return dname_uri.replace("s3://anonymous%40", "")
+        # Ensure it starts with s3:// and no anonymous@
+        if "anonymous@" in dname_uri:
+            dname_uri = dname_uri.replace("anonymous@", "")
+        if not dname_uri.startswith("s3://"):
+            dname_uri = f"s3://{dname_uri}"
+        return dname_uri
 
     def __init__(self, bucket_name, prefix, dataset_name):
         super().__init__(bucket_name, prefix, dataset_name)
-        # Placeholder for Zarr specific initialization, e.g., opening Zarr store
-        # self.zarr_store = self._open_zarr_store()
-        pass
+        self.zarr_store = self._open_zarr_store()
 
-    # def _open_zarr_store(self):
-    #     # Logic to open Zarr store using xarray or zarr library
-    #     # Example: return xr.open_zarr(self.dname, storage_options={'anon': True})
-    #     pass
+    def _open_zarr_store(self):
+        """Opens the Zarr store using xarray and fsspec."""
+        try:
+            return xr.open_zarr(
+                fsspec.get_mapper(self.dname, anon=True), chunks=None, consolidated=True
+            )
+        except Exception as e:
+            print(f"Error opening Zarr store {self.dname}: {e}")
+            raise
+
+    def _find_lat_lon_vars(self, ds):
+        """Helper function to find latitude and longitude variables/coordinates."""
+        lat_names = ['latitude', 'lat', 'LATITUDE', 'LAT']
+        lon_names = ['longitude', 'lon', 'LONGITUDE', 'LON']
+
+        lat_var = None
+        lon_var = None
+
+        # Check coordinates first
+        for name in lat_names:
+            if name in ds.coords:
+                lat_var = ds.coords[name]
+                break
+        for name in lon_names:
+            if name in ds.coords:
+                lon_var = ds.coords[name]
+                break
+
+        # If not in coords, check data variables
+        if lat_var is None:
+            for name in lat_names:
+                if name in ds.data_vars:
+                    lat_var = ds.data_vars[name]
+                    break
+        if lon_var is None:
+            for name in lon_names:
+                if name in ds.data_vars:
+                    lon_var = ds.data_vars[name]
+                    break
+        
+        if lat_var is None:
+            raise ValueError(f"Latitude variable/coordinate not found in dataset {self.dataset_name}. Searched for {lat_names}.")
+        if lon_var is None:
+            raise ValueError(f"Longitude variable/coordinate not found in dataset {self.dataset_name}. Searched for {lon_names}.")
+            
+        return lat_var, lon_var
 
     def get_data(self, **kwargs):
         # Placeholder for Zarr data retrieval logic
         # This will involve using xarray to select/slice data based on kwargs
+        # Example: return self.zarr_store.sel(**kwargs)
         raise NotImplementedError("Zarr data retrieval not yet implemented.")
 
     def get_spatial_extent(self):
-        # Placeholder for Zarr spatial extent logic
-        raise NotImplementedError("Zarr spatial extent retrieval not yet implemented.")
+        """Calculates the spatial extent (min/max lat/lon) of the Zarr dataset."""
+        if self.zarr_store is None:
+            self._open_zarr_store()
+
+        lat_var, lon_var = self._find_lat_lon_vars(self.zarr_store)
+
+        min_lat = float(lat_var.min().compute() if hasattr(lat_var, 'compute') else lat_var.min())
+        max_lat = float(lat_var.max().compute() if hasattr(lat_var, 'compute') else lat_var.max())
+        min_lon = float(lon_var.min().compute() if hasattr(lon_var, 'compute') else lon_var.min())
+        max_lon = float(lon_var.max().compute() if hasattr(lon_var, 'compute') else lon_var.max())
+        
+        return [min_lat, min_lon, max_lat, max_lon]
 
     def plot_spatial_extent(self):
         # Placeholder for Zarr spatial extent plotting
