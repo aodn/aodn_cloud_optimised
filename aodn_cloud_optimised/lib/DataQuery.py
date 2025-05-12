@@ -1352,18 +1352,6 @@ class ParquetDataSource(DataSource):
 
         # time filter: doesnt require date_end
         if date_end is None:
-        date_end=None,
-        lat_min=None,
-        lat_max=None,
-        lon_min=None,
-        lon_max=None,
-        scalar_filter=None,
-        columns=None,
-    ):
-        # TODO fix the whole logic as not everything is considered
-
-        # time filter: doesnt require date_end
-        if date_end is None:
             now = datetime.now()
             date_end = now.strftime("%Y-%m-%d %H:%M:%S")
 
