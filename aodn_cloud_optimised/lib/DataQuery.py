@@ -14,6 +14,7 @@ from typing import Final
 import boto3
 import cartopy.crs as ccrs  # For coastline plotting
 import cartopy.feature as cfeature
+import fsspec
 import cftime
 import geopandas as gpd
 import gsw  # TEOS-10 library
@@ -1049,13 +1050,13 @@ def get_zarr_metadata(dname):
               and then keys for each variable and coordinate, pointing to their
               respective attribute dictionaries.
     """
-    name = dname.replace("s3://", "")
-    name = name.replace("anonymous@", "")
+    name = dname.replace("anonymous@", "")
 
     try:
         # Use fsspec mapper for xarray to access S3 anonymously
-        s3_map = fs.S3FileSystem(anonymous=True, client_kwargs={'region_name': REGION, 'endpoint_url': ENDPOINT_URL}).get_mapper(name)
-        with xr.open_zarr(s3_map, consolidated=True) as ds:
+        with xr.open_zarr(
+            fsspec.get_mapper(name, anon=True), chunks=None, consolidated=True
+        ) as ds:
             metadata = {"global_attributes": ds.attrs.copy()}
             for var_name, variable in ds.variables.items():
                 metadata[var_name] = variable.attrs.copy()
@@ -1277,7 +1278,9 @@ class GetAodn:
         elif data_format == "zarr":
             return ZarrDataSource(self.bucket_name, self.prefix, dataset_name)
         else:
-            raise ValueError(f"Unsupported data format: {data_format}. Choose 'parquet' or 'zarr'.")
+            raise ValueError(
+                f"Unsupported data format: {data_format}. Choose 'parquet' or 'zarr'."
+            )
 
     def get_metadata(self):
         # This will need to be adapted to potentially list both Parquet and Zarr datasets
@@ -1302,11 +1305,13 @@ class Metadata:
 
         # Process Parquet datasets
         folders_with_parquet = self.list_folders_with_data(".parquet/")
-        for dataset_path in folders_with_parquet: # dataset_path is like 'my_dataset.parquet/'
+        for (
+            dataset_path
+        ) in folders_with_parquet:  # dataset_path is like 'my_dataset.parquet/'
             # Construct dname for Parquet metadata
             dname = (
                 PureS3Path.from_uri(f"s3://anonymous@{self.bucket_name}/{self.prefix}/")
-                .joinpath(dataset_path) # Use dataset_path directly
+                .joinpath(dataset_path)  # Use dataset_path directly
                 .as_uri()
             )
             dname = dname.replace("s3://anonymous%40", "")
@@ -1316,20 +1321,22 @@ class Metadata:
             except Exception as e:
                 print(f"Error processing Parquet metadata from {dataset_path}: {e}")
                 continue
-            
+
             # Extract dataset_name from dataset_path (e.g., 'my_dataset' from 'my_dataset.parquet/')
-            dataset_name = os.path.splitext(dataset_path.strip('/'))[0]
+            dataset_name = os.path.splitext(dataset_path.strip("/"))[0]
             catalog[dataset_name] = metadata
-        
+
         # Process Zarr datasets
         folders_with_zarr = self.list_folders_with_data(".zarr/")
-        for dataset_path in folders_with_zarr: # dataset_path is like 'my_dataset.zarr/'
+        for (
+            dataset_path
+        ) in folders_with_zarr:  # dataset_path is like 'my_dataset.zarr/'
             dname = (
                 PureS3Path.from_uri(f"s3://anonymous@{self.bucket_name}/{self.prefix}/")
-                .joinpath(dataset_path) # Use dataset_path directly
+                .joinpath(dataset_path)  # Use dataset_path directly
                 .as_uri()
             )
-            dname = dname.replace("s3://anonymous%40", "")
+            dname = dname.replace("s3://anonymous%40", "s3://")
 
             try:
                 metadata = get_zarr_metadata(dname)
@@ -1337,12 +1344,12 @@ class Metadata:
                 print(f"Error processing Zarr metadata from {dataset_path}: {e}")
                 continue
 
-            dataset_name = os.path.splitext(dataset_path.strip('/'))[0]
+            dataset_name = os.path.splitext(dataset_path.strip("/"))[0]
             # If a dataset with the same name (but different format) exists,
             # we might want to merge or handle it. For now, Zarr will overwrite if name clashes.
             # A more robust solution might involve storing format in the catalog key or structure.
             catalog[dataset_name] = metadata
-            
+
         return catalog
 
     @lru_cache(maxsize=None)
@@ -1359,14 +1366,13 @@ class Metadata:
 
         # if (prefix_path is not None) and (not prefix_path.endswith("/")):
         #    prefix_path += "/"
-        
+
         # Ensure prefix is correctly formatted for S3 listing
         # If prefix is empty, list from the root of the bucket.
         # If prefix is not empty and doesn't end with '/', add it.
         s3_prefix = self.prefix
-        if s3_prefix and not s3_prefix.endswith('/'):
-            s3_prefix += '/'
-
+        if s3_prefix and not s3_prefix.endswith("/"):
+            s3_prefix += "/"
 
         response = s3.list_objects_v2(
             Bucket=self.bucket_name, Prefix=s3_prefix, Delimiter="/"
@@ -1375,12 +1381,13 @@ class Metadata:
         folders = []
 
         for common_prefix in response.get("CommonPrefixes", []):
-            folder_path = common_prefix["Prefix"] # This is the full path from bucket root
+            folder_path = common_prefix[
+                "Prefix"
+            ]  # This is the full path from bucket root
             # We need the relative path from self.prefix
             relative_folder_path = folder_path
-            if s3_prefix: # if s3_prefix is not empty
-                 relative_folder_path = folder_path[len(s3_prefix):]
-
+            if s3_prefix:  # if s3_prefix is not empty
+                relative_folder_path = folder_path[len(s3_prefix) :]
 
             if relative_folder_path.endswith(extension_filter):
                 # folder_name = folder_path[len(s3_prefix):] # Get the name relative to the prefix
