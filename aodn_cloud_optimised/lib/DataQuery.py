@@ -6,6 +6,7 @@ Notebooks
 import json
 import os
 import re
+from abc import ABC, abstractmethod
 from datetime import datetime, timedelta, timezone
 from functools import lru_cache
 from typing import Final
@@ -1036,32 +1037,50 @@ def decode_and_load_json(metadata):
 # Work done during IMOS HACKATHON 2024
 # https://github.com/aodn/IMOS-hackathon/blob/main/2024/Projects/CARSv2/notebooks/get_aodn_example_hackathon.ipynb
 ###################################################################################################################
-class GetAodn:
-    def __init__(self):
-        self.bucket_name = BUCKET_OPTIMISED_DEFAULT
-        self.prefix = ROOT_PREFIX_CLOUD_OPTIMISED_PATH
-
-    def get_dataset(self, dataset_name):
-        return Dataset(self.bucket_name, self.prefix, dataset_name)
-
-    def get_metadata(self):
-        return Metadata(self.bucket_name, self.prefix)
-
-
-class Dataset:
+class DataSource(ABC):
     def __init__(self, bucket_name, prefix, dataset_name):
         self.bucket_name = bucket_name
         self.prefix = prefix
         self.dataset_name = dataset_name
+        self.dname = self._build_data_path()
 
+    @abstractmethod
+    def _build_data_path(self):
+        pass
+
+    @abstractmethod
+    def get_data(self, **kwargs):
+        pass
+
+    @abstractmethod
+    def get_spatial_extent(self):
+        pass
+
+    @abstractmethod
+    def plot_spatial_extent(self):
+        pass
+
+    @abstractmethod
+    def get_temporal_extent(self):
+        pass
+
+    @abstractmethod
+    def get_metadata(self):
+        pass
+
+
+class ParquetDataSource(DataSource):
+    def _build_data_path(self):
         # creating path with PureS3Path to handle windows, and handle empty self.prefix
-        self.dname = (
+        dname_uri = (
             PureS3Path.from_uri(f"s3://anonymous@{self.bucket_name}/{self.prefix}/")
             .joinpath(f"{self.dataset_name}.parquet/")
             .as_uri()
         )
-        self.dname = self.dname.replace("s3://anonymous%40", "")
+        return dname_uri.replace("s3://anonymous%40", "")
 
+    def __init__(self, bucket_name, prefix, dataset_name):
+        super().__init__(bucket_name, prefix, dataset_name)
         self.parquet_ds = self._create_parquet_dataset()
 
     def _create_parquet_dataset(self, filters=None):
@@ -1172,6 +1191,69 @@ class Dataset:
         return get_schema_metadata(self.dname)
 
 
+class ZarrDataSource(DataSource):
+    def _build_data_path(self):
+        # creating path with PureS3Path to handle windows, and handle empty self.prefix
+        dname_uri = (
+            PureS3Path.from_uri(f"s3://anonymous@{self.bucket_name}/{self.prefix}/")
+            .joinpath(f"{self.dataset_name}.zarr/")
+            .as_uri()
+        )
+        return dname_uri.replace("s3://anonymous%40", "")
+
+    def __init__(self, bucket_name, prefix, dataset_name):
+        super().__init__(bucket_name, prefix, dataset_name)
+        # Placeholder for Zarr specific initialization, e.g., opening Zarr store
+        # self.zarr_store = self._open_zarr_store()
+        pass
+
+    # def _open_zarr_store(self):
+    #     # Logic to open Zarr store using xarray or zarr library
+    #     # Example: return xr.open_zarr(self.dname, storage_options={'anon': True})
+    #     pass
+
+    def get_data(self, **kwargs):
+        # Placeholder for Zarr data retrieval logic
+        # This will involve using xarray to select/slice data based on kwargs
+        raise NotImplementedError("Zarr data retrieval not yet implemented.")
+
+    def get_spatial_extent(self):
+        # Placeholder for Zarr spatial extent logic
+        raise NotImplementedError("Zarr spatial extent retrieval not yet implemented.")
+
+    def plot_spatial_extent(self):
+        # Placeholder for Zarr spatial extent plotting
+        raise NotImplementedError("Zarr spatial extent plotting not yet implemented.")
+
+    def get_temporal_extent(self):
+        # Placeholder for Zarr temporal extent logic
+        raise NotImplementedError("Zarr temporal extent retrieval not yet implemented.")
+
+    def get_metadata(self):
+        # Placeholder for Zarr metadata retrieval
+        # This might involve reading attributes from the Zarr store
+        raise NotImplementedError("Zarr metadata retrieval not yet implemented.")
+
+
+class GetAodn:
+    def __init__(self):
+        self.bucket_name = BUCKET_OPTIMISED_DEFAULT
+        self.prefix = ROOT_PREFIX_CLOUD_OPTIMISED_PATH
+
+    def get_dataset(self, dataset_name, data_format="parquet"):
+        if data_format == "parquet":
+            return ParquetDataSource(self.bucket_name, self.prefix, dataset_name)
+        elif data_format == "zarr":
+            return ZarrDataSource(self.bucket_name, self.prefix, dataset_name)
+        else:
+            raise ValueError(f"Unsupported data format: {data_format}. Choose 'parquet' or 'zarr'.")
+
+    def get_metadata(self):
+        # This will need to be adapted to potentially list both Parquet and Zarr datasets
+        # and fetch metadata accordingly. For now, it retains Parquet-centric logic.
+        return Metadata(self.bucket_name, self.prefix)
+
+
 class Metadata:
     def __init__(self, bucket_name, prefix):
         # super().__init__()
@@ -1183,28 +1265,38 @@ class Metadata:
     def metadata_catalog_uncached(self):
         # print('Running metadata_catalog_uncached...')  # Debug output
 
-        folders_with_parquet = self.list_folders_with_parquet()
+        # This method currently only lists Parquet datasets.
+        # It will need to be updated to discover Zarr datasets as well.
+        folders_with_parquet = self.list_folders_with_data(".parquet/")
         catalog = {}
 
-        for dataset in folders_with_parquet:
+        for dataset_path in folders_with_parquet: # dataset_path is like 'my_dataset.parquet/'
+            # Construct dname for Parquet metadata
             dname = (
                 PureS3Path.from_uri(f"s3://anonymous@{self.bucket_name}/{self.prefix}/")
-                .joinpath(f"{dataset}")
+                .joinpath(dataset_path) # Use dataset_path directly
                 .as_uri()
             )
             dname = dname.replace("s3://anonymous%40", "")
 
             try:
-                metadata = get_schema_metadata(dname)  # schema metadata
+                # Assuming get_schema_metadata is Parquet specific for now
+                metadata = get_schema_metadata(dname)
             except Exception as e:
-                print(f"Error processing metadata from {dataset}, {e}")
+                print(f"Error processing Parquet metadata from {dataset_path}, {e}")
                 continue
+            
+            # Extract dataset_name from dataset_path (e.g., 'my_dataset' from 'my_dataset.parquet/')
+            dataset_name = os.path.splitext(dataset_path.strip('/'))[0]
 
-            path_parts = dataset.strip("/").split("/")
-            last_folder_with_extension = path_parts[-1]
-            dataset_name = os.path.splitext(last_folder_with_extension)[0]
 
             catalog[dataset_name] = metadata
+        
+        # Placeholder for Zarr dataset discovery and metadata extraction
+        # folders_with_zarr = self.list_folders_with_data(".zarr/")
+        # for dataset_path in folders_with_zarr:
+        #     # ... logic to get Zarr metadata ...
+        #     pass
 
         return catalog
 
@@ -1216,25 +1308,38 @@ class Metadata:
         else:
             return self.metadata_catalog_uncached()
 
-    def list_folders_with_parquet(self):
+    def list_folders_with_data(self, extension_filter=".parquet/"):
         s3 = boto3.client("s3", config=Config(signature_version=UNSIGNED))
-        prefix = self.prefix
+        # prefix_path = self.prefix # Ensure prefix is treated as a path component
 
-        # if (prefix is not None) and (not prefix.endswith("/")):
-        #    prefix += "/"
+        # if (prefix_path is not None) and (not prefix_path.endswith("/")):
+        #    prefix_path += "/"
+        
+        # Ensure prefix is correctly formatted for S3 listing
+        # If prefix is empty, list from the root of the bucket.
+        # If prefix is not empty and doesn't end with '/', add it.
+        s3_prefix = self.prefix
+        if s3_prefix and not s3_prefix.endswith('/'):
+            s3_prefix += '/'
+
 
         response = s3.list_objects_v2(
-            Bucket=self.bucket_name, Prefix=prefix, Delimiter="/"
+            Bucket=self.bucket_name, Prefix=s3_prefix, Delimiter="/"
         )
 
         folders = []
 
-        for prefix in response.get("CommonPrefixes", []):
-            folder_path = prefix["Prefix"]
-            if folder_path.endswith(".parquet/"):
-                folder_name = folder_path[len(prefix) - 1 :]
-                folders.append(folder_name)
+        for common_prefix in response.get("CommonPrefixes", []):
+            folder_path = common_prefix["Prefix"] # This is the full path from bucket root
+            # We need the relative path from self.prefix
+            relative_folder_path = folder_path
+            if s3_prefix: # if s3_prefix is not empty
+                 relative_folder_path = folder_path[len(s3_prefix):]
 
+
+            if relative_folder_path.endswith(extension_filter):
+                # folder_name = folder_path[len(s3_prefix):] # Get the name relative to the prefix
+                folders.append(relative_folder_path)
         return folders
 
     def find_datasets_with_attribute(
