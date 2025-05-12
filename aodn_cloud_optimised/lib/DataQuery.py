@@ -1104,10 +1104,11 @@ class DataSource(ABC):
 
 class ParquetDataSource(DataSource):
     def _build_data_path(self):
-        # creating path with PureS3Path to handle windows, and handle empty self.prefix
+        # self.dataset_name now includes the extension, e.g., "my_dataset.parquet"
+        # We need to form the path like ".../my_dataset.parquet/"
         dname_uri = (
             PureS3Path.from_uri(f"s3://anonymous@{self.bucket_name}/{self.prefix}/")
-            .joinpath(f"{self.dataset_name}.parquet/")
+            .joinpath(f"{self.dataset_name}/")  # Add trailing slash
             .as_uri()
         )
         return dname_uri.replace("s3://anonymous%40", "")
@@ -1226,13 +1227,14 @@ class ParquetDataSource(DataSource):
 
 class ZarrDataSource(DataSource):
     def _build_data_path(self):
-        # creating path with PureS3Path to handle windows, and handle empty self.prefix
+        # self.dataset_name now includes the extension, e.g., "my_dataset.zarr"
+        # We need to form the path like ".../my_dataset.zarr/"
         dname_uri = (
-            PureS3Path.from_uri(f"s3://{self.bucket_name}/{self.prefix}/") # Removed anonymous@
-            .joinpath(f"{self.dataset_name}.zarr/")
+            PureS3Path.from_uri(f"s3://{self.bucket_name}/{self.prefix}/")
+            .joinpath(f"{self.dataset_name}/")  # Add trailing slash
             .as_uri()
         )
-        # Ensure it starts with s3:// and no anonymous@
+        # Ensure it starts with s3:// and no anonymous@ (PureS3Path should handle s3://)
         if "anonymous@" in dname_uri:
             dname_uri = dname_uri.replace("anonymous@", "")
         if not dname_uri.startswith("s3://"):
@@ -1418,14 +1420,27 @@ class GetAodn:
         
         return sorted(list(set(datasets))) # Sort and ensure uniqueness
 
-    def get_dataset(self, dataset_name, data_format="parquet"):
-        if data_format == "parquet":
-            return ParquetDataSource(self.bucket_name, self.prefix, dataset_name)
-        elif data_format == "zarr":
-            return ZarrDataSource(self.bucket_name, self.prefix, dataset_name)
+    def get_dataset(self, dataset_name_with_ext):
+        """
+        Retrieves a data source object for the given dataset name.
+        The dataset name must include the extension (e.g., '.parquet' or '.zarr').
+
+        Args:
+            dataset_name_with_ext (str): The name of the dataset including its format extension.
+
+        Returns:
+            DataSource: An instance of ParquetDataSource or ZarrDataSource.
+
+        Raises:
+            ValueError: If the dataset extension is unsupported.
+        """
+        if dataset_name_with_ext.endswith(".parquet"):
+            return ParquetDataSource(self.bucket_name, self.prefix, dataset_name_with_ext)
+        elif dataset_name_with_ext.endswith(".zarr"):
+            return ZarrDataSource(self.bucket_name, self.prefix, dataset_name_with_ext)
         else:
             raise ValueError(
-                f"Unsupported data format: {data_format}. Choose 'parquet' or 'zarr'."
+                f"Unsupported dataset extension in '{dataset_name_with_ext}'. Must end with '.parquet' or '.zarr'."
             )
 
     def get_metadata(self):
