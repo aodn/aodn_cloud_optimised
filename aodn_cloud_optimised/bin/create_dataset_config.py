@@ -674,7 +674,9 @@ def main():
     nc_file = PureS3Path.from_uri(f"s3://{bucket}").joinpath(obj_key).as_uri()
 
     # Generate JSON schema from the NetCDF file
-    temp_file_path = generate_json_schema_from_s3_netcdf(nc_file)
+    temp_file_path = generate_json_schema_from_s3_netcdf(
+        nc_file, cloud_format=args.cloud_format
+    )
 
     with open(temp_file_path, "r") as file:
         dataset_config_schema = json.load(file)

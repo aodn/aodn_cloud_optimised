@@ -213,7 +213,7 @@ def preprocess_xarray(ds, dataset_config):
 
                 else:
                     logger.warning(
-                        f"'dims' key is missing in {variable_name} definition is schema. Defaulting to create {variable_name} with all available dimensions {dimensions} by default"
+                        f"'dims' key is missing in {variable_name} definition in schema. Defaulting to creating {variable_name} with all available dimensions {dimensions}"
                     )
                     dim_names = tuple(
                         dim_info["name"] for dim_info in dimensions.values()
