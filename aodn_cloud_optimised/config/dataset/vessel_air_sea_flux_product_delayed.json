@@ -348,7 +348,7 @@
     "history": {
       "type": "string",
       "long_name": "file history information"
-    }
+    },
     "PL_HD": {
     "type": "float",
     "long_name": "platform heading",
