@@ -1034,6 +1034,37 @@ def decode_and_load_json(metadata):
     return decoded_metadata
 
 
+def get_zarr_metadata(dname):
+    """Retrieve metadata from a Zarr store.
+
+    This function opens a Zarr store using xarray and extracts global attributes
+    and attributes for each variable and coordinate.
+
+    Args:
+        dname (str): The S3 path of the Zarr store.
+
+    Returns:
+        dict: A dictionary containing the Zarr store's metadata.
+              It includes a "global_attributes" key for global attributes,
+              and then keys for each variable and coordinate, pointing to their
+              respective attribute dictionaries.
+    """
+    name = dname.replace("s3://", "")
+    name = name.replace("anonymous@", "")
+
+    try:
+        # Use fsspec mapper for xarray to access S3 anonymously
+        s3_map = fs.S3FileSystem(anonymous=True, client_kwargs={'region_name': REGION, 'endpoint_url': ENDPOINT_URL}).get_mapper(name)
+        with xr.open_zarr(s3_map, consolidated=True) as ds:
+            metadata = {"global_attributes": ds.attrs.copy()}
+            for var_name, variable in ds.variables.items():
+                metadata[var_name] = variable.attrs.copy()
+        return metadata
+    except Exception as e:
+        print(f"Error opening or processing Zarr metadata from {dname}: {e}")
+        return {"global_attributes": {}, "error": str(e)}
+
+
 ####################################################################################################################
 # Work done during IMOS HACKATHON 2024
 # https://github.com/aodn/IMOS-hackathon/blob/main/2024/Projects/CARSv2/notebooks/get_aodn_example_hackathon.ipynb
