@@ -1315,8 +1315,67 @@ class ZarrDataSource(DataSource):
         raise NotImplementedError("Zarr spatial extent plotting not yet implemented.")
 
     def get_temporal_extent(self):
-        # Placeholder for Zarr temporal extent logic
-        raise NotImplementedError("Zarr temporal extent retrieval not yet implemented.")
+        """
+        Plots the time coverage of the Zarr dataset and returns its temporal extent.
+        """
+        if self.zarr_store is None:
+            self._open_zarr_store()
+
+        time_var_name = None
+        possible_time_names = ['time', 'TIME', 'datetime', 'date', 'Date', 'DateTime'] # Common time variable names
+
+        # Check in coordinates
+        for name in possible_time_names:
+            if name in self.zarr_store.coords:
+                time_var_name = name
+                break
+        
+        # If not in coordinates, check in data variables
+        if time_var_name is None:
+            for name in possible_time_names:
+                if name in self.zarr_store.data_vars:
+                    time_var_name = name
+                    break
+        
+        if time_var_name is None:
+            raise ValueError(
+                f"Could not find a suitable time variable in the Zarr store {self.dataset_name}. Searched for {possible_time_names}."
+            )
+
+        # Call the plotting function as requested
+        plot_time_coverage(self.zarr_store, time_var=time_var_name)
+
+        # Calculate and return the temporal extent
+        time_values = self.zarr_store[time_var_name].values
+
+        # Ensure time_values are sorted before taking min/max for safety, though plot_time_coverage also sorts.
+        # However, direct access to .values might not be sorted.
+        # For xarray DataArrays, min/max handle this, but if it's a raw numpy array from .values, sorting is safer.
+        # Actually, xarray's .min() and .max() on a DataArray should be correct without pre-sorting values.
+        
+        min_val = self.zarr_store[time_var_name].min().item()
+        max_val = self.zarr_store[time_var_name].max().item()
+
+        cftime_types = (
+            cftime.DatetimeGregorian,
+            cftime.DatetimeProlepticGregorian,
+            cftime.DatetimeJulian,
+            cftime.DatetimeNoLeap,
+            cftime.DatetimeAllLeap,
+            cftime.Datetime360Day,
+        )
+
+        if isinstance(min_val, cftime_types):
+            min_time = pd.to_datetime(min_val.isoformat())
+        else:
+            min_time = pd.to_datetime(min_val)
+
+        if isinstance(max_val, cftime_types):
+            max_time = pd.to_datetime(max_val.isoformat())
+        else:
+            max_time = pd.to_datetime(max_val)
+            
+        return min_time, max_time
 
     def get_metadata(self):
         """Retrieves metadata for the Zarr dataset."""
