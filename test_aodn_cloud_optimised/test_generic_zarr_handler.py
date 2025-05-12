@@ -197,7 +197,7 @@ class TestGenericZarrHandler(unittest.TestCase):
 
         # Validate logs
         self.assertTrue(
-            any("Writing data to a new Zarr dataset" in log for log in captured_logs)
+            any("Writing data to a new Zarr store at" in log for log in captured_logs)
         )
         # 2nd pass, process the same file a second time. Should be overwritten in ONE region slice
         # 2024-07-02 11:16:21,649 - INFO - GenericZarrHandler.py:303 - publish_cloud_optimised_fileset_batch - Duplicate values of TIME
@@ -212,7 +212,7 @@ class TestGenericZarrHandler(unittest.TestCase):
         # Validate logs
         self.assertTrue(
             any(
-                "Overwriting Zarr dataset in Region: {'TIME': slice(0, 4, None)}, Matching Indexes in new ds: [0 1 2 3]"
+                "Batch 1, Region 1 - Overwriting Zarr dataset in region: {'TIME': slice(0, 4, None)}, with matching indexes in the new dataset: [0 1 2 3]"
                 in log
                 for log in captured_logs
             )
@@ -236,7 +236,7 @@ class TestGenericZarrHandler(unittest.TestCase):
         # Validate logs
         self.assertTrue(
             any(
-                "Overwriting Zarr dataset in Region: {'TIME': slice(2, 4, None)}, Matching Indexes in new ds: [1 2]"
+                "Batch 1, Region 2 - Overwriting Zarr dataset in region: {'TIME': slice(2, 4, None)}, with matching indexes in the new dataset: [1 2]"
                 in log
                 for log in captured_logs
             )
@@ -282,13 +282,13 @@ class TestGenericZarrHandler(unittest.TestCase):
         # Validate logs
         self.assertTrue(
             any(
-                "Detected issue with variable: LATITUDE. Inconsistent grid" in log
+                "Detected issue with variable 'LATITUDE': Inconsistent grid." in log
                 for log in captured_logs
             )
         )
         self.assertTrue(
             any(
-                "imos-data/acorn/nwa/IMOS_ACORN_V_20220312T183000Z_NWA_FV01_1-hour-avg.nc> - LATITUDE is NOT consistent with the reference values"
+                "LATITUDE in <File-like object S3FileSystem, imos-data/acorn/nwa/IMOS_ACORN_V_20220312T183000Z_NWA_FV01_1-hour-avg.nc> is NOT consistent with reference values."
                 in log
                 for log in captured_logs
             )
@@ -301,7 +301,7 @@ class TestGenericZarrHandler(unittest.TestCase):
             )
         )
         self.assertTrue(
-            any("Writing data to a new Zarr dataset" in log for log in captured_logs)
+            any("Writing data to a new Zarr store at" in log for log in captured_logs)
         )
 
         # read zarr

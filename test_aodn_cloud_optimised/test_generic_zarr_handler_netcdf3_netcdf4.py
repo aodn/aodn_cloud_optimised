@@ -160,7 +160,7 @@ class TestGenericZarrHandler(unittest.TestCase):
         # Validate logs
         self.assertTrue(
             any(
-                "Successfully Concatenating files together" in log
+                "Successfully concatenated files from batch." in log
                 for log in captured_logs
             )
         )

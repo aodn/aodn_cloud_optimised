@@ -235,7 +235,9 @@ def preprocess_xarray(ds, dataset_config):
                 #    (dimensions["time"]["name"],),
                 #    empty_string_array,
                 # )
-                logger.warning(f"Variable '{variable_name}' is not of a numeric type (np.number).")
+                logger.warning(
+                    f"Variable '{variable_name}' is not of a numeric type (np.number)."
+                )
 
             ds[variable_name] = ds[variable_name].astype(datatype)
 
@@ -390,7 +392,9 @@ class GenericHandler(CommonHandler):
 
             batch_files = create_fileset(batch_uri_list, self.s3_fs)
 
-            self.logger.info(f"{self.uuid_log}: Processing batch {idx + 1} with files: {batch_files}")
+            self.logger.info(
+                f"{self.uuid_log}: Processing batch {idx + 1} with files: {batch_files}"
+            )
 
             if drop_vars_list:
                 self.logger.warning(
@@ -420,7 +424,9 @@ class GenericHandler(CommonHandler):
                 )
 
             except MergeError as e:
-                self.logger.error(f"{self.uuid_log}: Failed to merge datasets for batch {idx + 1}: {e}")
+                self.logger.error(
+                    f"{self.uuid_log}: Failed to merge datasets for batch {idx + 1}: {e}"
+                )
                 if "ds" in locals():
                     self.postprocess(ds)
 
@@ -541,7 +547,9 @@ class GenericHandler(CommonHandler):
             )
             return ds
         except Exception as e:
-            self.logger.warning(f"{self.uuid_log}: Error during multi-engine fallback: {e}.\n {traceback.format_exc()}")
+            self.logger.warning(
+                f"{self.uuid_log}: Error during multi-engine fallback: {e}.\n {traceback.format_exc()}"
+            )
             raise RuntimeError("Fallback to individual processing needed.")
 
     def fallback_to_individual_processing(
@@ -821,7 +829,9 @@ class GenericHandler(CommonHandler):
         )
         ds = ds.unify_chunks()
         # ds = ds.persist()
-        self.logger.info(f"{self.uuid_log}: Successfully concatenated files from batch.")
+        self.logger.info(
+            f"{self.uuid_log}: Successfully concatenated files from batch."
+        )
         return ds
 
     def _open_mfds(
@@ -960,7 +970,9 @@ class GenericHandler(CommonHandler):
 
         # Write the dataset to Zarr
         if prefix_exists(self.cloud_optimised_output_path):
-            self.logger.info(f"{self.uuid_log}: Existing Zarr store found at {self.cloud_optimised_output_path}. Appending data.")
+            self.logger.info(
+                f"{self.uuid_log}: Existing Zarr store found at {self.cloud_optimised_output_path}. Appending data."
+            )
 
             # NOTE: In the next section, we need to figure out if we're reprocessing existing data.
             #       For this, the logic is to open the original zarr store and compare with the new ds from
@@ -1007,7 +1019,9 @@ class GenericHandler(CommonHandler):
         """
         Writes the dataset to a new Zarr store.
         """
-        self.logger.info(f"{self.uuid_log}: Writing data to a new Zarr store at {self.store}.")
+        self.logger.info(
+            f"{self.uuid_log}: Writing data to a new Zarr store at {self.store}."
+        )
         ds.to_zarr(
             self.store,
             mode="w",  # Overwrite mode for the first batch
@@ -1022,7 +1036,9 @@ class GenericHandler(CommonHandler):
         """
         Append the dataset to an existing Zarr store.
         """
-        self.logger.info(f"{self.uuid_log}: Appending data to the existing Zarr store at {self.store}.")
+        self.logger.info(
+            f"{self.uuid_log}: Appending data to the existing Zarr store at {self.store}."
+        )
         # import ipdb; ipdb.set_trace()
         ds.to_zarr(
             self.store,
