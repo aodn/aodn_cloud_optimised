@@ -158,7 +158,7 @@ def preprocess_xarray(ds, dataset_config):
         filename = os.path.basename(ds[var].encoding["source"])
 
     except KeyError as e:
-        logger.debug(f"Original filename not available in xarray dataset.\n {e}")
+        logger.debug(f"Original filename not available in the xarray dataset: {e}")
         filename = "UNKOWN_FILENAME.nc"
 
     # TODO: get filename; Should be from https://github.com/pydata/xarray/issues/9142
@@ -260,7 +260,7 @@ def preprocess_xarray(ds, dataset_config):
 
             ds[variable_name] = ds[variable_name].astype(datatype)
 
-    logger.info(f"Successfully applied preprocessing to dataset from {filename}")
+    logger.info(f"Successfully applied preprocessing to the dataset from {filename}")
     return ds
 
 
@@ -548,7 +548,7 @@ class GenericHandler(CommonHandler):
         self, batch_files, partial_preprocess, drop_vars_list, idx
     ):
         self.logger.info(
-            f"{self.uuid_log}: Batch processing methods failed for batch {idx +1}. Falling back to processing files individually."
+            f"{self.uuid_log}: Batch processing methods failed for batch {idx + 1}. Falling back to processing files individually."
         )
         try:
             self._process_individual_file_fallback(
@@ -577,7 +577,7 @@ class GenericHandler(CommonHandler):
             reference_ds.close()
         except Exception as e:
             self.logger.error(
-                f"{self.uuid_log}: Failed to open the first file {file_paths[0]}: {e}"
+                f"{self.uuid_log}: Failed to open the first file: {file_paths[0]}: {e}"
             )
             return file_paths  # If the first file fails, consider all files problematic
 
@@ -630,7 +630,7 @@ class GenericHandler(CommonHandler):
         time_dimension_name = self.dimensions["time"]["name"]
 
         self.logger.info(
-            f"{self.uuid_log}: Duplicate values of '{time_dimension_name}' found in existing dataset. Overwriting."
+            f"{self.uuid_log}: Duplicate values of '{time_dimension_name}' found in the existing dataset. Overwriting."
         )
         # Get indices of common time values in the original dataset
         common_indices = np.nonzero(np.isin(time_values_org, common_time_values))[0]
@@ -670,7 +670,7 @@ class GenericHandler(CommonHandler):
         n_region = 0
         for region, indexes in zip(regions, matching_indexes):
             self.logger.info(
-                f"{self.uuid_log}: Batch {idx + 1}, Region {n_region + 1} - Overwriting Zarr dataset in Region: {region}, with matching indexes in new dataset: {indexes}"
+                f"{self.uuid_log}: Batch {idx + 1}, Region {n_region + 1} - Overwriting Zarr dataset in region: {region}, with matching indexes in the new dataset: {indexes}"
             )
 
             ##########################################
@@ -709,15 +709,15 @@ class GenericHandler(CommonHandler):
                 mode="r+",
             )
             self.logger.info(
-                f"{self.uuid_log}: Batch {idx + 1}, Region {n_region + 1} - Successfully published to {self.store}"
+                f"{self.uuid_log}: Batch {idx + 1}, Region {n_region + 1} - Successfully published to the Zarr store: {self.store}"
             )
             n_region += 1
 
         self.logger.info(
-            f"{self.uuid_log}: All overlapping regions from Batch {idx + 1} were successfully published to {self.store}"
+            f"{self.uuid_log}: All overlapping regions from Batch {idx + 1} were successfully published to the Zarr store: {self.store}"
         )
         self.logger.info(
-            f"{self.uuid_log}: Checking for non-overlapping data from Batch {idx + 1} to append to {self.store}"
+            f"{self.uuid_log}: Checking for non-overlapping data from Batch {idx + 1} to append to the Zarr store: {self.store}"
         )
         # Now find the time values in ds that were NOT reprocessed
         # These are the time values not found in any of the common regions
@@ -726,7 +726,7 @@ class GenericHandler(CommonHandler):
         # Return a dataset with the unprocessed time values
         if len(unprocessed_time_values) > 0:
             self.logger.info(
-                f"{self.uuid_log}: Found {len(unprocessed_time_values)} non-overlapping data points from Batch {idx + 1} to append to {self.store}"
+                f"{self.uuid_log}: Found {len(unprocessed_time_values)} non-overlapping data points from Batch {idx + 1} to append to the Zarr store: {self.store}"
             )
             ds_unprocessed = ds.sel({time_dimension_name: unprocessed_time_values})
             self._write_ds(ds_unprocessed, idx)
@@ -809,7 +809,7 @@ class GenericHandler(CommonHandler):
 
         # Concatenate the datasets
         self.logger.info(
-            f"{self.uuid_log}: Successfully read all files in batch with different engines. Concatenating them."
+            f"{self.uuid_log}: Successfully read all files in the batch with different engines. Concatenating them now."
         )
 
         ds = xr.concat(
@@ -936,7 +936,7 @@ class GenericHandler(CommonHandler):
         if len(duplicates) > 0:
             self.logger.warning(
                 f"{self.uuid_log}: Duplicate values of '{time_dimension_name}' dimension "
-                f"found in original Zarr dataset. This could lead to a corrupted dataset. Duplicates: {duplicates}"
+                f"found in the original Zarr dataset. This could lead to a corrupted dataset. Duplicates: {duplicates}"
             )
 
         return True
@@ -996,7 +996,7 @@ class GenericHandler(CommonHandler):
                     self._append_zarr_store(ds)
 
                     self.logger.info(
-                        f"{self.uuid_log}: Batch {idx + 1} successfully appended to {self.store}"
+                        f"{self.uuid_log}: Batch {idx + 1} successfully appended to the Zarr store: {self.store}"
                     )
 
         # First time writing the dataset
@@ -1007,7 +1007,7 @@ class GenericHandler(CommonHandler):
         """
         Writes the dataset to a new Zarr store.
         """
-        self.logger.info(f"{self.uuid_log}: Writing data to a new Zarr dataset at {self.store}.")
+        self.logger.info(f"{self.uuid_log}: Writing data to a new Zarr store at {self.store}.")
         ds.to_zarr(
             self.store,
             mode="w",  # Overwrite mode for the first batch
@@ -1022,7 +1022,7 @@ class GenericHandler(CommonHandler):
         """
         Append the dataset to an existing Zarr store.
         """
-        self.logger.info(f"{self.uuid_log}: Appending data to existing Zarr dataset at {self.store}.")
+        self.logger.info(f"{self.uuid_log}: Appending data to the existing Zarr store at {self.store}.")
         # import ipdb; ipdb.set_trace()
         ds.to_zarr(
             self.store,
