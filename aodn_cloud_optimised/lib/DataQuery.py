@@ -26,6 +26,7 @@ import pyarrow.compute as pc
 import pyarrow.fs as fs
 import pyarrow.parquet as pq
 import seaborn as sns
+import xarray as xr
 from botocore import UNSIGNED
 from botocore.client import Config
 from fuzzywuzzy import fuzz
@@ -1230,9 +1231,8 @@ class ZarrDataSource(DataSource):
         raise NotImplementedError("Zarr temporal extent retrieval not yet implemented.")
 
     def get_metadata(self):
-        # Placeholder for Zarr metadata retrieval
-        # This might involve reading attributes from the Zarr store
-        raise NotImplementedError("Zarr metadata retrieval not yet implemented.")
+        """Retrieves metadata for the Zarr dataset."""
+        return get_zarr_metadata(self.dname)
 
 
 class GetAodn:
@@ -1267,9 +1267,10 @@ class Metadata:
 
         # This method currently only lists Parquet datasets.
         # It will need to be updated to discover Zarr datasets as well.
-        folders_with_parquet = self.list_folders_with_data(".parquet/")
         catalog = {}
 
+        # Process Parquet datasets
+        folders_with_parquet = self.list_folders_with_data(".parquet/")
         for dataset_path in folders_with_parquet: # dataset_path is like 'my_dataset.parquet/'
             # Construct dname for Parquet metadata
             dname = (
@@ -1280,24 +1281,37 @@ class Metadata:
             dname = dname.replace("s3://anonymous%40", "")
 
             try:
-                # Assuming get_schema_metadata is Parquet specific for now
                 metadata = get_schema_metadata(dname)
             except Exception as e:
-                print(f"Error processing Parquet metadata from {dataset_path}, {e}")
+                print(f"Error processing Parquet metadata from {dataset_path}: {e}")
                 continue
             
             # Extract dataset_name from dataset_path (e.g., 'my_dataset' from 'my_dataset.parquet/')
             dataset_name = os.path.splitext(dataset_path.strip('/'))[0]
-
-
             catalog[dataset_name] = metadata
         
-        # Placeholder for Zarr dataset discovery and metadata extraction
-        # folders_with_zarr = self.list_folders_with_data(".zarr/")
-        # for dataset_path in folders_with_zarr:
-        #     # ... logic to get Zarr metadata ...
-        #     pass
+        # Process Zarr datasets
+        folders_with_zarr = self.list_folders_with_data(".zarr/")
+        for dataset_path in folders_with_zarr: # dataset_path is like 'my_dataset.zarr/'
+            dname = (
+                PureS3Path.from_uri(f"s3://anonymous@{self.bucket_name}/{self.prefix}/")
+                .joinpath(dataset_path) # Use dataset_path directly
+                .as_uri()
+            )
+            dname = dname.replace("s3://anonymous%40", "")
 
+            try:
+                metadata = get_zarr_metadata(dname)
+            except Exception as e:
+                print(f"Error processing Zarr metadata from {dataset_path}: {e}")
+                continue
+
+            dataset_name = os.path.splitext(dataset_path.strip('/'))[0]
+            # If a dataset with the same name (but different format) exists,
+            # we might want to merge or handle it. For now, Zarr will overwrite if name clashes.
+            # A more robust solution might involve storing format in the catalog key or structure.
+            catalog[dataset_name] = metadata
+            
         return catalog
 
     @lru_cache(maxsize=None)
