@@ -114,14 +114,40 @@ def preprocess_xarray(ds, dataset_config):
 
     ##########
     var_required = schema.copy()
-    var_required.pop(dimensions["time"]["name"])
-    var_required.pop(dimensions["latitude"]["name"])
-    var_required.pop(dimensions["longitude"]["name"])
+    for dim_info in dimensions.values():
+        var_required.pop(dim_info["name"], None)
 
     # Remove variables with "drop_var": true from the var_required list
     for var_name, var_details in schema.items():
         if var_details.get("drop_var", False):
             var_required.pop(var_name, None)
+
+    # create variables from gatts
+    gatts_to_variable = dataset_config.get("gatts_to_variable", None)
+    if gatts_to_variable:
+        for gatts_var in gatts_to_variable:
+            dest_name = gatts_to_variable[gatts_var]["destination_name"]
+            dim_name = gatts_to_variable[gatts_var]["dimensions"]
+
+            # Get the string length from the config, defaulting to 61 if not specified
+            length = gatts_to_variable[gatts_var].get("length", 255)
+
+            # Define the string dtype dynamically with the given length
+            string_dtype = f"<U{length}"
+
+            # Create padded string to have consistent variable size accross the whole dataset
+            gatt_var_value = getattr(ds, gatts_var, None)
+            if gatt_var_value is None:
+                gatt_var_value_padded = "".ljust(
+                    length
+                )  # Ensures dtype becomes <U{length}
+            else:
+                gatt_var_value_padded = str(gatt_var_value).ljust(length)
+
+            ds[dest_name] = (
+                dim_name,
+                np.full(ds.dims[dim_name], gatt_var_value_padded, dtype=string_dtype),
+            )
 
     # TODO: make the variable below something more generic? a parameter?
     var_template_shape = dataset_config.get("var_template_shape")
@@ -136,24 +162,19 @@ def preprocess_xarray(ds, dataset_config):
         filename = "UNKOWN_FILENAME.nc"
 
     # TODO: get filename; Should be from https://github.com/pydata/xarray/issues/9142
-    ds = ds.assign(
-        filename=((dimensions["time"]["name"],), [filename])
-    )  # add new filename variable with time dimension
+    ds["filename"] = (
+        dimensions["time"]["name"],
+        np.full(ds.dims[dimensions["time"]["name"]], filename),
+    )
+    # ds = ds.assign(
+    # filename=((dimensions["time"]["name"],), [filename])
+    # )  # add new filename variable with time dimension
 
     # TODO: when filename is added, this can be used to find the equivalent data already stored as CO, and create a NAN
     # version to push back as CO in order to "delete". If UNKOWN_FILENAME.nc, either run an error, or have another approach,
     # Maybe the file to delete, would be a filename, OR the physical og NetCDF, which means then that we have all of the info in it, and simply making it NAN
 
     logger.info(f"Applying preprocessing on dataset from {filename}")
-    try:
-        warnings.filterwarnings("error", category=RuntimeWarning)
-        nan_array = da.full(ds[var_template_shape].shape, da.nan, dtype=da.float64)
-        # the following commented line returned some RuntimeWarnings every now and then.
-        # nan_array = np.empty(
-        #    ds[var_template_shape].shape) * np.nan  # np.full_like( (1, 4500, 6000), np.nan, dtype=object)
-    except RuntimeWarning as rw:
-        raise TypeError
-
     for variable_name in var_required:
         datatype = var_required[variable_name].get("type")
 
@@ -164,18 +185,48 @@ def preprocess_xarray(ds, dataset_config):
                 f"Add missing {variable_name} to xarray dataset with NaN values"
             )
 
+            var_dims = schema[variable_name].get("dims", None)
             # check the type of the variable (numerical of string)
             if np.issubdtype(datatype, np.number):
                 # Add the missing variable  to the dataset
+                if var_dims:
+                    dim_names = tuple(var_dims)
+                    missing_coords = [dim for dim in dim_names if dim not in ds.coords]
+
+                    # create missing dimension for missing variable
+                    # TODO: this is dangerous in case the first file to process of a dataset doesnt have ALL the dimensions. If this is the case, the dimension will be full of NaNs.
+                    # How to avoid this? create a dummy NetCDF with epoq date, NaN variables but ALL valid dimensions?
+                    if missing_coords:
+                        for dim in missing_coords:
+
+                            logger.warning(
+                                f"Add missing {dim} coordinate to xarray dataset with NaN values"
+                            )
+                            size = dimensions[dim][
+                                "size"
+                            ]  # get size from dataset's .dims
+                            nan_array = da.full(size, da.nan, dtype=da.float64)
+                            ds.coords[dim] = (dim, nan_array)
+
+                    shape = tuple([ds[dim].shape[0] for dim in dim_names])
+                    nan_array = da.full(shape, da.nan, dtype=da.float64)
+
+                else:
+                    logger.warning(
+                        f"'dims' key is missing in {variable_name} definition is schema. Defaulting to create {variable_name} with all available dimensions {dimensions} by default"
+                    )
+                    dim_names = tuple(
+                        dim_info["name"] for dim_info in dimensions.values()
+                    )
+                    # TODO: to clean and remove this abomination. nan_array should always be created based on the dims set for each variable!
+                    nan_array = da.full(
+                        ds[var_template_shape].shape, da.nan, dtype=da.float64
+                    )
+
                 ds[variable_name] = (
-                    (
-                        dimensions["time"]["name"],
-                        dimensions["latitude"]["name"],
-                        dimensions["longitude"]["name"],
-                    ),
+                    dim_names,
                     nan_array,
                 )
-
             else:
                 # for strings variables, it's quite likely that the variables don't have any dimensions associated.
                 # This can be an issue to know which datapoint is associated to which string value.
@@ -252,10 +303,11 @@ class GenericHandler(CommonHandler):
             "vars_incompatible_with_region", None
         )
 
+        # Generic chunks structure
         self.chunks = {
-            self.dimensions["time"]["name"]: self.dimensions["time"]["chunk"],
-            self.dimensions["latitude"]["name"]: self.dimensions["latitude"]["chunk"],
-            self.dimensions["longitude"]["name"]: self.dimensions["longitude"]["chunk"],
+            dim_info["name"]: dim_info["chunk"]
+            for dim_info in self.dimensions.values()
+            if "chunk" in dim_info
         }
 
         self.compute = bool(True)
@@ -311,7 +363,6 @@ class GenericHandler(CommonHandler):
         if s3_file_uri_list is None:
             raise ValueError("input_objects is not defined")
 
-        time_dimension_name = self.dimensions["time"]["name"]
         drop_vars_list = [
             var_name
             for var_name, attrs in self.schema.items()
@@ -435,12 +486,15 @@ class GenericHandler(CommonHandler):
             # First attempt with the primary engine
             return handle_engine(primary_engine)
         except ValueError as e:
+
             if str(e) == "Switch to fallback engine":
                 try:
                     # Second attempt with the fallback engine
                     return handle_engine(fallback_engine)
                 except Exception:
                     # If fallback also fails, handle multi-engine fallback
+                    # Log full traceback before continuing
+                    traceback.print_exc()
                     return self.handle_multi_engine_fallback(
                         batch_files, partial_preprocess, drop_vars_list
                     )
@@ -879,9 +933,9 @@ class GenericHandler(CommonHandler):
         unique, counts = np.unique(time_values_org, return_counts=True)
         duplicates = unique[counts > 1]
 
-        # Raise error if duplicates are found
+        # TODO: Raise error if duplicates are found? Not necessarely an issue. For example, some SOOP dataset, same TIME, 2 different NetCDF files, 2 different vessel and location.
         if len(duplicates) > 0:
-            self.logger.error(
+            self.logger.warning(
                 f"{self.uuid_log}: Duplicate values of {time_dimension_name} dimension "
                 f"found in original Zarr dataset. Could lead to a corrupted dataset: {duplicates}"
             )
@@ -891,7 +945,13 @@ class GenericHandler(CommonHandler):
     def _write_ds(self, ds, idx):
         time_dimension_name = self.dimensions["time"]["name"]
         ds = ds.sortby(time_dimension_name)
-        ds = ds.chunk(chunks=self.chunks)
+        if any(chunk == 0 for chunk in self.chunks.values()):
+            self.logger.warning(
+                f"{self.uuid_log}: One or more dimensions have in their dataset configuration a chunk size of 0: {self.chunks}. Please modify the configuration file. Defaulting to chunks=auto"
+            )
+            ds = ds.chunk(chunks="auto")
+        else:
+            ds = ds.chunk(chunks=self.chunks)
 
         # TODO: see https://github.com/pydata/xarray/issues/5219  https://github.com/pydata/xarray/issues/5286
         for var in ds:
