@@ -13,6 +13,7 @@ from typing import Final
 import boto3
 import cartopy.crs as ccrs  # For coastline plotting
 import cartopy.feature as cfeature
+import cftime
 import geopandas as gpd
 import gsw  # TEOS-10 library
 import matplotlib.pyplot as plt
@@ -498,7 +499,22 @@ def plot_time_coverage(ds, time_var="time"):
     # Convert the time dimension to a pandas DatetimeIndex
     ds = ds.sortby(time_var)
 
-    time_series = pd.to_datetime(ds[time_var].values)
+    time_values = ds[time_var].values
+
+    cftime_types = (
+        cftime.DatetimeGregorian,
+        cftime.DatetimeProlepticGregorian,
+        cftime.DatetimeJulian,
+        cftime.DatetimeNoLeap,
+        cftime.DatetimeAllLeap,
+        cftime.Datetime360Day,
+    )
+
+    # Convert to pandas datetime; handle cftime objects if needed
+    if isinstance(time_values[0], cftime_types):
+        time_series = pd.to_datetime([t.isoformat() for t in time_values])
+    else:
+        time_series = pd.to_datetime(time_values)
 
     # Create a DataFrame with the year and month as separate columns
     time_df = pd.DataFrame({"year": time_series.year, "month": time_series.month})
