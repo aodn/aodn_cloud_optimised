@@ -1957,19 +1957,24 @@ class ZarrDataSource(DataSource):
         else:
             timeseries_df.attrs["requested_var_name"] = None
 
+        attributes = ds.attrs
+        timeseries_df.attrs = attributes
+        for var in ds:
+            if var in timeseries_df:
+                timeseries_df[var].attrs = ds[var].attrs
+
         return timeseries_df
 
     def plot_timeseries(
         self,
-        timeseries_df: pd.DataFrame,
-        var_name: str,
         lat: float,
         lon: float,
         date_start: str,
         date_end: str,
-        actual_lat_name: str,
-        actual_lon_name: str,
-        actual_time_name: str,
+        var_name: str | None = None,
+        lat_name_override: str | None = None,
+        lon_name_override: str | None = None,
+        time_name_override: str | None = None,
     ) -> None:
         """Plots the extracted time series data.
 
@@ -1980,34 +1985,57 @@ class ZarrDataSource(DataSource):
             lon: The target longitude for which data was extracted.
             start_time: The requested start time for the series.
             end_time: The requested end time for the series.
-            actual_lat_name: Actual latitude coordinate name in timeseries_df.
-            actual_lon_name: Actual longitude coordinate name in timeseries_df.
-            actual_time_name: Actual time coordinate name in timeseries_df.
+            lat_name_override: Actual latitude coordinate name in timeseries_df.
+            lon_name_override: Actual longitude coordinate name in timeseries_df.
+            time_name_override: Actual time coordinate name in timeseries_df.
         """
         if self.zarr_store is None:
-            self.zarr_store = self._open_zarr_store()
+            self.zarr_store = (
+                self._open_zarr_store()
+            )  # Ensures store is open and sorted by time
 
-        ds = self.zarr_store  # For accessing attributes
+        ds = self.zarr_store
 
-        if var_name not in timeseries_df.columns:
-            print(
-                f"Warning: Variable '{var_name}' not found in the provided DataFrame. Cannot plot."
+        # Determine actual coordinate names
+        actual_time_name = (
+            time_name_override
+            if time_name_override
+            else _find_var_name_global(
+                ds,
+                ["time", "TIME", "datetime", "date", "Date", "DateTime", "JULD"],
+                "time",
             )
-            # Attempt to plot the first variable from retrieved_vars if available
-            if timeseries_df.attrs.get("retrieved_vars"):
-                var_name_to_plot = timeseries_df.attrs["retrieved_vars"][0]
-                print(
-                    f"Attempting to plot the first available variable: '{var_name_to_plot}'"
-                )
-            else:
-                return  # Cannot plot
-        else:
-            var_name_to_plot = var_name
+        )
+        actual_lat_name = (
+            lat_name_override
+            if lat_name_override
+            else _find_var_name_global(
+                ds, ["latitude", "lat", "LATITUDE", "LAT"], "latitude"
+            )
+        )
+        actual_lon_name = (
+            lon_name_override
+            if lon_name_override
+            else _find_var_name_global(
+                ds, ["longitude", "lon", "LONGITUDE", "LON"], "longitude"
+            )
+        )
 
-        # The DataFrame should have columns: actual_time_name, actual_lat_name, actual_lon_name, and var_name_to_plot
+        timeseries_df = self.get_timeseries_data(
+            lat,
+            lon,
+            date_start,
+            date_end,
+            var_name,
+            actual_lat_name,
+            actual_lon_name,
+            actual_time_name,
+        )
+
         # Plotting
         plt.figure()  # Create a new figure
-        plt.plot(timeseries_df[actual_time_name], timeseries_df[var_name_to_plot])
+        breakpoint()
+        plt.plot(timeseries_df[actual_time_name], timeseries_df[var_name])
 
         # Use actual lat/lon values from the DataFrame for the title, as 'nearest' might pick a slightly different point.
         plot_lat_val = (
@@ -2021,9 +2049,8 @@ class ZarrDataSource(DataSource):
         norm_date_end = normalize_date(date_end)
 
         # Get attributes from the original Zarr store for the plotted variable
-        var_attrs = ds[var_name_to_plot].attrs if var_name_to_plot in ds else {}
-        long_name = var_attrs.get("long_name", var_name_to_plot)
-        units = var_attrs.get("units", "unitless")
+        long_name = timeseries_df[var_name].get("long_name", var_name)
+        units = timeseries_df[var_name].get("units", "unitless")
 
         plt.title(
             f"{long_name} at {actual_lat_name}={plot_lat_val:.2f}, "
