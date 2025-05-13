@@ -434,6 +434,7 @@ class GenericHandler(CommonHandler):
             ValueError: If specific unrecoverable errors occur (e.g., invalid
                 NetCDF format after trying both engines).
         """
+
         def handle_engine(engine):
             try:
                 return self._open_mfds(
