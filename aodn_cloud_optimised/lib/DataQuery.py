@@ -1528,26 +1528,98 @@ class ZarrDataSource(DataSource):
             
         return lat_var, lon_var
 
-    def get_data(self, **kwargs) -> xr.Dataset:
-        """Retrieves data from the Zarr store, potentially filtered.
+    def _find_var_name(self, ds: xr.Dataset, common_names: list[str], var_description: str) -> str:
+        """Helper to find a variable/coordinate name from a list of common names.
 
-        Currently a placeholder. Intended to use `xarray.Dataset.sel()` or
-        similar methods based on the provided kwargs.
+        Prioritizes coordinates, then 1D data variables.
 
         Args:
-            **kwargs: Keyword arguments for filtering (e.g., time slices,
-                lat/lon ranges).
+            ds: The xarray Dataset to search within.
+            common_names: A list of common names for the variable (e.g., ['time', 'TIME']).
+            var_description: A string describing the variable type (e.g., "time", "latitude")
+                             for use in error messages.
 
         Returns:
-            An xarray Dataset containing the requested data.
+            The found variable/coordinate name.
 
         Raises:
-            NotImplementedError: This method is not yet implemented.
+            ValueError: If a suitable variable/coordinate cannot be found.
         """
-        # Placeholder for Zarr data retrieval logic
-        # This will involve using xarray to select/slice data based on kwargs
-        # Example: return self.zarr_store.sel(**kwargs)
-        raise NotImplementedError("Zarr data retrieval not yet implemented.")
+        # Check coordinates first
+        for name in common_names:
+            if name in ds.coords:
+                return name
+        
+        # Then check 1D data variables
+        for name in common_names:
+            if name in ds.data_vars:
+                if ds[name].ndim == 1:
+                    return name
+                else:
+                    self.get_logger().debug(
+                        f"Found potential {var_description} variable '{name}' but it is multi-dimensional. Skipping for sel()."
+                    )
+        
+        raise ValueError(
+            f"Could not find a suitable 1D {var_description} variable/coordinate in the Zarr store {self.dataset_name}. Searched for {common_names}."
+        )
+
+    def get_data(
+        self,
+        date_start: str | None = None,
+        date_end: str | None = None,
+        lat_min: float | None = None,
+        lat_max: float | None = None,
+        lon_min: float | None = None,
+        lon_max: float | None = None,
+    ) -> xr.Dataset:
+        """Retrieves data from the Zarr store, applying spatio-temporal filters.
+
+        Uses xarray's `sel()` method to slice the data based on the provided
+        time, latitude, and longitude ranges.
+
+        Args:
+            date_start: Optional start date string (e.g., "YYYY-MM-DD" or "YYYY-MM-DDTHH:MM:SS").
+            date_end: Optional end date string.
+            lat_min: Optional minimum latitude for slicing.
+            lat_max: Optional maximum latitude for slicing.
+            lon_min: Optional minimum longitude for slicing.
+            lon_max: Optional maximum longitude for slicing.
+
+        Returns:
+            An xarray.Dataset containing the selected data.
+
+        Raises:
+            ValueError: If essential coordinate names (time, lat, lon) cannot be found.
+        """
+        if self.zarr_store is None:
+            self._open_zarr_store()
+
+        selectors = {}
+
+        # Time slicing
+        if date_start is not None or date_end is not None:
+            time_names = ['time', 'TIME', 'datetime', 'date', 'Date', 'DateTime', 'JULD']
+            time_var_name = self._find_var_name(self.zarr_store, time_names, "time")
+            selectors[time_var_name] = slice(date_start, date_end)
+
+        # Latitude slicing
+        if lat_min is not None or lat_max is not None:
+            lat_names = ['latitude', 'lat', 'LATITUDE', 'LAT']
+            lat_var_name = self._find_var_name(self.zarr_store, lat_names, "latitude")
+            selectors[lat_var_name] = slice(lat_min, lat_max)
+
+        # Longitude slicing
+        if lon_min is not None or lon_max is not None:
+            lon_names = ['longitude', 'lon', 'LONGITUDE', 'LON']
+            lon_var_name = self._find_var_name(self.zarr_store, lon_names, "longitude")
+            selectors[lon_var_name] = slice(lon_min, lon_max)
+        
+        if not selectors:
+            self.get_logger().warning("No filters provided to get_data for Zarr source. Returning entire dataset.")
+            return self.zarr_store
+
+        return self.zarr_store.sel(selectors)
 
     def get_spatial_extent(self) -> list[float]:
         """Calculates the spatial extent (min/max lat/lon) of the Zarr dataset.
