@@ -1202,8 +1202,18 @@ class DataSource(ABC):
         pass
 
     @abstractmethod
-    def get_data(self, **kwargs) -> pd.DataFrame | xr.Dataset:
-        """Retrieves data, potentially filtered by kwargs."""
+    def get_data(
+        self,
+        date_start: str | None = None,
+        date_end: str | None = None,
+        lat_min: float | None = None,
+        lat_max: float | None = None,
+        lon_min: float | None = None,
+        lon_max: float | None = None,
+        scalar_filter: dict | None = None,
+        columns: list[str] | None = None,
+    ) -> pd.DataFrame | xr.Dataset:
+        """Retrieves data, potentially filtered by arguments."""
         pass
 
     @abstractmethod
