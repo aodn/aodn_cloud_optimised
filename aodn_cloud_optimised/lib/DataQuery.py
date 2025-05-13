@@ -747,195 +747,216 @@ def plot_radar_water_velocity_gridded(
 
 
 def plot_gridded_variable(
-    ds: xr.Dataset,
-    var_name: str,
-    n_days: int = 6,
-    coastline_resolution: str = "110m",
-    log_scale: bool = False,
-    lat_name_override: str | None = None,
-    lon_name_override: str | None = None,
-    time_name_override: str | None = None,
-) -> None:
-    """Plots a gridded variable from an xr.Dataset for multiple consecutive time steps.
-
-    Displays maps of the specified variable (`var_name`) for up to `n_days`
-    consecutive time steps, starting from the beginning of the dataset's time dimension.
-    The spatial extent for plotting is derived from the input `ds`.
-    Includes coastlines, gridlines, and optional logarithmic color scaling.
-    Handles unit conversion from Kelvin to Celsius if applicable.
-
-    Args:
-        ds: The input xarray Dataset, assumed to be appropriately sliced
-            spatio-temporally.
-        var_name: The name of the data variable to plot.
-        n_days: The maximum number of consecutive time steps to plot from `ds`.
-            Defaults to 6.
-        coastline_resolution: The resolution for the Cartopy coastline
-            feature ('110m', '50m', '10m'). Defaults to "110m".
-        log_scale: If True, use a logarithmic color scale. Defaults to False.
-        lat_name_override: Optional override for the latitude coordinate name.
-        lon_name_override: Optional override for the longitude coordinate name.
-        time_name_override: Optional override for the time coordinate name.
-
-    Raises:
-        ValueError: If no valid data is found, or coordinate names cannot be determined.
-        AssertionError: If the dataset does not have the determined time dimension.
+    ds,
+    start_date,
+    lon_slice=None,
+    lat_slice=None,
+    var_name="sea_surface_temperature",
+    n_days=6,
+    lat_name="lat",
+    lon_name="lon",
+    time_name="time",
+    coastline_resolution="110m",
+    log_scale=False,  # Optional argument to use a logarithmic color scale
+):
     """
-    actual_lat_name = (
-        lat_name_override
-        if lat_name_override
-        else _find_var_name_global(
-            ds, ["latitude", "lat", "LATITUDE", "LAT"], "latitude"
+    Plots a variable (e.g., SST) data for 6 consecutive days starting from start_date with coastlines.
+
+    Parameters:
+    - ds: xarray.Dataset containing the data.
+    - start_date: str, start date in 'YYYY-MM-DD' format.
+    - lon_slice: tuple, longitude slice (start_lon, end_lon). (min val, max val)
+    - lat_slice: tuple, latitude slice (start_lat, end_lat). (min val, max val)
+    - var_name: str, variable name to plot (default is 'sea_surface_temperature').
+    - coastline_resolution: str, resolution of the coastlines ('110m', '50m', '10m').
+    - log_scale: bool, whether to use a logarithmic color scale (default is False).
+    """
+
+    ds = ds.sortby(time_name)
+
+    # Get latitude and longitude extents
+    lat_min, lat_max = ds[lat_name].min().item(), ds[lat_name].max().item()
+    lon_min, lon_max = ds[lon_name].min().item(), ds[lon_name].max().item()
+
+    if lat_slice is None:
+        lat_slice = (lat_min, lat_max)
+
+    if lon_slice is None:
+        lon_slice = (lon_min, lon_max)
+
+    # Decide on the slice order
+    if ds[lat_name][0] < ds[lat_name][-1]:
+        lat_slice = lat_slice
+    elif ds[lat_name][0] > ds[lat_name][-1]:
+        # Reverse the slice
+        lat_slice = lat_slice[::-1]
+
+    # Test if lat_slice and lon_slice are within bounds
+    if not (lat_min <= lat_slice[0] <= lat_max and lat_min <= lat_slice[1] <= lat_max):
+        raise ValueError(
+            f"Latitude slice {lat_slice} is out of bounds. Dataset latitude extent is ({lat_min}, {lat_max})"
         )
+
+    if not (lon_min <= lon_slice[0] <= lon_max and lon_min <= lon_slice[1] <= lon_max):
+        raise ValueError(
+            f"Longitude slice {lon_slice} is out of bounds. Dataset longitude extent is ({lon_min}, {lon_max})"
+        )
+
+    # Parse the start date
+    start_date_parsed = pd.to_datetime(start_date)
+
+    # Ensure the dataset has a time dimension and it's sorted
+    assert time_name in ds.dims, "Dataset does not have a 'time' dimension"
+    ds = ds.sortby(time_name)
+
+    # Find the nearest date in the dataset
+    nearest_date = ds.sel({time_name: start_date_parsed}, method="nearest")[time_name]
+    print(f"Nearest date in dataset: {nearest_date}")
+
+    # Get the index of the nearest date
+    nearest_date_index = (
+        ds[time_name].where(ds[time_name] == nearest_date, drop=True).squeeze().values
     )
-    actual_lon_name = (
-        lon_name_override
-        if lon_name_override
-        else _find_var_name_global(
-            ds, ["longitude", "lon", "LONGITUDE", "LON"], "longitude"
-        )
-    )
-    actual_time_name = (
-        time_name_override
-        if time_name_override
-        else _find_var_name_global(
-            ds, ["time", "TIME", "datetime", "date", "Date", "DateTime", "JULD"], "time"
-        )
-    )
 
-    ds = ds.sortby(actual_time_name)
+    # Find the position of the nearest date in the time array
+    nearest_date_position = int((ds[time_name] == nearest_date_index).argmax().values)
 
-    assert (
-        actual_time_name in ds.dims
-    ), f"Dataset does not have a '{actual_time_name}' dimension"
+    # Get the next n_days date values including the nearest date
+    dates = ds[time_name][nearest_date_position : nearest_date_position + n_days].values
+    dates = [pd.Timestamp(date) for date in dates]
 
-    time_coord = ds[actual_time_name]
-    num_available_steps = len(time_coord)
-    steps_to_plot = min(n_days, num_available_steps)
-
-    if steps_to_plot == 0:
-        print(
-            f"No time steps available in the dataset for variable '{var_name}'. Cannot plot."
-        )
-        return
-
-    dates_to_plot_raw = time_coord[:steps_to_plot].values
-    dates_to_plot = [pd.Timestamp(date) for date in dates_to_plot_raw]
-
-    if not dates_to_plot:
-        print(f"No dates to plot for variable '{var_name}' (n_days={n_days}).")
-        return
-
+    # Retrieve variable-specific metadata
     var_long_name = ds[var_name].attrs.get("long_name", var_name)
-    print(f"Plotting '{var_long_name}' for {len(dates_to_plot)} time steps.")
+    print(f"Variable Long Name: {var_long_name}")
 
-    num_plots = len(dates_to_plot)
-    ncols = 3
-    nrows = (num_plots + ncols - 1) // ncols
-
+    # Create subplots with Cartopy for coastlines
     fig, axes = plt.subplots(
-        nrows=nrows,
-        ncols=ncols,
-        figsize=(18, 6 * nrows if nrows > 0 else 6),
+        nrows=int(n_days / 3),
+        ncols=3,
+        figsize=(18, 10),
         subplot_kw={"projection": ccrs.PlateCarree()},
-        squeeze=False,
     )
-    axes_flat = axes.flatten()
+    axes = axes.flatten()
 
+    # Set up a variable for the colormap
     cmap = plt.get_cmap("coolwarm")
-    vmin_all, vmax_all = float("inf"), float("-inf")
 
-    plot_data_cache = {}
+    # Create a placeholder for the color data range
+    vmin, vmax = float("inf"), float("-inf")
 
-    for date_obj in dates_to_plot:
+    # First pass: gather all the data to find vmin and vmax
+    for date in dates:
         try:
-            # Data is selected only by time from the input ds
-            data = ds[var_name].sel({actual_time_name: date_obj})
+            data = ds[var_name].sel(
+                {
+                    time_name: date.strftime("%Y-%m-%d %H:%M:%S"),
+                    lon_name: slice(lon_slice[0], lon_slice[1]),
+                    lat_name: slice(lat_slice[0], lat_slice[1]),
+                }
+            )
 
+            # Check for NaNs
             if data.isnull().all():
-                plot_data_cache[date_obj] = None
+                print(
+                    f"No valid data for {date.strftime('%Y-%m-%d %H:%M:%S')}, skipping this date."
+                )
                 continue
 
-            current_var_units = ds[var_name].attrs.get("units", "unknown units")
-            if current_var_units.lower() == "kelvin":
-                data = data - 273.15
+            # Retrieve and check units for the current plot
+            var_units = ds[var_name].attrs.get("units", "unknown units")
 
-            plot_data_cache[date_obj] = data
-            vmin_all = min(vmin_all, data.min().item())
-            vmax_all = max(vmax_all, data.max().item())
+            # Convert Kelvin to Celsius if needed
+            if var_units.lower() == "kelvin":
+                data = data - 273.15
+                var_units = "°C"  # Change units in the label
+
+            # Update vmin and vmax for colorbar scaling
+            vmin = min(vmin, data.min().values)
+            vmax = max(vmax, data.max().values)
+
+            # Set the color scale norm based on whether log_scale is True or False
+            if log_scale:
+                norm = LogNorm(vmin=vmin, vmax=vmax)  # Logarithmic scale
+                cbar_label = f"Log({var_long_name}) ({var_units})"  # Colorbar label for log scale
+            else:
+                norm = Normalize(vmin=vmin, vmax=vmax)  # Linear scale
+                cbar_label = (
+                    f"{var_long_name} ({var_units})"  # Colorbar label for linear scale
+                )
 
         except Exception as err:
-            print(
-                f"Error processing data for date {date_obj.strftime('%Y-%m-%d %H:%M:%S')}: {err}"
-            )
-            plot_data_cache[date_obj] = None
-
-    if not np.isfinite(vmin_all) or not np.isfinite(vmax_all):
-        print(
-            "No valid data found across all selected dates and coordinates to determine color scale."
-        )
-        if num_plots > 0 and all(p is None for p in plot_data_cache.values()):
-            plt.close(fig)
-        return
-
-    norm_to_use = (
-        LogNorm(vmin=vmin_all, vmax=vmax_all)
-        if log_scale
-        else Normalize(vmin=vmin_all, vmax=vmax_all)
-    )
-    img_for_colorbar = None
-
-    for idx, date_obj in enumerate(dates_to_plot):
-        ax = axes_flat[idx]
-        data_to_plot = plot_data_cache.get(date_obj)
-
-        if data_to_plot is None or data_to_plot.isnull().all():
-            print(
-                f"No valid data for {date_obj.strftime('%Y-%m-%d %H:%M:%S')}, skipping plot."
-            )
-            ax.set_title(f"No data for {date_obj.strftime('%Y-%m-%d %H:%M:%S')}")
-            ax.axis("off")
+            print(f"Error processing date {date.strftime('%Y-%m-%d')}: {err}")
             continue
 
-        var_units_display = ds[var_name].attrs.get("units", "unknown units")
-        if var_units_display.lower() == "kelvin":
-            var_units_display = "°C"
-
-        img = data_to_plot.plot(
-            ax=ax,
-            cmap=cmap,
-            norm=norm_to_use,
-            add_colorbar=False,
+    # Check if vmin or vmax are still invalid (if no data was found)
+    if not np.isfinite(vmin) or not np.isfinite(vmax):
+        raise ValueError(
+            "No valid data found in the selected range of dates and coordinates."
         )
-        if img_for_colorbar is None:
-            img_for_colorbar = img
 
-        ax.coastlines(resolution=coastline_resolution)
-        ax.add_feature(cfeature.BORDERS, linestyle=":")
-        gl = ax.gridlines(draw_labels=True, dms=True, x_inline=False, y_inline=False)
-        gl.top_labels = False
-        gl.right_labels = False
-        ax.set_title(date_obj.strftime("%Y-%m-%d %H:%M:%S"))
+    # Plot each date after determining vmin and vmax
+    for date in dates:
+        try:
+            data = ds[var_name].sel(
+                {
+                    time_name: date.strftime("%Y-%m-%d %H:%M:%S"),
+                    lon_name: slice(lon_slice[0], lon_slice[1]),
+                    lat_name: slice(lat_slice[0], lat_slice[1]),
+                }
+            )
 
-    for i in range(num_plots, len(axes_flat)):
-        axes_flat[i].set_visible(False)
+            # Skip if no valid data is found for the date
+            if data.isnull().all():
+                print(
+                    f"No data for {date.strftime('%Y-%m-%d %H:%M:%S')}, skipping plot."
+                )
+                continue
 
-    if img_for_colorbar:
-        cbar_label_text = f"{var_long_name} ({var_units_display})"
-        if log_scale:
-            cbar_label_text = f"Log({cbar_label_text})"
+            var_units = ds[var_name].attrs.get("units", "unknown units")
+            if var_units.lower() == "kelvin":
+                data = data - 273.15
+                var_units = "°C"
 
-        fig.subplots_adjust(right=0.85)
-        cbar_ax = fig.add_axes([0.88, 0.15, 0.03, 0.7])
-        cbar = fig.colorbar(img_for_colorbar, cax=cbar_ax, orientation="vertical")
-        cbar.set_label(cbar_label_text)
+            # Plot the data
+            img = data.plot(
+                ax=axes[dates.index(date)],
+                cmap=cmap,
+                vmin=vmin,
+                vmax=vmax,
+                norm=norm,
+                add_colorbar=False,
+            )
+
+            # Add coastlines and gridlines
+            ax = axes[dates.index(date)]
+            ax.coastlines(resolution=coastline_resolution)
+            ax.add_feature(cfeature.BORDERS, linestyle=":")
+            ax.gridlines(draw_labels=True, dms=True, x_inline=False, y_inline=False)
+
+            # Set the title with the date
+            ax.set_title(date.strftime("%Y-%m-%d %H:%M:%S"))
+
+        except Exception as err:
+            print(f"Error processing date {date.strftime('%Y-%m-%d %H:%M:%S')}: {err}")
+            ax.set_title(f"No data for {date.strftime('%Y-%m-%d %H:%M:%S')}")
+            ax.axis("off")
+
+    # Create a single colorbar for all plots
+    cbar_ax = fig.add_axes([1, 0.15, 0.02, 0.7])
+    cbar = fig.colorbar(img, cax=cbar_ax, orientation="vertical")
+    # Set the colorbar label and title based on the scale type
+    if log_scale:
+        cbar.set_label(f"Log({var_long_name}) ({var_units})")
     else:
-        plt.close(fig)
-        print("No images were plotted, so no colorbar will be shown.")
-        return
+        cbar.set_label(f"{var_long_name} ({var_units})")
+
+    cbar.set_ticks([vmin, (vmin + vmax) / 2, vmax])
+    cbar.ax.set_yticklabels([f"{vmin:.2f}", f"{(vmin + vmax) / 2:.2f}", f"{vmax:.2f}"])
 
     fig.suptitle(f"{var_long_name} Over Time", fontsize=16, fontweight="bold")
-    plt.tight_layout(rect=[0, 0, 0.85, 0.95])
+    # Adjust layout to give more space for the colorbar
+    plt.subplots_adjust(right=0.85, top=0.9)
+    plt.tight_layout()
     plt.show()
 
 
@@ -2017,13 +2038,11 @@ class ZarrDataSource(DataSource):
     def plot_gridded_variable(
         self,
         var_name: str,
-        lat: float,
-        lon: float,
+        lon_slice: float | None,
+        lat_slice: float | None,
         date_start: str,
         date_end: str | None = None,
         n_days: int = 6,
-        lat_slice_radius_deg: float = 1.0,
-        lon_slice_radius_deg: float = 1.0,
         coastline_resolution: str = "110m",
         log_scale: bool = False,
         lat_name_override: str | None = None,
@@ -2042,17 +2061,11 @@ class ZarrDataSource(DataSource):
 
         Args:
             var_name: The name of the data variable to plot.
-            lat: Central latitude for the plot.
-            lon: Central longitude for the plot.
             date_start: The start date string (e.g., "YYYY-MM-DD"). Plotting starts
                 from the time step nearest to this date.
             date_end: Optional end date string (e.g., "YYYY-MM-DD"). If provided,
                 plotting will not extend beyond this date.
             n_days: The maximum number of consecutive time steps to plot. Defaults to 6.
-            lat_slice_radius_deg: Radius in degrees to define the N-S extent of the
-                plot around `lat`. Defaults to 1.0.
-            lon_slice_radius_deg: Radius in degrees to define the E-W extent of the
-                plot around `lon`. Defaults to 1.0.
             coastline_resolution: The resolution for the Cartopy coastline
                 feature ('110m', '50m', '10m'). Defaults to "110m".
             log_scale: If True, use a logarithmic color scale. Defaults to False.
@@ -2096,9 +2109,21 @@ class ZarrDataSource(DataSource):
 
         ds = ds.sortby(actual_time_name)
 
-        # Define lat_slice and lon_slice from inputs
-        lat_slice = (lat - lat_slice_radius_deg, lat + lat_slice_radius_deg)
-        lon_slice = (lon - lon_slice_radius_deg, lon + lon_slice_radius_deg)
+        # Get latitude and longitude extents
+        lat_min, lat_max = (
+            ds[actual_lat_name].min().item(),
+            ds[actual_lat_name].max().item(),
+        )
+        lon_min, lon_max = (
+            ds[actual_lon_name].min().item(),
+            ds[actual_lon_name].max().item(),
+        )
+
+        if lat_slice is None:
+            lat_slice = (lat_min, lat_max)
+
+        if lon_slice is None:
+            lon_slice = (lon_min, lon_max)
 
         # Get latitude and longitude extents from dataset for validation
         ds_lat_min, ds_lat_max = (
@@ -2135,14 +2160,14 @@ class ZarrDataSource(DataSource):
 
         # Decide on the slice order for actual slicing based on dataset coordinate order
         if ds[actual_lat_name][0] > ds[actual_lat_name][-1]:
-            lat_slice_for_sel = (lat_slice[1], lat_slice[0])  # Reverse for sel
+            lat_slice_for_sel = (max(lat_slice), min(lat_slice))
         else:
-            lat_slice_for_sel = lat_slice
+            lat_slice_for_sel = (min(lat_slice), max(lat_slice))
 
         if ds[actual_lon_name][0] > ds[actual_lon_name][-1]:
-            lon_slice_for_sel = (lon_slice[1], lon_slice[0])  # Reverse for sel
+            lon_slice_for_sel = (max(lon_slice), min(lon_slice))
         else:
-            lon_slice_for_sel = lon_slice
+            lon_slice_for_sel = (min(lon_slice), max(lon_slice))
 
         # Parse dates
         start_date_parsed = pd.to_datetime(date_start)
@@ -2225,6 +2250,7 @@ class ZarrDataSource(DataSource):
                         ),
                     }
                 )
+                breakpoint()
                 if data.isnull().all():
                     plot_data_cache[date_obj] = None  # Mark as no data
                     continue
@@ -2316,7 +2342,7 @@ class ZarrDataSource(DataSource):
             return
 
         fig.suptitle(
-            f"{var_long_name} Over Time\n(Center: lat={lat:.2f}, lon={lon:.2f}, Radius: lat={lat_slice_radius_deg:.2f}°, lon={lon_slice_radius_deg:.2f}°)",
+            f"{var_long_name} Over Time\n",
             fontsize=16,
             fontweight="bold",
         )
