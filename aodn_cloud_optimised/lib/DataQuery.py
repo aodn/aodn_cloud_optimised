@@ -89,7 +89,9 @@ def get_temporal_extent_v1(parquet_ds: pq.ParquetDataset) -> tuple[datetime, dat
     )
 
 
-def get_temporal_extent(parquet_ds: pq.ParquetDataset) -> tuple[pd.Timestamp, pd.Timestamp]:
+def get_temporal_extent(
+    parquet_ds: pq.ParquetDataset,
+) -> tuple[pd.Timestamp, pd.Timestamp]:
     """Calculates the precise temporal extent by reading min/max time variable values.
 
     This method finds the minimum and maximum 'timestamp' partition values, then
@@ -779,22 +781,44 @@ def plot_gridded_variable(
         ValueError: If no valid data is found, or coordinate names cannot be determined.
         AssertionError: If the dataset does not have the determined time dimension.
     """
-    actual_lat_name = lat_name_override if lat_name_override else _find_var_name_global(ds, ['latitude', 'lat', 'LATITUDE', 'LAT'], "latitude")
-    actual_lon_name = lon_name_override if lon_name_override else _find_var_name_global(ds, ['longitude', 'lon', 'LONGITUDE', 'LON'], "longitude")
-    actual_time_name = time_name_override if time_name_override else _find_var_name_global(ds, ['time', 'TIME', 'datetime', 'date', 'Date', 'DateTime', 'JULD'], "time")
+    actual_lat_name = (
+        lat_name_override
+        if lat_name_override
+        else _find_var_name_global(
+            ds, ["latitude", "lat", "LATITUDE", "LAT"], "latitude"
+        )
+    )
+    actual_lon_name = (
+        lon_name_override
+        if lon_name_override
+        else _find_var_name_global(
+            ds, ["longitude", "lon", "LONGITUDE", "LON"], "longitude"
+        )
+    )
+    actual_time_name = (
+        time_name_override
+        if time_name_override
+        else _find_var_name_global(
+            ds, ["time", "TIME", "datetime", "date", "Date", "DateTime", "JULD"], "time"
+        )
+    )
 
     ds = ds.sortby(actual_time_name)
-    
-    assert actual_time_name in ds.dims, f"Dataset does not have a '{actual_time_name}' dimension"
+
+    assert (
+        actual_time_name in ds.dims
+    ), f"Dataset does not have a '{actual_time_name}' dimension"
 
     time_coord = ds[actual_time_name]
     num_available_steps = len(time_coord)
     steps_to_plot = min(n_days, num_available_steps)
 
     if steps_to_plot == 0:
-        print(f"No time steps available in the dataset for variable '{var_name}'. Cannot plot.")
+        print(
+            f"No time steps available in the dataset for variable '{var_name}'. Cannot plot."
+        )
         return
-        
+
     dates_to_plot_raw = time_coord[:steps_to_plot].values
     dates_to_plot = [pd.Timestamp(date) for date in dates_to_plot_raw]
 
@@ -807,65 +831,75 @@ def plot_gridded_variable(
 
     num_plots = len(dates_to_plot)
     ncols = 3
-    nrows = (num_plots + ncols - 1) // ncols 
-    
+    nrows = (num_plots + ncols - 1) // ncols
+
     fig, axes = plt.subplots(
         nrows=nrows,
         ncols=ncols,
         figsize=(18, 6 * nrows if nrows > 0 else 6),
         subplot_kw={"projection": ccrs.PlateCarree()},
-        squeeze=False 
+        squeeze=False,
     )
     axes_flat = axes.flatten()
 
     cmap = plt.get_cmap("coolwarm")
     vmin_all, vmax_all = float("inf"), float("-inf")
-    
+
     plot_data_cache = {}
-    
+
     for date_obj in dates_to_plot:
         try:
             # Data is selected only by time from the input ds
             data = ds[var_name].sel({actual_time_name: date_obj})
-            
+
             if data.isnull().all():
-                plot_data_cache[date_obj] = None 
+                plot_data_cache[date_obj] = None
                 continue
-            
+
             current_var_units = ds[var_name].attrs.get("units", "unknown units")
             if current_var_units.lower() == "kelvin":
                 data = data - 273.15
-            
-            plot_data_cache[date_obj] = data 
+
+            plot_data_cache[date_obj] = data
             vmin_all = min(vmin_all, data.min().item())
             vmax_all = max(vmax_all, data.max().item())
 
         except Exception as err:
-            print(f"Error processing data for date {date_obj.strftime('%Y-%m-%d %H:%M:%S')}: {err}")
+            print(
+                f"Error processing data for date {date_obj.strftime('%Y-%m-%d %H:%M:%S')}: {err}"
+            )
             plot_data_cache[date_obj] = None
 
     if not np.isfinite(vmin_all) or not np.isfinite(vmax_all):
-        print("No valid data found across all selected dates and coordinates to determine color scale.")
+        print(
+            "No valid data found across all selected dates and coordinates to determine color scale."
+        )
         if num_plots > 0 and all(p is None for p in plot_data_cache.values()):
-             plt.close(fig)
+            plt.close(fig)
         return
 
-    norm_to_use = LogNorm(vmin=vmin_all, vmax=vmax_all) if log_scale else Normalize(vmin=vmin_all, vmax=vmax_all)
-    img_for_colorbar = None 
+    norm_to_use = (
+        LogNorm(vmin=vmin_all, vmax=vmax_all)
+        if log_scale
+        else Normalize(vmin=vmin_all, vmax=vmax_all)
+    )
+    img_for_colorbar = None
 
     for idx, date_obj in enumerate(dates_to_plot):
         ax = axes_flat[idx]
         data_to_plot = plot_data_cache.get(date_obj)
 
         if data_to_plot is None or data_to_plot.isnull().all():
-            print(f"No valid data for {date_obj.strftime('%Y-%m-%d %H:%M:%S')}, skipping plot.")
+            print(
+                f"No valid data for {date_obj.strftime('%Y-%m-%d %H:%M:%S')}, skipping plot."
+            )
             ax.set_title(f"No data for {date_obj.strftime('%Y-%m-%d %H:%M:%S')}")
             ax.axis("off")
             continue
 
         var_units_display = ds[var_name].attrs.get("units", "unknown units")
         if var_units_display.lower() == "kelvin":
-             var_units_display = "°C"
+            var_units_display = "°C"
 
         img = data_to_plot.plot(
             ax=ax,
@@ -873,7 +907,7 @@ def plot_gridded_variable(
             norm=norm_to_use,
             add_colorbar=False,
         )
-        if img_for_colorbar is None: 
+        if img_for_colorbar is None:
             img_for_colorbar = img
 
         ax.coastlines(resolution=coastline_resolution)
@@ -886,27 +920,30 @@ def plot_gridded_variable(
     for i in range(num_plots, len(axes_flat)):
         axes_flat[i].set_visible(False)
 
-    if img_for_colorbar: 
+    if img_for_colorbar:
         cbar_label_text = f"{var_long_name} ({var_units_display})"
         if log_scale:
             cbar_label_text = f"Log({cbar_label_text})"
-        
-        fig.subplots_adjust(right=0.85) 
-        cbar_ax = fig.add_axes([0.88, 0.15, 0.03, 0.7]) 
+
+        fig.subplots_adjust(right=0.85)
+        cbar_ax = fig.add_axes([0.88, 0.15, 0.03, 0.7])
         cbar = fig.colorbar(img_for_colorbar, cax=cbar_ax, orientation="vertical")
         cbar.set_label(cbar_label_text)
-    else: 
+    else:
         plt.close(fig)
         print("No images were plotted, so no colorbar will be shown.")
         return
 
     fig.suptitle(f"{var_long_name} Over Time", fontsize=16, fontweight="bold")
-    plt.tight_layout(rect=[0, 0, 0.85, 0.95]) 
+    plt.tight_layout(rect=[0, 0, 0.85, 0.95])
     plt.show()
 
 
 def plot_ts_diagram(
-    df: pd.DataFrame, temp_col: str = "TEMP", psal_col: str = "PSAL", z_col: str = "DEPTH"
+    df: pd.DataFrame,
+    temp_col: str = "TEMP",
+    psal_col: str = "PSAL",
+    z_col: str = "DEPTH",
 ) -> None:
     """Plots a Temperature-Salinity (T-S) diagram with density contours.
 
@@ -1105,6 +1142,7 @@ def get_zarr_metadata(dname: str) -> dict:
 ###################################################################################################################
 class DataSource(ABC):
     """Abstract Base Class for accessing different data source formats (Parquet, Zarr)."""
+
     def __init__(self, bucket_name: str, prefix: str, dataset_name: str):
         """Initialises the DataSource.
 
@@ -1166,7 +1204,7 @@ class DataSource(ABC):
         lon: float,
         date_start: str,
         date_end: str,
-        var_name: str | None = None, # Made var_name optional
+        var_name: str | None = None,  # Made var_name optional
         lat_name_override: str | None = None,
         lon_name_override: str | None = None,
         time_name_override: str | None = None,
@@ -1178,12 +1216,12 @@ class DataSource(ABC):
     def plot_timeseries(
         self,
         timeseries_df: pd.DataFrame,
-        var_name: str, # Specific variable from the DataFrame to plot
+        var_name: str,  # Specific variable from the DataFrame to plot
         lat: float,
         lon: float,
         date_start: str,
         date_end: str,
-        actual_lat_name: str, 
+        actual_lat_name: str,
         actual_lon_name: str,
         actual_time_name: str,
     ) -> None:
@@ -1193,6 +1231,7 @@ class DataSource(ABC):
 
 class ParquetDataSource(DataSource):
     """DataSource implementation for Parquet datasets."""
+
     def _build_data_path(self) -> str:
         """Constructs the S3 path for the Parquet dataset directory.
 
@@ -1424,6 +1463,7 @@ class ParquetDataSource(DataSource):
 
 class ZarrDataSource(DataSource):
     """DataSource implementation for Zarr datasets."""
+
     def _build_data_path(self) -> str:
         """Constructs the S3 path for the Zarr store directory.
 
@@ -1472,7 +1512,15 @@ class ZarrDataSource(DataSource):
                 fsspec.get_mapper(self.dname, anon=True), chunks=None, consolidated=True
             )
             # Find the time variable name to sort by
-            time_names = ['time', 'TIME', 'datetime', 'date', 'Date', 'DateTime', 'JULD']
+            time_names = [
+                "time",
+                "TIME",
+                "datetime",
+                "date",
+                "Date",
+                "DateTime",
+                "JULD",
+            ]
             # We need a logger instance here if _find_var_name uses it.
             # Since _find_var_name is part of ZarrDataSource, it can call self.get_logger()
             # However, _open_zarr_store is called in __init__ before logger might be fully set up by CommonHandler if not careful.
@@ -1487,8 +1535,10 @@ class ZarrDataSource(DataSource):
                 # Or re-raise if sorting is critical. For now, let's log and return.
                 # Consider if self.get_logger() is available here.
                 # If not, use a simple print or a default logger.
-                print(f"Warning: Could not find time variable to sort Zarr store {self.dname}: {ve}. Returning unsorted.")
-                return ds # Return unsorted if time var not found, or raise
+                print(
+                    f"Warning: Could not find time variable to sort Zarr store {self.dname}: {ve}. Returning unsorted."
+                )
+                return ds  # Return unsorted if time var not found, or raise
         except Exception as e:
             print(f"Error opening Zarr store {self.dname}: {e}")
             raise
@@ -1509,8 +1559,8 @@ class ZarrDataSource(DataSource):
             ValueError: If a latitude or longitude variable/coordinate cannot
                 be found using the common names.
         """
-        lat_names = ['latitude', 'lat', 'LATITUDE', 'LAT']
-        lon_names = ['longitude', 'lon', 'LONGITUDE', 'LON']
+        lat_names = ["latitude", "lat", "LATITUDE", "LAT"]
+        lon_names = ["longitude", "lon", "LONGITUDE", "LON"]
 
         lat_var = None
         lon_var = None
@@ -1536,12 +1586,16 @@ class ZarrDataSource(DataSource):
                 if name in ds.data_vars:
                     lon_var = ds.data_vars[name]
                     break
-        
+
         if lat_var is None:
-            raise ValueError(f"Latitude variable/coordinate not found in dataset {self.dataset_name}. Searched for {lat_names}.")
+            raise ValueError(
+                f"Latitude variable/coordinate not found in dataset {self.dataset_name}. Searched for {lat_names}."
+            )
         if lon_var is None:
-            raise ValueError(f"Longitude variable/coordinate not found in dataset {self.dataset_name}. Searched for {lon_names}.")
-            
+            raise ValueError(
+                f"Longitude variable/coordinate not found in dataset {self.dataset_name}. Searched for {lon_names}."
+            )
+
         return lat_var, lon_var
 
     def get_data(
@@ -1579,24 +1633,36 @@ class ZarrDataSource(DataSource):
 
         # Time slicing
         if date_start is not None or date_end is not None:
-            time_names = ['time', 'TIME', 'datetime', 'date', 'Date', 'DateTime', 'JULD']
+            time_names = [
+                "time",
+                "TIME",
+                "datetime",
+                "date",
+                "Date",
+                "DateTime",
+                "JULD",
+            ]
             time_var_name = _find_var_name_global(self.zarr_store, time_names, "time")
             selectors[time_var_name] = slice(date_start, date_end)
 
         # Latitude slicing
         if lat_min is not None or lat_max is not None:
-            lat_names = ['latitude', 'lat', 'LATITUDE', 'LAT']
+            lat_names = ["latitude", "lat", "LATITUDE", "LAT"]
             lat_var_name = _find_var_name_global(self.zarr_store, lat_names, "latitude")
             selectors[lat_var_name] = slice(lat_min, lat_max)
 
         # Longitude slicing
         if lon_min is not None or lon_max is not None:
-            lon_names = ['longitude', 'lon', 'LONGITUDE', 'LON']
-            lon_var_name = _find_var_name_global(self.zarr_store, lon_names, "longitude")
+            lon_names = ["longitude", "lon", "LONGITUDE", "LON"]
+            lon_var_name = _find_var_name_global(
+                self.zarr_store, lon_names, "longitude"
+            )
             selectors[lon_var_name] = slice(lon_min, lon_max)
-        
+
         if not selectors:
-            self.get_logger().warning("No filters provided to get_data for Zarr source. Returning entire dataset.")
+            self.get_logger().warning(
+                "No filters provided to get_data for Zarr source. Returning entire dataset."
+            )
             return self.zarr_store
 
         return self.zarr_store.sel(selectors)
@@ -1615,11 +1681,19 @@ class ZarrDataSource(DataSource):
 
         lat_var, lon_var = self._find_lat_lon_vars(self.zarr_store)
 
-        min_lat = float(lat_var.min().compute() if hasattr(lat_var, 'compute') else lat_var.min())
-        max_lat = float(lat_var.max().compute() if hasattr(lat_var, 'compute') else lat_var.max())
-        min_lon = float(lon_var.min().compute() if hasattr(lon_var, 'compute') else lon_var.min())
-        max_lon = float(lon_var.max().compute() if hasattr(lon_var, 'compute') else lon_var.max())
-        
+        min_lat = float(
+            lat_var.min().compute() if hasattr(lat_var, "compute") else lat_var.min()
+        )
+        max_lat = float(
+            lat_var.max().compute() if hasattr(lat_var, "compute") else lat_var.max()
+        )
+        min_lon = float(
+            lon_var.min().compute() if hasattr(lon_var, "compute") else lon_var.min()
+        )
+        max_lon = float(
+            lon_var.max().compute() if hasattr(lon_var, "compute") else lon_var.max()
+        )
+
         return [min_lat, min_lon, max_lat, max_lon]
 
     def plot_spatial_extent(self) -> None:
@@ -1651,8 +1725,8 @@ class ZarrDataSource(DataSource):
 
         time_var_name = _find_var_name_global(
             self.zarr_store,
-            ['time', 'TIME', 'datetime', 'date', 'Date', 'DateTime', 'JULD'],
-            "time"
+            ["time", "TIME", "datetime", "date", "Date", "DateTime", "JULD"],
+            "time",
         )
 
         # Calculate and return the temporal extent
@@ -1662,7 +1736,7 @@ class ZarrDataSource(DataSource):
         # However, direct access to .values might not be sorted.
         # For xarray DataArrays, min/max handle this, but if it's a raw numpy array from .values, sorting is safer.
         # Actually, xarray's .min() and .max() on a DataArray should be correct without pre-sorting values.
-        
+
         min_val = self.zarr_store[time_var_name].min().item()
         max_val = self.zarr_store[time_var_name].max().item()
 
@@ -1684,7 +1758,7 @@ class ZarrDataSource(DataSource):
             max_time = pd.to_datetime(max_val.isoformat())
         else:
             max_time = pd.to_datetime(max_val)
-            
+
         return min_time, max_time
 
     def plot_time_coverage(self) -> None:
@@ -1701,10 +1775,10 @@ class ZarrDataSource(DataSource):
 
         time_var_name = _find_var_name_global(
             self.zarr_store,
-            ['time', 'TIME', 'datetime', 'date', 'Date', 'DateTime', 'JULD'],
-            "time"
+            ["time", "TIME", "datetime", "date", "Date", "DateTime", "JULD"],
+            "time",
         )
-        
+
         # Call the global plotting function
         plot_time_coverage(self.zarr_store, time_var=time_var_name)
 
@@ -1742,77 +1816,137 @@ class ZarrDataSource(DataSource):
                 outside dataset bounds, or if coordinate names cannot be found.
         """
         if self.zarr_store is None:
-            self.zarr_store = self._open_zarr_store() # Ensures store is open and sorted by time
+            self.zarr_store = (
+                self._open_zarr_store()
+            )  # Ensures store is open and sorted by time
 
         ds = self.zarr_store
 
         # Determine actual coordinate names
-        actual_time_name = time_name_override if time_name_override else _find_var_name_global(ds, ['time', 'TIME', 'datetime', 'date', 'Date', 'DateTime', 'JULD'], "time")
-        actual_lat_name = lat_name_override if lat_name_override else _find_var_name_global(ds, ['latitude', 'lat', 'LATITUDE', 'LAT'], "latitude")
-        actual_lon_name = lon_name_override if lon_name_override else _find_var_name_global(ds, ['longitude', 'lon', 'LONGITUDE', 'LON'], "longitude")
+        actual_time_name = (
+            time_name_override
+            if time_name_override
+            else _find_var_name_global(
+                ds,
+                ["time", "TIME", "datetime", "date", "Date", "DateTime", "JULD"],
+                "time",
+            )
+        )
+        actual_lat_name = (
+            lat_name_override
+            if lat_name_override
+            else _find_var_name_global(
+                ds, ["latitude", "lat", "LATITUDE", "LAT"], "latitude"
+            )
+        )
+        actual_lon_name = (
+            lon_name_override
+            if lon_name_override
+            else _find_var_name_global(
+                ds, ["longitude", "lon", "LONGITUDE", "LON"], "longitude"
+            )
+        )
 
         norm_date_start = normalize_date(date_start)
         norm_date_end = normalize_date(date_end)
 
         # Get latitude, longitude, and time extents for validation
-        ds_lat_min, ds_lat_max = ds[actual_lat_name].min().item(), ds[actual_lat_name].max().item()
-        ds_lon_min, ds_lon_max = ds[actual_lon_name].min().item(), ds[actual_lon_name].max().item()
-        
+        ds_lat_min, ds_lat_max = (
+            ds[actual_lat_name].min().item(),
+            ds[actual_lat_name].max().item(),
+        )
+        ds_lon_min, ds_lon_max = (
+            ds[actual_lon_name].min().item(),
+            ds[actual_lon_name].max().item(),
+        )
+
         time_min_val = ds[actual_time_name].min().item()
         time_max_val = ds[actual_time_name].max().item()
-        cftime_types = (cftime.DatetimeGregorian, cftime.DatetimeProlepticGregorian, cftime.DatetimeJulian, cftime.DatetimeNoLeap, cftime.DatetimeAllLeap, cftime.Datetime360Day)
-        ds_time_min = pd.to_datetime(time_min_val.isoformat() if isinstance(time_min_val, cftime_types) else time_min_val)
-        ds_time_max = pd.to_datetime(time_max_val.isoformat() if isinstance(time_max_val, cftime_types) else time_max_val)
+        cftime_types = (
+            cftime.DatetimeGregorian,
+            cftime.DatetimeProlepticGregorian,
+            cftime.DatetimeJulian,
+            cftime.DatetimeNoLeap,
+            cftime.DatetimeAllLeap,
+            cftime.Datetime360Day,
+        )
+        ds_time_min = pd.to_datetime(
+            time_min_val.isoformat()
+            if isinstance(time_min_val, cftime_types)
+            else time_min_val
+        )
+        ds_time_max = pd.to_datetime(
+            time_max_val.isoformat()
+            if isinstance(time_max_val, cftime_types)
+            else time_max_val
+        )
 
         if not (ds_lat_min <= lat <= ds_lat_max):
-            raise ValueError(f"Latitude {lat} is out of bounds. Dataset latitude extent is ({ds_lat_min}, {ds_lat_max}) using '{actual_lat_name}'.")
+            raise ValueError(
+                f"Latitude {lat} is out of bounds. Dataset latitude extent is ({ds_lat_min}, {ds_lat_max}) using '{actual_lat_name}'."
+            )
         if not (ds_lon_min <= lon <= ds_lon_max):
-            raise ValueError(f"Longitude {lon} is out of bounds. Dataset longitude extent is ({ds_lon_min}, {ds_lon_max}) using '{actual_lon_name}'.")
+            raise ValueError(
+                f"Longitude {lon} is out of bounds. Dataset longitude extent is ({ds_lon_min}, {ds_lon_max}) using '{actual_lon_name}'."
+            )
         if not (ds_time_min <= pd.to_datetime(norm_date_start) <= ds_time_max):
-            raise ValueError(f"Start date {norm_date_start} is out of bounds. Dataset time extent is ({ds_time_min.strftime('%Y-%m-%d %H:%M:%S')}, {ds_time_max.strftime('%Y-%m-%d %H:%M:%S')}) using '{actual_time_name}'.")
+            raise ValueError(
+                f"Start date {norm_date_start} is out of bounds. Dataset time extent is ({ds_time_min.strftime('%Y-%m-%d %H:%M:%S')}, {ds_time_max.strftime('%Y-%m-%d %H:%M:%S')}) using '{actual_time_name}'."
+            )
         if not (ds_time_min <= pd.to_datetime(norm_date_end) <= ds_time_max):
-            raise ValueError(f"End date {norm_date_end} is out of bounds. Dataset time extent is ({ds_time_min.strftime('%Y-%m-%d %H:%M:%S')}, {ds_time_max.strftime('%Y-%m-%d %H:%M:%S')}) using '{actual_time_name}'.")
+            raise ValueError(
+                f"End date {norm_date_end} is out of bounds. Dataset time extent is ({ds_time_min.strftime('%Y-%m-%d %H:%M:%S')}, {ds_time_max.strftime('%Y-%m-%d %H:%M:%S')}) using '{actual_time_name}'."
+            )
 
         # Determine which part of the dataset to select (single variable or all)
         target_ds_selection = ds
-        retrieved_var_names = list(ds.data_vars.keys()) # Default to all data vars
+        retrieved_var_names = list(ds.data_vars.keys())  # Default to all data vars
 
         if var_name:
             if var_name in ds.data_vars:
-                target_ds_selection = ds[[var_name]] # Select specific variable, keep as Dataset
+                target_ds_selection = ds[
+                    [var_name]
+                ]  # Select specific variable, keep as Dataset
                 retrieved_var_names = [var_name]
             else:
                 # Using print as logger is not available in DataSource
-                print(f"Warning: Variable '{var_name}' not found in dataset. Returning all available data variables for the selected point.")
-        
+                print(
+                    f"Warning: Variable '{var_name}' not found in dataset. Returning all available data variables for the selected point."
+                )
+
         # Slice by time, then select nearest lat/lon
-        time_sliced_data = target_ds_selection.sel({actual_time_name: slice(norm_date_start, norm_date_end)})
-        selected_data_point = time_sliced_data.sel({actual_lat_name: lat, actual_lon_name: lon}, method="nearest")
-        
+        time_sliced_data = target_ds_selection.sel(
+            {actual_time_name: slice(norm_date_start, norm_date_end)}
+        )
+        selected_data_point = time_sliced_data.sel(
+            {actual_lat_name: lat, actual_lon_name: lon}, method="nearest"
+        )
+
         timeseries_df = selected_data_point.to_dataframe().reset_index()
-        
-        timeseries_df.attrs['actual_time_name'] = actual_time_name
-        timeseries_df.attrs['actual_lat_name'] = actual_lat_name
-        timeseries_df.attrs['actual_lon_name'] = actual_lon_name
-        timeseries_df.attrs['retrieved_vars'] = retrieved_var_names # List of vars in the df
+
+        timeseries_df.attrs["actual_time_name"] = actual_time_name
+        timeseries_df.attrs["actual_lat_name"] = actual_lat_name
+        timeseries_df.attrs["actual_lon_name"] = actual_lon_name
+        timeseries_df.attrs[
+            "retrieved_vars"
+        ] = retrieved_var_names  # List of vars in the df
         # If a single var was requested (and found), store its name for convenience in plotting
         if var_name and var_name in retrieved_var_names:
-             timeseries_df.attrs['requested_var_name'] = var_name
+            timeseries_df.attrs["requested_var_name"] = var_name
         else:
-            timeseries_df.attrs['requested_var_name'] = None
-
+            timeseries_df.attrs["requested_var_name"] = None
 
         return timeseries_df
 
     def plot_timeseries(
         self,
         timeseries_df: pd.DataFrame,
-        var_name: str, 
-        lat: float, 
-        lon: float, 
-        date_start: str, 
-        date_end: str, 
-        actual_lat_name: str, 
+        var_name: str,
+        lat: float,
+        lon: float,
+        date_start: str,
+        date_end: str,
+        actual_lat_name: str,
         actual_lon_name: str,
         actual_time_name: str,
     ) -> None:
@@ -1831,36 +1965,44 @@ class ZarrDataSource(DataSource):
         """
         if self.zarr_store is None:
             self.zarr_store = self._open_zarr_store()
-        
-        ds = self.zarr_store # For accessing attributes
+
+        ds = self.zarr_store  # For accessing attributes
 
         if var_name not in timeseries_df.columns:
-            print(f"Warning: Variable '{var_name}' not found in the provided DataFrame. Cannot plot.")
+            print(
+                f"Warning: Variable '{var_name}' not found in the provided DataFrame. Cannot plot."
+            )
             # Attempt to plot the first variable from retrieved_vars if available
-            if timeseries_df.attrs.get('retrieved_vars'):
-                var_name_to_plot = timeseries_df.attrs['retrieved_vars'][0]
-                print(f"Attempting to plot the first available variable: '{var_name_to_plot}'")
+            if timeseries_df.attrs.get("retrieved_vars"):
+                var_name_to_plot = timeseries_df.attrs["retrieved_vars"][0]
+                print(
+                    f"Attempting to plot the first available variable: '{var_name_to_plot}'"
+                )
             else:
-                return # Cannot plot
+                return  # Cannot plot
         else:
             var_name_to_plot = var_name
 
         # The DataFrame should have columns: actual_time_name, actual_lat_name, actual_lon_name, and var_name_to_plot
         # Plotting
-        plt.figure() # Create a new figure
+        plt.figure()  # Create a new figure
         plt.plot(timeseries_df[actual_time_name], timeseries_df[var_name_to_plot])
 
         # Use actual lat/lon values from the DataFrame for the title, as 'nearest' might pick a slightly different point.
-        plot_lat_val = timeseries_df[actual_lat_name].iloc[0] if not timeseries_df.empty else lat
-        plot_lon_val = timeseries_df[actual_lon_name].iloc[0] if not timeseries_df.empty else lon
-        
+        plot_lat_val = (
+            timeseries_df[actual_lat_name].iloc[0] if not timeseries_df.empty else lat
+        )
+        plot_lon_val = (
+            timeseries_df[actual_lon_name].iloc[0] if not timeseries_df.empty else lon
+        )
+
         norm_date_start = normalize_date(date_start)
         norm_date_end = normalize_date(date_end)
 
         # Get attributes from the original Zarr store for the plotted variable
         var_attrs = ds[var_name_to_plot].attrs if var_name_to_plot in ds else {}
-        long_name = var_attrs.get('long_name', var_name_to_plot)
-        units = var_attrs.get('units', 'unitless')
+        long_name = var_attrs.get("long_name", var_name_to_plot)
+        units = var_attrs.get("units", "unitless")
 
         plt.title(
             f"{long_name} at {actual_lat_name}={plot_lat_val:.2f}, "
@@ -1925,12 +2067,32 @@ class ZarrDataSource(DataSource):
         """
         if self.zarr_store is None:
             self.zarr_store = self._open_zarr_store()
-        
+
         ds = self.zarr_store
 
-        actual_lat_name = lat_name_override if lat_name_override else self._find_var_name(ds, ['latitude', 'lat', 'LATITUDE', 'LAT'], "latitude")
-        actual_lon_name = lon_name_override if lon_name_override else self._find_var_name(ds, ['longitude', 'lon', 'LONGITUDE', 'LON'], "longitude")
-        actual_time_name = time_name_override if time_name_override else self._find_var_name(ds, ['time', 'TIME', 'datetime', 'date', 'Date', 'DateTime', 'JULD'], "time")
+        actual_lat_name = (
+            lat_name_override
+            if lat_name_override
+            else _find_var_name_global(
+                ds, ["latitude", "lat", "LATITUDE", "LAT"], "latitude"
+            )
+        )
+        actual_lon_name = (
+            lon_name_override
+            if lon_name_override
+            else _find_var_name_global(
+                ds, ["longitude", "lon", "LONGITUDE", "LON"], "longitude"
+            )
+        )
+        actual_time_name = (
+            time_name_override
+            if time_name_override
+            else _find_var_name_global(
+                ds,
+                ["time", "TIME", "datetime", "date", "Date", "DateTime", "JULD"],
+                "time",
+            )
+        )
 
         ds = ds.sortby(actual_time_name)
 
@@ -1939,60 +2101,82 @@ class ZarrDataSource(DataSource):
         lon_slice = (lon - lon_slice_radius_deg, lon + lon_slice_radius_deg)
 
         # Get latitude and longitude extents from dataset for validation
-        ds_lat_min, ds_lat_max = ds[actual_lat_name].min().item(), ds[actual_lat_name].max().item()
-        ds_lon_min, ds_lon_max = ds[actual_lon_name].min().item(), ds[actual_lon_name].max().item()
+        ds_lat_min, ds_lat_max = (
+            ds[actual_lat_name].min().item(),
+            ds[actual_lat_name].max().item(),
+        )
+        ds_lon_min, ds_lon_max = (
+            ds[actual_lon_name].min().item(),
+            ds[actual_lon_name].max().item(),
+        )
 
         # Validate derived slices
         # Ensure slice is within [ds_lat_min, ds_lat_max] and handle reversed axes if necessary
         # For simplicity, we'll check individual bounds of the calculated slice.
         # A more robust check would consider the order of ds[actual_lat_name].values if it can be reversed.
-        
-        _lat_slice_to_check = sorted(lat_slice) # Ensure min, max order for checking
-        if not (ds_lat_min <= _lat_slice_to_check[0] <= ds_lat_max and ds_lat_min <= _lat_slice_to_check[1] <= ds_lat_max):
-             raise ValueError(
+
+        _lat_slice_to_check = sorted(lat_slice)  # Ensure min, max order for checking
+        if not (
+            ds_lat_min <= _lat_slice_to_check[0] <= ds_lat_max
+            and ds_lat_min <= _lat_slice_to_check[1] <= ds_lat_max
+        ):
+            raise ValueError(
                 f"Derived latitude slice {lat_slice} is out of bounds. Dataset latitude extent is ({ds_lat_min}, {ds_lat_max}) using '{actual_lat_name}'."
             )
-        
+
         _lon_slice_to_check = sorted(lon_slice)
-        if not (ds_lon_min <= _lon_slice_to_check[0] <= ds_lon_max and ds_lon_min <= _lon_slice_to_check[1] <= ds_lon_max):
+        if not (
+            ds_lon_min <= _lon_slice_to_check[0] <= ds_lon_max
+            and ds_lon_min <= _lon_slice_to_check[1] <= ds_lon_max
+        ):
             raise ValueError(
                 f"Derived longitude slice {lon_slice} is out of bounds. Dataset longitude extent is ({ds_lon_min}, {ds_lon_max}) using '{actual_lon_name}'."
             )
 
         # Decide on the slice order for actual slicing based on dataset coordinate order
         if ds[actual_lat_name][0] > ds[actual_lat_name][-1]:
-            lat_slice_for_sel = (lat_slice[1], lat_slice[0]) # Reverse for sel
+            lat_slice_for_sel = (lat_slice[1], lat_slice[0])  # Reverse for sel
         else:
             lat_slice_for_sel = lat_slice
-        
+
         if ds[actual_lon_name][0] > ds[actual_lon_name][-1]:
-            lon_slice_for_sel = (lon_slice[1], lon_slice[0]) # Reverse for sel
+            lon_slice_for_sel = (lon_slice[1], lon_slice[0])  # Reverse for sel
         else:
             lon_slice_for_sel = lon_slice
-
 
         # Parse dates
         start_date_parsed = pd.to_datetime(date_start)
         end_date_parsed = pd.to_datetime(date_end) if date_end else None
 
-        assert actual_time_name in ds.dims, f"Dataset does not have a '{actual_time_name}' dimension"
+        assert (
+            actual_time_name in ds.dims
+        ), f"Dataset does not have a '{actual_time_name}' dimension"
 
         # Find the nearest date in the dataset to start_date_parsed
         try:
-            nearest_date_val = ds.sel({actual_time_name: start_date_parsed}, method="nearest")[actual_time_name].item()
-        except KeyError: # If sel returns empty
-             raise ValueError(f"Start date {date_start} is likely outside the dataset's time range for '{actual_time_name}'.")
-
+            nearest_date_val = ds.sel(
+                {actual_time_name: start_date_parsed}, method="nearest"
+            )[actual_time_name].data
+        except KeyError:  # If sel returns empty
+            raise ValueError(
+                f"Start date {date_start} is likely outside the dataset's time range for '{actual_time_name}'."
+            )
 
         # Find the position of the nearest date in the time array
         time_coords_values = ds[actual_time_name].values
         try:
-            nearest_date_position = np.where(time_coords_values == nearest_date_val)[0][0]
+            nearest_date_position = np.where(time_coords_values == nearest_date_val)[0][
+                0
+            ]
         except IndexError:
-            raise ValueError(f"Could not locate the nearest start date {nearest_date_val} in the time coordinates of '{actual_time_name}'.")
+            raise ValueError(
+                f"Could not locate the nearest start date {nearest_date_val} in the time coordinates of '{actual_time_name}'."
+            )
 
         # Get up to n_days date values starting from nearest_date_position
-        potential_dates_raw = ds[actual_time_name][nearest_date_position : nearest_date_position + n_days].values
+        potential_dates_raw = ds[actual_time_name][
+            nearest_date_position : nearest_date_position + n_days
+        ].values
         dates_to_plot = [pd.Timestamp(date) for date in potential_dates_raw]
 
         # Filter by end_date if provided
@@ -2000,7 +2184,9 @@ class ZarrDataSource(DataSource):
             dates_to_plot = [date for date in dates_to_plot if date <= end_date_parsed]
 
         if not dates_to_plot:
-            print(f"No dates to plot for variable '{var_name}' in the specified range [{date_start} - {date_end if date_end else '...'} with n_days={n_days}].")
+            print(
+                f"No dates to plot for variable '{var_name}' in the specified range [{date_start} - {date_end if date_end else '...'} with n_days={n_days}]."
+            )
             return
 
         var_long_name = ds[var_name].attrs.get("long_name", var_name)
@@ -2008,73 +2194,87 @@ class ZarrDataSource(DataSource):
 
         num_plots = len(dates_to_plot)
         ncols = 3
-        nrows = (num_plots + ncols - 1) // ncols 
-        
+        nrows = (num_plots + ncols - 1) // ncols
+
         fig, axes = plt.subplots(
             nrows=nrows,
             ncols=ncols,
-            figsize=(18, 6 * nrows if nrows > 0 else 6), # Adjust height based on nrows
+            figsize=(18, 6 * nrows if nrows > 0 else 6),  # Adjust height based on nrows
             subplot_kw={"projection": ccrs.PlateCarree()},
-            squeeze=False # Ensure axes is always 2D array
+            squeeze=False,  # Ensure axes is always 2D array
         )
         axes_flat = axes.flatten()
 
         cmap = plt.get_cmap("coolwarm")
         vmin_all, vmax_all = float("inf"), float("-inf")
-        
+
         # Store data for each plot to avoid re-selecting
         plot_data_cache = {}
-        
+
         # First pass: gather all data to find global vmin and vmax for consistent color scaling
         for date_obj in dates_to_plot:
             try:
                 data = ds[var_name].sel(
                     {
-                        actual_time_name: date_obj, # Use exact match for already selected dates
-                        actual_lon_name: slice(lon_slice_for_sel[0], lon_slice_for_sel[1]),
-                        actual_lat_name: slice(lat_slice_for_sel[0], lat_slice_for_sel[1]),
+                        actual_time_name: date_obj,  # Use exact match for already selected dates
+                        actual_lon_name: slice(
+                            lon_slice_for_sel[0], lon_slice_for_sel[1]
+                        ),
+                        actual_lat_name: slice(
+                            lat_slice_for_sel[0], lat_slice_for_sel[1]
+                        ),
                     }
                 )
                 if data.isnull().all():
-                    plot_data_cache[date_obj] = None # Mark as no data
+                    plot_data_cache[date_obj] = None  # Mark as no data
                     continue
-                
+
                 current_var_units = ds[var_name].attrs.get("units", "unknown units")
                 if current_var_units.lower() == "kelvin":
                     data = data - 273.15
-                
-                plot_data_cache[date_obj] = data # Cache data (potentially converted)
+
+                plot_data_cache[date_obj] = data  # Cache data (potentially converted)
                 vmin_all = min(vmin_all, data.min().item())
                 vmax_all = max(vmax_all, data.max().item())
 
             except Exception as err:
-                print(f"Error processing data for date {date_obj.strftime('%Y-%m-%d %H:%M:%S')}: {err}")
-                plot_data_cache[date_obj] = None # Mark as error/no data
+                print(
+                    f"Error processing data for date {date_obj.strftime('%Y-%m-%d %H:%M:%S')}: {err}"
+                )
+                plot_data_cache[date_obj] = None  # Mark as error/no data
 
         if not np.isfinite(vmin_all) or not np.isfinite(vmax_all):
-            print("No valid data found across all selected dates and coordinates to determine color scale.")
+            print(
+                "No valid data found across all selected dates and coordinates to determine color scale."
+            )
             # Clean up empty figure if no plots will be made
             if num_plots > 0 and all(p is None for p in plot_data_cache.values()):
-                 plt.close(fig)
+                plt.close(fig)
             return
 
-        norm_to_use = LogNorm(vmin=vmin_all, vmax=vmax_all) if log_scale else Normalize(vmin=vmin_all, vmax=vmax_all)
-        
-        img_for_colorbar = None # To store one of the plot images for the colorbar
+        norm_to_use = (
+            LogNorm(vmin=vmin_all, vmax=vmax_all)
+            if log_scale
+            else Normalize(vmin=vmin_all, vmax=vmax_all)
+        )
+
+        img_for_colorbar = None  # To store one of the plot images for the colorbar
 
         for idx, date_obj in enumerate(dates_to_plot):
             ax = axes_flat[idx]
             data_to_plot = plot_data_cache.get(date_obj)
 
             if data_to_plot is None or data_to_plot.isnull().all():
-                print(f"No valid data for {date_obj.strftime('%Y-%m-%d %H:%M:%S')}, skipping plot.")
+                print(
+                    f"No valid data for {date_obj.strftime('%Y-%m-%d %H:%M:%S')}, skipping plot."
+                )
                 ax.set_title(f"No data for {date_obj.strftime('%Y-%m-%d %H:%M:%S')}")
                 ax.axis("off")
                 continue
 
             var_units_display = ds[var_name].attrs.get("units", "unknown units")
             if var_units_display.lower() == "kelvin":
-                 var_units_display = "°C"
+                var_units_display = "°C"
 
             img = data_to_plot.plot(
                 ax=ax,
@@ -2082,12 +2282,14 @@ class ZarrDataSource(DataSource):
                 norm=norm_to_use,
                 add_colorbar=False,
             )
-            if img_for_colorbar is None: # Capture one image for the colorbar
+            if img_for_colorbar is None:  # Capture one image for the colorbar
                 img_for_colorbar = img
 
             ax.coastlines(resolution=coastline_resolution)
             ax.add_feature(cfeature.BORDERS, linestyle=":")
-            gl = ax.gridlines(draw_labels=True, dms=True, x_inline=False, y_inline=False)
+            gl = ax.gridlines(
+                draw_labels=True, dms=True, x_inline=False, y_inline=False
+            )
             gl.top_labels = False
             gl.right_labels = False
             ax.set_title(date_obj.strftime("%Y-%m-%d %H:%M:%S"))
@@ -2096,26 +2298,31 @@ class ZarrDataSource(DataSource):
         for i in range(num_plots, len(axes_flat)):
             axes_flat[i].set_visible(False)
 
-        if img_for_colorbar: # Only add colorbar if at least one plot was made
+        if img_for_colorbar:  # Only add colorbar if at least one plot was made
             cbar_label_text = f"{var_long_name} ({var_units_display})"
             if log_scale:
                 cbar_label_text = f"Log({cbar_label_text})"
-            
+
             # Adjust colorbar position; [left, bottom, width, height] in figure-relative coords
-            fig.subplots_adjust(right=0.85) # Make space for colorbar
-            cbar_ax = fig.add_axes([0.88, 0.15, 0.03, 0.7]) # Position to the right
+            fig.subplots_adjust(right=0.85)  # Make space for colorbar
+            cbar_ax = fig.add_axes([0.88, 0.15, 0.03, 0.7])  # Position to the right
             cbar = fig.colorbar(img_for_colorbar, cax=cbar_ax, orientation="vertical")
             cbar.set_label(cbar_label_text)
             # cbar.set_ticks([vmin_all, (vmin_all + vmax_all) / 2, vmax_all])
             # cbar.ax.set_yticklabels([f"{vmin_all:.2f}", f"{(vmin_all + vmax_all) / 2:.2f}", f"{vmax_all:.2f}"])
-        else: # No plots made, clean up figure
+        else:  # No plots made, clean up figure
             plt.close(fig)
             print("No images were plotted, so no colorbar will be shown.")
             return
 
-
-        fig.suptitle(f"{var_long_name} Over Time\n(Center: lat={lat:.2f}, lon={lon:.2f}, Radius: lat={lat_slice_radius_deg:.2f}°, lon={lon_slice_radius_deg:.2f}°)", fontsize=16, fontweight="bold")
-        plt.tight_layout(rect=[0, 0, 0.85, 0.95]) # Adjust rect to prevent suptitle overlap and leave space for cbar
+        fig.suptitle(
+            f"{var_long_name} Over Time\n(Center: lat={lat:.2f}, lon={lon:.2f}, Radius: lat={lat_slice_radius_deg:.2f}°, lon={lon_slice_radius_deg:.2f}°)",
+            fontsize=16,
+            fontweight="bold",
+        )
+        plt.tight_layout(
+            rect=[0, 0, 0.85, 0.95]
+        )  # Adjust rect to prevent suptitle overlap and leave space for cbar
         plt.show()
 
     def get_metadata(self) -> dict:
@@ -2129,7 +2336,9 @@ class ZarrDataSource(DataSource):
         return get_zarr_metadata(self.dname)
 
 
-def _find_var_name_global(ds: xr.Dataset, common_names: list[str], var_description: str) -> str:
+def _find_var_name_global(
+    ds: xr.Dataset, common_names: list[str], var_description: str
+) -> str:
     """Helper to find a variable/coordinate name from a list of common names.
 
     Prioritizes coordinates, then 1D data variables.
@@ -2150,13 +2359,13 @@ def _find_var_name_global(ds: xr.Dataset, common_names: list[str], var_descripti
     for name in common_names:
         if name in ds.coords:
             return name
-    
+
     # Then check 1D data variables
     for name in common_names:
         if name in ds.data_vars:
             if ds[name].ndim == 1:
                 return name
-    
+
     raise ValueError(
         f"Could not find a suitable 1D {var_description} variable/coordinate in the provided Dataset. Searched for {common_names}."
     )
@@ -2164,6 +2373,7 @@ def _find_var_name_global(ds: xr.Dataset, common_names: list[str], var_descripti
 
 class GetAodn:
     """Main class for discovering and accessing AODN cloud-optimised datasets."""
+
     def __init__(self):
         """Initialises GetAodn with default S3 bucket and prefix."""
         self.bucket_name = BUCKET_OPTIMISED_DEFAULT
@@ -2177,28 +2387,32 @@ class GetAodn:
             list: A list of dataset names (folder names).
         """
         s3 = boto3.client("s3", config=Config(signature_version=UNSIGNED))
-        
+
         s3_prefix = self.prefix
         if s3_prefix and not s3_prefix.endswith("/"):
             s3_prefix += "/"
-        
-        paginator = s3.get_paginator('list_objects_v2')
+
+        paginator = s3.get_paginator("list_objects_v2")
         datasets = []
 
-        for page in paginator.paginate(Bucket=self.bucket_name, Prefix=s3_prefix, Delimiter="/"):
+        for page in paginator.paginate(
+            Bucket=self.bucket_name, Prefix=s3_prefix, Delimiter="/"
+        ):
             for common_prefix in page.get("CommonPrefixes", []):
                 folder_path = common_prefix["Prefix"]  # Full path from bucket root
                 # Extract the folder name relative to s3_prefix
                 relative_folder_path = folder_path
-                if s3_prefix: # if s3_prefix is not empty
-                    relative_folder_path = folder_path[len(s3_prefix):]
-                
+                if s3_prefix:  # if s3_prefix is not empty
+                    relative_folder_path = folder_path[len(s3_prefix) :]
+
                 # Remove trailing slash to get the dataset name
-                dataset_name = relative_folder_path.rstrip('/')
-                if dataset_name: # Ensure it's not an empty string if prefix itself was listed
+                dataset_name = relative_folder_path.rstrip("/")
+                if (
+                    dataset_name
+                ):  # Ensure it's not an empty string if prefix itself was listed
                     datasets.append(dataset_name)
-        
-        return sorted(list(set(datasets))) # Sort and ensure uniqueness
+
+        return sorted(list(set(datasets)))  # Sort and ensure uniqueness
 
     def get_dataset(self, dataset_name_with_ext: str) -> DataSource:
         """Retrieves a DataSource object for the specified dataset.
@@ -2218,7 +2432,9 @@ class GetAodn:
             ValueError: If the extension is not ".parquet" or ".zarr".
         """
         if dataset_name_with_ext.endswith(".parquet"):
-            return ParquetDataSource(self.bucket_name, self.prefix, dataset_name_with_ext)
+            return ParquetDataSource(
+                self.bucket_name, self.prefix, dataset_name_with_ext
+            )
         elif dataset_name_with_ext.endswith(".zarr"):
             return ZarrDataSource(self.bucket_name, self.prefix, dataset_name_with_ext)
         else:
@@ -2226,7 +2442,7 @@ class GetAodn:
                 f"Unsupported dataset extension in '{dataset_name_with_ext}'. Must end with '.parquet' or '.zarr'."
             )
 
-    def get_metadata(self) -> 'Metadata':
+    def get_metadata(self) -> "Metadata":
         """Returns a Metadata object for browsing dataset metadata.
 
         Instantiates and returns a `Metadata` object configured with the
@@ -2242,6 +2458,7 @@ class GetAodn:
 
 class Metadata:
     """Provides methods to access and query metadata across datasets."""
+
     def __init__(self, bucket_name: str, prefix: str):
         """Initialises the Metadata object.
 
