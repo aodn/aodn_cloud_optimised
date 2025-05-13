@@ -1226,6 +1226,37 @@ class DataSource(ABC):
         """Retrieves metadata associated with the dataset."""
         pass
 
+    @abstractmethod
+    def get_timeseries_data(
+        self,
+        var_name: str,
+        lat: float,
+        lon: float,
+        start_time: str,
+        end_time: str,
+        lat_name_override: str | None = None,
+        lon_name_override: str | None = None,
+        time_name_override: str | None = None,
+    ) -> pd.DataFrame:
+        """Extracts time series data for a variable at the nearest point."""
+        pass
+
+    @abstractmethod
+    def plot_timeseries(
+        self,
+        timeseries_df: pd.DataFrame,
+        var_name: str,
+        lat: float,
+        lon: float,
+        start_time: str,
+        end_time: str,
+        actual_lat_name: str, # Actual name used for lat in timeseries_df
+        actual_lon_name: str, # Actual name used for lon in timeseries_df
+        actual_time_name: str, # Actual name used for time in timeseries_df
+    ) -> None:
+        """Plots the extracted time series data."""
+        pass
+
 
 class ParquetDataSource(DataSource):
     """DataSource implementation for Parquet datasets."""
@@ -1424,6 +1455,39 @@ class ParquetDataSource(DataSource):
         """
         return get_schema_metadata(self.dname)
 
+    def get_timeseries_data(
+        self,
+        var_name: str,
+        lat: float,
+        lon: float,
+        start_time: str,
+        end_time: str,
+        lat_name_override: str | None = None,
+        lon_name_override: str | None = None,
+        time_name_override: str | None = None,
+    ) -> pd.DataFrame:
+        """Extracts time series data for a variable at the nearest point. (Not Implemented for Parquet)"""
+        raise NotImplementedError(
+            "get_timeseries_data is not implemented for ParquetDataSource."
+        )
+
+    def plot_timeseries(
+        self,
+        timeseries_df: pd.DataFrame,
+        var_name: str,
+        lat: float,
+        lon: float,
+        start_time: str,
+        end_time: str,
+        actual_lat_name: str,
+        actual_lon_name: str,
+        actual_time_name: str,
+    ) -> None:
+        """Plots the extracted time series data. (Not Implemented for Parquet)"""
+        raise NotImplementedError(
+            "plot_timeseries is not implemented for ParquetDataSource."
+        )
+
 
 class ZarrDataSource(DataSource):
     """DataSource implementation for Zarr datasets."""
@@ -1574,10 +1638,10 @@ class ZarrDataSource(DataSource):
             if name in ds.data_vars:
                 if ds[name].ndim == 1:
                     return name
-                else:
-                    self.get_logger().debug(
-                        f"Found potential {var_description} variable '{name}' but it is multi-dimensional. Skipping for sel()."
-                    )
+                # else:
+                #     # self.get_logger().debug( # ZarrDataSource does not have get_logger
+                #     #     f"Found potential {var_description} variable '{name}' but it is multi-dimensional. Skipping for sel()."
+                #     # )
         
         raise ValueError(
             f"Could not find a suitable 1D {var_description} variable/coordinate in the Zarr store {self.dataset_name}. Searched for {common_names}."
@@ -1744,6 +1808,145 @@ class ZarrDataSource(DataSource):
             max_time = pd.to_datetime(max_val)
             
         return min_time, max_time
+
+    def get_timeseries_data(
+        self,
+        var_name: str,
+        lat: float,
+        lon: float,
+        start_time: str,
+        end_time: str,
+        lat_name_override: str | None = None,
+        lon_name_override: str | None = None,
+        time_name_override: str | None = None,
+    ) -> pd.DataFrame:
+        """Extracts time series data for a variable at the nearest point from the Zarr store.
+
+        Args:
+            var_name: The name of the data variable to extract.
+            lat: The target latitude.
+            lon: The target longitude.
+            start_time: The start time string (e.g., "YYYY-MM-DD").
+            end_time: The end time string (e.g., "YYYY-MM-DD").
+            lat_name_override: Optional override for the latitude coordinate name.
+            lon_name_override: Optional override for the longitude coordinate name.
+            time_name_override: Optional override for the time coordinate name.
+
+        Returns:
+            A pandas DataFrame containing the time series data. Columns include
+            the actual time, latitude, and longitude coordinate names found/used,
+            and the variable itself.
+
+        Raises:
+            ValueError: If requested lat, lon, start_time, or end_time are
+                outside dataset bounds, or if coordinate names cannot be found.
+        """
+        if self.zarr_store is None:
+            self.zarr_store = self._open_zarr_store() # Ensures store is open and sorted by time
+
+        ds = self.zarr_store
+
+        # Determine actual coordinate names
+        actual_time_name = time_name_override if time_name_override else self._find_var_name(ds, ['time', 'TIME', 'datetime', 'date', 'Date', 'DateTime', 'JULD'], "time")
+        actual_lat_name = lat_name_override if lat_name_override else self._find_var_name(ds, ['latitude', 'lat', 'LATITUDE', 'LAT'], "latitude")
+        actual_lon_name = lon_name_override if lon_name_override else self._find_var_name(ds, ['longitude', 'lon', 'LONGITUDE', 'LON'], "longitude")
+
+        norm_start_time = normalize_date(start_time)
+        norm_end_time = normalize_date(end_time)
+
+        # Get latitude, longitude, and time extents for validation
+        ds_lat_min, ds_lat_max = ds[actual_lat_name].min().item(), ds[actual_lat_name].max().item()
+        ds_lon_min, ds_lon_max = ds[actual_lon_name].min().item(), ds[actual_lon_name].max().item()
+        
+        # Time extent - handle cftime
+        time_min_val = ds[actual_time_name].min().item()
+        time_max_val = ds[actual_time_name].max().item()
+        cftime_types = (cftime.DatetimeGregorian, cftime.DatetimeProlepticGregorian, cftime.DatetimeJulian, cftime.DatetimeNoLeap, cftime.DatetimeAllLeap, cftime.Datetime360Day)
+        ds_time_min = pd.to_datetime(time_min_val.isoformat() if isinstance(time_min_val, cftime_types) else time_min_val)
+        ds_time_max = pd.to_datetime(time_max_val.isoformat() if isinstance(time_max_val, cftime_types) else time_max_val)
+
+        # Validate inputs
+        if not (ds_lat_min <= lat <= ds_lat_max):
+            raise ValueError(f"Latitude {lat} is out of bounds. Dataset latitude extent is ({ds_lat_min}, {ds_lat_max}) using '{actual_lat_name}'.")
+        if not (ds_lon_min <= lon <= ds_lon_max):
+            raise ValueError(f"Longitude {lon} is out of bounds. Dataset longitude extent is ({ds_lon_min}, {ds_lon_max}) using '{actual_lon_name}'.")
+        if not (ds_time_min <= pd.to_datetime(norm_start_time) <= ds_time_max):
+            raise ValueError(f"Start time {norm_start_time} is out of bounds. Dataset time extent is ({ds_time_min.strftime('%Y-%m-%d %H:%M:%S')}, {ds_time_max.strftime('%Y-%m-%d %H:%M:%S')}) using '{actual_time_name}'.")
+        if not (ds_time_min <= pd.to_datetime(norm_end_time) <= ds_time_max):
+            raise ValueError(f"End time {norm_end_time} is out of bounds. Dataset time extent is ({ds_time_min.strftime('%Y-%m-%d %H:%M:%S')}, {ds_time_max.strftime('%Y-%m-%d %H:%M:%S')}) using '{actual_time_name}'.")
+
+        # Slice by time, then select nearest lat/lon
+        time_sliced_data = ds[var_name].sel({actual_time_name: slice(norm_start_time, norm_end_time)})
+        selected_data_array = time_sliced_data.sel({actual_lat_name: lat, actual_lon_name: lon}, method="nearest")
+        
+        # Convert to DataFrame
+        timeseries_df = selected_data_array.to_dataframe().reset_index()
+        
+        # Ensure the DataFrame columns for coordinates match the actual names found
+        # to_dataframe() might rename coordinates if they clash with var_name.
+        # We need to ensure the columns in timeseries_df corresponding to actual_lat_name, etc. are correctly identified.
+        # Typically, reset_index() makes them regular columns with their original names.
+        
+        # Add actual coordinate names to the DataFrame attributes for plotting reference
+        timeseries_df.attrs['actual_time_name'] = actual_time_name
+        timeseries_df.attrs['actual_lat_name'] = actual_lat_name
+        timeseries_df.attrs['actual_lon_name'] = actual_lon_name
+        timeseries_df.attrs['var_name'] = var_name # Store original var_name for plotting
+
+        return timeseries_df
+
+    def plot_timeseries(
+        self,
+        timeseries_df: pd.DataFrame,
+        var_name: str, # Original var_name requested
+        lat: float, # Target lat
+        lon: float, # Target lon
+        start_time: str, # Requested start time
+        end_time: str, # Requested end time
+        actual_lat_name: str, 
+        actual_lon_name: str,
+        actual_time_name: str,
+    ) -> None:
+        """Plots the extracted time series data.
+
+        Args:
+            timeseries_df: DataFrame obtained from get_timeseries_data.
+            var_name: The name of the variable plotted.
+            lat: The target latitude for which data was extracted.
+            lon: The target longitude for which data was extracted.
+            start_time: The requested start time for the series.
+            end_time: The requested end time for the series.
+            actual_lat_name: Actual latitude coordinate name in timeseries_df.
+            actual_lon_name: Actual longitude coordinate name in timeseries_df.
+            actual_time_name: Actual time coordinate name in timeseries_df.
+        """
+        if self.zarr_store is None:
+            self.zarr_store = self._open_zarr_store()
+        
+        ds = self.zarr_store # For accessing attributes
+
+        # The DataFrame should have columns: actual_time_name, actual_lat_name, actual_lon_name, and var_name
+        # Plotting
+        plt.figure() # Create a new figure
+        plt.plot(timeseries_df[actual_time_name], timeseries_df[var_name])
+
+        # Use actual lat/lon values from the DataFrame for the title, as 'nearest' might pick a slightly different point.
+        # These are columns in the DataFrame after reset_index().
+        plot_lat_val = timeseries_df[actual_lat_name].iloc[0] if not timeseries_df.empty else lat
+        plot_lon_val = timeseries_df[actual_lon_name].iloc[0] if not timeseries_df.empty else lon
+        
+        norm_start_time = normalize_date(start_time)
+        norm_end_time = normalize_date(end_time)
+
+        plt.title(
+            f"{ds[var_name].attrs.get('long_name', var_name)} at {actual_lat_name}={plot_lat_val:.2f}, "
+            f"{actual_lon_name}={plot_lon_val:.2f} from {norm_start_time} to {norm_end_time}"
+        )
+        plt.xlabel(f"Time ({actual_time_name})")
+        plt.ylabel(f"{ds[var_name].attrs.get('long_name', var_name)} ({ds[var_name].attrs.get('units', 'unitless')})")
+        plt.xticks(rotation=45)
+        plt.tight_layout()
+        plt.show()
 
     def get_metadata(self) -> dict:
         """Retrieves metadata from the Zarr store.
