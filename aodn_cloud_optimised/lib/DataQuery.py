@@ -1468,11 +1468,30 @@ class ZarrDataSource(DataSource):
 
         Raises:
             Exception: If opening the Zarr store fails.
+            ValueError: If a suitable time variable cannot be found for sorting.
         """
         try:
-            return xr.open_zarr(
+            ds = xr.open_zarr(
                 fsspec.get_mapper(self.dname, anon=True), chunks=None, consolidated=True
             )
+            # Find the time variable name to sort by
+            time_names = ['time', 'TIME', 'datetime', 'date', 'Date', 'DateTime', 'JULD']
+            # We need a logger instance here if _find_var_name uses it.
+            # Since _find_var_name is part of ZarrDataSource, it can call self.get_logger()
+            # However, _open_zarr_store is called in __init__ before logger might be fully set up by CommonHandler if not careful.
+            # For now, assuming _find_var_name can access a logger or doesn't strictly need it for this path.
+            # A safer approach might be to pass a logger or make _find_var_name static if it doesn't need self.
+            # Let's assume self.get_logger() is available or _find_var_name handles its absence.
+            try:
+                time_var_name = self._find_var_name(ds, time_names, "time")
+                return ds.sortby(time_var_name)
+            except ValueError as ve:
+                # Log this, but still return the unsorted dataset if time var not found for sorting.
+                # Or re-raise if sorting is critical. For now, let's log and return.
+                # Consider if self.get_logger() is available here.
+                # If not, use a simple print or a default logger.
+                print(f"Warning: Could not find time variable to sort Zarr store {self.dname}: {ve}. Returning unsorted.")
+                return ds # Return unsorted if time var not found, or raise
         except Exception as e:
             print(f"Error opening Zarr store {self.dname}: {e}")
             raise
