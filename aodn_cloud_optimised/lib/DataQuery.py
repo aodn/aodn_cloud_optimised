@@ -1748,11 +1748,10 @@ class ZarrDataSource(DataSource):
         raise NotImplementedError("Zarr spatial extent plotting not yet implemented.")
 
     def get_temporal_extent(self) -> tuple[pd.Timestamp, pd.Timestamp]:
-        """Plots time coverage and returns the temporal extent of the Zarr dataset.
+        """Calculates and returns the temporal extent of the Zarr dataset.
 
-        Identifies the time variable, calls the global `plot_time_coverage`
-        function, and calculates the minimum and maximum time values from the
-        time variable. Handles cftime objects.
+        Identifies the time variable and calculates the minimum and maximum
+        time values from it. Handles cftime objects.
 
         Returns:
             A tuple containing the minimum and maximum pandas Timestamp objects.
@@ -1763,32 +1762,14 @@ class ZarrDataSource(DataSource):
         if self.zarr_store is None:
             self._open_zarr_store()
 
-        time_var_name = None
-        possible_time_names = ['time', 'TIME', 'datetime', 'date', 'Date', 'DateTime'] # Common time variable names
-
-        # Check in coordinates
-        for name in possible_time_names:
-            if name in self.zarr_store.coords:
-                time_var_name = name
-                break
-        
-        # If not in coordinates, check in data variables
-        if time_var_name is None:
-            for name in possible_time_names:
-                if name in self.zarr_store.data_vars:
-                    time_var_name = name
-                    break
-        
-        if time_var_name is None:
-            raise ValueError(
-                f"Could not find a suitable time variable in the Zarr store {self.dataset_name}. Searched for {possible_time_names}."
-            )
-
-        # Call the plotting function as requested
-        plot_time_coverage(self.zarr_store, time_var=time_var_name)
+        time_var_name = self._find_var_name(
+            self.zarr_store, 
+            ['time', 'TIME', 'datetime', 'date', 'Date', 'DateTime', 'JULD'], 
+            "time"
+        )
 
         # Calculate and return the temporal extent
-        time_values = self.zarr_store[time_var_name].values
+        # time_values = self.zarr_store[time_var_name].values # Not strictly needed if using .min()/.max() on DataArray
 
         # Ensure time_values are sorted before taking min/max for safety, though plot_time_coverage also sorts.
         # However, direct access to .values might not be sorted.
@@ -1818,6 +1799,27 @@ class ZarrDataSource(DataSource):
             max_time = pd.to_datetime(max_val)
             
         return min_time, max_time
+
+    def plot_time_coverage(self) -> None:
+        """Plots a heatmap showing the temporal data coverage for the Zarr dataset.
+
+        Internally finds the time variable and calls the global `plot_time_coverage`
+        function.
+
+        Raises:
+            ValueError: If a suitable time variable cannot be found.
+        """
+        if self.zarr_store is None:
+            self._open_zarr_store()
+
+        time_var_name = self._find_var_name(
+            self.zarr_store,
+            ['time', 'TIME', 'datetime', 'date', 'Date', 'DateTime', 'JULD'],
+            "time"
+        )
+        
+        # Call the global plotting function
+        plot_time_coverage(self.zarr_store, time_var=time_var_name)
 
     def get_timeseries_data(
         self,
