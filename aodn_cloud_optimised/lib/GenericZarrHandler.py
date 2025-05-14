@@ -25,19 +25,24 @@ from aodn_cloud_optimised.lib.s3Tools import (
 def check_variable_values_dask(
     file_path, reference_values, variable_name, dataset_config, uuid_log
 ):
-    """
-    Check if the values of a specified variable in a single file are consistent with the reference.
+    """Checks if variable values in a file match reference values.
+
+    Designed to be run in parallel (e.g., with Dask), hence it's a top-level
+    function to avoid serialization issues with class methods.
 
     Args:
-        file_path (str): File path to check.
-        reference_values (np.ndarray): Reference values for the variable.
-        variable_name (str): Name of the variable to check.
+        file_path (str): Path to the NetCDF file to check.
+        reference_values (np.ndarray): The reference NumPy array to compare against.
+        variable_name (str): The name of the variable within the NetCDF file
+            to compare.
+        dataset_config (dict): The dataset configuration dictionary, used to
+            get the logger name.
+        uuid_log (str): A unique identifier for logging purposes within a batch.
 
     Returns:
-        tuple: (file_path, bool) where bool indicates if the file is problematic.
-
-    Comment:
-        this variable cannot be in the class below. Otherwise, the self cannot be serialized when calling future
+        tuple[str, bool]: A tuple containing the file path and a boolean
+            indicating if the file is problematic (True) or consistent (False).
+            Returns (file_path, True) if any exception occurs during processing.
     """
     logger_name = dataset_config.get("logger_name", "generic")
     logger = get_logger(logger_name)
@@ -70,14 +75,30 @@ def check_variable_values_dask(
 
 
 def preprocess_xarray(ds, dataset_config):
-    """
-    Perform preprocessing on the input dataset (`ds`) and return an xarray Dataset.
+    """Performs preprocessing steps on an xarray Dataset.
 
-    :param ds: Input xarray Dataset.
-    :param dataset_config: Configuration dictionary for the dataset.
+    This function applies preprocessing logic defined in the dataset
+    configuration, such as dropping variables, adding missing variables with
+    NaN values, ensuring correct data types, and adding a 'filename' variable.
 
-    :return:
-        Preprocessed xarray Dataset.
+    Note:
+        This function is designed to be used as a preprocessing step, potentially
+        within `xr.open_mfdataset` or applied manually after opening datasets.
+        It handles potential `RuntimeWarning` during NaN array creation.
+
+    Args:
+        ds (xr.Dataset): The input xarray Dataset to preprocess.
+        dataset_config (dict): Configuration dictionary containing schema,
+            dimensions, and other preprocessing parameters. Expected keys include
+            'logger_name', 'dimensions', 'schema', 'var_template_shape'.
+
+    Returns:
+        xr.Dataset: The preprocessed xarray Dataset.
+
+    Raises:
+        ValueError: If the dataset has no data variables left after filtering.
+        TypeError: If a `RuntimeWarning` occurs during NaN array creation,
+                   indicating potential issues.
     """
     # TODO: this is part a rewritten function available in the GenericHandler class below.
     #       running the class method with xarray as preprocess=self.preprocess_xarray lead to many issues
@@ -267,25 +288,30 @@ def preprocess_xarray(ds, dataset_config):
 
 
 class GenericHandler(CommonHandler):
-    """
-    GenericHandler to create cloud-optimised datasets in Zarr format.
+    """Handles the creation of cloud-optimised datasets in Zarr format.
+
+    Provides methods to process NetCDF files (potentially in batches),
+    apply preprocessing, handle inconsistencies, and write the data to
+    an S3 Zarr store, managing chunking, consolidation, and appending.
 
     Inherits:
-        CommonHandler: Provides common functionality for handling cloud-optimised datasets.
+        CommonHandler: Provides common functionality like cluster management,
+                       logging, and configuration loading.
     """
 
     def __init__(self, **kwargs):
-        """
-        Initialise the GenericHandler object.
+        """Initialises the GenericZarrHandler.
+
+        Sets up configuration, validates schema, defines chunking strategy,
+        initialises S3 filesystem and Zarr store mapper, and sets default
+        Zarr writing options.
 
         Args:
-            **kwargs: Additional keyword arguments.
-                optimised_bucket_name (str, optional[config]): Name of the optimised bucket.
-                root_prefix_cloud_optimised_path (str, optional[config]): Root Prefix path of the location of cloud optimised files
-
-        Inherits:
-            CommonHandler: Provides common functionality for handling cloud-optimised datasets.
-
+            **kwargs: Keyword arguments passed to the parent `CommonHandler`
+                and used for specific Zarr handling configuration. Expected
+                kwargs include those needed by `CommonHandler` and potentially
+                `rechunk_drop_vars`. Configuration is loaded from the dataset
+                config file specified in kwargs or defaults.
         """
         super().__init__(**kwargs)
 
@@ -336,30 +362,21 @@ class GenericHandler(CommonHandler):
         self.consolidated = True
 
     def publish_cloud_optimised_fileset_batch(self, s3_file_uri_list):
-        """
-        Process and publish a batch of NetCDF files stored in S3 to a Zarr dataset.
+        """Processes and publishes batches of NetCDF files to the Zarr store.
 
-        This method iterates over a list of S3 file URIs, processes them in batches, and publishes
-        the resulting datasets to a Zarr store on S3. It performs the following steps:
+        Iterates through the input list of S3 URIs, processing them in batches
+        determined by cluster resources or a default size. For each batch, it
+        attempts to open the files as a single dataset using various strategies
+        (engines, handling inconsistencies), preprocesses the data, and writes
+        it to the target Zarr store using `_write_ds`. Includes fallback logic
+        for individual file processing if batch methods fail.
 
-        1. Validate input parameters and initialise logging.
-        2. Create a list of file handles from S3 file URIs.
-        3. Iterate through batches of file handles.
-        4. Perform preprocessing on each batched dataset.
-        5. Drop specified variables from the dataset based on schema settings.
-        6. Open and preprocess each dataset using Dask for parallel processing.
-        7. Chunk the dataset according to predefined dimensions.
-        8. Write the processed dataset to an existing or new Zarr store on S3.
-        9. Handle merging datasets and logging errors if encountered.
-
-        Parameters:
-        - s3_file_uri_list (list): List of S3 file URIs to process and publish.
+        Args:
+            s3_file_uri_list (list[str]): A list of S3 URIs pointing to the
+                NetCDF files to be processed.
 
         Raises:
-        - ValueError: If input_objects (`s3_file_uri_list`) is not defined.
-
-        Returns:
-        None
+            ValueError: If `s3_file_uri_list` is None.
         """
         # Iterate over s3_file_handle_list in batches
         if s3_file_uri_list is None:
@@ -448,6 +465,32 @@ class GenericHandler(CommonHandler):
         primary_engine="h5netcdf",
         fallback_engine="scipy",
     ):
+        """Attempts to open a batch of files using multiple strategies.
+
+        Tries opening the batch with the primary engine (`h5netcdf`). If that
+        fails due to specific known errors (e.g., inconsistent coordinates,
+        wrong NetCDF format signature), it attempts specific handling or tries
+        the fallback engine (`scipy`). If all standard `open_mfdataset` attempts
+        fail, it resorts to opening files individually with mixed engines.
+
+        Args:
+            batch_files (list[str]): List of S3 file paths in the current batch.
+            partial_preprocess (callable): The pre-configured preprocessing function.
+            drop_vars_list (list[str]): List of variable names to drop.
+            primary_engine (str): The preferred engine for `xr.open_mfdataset`.
+                Defaults to "h5netcdf".
+            fallback_engine (str): The engine to try if the primary one fails
+                due to specific format errors. Defaults to "scipy".
+
+        Returns:
+            xr.Dataset: The opened and potentially preprocessed dataset for the batch.
+
+        Raises:
+            RuntimeError: If all attempts, including individual file opening, fail.
+            ValueError: If specific unrecoverable errors occur (e.g., invalid
+                NetCDF format after trying both engines).
+        """
+
         def handle_engine(engine):
             try:
                 return self._open_mfds(
@@ -507,6 +550,24 @@ class GenericHandler(CommonHandler):
     def handle_coordinate_variable_issue(
         self, batch_files, variable_name, partial_preprocess, drop_vars_list, engine
     ):
+        """Handles errors caused by inconsistent coordinate variables in a batch.
+
+        When `xr.open_mfdataset` fails due to a non-monotonic coordinate, this
+        method identifies the problematic files by comparing the coordinate
+        variable values against a reference (the first file). It then attempts
+        to re-open the dataset excluding the problematic files.
+
+        Args:
+            batch_files (list[str]): List of S3 file paths in the batch.
+            variable_name (str): The name of the inconsistent coordinate variable.
+            partial_preprocess (callable): The pre-configured preprocessing function.
+            drop_vars_list (list[str]): List of variable names to drop.
+            engine (str): The engine ('h5netcdf' or 'scipy') being used when the
+                error occurred.
+
+        Returns:
+            xr.Dataset: The dataset opened from the cleaned batch of files.
+        """
 
         self.logger.error(
             f"{self.uuid_log}: Detected issue with variable '{variable_name}': Inconsistent grid."
@@ -534,6 +595,24 @@ class GenericHandler(CommonHandler):
     def handle_multi_engine_fallback(
         self, batch_files, partial_preprocess, drop_vars_list
     ):
+        """Handles fallback scenario where files need different engines.
+
+        If `xr.open_mfdataset` fails with both 'h5netcdf' and 'scipy' engines
+        (likely due to a mix of NetCDF3 and NetCDF4 files in the batch), this
+        method attempts to open each file individually, trying 'scipy' first
+        and falling back to 'h5netcdf', then concatenates the resulting datasets.
+
+        Args:
+            batch_files (list[str]): List of S3 file paths in the batch.
+            partial_preprocess (callable): The pre-configured preprocessing function.
+            drop_vars_list (list[str]): List of variable names to drop.
+
+        Returns:
+            xr.Dataset: The concatenated dataset from individually opened files.
+
+        Raises:
+            RuntimeError: If concatenation fails after individual opening attempts.
+        """
         self.logger.warning(
             f"{self.uuid_log}: Neither 'h5netcdf' nor 'scipy' engine could concatenate the dataset. "
             f"Falling back to opening files individually with different engines."
@@ -555,6 +634,19 @@ class GenericHandler(CommonHandler):
     def fallback_to_individual_processing(
         self, batch_files, partial_preprocess, drop_vars_list, idx
     ):
+        """Handles the ultimate fallback: processing files one by one.
+
+        If all batch processing attempts (`try_open_dataset`) fail for a batch,
+        this method iterates through the files in the batch, opens each one
+        individually (using `_open_file_with_fallback`), and writes it to the
+        Zarr store immediately using `_write_ds`.
+
+        Args:
+            batch_files (list[str]): List of S3 file paths in the failed batch.
+            partial_preprocess (callable): The pre-configured preprocessing function.
+            drop_vars_list (list[str]): List of variable names to drop.
+            idx (int): The index of the current batch (for logging).
+        """
         self.logger.info(
             f"{self.uuid_log}: Batch processing methods failed for batch {idx + 1}. Falling back to processing files individually."
         )
@@ -568,15 +660,22 @@ class GenericHandler(CommonHandler):
             )
 
     def check_variable_values_parallel(self, file_paths, variable_name):
-        """
-        Check the values of a specified variable in all files using a Coiled cluster.
+        """Checks variable consistency across files in parallel.
+
+        Compares the values of a specified variable in multiple NetCDF files
+        against the values in the first file of the list. Uses the configured
+        Dask cluster (if available) for parallel execution via the top-level
+        `check_variable_values_dask` function.
 
         Args:
-            file_paths (list): List of file paths to check.
-            variable_name (str): Name of the variable to check.
+            file_paths (list[str]): List of S3 file paths to check. The first
+                file is used as the reference.
+            variable_name (str): The name of the variable to compare across files.
 
         Returns:
-            list: List of file paths with inconsistent variable values.
+            list[str]: A list of file paths identified as having values for the
+                specified variable that are inconsistent with the first file.
+                Returns all file paths if the reference file cannot be opened.
         """
         # Open the first file and store its variable values as the reference
         try:
@@ -635,6 +734,29 @@ class GenericHandler(CommonHandler):
         time_values_org,
         time_values_new,
     ):
+        """Handles writing data when time values overlap with existing Zarr store.
+
+        Identifies contiguous regions in the existing Zarr store that overlap
+        in time with the new dataset (`ds`). Writes the corresponding slices
+        from `ds` into these regions using `mode='r+'` and `region=...`.
+        Also handles potential size mismatches (padding) and ensures variables
+        incompatible with region writing are dropped. Finally, identifies and
+        writes any non-overlapping data from `ds` using `_write_ds`.
+
+        Args:
+            ds (xr.Dataset): The new dataset batch to write.
+            idx (int): The index of the current batch (for logging).
+            common_time_values (np.ndarray): Array of time values present in
+                both the existing store and the new dataset.
+            time_values_org (np.ndarray): Array of time values from the
+                existing Zarr store.
+            time_values_new (np.ndarray): Array of time values from the new
+                dataset (`ds`).
+
+        Returns:
+            xr.Dataset | None: The dataset containing only the non-overlapping
+                (unprocessed) time values, or None if all data overlapped.
+        """
         time_dimension_name = self.dimensions["time"]["name"]
 
         self.logger.info(
@@ -743,22 +865,20 @@ class GenericHandler(CommonHandler):
             return None
 
     def _open_file_with_fallback(self, file, partial_preprocess, drop_vars_list):
-        """Attempts to open a file using the specified engines.
+        """Opens a single file, trying 'scipy' then 'h5netcdf' engine.
 
-        Tries to open the given file with the 'scipy' engine. If an exception occurs,
-        it falls back to using the 'h5netcdf' engine. Logs success or failure messages
-        accordingly.
+        Used as part of the fallback strategy when `open_mfdataset` fails.
 
         Args:
-            file (str): The file path to be opened.
-            partial_preprocess (bool): Flag indicating whether to apply partial preprocessing.
-            drop_vars_list (list): List of variables to drop from the dataset.
+            file (str): The S3 path of the file to open.
+            partial_preprocess (callable): The pre-configured preprocessing function.
+            drop_vars_list (list[str]): List of variable names to drop.
 
         Returns:
-            xr.Dataset: The opened dataset.
+            xr.Dataset: The opened and preprocessed dataset.
 
         Raises:
-            Exception: Propagates any exceptions raised by the dataset opening operations.
+            Exception: If the file cannot be opened with either engine.
         """
         try:
             engine = "scipy"
@@ -783,11 +903,16 @@ class GenericHandler(CommonHandler):
     def _process_individual_file_fallback(
         self, batch_files, partial_preprocess, drop_vars_list, idx
     ):
-        """Processes individual files from a batch, applying fallback mechanisms.
+        """Processes files individually as a fallback.
 
-        Iterates over a batch of files, attempts to open each file using the
-        '_open_file_with_fallback' method, and writes the resulting dataset to storage
-        using the '_write_ds' method.
+        Iterates through `batch_files`, opens each using `_open_file_with_fallback`,
+        and writes it immediately using `_write_ds`.
+
+        Args:
+            batch_files (list[str]): List of S3 file paths in the batch.
+            partial_preprocess (callable): The pre-configured preprocessing function.
+            drop_vars_list (list[str]): List of variable names to drop.
+            idx (int): The index of the current batch (for logging).
         """
         for file in batch_files:
             ds = self._open_file_with_fallback(file, partial_preprocess, drop_vars_list)
@@ -796,19 +921,19 @@ class GenericHandler(CommonHandler):
     def _concatenate_files_different_engines(
         self, batch_files, partial_preprocess, drop_vars_list
     ):
-        """Concatenates datasets opened from a batch of files using different engines.
+        """Opens files individually and concatenates them.
 
-        Attempts to open each file in the provided batch with the 'scipy' engine, falling
-        back to the 'h5netcdf' engine if needed. Collects all datasets and concatenates them
-        into a single dataset, logging progress throughout the process.
+        Used when `open_mfdataset` fails even with fallback engines. Opens each
+        file using `_open_file_with_fallback` and then concatenates the list
+        of resulting datasets along the time dimension.
 
         Args:
-            batch_files (list): A list of file paths to be concatenated.
-            partial_preprocess (bool): Flag indicating whether to apply partial preprocessing.
-            drop_vars_list (list): List of variables to drop from each dataset.
+            batch_files (list[str]): List of S3 file paths in the batch.
+            partial_preprocess (callable): The pre-configured preprocessing function.
+            drop_vars_list (list[str]): List of variable names to drop.
 
         Returns:
-            xr.Dataset: A single concatenated dataset containing all successfully opened files.
+            xr.Dataset: The concatenated dataset.
         """
         datasets = []
         for file in batch_files:
@@ -837,6 +962,23 @@ class GenericHandler(CommonHandler):
     def _open_mfds(
         self, partial_preprocess, drop_vars_list, batch_files, engine="h5netcdf"
     ):
+        """Opens multiple files as a single dataset using xr.open_mfdataset.
+
+        Configures and calls `xr.open_mfdataset` with appropriate parameters
+        for parallel processing, preprocessing, chunking, and decoding.
+        Includes fallback for chunking if 'auto' fails.
+
+        Args:
+            partial_preprocess (callable): The pre-configured preprocessing function
+                to be passed to `open_mfdataset`.
+            drop_vars_list (list[str]): List of variable names to drop.
+            batch_files (list[str]): List of S3 file paths to open.
+            engine (str): The engine to use ('h5netcdf' or 'scipy').
+                Defaults to "h5netcdf".
+
+        Returns:
+            xr.Dataset: The multi-file dataset opened by xarray.
+        """
 
         # Note:
         # if using preprocess within open_mfdataset, data_vars should probably be set to "minimal" as the preprocess
@@ -878,29 +1020,24 @@ class GenericHandler(CommonHandler):
 
         return ds
 
-    # @delayed  # to open and chunk each dataset lazily. cant work with xarray concatenation
+    # @delayed # Cannot use delayed with xr.concat
     def _open_ds(self, file, partial_preprocess, drop_vars_list, engine="h5netcdf"):
-        """Open and preprocess a single file as a xarray dataset.
+        """Opens and preprocesses a single file.
 
-        This method opens a dataset from a specified file using xarray and preprocesses it
-        according to the provided configuration. It supports various engines for decoding
-        and handling variables.
+        Uses `xr.open_dataset` with specified engine and parameters. Applies
+        chunking (with fallback from 'auto') and the `preprocess_xarray`
+        function.
 
         Args:
-            file (str): The file path or URI of the dataset to open.
-            partial_preprocess (function): A function to preprocess the dataset, applied to
-                the dataset after it is opened.
-            drop_vars_list (list of str): A list of variable names to drop from the dataset.
-            engine (str, optional): The engine to use for reading the dataset. Defaults to
-                "h5netcdf".
+            file (str | object): The file path or file-like object to open.
+            partial_preprocess (callable): The pre-configured preprocessing function
+                (unused here, `preprocess_xarray` is called directly).
+            drop_vars_list (list[str]): List of variable names to drop during opening.
+            engine (str): The engine to use ('h5netcdf' or 'scipy').
+                Defaults to "h5netcdf".
 
         Returns:
-            xr.Dataset: The opened and preprocessed xarray dataset.
-
-        Note:
-        This function can't have the @delayed decorator.
-        The reason is that this function is used when we have to use xr.concatenate, which can't handle
-        <class 'dask.delayed.Delayed'>.
+            xr.Dataset: The opened, chunked, and preprocessed dataset.
         """
 
         open_dataset_params = {
@@ -935,6 +1072,17 @@ class GenericHandler(CommonHandler):
         return ds
 
     def _find_duplicated_values(self, ds_org):
+        """Checks for duplicate time values in the existing Zarr store.
+
+        Logs an error if duplicate values are found in the time dimension of
+        the provided dataset (assumed to be the existing Zarr store).
+
+        Args:
+            ds_org (xr.Dataset): The dataset representing the existing Zarr store.
+
+        Returns:
+            bool: Always returns True. The main purpose is logging the error.
+        """
         # Find duplicates
         time_dimension_name = self.dimensions["time"]["name"]
         time_values_org = ds_org[time_dimension_name].values
@@ -952,6 +1100,18 @@ class GenericHandler(CommonHandler):
         return True
 
     def _write_ds(self, ds, idx):
+        """Writes a dataset batch to the Zarr store.
+
+        Sorts the dataset by time, ensures correct chunking, removes incompatible
+        encoding information, and determines whether to write to a new store,
+        append to an existing store, or handle overlapping regions based on
+        time values.
+
+        Args:
+            ds (xr.Dataset): The preprocessed dataset batch to write.
+            idx (int): The index of the current batch (used for determining
+                if it's the first write and for logging).
+        """
         time_dimension_name = self.dimensions["time"]["name"]
         ds = ds.sortby(time_dimension_name)
         if any(chunk == 0 for chunk in self.chunks.values()):
@@ -1016,8 +1176,12 @@ class GenericHandler(CommonHandler):
             self._write_new_zarr_store(ds)
 
     def _write_new_zarr_store(self, ds):
-        """
-        Writes the dataset to a new Zarr store.
+        """Writes the dataset to a new Zarr store (mode='w').
+
+        Used for the very first batch when the Zarr store doesn't exist yet.
+
+        Args:
+            ds (xr.Dataset): The dataset to write.
         """
         self.logger.info(
             f"{self.uuid_log}: Writing data to a new Zarr store at {self.store}."
@@ -1032,14 +1196,19 @@ class GenericHandler(CommonHandler):
         )
 
     def _append_zarr_store(self, ds):
+        """Appends the dataset to an existing Zarr store (mode='a-').
+
+        Used when writing subsequent batches that do not overlap in time with
+        the existing data. Appends along the time dimension.
+
+        Args:
+            ds (xr.Dataset): The dataset to append.
+        """
         time_dimension_name = self.dimensions["time"]["name"]
-        """
-        Append the dataset to an existing Zarr store.
-        """
+
         self.logger.info(
             f"{self.uuid_log}: Appending data to the existing Zarr store at {self.store}."
         )
-        # import ipdb; ipdb.set_trace()
         ds.to_zarr(
             self.store,
             mode="a-",
@@ -1051,21 +1220,17 @@ class GenericHandler(CommonHandler):
         )
 
     def to_cloud_optimised(self, s3_file_uri_list=None):
-        """
-        Create a Zarr dataset from NetCDF data.
+        """Main entry point to convert NetCDF files to a Zarr dataset.
 
-        This method creates a Zarr dataset from NetCDF data stored in S3. It logs the process,
-        deletes existing Zarr objects if specified, processes multiple files concurrently using a cluster,
-        and publishes the resulting datasets using the 'publish_cloud_optimised_fileset_batch' method.
-
-        Note:
+        Handles optional clearing of existing data, sets up the Dask cluster
+        if configured, ensures the input file list is unique, and calls
+        `publish_cloud_optimised_fileset_batch` to process the files.
+        Closes the cluster afterwards if one was created.
 
         Args:
-        - s3_file_uri_list (list, optional): List of S3 file URIs to process and create the Zarr dataset.
-                                             If not provided, no processing is performed.
-
-        Returns:
-        None
+            s3_file_uri_list (list[str], optional): List of S3 URIs of NetCDF
+                files to process. If None or empty, the method will exit early.
+                Defaults to None.
         """
         if self.clear_existing_data:
             self.logger.warning(
@@ -1105,15 +1270,18 @@ class GenericHandler(CommonHandler):
 
     @staticmethod
     def filter_rechunk_dimensions(dimensions):
-        """
-        Filter dimensions dictionary based on the 'rechunk' key.
+        """Filters dimensions based on the 'rechunk' flag in the config.
 
-        Parameters:
-        - dimensions (dict): A dictionary containing dimensions information.
+        Static method used potentially by the (currently commented out) `rechunk`
+        method to determine which dimensions and their target chunk sizes should
+        be used for rechunking.
+
+        Args:
+            dimensions (dict): The 'dimensions' section of the dataset configuration.
 
         Returns:
-        - rechunk_dimensions (dict): A filtered dictionary containing keys where 'rechunk' is True,
-                                    along with their corresponding 'chunk' values.
+            dict: A dictionary where keys are dimension names and values are
+                  target chunk sizes for dimensions marked with 'rechunk: true'.
         """
         rechunk_dimensions = {}
 

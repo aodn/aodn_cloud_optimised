@@ -6,6 +6,7 @@ Notebooks
 import json
 import os
 import re
+from abc import ABC, abstractmethod
 from datetime import datetime, timedelta, timezone
 from functools import lru_cache
 from typing import Final
@@ -13,6 +14,8 @@ from typing import Final
 import boto3
 import cartopy.crs as ccrs  # For coastline plotting
 import cartopy.feature as cfeature
+import fsspec
+import cftime
 import geopandas as gpd
 import gsw  # TEOS-10 library
 import matplotlib.pyplot as plt
@@ -24,6 +27,7 @@ import pyarrow.compute as pc
 import pyarrow.fs as fs
 import pyarrow.parquet as pq
 import seaborn as sns
+import xarray as xr
 from botocore import UNSIGNED
 from botocore.client import Config
 from fuzzywuzzy import fuzz
@@ -39,15 +43,19 @@ BUCKET_OPTIMISED_DEFAULT = "aodn-cloud-optimised"
 ROOT_PREFIX_CLOUD_OPTIMISED_PATH = ""
 
 
-def query_unique_value(dataset: pq.ParquetDataset, partition: str) -> set:
-    """Query the unique values of a specified partition name from a ParquetDataset.
+def query_unique_value(dataset: pq.ParquetDataset, partition: str) -> set[str]:
+    """Queries unique values for a given Hive partition key in a Parquet dataset.
+
+    Iterates through the fragments (files) of a Parquet dataset and extracts
+    the unique values associated with the specified partition key from the
+    file paths. Assumes Hive partitioning (e.g., ".../partition=value/...").
 
     Args:
-        dataset (pyarrow.parquet.ParquetDataset): The ParquetDataset to query.
-        partition (str): The name of the partition to query on.
+        dataset: The pyarrow.parquet.ParquetDataset object.
+        partition: The name of the partition key (e.g., "year", "timestamp").
 
     Returns:
-        set[str]: A set containing the unique values of the specified partition.
+        A set containing the unique string values found for the partition key.
     """
     unique_values = set()
     pattern = re.compile(f".*/{partition}=([^/]*)/")
@@ -57,19 +65,19 @@ def query_unique_value(dataset: pq.ParquetDataset, partition: str) -> set:
     return unique_values
 
 
-def get_temporal_extent_v1(parquet_ds):
-    """Calculate the temporal extent (start and end timestamps) of a Parquet dataset.
+def get_temporal_extent_v1(parquet_ds: pq.ParquetDataset) -> tuple[datetime, datetime]:
+    """Calculates temporal extent based *only* on 'timestamp' partition values.
 
-    This function determines the temporal extent of a Parquet dataset based on unique timestamps
-    found in the 'timestamp' partition.
+    This is a faster but potentially less accurate method than `get_temporal_extent`
+    as it relies solely on the timestamp partition values, which might represent
+    time bins rather than exact start/end times within the data.
 
     Args:
-        parquet_ds (pyarrow.parquet.ParquetDataset): The Parquet dataset to analyze.
+        parquet_ds: The pyarrow.parquet.ParquetDataset object.
 
     Returns:
-        tuple: A tuple containing the temporal extent of the dataset.
-               The first element is the datetime corresponding to the minimum timestamp value,
-               and the second element is the datetime corresponding to the maximum timestamp value.
+        A tuple containing the minimum and maximum datetime objects derived
+        from the 'timestamp' partition values, localized to UTC.
     """
     unique_timestamps = query_unique_value(parquet_ds, "timestamp")
     unique_timestamps = np.array([np.int64(string) for string in unique_timestamps])
@@ -81,17 +89,22 @@ def get_temporal_extent_v1(parquet_ds):
     )
 
 
-def get_temporal_extent(parquet_ds):
-    """Calculate the temporal extent (start and end timestamps) of a Parquet dataset. Slow but accurate version
+def get_temporal_extent(
+    parquet_ds: pq.ParquetDataset,
+) -> tuple[pd.Timestamp, pd.Timestamp]:
+    """Calculates the precise temporal extent by reading min/max time variable values.
 
-    This function determines the temporal extent of a Parquet dataset
+    This method finds the minimum and maximum 'timestamp' partition values, then
+    reads the actual time variable (e.g., 'TIME' or 'JULD') from the corresponding
+    Parquet files to get the precise minimum and maximum timestamps in the dataset.
+    This is more accurate but slower than `get_temporal_extent_v1`.
+
     Args:
-        parquet_ds (pyarrow.parquet.ParquetDataset): The Parquet dataset to analyze.
+        parquet_ds: The pyarrow.parquet.ParquetDataset object.
 
     Returns:
-        tuple: A tuple containing the temporal extent of the dataset.
-               The first element is the datetime corresponding to the minimum timestamp value,
-               and the second element is the datetime corresponding to the maximum timestamp value.
+        A tuple containing the minimum and maximum pandas Timestamp objects
+        found within the dataset's time variable.
     """
     dname = f"s3://anonymous@{parquet_ds.__dict__['_base_dir']}"
     unique_timestamps = query_unique_value(parquet_ds, "timestamp")
@@ -116,19 +129,23 @@ def get_temporal_extent(parquet_ds):
 
 def get_timestamps_boundary_values(
     parquet_ds: pq.ParquetDataset, date_start: str, date_end: str
-):
-    """
-    Get the boundary values of timestamps from a Parquet dataset based on the specified date range.
+) -> tuple[np.int64, np.int64]:
+    """Finds partition timestamp boundaries bracketing a date range.
+
+    Given a start and end date, this function identifies the 'timestamp'
+    partition values in the Parquet dataset that immediately precede the
+    start date and the end date. This is useful for filtering partitions
+    efficiently.
 
     Args:
-        parquet_ds (pyarrow.parquet.ParquetDataset): The Parquet dataset.
-        date_start (str): The start date in string format (e.g., "YYYY-MM-DD").
-        date_end (str): The end date in string format (e.g., "YYYY-MM-DD").
+        parquet_ds: The pyarrow.parquet.ParquetDataset object.
+        date_start: The start date string (e.g., "YYYY-MM-DD").
+        date_end: The end date string (e.g., "YYYY-MM-DD").
 
     Returns:
-        tuple: A tuple containing the boundary values of timestamps for the specified date range.
-               The first element is the timestamp corresponding to the closest value before date_start,
-               and the second element is the timestamp corresponding to the closest value after date_end.
+        A tuple containing two int64 timestamps:
+        - The partition timestamp value just before or equal to `date_start`.
+        - The partition timestamp value just before or equal to `date_end`.
     """
 
     # Get the unique partition values of timestamp available in the parquet dataset
@@ -155,25 +172,32 @@ def get_timestamps_boundary_values(
     return timestamp_start, timestamp_end
 
 
-def create_bbox_filter(parquet_ds, **kwargs):
-    """
-    Create a filter expression to select data within a bounding box from a Parquet dataset.
+def create_bbox_filter(parquet_ds: pq.ParquetDataset, **kwargs) -> pc.Expression:
+    """Creates a PyArrow filter expression for spatial bounding box queries.
+
+    Combines partition pruning based on the 'polygon' partition key (finding
+    partitions intersecting the query box) with row-level filtering based on
+    latitude and longitude variable values.
 
     Args:
-        parquet_ds (pyarrow.parquet.ParquetDataset): The Parquet dataset to filter.
-        kwargs (dict): Keyword arguments specifying the bounding box coordinates:
-            lon_min (float): The minimum longitude of the bounding box.
-            lon_max (float): The maximum longitude of the bounding box.
-            lat_min (float): The minimum latitude of the bounding box.
-            lat_max (float): The maximum latitude of the bounding box.
-            lat_varname (str, optional): The latitude variable name.
-            lon_varname (str, optional): The longitude variable name.
+        parquet_ds: The pyarrow.parquet.ParquetDataset object.
+        **kwargs: Keyword arguments defining the bounding box and variable names.
+            lon_min (float): Minimum longitude.
+            lon_max (float): Maximum longitude.
+            lat_min (float): Minimum latitude.
+            lat_max (float): Maximum latitude.
+            lat_varname (str, optional): Name of the latitude variable.
+                Defaults to "LATITUDE".
+            lon_varname (str, optional): Name of the longitude variable.
+                Defaults to "LONGITUDE".
 
     Returns:
-        pyarrow.compute.Expression: A filter expression for selecting data within the specified bounding box.
+        A PyArrow compute expression suitable for the `filters` argument in
+        `pyarrow.parquet.read_table` or `pd.read_parquet`.
 
-    Example:
-        filter_expr = create_bbox_filter(parquet_ds, lon_min=-180, lon_max=180, lat_min=-90, lat_max=90)
+    Raises:
+        ValueError: If any of lon_min, lon_max, lat_min, lat_max are None.
+        ValueError: If no 'polygon' partitions intersect the bounding box.
     """
     lon_min = kwargs.get("lon_min")
     lon_max = kwargs.get("lon_max")
@@ -233,23 +257,27 @@ def create_bbox_filter(parquet_ds, **kwargs):
     return expression
 
 
-def create_time_filter(parquet_ds, **kwargs):
-    """
-    Create a filter expression to select data within a time range from a Parquet dataset.
+def create_time_filter(parquet_ds: pq.ParquetDataset, **kwargs) -> pc.Expression:
+    """Creates a PyArrow filter expression for temporal range queries.
+
+    Combines partition pruning based on the 'timestamp' partition key (using
+    `get_timestamps_boundary_values`) with row-level filtering based on the
+    actual time variable values (e.g., 'TIME' or 'JULD').
 
     Args:
-        parquet_ds (pyarrow.parquet.ParquetDataset): The Parquet dataset to filter.
-        kwargs (dict): Keyword arguments specifying the time range:
-            date_start (str, optional): The start date in the format 'YYYY-MM-DD'.
-            date_end (str, optional): The end date in the format 'YYYY-MM-DD'.
-            time_varname (str, optional): The time variable.
-
+        parquet_ds: The pyarrow.parquet.ParquetDataset object.
+        **kwargs: Keyword arguments defining the time range and variable name.
+            date_start (str): Start date string (e.g., "YYYY-MM-DD").
+            date_end (str): End date string (e.g., "YYYY-MM-DD").
+            time_varname (str, optional): Name of the time variable. Defaults
+                to "TIME", but checks for "JULD" if "TIME" is not present.
 
     Returns:
-        pyarrow.compute.Expression: A filter expression for selecting data within the specified time range.
+        A PyArrow compute expression suitable for the `filters` argument in
+        `pyarrow.parquet.read_table` or `pd.read_parquet`.
 
-    Example:
-        filter_expr = create_time_filter(parquet_ds, date_start='2023-01-01', date_end='2023-12-31')
+    Raises:
+        ValueError: If `date_start` or `date_end` are None.
     """
     date_start = kwargs.get("date_start")
     date_end = kwargs.get("date_end")
@@ -279,16 +307,18 @@ def create_time_filter(parquet_ds, **kwargs):
 
 
 def get_spatial_extent(parquet_ds: pq.ParquetDataset) -> MultiPolygon:
-    """Retrieve the spatial extent (multi-polygon) from a Parquet dataset.
+    """Retrieves the spatial extent as a MultiPolygon from 'polygon' partitions.
 
-    This function retrieves the spatial extent (multi-polygon) represented by unique polygons
-    found in the 'polygon' partition of the given Parquet dataset.
+    Reads the unique values from the 'polygon' partition key, decodes the WKB
+    hex strings into Shapely Polygon objects, and combines them into a single
+    MultiPolygon object representing the total spatial coverage defined by the
+    partitions.
 
     Args:
-        parquet_ds (pyarrow.parquet.ParquetDataset): The Parquet dataset containing polygon partitions.
+        parquet_ds: The pyarrow.parquet.ParquetDataset object.
 
     Returns:
-        shapely.geometry.MultiPolygon: A multi-polygon representing the spatial extent.
+        A Shapely MultiPolygon object.
     """
     # Retrieve unique polygon partitions
     polygon_partitions = query_unique_value(parquet_ds, "polygon")
@@ -307,14 +337,14 @@ def get_spatial_extent(parquet_ds: pq.ParquetDataset) -> MultiPolygon:
 
 
 def validate_date(date_str: str) -> bool:
-    """
-    Validates if a date string is in 'YYYY-MM-DD' format and checks if it's a valid date.
+    """Validates if a string is a valid date in 'YYYY-MM-DD' format.
 
     Args:
-        date_str (str): The date string to validate.
+        date_str: The date string to validate.
 
     Returns:
-        bool: True if the date is valid, False otherwise.
+        True if the string is a valid date in the specified format,
+        False otherwise.
     """
     try:
         datetime.strptime(date_str, "%Y-%m-%d")
@@ -324,14 +354,21 @@ def validate_date(date_str: str) -> bool:
 
 
 def normalize_date(date_str: str) -> str:
-    """
-    Converts an invalid date to a valid one by rolling over.
+    """Normalizes a date string, handling potential invalid dates like 'YYYY-MM-31'.
+
+    Uses pandas `to_datetime` with `errors='coerce'` to parse the date string.
+    If the date is invalid (e.g., February 30th), pandas might adjust it or
+    return NaT. If valid, returns the date formatted as
+    'YYYY-MM-DD HH:MM:SS'.
 
     Args:
-        date_str (str): The input date string in 'YYYY-MM-DD' format.
+        date_str: The input date string (ideally 'YYYY-MM-DD').
 
     Returns:
-        str: A valid date string in 'YYYY-MM-DD' format.
+        The normalized date string in 'YYYY-MM-DD HH:MM:SS' format.
+
+    Raises:
+        ValueError: If the input string cannot be parsed into a date by pandas.
     """
     # Use pd.to_datetime to handle normalization and invalid dates
     date_obj = pd.to_datetime(date_str, errors="coerce")
@@ -352,22 +389,35 @@ def create_timeseries(
     lat_name="lat",
     lon_name="lon",
     time_name="time",
-):
-    """
-    Creates a time series plot of a given variable at a specific latitude and longitude over a specified time range.
-    Also returns the time series data as a pandas DataFrame.
+) -> pd.DataFrame:
+    """Extracts and plots a time series for a variable at the nearest point.
 
-    Parameters:
-    - ds: xarray.Dataset containing the data.
-    - var_name: str, the name of the variable to plot (e.g., 'analysed_sst').
-    - lat: float, latitude value.
-    - lon: float, longitude value.
-    - start_time: str, start date in 'YYYY-MM-DD' format.
-    - end_time: str, end date in 'YYYY-MM-DD' format.
+    Selects data from an xarray Dataset for a given variable (`var_name`)
+    at the spatial coordinates (`lat`, `lon`) nearest to the specified values,
+    within a given time range (`start_time`, `end_time`). It then plots the
+    resulting time series and returns the data as a pandas DataFrame.
+
+    Args:
+        ds: The input xarray Dataset.
+        var_name: The name of the data variable to extract.
+        lat: The target latitude.
+        lon: The target longitude.
+        start_time: The start time string (e.g., "YYYY-MM-DD").
+        end_time: The end time string (e.g., "YYYY-MM-DD").
+        lat_name: The name of the latitude coordinate/variable in `ds`.
+            Defaults to "lat".
+        lon_name: The name of the longitude coordinate/variable in `ds`.
+            Defaults to "lon".
+        time_name: The name of the time coordinate in `ds`. Defaults to "time".
 
     Returns:
-    - A plot of the variable's time series at the specified location and time range.
-    - A pandas DataFrame containing the time series data.
+        A pandas DataFrame containing the extracted time series data with
+        columns for time, the variable, latitude, and longitude of the
+        selected nearest point.
+
+    Raises:
+        ValueError: If the requested lat, lon, start_time, or end_time are
+            outside the bounds of the dataset.
     """
 
     start_time = normalize_date(start_time)
@@ -434,18 +484,19 @@ def create_timeseries(
 
 
 #
-def plot_spatial_extent(parquet_ds, coastline_resolution="110m"):
-    """Retrieve the spatial extent (multi-polygon) from a Parquet dataset and plot it alongside the coastline.
+def plot_spatial_extent(
+    parquet_ds: pq.ParquetDataset, coastline_resolution: str = "110m"
+) -> None:
+    """Plots the spatial extent derived from Parquet 'polygon' partitions.
 
-    This function retrieves the spatial extent (multi-polygon) represented by unique polygons
-    found in the 'polygon' partition of the given Parquet dataset and plots it with the coastline.
+    Retrieves the spatial extent using `get_spatial_extent`, creates a
+    GeoDataFrame, and plots it on a map with coastlines, borders, land,
+    and ocean features using Cartopy.
 
     Args:
-        parquet_ds (pyarrow.parquet.ParquetDataset): The Parquet dataset containing polygon partitions.
-        coastline_resolution (str): The resolution of the coastline to plot ('110m', '50m', '10m').
-
-    Returns:
-        None
+        parquet_ds: The pyarrow.parquet.ParquetDataset object.
+        coastline_resolution: The resolution for the Cartopy coastline
+            feature ('110m', '50m', '10m'). Defaults to "110m".
     """
     multi_polygon = get_spatial_extent(parquet_ds)
 
@@ -488,17 +539,37 @@ def plot_spatial_extent(parquet_ds, coastline_resolution="110m"):
     plt.show()
 
 
-def plot_time_coverage(ds, time_var="time"):
-    """
-    Plots the time coverage of the given xarray dataset.
+def plot_time_coverage(ds: xr.Dataset, time_var: str = "time") -> None:
+    """Plots a heatmap showing the temporal data coverage (data points per month).
+
+    Calculates the number of data points for each year/month combination based
+    on the specified time coordinate in the xarray Dataset and displays it as
+    a heatmap. Handles cftime objects if present in the time coordinate.
 
     Args:
-        ds (xarray.Dataset): The input dataset containing a 'time' dimension.
+        ds: The input xarray Dataset.
+        time_var: The name of the time coordinate variable in `ds`.
+            Defaults to "time".
     """
     # Convert the time dimension to a pandas DatetimeIndex
     ds = ds.sortby(time_var)
 
-    time_series = pd.to_datetime(ds[time_var].values)
+    time_values = ds[time_var].values
+
+    cftime_types = (
+        cftime.DatetimeGregorian,
+        cftime.DatetimeProlepticGregorian,
+        cftime.DatetimeJulian,
+        cftime.DatetimeNoLeap,
+        cftime.DatetimeAllLeap,
+        cftime.Datetime360Day,
+    )
+
+    # Convert to pandas datetime; handle cftime objects if needed
+    if isinstance(time_values[0], cftime_types):
+        time_series = pd.to_datetime([t.isoformat() for t in time_values])
+    else:
+        time_series = pd.to_datetime(time_values)
 
     # Create a DataFrame with the year and month as separate columns
     time_df = pd.DataFrame({"year": time_series.year, "month": time_series.month})
@@ -531,19 +602,21 @@ def plot_time_coverage(ds, time_var="time"):
     plt.xticks(rotation=45)
 
 
-def plot_radar_water_velocity_rose(ds, time_start, time_end, time_name="TIME"):
-    """
-    Plots a wind rose of speed averages over a specified time range.
+def plot_radar_water_velocity_rose(
+    ds: xr.Dataset, time_start: str, time_end: str, time_name: str = "TIME"
+) -> None:
+    """Plots a velocity rose (similar to wind rose) for radar data.
 
-    Parameters:
-    - ds: xarray.Dataset
-        The input dataset containing UCUR, VCUR, LONGITUDE, LATITUDE, and TIME variables.
-    - time_start: str
-        The starting time in the format 'YYYY-MM-DDTHH:MM:SS'.
-    - time_end: str
-        The ending time in the format 'YYYY-MM-DDTHH:MM:SS'.
-    - time_name: str, optional
-        The name of the time coordinate in the dataset. Default is "TIME".
+    Calculates the time-averaged U and V velocity components (UCUR, VCUR)
+    over the specified time range, derives average speed and direction, and
+    plots them using the `windrose` library.
+
+    Args:
+        ds: The input xarray Dataset, expected to contain 'UCUR', 'VCUR',
+            'LONGITUDE', 'LATITUDE', and a time coordinate.
+        time_start: The start time string for averaging (e.g., "YYYY-MM-DDTHH:MM:SS").
+        time_end: The end time string for averaging (e.g., "YYYY-MM-DDTHH:MM:SS").
+        time_name: The name of the time coordinate in `ds`. Defaults to "TIME".
     """
     # Select the data in the specified time range
     subset = ds.sel({time_name: slice(time_start, time_end)})
@@ -580,20 +653,26 @@ def plot_radar_water_velocity_rose(ds, time_start, time_end, time_name="TIME"):
 
 
 def plot_radar_water_velocity_gridded(
-    ds, time_start, time_name="TIME", coastline_resolution="50m"
-):
-    """
-    Plotting function for ACORN data with coastlines.
+    ds: xr.Dataset,
+    time_start: str,
+    time_name: str = "TIME",
+    coastline_resolution: str = "50m",
+) -> None:
+    """Plots gridded radar velocity data for 6 consecutive time steps.
 
-    Parameters:
-    - ds: xarray.Dataset
-        The input dataset.
-    - time_start: str
-        The starting time in the format '2021-02-21T01:00:00'.
-    - time_name: str, optional
-        The name of the time coordinate in the dataset. Default is "TIME".
-    - coastline_resolution: str, optional
-        The resolution of the coastlines. Options are "10m", "50m", "110m". Default is "110m".
+    Starting from the time step nearest to `time_start`, this function creates
+    a 3x2 grid of plots showing water speed (color) and velocity vectors
+    (quiver arrows) for 6 consecutive time steps. Includes coastlines and
+    gridlines.
+
+    Args:
+        ds: The input xarray Dataset, expected to contain 'UCUR', 'VCUR',
+            'LONGITUDE', 'LATITUDE', and a time coordinate.
+        time_start: The starting time string (e.g., "YYYY-MM-DDTHH:MM:SS").
+            The plot will start from the time step nearest to this.
+        time_name: The name of the time coordinate in `ds`. Defaults to "TIME".
+        coastline_resolution: The resolution for the Cartopy coastline
+            feature ('110m', '50m', '10m'). Defaults to "50m".
     """
     ds = ds.sortby(time_name)
 
@@ -881,15 +960,25 @@ def plot_gridded_variable(
     plt.show()
 
 
-def plot_ts_diagram(df, temp_col="TEMP", psal_col="PSAL", z_col="DEPTH"):
-    """
-    Plots a T-S (Temperature-Salinity) diagram with density contours.
+def plot_ts_diagram(
+    df: pd.DataFrame,
+    temp_col: str = "TEMP",
+    psal_col: str = "PSAL",
+    z_col: str = "DEPTH",
+) -> None:
+    """Plots a Temperature-Salinity (T-S) diagram with density contours.
+
+    Generates a scatter plot of temperature vs. salinity from the input
+    DataFrame, color-coded by depth. Overlays density anomaly (sigma0)
+    contours calculated using the `gsw` library. Filters data points with
+    salinity below 25 before plotting.
 
     Args:
-        df (pd.DataFrame): DataFrame containing temperature, salinity, and depth columns.
-        temp_col (str): Column name for temperature data (default is 'TEMP').
-        psal_col (str): Column name for salinity data (default is 'PSAL').
-        depth_col (str): Column name for depth data (default is 'DEPTH').
+        df: DataFrame containing temperature, salinity, and depth data.
+        temp_col: Name of the temperature column. Defaults to "TEMP".
+        psal_col: Name of the salinity column. Defaults to "PSAL".
+        z_col: Name of the depth column used for color-coding. Defaults
+            to "DEPTH".
     """
     # Filter data where PSAL >= 25
     filtered_df = df[(df[psal_col] >= 25)]
@@ -957,19 +1046,23 @@ def plot_ts_diagram(df, temp_col="TEMP", psal_col="PSAL", z_col="DEPTH"):
     plt.show()
 
 
-def get_schema_metadata(dname):
-    """Retrieve pyarrow_schema metadata from a Parquet dataset directory.
+def get_schema_metadata(dname: str) -> dict:
+    """Retrieves and decodes metadata from a Parquet dataset's common metadata.
 
-    This function reads the pyarrow_schema metadata from the common metadata file
-    associated with a Parquet dataset directory.
+    Reads the schema from the `_common_metadata` file within the specified
+    Parquet dataset directory (`dname`) on S3. It then decodes the schema's
+    metadata (which is stored as bytes key-value pairs where values are often
+    JSON strings) into a standard Python dictionary.
 
     Args:
-        dname (str): The S3 path of the Parquet dataset (without '_common_metadata').
+        dname: The S3 path to the root of the Parquet dataset directory
+            (e.g., "s3://bucket/path/dataset.parquet/").
 
     Returns:
-        dict: A dictionary containing the decoded pyarrow_schema metadata.
-            The keys are metadata keys (decoded from bytes to UTF-8 strings),
-            and the values are metadata values (parsed from JSON strings to Python objects).
+        A dictionary containing the decoded metadata. Keys and string values
+        within the original JSON are decoded from UTF-8. JSON structures are
+        parsed into Python objects. Returns an empty dict if metadata is empty
+        or decoding fails.
     """
     name = dname.replace("s3://", "")
     name = name.replace("anonymous@", "")
@@ -999,7 +1092,23 @@ def get_schema_metadata(dname):
     return decoded_meta
 
 
-def decode_and_load_json(metadata):
+def decode_and_load_json(metadata: dict[bytes, bytes]) -> dict[str, any]:
+    """Decodes keys and JSON-encoded values from Parquet metadata.
+
+    Iterates through a dictionary where keys and values are bytes (as obtained
+    from PyArrow schema metadata). It decodes keys to UTF-8 strings and attempts
+    to decode values as UTF-8 strings, replace single quotes with double quotes
+    (common issue), and then parse them as JSON. Logs errors for values that
+    fail decoding or JSON parsing.
+
+    Args:
+        metadata: A dictionary with bytes keys and bytes values, typically
+            from `pyarrow.Schema.metadata`.
+
+    Returns:
+        A dictionary with decoded string keys and parsed Python objects as values.
+        Keys or values that failed decoding/parsing are omitted.
+    """
     decoded_metadata = {}
     for key, value in metadata.items():
         try:
@@ -1016,39 +1125,172 @@ def decode_and_load_json(metadata):
     return decoded_metadata
 
 
+def get_zarr_metadata(dname: str) -> dict:
+    """Retrieves metadata from a Zarr store using xarray.
+
+    Opens the Zarr store located at the S3 path `dname` using xarray and
+    fsspec for anonymous access. Extracts global attributes and attributes
+    for all variables (including coordinates) into a dictionary.
+
+    Args:
+        dname: The S3 path to the Zarr store (e.g., "s3://bucket/path/dataset.zarr/").
+
+    Returns:
+        A dictionary containing the metadata. It has a top-level key
+        "global_attributes" and keys for each variable/coordinate name,
+        with values being dictionaries of their respective attributes.
+        Returns a basic dict with an "error" key if opening fails.
+    """
+    name = dname.replace("anonymous@", "")
+
+    try:
+        # Use fsspec mapper for xarray to access S3 anonymously
+        with xr.open_zarr(
+            fsspec.get_mapper(name, anon=True), chunks=None, consolidated=True
+        ) as ds:
+            metadata = {"global_attributes": ds.attrs.copy()}
+            for var_name, variable in ds.variables.items():
+                metadata[var_name] = variable.attrs.copy()
+        return metadata
+    except Exception as e:
+        print(f"Error opening or processing Zarr metadata from {dname}: {e}")
+        return {"global_attributes": {}, "error": str(e)}
+
+
 ####################################################################################################################
 # Work done during IMOS HACKATHON 2024
 # https://github.com/aodn/IMOS-hackathon/blob/main/2024/Projects/CARSv2/notebooks/get_aodn_example_hackathon.ipynb
 ###################################################################################################################
-class GetAodn:
-    def __init__(self):
-        self.bucket_name = BUCKET_OPTIMISED_DEFAULT
-        self.prefix = ROOT_PREFIX_CLOUD_OPTIMISED_PATH
+class DataSource(ABC):
+    """Abstract Base Class for accessing different data source formats (Parquet, Zarr)."""
 
-    def get_dataset(self, dataset_name):
-        return Dataset(self.bucket_name, self.prefix, dataset_name)
+    def __init__(self, bucket_name: str, prefix: str, dataset_name: str):
+        """Initialises the DataSource.
 
-    def get_metadata(self):
-        return Metadata(self.bucket_name, self.prefix)
-
-
-class Dataset:
-    def __init__(self, bucket_name, prefix, dataset_name):
+        Args:
+            bucket_name: The S3 bucket name.
+            prefix: The S3 prefix (folder path) within the bucket.
+            dataset_name: The name of the dataset (including extension,
+                e.g., "my_data.parquet" or "my_data.zarr").
+        """
         self.bucket_name = bucket_name
         self.prefix = prefix
         self.dataset_name = dataset_name
+        self.dname = self._build_data_path()
 
-        # creating path with PureS3Path to handle windows, and handle empty self.prefix
-        self.dname = (
+    @abstractmethod
+    def _build_data_path(self) -> str:
+        """Constructs the full S3 path to the data source."""
+        pass
+
+    @abstractmethod
+    def get_data(
+        self,
+        date_start: str | None = None,
+        date_end: str | None = None,
+        lat_min: float | None = None,
+        lat_max: float | None = None,
+        lon_min: float | None = None,
+        lon_max: float | None = None,
+        scalar_filter: dict | None = None,
+        columns: list[str] | None = None,
+    ) -> pd.DataFrame | xr.Dataset:
+        """Retrieves data, potentially filtered by arguments."""
+        pass
+
+    @abstractmethod
+    def get_spatial_extent(self) -> list | MultiPolygon:
+        """Returns the spatial extent of the dataset."""
+        pass
+
+    @abstractmethod
+    def plot_spatial_extent(self) -> None:
+        """Plots the spatial extent of the dataset."""
+        pass
+
+    @abstractmethod
+    def get_temporal_extent(self) -> tuple[pd.Timestamp, pd.Timestamp]:
+        """Returns the temporal extent (min_time, max_time) of the dataset."""
+        pass
+
+    @abstractmethod
+    def get_metadata(self) -> dict:
+        """Retrieves metadata associated with the dataset."""
+        pass
+
+    @abstractmethod
+    def get_timeseries_data(
+        self,
+        lat: float,
+        lon: float,
+        date_start: str,
+        date_end: str,
+        var_name: str | None = None,  # Made var_name optional
+        lat_name_override: str | None = None,
+        lon_name_override: str | None = None,
+        time_name_override: str | None = None,
+    ) -> pd.DataFrame:
+        """Extracts time series data for a variable (or all variables) at the nearest point."""
+        pass
+
+    @abstractmethod
+    def plot_timeseries(
+        self,
+        timeseries_df: pd.DataFrame,
+        var_name: str,  # Specific variable from the DataFrame to plot
+        lat: float,
+        lon: float,
+        date_start: str,
+        date_end: str,
+        actual_lat_name: str,
+        actual_lon_name: str,
+        actual_time_name: str,
+    ) -> None:
+        """Plots the extracted time series data."""
+        pass
+
+
+class ParquetDataSource(DataSource):
+    """DataSource implementation for Parquet datasets."""
+
+    def _build_data_path(self) -> str:
+        """Constructs the S3 path for the Parquet dataset directory.
+
+        Returns:
+            The S3 path string (e.g., "bucket/prefix/my_dataset.parquet/").
+            Removes any "s3://anonymous@" prefix added by PureS3Path.
+        """
+        # self.dataset_name now includes the extension, e.g., "my_dataset.parquet"
+        # We need to form the path like ".../my_dataset.parquet/"
+        dname_uri = (
             PureS3Path.from_uri(f"s3://anonymous@{self.bucket_name}/{self.prefix}/")
-            .joinpath(f"{self.dataset_name}.parquet/")
+            .joinpath(f"{self.dataset_name}/")  # Add trailing slash
             .as_uri()
         )
-        self.dname = self.dname.replace("s3://anonymous%40", "")
+        return dname_uri.replace("s3://anonymous%40", "")
 
+    def __init__(self, bucket_name: str, prefix: str, dataset_name: str):
+        """Initialises the ParquetDataSource.
+
+        Args:
+            bucket_name: The S3 bucket name.
+            prefix: The S3 prefix (folder path) within the bucket.
+            dataset_name: The name of the dataset including the '.parquet'
+                extension.
+        """
+        super().__init__(bucket_name, prefix, dataset_name)
         self.parquet_ds = self._create_parquet_dataset()
 
-    def _create_parquet_dataset(self, filters=None):
+    def _create_parquet_dataset(self, filters=None) -> pq.ParquetDataset:
+        """Creates a PyArrow ParquetDataset object for the data source.
+
+        Args:
+            filters: Optional PyArrow filter expression to apply when creating
+                the dataset object (for metadata filtering). Defaults to None.
+
+        Returns:
+            A pyarrow.parquet.ParquetDataset instance.
+        """
         return pq.ParquetDataset(
             self.dname,
             partitioning="hive",
@@ -1061,31 +1303,75 @@ class Dataset:
             ),
         )
 
-    def partition_keys_list(self):
+    def partition_keys_list(self) -> pa.Schema:
+        """Returns the schema of the Hive partitioning keys.
+
+        Returns:
+            A pyarrow.Schema object representing the partition keys.
+        """
         dataset = self._create_parquet_dataset()
         partition_keys = dataset.partitioning.schema
         return partition_keys
 
-    def get_spatial_extent(self):
+    def get_spatial_extent(self) -> MultiPolygon:
+        """Returns the spatial extent derived from 'polygon' partitions.
+
+        Uses the global `get_spatial_extent` function.
+
+        Returns:
+            A Shapely MultiPolygon object.
+        """
         return get_spatial_extent(self.parquet_ds)
 
-    def plot_spatial_extent(self):
+    def plot_spatial_extent(self) -> None:
+        """Plots the spatial extent derived from 'polygon' partitions.
+
+        Uses the global `plot_spatial_extent` function.
+        """
         return plot_spatial_extent(self.parquet_ds)
 
-    def get_temporal_extent(self):
+    def get_temporal_extent(self) -> tuple[pd.Timestamp, pd.Timestamp]:
+        """Returns the precise temporal extent by reading min/max time values.
+
+        Uses the global `get_temporal_extent` function.
+
+        Returns:
+            A tuple containing the minimum and maximum pandas Timestamp objects.
+        """
         return get_temporal_extent(self.parquet_ds)
 
     def get_data(
         self,
-        date_start=None,
-        date_end=None,
-        lat_min=None,
-        lat_max=None,
-        lon_min=None,
-        lon_max=None,
-        scalar_filter=None,
-        columns=None,
-    ):
+        date_start: str | None = None,
+        date_end: str | None = None,
+        lat_min: float | None = None,
+        lat_max: float | None = None,
+        lon_min: float | None = None,
+        lon_max: float | None = None,
+        scalar_filter: dict | None = None,
+        columns: list[str] | None = None,
+    ) -> pd.DataFrame:
+        """Retrieves data from the Parquet dataset, applying filters.
+
+        Constructs PyArrow filter expressions based on the provided time range,
+        bounding box, and scalar filter conditions. Reads the filtered data
+        using `pd.read_parquet`.
+
+        Args:
+            date_start: Start date string (e.g., "YYYY-MM-DD").
+            date_end: End date string (e.g., "YYYY-MM-DD"). Defaults to now if
+                `date_start` is provided but `date_end` is None.
+            lat_min: Minimum latitude for bounding box filter.
+            lat_max: Maximum latitude for bounding box filter.
+            lon_min: Minimum longitude for bounding box filter.
+            lon_max: Maximum longitude for bounding box filter.
+            scalar_filter: Dictionary for simple equality filters, e.g.,
+                `{'platform_code': 'SLABC'}`. Filters are combined with AND.
+            columns: List of column names to read. Reads all columns if None.
+
+        Returns:
+            A pandas DataFrame containing the requested data.
+        """
         # TODO fix the whole logic as not everything is considered
 
         # time filter: doesnt require date_end
@@ -1152,78 +1438,1260 @@ class Dataset:
 
         return df
 
-    def get_metadata(self):
+    def get_metadata(self) -> dict:
+        """Retrieves metadata from the Parquet dataset's common metadata.
+
+        Uses the global `get_schema_metadata` function.
+
+        Returns:
+            A dictionary containing the decoded metadata.
+        """
         return get_schema_metadata(self.dname)
+
+    def get_timeseries_data(
+        self,
+        lat: float,
+        lon: float,
+        date_start: str,
+        date_end: str,
+        var_name: str | None = None,
+        lat_name_override: str | None = None,
+        lon_name_override: str | None = None,
+        time_name_override: str | None = None,
+    ) -> pd.DataFrame:
+        """Extracts time series data for a variable (or all variables) at the nearest point. (Not Implemented for Parquet)"""
+        raise NotImplementedError(
+            "get_timeseries_data is not implemented for ParquetDataSource."
+        )
+
+    def plot_timeseries(
+        self,
+        timeseries_df: pd.DataFrame,
+        var_name: str,
+        lat: float,
+        lon: float,
+        date_start: str,
+        date_end: str,
+        actual_lat_name: str,
+        actual_lon_name: str,
+        actual_time_name: str,
+    ) -> None:
+        """Plots the extracted time series data. (Not Implemented for Parquet)"""
+        raise NotImplementedError(
+            "plot_timeseries is not implemented for ParquetDataSource."
+        )
+
+
+class ZarrDataSource(DataSource):
+    """DataSource implementation for Zarr datasets."""
+
+    def _build_data_path(self) -> str:
+        """Constructs the S3 path for the Zarr store directory.
+
+        Returns:
+            The S3 path string (e.g., "s3://bucket/prefix/my_dataset.zarr/").
+            Ensures the path starts with "s3://" and removes any "anonymous@".
+        """
+        # self.dataset_name now includes the extension, e.g., "my_dataset.zarr"
+        # We need to form the path like ".../my_dataset.zarr/"
+        dname_uri = (
+            PureS3Path.from_uri(f"s3://{self.bucket_name}/{self.prefix}/")
+            .joinpath(f"{self.dataset_name}/")  # Add trailing slash
+            .as_uri()
+        )
+        # Ensure it starts with s3:// and no anonymous@ (PureS3Path should handle s3://)
+        if "anonymous@" in dname_uri:
+            dname_uri = dname_uri.replace("anonymous@", "")
+        if not dname_uri.startswith("s3://"):
+            dname_uri = f"s3://{dname_uri}"
+        return dname_uri
+
+    def __init__(self, bucket_name: str, prefix: str, dataset_name: str):
+        """Initialises the ZarrDataSource.
+
+        Args:
+            bucket_name: The S3 bucket name.
+            prefix: The S3 prefix (folder path) within the bucket.
+            dataset_name: The name of the dataset including the '.zarr'
+                extension.
+        """
+        super().__init__(bucket_name, prefix, dataset_name)
+        self.zarr_store = self._open_zarr_store()
+
+    def _open_zarr_store(self) -> xr.Dataset:
+        """Opens the Zarr store using xarray and fsspec for anonymous access.
+
+        Returns:
+            An xarray Dataset object representing the Zarr store.
+
+        Raises:
+            Exception: If opening the Zarr store fails.
+            ValueError: If a suitable time variable cannot be found for sorting.
+        """
+        try:
+            ds = xr.open_zarr(
+                fsspec.get_mapper(self.dname, anon=True), chunks=None, consolidated=True
+            )
+            # Find the time variable name to sort by
+            time_names = [
+                "time",
+                "TIME",
+                "datetime",
+                "date",
+                "Date",
+                "DateTime",
+                "JULD",
+            ]
+            # We need a logger instance here if _find_var_name uses it.
+            # Since _find_var_name is part of ZarrDataSource, it can call self.get_logger()
+            # However, _open_zarr_store is called in __init__ before logger might be fully set up by CommonHandler if not careful.
+            # For now, assuming _find_var_name_global can access a logger or doesn't strictly need it for this path.
+            # A safer approach might be to pass a logger or make _find_var_name_global static if it doesn't need self.
+            # Let's assume self.get_logger() is available or _find_var_name_global handles its absence.
+            try:
+                time_var_name = _find_var_name_global(ds, time_names, "time")
+                return ds.sortby(time_var_name)
+            except ValueError as ve:
+                # Log this, but still return the unsorted dataset if time var not found for sorting.
+                # Or re-raise if sorting is critical. For now, let's log and return.
+                # Consider if self.get_logger() is available here.
+                # If not, use a simple print or a default logger.
+                print(
+                    f"Warning: Could not find time variable to sort Zarr store {self.dname}: {ve}. Returning unsorted."
+                )
+                return ds  # Return unsorted if time var not found, or raise
+        except Exception as e:
+            print(f"Error opening Zarr store {self.dname}: {e}")
+            raise
+
+    def _find_lat_lon_vars(self, ds: xr.Dataset) -> tuple[xr.DataArray, xr.DataArray]:
+        """Finds latitude and longitude variables/coordinates in a dataset.
+
+        Searches for common names (e.g., 'latitude', 'lat', 'LATITUDE', 'LAT')
+        first in the dataset coordinates and then in the data variables.
+
+        Args:
+            ds: The xarray Dataset to search within.
+
+        Returns:
+            A tuple containing the xarray DataArrays for latitude and longitude.
+
+        Raises:
+            ValueError: If a latitude or longitude variable/coordinate cannot
+                be found using the common names.
+        """
+        lat_names = ["latitude", "lat", "LATITUDE", "LAT"]
+        lon_names = ["longitude", "lon", "LONGITUDE", "LON"]
+
+        lat_var = None
+        lon_var = None
+
+        # Check coordinates first
+        for name in lat_names:
+            if name in ds.coords:
+                lat_var = ds.coords[name]
+                break
+        for name in lon_names:
+            if name in ds.coords:
+                lon_var = ds.coords[name]
+                break
+
+        # If not in coords, check data variables
+        if lat_var is None:
+            for name in lat_names:
+                if name in ds.data_vars:
+                    lat_var = ds.data_vars[name]
+                    break
+        if lon_var is None:
+            for name in lon_names:
+                if name in ds.data_vars:
+                    lon_var = ds.data_vars[name]
+                    break
+
+        if lat_var is None:
+            raise ValueError(
+                f"Latitude variable/coordinate not found in dataset {self.dataset_name}. Searched for {lat_names}."
+            )
+        if lon_var is None:
+            raise ValueError(
+                f"Longitude variable/coordinate not found in dataset {self.dataset_name}. Searched for {lon_names}."
+            )
+
+        return lat_var, lon_var
+
+    def get_data(
+        self,
+        date_start: str | None = None,
+        date_end: str | None = None,
+        lat_min: float | None = None,
+        lat_max: float | None = None,
+        lon_min: float | None = None,
+        lon_max: float | None = None,
+    ) -> xr.Dataset:
+        """Retrieves data from the Zarr store, applying spatio-temporal filters.
+
+        Uses xarray's `sel()` method to slice the data based on the provided
+        time, latitude, and longitude ranges.
+
+        Args:
+            date_start: Optional start date string (e.g., "YYYY-MM-DD" or "YYYY-MM-DDTHH:MM:SS").
+            date_end: Optional end date string.
+            lat_min: Optional minimum latitude for slicing.
+            lat_max: Optional maximum latitude for slicing.
+            lon_min: Optional minimum longitude for slicing.
+            lon_max: Optional maximum longitude for slicing.
+
+        Returns:
+            An xarray.Dataset containing the selected data.
+
+        Raises:
+            ValueError: If essential coordinate names (time, lat, lon) cannot be found.
+        """
+        if self.zarr_store is None:
+            self._open_zarr_store()
+
+        selectors = {}
+
+        # Time slicing
+        if date_start is not None or date_end is not None:
+            time_names = [
+                "time",
+                "TIME",
+                "datetime",
+                "date",
+                "Date",
+                "DateTime",
+                "JULD",
+            ]
+            time_var_name = _find_var_name_global(self.zarr_store, time_names, "time")
+            selectors[time_var_name] = slice(date_start, date_end)
+
+        # Latitude slicing
+        if lat_min is not None or lat_max is not None:
+            lat_names = ["latitude", "lat", "LATITUDE", "LAT"]
+            lat_var_name = _find_var_name_global(self.zarr_store, lat_names, "latitude")
+            selectors[lat_var_name] = slice(lat_min, lat_max)
+
+        # Longitude slicing
+        if lon_min is not None or lon_max is not None:
+            lon_names = ["longitude", "lon", "LONGITUDE", "LON"]
+            lon_var_name = _find_var_name_global(
+                self.zarr_store, lon_names, "longitude"
+            )
+            selectors[lon_var_name] = slice(lon_min, lon_max)
+
+        if not selectors:
+            self.get_logger().warning(
+                "No filters provided to get_data for Zarr source. Returning entire dataset."
+            )
+            return self.zarr_store
+
+        return self.zarr_store.sel(selectors)
+
+    def get_spatial_extent(self) -> list[float]:
+        """Calculates the spatial extent (min/max lat/lon) of the Zarr dataset.
+
+        Finds the latitude and longitude variables using `_find_lat_lon_vars`
+        and computes their minimum and maximum values.
+
+        Returns:
+            A list containing [min_lat, min_lon, max_lat, max_lon].
+        """
+        if self.zarr_store is None:
+            self._open_zarr_store()
+
+        lat_var, lon_var = self._find_lat_lon_vars(self.zarr_store)
+
+        min_lat = float(
+            lat_var.min().compute() if hasattr(lat_var, "compute") else lat_var.min()
+        )
+        max_lat = float(
+            lat_var.max().compute() if hasattr(lat_var, "compute") else lat_var.max()
+        )
+        min_lon = float(
+            lon_var.min().compute() if hasattr(lon_var, "compute") else lon_var.min()
+        )
+        max_lon = float(
+            lon_var.max().compute() if hasattr(lon_var, "compute") else lon_var.max()
+        )
+
+        return [min_lat, min_lon, max_lat, max_lon]
+
+    def plot_spatial_extent(self) -> None:
+        """Plots the spatial extent of the Zarr dataset.
+
+        Currently a placeholder. Intended to potentially use the results from
+        `get_spatial_extent` and plot them on a map.
+
+        Raises:
+            NotImplementedError: This method is not yet implemented.
+        """
+        # Placeholder for Zarr spatial extent plotting
+        raise NotImplementedError("Zarr spatial extent plotting not yet implemented.")
+
+    def get_temporal_extent(self) -> tuple[pd.Timestamp, pd.Timestamp]:
+        """Calculates and returns the temporal extent of the Zarr dataset.
+
+        Identifies the time variable and calculates the minimum and maximum
+        time values from it. Handles cftime objects.
+
+        Returns:
+            A tuple containing the minimum and maximum pandas Timestamp objects.
+
+        Raises:
+            ValueError: If a suitable time variable cannot be found.
+        """
+        if self.zarr_store is None:
+            self._open_zarr_store()
+
+        time_var_name = _find_var_name_global(
+            self.zarr_store,
+            ["time", "TIME", "datetime", "date", "Date", "DateTime", "JULD"],
+            "time",
+        )
+
+        # Calculate and return the temporal extent
+        # time_values = self.zarr_store[time_var_name].values # Not strictly needed if using .min()/.max() on DataArray
+
+        # Ensure time_values are sorted before taking min/max for safety, though plot_time_coverage also sorts.
+        # However, direct access to .values might not be sorted.
+        # For xarray DataArrays, min/max handle this, but if it's a raw numpy array from .values, sorting is safer.
+        # Actually, xarray's .min() and .max() on a DataArray should be correct without pre-sorting values.
+
+        min_val = self.zarr_store[time_var_name].min().item()
+        max_val = self.zarr_store[time_var_name].max().item()
+
+        cftime_types = (
+            cftime.DatetimeGregorian,
+            cftime.DatetimeProlepticGregorian,
+            cftime.DatetimeJulian,
+            cftime.DatetimeNoLeap,
+            cftime.DatetimeAllLeap,
+            cftime.Datetime360Day,
+        )
+
+        if isinstance(min_val, cftime_types):
+            min_time = pd.to_datetime(min_val.isoformat())
+        else:
+            min_time = pd.to_datetime(min_val)
+
+        if isinstance(max_val, cftime_types):
+            max_time = pd.to_datetime(max_val.isoformat())
+        else:
+            max_time = pd.to_datetime(max_val)
+
+        return min_time, max_time
+
+    def plot_time_coverage(self) -> None:
+        """Plots a heatmap showing the temporal data coverage for the Zarr dataset.
+
+        Internally finds the time variable and calls the global `plot_time_coverage`
+        function.
+
+        Raises:
+            ValueError: If a suitable time variable cannot be found.
+        """
+        if self.zarr_store is None:
+            self._open_zarr_store()
+
+        time_var_name = _find_var_name_global(
+            self.zarr_store,
+            ["time", "TIME", "datetime", "date", "Date", "DateTime", "JULD"],
+            "time",
+        )
+
+        # Call the global plotting function
+        plot_time_coverage(self.zarr_store, time_var=time_var_name)
+
+    def get_timeseries_data(
+        self,
+        lat: float,
+        lon: float,
+        date_start: str,
+        date_end: str,
+        var_name: str | None = None,
+        lat_name_override: str | None = None,
+        lon_name_override: str | None = None,
+        time_name_override: str | None = None,
+    ) -> pd.DataFrame:
+        """Extracts time series data for specified or all variables at the nearest point from the Zarr store.
+
+        Args:
+            lat: The target latitude.
+            lon: The target longitude.
+            date_start: The start date string (e.g., "YYYY-MM-DD").
+            date_end: The end date string (e.g., "YYYY-MM-DD").
+            var_name: Optional. The name of the specific data variable to extract.
+                      If None, all data variables are extracted.
+            lat_name_override: Optional override for the latitude coordinate name.
+            lon_name_override: Optional override for the longitude coordinate name.
+            time_name_override: Optional override for the time coordinate name.
+
+        Returns:
+            A pandas DataFrame containing the time series data. Columns include
+            the actual time, latitude, and longitude coordinate names found/used,
+            and the requested variable(s).
+
+        Raises:
+            ValueError: If requested lat, lon, date_start, or date_end are
+                outside dataset bounds, or if coordinate names cannot be found.
+        """
+        if self.zarr_store is None:
+            self.zarr_store = (
+                self._open_zarr_store()
+            )  # Ensures store is open and sorted by time
+
+        ds = self.zarr_store
+
+        # Determine actual coordinate names
+        actual_time_name = (
+            time_name_override
+            if time_name_override
+            else _find_var_name_global(
+                ds,
+                ["time", "TIME", "datetime", "date", "Date", "DateTime", "JULD"],
+                "time",
+            )
+        )
+        actual_lat_name = (
+            lat_name_override
+            if lat_name_override
+            else _find_var_name_global(
+                ds, ["latitude", "lat", "LATITUDE", "LAT"], "latitude"
+            )
+        )
+        actual_lon_name = (
+            lon_name_override
+            if lon_name_override
+            else _find_var_name_global(
+                ds, ["longitude", "lon", "LONGITUDE", "LON"], "longitude"
+            )
+        )
+
+        norm_date_start = normalize_date(date_start)
+        norm_date_end = normalize_date(date_end)
+
+        # Get latitude, longitude, and time extents for validation
+        ds_lat_min, ds_lat_max = (
+            ds[actual_lat_name].min().item(),
+            ds[actual_lat_name].max().item(),
+        )
+        ds_lon_min, ds_lon_max = (
+            ds[actual_lon_name].min().item(),
+            ds[actual_lon_name].max().item(),
+        )
+
+        time_min_val = ds[actual_time_name].min().item()
+        time_max_val = ds[actual_time_name].max().item()
+        cftime_types = (
+            cftime.DatetimeGregorian,
+            cftime.DatetimeProlepticGregorian,
+            cftime.DatetimeJulian,
+            cftime.DatetimeNoLeap,
+            cftime.DatetimeAllLeap,
+            cftime.Datetime360Day,
+        )
+        ds_time_min = pd.to_datetime(
+            time_min_val.isoformat()
+            if isinstance(time_min_val, cftime_types)
+            else time_min_val
+        )
+        ds_time_max = pd.to_datetime(
+            time_max_val.isoformat()
+            if isinstance(time_max_val, cftime_types)
+            else time_max_val
+        )
+
+        if not (ds_lat_min <= lat <= ds_lat_max):
+            raise ValueError(
+                f"Latitude {lat} is out of bounds. Dataset latitude extent is ({ds_lat_min}, {ds_lat_max}) using '{actual_lat_name}'."
+            )
+        if not (ds_lon_min <= lon <= ds_lon_max):
+            raise ValueError(
+                f"Longitude {lon} is out of bounds. Dataset longitude extent is ({ds_lon_min}, {ds_lon_max}) using '{actual_lon_name}'."
+            )
+        if not (ds_time_min <= pd.to_datetime(norm_date_start) <= ds_time_max):
+            raise ValueError(
+                f"Start date {norm_date_start} is out of bounds. Dataset time extent is ({ds_time_min.strftime('%Y-%m-%d %H:%M:%S')}, {ds_time_max.strftime('%Y-%m-%d %H:%M:%S')}) using '{actual_time_name}'."
+            )
+        if not (ds_time_min <= pd.to_datetime(norm_date_end) <= ds_time_max):
+            raise ValueError(
+                f"End date {norm_date_end} is out of bounds. Dataset time extent is ({ds_time_min.strftime('%Y-%m-%d %H:%M:%S')}, {ds_time_max.strftime('%Y-%m-%d %H:%M:%S')}) using '{actual_time_name}'."
+            )
+
+        # Determine which part of the dataset to select (single variable or all)
+        target_ds_selection = ds
+        retrieved_var_names = list(ds.data_vars.keys())  # Default to all data vars
+
+        if var_name:
+            if var_name in ds.data_vars:
+                target_ds_selection = ds[
+                    [var_name]
+                ]  # Select specific variable, keep as Dataset
+                retrieved_var_names = [var_name]
+            else:
+                # Using print as logger is not available in DataSource
+                print(
+                    f"Warning: Variable '{var_name}' not found in dataset. Returning all available data variables for the selected point."
+                )
+
+        # Slice by time, then select nearest lat/lon
+        time_sliced_data = target_ds_selection.sel(
+            {actual_time_name: slice(norm_date_start, norm_date_end)}
+        )
+        selected_data_point = time_sliced_data.sel(
+            {actual_lat_name: lat, actual_lon_name: lon}, method="nearest"
+        )
+
+        timeseries_df = selected_data_point.to_dataframe().reset_index()
+
+        timeseries_df.attrs["actual_time_name"] = actual_time_name
+        timeseries_df.attrs["actual_lat_name"] = actual_lat_name
+        timeseries_df.attrs["actual_lon_name"] = actual_lon_name
+        timeseries_df.attrs[
+            "retrieved_vars"
+        ] = retrieved_var_names  # List of vars in the df
+        # If a single var was requested (and found), store its name for convenience in plotting
+        if var_name and var_name in retrieved_var_names:
+            timeseries_df.attrs["requested_var_name"] = var_name
+        else:
+            timeseries_df.attrs["requested_var_name"] = None
+
+        attributes = ds.attrs
+        timeseries_df.attrs = attributes
+        for var in ds:
+            if var in timeseries_df:
+                timeseries_df[var].attrs = ds[var].attrs
+
+        return timeseries_df
+
+    def plot_timeseries(
+        self,
+        lat: float,
+        lon: float,
+        date_start: str,
+        date_end: str,
+        var_name: str | None = None,
+        lat_name_override: str | None = None,
+        lon_name_override: str | None = None,
+        time_name_override: str | None = None,
+    ) -> None:
+        """Plots the extracted time series data.
+
+        Args:
+            timeseries_df: DataFrame obtained from get_timeseries_data.
+            var_name: The name of the variable plotted.
+            lat: The target latitude for which data was extracted.
+            lon: The target longitude for which data was extracted.
+            start_time: The requested start time for the series.
+            end_time: The requested end time for the series.
+            lat_name_override: Actual latitude coordinate name in timeseries_df.
+            lon_name_override: Actual longitude coordinate name in timeseries_df.
+            time_name_override: Actual time coordinate name in timeseries_df.
+        """
+        if self.zarr_store is None:
+            self.zarr_store = (
+                self._open_zarr_store()
+            )  # Ensures store is open and sorted by time
+
+        ds = self.zarr_store
+
+        # Determine actual coordinate names
+        actual_time_name = (
+            time_name_override
+            if time_name_override
+            else _find_var_name_global(
+                ds,
+                ["time", "TIME", "datetime", "date", "Date", "DateTime", "JULD"],
+                "time",
+            )
+        )
+        actual_lat_name = (
+            lat_name_override
+            if lat_name_override
+            else _find_var_name_global(
+                ds, ["latitude", "lat", "LATITUDE", "LAT"], "latitude"
+            )
+        )
+        actual_lon_name = (
+            lon_name_override
+            if lon_name_override
+            else _find_var_name_global(
+                ds, ["longitude", "lon", "LONGITUDE", "LON"], "longitude"
+            )
+        )
+
+        timeseries_df = self.get_timeseries_data(
+            lat,
+            lon,
+            date_start,
+            date_end,
+            var_name,
+            actual_lat_name,
+            actual_lon_name,
+            actual_time_name,
+        )
+
+        # Plotting
+        plt.figure()  # Create a new figure
+        breakpoint()
+        plt.plot(timeseries_df[actual_time_name], timeseries_df[var_name])
+
+        # Use actual lat/lon values from the DataFrame for the title, as 'nearest' might pick a slightly different point.
+        plot_lat_val = (
+            timeseries_df[actual_lat_name].iloc[0] if not timeseries_df.empty else lat
+        )
+        plot_lon_val = (
+            timeseries_df[actual_lon_name].iloc[0] if not timeseries_df.empty else lon
+        )
+
+        norm_date_start = normalize_date(date_start)
+        norm_date_end = normalize_date(date_end)
+
+        # Get attributes from the original Zarr store for the plotted variable
+        long_name = timeseries_df[var_name].get("long_name", var_name)
+        units = timeseries_df[var_name].get("units", "unitless")
+
+        plt.title(
+            f"{long_name} at {actual_lat_name}={plot_lat_val:.2f}, "
+            f"{actual_lon_name}={plot_lon_val:.2f} from {norm_date_start} to {norm_date_end}"
+        )
+        plt.xlabel(f"Time ({actual_time_name})")
+        plt.ylabel(f"{long_name} ({units})")
+        plt.xticks(rotation=45)
+        plt.tight_layout()
+        plt.show()
+
+    def plot_gridded_variable(
+        self,
+        var_name: str,
+        lon_slice: float | None,
+        lat_slice: float | None,
+        date_start: str,
+        date_end: str | None = None,
+        n_days: int = 6,
+        coastline_resolution: str = "110m",
+        log_scale: bool = False,
+        lat_name_override: str | None = None,
+        lon_name_override: str | None = None,
+        time_name_override: str | None = None,
+    ) -> None:
+        """Plots a gridded variable for multiple consecutive time steps from the Zarr store.
+
+        Displays maps of the specified variable (`var_name`) for up to `n_days`
+        consecutive time steps, starting from the time step nearest to `date_start`.
+        Plotting is capped by `date_end` if provided.
+        The spatial extent is defined by a central point (`lat`, `lon`) and
+        radii (`lat_slice_radius_deg`, `lon_slice_radius_deg`).
+        Includes coastlines, gridlines, and optional logarithmic color scaling.
+        Handles unit conversion from Kelvin to Celsius if applicable.
+
+        Args:
+            var_name: The name of the data variable to plot.
+            date_start: The start date string (e.g., "YYYY-MM-DD"). Plotting starts
+                from the time step nearest to this date.
+            date_end: Optional end date string (e.g., "YYYY-MM-DD"). If provided,
+                plotting will not extend beyond this date.
+            n_days: The maximum number of consecutive time steps to plot. Defaults to 6.
+            coastline_resolution: The resolution for the Cartopy coastline
+                feature ('110m', '50m', '10m'). Defaults to "110m".
+            log_scale: If True, use a logarithmic color scale. Defaults to False.
+            lat_name_override: Optional override for the latitude coordinate name.
+            lon_name_override: Optional override for the longitude coordinate name.
+            time_name_override: Optional override for the time coordinate name.
+
+        Raises:
+            ValueError: If slices are outside dataset bounds, no valid data is found,
+                        or coordinate names cannot be determined.
+            AssertionError: If the dataset does not have the determined time dimension.
+        """
+        if self.zarr_store is None:
+            self.zarr_store = self._open_zarr_store()
+
+        ds = self.zarr_store
+
+        actual_lat_name = (
+            lat_name_override
+            if lat_name_override
+            else _find_var_name_global(
+                ds, ["latitude", "lat", "LATITUDE", "LAT"], "latitude"
+            )
+        )
+        actual_lon_name = (
+            lon_name_override
+            if lon_name_override
+            else _find_var_name_global(
+                ds, ["longitude", "lon", "LONGITUDE", "LON"], "longitude"
+            )
+        )
+        actual_time_name = (
+            time_name_override
+            if time_name_override
+            else _find_var_name_global(
+                ds,
+                ["time", "TIME", "datetime", "date", "Date", "DateTime", "JULD"],
+                "time",
+            )
+        )
+
+        ds = ds.sortby(actual_time_name)
+
+        # Get latitude and longitude extents
+        lat_min, lat_max = (
+            ds[actual_lat_name].min().item(),
+            ds[actual_lat_name].max().item(),
+        )
+        lon_min, lon_max = (
+            ds[actual_lon_name].min().item(),
+            ds[actual_lon_name].max().item(),
+        )
+
+        if lat_slice is None:
+            lat_slice = (lat_min, lat_max)
+
+        if lon_slice is None:
+            lon_slice = (lon_min, lon_max)
+
+        # Get latitude and longitude extents from dataset for validation
+        ds_lat_min, ds_lat_max = (
+            ds[actual_lat_name].min().item(),
+            ds[actual_lat_name].max().item(),
+        )
+        ds_lon_min, ds_lon_max = (
+            ds[actual_lon_name].min().item(),
+            ds[actual_lon_name].max().item(),
+        )
+
+        # Validate derived slices
+        # Ensure slice is within [ds_lat_min, ds_lat_max] and handle reversed axes if necessary
+        # For simplicity, we'll check individual bounds of the calculated slice.
+        # A more robust check would consider the order of ds[actual_lat_name].values if it can be reversed.
+
+        _lat_slice_to_check = sorted(lat_slice)  # Ensure min, max order for checking
+        if not (
+            ds_lat_min <= _lat_slice_to_check[0] <= ds_lat_max
+            and ds_lat_min <= _lat_slice_to_check[1] <= ds_lat_max
+        ):
+            raise ValueError(
+                f"Derived latitude slice {lat_slice} is out of bounds. Dataset latitude extent is ({ds_lat_min}, {ds_lat_max}) using '{actual_lat_name}'."
+            )
+
+        _lon_slice_to_check = sorted(lon_slice)
+        if not (
+            ds_lon_min <= _lon_slice_to_check[0] <= ds_lon_max
+            and ds_lon_min <= _lon_slice_to_check[1] <= ds_lon_max
+        ):
+            raise ValueError(
+                f"Derived longitude slice {lon_slice} is out of bounds. Dataset longitude extent is ({ds_lon_min}, {ds_lon_max}) using '{actual_lon_name}'."
+            )
+
+        # Decide on the slice order for actual slicing based on dataset coordinate order
+        if ds[actual_lat_name][0] > ds[actual_lat_name][-1]:
+            lat_slice_for_sel = (max(lat_slice), min(lat_slice))
+        else:
+            lat_slice_for_sel = (min(lat_slice), max(lat_slice))
+
+        if ds[actual_lon_name][0] > ds[actual_lon_name][-1]:
+            lon_slice_for_sel = (max(lon_slice), min(lon_slice))
+        else:
+            lon_slice_for_sel = (min(lon_slice), max(lon_slice))
+
+        # Parse dates
+        start_date_parsed = pd.to_datetime(date_start)
+        end_date_parsed = pd.to_datetime(date_end) if date_end else None
+
+        assert (
+            actual_time_name in ds.dims
+        ), f"Dataset does not have a '{actual_time_name}' dimension"
+
+        # Find the nearest date in the dataset to start_date_parsed
+        try:
+            nearest_date_val = ds.sel(
+                {actual_time_name: start_date_parsed}, method="nearest"
+            )[actual_time_name].data
+        except KeyError:  # If sel returns empty
+            raise ValueError(
+                f"Start date {date_start} is likely outside the dataset's time range for '{actual_time_name}'."
+            )
+
+        # Find the position of the nearest date in the time array
+        time_coords_values = ds[actual_time_name].values
+        try:
+            nearest_date_position = np.where(time_coords_values == nearest_date_val)[0][
+                0
+            ]
+        except IndexError:
+            raise ValueError(
+                f"Could not locate the nearest start date {nearest_date_val} in the time coordinates of '{actual_time_name}'."
+            )
+
+        # Get up to n_days date values starting from nearest_date_position
+        potential_dates_raw = ds[actual_time_name][
+            nearest_date_position : nearest_date_position + n_days
+        ].values
+        dates_to_plot = [pd.Timestamp(date) for date in potential_dates_raw]
+
+        # Filter by end_date if provided
+        if end_date_parsed:
+            dates_to_plot = [date for date in dates_to_plot if date <= end_date_parsed]
+
+        if not dates_to_plot:
+            print(
+                f"No dates to plot for variable '{var_name}' in the specified range [{date_start} - {date_end if date_end else '...'} with n_days={n_days}]."
+            )
+            return
+
+        var_long_name = ds[var_name].attrs.get("long_name", var_name)
+        print(f"Plotting '{var_long_name}' for {len(dates_to_plot)} time steps.")
+
+        num_plots = len(dates_to_plot)
+        ncols = 3
+        nrows = (num_plots + ncols - 1) // ncols
+
+        fig, axes = plt.subplots(
+            nrows=nrows,
+            ncols=ncols,
+            figsize=(18, 6 * nrows if nrows > 0 else 6),  # Adjust height based on nrows
+            subplot_kw={"projection": ccrs.PlateCarree()},
+            squeeze=False,  # Ensure axes is always 2D array
+        )
+        axes_flat = axes.flatten()
+
+        cmap = plt.get_cmap("coolwarm")
+        vmin_all, vmax_all = float("inf"), float("-inf")
+
+        # Store data for each plot to avoid re-selecting
+        plot_data_cache = {}
+
+        # First pass: gather all data to find global vmin and vmax for consistent color scaling
+        for date_obj in dates_to_plot:
+            try:
+                data = ds[var_name].sel(
+                    {
+                        actual_time_name: date_obj,  # Use exact match for already selected dates
+                        actual_lon_name: slice(
+                            lon_slice_for_sel[0], lon_slice_for_sel[1]
+                        ),
+                        actual_lat_name: slice(
+                            lat_slice_for_sel[0], lat_slice_for_sel[1]
+                        ),
+                    }
+                )
+                breakpoint()
+                if data.isnull().all():
+                    plot_data_cache[date_obj] = None  # Mark as no data
+                    continue
+
+                current_var_units = ds[var_name].attrs.get("units", "unknown units")
+                if current_var_units.lower() == "kelvin":
+                    data = data - 273.15
+
+                plot_data_cache[date_obj] = data  # Cache data (potentially converted)
+                vmin_all = min(vmin_all, data.min().item())
+                vmax_all = max(vmax_all, data.max().item())
+
+            except Exception as err:
+                print(
+                    f"Error processing data for date {date_obj.strftime('%Y-%m-%d %H:%M:%S')}: {err}"
+                )
+                plot_data_cache[date_obj] = None  # Mark as error/no data
+
+        if not np.isfinite(vmin_all) or not np.isfinite(vmax_all):
+            print(
+                "No valid data found across all selected dates and coordinates to determine color scale."
+            )
+            # Clean up empty figure if no plots will be made
+            if num_plots > 0 and all(p is None for p in plot_data_cache.values()):
+                plt.close(fig)
+            return
+
+        norm_to_use = (
+            LogNorm(vmin=vmin_all, vmax=vmax_all)
+            if log_scale
+            else Normalize(vmin=vmin_all, vmax=vmax_all)
+        )
+
+        img_for_colorbar = None  # To store one of the plot images for the colorbar
+
+        for idx, date_obj in enumerate(dates_to_plot):
+            ax = axes_flat[idx]
+            data_to_plot = plot_data_cache.get(date_obj)
+
+            if data_to_plot is None or data_to_plot.isnull().all():
+                print(
+                    f"No valid data for {date_obj.strftime('%Y-%m-%d %H:%M:%S')}, skipping plot."
+                )
+                ax.set_title(f"No data for {date_obj.strftime('%Y-%m-%d %H:%M:%S')}")
+                ax.axis("off")
+                continue
+
+            var_units_display = ds[var_name].attrs.get("units", "unknown units")
+            if var_units_display.lower() == "kelvin":
+                var_units_display = "°C"
+
+            img = data_to_plot.plot(
+                ax=ax,
+                cmap=cmap,
+                norm=norm_to_use,
+                add_colorbar=False,
+            )
+            if img_for_colorbar is None:  # Capture one image for the colorbar
+                img_for_colorbar = img
+
+            ax.coastlines(resolution=coastline_resolution)
+            ax.add_feature(cfeature.BORDERS, linestyle=":")
+            gl = ax.gridlines(
+                draw_labels=True, dms=True, x_inline=False, y_inline=False
+            )
+            gl.top_labels = False
+            gl.right_labels = False
+            ax.set_title(date_obj.strftime("%Y-%m-%d %H:%M:%S"))
+
+        # Hide any unused subplots
+        for i in range(num_plots, len(axes_flat)):
+            axes_flat[i].set_visible(False)
+
+        if img_for_colorbar:  # Only add colorbar if at least one plot was made
+            cbar_label_text = f"{var_long_name} ({var_units_display})"
+            if log_scale:
+                cbar_label_text = f"Log({cbar_label_text})"
+
+            # Adjust colorbar position; [left, bottom, width, height] in figure-relative coords
+            fig.subplots_adjust(right=0.85)  # Make space for colorbar
+            cbar_ax = fig.add_axes([0.88, 0.15, 0.03, 0.7])  # Position to the right
+            cbar = fig.colorbar(img_for_colorbar, cax=cbar_ax, orientation="vertical")
+            cbar.set_label(cbar_label_text)
+            # cbar.set_ticks([vmin_all, (vmin_all + vmax_all) / 2, vmax_all])
+            # cbar.ax.set_yticklabels([f"{vmin_all:.2f}", f"{(vmin_all + vmax_all) / 2:.2f}", f"{vmax_all:.2f}"])
+        else:  # No plots made, clean up figure
+            plt.close(fig)
+            print("No images were plotted, so no colorbar will be shown.")
+            return
+
+        fig.suptitle(
+            f"{var_long_name} Over Time\n",
+            fontsize=16,
+            fontweight="bold",
+        )
+        plt.tight_layout(
+            rect=[0, 0, 0.85, 0.95]
+        )  # Adjust rect to prevent suptitle overlap and leave space for cbar
+        plt.show()
+
+    def get_metadata(self) -> dict:
+        """Retrieves metadata from the Zarr store.
+
+        Uses the global `get_zarr_metadata` function.
+
+        Returns:
+            A dictionary containing the Zarr store's metadata.
+        """
+        return get_zarr_metadata(self.dname)
+
+
+def _find_var_name_global(
+    ds: xr.Dataset, common_names: list[str], var_description: str
+) -> str:
+    """Helper to find a variable/coordinate name from a list of common names.
+
+    Prioritizes coordinates, then 1D data variables.
+
+    Args:
+        ds: The xarray Dataset to search within.
+        common_names: A list of common names for the variable (e.g., ['time', 'TIME']).
+        var_description: A string describing the variable type (e.g., "time", "latitude")
+                         for use in error messages.
+
+    Returns:
+        The found variable/coordinate name.
+
+    Raises:
+        ValueError: If a suitable variable/coordinate cannot be found.
+    """
+    # Check coordinates first
+    for name in common_names:
+        if name in ds.coords:
+            return name
+
+    # Then check 1D data variables
+    for name in common_names:
+        if name in ds.data_vars:
+            if ds[name].ndim == 1:
+                return name
+
+    raise ValueError(
+        f"Could not find a suitable 1D {var_description} variable/coordinate in the provided Dataset. Searched for {common_names}."
+    )
+
+
+class GetAodn:
+    """Main class for discovering and accessing AODN cloud-optimised datasets."""
+
+    def __init__(self):
+        """Initialises GetAodn with default S3 bucket and prefix."""
+        self.bucket_name = BUCKET_OPTIMISED_DEFAULT
+        self.prefix = ROOT_PREFIX_CLOUD_OPTIMISED_PATH
+
+    def list_datasets(self) -> list[str]:
+        """
+        Lists the top-level 'folders' (datasets) available in the S3 bucket under the configured prefix.
+
+        Returns:
+            list: A list of dataset names (folder names).
+        """
+        s3 = boto3.client("s3", config=Config(signature_version=UNSIGNED))
+
+        s3_prefix = self.prefix
+        if s3_prefix and not s3_prefix.endswith("/"):
+            s3_prefix += "/"
+
+        paginator = s3.get_paginator("list_objects_v2")
+        datasets = []
+
+        for page in paginator.paginate(
+            Bucket=self.bucket_name, Prefix=s3_prefix, Delimiter="/"
+        ):
+            for common_prefix in page.get("CommonPrefixes", []):
+                folder_path = common_prefix["Prefix"]  # Full path from bucket root
+                # Extract the folder name relative to s3_prefix
+                relative_folder_path = folder_path
+                if s3_prefix:  # if s3_prefix is not empty
+                    relative_folder_path = folder_path[len(s3_prefix) :]
+
+                # Remove trailing slash to get the dataset name
+                dataset_name = relative_folder_path.rstrip("/")
+                if (
+                    dataset_name
+                ):  # Ensure it's not an empty string if prefix itself was listed
+                    datasets.append(dataset_name)
+
+        return sorted(list(set(datasets)))  # Sort and ensure uniqueness
+
+    def get_dataset(self, dataset_name_with_ext: str) -> DataSource:
+        """Retrieves a DataSource object for the specified dataset.
+
+        Infers the data format (Parquet or Zarr) from the file extension
+        in `dataset_name_with_ext` and returns the corresponding DataSource
+        implementation instance.
+
+        Args:
+            dataset_name_with_ext: The name of the dataset including its
+                extension (e.g., "my_data.parquet", "my_data.zarr").
+
+        Returns:
+            An instance of `ParquetDataSource` or `ZarrDataSource`.
+
+        Raises:
+            ValueError: If the extension is not ".parquet" or ".zarr".
+        """
+        if dataset_name_with_ext.endswith(".parquet"):
+            return ParquetDataSource(
+                self.bucket_name, self.prefix, dataset_name_with_ext
+            )
+        elif dataset_name_with_ext.endswith(".zarr"):
+            return ZarrDataSource(self.bucket_name, self.prefix, dataset_name_with_ext)
+        else:
+            raise ValueError(
+                f"Unsupported dataset extension in '{dataset_name_with_ext}'. Must end with '.parquet' or '.zarr'."
+            )
+
+    def get_metadata(self) -> "Metadata":
+        """Returns a Metadata object for browsing dataset metadata.
+
+        Instantiates and returns a `Metadata` object configured with the
+        same bucket and prefix as this `GetAodn` instance.
+
+        Returns:
+            A `Metadata` instance.
+        """
+        # This will need to be adapted to potentially list both Parquet and Zarr datasets
+        # and fetch metadata accordingly. For now, it retains Parquet-centric logic.
+        return Metadata(self.bucket_name, self.prefix)
 
 
 class Metadata:
-    def __init__(self, bucket_name, prefix):
+    """Provides methods to access and query metadata across datasets."""
+
+    def __init__(self, bucket_name: str, prefix: str):
+        """Initialises the Metadata object.
+
+        Args:
+            bucket_name: The S3 bucket name containing the datasets.
+            prefix: The S3 prefix (folder path) within the bucket where
+                datasets reside.
+        """
         # super().__init__()
         # initialise the class by calling the needed methods
         self.bucket_name = bucket_name
         self.prefix = prefix
         self.catalog = self.metadata_catalog()
 
-    def metadata_catalog_uncached(self):
+    def metadata_catalog_uncached(self) -> dict:
+        """Builds the metadata catalog by scanning S3 and reading metadata.
+
+        Lists folders ending in ".parquet/" and ".zarr/" under the configured
+        prefix. For each found dataset, it calls the appropriate metadata
+        retrieval function (`get_schema_metadata` or `get_zarr_metadata`)
+        and stores the result in a dictionary keyed by the dataset name
+        (without the extension).
+
+        Note:
+            If datasets exist in both Parquet and Zarr format with the same base
+            name, the Zarr metadata will overwrite the Parquet metadata in the
+            current implementation.
+
+        Returns:
+            A dictionary where keys are dataset base names (str) and values
+            are their corresponding metadata dictionaries.
+        """
         # print('Running metadata_catalog_uncached...')  # Debug output
 
-        folders_with_parquet = self.list_folders_with_parquet()
+        # This method currently only lists Parquet datasets.
+        # It will need to be updated to discover Zarr datasets as well.
         catalog = {}
 
-        for dataset in folders_with_parquet:
+        # Process Parquet datasets
+        folders_with_parquet = self.list_folders_with_data(".parquet/")
+        for (
+            dataset_path
+        ) in folders_with_parquet:  # dataset_path is like 'my_dataset.parquet/'
+            # Construct dname for Parquet metadata
             dname = (
                 PureS3Path.from_uri(f"s3://anonymous@{self.bucket_name}/{self.prefix}/")
-                .joinpath(f"{dataset}")
+                .joinpath(dataset_path)  # Use dataset_path directly
                 .as_uri()
             )
             dname = dname.replace("s3://anonymous%40", "")
 
             try:
-                metadata = get_schema_metadata(dname)  # schema metadata
+                metadata = get_schema_metadata(dname)
             except Exception as e:
-                print(f"Error processing metadata from {dataset}, {e}")
+                print(f"Error processing Parquet metadata from {dataset_path}: {e}")
                 continue
 
-            path_parts = dataset.strip("/").split("/")
-            last_folder_with_extension = path_parts[-1]
-            dataset_name = os.path.splitext(last_folder_with_extension)[0]
+            # Extract dataset_name from dataset_path (e.g., 'my_dataset' from 'my_dataset.parquet/')
+            dataset_name = dataset_path.rstrip("/")
+            catalog[dataset_name] = metadata
 
+        # Process Zarr datasets
+        folders_with_zarr = self.list_folders_with_data(".zarr/")
+        for (
+            dataset_path
+        ) in folders_with_zarr:  # dataset_path is like 'my_dataset.zarr/'
+            dname = (
+                PureS3Path.from_uri(f"s3://anonymous@{self.bucket_name}/{self.prefix}/")
+                .joinpath(dataset_path)  # Use dataset_path directly
+                .as_uri()
+            )
+            dname = dname.replace("s3://anonymous%40", "s3://")
+
+            try:
+                metadata = get_zarr_metadata(dname)
+            except Exception as e:
+                print(f"Error processing Zarr metadata from {dataset_path}: {e}")
+                continue
+
+            dataset_name = dataset_path.rstrip("/")
+            # If a dataset with the same name (but different format) exists,
+            # we might want to merge or handle it. For now, Zarr will overwrite if name clashes.
+            # A more robust solution might involve storing format in the catalog key or structure.
             catalog[dataset_name] = metadata
 
         return catalog
 
     @lru_cache(maxsize=None)
-    def metadata_catalog(self):
+    def metadata_catalog(self) -> dict:
+        """Returns the metadata catalog, using a cache.
+
+        Calls `metadata_catalog_uncached` on the first call and caches the
+        result for subsequent calls.
+
+        Returns:
+            The cached metadata catalog dictionary.
+        """
         # print('Running metadata_catalog...')  # Debug output
         if "catalog" in self.__dict__:
             return self.catalog
         else:
             return self.metadata_catalog_uncached()
 
-    def list_folders_with_parquet(self):
-        s3 = boto3.client("s3", config=Config(signature_version=UNSIGNED))
-        prefix = self.prefix
+    def list_folders_with_data(self, extension_filter: str = ".parquet/") -> list[str]:
+        """Lists folders in S3 matching a specific extension filter.
 
-        # if (prefix is not None) and (not prefix.endswith("/")):
-        #    prefix += "/"
+        Uses `boto3.list_objects_v2` with a delimiter to find common prefixes
+        (folders) under `self.prefix` that end with the specified
+        `extension_filter`.
+
+        Args:
+            extension_filter: The file extension (including trailing slash,
+                e.g., ".parquet/", ".zarr/") to filter folders by.
+                Defaults to ".parquet/".
+
+        Returns:
+            A list of relative folder paths (e.g., "my_dataset.parquet/")
+            matching the filter.
+        """
+        s3 = boto3.client("s3", config=Config(signature_version=UNSIGNED))
+        # prefix_path = self.prefix # Ensure prefix is treated as a path component
+
+        # if (prefix_path is not None) and (not prefix_path.endswith("/")):
+        #    prefix_path += "/"
+
+        # Ensure prefix is correctly formatted for S3 listing
+        # If prefix is empty, list from the root of the bucket.
+        # If prefix is not empty and doesn't end with '/', add it.
+        s3_prefix = self.prefix
+        if s3_prefix and not s3_prefix.endswith("/"):
+            s3_prefix += "/"
 
         response = s3.list_objects_v2(
-            Bucket=self.bucket_name, Prefix=prefix, Delimiter="/"
+            Bucket=self.bucket_name, Prefix=s3_prefix, Delimiter="/"
         )
 
         folders = []
 
-        for prefix in response.get("CommonPrefixes", []):
-            folder_path = prefix["Prefix"]
-            if folder_path.endswith(".parquet/"):
-                folder_name = folder_path[len(prefix) - 1 :]
-                folders.append(folder_name)
+        for common_prefix in response.get("CommonPrefixes", []):
+            folder_path = common_prefix[
+                "Prefix"
+            ]  # This is the full path from bucket root
+            # We need the relative path from self.prefix
+            relative_folder_path = folder_path
+            if s3_prefix:  # if s3_prefix is not empty
+                relative_folder_path = folder_path[len(s3_prefix) :]
 
+            if relative_folder_path.endswith(extension_filter):
+                # folder_name = folder_path[len(s3_prefix):] # Get the name relative to the prefix
+                folders.append(relative_folder_path)
         return folders
 
     def find_datasets_with_attribute(
-        self, target_value, target_key="standard_name", data_dict=None, threshold=80
-    ):
+        self,
+        target_value: str,
+        target_key: str = "standard_name",
+        data_dict: dict | None = None,
+        threshold: int = 80,
+    ) -> list[str]:
+        """Finds datasets having an attribute matching a target value using fuzzy matching.
+
+        Recursively searches through the metadata catalog (`data_dict`) for
+        nested dictionaries containing the `target_key`. It compares the value
+        associated with `target_key` to the `target_value` using fuzzy string
+        matching (`fuzzywuzzy.fuzz.partial_ratio`). If the similarity score
+        meets or exceeds the `threshold`, the dataset name is added to the results.
+
+        Args:
+            target_value: The string value to search for.
+            target_key: The metadata key to check the value of (e.g.,
+                "standard_name", "long_name"). Defaults to "standard_name".
+            data_dict: The metadata catalog dictionary to search within. If None,
+                uses `self.metadata_catalog()`. Defaults to None.
+            threshold: The minimum similarity score (0-100) required for a match.
+                Defaults to 80.
+
+        Returns:
+            A list of unique dataset names whose metadata contains a sufficiently
+            similar value for the specified target key.
+        """
         matching_datasets = []
         # https://stackoverflow.com/questions/56535948/python-why-cant-you-use-a-self-variable-as-an-optional-argument-in-a-method
         if data_dict == None:
