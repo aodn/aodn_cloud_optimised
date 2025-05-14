@@ -2570,7 +2570,7 @@ class Metadata:
                 continue
 
             # Extract dataset_name from dataset_path (e.g., 'my_dataset' from 'my_dataset.parquet/')
-            dataset_name = os.path.splitext(dataset_path.strip("/"))[0]
+            dataset_name = dataset_path.rstrip("/")
             catalog[dataset_name] = metadata
 
         # Process Zarr datasets
@@ -2591,7 +2591,7 @@ class Metadata:
                 print(f"Error processing Zarr metadata from {dataset_path}: {e}")
                 continue
 
-            dataset_name = os.path.splitext(dataset_path.strip("/"))[0]
+            dataset_name = dataset_path.rstrip("/")
             # If a dataset with the same name (but different format) exists,
             # we might want to merge or handle it. For now, Zarr will overwrite if name clashes.
             # A more robust solution might involve storing format in the catalog key or structure.

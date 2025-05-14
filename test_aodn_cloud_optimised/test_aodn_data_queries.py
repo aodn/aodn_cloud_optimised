@@ -173,16 +173,18 @@ class TestGenericHandler(unittest.TestCase):
         # test metadata and available dataset
         aodn_meta = aodn_instance.get_metadata()
         self.assertEqual(
-            ["vessel_sst_delayed_qc", "wave_buoy_realtime_nonqc"],
+            ["vessel_sst_delayed_qc.parquet", "wave_buoy_realtime_nonqc.parquet"],
             list(aodn_meta.metadata_catalog().keys()),
         )
 
         # test fuzzysearch
         res = aodn_meta.find_datasets_with_attribute("temp", target_key="standard_name")
-        self.assertEqual(["vessel_sst_delayed_qc"], res)
+        self.assertEqual(["vessel_sst_delayed_qc.parquet"], res)
 
         # test temporal extents
-        res = aodn_instance.get_dataset("vessel_sst_delayed_qc").get_temporal_extent()
+        res = aodn_instance.get_dataset(
+            "vessel_sst_delayed_qc.parquet"
+        ).get_temporal_extent()
 
         self.assertEqual(
             (
@@ -199,7 +201,9 @@ class TestGenericHandler(unittest.TestCase):
             [(160, -25), (170, -25), (170, -15), (160, -15), (160, -25)]
         )
 
-        res = aodn_instance.get_dataset("vessel_sst_delayed_qc").get_spatial_extent()
+        res = aodn_instance.get_dataset(
+            "vessel_sst_delayed_qc.parquet"
+        ).get_spatial_extent()
 
         self.assertEqual(expected_polygon_0, res.geoms[0])
 
