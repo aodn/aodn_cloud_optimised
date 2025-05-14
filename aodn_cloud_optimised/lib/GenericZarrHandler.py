@@ -52,20 +52,20 @@ def check_variable_values_dask(
         ds.close()
 
         logger.debug(
-            f"{uuid_log}: {file_path} checking {variable_name} is consistent with the reference values."
+            f"{uuid_log}: Checking if {variable_name} in {file_path} is consistent with reference values."
         )
 
-        logger.debug(f"{uuid_log}: reference values\n{reference_values}.")
+        logger.debug(f"{uuid_log}: Reference values:\n{reference_values}")
 
         res = not np.array_equal(variable_values, reference_values)
 
         if res is True:
             logger.error(
-                f"{uuid_log}: {file_path} - {variable_name} is NOT consistent with the reference values."
+                f"{uuid_log}: {variable_name} in {file_path} is NOT consistent with reference values."
             )
-            logger.error(f"{uuid_log}: variable values\n{variable_values}.")
+            logger.error(f"{uuid_log}: Variable values:\n{variable_values}")
         else:
-            logger.debug(f"{uuid_log}: variable values\n{variable_values}.")
+            logger.debug(f"{uuid_log}: Variable values:\n{variable_values}")
 
         # Check if the values are identical
         return file_path, res
@@ -127,22 +127,48 @@ def preprocess_xarray(ds, dataset_config):
 
     if not ds.data_vars:
         logger.error(
-            f"The dataset has no data variable left. Check the configuration dataset"
+            "The dataset has no data variables left. Check the dataset configuration."
         )
         raise ValueError(
-            f"The dataset has no data variable left. Check the configuration dataset"
+            "The dataset has no data variables left. Check the dataset configuration."
         )
 
     ##########
     var_required = schema.copy()
-    var_required.pop(dimensions["time"]["name"])
-    var_required.pop(dimensions["latitude"]["name"])
-    var_required.pop(dimensions["longitude"]["name"])
+    for dim_info in dimensions.values():
+        var_required.pop(dim_info["name"], None)
 
     # Remove variables with "drop_var": true from the var_required list
     for var_name, var_details in schema.items():
         if var_details.get("drop_var", False):
             var_required.pop(var_name, None)
+
+    # create variables from gatts
+    gatts_to_variable = dataset_config.get("gatts_to_variable", None)
+    if gatts_to_variable:
+        for gatts_var in gatts_to_variable:
+            dest_name = gatts_to_variable[gatts_var]["destination_name"]
+            dim_name = gatts_to_variable[gatts_var]["dimensions"]
+
+            # Get the string length from the config, defaulting to 61 if not specified
+            length = gatts_to_variable[gatts_var].get("length", 255)
+
+            # Define the string dtype dynamically with the given length
+            string_dtype = f"<U{length}"
+
+            # Create padded string to have consistent variable size accross the whole dataset
+            gatt_var_value = getattr(ds, gatts_var, None)
+            if gatt_var_value is None:
+                gatt_var_value_padded = "".ljust(
+                    length
+                )  # Ensures dtype becomes <U{length}
+            else:
+                gatt_var_value_padded = str(gatt_var_value).ljust(length)
+
+            ds[dest_name] = (
+                dim_name,
+                np.full(ds.dims[dim_name], gatt_var_value_padded, dtype=string_dtype),
+            )
 
     # TODO: make the variable below something more generic? a parameter?
     var_template_shape = dataset_config.get("var_template_shape")
@@ -153,28 +179,23 @@ def preprocess_xarray(ds, dataset_config):
         filename = os.path.basename(ds[var].encoding["source"])
 
     except KeyError as e:
-        logger.debug(f"Original filename not available in xarray dataset.\n {e}")
+        logger.debug(f"Original filename not available in the xarray dataset: {e}")
         filename = "UNKOWN_FILENAME.nc"
 
     # TODO: get filename; Should be from https://github.com/pydata/xarray/issues/9142
-    ds = ds.assign(
-        filename=((dimensions["time"]["name"],), [filename])
-    )  # add new filename variable with time dimension
+    ds["filename"] = (
+        dimensions["time"]["name"],
+        np.full(ds.dims[dimensions["time"]["name"]], filename),
+    )
+    # ds = ds.assign(
+    # filename=((dimensions["time"]["name"],), [filename])
+    # )  # add new filename variable with time dimension
 
     # TODO: when filename is added, this can be used to find the equivalent data already stored as CO, and create a NAN
     # version to push back as CO in order to "delete". If UNKOWN_FILENAME.nc, either run an error, or have another approach,
     # Maybe the file to delete, would be a filename, OR the physical og NetCDF, which means then that we have all of the info in it, and simply making it NAN
 
     logger.info(f"Applying preprocessing on dataset from {filename}")
-    try:
-        warnings.filterwarnings("error", category=RuntimeWarning)
-        nan_array = da.full(ds[var_template_shape].shape, da.nan, dtype=da.float64)
-        # the following commented line returned some RuntimeWarnings every now and then.
-        # nan_array = np.empty(
-        #    ds[var_template_shape].shape) * np.nan  # np.full_like( (1, 4500, 6000), np.nan, dtype=object)
-    except RuntimeWarning as rw:
-        raise TypeError
-
     for variable_name in var_required:
         datatype = var_required[variable_name].get("type")
 
@@ -182,21 +203,51 @@ def preprocess_xarray(ds, dataset_config):
         if variable_name not in ds:
 
             logger.warning(
-                f"Add missing {variable_name} to xarray dataset with NaN values"
+                f"Adding missing variable '{variable_name}' to xarray dataset with NaN values."
             )
 
+            var_dims = schema[variable_name].get("dims", None)
             # check the type of the variable (numerical of string)
             if np.issubdtype(datatype, np.number):
                 # Add the missing variable  to the dataset
+                if var_dims:
+                    dim_names = tuple(var_dims)
+                    missing_coords = [dim for dim in dim_names if dim not in ds.coords]
+
+                    # create missing dimension for missing variable
+                    # TODO: this is dangerous in case the first file to process of a dataset doesnt have ALL the dimensions. If this is the case, the dimension will be full of NaNs.
+                    # How to avoid this? create a dummy NetCDF with epoq date, NaN variables but ALL valid dimensions?
+                    if missing_coords:
+                        for dim in missing_coords:
+
+                            logger.warning(
+                                f"Adding missing coordinate '{dim}' to xarray dataset with NaN values."
+                            )
+                            size = dimensions[dim][
+                                "size"
+                            ]  # get size from dataset's .dims
+                            nan_array = da.full(size, da.nan, dtype=da.float64)
+                            ds.coords[dim] = (dim, nan_array)
+
+                    shape = tuple([ds[dim].shape[0] for dim in dim_names])
+                    nan_array = da.full(shape, da.nan, dtype=da.float64)
+
+                else:
+                    logger.warning(
+                        f"The 'dims' key is missing for '{variable_name}' in the schema. Defaulting to creating '{variable_name}' with all available dimensions: {dimensions}"
+                    )
+                    dim_names = tuple(
+                        dim_info["name"] for dim_info in dimensions.values()
+                    )
+                    # TODO: to clean and remove this abomination. nan_array should always be created based on the dims set for each variable!
+                    nan_array = da.full(
+                        ds[var_template_shape].shape, da.nan, dtype=da.float64
+                    )
+
                 ds[variable_name] = (
-                    (
-                        dimensions["time"]["name"],
-                        dimensions["latitude"]["name"],
-                        dimensions["longitude"]["name"],
-                    ),
+                    dim_names,
                     nan_array,
                 )
-
             else:
                 # for strings variables, it's quite likely that the variables don't have any dimensions associated.
                 # This can be an issue to know which datapoint is associated to which string value.
@@ -205,7 +256,9 @@ def preprocess_xarray(ds, dataset_config):
                 #    (dimensions["time"]["name"],),
                 #    empty_string_array,
                 # )
-                logger.warning(f"{variable_name} is not np.number")
+                logger.warning(
+                    f"Variable '{variable_name}' is not of a numeric type (np.number)."
+                )
 
             ds[variable_name] = ds[variable_name].astype(datatype)
 
@@ -230,7 +283,7 @@ def preprocess_xarray(ds, dataset_config):
 
             ds[variable_name] = ds[variable_name].astype(datatype)
 
-    logger.info(f"Successfully applied preprocessing to dataset from {filename}")
+    logger.info(f"Successfully applied preprocessing to the dataset from {filename}")
     return ds
 
 
@@ -278,10 +331,11 @@ class GenericHandler(CommonHandler):
             "vars_incompatible_with_region", None
         )
 
+        # Generic chunks structure
         self.chunks = {
-            self.dimensions["time"]["name"]: self.dimensions["time"]["chunk"],
-            self.dimensions["latitude"]["name"]: self.dimensions["latitude"]["chunk"],
-            self.dimensions["longitude"]["name"]: self.dimensions["longitude"]["chunk"],
+            dim_info["name"]: dim_info["chunk"]
+            for dim_info in self.dimensions.values()
+            if "chunk" in dim_info
         }
 
         self.compute = bool(True)
@@ -328,7 +382,6 @@ class GenericHandler(CommonHandler):
         if s3_file_uri_list is None:
             raise ValueError("input_objects is not defined")
 
-        time_dimension_name = self.dimensions["time"]["name"]
         drop_vars_list = [
             var_name
             for var_name, attrs in self.schema.items()
@@ -351,17 +404,18 @@ class GenericHandler(CommonHandler):
             self.uuid_log = str(uuid.uuid4())  # value per batch
 
             self.logger.info(
-                f"{self.uuid_log}: Listing all objects to process and creating a s3_file_handle_list"
+                f"{self.uuid_log}: Listing objects to process and creating S3 file handle list for batch {idx + 1}."
             )
 
             batch_files = create_fileset(batch_uri_list, self.s3_fs)
 
-            self.logger.info(f"{self.uuid_log}: Processing batch {idx + 1}...")
-            self.logger.info(batch_files)
+            self.logger.info(
+                f"{self.uuid_log}: Processing batch {idx + 1} with files: {batch_files}"
+            )
 
             if drop_vars_list:
                 self.logger.warning(
-                    f"{self.uuid_log}: Dropping variables: {drop_vars_list} from the dataset"
+                    f"{self.uuid_log}: Dropping variables from the dataset: {drop_vars_list}"
                 )
 
             partial_preprocess_already_run = False
@@ -377,7 +431,7 @@ class GenericHandler(CommonHandler):
                 if not partial_preprocess_already_run:
                     # Likely redundant now, but retained for safety
                     self.logger.debug(
-                        f"{self.uuid_log}: partial_preprocess_already_run is False"
+                        f"{self.uuid_log}: 'partial_preprocess_already_run' is False. Applying preprocess_xarray."
                     )
                     ds = preprocess_xarray(ds, self.dataset_config)
 
@@ -387,13 +441,15 @@ class GenericHandler(CommonHandler):
                 )
 
             except MergeError as e:
-                self.logger.error(f"{self.uuid_log}: Failed to merge datasets: {e}")
+                self.logger.error(
+                    f"{self.uuid_log}: Failed to merge datasets for batch {idx + 1}: {e}"
+                )
                 if "ds" in locals():
                     self.postprocess(ds)
 
             except Exception as e:
                 self.logger.error(
-                    f"{self.uuid_log}: An unexpected error occurred: {e}.\n {traceback.format_exc()}"
+                    f"{self.uuid_log}: An unexpected error occurred during batch {idx + 1} processing: {e}.\n {traceback.format_exc()}"
                 )
                 self.fallback_to_individual_processing(
                     batch_files, partial_preprocess, drop_vars_list, idx
@@ -478,12 +534,15 @@ class GenericHandler(CommonHandler):
             # First attempt with the primary engine
             return handle_engine(primary_engine)
         except ValueError as e:
+
             if str(e) == "Switch to fallback engine":
                 try:
                     # Second attempt with the fallback engine
                     return handle_engine(fallback_engine)
                 except Exception:
                     # If fallback also fails, handle multi-engine fallback
+                    # Log full traceback before continuing
+                    traceback.print_exc()
                     return self.handle_multi_engine_fallback(
                         batch_files, partial_preprocess, drop_vars_list
                     )
@@ -511,10 +570,10 @@ class GenericHandler(CommonHandler):
         """
 
         self.logger.error(
-            f"{self.uuid_log}: Detected issue with variable: {variable_name}. Inconsistent grid"
+            f"{self.uuid_log}: Detected issue with variable '{variable_name}': Inconsistent grid."
         )
         self.logger.warning(
-            f"{self.uuid_log}: Running variable consistency check across files in batch"
+            f"{self.uuid_log}: Running variable consistency check across files in the batch."
         )
         problematic_files = self.check_variable_values_parallel(
             batch_files, variable_name
@@ -523,10 +582,10 @@ class GenericHandler(CommonHandler):
             file for file in batch_files if file not in problematic_files
         ]
         self.logger.warning(
-            f"{self.uuid_log}: Processing batch without problematic files"
+            f"{self.uuid_log}: Processing batch without problematic files: {problematic_files}"
         )
         self.logger.info(
-            f"{self.uuid_log}: Processing the following files:\n{clean_batch_files}"
+            f"{self.uuid_log}: Processing the following clean files:\n{clean_batch_files}"
         )
 
         return self._open_mfds(
@@ -555,7 +614,7 @@ class GenericHandler(CommonHandler):
             RuntimeError: If concatenation fails after individual opening attempts.
         """
         self.logger.warning(
-            f'{self.uuid_log}: Neither "h5netcdf" or "scipy" engine could not be used to concatenate the dataset together. '
+            f"{self.uuid_log}: Neither 'h5netcdf' nor 'scipy' engine could concatenate the dataset. "
             f"Falling back to opening files individually with different engines."
         )
         try:
@@ -563,11 +622,13 @@ class GenericHandler(CommonHandler):
                 batch_files, partial_preprocess, drop_vars_list
             )
             self.logger.info(
-                f"{self.uuid_log}: Successfully concatenated files together."
+                f"{self.uuid_log}: Successfully concatenated files using different engines."
             )
             return ds
         except Exception as e:
-            self.logger.warning(f"{self.uuid_log}: {e}.\n {traceback.format_exc()}")
+            self.logger.warning(
+                f"{self.uuid_log}: Error during multi-engine fallback: {e}.\n {traceback.format_exc()}"
+            )
             raise RuntimeError("Fallback to individual processing needed.")
 
     def fallback_to_individual_processing(
@@ -587,7 +648,7 @@ class GenericHandler(CommonHandler):
             idx (int): The index of the current batch (for logging).
         """
         self.logger.info(
-            f"{self.uuid_log}: None of the batch processing methods worked. Falling back to processing files individually."
+            f"{self.uuid_log}: Batch processing methods failed for batch {idx + 1}. Falling back to processing files individually."
         )
         try:
             self._process_individual_file_fallback(
@@ -595,7 +656,7 @@ class GenericHandler(CommonHandler):
             )
         except Exception as e:
             self.logger.error(
-                f"{self.uuid_log}: An unexpected error occurred during fallback processing: {e}.\n {traceback.format_exc()}"
+                f"{self.uuid_log}: An unexpected error occurred during individual file fallback processing for batch {idx + 1}: {e}.\n {traceback.format_exc()}"
             )
 
     def check_variable_values_parallel(self, file_paths, variable_name):
@@ -623,7 +684,7 @@ class GenericHandler(CommonHandler):
             reference_ds.close()
         except Exception as e:
             self.logger.error(
-                f"{self.uuid_log}: Failed to open the first file {file_paths[0]}: {e}"
+                f"{self.uuid_log}: Failed to open the first file: {file_paths[0]}: {e}"
             )
             return file_paths  # If the first file fails, consider all files problematic
 
@@ -659,9 +720,10 @@ class GenericHandler(CommonHandler):
         problematic_files = [
             file_path for file_path, is_problematic in results if is_problematic
         ]
-        self.logger.error(
-            f"{self.uuid_log}: Contact the data provider. The following files don't have a consistent grid with the rest of the dataset:\n{problematic_files}"
-        )
+        if problematic_files:
+            self.logger.error(
+                f"{self.uuid_log}: Contact the data provider. The following files have an inconsistent grid with the rest of the dataset for variable '{variable_name}':\n{problematic_files}"
+            )
         return problematic_files
 
     def _handle_duplicate_regions(
@@ -698,7 +760,7 @@ class GenericHandler(CommonHandler):
         time_dimension_name = self.dimensions["time"]["name"]
 
         self.logger.info(
-            f"{self.uuid_log}: Duplicate values of {self.dimensions['time']['name']} already existing in dataset. Overwriting"
+            f"{self.uuid_log}: Duplicate values of '{time_dimension_name}' found in the existing dataset. Overwriting."
         )
         # Get indices of common time values in the original dataset
         common_indices = np.nonzero(np.isin(time_values_org, common_time_values))[0]
@@ -738,7 +800,7 @@ class GenericHandler(CommonHandler):
         n_region = 0
         for region, indexes in zip(regions, matching_indexes):
             self.logger.info(
-                f"{self.uuid_log}: Region {n_region + 1} from Batch {idx + 1} - Overwriting Zarr dataset in Region: {region}, Matching Indexes in new ds: {indexes}"
+                f"{self.uuid_log}: Batch {idx + 1}, Region {n_region + 1} - Overwriting Zarr dataset in region: {region}, with matching indexes in the new dataset: {indexes}"
             )
 
             ##########################################
@@ -751,9 +813,8 @@ class GenericHandler(CommonHandler):
                 amount_to_pad = region_num_elements - matching_indexes_array_size
 
                 self.logger.error(
-                    f"{self.uuid_log}: Duplicate values of {time_dimension_name} dimension "
-                    f"found in original Zarr dataset. writing {matching_indexes_array_size} index value in a bigger region {region}. Trying to pad the dataset with"
-                    f"an extra {amount_to_pad} index of NaN"
+                    f"{self.uuid_log}: Mismatch in size for region {region}. Original region size: {region_num_elements}, new data size: {matching_indexes_array_size}. "
+                    f"Attempting to pad the new dataset with {amount_to_pad} NaN index(es)."
                 )
             else:
                 amount_to_pad = 0
@@ -778,15 +839,15 @@ class GenericHandler(CommonHandler):
                 mode="r+",
             )
             self.logger.info(
-                f"{self.uuid_log}: Region {n_region + 1} from Batch {idx + 1} - successfully published to {self.store}"
+                f"{self.uuid_log}: Batch {idx + 1}, Region {n_region + 1} - Successfully published to the Zarr store: {self.store}"
             )
             n_region += 1
 
         self.logger.info(
-            f"{self.uuid_log}: All existing Regions from Batch {idx + 1} were successfully published to {self.store}"
+            f"{self.uuid_log}: All overlapping regions from Batch {idx + 1} were successfully published to the Zarr store: {self.store}"
         )
         self.logger.info(
-            f"{self.uuid_log}: Looking for dataset indexes left to be published from Batch {idx + 1} to {self.store}"
+            f"{self.uuid_log}: Checking for non-overlapping data from Batch {idx + 1} to append to the Zarr store: {self.store}"
         )
         # Now find the time values in ds that were NOT reprocessed
         # These are the time values not found in any of the common regions
@@ -795,7 +856,7 @@ class GenericHandler(CommonHandler):
         # Return a dataset with the unprocessed time values
         if len(unprocessed_time_values) > 0:
             self.logger.info(
-                f"{self.uuid_log}: Found indexes left to be published from Batch {idx + 1} to {self.store}"
+                f"{self.uuid_log}: Found {len(unprocessed_time_values)} non-overlapping data points from Batch {idx + 1} to append to the Zarr store: {self.store}"
             )
             ds_unprocessed = ds.sel({time_dimension_name: unprocessed_time_values})
             self._write_ds(ds_unprocessed, idx)
@@ -824,18 +885,18 @@ class GenericHandler(CommonHandler):
             with self.s3_fs.open(file, "rb") as f:  # Open the file-like object
                 ds = self._open_ds(f, partial_preprocess, drop_vars_list, engine=engine)
             self.logger.info(
-                f"{self.uuid_log}: Success opening {file} with {engine} engine."
+                f"{self.uuid_log}: Successfully opened {file} with '{engine}' engine."
             )
             return ds
         except (ValueError, TypeError) as e:
             self.logger.info(
-                f"{self.uuid_log}: Error opening {file}: {e} with scipy engine. Defaulting to h5netcdf"
+                f"{self.uuid_log}: Error opening {file} with 'scipy' engine: {e}. Defaulting to 'h5netcdf'."
             )
             engine = "h5netcdf"
 
             ds = self._open_ds(file, partial_preprocess, drop_vars_list, engine=engine)
             self.logger.info(
-                f"{self.uuid_log}: Success opening {file} with {engine} engine."
+                f"{self.uuid_log}: Successfully opened {file} with '{engine}' engine."
             )
             return ds
 
@@ -881,7 +942,7 @@ class GenericHandler(CommonHandler):
 
         # Concatenate the datasets
         self.logger.info(
-            f"{self.uuid_log}: Successfully read all files with different engines. Concatenating them together"
+            f"{self.uuid_log}: Successfully read all files in the batch with different engines. Concatenating them now."
         )
 
         ds = xr.concat(
@@ -893,7 +954,9 @@ class GenericHandler(CommonHandler):
         )
         ds = ds.unify_chunks()
         # ds = ds.persist()
-        self.logger.info(f"{self.uuid_log}: Successfully Concatenating files together")
+        self.logger.info(
+            f"{self.uuid_log}: Successfully concatenated files from batch."
+        )
         return ds
 
     def _open_mfds(
@@ -947,7 +1010,7 @@ class GenericHandler(CommonHandler):
             ds = ds.chunk(chunks="auto")
         except Exception as err:
             self.logger.warning(
-                f"{self.uuid_log}:{err}\n Defaulting to open files without auto chunks option"
+                f"{self.uuid_log}: Error auto-chunking dataset: {err}. Defaulting to specified chunks: {self.chunks}"
             )
             ds = ds.chunk(chunks=self.chunks)
 
@@ -997,7 +1060,7 @@ class GenericHandler(CommonHandler):
             ds = ds.chunk(chunks="auto")
         except Exception as err:
             self.logger.warning(
-                f"{self.uuid_log}:{err}\n Defaulting to open files without auto chunks option"
+                f"{self.uuid_log}: Error auto-chunking dataset from file '{file}': {err}. Defaulting to specified chunks: {self.chunks}"
             )
             ds = ds.chunk(chunks=self.chunks)
 
@@ -1027,11 +1090,11 @@ class GenericHandler(CommonHandler):
         unique, counts = np.unique(time_values_org, return_counts=True)
         duplicates = unique[counts > 1]
 
-        # Raise error if duplicates are found
+        # TODO: Raise error if duplicates are found? Not necessarily an issue. For example, some SOOP dataset, same TIME, 2 different NetCDF files, 2 different vessel and location.
         if len(duplicates) > 0:
-            self.logger.error(
-                f"{self.uuid_log}: Duplicate values of {time_dimension_name} dimension "
-                f"found in original Zarr dataset. Could lead to a corrupted dataset: {duplicates}"
+            self.logger.warning(
+                f"{self.uuid_log}: Duplicate values of '{time_dimension_name}' dimension "
+                f"found in the original Zarr dataset. This could lead to a corrupted dataset. Duplicates: {duplicates}"
             )
 
         return True
@@ -1051,7 +1114,14 @@ class GenericHandler(CommonHandler):
         """
         time_dimension_name = self.dimensions["time"]["name"]
         ds = ds.sortby(time_dimension_name)
-        ds = ds.chunk(chunks=self.chunks)
+        if any(chunk == 0 for chunk in self.chunks.values()):
+            self.logger.warning(
+                f"{self.uuid_log}: One or more dimensions in the dataset configuration have a chunk size of 0: {self.chunks}. "
+                f"Please modify the configuration file. Defaulting to 'chunks=auto'."
+            )
+            ds = ds.chunk(chunks="auto")
+        else:
+            ds = ds.chunk(chunks=self.chunks)
 
         # TODO: see https://github.com/pydata/xarray/issues/5219  https://github.com/pydata/xarray/issues/5286
         for var in ds:
@@ -1060,7 +1130,9 @@ class GenericHandler(CommonHandler):
 
         # Write the dataset to Zarr
         if prefix_exists(self.cloud_optimised_output_path):
-            self.logger.info(f"{self.uuid_log}: Appending data to existing Zarr")
+            self.logger.info(
+                f"{self.uuid_log}: Existing Zarr store found at {self.cloud_optimised_output_path}. Appending data."
+            )
 
             # NOTE: In the next section, we need to figure out if we're reprocessing existing data.
             #       For this, the logic is to open the original zarr store and compare with the new ds from
@@ -1096,7 +1168,7 @@ class GenericHandler(CommonHandler):
                     self._append_zarr_store(ds)
 
                     self.logger.info(
-                        f"Batch {idx + 1} successfully published to {self.store}"
+                        f"{self.uuid_log}: Batch {idx + 1} successfully appended to the Zarr store: {self.store}"
                     )
 
         # First time writing the dataset
@@ -1111,7 +1183,9 @@ class GenericHandler(CommonHandler):
         Args:
             ds (xr.Dataset): The dataset to write.
         """
-        self.logger.info(f"{self.uuid_log}: Writing data to a new Zarr dataset.")
+        self.logger.info(
+            f"{self.uuid_log}: Writing data to a new Zarr store at {self.store}."
+        )
         ds.to_zarr(
             self.store,
             mode="w",  # Overwrite mode for the first batch
@@ -1131,8 +1205,10 @@ class GenericHandler(CommonHandler):
             ds (xr.Dataset): The dataset to append.
         """
         time_dimension_name = self.dimensions["time"]["name"]
-        self.logger.info(f"{self.uuid_log}: Appending data to Zarr dataset")
-        # import ipdb; ipdb.set_trace()
+
+        self.logger.info(
+            f"{self.uuid_log}: Appending data to the existing Zarr store at {self.store}."
+        )
         ds.to_zarr(
             self.store,
             mode="a-",
@@ -1158,13 +1234,13 @@ class GenericHandler(CommonHandler):
         """
         if self.clear_existing_data:
             self.logger.warning(
-                f"Creating new Zarr dataset - DELETING existing all Zarr objects if they exist"
+                f"Option 'clear_existing_data' is True. DELETING all existing Zarr objects at {self.cloud_optimised_output_path} if they exist."
             )
             # TODO: delete all objects
             if prefix_exists(self.cloud_optimised_output_path):
                 bucket_name, prefix = split_s3_path(self.cloud_optimised_output_path)
                 self.logger.info(
-                    f"Deleting existing Zarr objects from path: {self.cloud_optimised_output_path}"
+                    f"Deleting existing Zarr objects from bucket '{bucket_name}' with prefix '{prefix}'."
                 )
 
                 delete_objects_in_prefix(bucket_name, prefix)

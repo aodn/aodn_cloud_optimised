@@ -26,7 +26,7 @@ and having anywhere in the code
 Debug a cloud optimised pipeline
 ================================
 
-Modify a dataset binary to use a local cluster, for example:
+Modify a dataset processing script to use a None cluster, for example:
 
 .. code-block:: python
 
@@ -37,8 +37,8 @@ Modify a dataset binary to use a local cluster, for example:
             "IMOS/SRS/SST/ghrsst/L3S-1dS/dn/",
             "--dataset-config",
             "satellite_ghrsst_l3s_1day_daynighttime_single_sensor_southernocean.json",
-            "--cluster-mode",
-            "local",
+            # "--cluster-mode",
+            # "local",
         ]
 
 
