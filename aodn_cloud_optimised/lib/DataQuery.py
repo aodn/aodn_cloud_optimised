@@ -9,13 +9,13 @@ import re
 from abc import ABC, abstractmethod
 from datetime import datetime, timedelta, timezone
 from functools import lru_cache
-from typing import Final
+from typing import Final, Set
 
 import boto3
 import cartopy.crs as ccrs  # For coastline plotting
 import cartopy.feature as cfeature
-import fsspec
 import cftime
+import fsspec
 import geopandas as gpd
 import gsw  # TEOS-10 library
 import matplotlib.pyplot as plt
@@ -24,12 +24,14 @@ import numpy as np
 import pandas as pd
 import pyarrow as pa
 import pyarrow.compute as pc
+import pyarrow.dataset as ds
 import pyarrow.fs as fs
 import pyarrow.parquet as pq
 import seaborn as sns
 import xarray as xr
 from botocore import UNSIGNED
 from botocore.client import Config
+from dateutil.parser import parse
 from fuzzywuzzy import fuzz
 from matplotlib.colors import LogNorm, Normalize
 from s3path import PureS3Path
@@ -41,17 +43,18 @@ REGION: Final[str] = "ap-southeast-2"
 ENDPOINT_URL = f"https://s3.ap-southeast-2.amazonaws.com"
 BUCKET_OPTIMISED_DEFAULT = "aodn-cloud-optimised"
 ROOT_PREFIX_CLOUD_OPTIMISED_PATH = ""
+DEFAULT_TIME = datetime(1900, 1, 1)
 
 
-def query_unique_value(dataset: pq.ParquetDataset, partition: str) -> set[str]:
-    """Queries unique values for a given Hive partition key in a Parquet dataset.
+def query_unique_value(dataset: ds.Dataset, partition: str) -> Set[str]:
+    """Queries unique values for a given Hive partition key in a PyArrow dataset.
 
-    Iterates through the fragments (files) of a Parquet dataset and extracts
-    the unique values associated with the specified partition key from the
-    file paths. Assumes Hive partitioning (e.g., ".../partition=value/...").
+    Iterates through the fragments (files) of a dataset and extracts the unique
+    values associated with the specified partition key from the file paths.
+    Assumes Hive partitioning (e.g., ".../partition=value/...").
 
     Args:
-        dataset: The pyarrow.parquet.ParquetDataset object.
+        dataset: The pyarrow.dataset.Dataset object.
         partition: The name of the partition key (e.g., "year", "timestamp").
 
     Returns:
@@ -59,13 +62,14 @@ def query_unique_value(dataset: pq.ParquetDataset, partition: str) -> set[str]:
     """
     unique_values = set()
     pattern = re.compile(f".*/{partition}=([^/]*)/")
-    for p in dataset.fragments:
-        value = re.match(pattern, p.path).group(1)
-        unique_values.add(value)
+    for fragment in dataset.get_fragments():
+        match = pattern.match(fragment.path)
+        if match:
+            unique_values.add(match.group(1))
     return unique_values
 
 
-def get_temporal_extent_v1(parquet_ds: pq.ParquetDataset) -> tuple[datetime, datetime]:
+def get_temporal_extent_v1(dataset: ds.Dataset) -> tuple[datetime, datetime]:
     """Calculates temporal extent based *only* on 'timestamp' partition values.
 
     This is a faster but potentially less accurate method than `get_temporal_extent`
@@ -73,15 +77,15 @@ def get_temporal_extent_v1(parquet_ds: pq.ParquetDataset) -> tuple[datetime, dat
     time bins rather than exact start/end times within the data.
 
     Args:
-        parquet_ds: The pyarrow.parquet.ParquetDataset object.
+        dataset: The pyarrow.dataset.Dataset object.
 
     Returns:
         A tuple containing the minimum and maximum datetime objects derived
         from the 'timestamp' partition values, localized to UTC.
     """
-    unique_timestamps = query_unique_value(parquet_ds, "timestamp")
-    unique_timestamps = np.array([np.int64(string) for string in unique_timestamps])
-    unique_timestamps = np.sort(unique_timestamps)
+    unique_timestamps = query_unique_value(dataset, "timestamp")
+    unique_timestamps = np.array([np.int64(ts) for ts in unique_timestamps])
+    unique_timestamps.sort()
 
     return (
         datetime.fromtimestamp(unique_timestamps.min(), tz=timezone.utc),
@@ -90,7 +94,7 @@ def get_temporal_extent_v1(parquet_ds: pq.ParquetDataset) -> tuple[datetime, dat
 
 
 def get_temporal_extent(
-    parquet_ds: pq.ParquetDataset,
+    dataset: ds.Dataset,
 ) -> tuple[pd.Timestamp, pd.Timestamp]:
     """Calculates the precise temporal extent by reading min/max time variable values.
 
@@ -100,47 +104,55 @@ def get_temporal_extent(
     This is more accurate but slower than `get_temporal_extent_v1`.
 
     Args:
-        parquet_ds: The pyarrow.parquet.ParquetDataset object.
+        dataset: The pyarrow.dataset.Dataset object.
 
     Returns:
         A tuple containing the minimum and maximum pandas Timestamp objects
         found within the dataset's time variable.
     """
-    dname = f"s3://anonymous@{parquet_ds.__dict__['_base_dir']}"
-    unique_timestamps = query_unique_value(parquet_ds, "timestamp")
+    base_path = dataset.files[0].split(f".parquet")[0]  # crude, adjust if needed
+    dname = f"s3://anonymous@{base_path}.parquet"
+
+    # dname = f"s3://anonymous@{dataset.__dict__['_base_dir']}"
+    unique_timestamps = query_unique_value(dataset, "timestamp")
     unique_timestamps = np.array([np.int64(string) for string in unique_timestamps])
     unique_timestamps = np.sort(unique_timestamps)
 
-    if "TIME" in parquet_ds.schema.names:
-        time_varname = "TIME"
-    elif "JULD" in parquet_ds.schema.names:
-        time_varname = "JULD"
-    elif "detection_timestamp" in parquet_ds.schema.names:
-        time_varname = "detection_timestamp"
+    # Detect the time variable name in the schema
+    names = dataset.schema.names
+    for candidate in ("TIME", "JULD", "detection_timestamp"):
+        if candidate in names:
+            time_varname = candidate
+            break
+    else:
+        raise ValueError(
+            "No known time variable ('TIME', 'JULD', 'detection_timestamp') found in dataset schema"
+        )
 
     expr = pc.field("timestamp") == np.int64(unique_timestamps.max())
-    df = pd.read_parquet(dname, engine="pyarrow", columns=[time_varname], filters=expr)
+    table = dataset.to_table(filter=expr, columns=[time_varname])
+    df = table.to_pandas()
     time_max = df[time_varname].max()
 
     expr = pc.field("timestamp") == np.int64(unique_timestamps.min())
-    df = pd.read_parquet(dname, engine="pyarrow", columns=[time_varname], filters=expr)
+    table = dataset.to_table(filter=expr, columns=[time_varname])
+    df = table.to_pandas()
     time_min = df[time_varname].min()
 
     return time_min, time_max
 
 
 def get_timestamps_boundary_values(
-    parquet_ds: pq.ParquetDataset, date_start: str, date_end: str
+    dataset: ds.Dataset, date_start: str, date_end: str
 ) -> tuple[np.int64, np.int64]:
     """Finds partition timestamp boundaries bracketing a date range.
 
     Given a start and end date, this function identifies the 'timestamp'
-    partition values in the Parquet dataset that immediately precede the
-    start date and the end date. This is useful for filtering partitions
-    efficiently.
+    partition values in the PyArrow dataset that immediately precede the
+    start and end dates. This is useful for filtering partitions efficiently.
 
     Args:
-        parquet_ds: The pyarrow.parquet.ParquetDataset object.
+        dataset: The pyarrow.dataset.Dataset object.
         date_start: The start date string (e.g., "YYYY-MM-DD").
         date_end: The end date string (e.g., "YYYY-MM-DD").
 
@@ -149,32 +161,29 @@ def get_timestamps_boundary_values(
         - The partition timestamp value just before or equal to `date_start`.
         - The partition timestamp value just before or equal to `date_end`.
     """
+    # Get unique partition values of 'timestamp'
+    unique_timestamps = query_unique_value(dataset, "timestamp")
+    unique_timestamps = np.array([np.int64(ts) for ts in unique_timestamps])
+    unique_timestamps.sort()
 
-    # Get the unique partition values of timestamp available in the parquet dataset
-    unique_timestamps = query_unique_value(parquet_ds, "timestamp")
-    unique_timestamps = np.array([np.int64(string) for string in unique_timestamps])
-    unique_timestamps = np.sort(unique_timestamps)
+    # Convert input date strings to Unix timestamps
+    ts_start = int(pd.to_datetime(date_start).timestamp())
+    ts_end = int(pd.to_datetime(date_end).timestamp())
 
-    # We need to find the matching values of timestamp. the following logic does this
-    # 1) convert simply the date_start and date_end into timestamps
-    timestamp_start = pd.to_datetime(date_start).timestamp()
-    timestamp_end = pd.to_datetime(date_end).timestamp()
+    # Find closest partition timestamp ≤ date_start
+    idx_start = np.searchsorted(unique_timestamps, ts_start)
+    ts_start_part = (
+        unique_timestamps[0] if idx_start == 0 else unique_timestamps[idx_start - 1]
+    )
 
-    # 2) Look for the closest value and get the one before fore timestamp_start
-    index = np.searchsorted(unique_timestamps, timestamp_start)
-    if index == 0:
-        timestamp_start = unique_timestamps[index]
-    else:
-        timestamp_start = unique_timestamps[index - 1]
+    # Find closest partition timestamp ≤ date_end
+    idx_end = np.searchsorted(unique_timestamps, ts_end)
+    ts_end_part = unique_timestamps[idx_end - 1]
 
-    # 3) Look for the closest value and get the one after fore timestamp_end
-    index = np.searchsorted(unique_timestamps, timestamp_end)
-    timestamp_end = unique_timestamps[index - 1]
-
-    return timestamp_start, timestamp_end
+    return ts_start_part, ts_end_part
 
 
-def create_bbox_filter(parquet_ds: pq.ParquetDataset, **kwargs) -> pc.Expression:
+def create_bbox_filter(dataset: ds.Dataset, **kwargs) -> pc.Expression:
     """Creates a PyArrow filter expression for spatial bounding box queries.
 
     Combines partition pruning based on the 'polygon' partition key (finding
@@ -182,7 +191,7 @@ def create_bbox_filter(parquet_ds: pq.ParquetDataset, **kwargs) -> pc.Expression
     latitude and longitude variable values.
 
     Args:
-        parquet_ds: The pyarrow.parquet.ParquetDataset object.
+        dataset: The pyarrow.dataset.Dataset() object.
         **kwargs: Keyword arguments defining the bounding box and variable names.
             lon_min (float): Minimum longitude.
             lon_max (float): Maximum longitude.
@@ -220,7 +229,7 @@ def create_bbox_filter(parquet_ds: pq.ParquetDataset, **kwargs) -> pc.Expression
     ]
     bounding_box_polygon = Polygon(bounding_box)
 
-    polygon_partitions = query_unique_value(parquet_ds, "polygon")
+    polygon_partitions = query_unique_value(dataset, "polygon")
     wkb_list = list(polygon_partitions)
 
     polygon_set = set(map(lambda x: wkb.loads(bytes.fromhex(x)), wkb_list))
@@ -259,7 +268,7 @@ def create_bbox_filter(parquet_ds: pq.ParquetDataset, **kwargs) -> pc.Expression
     return expression
 
 
-def create_time_filter(parquet_ds: pq.ParquetDataset, **kwargs) -> pc.Expression:
+def create_time_filter(dataset: ds.Dataset, **kwargs) -> pc.Expression:
     """Creates a PyArrow filter expression for temporal range queries.
 
     Combines partition pruning based on the 'timestamp' partition key (using
@@ -267,7 +276,7 @@ def create_time_filter(parquet_ds: pq.ParquetDataset, **kwargs) -> pc.Expression
     actual time variable values (e.g., 'TIME' or 'JULD').
 
     Args:
-        parquet_ds: The pyarrow.parquet.ParquetDataset object.
+        dataset: The pyarrow.dataset.dataset() object.
         **kwargs: Keyword arguments defining the time range and variable name.
             date_start (str): Start date string (e.g., "YYYY-MM-DD").
             date_end (str): End date string (e.g., "YYYY-MM-DD").
@@ -288,7 +297,7 @@ def create_time_filter(parquet_ds: pq.ParquetDataset, **kwargs) -> pc.Expression
     if None in (date_start, date_end):
         raise ValueError("Start and end dates must be provided.")
 
-    timestamp_start, timestamp_end = get_temporal_extent_v1(parquet_ds)
+    timestamp_start, timestamp_end = get_temporal_extent_v1(dataset)
 
     # boundary check
     # Convert date_start string to a datetime object
@@ -318,19 +327,19 @@ def create_time_filter(parquet_ds: pq.ParquetDataset, **kwargs) -> pc.Expression
         )
 
     timestamp_start, timestamp_end = get_timestamps_boundary_values(
-        parquet_ds, date_start, date_end
+        dataset, date_start, date_end
     )
 
     expr1 = pc.field("timestamp") >= np.int64(timestamp_start)
     expr2 = pc.field("timestamp") <= np.int64(timestamp_end)
 
     # ARGO Specific:
-    if "TIME" in parquet_ds.schema.names:
+    if "TIME" in dataset.schema.names:
         time_varname = "TIME"
-    elif "JULD" in parquet_ds.schema.names:
+    elif "JULD" in dataset.schema.names:
         time_varname = "JULD"
     elif (
-        "detection_timestamp" in parquet_ds.schema.names
+        "detection_timestamp" in dataset.schema.names
     ):  # animal_acoustic_tracking_delayed_qc specific
         time_varname = "detection_timestamp"
 
@@ -341,7 +350,7 @@ def create_time_filter(parquet_ds: pq.ParquetDataset, **kwargs) -> pc.Expression
     return expression
 
 
-def get_spatial_extent(parquet_ds: pq.ParquetDataset) -> MultiPolygon:
+def get_spatial_extent(dataset: ds.Dataset) -> MultiPolygon:
     """Retrieves the spatial extent as a MultiPolygon from 'polygon' partitions.
 
     Reads the unique values from the 'polygon' partition key, decodes the WKB
@@ -350,13 +359,13 @@ def get_spatial_extent(parquet_ds: pq.ParquetDataset) -> MultiPolygon:
     partitions.
 
     Args:
-        parquet_ds: The pyarrow.parquet.ParquetDataset object.
+        dataset: The pyarrow.dataset.Dataset() object.
 
     Returns:
         A Shapely MultiPolygon object.
     """
     # Retrieve unique polygon partitions
-    polygon_partitions = query_unique_value(parquet_ds, "polygon")
+    polygon_partitions = query_unique_value(dataset, "polygon")
 
     # Convert WKB hex strings to Shapely geometries and create a set of unique polygons
     wkb_list = list(polygon_partitions)
@@ -520,7 +529,7 @@ def create_timeseries(
 
 #
 def plot_spatial_extent(
-    parquet_ds: pq.ParquetDataset, coastline_resolution: str = "110m"
+    dataset: ds.Dataset, coastline_resolution: str = "110m"
 ) -> None:
     """Plots the spatial extent derived from Parquet 'polygon' partitions.
 
@@ -529,11 +538,11 @@ def plot_spatial_extent(
     and ocean features using Cartopy.
 
     Args:
-        parquet_ds: The pyarrow.parquet.ParquetDataset object.
+        padataset: The pyarrow.dataset.Dataset() object.
         coastline_resolution: The resolution for the Cartopy coastline
             feature ('110m', '50m', '10m'). Defaults to "110m".
     """
-    multi_polygon = get_spatial_extent(parquet_ds)
+    multi_polygon = get_spatial_extent(dataset)
 
     # Create a GeoDataFrame for the MultiPolygon
     gdf = gpd.GeoDataFrame(geometry=[multi_polygon], crs="EPSG:4326")  # Assuming WGS84
@@ -1255,6 +1264,9 @@ class DataSource(ABC):
         """Returns the temporal extent (min_time, max_time) of the dataset."""
         pass
 
+    def get_unique_partition_values(self, partition_name: str) -> Set[str]:
+        pass
+
     @abstractmethod
     def get_metadata(self) -> dict:
         """Retrieves metadata associated with the dataset."""
@@ -1321,26 +1333,25 @@ class ParquetDataSource(DataSource):
                 extension.
         """
         super().__init__(bucket_name, prefix, dataset_name)
-        self.parquet_ds = self._create_parquet_dataset()
+        self.dataset = self._create_pyarrow_dataset()
 
-    def _create_parquet_dataset(self, filters=None) -> pq.ParquetDataset:
-        """Creates a PyArrow ParquetDataset object for the data source.
+    def get_unique_partition_values(self, partition_name) -> Set[str]:
+        return query_unique_value(self.dataset, partition_name)
+
+    def _create_pyarrow_dataset(self, filters=None) -> ds.Dataset:
+        """Creates a PyArrow Dataset object for the data source using the modern API.
 
         Args:
             filters: Optional PyArrow filter expression to apply when creating
-                the dataset object (for metadata filtering). Defaults to None.
+                the dataset object (for fragment-level filtering). Defaults to None.
 
         Returns:
-            A pyarrow.parquet.ParquetDataset instance.
+            A pyarrow.dataset.Dataset instance.
         """
-        breakpoint()
-        return pq.ParquetDataset(
+        return ds.dataset(
             self.dname,
+            format="parquet",
             partitioning="hive",
-            filters=filters,
-            # Pyarrow can infer file system from path prefix with s3 but it will try
-            # to scan local file system before infer and get a pyarrow s3 file system
-            # which is very slow to start, ParquetDataset no s3 prefix needed
             filesystem=fs.S3FileSystem(
                 region=REGION, endpoint_override=ENDPOINT_URL, anonymous=True
             ),
@@ -1352,7 +1363,7 @@ class ParquetDataSource(DataSource):
         Returns:
             A pyarrow.Schema object representing the partition keys.
         """
-        dataset = self._create_parquet_dataset()
+        dataset = self._create_pyarrow_dataset()
         partition_keys = dataset.partitioning.schema
         return partition_keys
 
@@ -1364,14 +1375,14 @@ class ParquetDataSource(DataSource):
         Returns:
             A Shapely MultiPolygon object.
         """
-        return get_spatial_extent(self.parquet_ds)
+        return get_spatial_extent(self.dataset)
 
     def plot_spatial_extent(self) -> None:
         """Plots the spatial extent derived from 'polygon' partitions.
 
         Uses the global `plot_spatial_extent` function.
         """
-        return plot_spatial_extent(self.parquet_ds)
+        return plot_spatial_extent(self.dataset)
 
     def get_temporal_extent(self) -> tuple[pd.Timestamp, pd.Timestamp]:
         """Returns the precise temporal extent by reading min/max time values.
@@ -1381,7 +1392,7 @@ class ParquetDataSource(DataSource):
         Returns:
             A tuple containing the minimum and maximum pandas Timestamp objects.
         """
-        return get_temporal_extent(self.parquet_ds)
+        return get_temporal_extent(self.dataset)
 
     def get_temporal_extent_from_timestamp_partition(
         self,
@@ -1393,7 +1404,7 @@ class ParquetDataSource(DataSource):
         Returns:
             A tuple containing the minimum and maximum pandas Timestamp objects.
         """
-        return get_temporal_extent_v1(self.parquet_ds)
+        return get_temporal_extent_v1(self.dataset)
 
     def get_data(
         self,
@@ -1405,12 +1416,14 @@ class ParquetDataSource(DataSource):
         lon_max: float | None = None,
         scalar_filter: dict | None = None,
         columns: list[str] | None = None,
+        lat_varname: str | None = None,
+        lon_varname: str | None = None,
+        time_varname: str | None = None,
     ) -> pd.DataFrame:
         """Retrieves data from the Parquet dataset, applying filters.
 
         Constructs PyArrow filter expressions based on the provided time range,
         bounding box, and scalar filter conditions. Reads the filtered data
-        using `pd.read_parquet`.
 
         Args:
             date_start: Start date string (e.g., "YYYY-MM-DD").
@@ -1437,20 +1450,32 @@ class ParquetDataSource(DataSource):
         if date_start is None:
             filter_time = None
         else:
+            time_kwargs = {}
+            if time_varname is not None:
+                time_kwargs["time_varname"] = time_varname
             filter_time = create_time_filter(
-                self.parquet_ds, date_start=date_start, date_end=date_end
+                self.dataset, date_start=date_start, date_end=date_end, **time_kwargs
             )
 
         # Geometry filter requires ALL optional args to be defined
         if lat_min is None or lat_max is None or lon_min is None or lon_max is None:
             filter_geo = None
         else:
+            bbox_kwargs = {}
+
+            if lat_varname is not None:
+                bbox_kwargs["lat_varname"] = lat_varname
+
+            if lon_varname is not None:
+                bbox_kwargs["lon_varname"] = lon_varname
+
             filter_geo = create_bbox_filter(
-                self.parquet_ds,
+                self.dataset,
                 lat_min=lat_min,
                 lat_max=lat_max,
                 lon_min=lon_min,
                 lon_max=lon_max,
+                **bbox_kwargs,
             )
 
         # scalar filter
@@ -1478,18 +1503,14 @@ class ParquetDataSource(DataSource):
 
         # add scalar filter to data_filter
         if scalar_filter is not None:
-            data_filter = data_filter & expr
+            if data_filter is None:
+                data_filter = expr
+            else:
+                data_filter = data_filter & expr
 
         # Set file system explicitly do not require folder prefix s3://
-        df = pd.read_parquet(
-            self.dname,
-            engine="pyarrow",
-            filters=data_filter,
-            columns=columns,
-            filesystem=fs.S3FileSystem(
-                region=REGION, endpoint_override=ENDPOINT_URL, anonymous=True
-            ),
-        )
+        table = self.dataset.to_table(filter=data_filter, columns=columns)
+        df = table.to_pandas()
 
         return df
 
