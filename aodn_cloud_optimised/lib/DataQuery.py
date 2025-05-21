@@ -115,6 +115,8 @@ def get_temporal_extent(
         time_varname = "TIME"
     elif "JULD" in parquet_ds.schema.names:
         time_varname = "JULD"
+    elif "detection_timestamp" in parquet_ds.schema.names:
+        time_varname = "detection_timestamp"
 
     expr = pc.field("timestamp") == np.int64(unique_timestamps.max())
     df = pd.read_parquet(dname, engine="pyarrow", columns=[time_varname], filters=expr)
@@ -286,6 +288,35 @@ def create_time_filter(parquet_ds: pq.ParquetDataset, **kwargs) -> pc.Expression
     if None in (date_start, date_end):
         raise ValueError("Start and end dates must be provided.")
 
+    timestamp_start, timestamp_end = get_temporal_extent_v1(parquet_ds)
+
+    # boundary check
+    # Convert date_start string to a datetime object
+    date_start_dt = datetime.strptime(date_start, "%Y-%m-%d").replace(
+        tzinfo=timezone.utc
+    )
+
+    # Compare
+    is_date_start_after_timestamp_end = date_start_dt > timestamp_end
+    if is_date_start_after_timestamp_end:
+        timestamp_end_str = timestamp_end.strftime("%Y-%m-%d %H:%M:%S")
+
+        raise ValueError(
+            f"date_start={date_start} is out of range of dataset. The maximum date_end is {timestamp_end_str}."
+        )
+    # do the same for the other part of the time boundary check
+    # Convert date_start string to a datetime object
+    date_end_dt = datetime.strptime(date_end, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+
+    # Compare
+    is_date_end_before_timestamp_start = date_end_dt < timestamp_start
+    if is_date_end_before_timestamp_start:
+        timestamp_start_str = timestamp_start.strftime("%Y-%m-%d %H:%M:%S")
+
+        raise ValueError(
+            f"date_end={date_end} is out of range of dataset. The minimum date_start is {timestamp_start_str}."
+        )
+
     timestamp_start, timestamp_end = get_timestamps_boundary_values(
         parquet_ds, date_start, date_end
     )
@@ -298,6 +329,10 @@ def create_time_filter(parquet_ds: pq.ParquetDataset, **kwargs) -> pc.Expression
         time_varname = "TIME"
     elif "JULD" in parquet_ds.schema.names:
         time_varname = "JULD"
+    elif (
+        "detection_timestamp" in parquet_ds.schema.names
+    ):  # animal_acoustic_tracking_delayed_qc specific
+        time_varname = "detection_timestamp"
 
     expr3 = pc.field(time_varname) >= pd.to_datetime(date_start)
     expr4 = pc.field(time_varname) <= pd.to_datetime(date_end)
@@ -1214,6 +1249,13 @@ class DataSource(ABC):
         pass
 
     @abstractmethod
+    def get_temporal_extent_from_timestamp_partition(
+        self,
+    ) -> tuple[datetime, datetime]:
+        """Returns the temporal extent (min_time, max_time) of the dataset."""
+        pass
+
+    @abstractmethod
     def get_metadata(self) -> dict:
         """Retrieves metadata associated with the dataset."""
         pass
@@ -1291,6 +1333,7 @@ class ParquetDataSource(DataSource):
         Returns:
             A pyarrow.parquet.ParquetDataset instance.
         """
+        breakpoint()
         return pq.ParquetDataset(
             self.dname,
             partitioning="hive",
@@ -1339,6 +1382,18 @@ class ParquetDataSource(DataSource):
             A tuple containing the minimum and maximum pandas Timestamp objects.
         """
         return get_temporal_extent(self.parquet_ds)
+
+    def get_temporal_extent_from_timestamp_partition(
+        self,
+    ) -> tuple[datetime, datetime]:
+        """Returns the temporal extent by reading min/max timestamp partition values.
+
+        Uses the global `get_temporal_extent_v1` function.
+
+        Returns:
+            A tuple containing the minimum and maximum pandas Timestamp objects.
+        """
+        return get_temporal_extent_v1(self.parquet_ds)
 
     def get_data(
         self,
@@ -2034,7 +2089,6 @@ class ZarrDataSource(DataSource):
 
         # Plotting
         plt.figure()  # Create a new figure
-        breakpoint()
         plt.plot(timeseries_df[actual_time_name], timeseries_df[var_name])
 
         # Use actual lat/lon values from the DataFrame for the title, as 'nearest' might pick a slightly different point.
@@ -2277,7 +2331,6 @@ class ZarrDataSource(DataSource):
                         ),
                     }
                 )
-                breakpoint()
                 if data.isnull().all():
                     plot_data_cache[date_obj] = None  # Mark as no data
                     continue
