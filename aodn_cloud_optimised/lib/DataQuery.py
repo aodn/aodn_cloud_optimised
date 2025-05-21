@@ -301,9 +301,7 @@ def create_time_filter(dataset: ds.Dataset, **kwargs) -> pc.Expression:
 
     # boundary check
     # Convert date_start string to a datetime object
-    date_start_dt = datetime.strptime(date_start, "%Y-%m-%d").replace(
-        tzinfo=timezone.utc
-    )
+    date_start_dt = parse(date_start, default=DEFAULT_TIME).replace(tzinfo=timezone.utc)
 
     # Compare
     is_date_start_after_timestamp_end = date_start_dt > timestamp_end
@@ -315,7 +313,7 @@ def create_time_filter(dataset: ds.Dataset, **kwargs) -> pc.Expression:
         )
     # do the same for the other part of the time boundary check
     # Convert date_start string to a datetime object
-    date_end_dt = datetime.strptime(date_end, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+    date_end_dt = parse(date_end, default=DEFAULT_TIME).replace(tzinfo=timezone.utc)
 
     # Compare
     is_date_end_before_timestamp_start = date_end_dt < timestamp_start
@@ -391,7 +389,8 @@ def validate_date(date_str: str) -> bool:
         False otherwise.
     """
     try:
-        datetime.strptime(date_str, "%Y-%m-%d")
+        # datetime.strptime(date_str, "%Y-%m-%d")
+        parse(date_str, default=DEFAULT_TIME)
         return True
     except ValueError:
         return False
