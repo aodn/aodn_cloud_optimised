@@ -1878,6 +1878,11 @@ class ZarrDataSource(DataSource):
         # Call the global plotting function
         plot_time_coverage(self.zarr_store, time_var=time_var_name)
 
+    def get_temporal_extent_from_timestamp_partition(self):
+        raise NotImplementedError(
+            "get_temporal_extent_from_timestamp_partition is not supported for ZarrDataSource"
+        )
+
     def get_timeseries_data(
         self,
         lat: float,
