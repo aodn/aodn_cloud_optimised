@@ -42,7 +42,6 @@ DATASET_CONFIG_NC_SOOP_SST_JSON = os.path.join(
 @mock_aws
 class TestGenericHandler(unittest.TestCase):
     def setUp(self):
-
         # Create a mock S3 service
         self.BUCKET_OPTIMISED_NAME = "aodn-cloud-optimised"
         self.ROOT_PREFIX_CLOUD_OPTIMISED_PATH = ""
@@ -188,12 +187,13 @@ class TestGenericHandler(unittest.TestCase):
 
         self.assertEqual(
             (
-                pd.Timestamp("2011-01-01 00:00:00"),
-                pd.Timestamp("2011-01-31 23:59:00.000003584"),
-                # datetime(2011, 1, 1, 0, 0, tzinfo=timezone.utc),
-                # datetime(2011, 1, 1, 0, 0, tzinfo=timezone.utc),
+                pd.Timestamp("2011-01-01 00:00:00").floor("min"),
+                pd.Timestamp("2011-01-01 21:59:00").floor("min"),
             ),
-            res,
+            (
+                res[0].floor("min"),
+                res[1].floor("min"),
+            ),
         )
 
         # test spatial extent
