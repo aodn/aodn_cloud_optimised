@@ -4,11 +4,11 @@
   "cloud_optimised_format": "parquet",
   "coiled_cluster_options": {
     "n_workers": [
-      1,
-      20
+      15,
+      40
     ],
-    "scheduler_vm_types": "t3.small",
-    "worker_vm_types": "t3.xlarge",
+    "scheduler_vm_types": "m7i.large",
+    "worker_vm_types": "m7i.xlarge",
     "allow_ingress_from": "me",
     "compute_purchase_option": "spot_with_fallback",
     "worker_options": {

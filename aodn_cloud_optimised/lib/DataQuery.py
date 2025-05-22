@@ -45,6 +45,15 @@ BUCKET_OPTIMISED_DEFAULT = "aodn-cloud-optimised"
 ROOT_PREFIX_CLOUD_OPTIMISED_PATH = ""
 DEFAULT_TIME = datetime(1900, 1, 1)
 
+from functools import lru_cache
+
+
+@lru_cache(maxsize=1)
+def get_s3_filesystem():
+    return fs.S3FileSystem(
+        region=REGION, endpoint_override=ENDPOINT_URL, anonymous=True
+    )
+
 
 def query_unique_value(dataset: ds.Dataset, partition: str) -> Set[str]:
     """Queries unique values for a given Hive partition key in a PyArrow dataset.
@@ -110,8 +119,8 @@ def get_temporal_extent(
         A tuple containing the minimum and maximum pandas Timestamp objects
         found within the dataset's time variable.
     """
-    base_path = dataset.files[0].split(f".parquet")[0]  # crude, adjust if needed
-    dname = f"s3://anonymous@{base_path}.parquet"
+    # base_path = dataset.files[0].split(f".parquet")[0]  # crude,
+    # dname = f"s3://anonymous@{base_path}.parquet"
 
     # dname = f"s3://anonymous@{dataset.__dict__['_base_dir']}"
     unique_timestamps = query_unique_value(dataset, "timestamp")
@@ -566,7 +575,7 @@ def plot_spatial_extent(
 
     ax.add_feature(cfeature.BORDERS, linestyle=":", edgecolor="gray")
     ax.add_feature(cfeature.LAND, edgecolor="black")
-    ax.add_feature(cfeature.OCEAN, facecolor="lightblue")
+    ax.add_feature(cfeature.OCEAN)  # , facecolor="lightblue")
 
     # Add grid lines
 
@@ -577,7 +586,7 @@ def plot_spatial_extent(
     gl.ylabel_style = {"size": 10, "color": "black"}
 
     ax.set_title("Spatial Extent and Coastline")
-    ax.legend()
+    # ax.legend()
 
     plt.show()
 
@@ -1109,16 +1118,19 @@ def get_schema_metadata(dname: str) -> dict:
     """
     name = dname.replace("s3://", "")
     name = name.replace("anonymous@", "")
+    print(f"Retrieving metadata for {name}")
 
-    parquet_meta = pa.parquet.read_schema(
-        os.path.join(name, "_common_metadata"),
-        # Pyarrow can infer file system from path prefix with s3 but it will try
-        # to scan local file system before infer and get a pyarrow s3 file system
-        # which is very slow to start, read_schema no s3 prefix needed
-        filesystem=fs.S3FileSystem(
-            region=REGION, endpoint_override=ENDPOINT_URL, anonymous=True
-        ),
-    )
+    s3 = get_s3_filesystem()
+    meta_name = os.path.join(name, "_common_metadata")
+    dataset = ds.dataset(meta_name, format="parquet", filesystem=s3)
+    parquet_meta = dataset.schema
+    # parquet_meta = pa.parquet.read_schema(
+    #     os.path.join(name, "_common_metadata"),
+    #     # Pyarrow can infer file system from path prefix with s3 but it will try
+    #     # to scan local file system before infer and get a pyarrow s3 file system
+    #     # which is very slow to start, read_schema no s3 prefix needed
+    #     filesystem=s3,
+    # )
 
     # horrible ... but got to be done. The dictionary of metadata has to be a dictionnary with byte keys and byte values.
     # meaning that we can't have nested dictionaries ...
@@ -1185,6 +1197,7 @@ def get_zarr_metadata(dname: str) -> dict:
         Returns a basic dict with an "error" key if opening fails.
     """
     name = dname.replace("anonymous@", "")
+    print(f"Retrieving metadata for {name}")
 
     try:
         # Use fsspec mapper for xarray to access S3 anonymously
@@ -1220,6 +1233,10 @@ class DataSource(ABC):
         self.prefix = prefix
         self.dataset_name = dataset_name
         self.dname = self._build_data_path()
+
+        if ".parquet" in self.dname:
+            self.s3 = get_s3_filesystem()
+            self.dataset = self._create_pyarrow_dataset()
 
     @abstractmethod
     def _build_data_path(self) -> str:
@@ -1306,6 +1323,17 @@ class DataSource(ABC):
 class ParquetDataSource(DataSource):
     """DataSource implementation for Parquet datasets."""
 
+    def __init__(self, bucket_name: str, prefix: str, dataset_name: str):
+        """Initialises the ParquetDataSource.
+
+        Args:
+            bucket_name: The S3 bucket name.
+            prefix: The S3 prefix (folder path) within the bucket.
+            dataset_name: The name of the dataset including the '.parquet'
+                extension.
+        """
+        super().__init__(bucket_name, prefix, dataset_name)
+
     def _build_data_path(self) -> str:
         """Constructs the S3 path for the Parquet dataset directory.
 
@@ -1321,18 +1349,6 @@ class ParquetDataSource(DataSource):
             .as_uri()
         )
         return dname_uri.replace("s3://anonymous%40", "")
-
-    def __init__(self, bucket_name: str, prefix: str, dataset_name: str):
-        """Initialises the ParquetDataSource.
-
-        Args:
-            bucket_name: The S3 bucket name.
-            prefix: The S3 prefix (folder path) within the bucket.
-            dataset_name: The name of the dataset including the '.parquet'
-                extension.
-        """
-        super().__init__(bucket_name, prefix, dataset_name)
-        self.dataset = self._create_pyarrow_dataset()
 
     def get_unique_partition_values(self, partition_name) -> Set[str]:
         return query_unique_value(self.dataset, partition_name)
@@ -1351,9 +1367,7 @@ class ParquetDataSource(DataSource):
             self.dname,
             format="parquet",
             partitioning="hive",
-            filesystem=fs.S3FileSystem(
-                region=REGION, endpoint_override=ENDPOINT_URL, anonymous=True
-            ),
+            filesystem=self.s3,
         )
 
     def partition_keys_list(self) -> pa.Schema:
