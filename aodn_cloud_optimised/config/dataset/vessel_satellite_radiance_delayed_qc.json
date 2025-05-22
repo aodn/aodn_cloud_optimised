@@ -1,6 +1,6 @@
 {
-  "dataset_name": "vessel_satellite_radiance",
-  "logger_name": "vessel_satellite_radiance",
+  "dataset_name": "vessel_satellite_radiance_delayed_qc",
+  "logger_name": "vessel_satellite_radiance_delayed_qc",
   "cloud_optimised_format": "zarr",
   "coiled_cluster_options": {
     "n_workers": [
@@ -305,7 +305,7 @@
     "Resources": [
       {
         "Description": "Cloud Optimised AODN dataset of IMOS - Satellite Remote Sensing - Ocean Colour - Ships of Opportunity - Radiometer Sub-Facility",
-        "ARN": "arn:aws:s3:::aodn-cloud-optimised/vessel_satellite_radiance.zarr",
+        "ARN": "arn:aws:s3:::aodn-cloud-optimised/vessel_satellite_radiance_delayed_qc.zarr",
         "Region": "ap-southeast-2",
         "Type": "S3 Bucket"
       }
@@ -314,8 +314,8 @@
       "Tutorials": [
         {
           "Title": "Accessing IMOS - Satellite Remote Sensing - Ocean Colour - Ships of Opportunity - Radiometer Sub-Facility",
-          "URL": "https://nbviewer.org/github/aodn/aodn_cloud_optimised/blob/main/notebooks/vessel_satellite_radiance.ipynb",
-          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/vessel_satellite_radiance.ipynb",
+          "URL": "https://nbviewer.org/github/aodn/aodn_cloud_optimised/blob/main/notebooks/vessel_satellite_radiance_delayed_qc.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/vessel_satellite_radiance_delayed_qc.ipynb",
           "AuthorName": "Laurent Besnard",
           "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
         },
