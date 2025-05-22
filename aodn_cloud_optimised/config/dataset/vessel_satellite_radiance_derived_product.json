@@ -7,7 +7,7 @@
       5,
       20
     ],
-    "scheduler_vm_types": "m7i.large",
+    "scheduler_vm_types": "m7i.xlarge",
     "worker_vm_types": "m7i.xlarge",
     "allow_ingress_from": "me",
     "compute_purchase_option": "spot_with_fallback",
@@ -21,12 +21,12 @@
   "dimensions": {
     "time": {
       "name": "TIME",
-      "chunk": 0,
+      "chunk": 10000,
       "rechunk": false
     },
     "WAVELENGTH": {
       "name": "WAVELENGTH",
-      "chunk": 0,
+      "chunk": 596,
       "size": 569
     }
   },
