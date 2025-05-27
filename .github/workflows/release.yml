@@ -80,14 +80,21 @@ jobs:
         run: |
           git push origin HEAD:main
 
-      # build the package after bumping version
-      - name: Build package
+      - name: Build frozen and non-frozen wheels
         run: |
-          poetry build
+          # Frozen wheel
 
-          # add freeze step see https://github.com/python-poetry/poetry/issues/2778
           poetry self add poetry-plugin-freeze
+          poetry build
           poetry freeze-wheel
+          mkdir -p dist-frozen
+          cp dist/*.whl dist-frozen/
+      
+          # Non-frozen wheel
+
+          poetry build -f wheel
+          mkdir -p dist-nofreeze
+          cp dist/*.whl dist-nofreeze/
 
       - name: Delete existing tag (if any)
         run: |
@@ -113,9 +120,10 @@ jobs:
 
       - name: Upload assets to release
         run: |
-          gh release upload v${{ env.new_version }} dist/*.whl dist/*.tar.gz
+          gh release upload v${{ env.new_version }} dist-frozen/*.whl dist-nofreeze/*.whl dist/*.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  
 
       # Delete latest draft release
       - name: Delete latest draft release
