@@ -51,8 +51,6 @@ dask-expr = ">=2.0.0"                                      # needs to be added f
 colorama = ">=0.4.6"
 s3path = ">=0.5.7"
 python-levenshtein = "^0.25.1"
-packaging = "<24.3"
-importlib-metadata = "<8.7.0"
 
 [tool.poetry.group.dev.dependencies]
 poetry = ">=2.1.3"
