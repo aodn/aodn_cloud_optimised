@@ -50,7 +50,10 @@ from aodn_cloud_optimised.bin.create_aws_registry_dataset import (
 )
 from aodn_cloud_optimised.lib.config import load_dataset_config
 from aodn_cloud_optimised.lib.config import load_variable_from_config, merge_dicts
-from aodn_cloud_optimised.lib.schema import generate_json_schema_from_s3_netcdf
+from aodn_cloud_optimised.lib.schema import (
+    generate_json_schema_from_s3_netcdf,
+    nullify_netcdf_variables,
+)
 
 
 def validate_dataset_name(value):
@@ -196,7 +199,7 @@ def main():
     command = [
         "generic_cloud_optimised_creation",
         "--paths",
-        "{os.path.dirname(nc_file_path).replace(f's3://{bucket}/','')}",
+        "{os.path.dirname(nc_file_path).replace(f"s3://{bucket}/", "")}",
         #"--filters",
         #"FILTER_STRING_1",
         #"FILTER_STRING_1",
@@ -555,7 +558,6 @@ def create_notebook(dataset_name):
     metadata_url = f"[here](https://catalogue-imos.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/{metadata_uuid})"
 
     if not os.path.exists(notebook_path):
-
         if cloud_optimised_format == "parquet":
             cloud_format_url = "[Parquet](https://parquet.apache.org)"
             with open(notebook_parquet_template_path) as f:
@@ -599,7 +601,8 @@ def main():
 
     This script performs the following tasks:
 
-    1. Generates a JSON schema from the NetCDF file located in the S3 bucket.
+    1. a. Generates a JSON schema from the NetCDF file located in the S3 bucket.
+       b. Generates a NetCDF file template with fill with NaNs alongside the json schema. Used to restore missing dimensions
     2. Reads and merges the validation schema template with the generated schema.
     3. Populates the dataset configuration with additional metadata including dataset name, metadata UUID, logger name,
        cloud-optimised format, cluster options, and batch size.
@@ -672,6 +675,11 @@ def main():
 
     # Construct the S3 file path
     nc_file = PureS3Path.from_uri(f"s3://{bucket}").joinpath(obj_key).as_uri()
+
+    # Create an empty NetCDF with NaN variables alongside the JSON files. Acts as the source of truth for restoring missing dimensions.
+    # only useful for Zarr to concatenate NetCDF together with missing var/dim in some NetCDF files
+    if args.cloud_format == "zarr":
+        nc_nullify_path = nullify_netcdf_variables(nc_file, args.dataset_name)
 
     # Generate JSON schema from the NetCDF file
     temp_file_path = generate_json_schema_from_s3_netcdf(
