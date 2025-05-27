@@ -89,7 +89,7 @@ jobs:
           poetry freeze-wheel
           mkdir -p dist-frozen
           cp dist/*.whl dist-frozen/
-      
+
           # Non-frozen wheel
 
           poetry build -f wheel
@@ -123,7 +123,7 @@ jobs:
           gh release upload v${{ env.new_version }} dist-frozen/*.whl dist-nofreeze/*.whl dist/*.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  
+
 
       # Delete latest draft release
       - name: Delete latest draft release
