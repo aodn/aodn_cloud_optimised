@@ -4,11 +4,11 @@
   "cloud_optimised_format": "zarr",
   "coiled_cluster_options": {
     "n_workers": [
-      1,
+      8,
       20
     ],
-    "scheduler_vm_types": "m7i.large",
-    "worker_vm_types": "m7i.xlarge",
+    "scheduler_vm_types": "m7i.xlarge",
+    "worker_vm_types": "m7i.large",
     "allow_ingress_from": "me",
     "compute_purchase_option": "spot_with_fallback",
     "worker_options": {
@@ -16,7 +16,7 @@
       "memory_limit": "16GB"
     }
   },
-  "batch_size": 1,
+  "batch_size": 50,
   "metadata_uuid": "28f8bfed-ca6a-472a-84e4-42563ce4df3f",
   "dimensions": {
     "time": {
@@ -26,17 +26,17 @@
     },
     "WAVELENGTH_Ed": {
       "name": "WAVELENGTH_Ed",
-      "chunk": 0,
+      "chunk": 200,
       "size": 200
     },
     "WAVELENGTH_Lu": {
       "name": "WAVELENGTH_Lu",
-      "chunk": 0,
+      "chunk": 200,
       "size": 200
     },
     "WAVELENGTH_Lsky": {
       "name": "WAVELENGTH_Lsky",
-      "chunk": 0,
+      "chunk": 200,
       "size": 200
     }
   },
@@ -56,8 +56,22 @@
       "destination_name": "platform_code",
       "dimensions": "TIME",
       "length": 7
+    },
+    "voyage_number": {
+      "destination_name": "voyage_number",
+      "dimensions": "TIME",
+      "length": 10
     }
   },
+  "gattrs_to_delete": [
+    "Voyage_number",
+    "platform_code",
+    "geospatial_lat_max",
+    "geospatial_lat_min",
+    "geospatial_lon_max",
+    "geospatial_lon_min",
+    "date_created"
+  ],
   "schema": {
     "TIME": {
       "type": "timestamp[ns]",

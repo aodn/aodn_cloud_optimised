@@ -27,12 +27,38 @@
     "WAVELENGTH": {
       "name": "WAVELENGTH",
       "chunk": 596,
-      "size": 569
+      "size": 596
     }
   },
   "var_template_shape": "rho",
   "vars_incompatible_with_region": [
     "WAVELENTGH"
+  ],
+  "gatts_to_variable": {
+    "file_version": {
+      "destination_name": "quality_control_version",
+      "dimensions": "TIME",
+      "length": 49
+    },
+    "platform_code": {
+      "destination_name": "platform_code",
+      "dimensions": "TIME",
+      "length": 7
+    },
+    "voyage_number": {
+      "destination_name": "voyage_number",
+      "dimensions": "TIME",
+      "length": 10
+    }
+  },
+  "gattrs_to_delete": [
+    "Voyage_number",
+    "platform_code",
+    "geospatial_lat_max",
+    "geospatial_lat_min",
+    "geospatial_lon_max",
+    "geospatial_lon_min",
+    "date_created"
   ],
   "schema": {
     "TIME": {
