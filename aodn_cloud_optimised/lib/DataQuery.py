@@ -4,14 +4,13 @@ Notebooks
 """
 
 import json
-import os
+import logging
+import posixpath
 import re
 from abc import ABC, abstractmethod
 from datetime import datetime, timedelta, timezone
 from functools import lru_cache
 from typing import Any, Final, Set
-import logging
-import posixpath
 
 import boto3
 import cartopy.crs as ccrs  # For coastline plotting
@@ -41,13 +40,13 @@ from shapely import wkb
 from shapely.geometry import MultiPolygon, Polygon
 from windrose import WindroseAxes
 
+__version__ = "0.2.0"
+
 REGION: Final[str] = "ap-southeast-2"
 ENDPOINT_URL = f"https://s3.ap-southeast-2.amazonaws.com"
 BUCKET_OPTIMISED_DEFAULT = "aodn-cloud-optimised"
 ROOT_PREFIX_CLOUD_OPTIMISED_PATH = ""
 DEFAULT_TIME = datetime(1900, 1, 1)
-
-from functools import lru_cache
 
 
 @lru_cache(maxsize=1)
