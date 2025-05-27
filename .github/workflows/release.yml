@@ -93,8 +93,9 @@ jobs:
           # Non-frozen wheel
 
           poetry build -f wheel
+          mv dist/aodn_cloud_optimised-0.1.43-py3-none-any.whl dist/aodn_cloud_optimised-0.1.43-unfrozen-py3-none-any.whl
           mkdir -p dist-nofreeze
-          cp dist/*.whl dist-nofreeze/
+          cp dist/*-unfrozen-*.whl dist-nofreeze/
 
       - name: Delete existing tag (if any)
         run: |
