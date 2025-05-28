@@ -1,0 +1,266 @@
+{
+  "dataset_name": "vessel_satellite_radiance_derived_product",
+  "logger_name": "vessel_satellite_radiance_derived_product",
+  "cloud_optimised_format": "zarr",
+  "coiled_cluster_options": {
+    "n_workers": [
+      5,
+      20
+    ],
+    "scheduler_vm_types": "m7i.xlarge",
+    "worker_vm_types": "m7i.xlarge",
+    "allow_ingress_from": "me",
+    "compute_purchase_option": "spot_with_fallback",
+    "worker_options": {
+      "nthreads": 4,
+      "memory_limit": "8GB"
+    }
+  },
+  "batch_size": 50,
+  "metadata_uuid": "28f8bfed-ca6a-472a-84e4-42563ce4df3f",
+  "dimensions": {
+    "time": {
+      "name": "TIME",
+      "chunk": 10000,
+      "rechunk": false
+    },
+    "WAVELENGTH": {
+      "name": "WAVELENGTH",
+      "chunk": 596,
+      "size": 596
+    }
+  },
+  "var_template_shape": "rho",
+  "vars_incompatible_with_region": [
+    "WAVELENTGH"
+  ],
+  "gatts_to_variable": {
+    "file_version": {
+      "destination_name": "quality_control_version",
+      "dimensions": "TIME",
+      "length": 49
+    },
+    "platform_code": {
+      "destination_name": "platform_code",
+      "dimensions": "TIME",
+      "length": 7
+    },
+    "voyage_number": {
+      "destination_name": "voyage_number",
+      "dimensions": "TIME",
+      "length": 10
+    }
+  },
+  "gattrs_to_delete": [
+    "Voyage_number",
+    "platform_code",
+    "geospatial_lat_max",
+    "geospatial_lat_min",
+    "geospatial_lon_max",
+    "geospatial_lon_min",
+    "date_created"
+  ],
+  "schema": {
+    "TIME": {
+      "type": "timestamp[ns]",
+      "long_name": "UTC time",
+      "axis": "T",
+      "standard_name": "time",
+      "valid_min": 0.0,
+      "valid_max": 10000000000.0
+    },
+    "WAVELENGTH": {
+      "type": "double",
+      "long_name": "wavelength",
+      "standard_name": "radiation_wavelength",
+      "units": "nm",
+      "valid_min": 398.0,
+      "valid_max": 1062.0,
+      "comment": "Wavelengths associated with the Rrs values after the input spectral values were resampled to common spectral bandwidth and abscissa values."
+    },
+    "LATITUDE": {
+      "type": "double",
+      "long_name": "latitude",
+      "units": "degrees_north",
+      "axis": "Y",
+      "reference_datum": "geographical coordinates, WGS84 projection",
+      "standard_name": "latitude",
+      "valid_min": -90.0,
+      "valid_max": 90.0
+    },
+    "LONGITUDE": {
+      "type": "double",
+      "long_name": "longitude",
+      "units": "degrees_east",
+      "axis": "X",
+      "reference_datum": "geographical coordinates, WGS84 projection",
+      "standard_name": "longitude",
+      "valid_min": -180.0,
+      "valid_max": 180.0
+    },
+    "relaz": {
+      "type": "double",
+      "dims": [
+        "TIME"
+      ],
+      "long_name": "relative solar azimuth",
+      "standard_name": "angle_of_rotation_from_solar_azimuth_to_platform_azimuth",
+      "units": "degrees"
+    },
+    "sza": {
+      "type": "double",
+      "dims": [
+        "TIME"
+      ],
+      "long_name": "solar zenith angle",
+      "standard_name": "solar_zenith_angle",
+      "units": "degrees"
+    },
+    "pitch": {
+      "type": "double",
+      "dims": [
+        "TIME"
+      ],
+      "long_name": "Platform pitch angle",
+      "standard_name": "platform_pitch_angle",
+      "units": "degrees"
+    },
+    "pitchsd": {
+      "type": "double",
+      "dims": [
+        "TIME"
+      ],
+      "long_name": "DALEC pitch standard deviation",
+      "standard_name": "platform_pitch_angle standard_error",
+      "cell_methods": "TIME: standard_deviation",
+      "units": "degrees"
+    },
+    "roll": {
+      "type": "double",
+      "dims": [
+        "TIME"
+      ],
+      "long_name": "Platform roll angle",
+      "standard_name": "platform_roll_angle",
+      "units": "degrees"
+    },
+    "rollsd": {
+      "type": "double",
+      "dims": [
+        "TIME"
+      ],
+      "long_name": "DALEC roll standard deviation",
+      "standard_name": "platform_roll_angle standard_error",
+      "cell_methods": "TIME: standard_deviation",
+      "units": "degrees"
+    },
+    "gearpos": {
+      "type": "double",
+      "dims": [
+        "TIME"
+      ],
+      "long_name": "DALEC gear position",
+      "units": "degrees"
+    },
+    "Rrs": {
+      "type": "double",
+      "dims": [
+        "WAVELENGTH",
+        "TIME"
+      ],
+      "long_name": "Remote Sensing Reflectance",
+      "varname": "Rrs",
+      "units": "sr^-1",
+      "cell_method": "LATITUDE: LONGITUDE: TIME: point",
+      "slope": 1.0,
+      "intercept": 0.0,
+      "ancillary_variables": "Rrs_xflags relaz sza windspeed"
+    },
+    "windspeed": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "long_name": "Wind speed",
+      "varname": "windspeed",
+      "units": "knots",
+      "slope": 1.0,
+      "intercept": 0.0,
+      "wind_source": "Measured"
+    },
+    "rho": {
+      "type": "double",
+      "dims": [
+        "WAVELENGTH",
+        "TIME"
+      ],
+      "long_name": "Fractional contribution of reflected sky light",
+      "varname": "rho",
+      "units": "1",
+      "cell_method": "LATITUDE: LONGITUDE: TIME: point",
+      "slope": 1.0,
+      "intercept": 0.0,
+      "ancillary_variables": "relaz sza windspeed"
+    },
+    "Rrs_xflags": {
+      "type": "int32",
+      "dims": [
+        "WAVELENGTH",
+        "TIME"
+      ],
+      "long_name": "Extra Flag for Remote Sensing Reflectance",
+      "varname": "Rrs_xflags",
+      "standard_name": "status_flag",
+      "ancillary_variables": "relaz sza windspeed",
+      "flag_meanings": "sza_below_50 sza_above_50 sza_below_10",
+      "flag_description": "A flag value of 1 indicates that the solar zenith angle exceeds 50 degrees. \nA flag value of 2 indicates that the solar zenith angle is less than 10 degrees and data is likely to be affected by residual sun glint. \nThe Rrs data with Rrs_xflags>0 may be excluded for precision uses.",
+      "flag_values": [
+        0,
+        1,
+        2
+      ]
+    }
+  },
+  "dataset_gattrs": {
+    "title": "FILL UP MANUALLY - CHECK DOCUMENTATION"
+  },
+  "aws_opendata_registry": {
+    "Name": "IMOS - Satellite Remote Sensing - Ocean Colour - Ships of Opportunity - Radiometer Sub-Facility",
+    "Description": "Calibrated DALEC Transect data The Dynamic above water radiance and irradiance collector (DALEC) is a radiometrically calibrated hyperspectral radiometer developed by In situ Marine Optics for autonomous ship based deployment. It contains three Zeiss UV-Vis enhanced spectroradiometers designed to measure near-simultaneous spectral upwelling radiance (Lu), downwelling radiance (Lsky) and downwelling irradiance (Ed). DALEC0001 is deployed on the foremast of the RV Southern Surveyor (VLHJ) and on the RV Solander. Spectra are collected during daylight hours when the ship is at sea subject to suitable sea conditions. Ancillary attitude data for the DALEC included in the dataset are pitch (degrees), pitch standard deviation (degrees), roll (degrees), roll standard deviation (degrees) and gear position (degrees from the bow). The dataset begins July 2011 and is on-going.",
+    "Documentation": "https://catalogue-imos.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/28f8bfed-ca6a-472a-84e4-42563ce4df3f",
+    "Contact": "info@aodn.org.au",
+    "ManagedBy": "AODN",
+    "UpdateFrequency": "As Needed",
+    "Tags": [
+      "FILL UP MANUALLY - CHECK DOCUMENTATION"
+    ],
+    "License": "http://creativecommons.org/licenses/by/4.0/",
+    "Resources": [
+      {
+        "Description": "Cloud Optimised AODN dataset of IMOS - Satellite Remote Sensing - Ocean Colour - Ships of Opportunity - Radiometer Sub-Facility",
+        "ARN": "arn:aws:s3:::aodn-cloud-optimised/vessel_satellite_radiance_derived_product.zarr",
+        "Region": "ap-southeast-2",
+        "Type": "S3 Bucket"
+      }
+    ],
+    "DataAtWork": {
+      "Tutorials": [
+        {
+          "Title": "Accessing IMOS - Satellite Remote Sensing - Ocean Colour - Ships of Opportunity - Radiometer Sub-Facility",
+          "URL": "https://nbviewer.org/github/aodn/aodn_cloud_optimised/blob/main/notebooks/vessel_satellite_radiance_derived_product.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/vessel_satellite_radiance_derived_product.ipynb",
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
+        },
+        {
+          "Title": "Accessing and search for any AODN dataset",
+          "URL": "https://nbviewer.org/github/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
+        }
+      ]
+    },
+    "Citation": "IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access]"
+  }
+}

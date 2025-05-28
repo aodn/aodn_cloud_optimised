@@ -4,12 +4,13 @@ Notebooks
 """
 
 import json
-import os
+import logging
+import posixpath
 import re
 from abc import ABC, abstractmethod
 from datetime import datetime, timedelta, timezone
 from functools import lru_cache
-from typing import Final, Set
+from typing import Any, Final, Set
 
 import boto3
 import cartopy.crs as ccrs  # For coastline plotting
@@ -39,13 +40,13 @@ from shapely import wkb
 from shapely.geometry import MultiPolygon, Polygon
 from windrose import WindroseAxes
 
+__version__ = "0.2.0"
+
 REGION: Final[str] = "ap-southeast-2"
 ENDPOINT_URL = f"https://s3.ap-southeast-2.amazonaws.com"
 BUCKET_OPTIMISED_DEFAULT = "aodn-cloud-optimised"
 ROOT_PREFIX_CLOUD_OPTIMISED_PATH = ""
 DEFAULT_TIME = datetime(1900, 1, 1)
-
-from functools import lru_cache
 
 
 @lru_cache(maxsize=1)
@@ -823,6 +824,7 @@ def plot_gridded_variable(
     - coastline_resolution: str, resolution of the coastlines ('110m', '50m', '10m').
     - log_scale: bool, whether to use a logarithmic color scale (default is False).
     """
+    logger = logging.getLogger("aodn.GetAodn")
 
     ds = ds.sortby(time_name)
 
@@ -863,7 +865,7 @@ def plot_gridded_variable(
 
     # Find the nearest date in the dataset
     nearest_date = ds.sel({time_name: start_date_parsed}, method="nearest")[time_name]
-    print(f"Nearest date in dataset: {nearest_date}")
+    logger.info(f"Nearest date in dataset: {nearest_date}")
 
     # Get the index of the nearest date
     nearest_date_index = (
@@ -879,7 +881,7 @@ def plot_gridded_variable(
 
     # Retrieve variable-specific metadata
     var_long_name = ds[var_name].attrs.get("long_name", var_name)
-    print(f"Variable Long Name: {var_long_name}")
+    logger.info(f"Variable Long Name: {var_long_name}")
 
     # Create subplots with Cartopy for coastlines
     fig, axes = plt.subplots(
@@ -909,7 +911,7 @@ def plot_gridded_variable(
 
             # Check for NaNs
             if data.isnull().all():
-                print(
+                logger.warning(
                     f"No valid data for {date.strftime('%Y-%m-%d %H:%M:%S')}, skipping this date."
                 )
                 continue
@@ -937,7 +939,7 @@ def plot_gridded_variable(
                 )
 
         except Exception as err:
-            print(f"Error processing date {date.strftime('%Y-%m-%d')}: {err}")
+            logger.error(f"Error processing date {date.strftime('%Y-%m-%d')}: {err}")
             continue
 
     # Check if vmin or vmax are still invalid (if no data was found)
@@ -959,7 +961,7 @@ def plot_gridded_variable(
 
             # Skip if no valid data is found for the date
             if data.isnull().all():
-                print(
+                logger.warning(
                     f"No data for {date.strftime('%Y-%m-%d %H:%M:%S')}, skipping plot."
                 )
                 continue
@@ -989,7 +991,9 @@ def plot_gridded_variable(
             ax.set_title(date.strftime("%Y-%m-%d %H:%M:%S"))
 
         except Exception as err:
-            print(f"Error processing date {date.strftime('%Y-%m-%d %H:%M:%S')}: {err}")
+            logger.error(
+                f"Error processing date {date.strftime('%Y-%m-%d %H:%M:%S')}: {err}"
+            )
             ax.set_title(f"No data for {date.strftime('%Y-%m-%d %H:%M:%S')}")
             ax.axis("off")
 
@@ -1118,10 +1122,11 @@ def get_schema_metadata(dname: str) -> dict:
     """
     name = dname.replace("s3://", "")
     name = name.replace("anonymous@", "")
-    print(f"Retrieving metadata for {name}")
+    logger = logging.getLogger("aodn.GetAodn")
+    logger.info(f"Retrieving metadata for {name}")
 
     s3 = get_s3_filesystem()
-    meta_name = os.path.join(name, "_common_metadata")
+    meta_name = posixpath.join(name, "_common_metadata")
     dataset = ds.dataset(meta_name, format="parquet", filesystem=s3)
     parquet_meta = dataset.schema
     # parquet_meta = pa.parquet.read_schema(
@@ -1144,6 +1149,14 @@ def get_schema_metadata(dname: str) -> dict:
     # }
 
     decoded_meta = decode_and_load_json(parquet_meta.metadata)
+
+    # handling old configuration of parquet creation. Should be deprecated at some stage but not impacting much
+    if "dataset_metadata" in decoded_meta:
+        logger.warning(
+            "Old 'dataset_medata' deprecated key found in parquet schema. Renamed to 'global_attributes'. Dataset should be updated"
+        )
+        decoded_meta["global_attributes"] = decoded_meta.pop("dataset_metadata")
+
     return decoded_meta
 
 
@@ -1164,6 +1177,7 @@ def decode_and_load_json(metadata: dict[bytes, bytes]) -> dict[str, any]:
         A dictionary with decoded string keys and parsed Python objects as values.
         Keys or values that failed decoding/parsing are omitted.
     """
+    logger = logging.getLogger("aodn.GetAodn")
     decoded_metadata = {}
     for key, value in metadata.items():
         try:
@@ -1173,10 +1187,10 @@ def decode_and_load_json(metadata: dict[bytes, bytes]) -> dict[str, any]:
 
             decoded_metadata[key.decode("utf-8")] = json.loads(value_str)
         except json.JSONDecodeError as e:
-            print(f"Error decoding JSON for key {key}: {e}")
-            print(f"Problematic JSON string: {value_str}")
+            logger.error(f"Error decoding JSON for key {key}: {e}")
+            logger.error(f"Problematic JSON string: {value_str}")
         except Exception as e:
-            print(f"Unexpected error for key {key}: {e}")
+            logger.error(f"Unexpected error for key {key}: {e}")
     return decoded_metadata
 
 
@@ -1196,8 +1210,9 @@ def get_zarr_metadata(dname: str) -> dict:
         with values being dictionaries of their respective attributes.
         Returns a basic dict with an "error" key if opening fails.
     """
+    logger = logging.getLogger("aodn.GetAodn")
     name = dname.replace("anonymous@", "")
-    print(f"Retrieving metadata for {name}")
+    logger.info(f"Retrieving metadata for {name}")
 
     try:
         # Use fsspec mapper for xarray to access S3 anonymously
@@ -1209,7 +1224,7 @@ def get_zarr_metadata(dname: str) -> dict:
                 metadata[var_name] = variable.attrs.copy()
         return metadata
     except Exception as e:
-        print(f"Error opening or processing Zarr metadata from {dname}: {e}")
+        logger.error(f"Error opening or processing Zarr metadata from {dname}: {e}")
         return {"global_attributes": {}, "error": str(e)}
 
 
@@ -1220,7 +1235,13 @@ def get_zarr_metadata(dname: str) -> dict:
 class DataSource(ABC):
     """Abstract Base Class for accessing different data source formats (Parquet, Zarr)."""
 
-    def __init__(self, bucket_name: str, prefix: str, dataset_name: str):
+    def __init__(
+        self,
+        bucket_name: str,
+        prefix: str,
+        dataset_name: str,
+        logger: logging.Logger | None = None,
+    ):
         """Initialises the DataSource.
 
         Args:
@@ -1228,11 +1249,22 @@ class DataSource(ABC):
             prefix: The S3 prefix (folder path) within the bucket.
             dataset_name: The name of the dataset (including extension,
                 e.g., "my_data.parquet" or "my_data.zarr").
+            logger: Optional logger to use. If not provided, a default logger will be created.
         """
         self.bucket_name = bucket_name
         self.prefix = prefix
         self.dataset_name = dataset_name
         self.dname = self._build_data_path()
+
+        self.logger = logger or logging.getLogger("aodn.GetAodn")
+        if not self.logger.handlers:
+            handler = logging.StreamHandler()
+            formatter = logging.Formatter(
+                "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+            )
+            handler.setFormatter(formatter)
+            self.logger.addHandler(handler)
+            self.logger.propagate = False
 
         if ".parquet" in self.dname:
             self.s3 = get_s3_filesystem()
@@ -1645,12 +1677,12 @@ class ZarrDataSource(DataSource):
                 # Or re-raise if sorting is critical. For now, let's log and return.
                 # Consider if self.get_logger() is available here.
                 # If not, use a simple print or a default logger.
-                print(
-                    f"Warning: Could not find time variable to sort Zarr store {self.dname}: {ve}. Returning unsorted."
+                self.logger.warning(
+                    f"Could not find time variable to sort Zarr store {self.dname}: {ve}. Returning unsorted."
                 )
                 return ds  # Return unsorted if time var not found, or raise
         except Exception as e:
-            print(f"Error opening Zarr store {self.dname}: {e}")
+            self.logger.error(f"Opening Zarr store {self.dname}: {e}")
             raise
 
     def _find_lat_lon_vars(self, ds: xr.Dataset) -> tuple[xr.DataArray, xr.DataArray]:
@@ -1716,29 +1748,32 @@ class ZarrDataSource(DataSource):
         lat_max: float | None = None,
         lon_min: float | None = None,
         lon_max: float | None = None,
+        scalar_filter: dict[str, Any] | None = None,
     ) -> xr.Dataset:
-        """Retrieves data from the Zarr store, applying spatio-temporal filters.
+        """Retrieves data from the Zarr store, applying scalar and spatio-temporal filters.
 
-        Uses xarray's `sel()` method to slice the data based on the provided
-        time, latitude, and longitude ranges.
+        Scalar filters are applied before coordinate slicing to optimise remote access.
 
         Args:
-            date_start: Optional start date string (e.g., "YYYY-MM-DD" or "YYYY-MM-DDTHH:MM:SS").
+            date_start: Optional start date string (e.g., "YYYY-MM-DD").
             date_end: Optional end date string.
-            lat_min: Optional minimum latitude for slicing.
-            lat_max: Optional maximum latitude for slicing.
-            lon_min: Optional minimum longitude for slicing.
-            lon_max: Optional maximum longitude for slicing.
+            lat_min: Optional minimum latitude.
+            lat_max: Optional maximum latitude.
+            lon_min: Optional minimum longitude.
+            lon_max: Optional maximum longitude.
+            scalar_filter: Optional dict of scalar equality filters (e.g., {"vessel_name": "VNCF"}).
 
         Returns:
             An xarray.Dataset containing the selected data.
 
         Raises:
-            ValueError: If essential coordinate names (time, lat, lon) cannot be found.
+            ValueError: If a scalar filter variable is not found.
         """
+
         if self.zarr_store is None:
             self._open_zarr_store()
 
+        ds = self.zarr_store
         selectors = {}
 
         # Time slicing
@@ -1752,30 +1787,52 @@ class ZarrDataSource(DataSource):
                 "DateTime",
                 "JULD",
             ]
-            time_var_name = _find_var_name_global(self.zarr_store, time_names, "time")
+            time_var_name = _find_var_name_global(ds, time_names, "time")
             selectors[time_var_name] = slice(date_start, date_end)
 
         # Latitude slicing
         if lat_min is not None or lat_max is not None:
             lat_names = ["latitude", "lat", "LATITUDE", "LAT"]
-            lat_var_name = _find_var_name_global(self.zarr_store, lat_names, "latitude")
+            lat_var_name = _find_var_name_global(ds, lat_names, "latitude")
             selectors[lat_var_name] = slice(lat_min, lat_max)
 
         # Longitude slicing
         if lon_min is not None or lon_max is not None:
             lon_names = ["longitude", "lon", "LONGITUDE", "LON"]
-            lon_var_name = _find_var_name_global(
-                self.zarr_store, lon_names, "longitude"
-            )
+            lon_var_name = _find_var_name_global(ds, lon_names, "longitude")
             selectors[lon_var_name] = slice(lon_min, lon_max)
 
-        if not selectors:
-            self.get_logger().warning(
+        # Perform spatio-temporal slicing first
+        if selectors:
+            ds = ds.sel(selectors)
+
+        # Scalar filters (e.g. {'vessel_name': 'VNCF'})
+        if scalar_filter:
+            for var_name, desired_value in scalar_filter.items():
+                if var_name not in ds.variables:
+                    self.logger.error(
+                        f"Scalar filter variable '{var_name}' does not exist in the dataset."
+                    )
+                    continue  # or raise ValueError(...) if you'd prefer to halt
+
+                var_data = ds[var_name]
+
+                # Handle string comparisons with stripping
+                if hasattr(var_data, "dtype") and np.issubdtype(
+                    var_data.dtype, np.str_
+                ):
+                    mask = var_data.str.strip() == str(desired_value).strip()
+                else:
+                    mask = var_data == desired_value
+
+                ds = ds.where(mask, drop=True)
+
+        if not selectors and not scalar_filter:
+            self.logger.warning(
                 "No filters provided to get_data for Zarr source. Returning entire dataset."
             )
-            return self.zarr_store
 
-        return self.zarr_store.sel(selectors)
+        return ds
 
     def get_spatial_extent(self) -> list[float]:
         """Calculates the spatial extent (min/max lat/lon) of the Zarr dataset.
@@ -2024,9 +2081,8 @@ class ZarrDataSource(DataSource):
                 ]  # Select specific variable, keep as Dataset
                 retrieved_var_names = [var_name]
             else:
-                # Using print as logger is not available in DataSource
-                print(
-                    f"Warning: Variable '{var_name}' not found in dataset. Returning all available data variables for the selected point."
+                self.logger.warning(
+                    f"Variable '{var_name}' not found in dataset. Returning all available data variables for the selected point."
                 )
 
         # Slice by time, then select nearest lat/lon
@@ -2329,13 +2385,15 @@ class ZarrDataSource(DataSource):
             dates_to_plot = [date for date in dates_to_plot if date <= end_date_parsed]
 
         if not dates_to_plot:
-            print(
+            self.logger.warning(
                 f"No dates to plot for variable '{var_name}' in the specified range [{date_start} - {date_end if date_end else '...'} with n_days={n_days}]."
             )
             return
 
         var_long_name = ds[var_name].attrs.get("long_name", var_name)
-        print(f"Plotting '{var_long_name}' for {len(dates_to_plot)} time steps.")
+        self.logger.info(
+            f"Plotting '{var_long_name}' for {len(dates_to_plot)} time steps."
+        )
 
         num_plots = len(dates_to_plot)
         ncols = 3
@@ -2383,13 +2441,13 @@ class ZarrDataSource(DataSource):
                 vmax_all = max(vmax_all, data.max().item())
 
             except Exception as err:
-                print(
-                    f"Error processing data for date {date_obj.strftime('%Y-%m-%d %H:%M:%S')}: {err}"
+                self.logger.error(
+                    f"Processing data for date {date_obj.strftime('%Y-%m-%d %H:%M:%S')}: {err}"
                 )
                 plot_data_cache[date_obj] = None  # Mark as error/no data
 
         if not np.isfinite(vmin_all) or not np.isfinite(vmax_all):
-            print(
+            self.logger.warning(
                 "No valid data found across all selected dates and coordinates to determine color scale."
             )
             # Clean up empty figure if no plots will be made
@@ -2410,7 +2468,7 @@ class ZarrDataSource(DataSource):
             data_to_plot = plot_data_cache.get(date_obj)
 
             if data_to_plot is None or data_to_plot.isnull().all():
-                print(
+                self.logger.warning(
                     f"No valid data for {date_obj.strftime('%Y-%m-%d %H:%M:%S')}, skipping plot."
                 )
                 ax.set_title(f"No data for {date_obj.strftime('%Y-%m-%d %H:%M:%S')}")
@@ -2457,7 +2515,7 @@ class ZarrDataSource(DataSource):
             # cbar.ax.set_yticklabels([f"{vmin_all:.2f}", f"{(vmin_all + vmax_all) / 2:.2f}", f"{vmax_all:.2f}"])
         else:  # No plots made, clean up figure
             plt.close(fig)
-            print("No images were plotted, so no colorbar will be shown.")
+            self.logger.warning("No images were plotted, so no colorbar will be shown.")
             return
 
         fig.suptitle(
@@ -2523,6 +2581,21 @@ class GetAodn:
         """Initialises GetAodn with default S3 bucket and prefix."""
         self.bucket_name = BUCKET_OPTIMISED_DEFAULT
         self.prefix = ROOT_PREFIX_CLOUD_OPTIMISED_PATH
+
+        self.logger = logging.getLogger("aodn.GetAodn")
+        self.logger.setLevel(logging.INFO)
+
+        if not self.logger.handlers:
+            handler = logging.StreamHandler()
+            formatter = logging.Formatter(
+                "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+            )
+            handler.setFormatter(formatter)
+            self.logger.addHandler(handler)
+            self.logger.propagate = False  # Prevent double logging
+
+    def get_logger(self) -> logging.Logger:
+        return self.logger
 
     def list_datasets(self) -> list[str]:
         """
@@ -2604,16 +2677,32 @@ class GetAodn:
 class Metadata:
     """Provides methods to access and query metadata across datasets."""
 
-    def __init__(self, bucket_name: str, prefix: str):
+    def __init__(
+        self,
+        bucket_name: str,
+        prefix: str,
+        logger: logging.Logger | None = None,
+    ):
         """Initialises the Metadata object.
 
         Args:
             bucket_name: The S3 bucket name containing the datasets.
             prefix: The S3 prefix (folder path) within the bucket where
                 datasets reside.
+            logger: Optional logger to use. If not provided, a default logger will be created.
         """
         # super().__init__()
         # initialise the class by calling the needed methods
+        self.logger = logger or logging.getLogger("aodn.GetAodn")
+        if not self.logger.handlers:
+            handler = logging.StreamHandler()
+            formatter = logging.Formatter(
+                "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+            )
+            handler.setFormatter(formatter)
+            self.logger.addHandler(handler)
+            self.logger.propagate = False
+
         self.bucket_name = bucket_name
         self.prefix = prefix
         self.catalog = self.metadata_catalog()
@@ -2658,7 +2747,9 @@ class Metadata:
             try:
                 metadata = get_schema_metadata(dname)
             except Exception as e:
-                print(f"Error processing Parquet metadata from {dataset_path}: {e}")
+                self.logger.error(
+                    f"Processing Parquet metadata from {dataset_path}: {e}"
+                )
                 continue
 
             # Extract dataset_name from dataset_path (e.g., 'my_dataset' from 'my_dataset.parquet/')
@@ -2680,7 +2771,7 @@ class Metadata:
             try:
                 metadata = get_zarr_metadata(dname)
             except Exception as e:
-                print(f"Error processing Zarr metadata from {dataset_path}: {e}")
+                self.logger.error(f"Processing Zarr metadata from {dataset_path}: {e}")
                 continue
 
             dataset_name = dataset_path.rstrip("/")

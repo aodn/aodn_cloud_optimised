@@ -120,6 +120,12 @@
         "type": "string"
       }
     },
+    "gattrs_to_delete": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
     "schema": {
       "type": "object"
     },

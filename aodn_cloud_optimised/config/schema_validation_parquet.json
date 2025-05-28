@@ -70,6 +70,12 @@
         "type": "string"
       }
     },
+    "gattrs_to_delete": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
     "partition_keys": {
       "type": "array",
       "items": {
