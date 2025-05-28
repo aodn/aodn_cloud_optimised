@@ -201,7 +201,6 @@ def preprocess_xarray(ds, dataset_config):
 
         # if variable doesn't exist
         if variable_name not in ds:
-
             logger.warning(
                 f"Adding missing variable '{variable_name}' to xarray dataset with NaN values."
             )
@@ -219,15 +218,17 @@ def preprocess_xarray(ds, dataset_config):
                     # How to avoid this? create a dummy NetCDF with epoq date, NaN variables but ALL valid dimensions?
                     if missing_coords:
                         for dim in missing_coords:
-
                             logger.warning(
-                                f"Adding missing coordinate '{dim}' to xarray dataset with NaN values."
+                                f"Adding missing coordinate '{dim}' to xarray dataset."
                             )
-                            size = dimensions[dim][
-                                "size"
-                            ]  # get size from dataset's .dims
-                            nan_array = da.full(size, da.nan, dtype=da.float64)
-                            ds.coords[dim] = (dim, nan_array)
+                            # size = dimensions[dim][
+                            #     "size"
+                            # # ]  # get size from dataset's .dims
+                            # nan_array = da.full(size, da.nan, dtype=da.float64)
+                            # ds.coords[dim] = (dim, nan_array)
+                            ds = add_missing_coordinate_from_template(
+                                ds, dim, dataset_config["dataset_name"]
+                            )
 
                     shape = tuple([ds[dim].shape[0] for dim in dim_names])
                     nan_array = da.full(shape, da.nan, dtype=da.float64)
@@ -264,7 +265,6 @@ def preprocess_xarray(ds, dataset_config):
 
         # if variable already exists
         else:
-
             if (datatype == "timestamp[ns]") or (
                 datatype == "datetime64[ns]"
             ):  # Timestamps do not have an astype method. But numpy.datetime64 do.
@@ -283,7 +283,67 @@ def preprocess_xarray(ds, dataset_config):
 
             ds[variable_name] = ds[variable_name].astype(datatype)
 
+    # delete global attributes as in config
+    if "gattrs_to_delete" in dataset_config.keys():
+        for gattr_to_delete in dataset_config["gattrs_to_delete"]:
+            del ds.attrs[gattr_to_delete]
+
+    # Add Global attributes into metadata (no schema)
+    dataset_metadata = dict()
+    if "metadata_uuid" in dataset_config.keys():
+        dataset_metadata["metadata_uuid"] = dataset_config["metadata_uuid"]
+    if "dataset_gattrs" in dataset_config.keys():
+        for gattr in dataset_config["dataset_gattrs"]:
+            dataset_metadata[gattr] = dataset_config["dataset_gattrs"][gattr]
+
+    # Update global attributes of the Dataset
+    ds.attrs.update(dataset_metadata)
+
     logger.info(f"Successfully applied preprocessing to the dataset from {filename}")
+    return ds
+
+
+def add_missing_coordinate_from_template(ds, dim, dataset_name):
+    """
+    Add a missing coordinate from a dataset template file.
+
+    Args:
+        ds (xarray.Dataset): The target dataset to modify.
+        dim (str): The name of the missing dimension.
+        dataset_name (str): Name of the dataset to locate the template file.
+
+    Returns:
+        xarray.Dataset: The dataset with the added coordinate.
+
+    Raises:
+        ValueError: If the template file is missing or does not contain the requested dimension.
+    """
+    import logging
+
+    logger = logging.getLogger(__name__)
+
+    nc_template_path = str(
+        importlib.resources.files("aodn_cloud_optimised")
+        .joinpath("config")
+        .joinpath("dataset")
+        .joinpath(f"{dataset_name}.nc")
+    )
+
+    if not os.path.exists(nc_template_path):
+        raise ValueError(
+            f"Missing required NetCDF template: {nc_template_path}. Please create it with nullify_netcdf_variables."
+        )
+
+    with xr.open_dataset(nc_template_path) as ds_template:
+        if dim not in ds_template.coords:
+            raise ValueError(
+                f"Dimension '{dim}' not found in template NetCDF: {nc_template_path}"
+            )
+
+        logger.info(f"Adding coordinate '{dim}' from template file: {nc_template_path}")
+        dim_data = ds_template.coords[dim].values
+
+    ds.coords[dim] = (dim, dim_data)
     return ds
 
 
@@ -400,7 +460,6 @@ class GenericHandler(CommonHandler):
         for idx, batch_uri_list in enumerate(
             self.batch_process_fileset(s3_file_uri_list, batch_size=batch_size)
         ):
-
             self.uuid_log = str(uuid.uuid4())  # value per batch
 
             self.logger.info(
@@ -534,7 +593,6 @@ class GenericHandler(CommonHandler):
             # First attempt with the primary engine
             return handle_engine(primary_engine)
         except ValueError as e:
-
             if str(e) == "Switch to fallback engine":
                 try:
                     # Second attempt with the fallback engine
@@ -1148,7 +1206,6 @@ class GenericHandler(CommonHandler):
                 use_cftime=True,
                 decode_coords=True,
             ) as ds_org:
-
                 self._find_duplicated_values(ds_org)
 
                 time_values_org = ds_org[time_dimension_name].values

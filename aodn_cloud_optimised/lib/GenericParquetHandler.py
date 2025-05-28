@@ -927,7 +927,7 @@ class GenericHandler(CommonHandler):
                 dataset_metadata[gattr] = self.dataset_config["dataset_gattrs"][gattr]
         # TODO: add a check this exists
 
-        var_atts_dict["dataset_metadata"] = str(dataset_metadata).encode()
+        var_atts_dict["global_attributes"] = str(dataset_metadata).encode()
 
         pdf_schema = pdf_schema.with_metadata(var_atts_dict)
 

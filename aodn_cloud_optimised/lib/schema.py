@@ -5,6 +5,7 @@ import numpy as np
 import pyarrow as pa
 import s3fs
 import xarray as xr
+import importlib.resources
 
 
 def custom_encoder(obj):
@@ -262,3 +263,74 @@ def create_pyarrow_schema(schema_input):
         return create_pyrarrow_schema_from_dict(schema_input)
     else:
         raise ValueError("Unsupported pyarrow_schema input type. Expected str or dict.")
+
+
+def nullify_netcdf_variables(nc_path, dataset_name, s3_fs=None):
+    """
+    Replace all non-dimension variables in a NetCDF file with NaN, compress the result,
+    and save it under aodn_cloud_optimised/config/dataset/{dataset_name}.nc.
+
+    Args:
+        nc_path (str or s3fs.S3File): Path to the NetCDF file (local or S3).
+        dataset_name (str): Name for the output NetCDF file (without extension).
+        s3_fs (s3fs.S3FileSystem, optional): S3FileSystem instance (defaults to anon).
+
+    Returns:
+        str: Path to the output NetCDF file.
+    """
+    output_path = str(
+        importlib.resources.files("aodn_cloud_optimised")
+        .joinpath("config")
+        .joinpath("dataset")
+        .joinpath(f"{dataset_name}.nc")
+    )
+
+    if isinstance(nc_path, s3fs.S3File):
+        if s3_fs is None:
+            s3_fs = s3fs.S3FileSystem(anon=True)
+        with s3_fs.open(nc_path) as f:
+            with xr.open_dataset(f) as ds:
+                _write_nullified_dataset(ds, output_path)
+    elif isinstance(nc_path, str) and nc_path.startswith("s3://"):
+        if s3_fs is None:
+            s3_fs = s3fs.S3FileSystem(anon=True)
+        with s3_fs.open(nc_path) as f:
+            with xr.open_dataset(f) as ds:
+                _write_nullified_dataset(ds, output_path)
+    else:
+        with xr.open_dataset(nc_path) as ds:
+            _write_nullified_dataset(ds, output_path)
+
+    return output_path
+
+
+def _write_nullified_dataset(ds, output_path):
+    """
+    Internal helper to nullify variables (retain dtypes) and write compressed NetCDF.
+
+    Args:
+        ds (xarray.Dataset): The dataset to modify.
+        output_path (str): Destination file path.
+    """
+    ds_null = ds.copy()
+    encoding = {}
+
+    for var in ds_null.data_vars:
+        data = ds_null[var].data
+        dtype = data.dtype
+
+        if np.issubdtype(dtype, np.floating):
+            # Floats can store np.nan directly
+            ds_null[var].data = np.full_like(data, np.nan)
+            encoding[var] = {"zlib": True, "complevel": 4}
+        elif np.issubdtype(dtype, np.integer):
+            # Integers can't hold NaNs — use _FillValue
+            fill_value = np.iinfo(dtype).min
+            ds_null[var].data = np.full_like(data, fill_value)
+            encoding[var] = {"zlib": True, "complevel": 4, "_FillValue": fill_value}
+        else:
+            # For non-numeric or object dtypes, zero them out or set to blank
+            ds_null[var].data = np.full_like(data, 0)
+            encoding[var] = {"zlib": True, "complevel": 4}
+
+    ds_null.to_netcdf(output_path, encoding=encoding, engine="netcdf4")

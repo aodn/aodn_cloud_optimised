@@ -80,12 +80,13 @@ jobs:
         run: |
           git push origin HEAD:main
 
+
       - name: Build frozen and unfrozen wheels
         run: |
-          # Frozen wheel
-
-          poetry self add poetry-plugin-freeze
           poetry build
+
+          # add freeze step see https://github.com/python-poetry/poetry/issues/2778
+          poetry self add poetry-plugin-freeze
           poetry freeze-wheel
           mkdir -p dist-frozen
           cp dist/*.whl dist-frozen/
@@ -127,7 +128,6 @@ jobs:
           gh release upload v${{ env.new_version }} dist-frozen/*.whl dist-unfrozen/*.whl dist/*.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
 
       # Delete latest draft release
       - name: Delete latest draft release
