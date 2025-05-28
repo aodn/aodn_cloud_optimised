@@ -8,7 +8,7 @@ import logging
 import posixpath
 import re
 from abc import ABC, abstractmethod
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from functools import lru_cache
 from typing import Any, Final, Set
 
@@ -27,7 +27,6 @@ import pyarrow as pa
 import pyarrow.compute as pc
 import pyarrow.dataset as ds
 import pyarrow.fs as fs
-import pyarrow.parquet as pq
 import seaborn as sns
 import xarray as xr
 from botocore import UNSIGNED
@@ -40,7 +39,7 @@ from shapely import wkb
 from shapely.geometry import MultiPolygon, Polygon
 from windrose import WindroseAxes
 
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 
 REGION: Final[str] = "ap-southeast-2"
 ENDPOINT_URL = f"https://s3.ap-southeast-2.amazonaws.com"
