@@ -3,11 +3,20 @@
 Setup file for jupyter notebooks
 """
 
+import importlib.util
 import os
 import platform
+import re
 import subprocess
 import sys
 from pathlib import Path
+
+import requests
+from IPython import get_ipython
+from packaging.version import InvalidVersion, Version
+
+DATAQUERY_PATH = "DataQuery.py"
+DATAQUERY_URL = "https://raw.githubusercontent.com/aodn/aodn_cloud_optimised/main/aodn_cloud_optimised/lib/DataQuery.py"
 
 
 def run_command(cmd):
@@ -56,22 +65,13 @@ def install_requirements():
         run_command("uv pip install --system pyopenssl --upgrade")
         run_command("uv pip install numpy --force-reinstall")
         run_command("uv pip install pyarrow --force-reinstall --upgrade")
+
+        # get_ipython().kernel.do_shutdown(restart=True)
     elif is_nectar():
         run_command(f"uv pip install --system -r {requirements_path}")
     else:
         run_command("uv venv")
         run_command(f"uv pip install -r {requirements_path}")
-
-
-import importlib.util
-import os
-import re
-
-import requests
-from packaging.version import InvalidVersion, Version
-
-DATAQUERY_PATH = "DataQuery.py"
-DATAQUERY_URL = "https://raw.githubusercontent.com/aodn/aodn_cloud_optimised/main/aodn_cloud_optimised/lib/DataQuery.py"
 
 
 def load_dataquery():
