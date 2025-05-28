@@ -80,7 +80,7 @@ jobs:
         run: |
           git push origin HEAD:main
 
-      - name: Build frozen and non-frozen wheels
+      - name: Build frozen and unfrozen wheels
         run: |
           # Frozen wheel
 
@@ -97,8 +97,8 @@ jobs:
             new_name="$(echo "$f" | sed 's/\.whl$/_unfrozen.whl/')"
             mv "$f" "$new_name"
           done
-          mkdir -p dist-nofreeze
-          cp dist/*-unfrozen-*.whl dist-nofreeze/
+          mkdir -p dist-unfrozen
+          cp dist/*_unfrozen.whl dist-unfrozen/
 
       - name: Delete existing tag (if any)
         run: |
@@ -124,7 +124,7 @@ jobs:
 
       - name: Upload assets to release
         run: |
-          gh release upload v${{ env.new_version }} dist-frozen/*.whl dist-nofreeze/*.whl dist/*.tar.gz
+          gh release upload v${{ env.new_version }} dist-frozen/*.whl dist-unfrozen/*.whl dist/*.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
