@@ -74,7 +74,6 @@ DATASET_CONFIG_NC_SOOP_SST_JSON = os.path.join(
 @mock_aws
 class TestGenericHandler(unittest.TestCase):
     def setUp(self):
-
         # Create a mock S3 service
         self.BUCKET_OPTIMISED_NAME = "imos-data-lab-optimised"
         self.ROOT_PREFIX_CLOUD_OPTIMISED_PATH = "testing"
@@ -369,10 +368,10 @@ class TestGenericHandler(unittest.TestCase):
         }
 
         self.assertEqual(
-            decoded_meta["dataset_metadata"]["metadata_uuid"],
+            decoded_meta["global_attributes"]["metadata_uuid"],
             "b299cdcd-3dee-48aa-abdd-e0fcdbb9cadc",
         )
-        self.assertEqual(decoded_meta["dataset_metadata"]["title"], "ARDC")
+        self.assertEqual(decoded_meta["global_attributes"]["title"], "ARDC")
 
     def test_parquet_nc_generic_handler_scipy(self):
         # test with the scipy engine
