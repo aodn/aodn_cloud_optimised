@@ -16,7 +16,7 @@
       "memory_limit": "16GB"
     }
   },
-  "batch_size": 50,
+  "batch_size": 25,
   "metadata_uuid": "28f8bfed-ca6a-472a-84e4-42563ce4df3f",
   "dimensions": {
     "time": {
