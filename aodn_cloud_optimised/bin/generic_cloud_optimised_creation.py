@@ -12,9 +12,8 @@ import re
 import sys
 import warnings
 from importlib.resources import files
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import List, Optional
-from pathlib import PurePosixPath
 
 import pydantic
 from pydantic import BaseModel, Field, field_validator
