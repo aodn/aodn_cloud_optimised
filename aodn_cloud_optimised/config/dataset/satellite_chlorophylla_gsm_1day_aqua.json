@@ -2,6 +2,25 @@
   "dataset_name": "satellite_chlorophylla_gsm_1day_aqua",
   "logger_name": "satellite_chlorophylla_gsm_1day_aqua",
   "parent_config": "satellite_ocean_colour_1day_aqua_main.json",
+  "run_settings": {
+    "paths": [
+      {
+        "s3_uri": "IMOS/SRS/OC/gridded/aqua/P1D/",
+        "filter": [
+          ".*aust\\.chl_gsm\\.nc"
+        ],
+        "year_range": [
+          "2002",
+          "2005"
+        ]
+      }
+    ],
+    "cluster": {
+      "mode": "coiled",
+      "restart_every_path": true
+    },
+    "clear_existing_data": true
+  },
   "metadata_uuid": "f73daf07-eb81-4995-a72a-ca903834509f",
   "var_template_shape": "chl_gsm",
   "batch_size": 125,

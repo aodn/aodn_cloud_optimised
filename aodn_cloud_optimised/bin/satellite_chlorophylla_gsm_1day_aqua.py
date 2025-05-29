@@ -1,22 +1,10 @@
 #!/usr/bin/env python3
 import subprocess
+import os
 
 
 def main():
-    imos_paths = [f"IMOS/SRS/OC/gridded/aqua/P1D/{year}" for year in range(2002, 2025)]
+    config_name = os.path.splitext(os.path.basename(__file__))[0]
+    command = ["generic_cloud_optimised_creation", "--config", config_name]
 
-    command = [
-        "generic_cloud_optimised_creation",
-        "--paths",
-        *imos_paths,
-        "--filters",
-        "aust.chl_gsm.nc",
-        "--dataset-config",
-        "satellite_chlorophylla_gsm_1day_aqua.json",
-        "--clear-existing-data",
-        "--cluster-mode",
-        "coiled",
-    ]
-
-    # Run the command
     subprocess.run(command, check=True)
