@@ -39,6 +39,7 @@ import argparse
 import sys
 import warnings
 from importlib.resources import files
+import re
 
 from aodn_cloud_optimised.lib import clusterLib
 from aodn_cloud_optimised.lib.CommonHandler import cloud_optimised_creation
@@ -66,11 +67,13 @@ def main():
         help="List of S3 paths to process. Example: 'IMOS/ANMN/NSW' 'IMOS/ANMN/PA'",
     )
     parser.add_argument(
-        "--filters",
+        "--filter",
         nargs="*",
-        default=[],
-        help="Optional filter strings to apply on the S3 paths. Example: '_hourly-timeseries_' 'FV02'",
+        default=None,
+        help="Optional list of filters, one per path, joined with ':'. "
+        "Example: '_hourly-timeseries_:FV02' '_daily-timeseries_'",
     )
+
     parser.add_argument(
         "--suffix",
         default=".nc",
@@ -103,7 +106,6 @@ def main():
     cluster_options = [mode.value for mode in clusterLib.ClusterMode]
     parser.add_argument(
         "--cluster-mode",
-        # type=clusterLib.parse_cluster_mode,
         default=clusterLib.ClusterMode.NONE.value,
         choices=cluster_options,
         help=f"Cluster mode to use. Options: {cluster_options}. Default is None.",
@@ -138,20 +140,30 @@ def main():
     )
     args = parser.parse_args()
 
-    bucket_raw_value = args.bucket_raw
-
-    # Gather S3 paths
+    if args.filter and len(args.filter) != len(args.paths):
+        parser.error(
+            "Number of --filters must match number of --paths or be omitted entirely."
+        )
     nc_obj_ls = []
-    for path in args.paths:
-        nc_obj_ls += s3_ls(
-            bucket_raw_value, path, suffix=args.suffix, exclude=args.exclude
+
+    for i, path in enumerate(args.paths):
+        # Get object list for this path
+        objs = s3_ls(
+            args.bucket_raw,
+            path,
+            # suffix and exclude removed since no longer used
         )
 
-    # Apply filters
-    for filter_str in args.filters:
-        nc_obj_ls = list(
-            dict.fromkeys([s for s in nc_obj_ls if filter_str in s])
-        )  # make the list unique!
+        # Apply path-specific regex filters if provided
+        if args.filter:
+            regex_pattern = args.filter[i]
+            regex = re.compile(regex_pattern)
+            objs = [s for s in objs if regex.search(s)]
+
+    nc_obj_ls.extend(objs)
+
+    # Deduplicate
+    nc_obj_ls = list(dict.fromkeys(nc_obj_ls))
 
     if not nc_obj_ls:
         warnings.warn("No files found matching the specified criteria.")

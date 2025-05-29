@@ -2,6 +2,29 @@
   "dataset_name": "vessel_satellite_radiance_derived_product",
   "logger_name": "vessel_satellite_radiance_derived_product",
   "cloud_optimised_format": "zarr",
+  "run_settings": {
+    "paths": [
+      {
+        "s3_uri": "IMOS/SRS/OC/radiometer/VLHJ_Southern-Surveyor",
+        "filter": [
+          ".*FV02.*\\.nc"
+        ],
+        "year_range": []
+      },
+      {
+        "s3_uri": "IMOS/SRS/OC/radiometer/VMQ9273_Solander",
+        "filter": [
+          ".*FV02.*\\.nc"
+        ],
+        "year_range": []
+      }
+    ],
+    "cluster": {
+      "mode": "coiled",
+      "restart_every_path": true
+    },
+    "clear_existing_data": true
+  },
   "coiled_cluster_options": {
     "n_workers": [
       5,
