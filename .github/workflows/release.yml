@@ -95,11 +95,11 @@ jobs:
 
           poetry build -f wheel
           for f in dist/*.whl; do
-            new_name="$(echo "$f" | sed 's/\.whl$/_unfrozen.whl/')"
+            new_name="$(echo "$f" | sed -E 's/(.+)-([0-9]+\.[0-9]+\.[0-9]+)-/\\1-\\2+unfrozen-/')"
             mv "$f" "$new_name"
           done
           mkdir -p dist-unfrozen
-          cp dist/*_unfrozen.whl dist-unfrozen/
+          cp dist/*+unfrozen*.whl dist-unfrozen/
 
       - name: Delete existing tag (if any)
         run: |
