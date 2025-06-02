@@ -4,19 +4,21 @@
 Runner to generate cloud-optimised datasets from S3 files, based on a dataset config JSON.
 
 Example usage:
-  python cloud_optimised_runner.py --config mooring_hourly_timeseries_delayed_qc.json
+  generic_cloud_optimised_creation --config mooring_hourly_timeseries_delayed_qc
+  generic_cloud_optimised_creation --config satellite_chlorophylla_gsm_1day_aqua --json-overwrite '{"run_settings": {"cluster": {"mode": null}, "raise_error": true}}'
 """
 
 import argparse
+import json
 import re
 import sys
 import warnings
 from importlib.resources import files
 from pathlib import Path, PurePosixPath
-from typing import List, Optional
+from typing import Any, List, Optional
+from urllib.parse import urlparse
 
-import pydantic
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, ValidationError, field_validator, StrictBool
 
 from aodn_cloud_optimised.lib import clusterLib
 from aodn_cloud_optimised.lib.CommonHandler import cloud_optimised_creation
@@ -29,35 +31,97 @@ from aodn_cloud_optimised.lib.s3Tools import s3_ls
 
 # ---------- Pydantic schema for validating the config ----------
 class ClusterConfig(BaseModel):
-    mode: Optional[str] = None
-    restart_every_path: bool = False
+    """Cluster processing configuration.
+
+    Attributes:
+        mode: Cluster mode (local, coiled, ec2, or None).
+        restart_every_path: Restart cluster after processing each path.
+    """
+
+    mode: Optional[clusterLib.ClusterMode] | None = Field(
+        default=None,
+        description=f"The mode for the cluster. Must be one of: {[m.value for m in clusterLib.ClusterMode]} or null.",
+    )
+    restart_every_path: bool = Field(
+        default=False,
+        description="Whether to restart the cluster after each path is processed.",
+    )
 
 
 class PathConfig(BaseModel):
-    s3_uri: str
-    filter: Optional[List[str]] = Field(default_factory=list)
-    year_range: Optional[List[int]] = None
+    """Input path configuration.
 
-    @field_validator("year_range")
+    Attributes:
+        s3_uri: S3 URI as a POSIX path string.
+        filter: List of regex patterns to filter files.
+        year_range: Year filter: None, one year, or a two-year inclusive range, or a list of exclusive years to process.
+    """
+
+    s3_uri: str
+    filter: List[str] = Field(
+        default_factory=list,
+        description="List of regular expression patterns used to filter matching files.",
+    )
+    year_range: Optional[List[int]] = Field(
+        default=None,
+        description="Must be None (no filtering), a single year [YYYY], a two-year range [YYYY, YYYY], or a list of exclusive years to process [YYYY, YYYY, YYYY]",
+    )
+
+    @field_validator("year_range", mode="after")
     def validate_year_range(cls, v: Optional[List[int]]) -> Optional[List[int]]:
         if v is None or len(v) == 0:
             return None  # No year filtering
 
-        if not (1 <= len(v) <= 2):
-            raise ValueError("year_range must contain 1 or 2 integers")
-
+        # Validate all items are int
+        if not all(isinstance(year, int) for year in v):
+            raise ValueError("year_range must be a list of integers")
         # If one year, return as single-item list
         if len(v) == 1:
             return v
 
-        # If two years, return inclusive range list
-        start, end = v
-        if start > end:
-            raise ValueError("year_range start year must be <= end year")
+        if len(v) == 2:
+            start, end = v
+            if start > end:
+                raise ValueError("year_range start year must be <= end year")
+            # Return inclusive range list
+            return list(range(start, end + 1))
 
-        return list(range(start, end + 1))
+        # More than 2 years, treat as explicit list
+        # Validate sorted ascending and unique
+        if sorted(v) != v:
+            raise ValueError("year_range list must be sorted in ascending order")
+        if len(set(v)) != len(v):
+            raise ValueError("year_range list must contain unique years")
 
-    @field_validator("filter")
+        return v
+
+    @field_validator("s3_uri", mode="after")
+    def validate_s3_uri(cls, v: str) -> str:
+        if not isinstance(v, str):
+            raise TypeError("s3_uri must be a string")
+
+        if v.startswith("s3://"):
+            parsed = urlparse(v)
+            if not parsed.netloc:
+                raise ValueError("s3_uri must include a bucket name after 's3://'")
+            if not parsed.path or parsed.path == "/":
+                raise ValueError(
+                    "s3_uri must include a valid key path after the bucket"
+                )
+            try:
+                PurePosixPath(parsed.path.lstrip("/"))
+            except Exception as e:
+                raise ValueError(f"s3_uri key path is not a valid POSIX path: {e}")
+        else:
+            # Validate as a relative POSIX path (e.g. "IMOS/SRS/...")
+            try:
+                PurePosixPath(v)
+            except Exception as e:
+                raise ValueError(f"s3_uri is not a valid relative POSIX path: {e}")
+
+        return v
+
+    @field_validator("filter", mode="after")
     def validate_regex(cls, v):
         for pattern in v:
             try:
@@ -68,16 +132,51 @@ class PathConfig(BaseModel):
 
 
 class RunSettings(BaseModel):
-    paths: List[PathConfig]
-    cluster: ClusterConfig = Field(default_factory=ClusterConfig)
-    clear_existing_data: bool = False
-    force_previous_parquet_deletion: bool = False
-    raise_error: bool = False
-    suffix: str = ".nc"
+    """Run configuration for processing.
+
+    Attributes:
+        paths: List of dataset path configurations.
+        cluster: Cluster execution settings.
+        clear_existing_data: Clear ALL existing Cloud Optimised data before run.
+        force_previous_parquet_deletion: Force deletion of previous Parquet files matching an input file.
+        raise_error: Raise errors and exit instead of simply logging.
+        suffix: File suffix for input file matching.
+        exclude: Optional regex to exclude files.
+    """
+
+    paths: List[PathConfig] = Field(
+        ..., description="List of input S3 path configs to process."
+    )
+    cluster: ClusterConfig = Field(
+        default_factory=ClusterConfig, description="Settings for cluster configuration."
+    )
+    clear_existing_data: bool = Field(
+        default=False,
+        description="If True, clear previously optimised data before processing.",
+    )
+    force_previous_parquet_deletion: bool = Field(
+        default=False,
+        description="If True, force deletion of previously generated Parquet files for matching input file.",
+    )
+    raise_error: StrictBool = Field(
+        default=False,
+        description="If True, raise errors for every logger.Error instead of continuing silently.",
+    )
+    suffix: str = Field(
+        default=".nc",
+        description="Suffix used to identify relevant input files (e.g., '.nc').",
+    )
     exclude: Optional[str] = None
 
 
 class DatasetConfig(BaseModel):
+    """Dataset processing configuration.
+
+    Attributes:
+        dataset_name: Dataset identifier.
+        run_settings: Processing run settings.
+    """
+
     dataset_name: str
     run_settings: RunSettings
 
@@ -90,16 +189,52 @@ def load_config(config_filename: str) -> DatasetConfig:
     return DatasetConfig.model_validate_json(raw)
 
 
+def json_update(base: dict, updates: dict) -> dict:
+    """Recursively update nested dictionaries."""
+    for k, v in updates.items():
+        if isinstance(v, dict) and isinstance(base.get(k), dict):
+            base[k] = json_update(base[k], v)
+        else:
+            base[k] = v
+    return base
+
+
 def collect_files(
-    path_cfg: PathConfig, suffix: str, exclude: Optional[str], bucket_raw: str
+    path_cfg: PathConfig, suffix: str, exclude: Optional[str], bucket_raw: Optional[str]
 ) -> List[str]:
-    matching_files = s3_ls(bucket_raw, path_cfg.s3_uri, suffix=suffix, exclude=exclude)
+    s3_uri = path_cfg.s3_uri
+
+    if s3_uri.startswith("s3://"):
+        parsed = urlparse(s3_uri)
+        bucket = parsed.netloc
+        prefix = parsed.path.lstrip("/")
+    else:
+        if not bucket_raw:
+            raise ValueError(
+                "bucket_raw must be provided when s3_uri is not a full S3 URI."
+            )
+        bucket = bucket_raw
+        prefix = s3_uri
+
+    prefix = str(PurePosixPath(prefix))  # normalise path
+
+    matching_files = s3_ls(bucket, prefix, suffix=suffix, exclude=exclude)
 
     for pattern in path_cfg.filter or []:
         regex = re.compile(pattern)
         matching_files = [f for f in matching_files if regex.search(f)]
 
     return matching_files
+
+
+def join_s3_uri(base_uri: str, *parts: str) -> str:
+    if base_uri.startswith("s3://"):
+        parsed = urlparse(base_uri)
+        bucket = parsed.netloc
+        key = PurePosixPath(parsed.path.lstrip("/"), *parts)
+        return f"s3://{bucket}/{key}"
+    else:
+        return str(PurePosixPath(base_uri, *parts))
 
 
 def main():
@@ -109,13 +244,30 @@ def main():
     parser.add_argument(
         "--config", required=True, help="JSON filename in config/dataset/"
     )
+    parser.add_argument(
+        "--json-overwrite",
+        type=str,
+        help='JSON string to override config fields. Example:  \'{"run_settings": {"cluster": {"mode": null}, "raise_error": true}}\' ',
+    )
     args = parser.parse_args()
 
     try:
         config = load_config(f"{args.config}.json")
-    except pydantic.ValidationError as e:
+    except ValidationError as e:
         print(f"❌ Validation error in config file:\n{e}")
         sys.exit(1)
+
+    overwrite_dict: dict[str, Any] = {}
+    if args.json_overwrite:
+        overwrite = args.json_overwrite
+        if overwrite.startswith("@"):
+            with open(overwrite[1:], "r") as f:
+                overwrite_dict = json.load(f)
+        else:
+            overwrite_dict = json.loads(overwrite)
+
+        config_updated = json_update(config.model_dump(), overwrite_dict)
+        config = DatasetConfig.model_validate(config_updated)
 
     bucket_raw = load_variable_from_config("BUCKET_RAW_DEFAULT")
     bucket_optimised = load_variable_from_config("BUCKET_OPTIMISED_DEFAULT")
@@ -163,10 +315,11 @@ def main():
 
             else:
                 for year in year_values:
-                    if year:
-                        s3_uri = str(PurePosixPath(path_cfg.s3_uri) / str(year))
-                    else:
-                        s3_uri = path_cfg.s3_uri
+                    s3_uri = (
+                        join_s3_uri(path_cfg.s3_uri, str(year))
+                        if year
+                        else path_cfg.s3_uri
+                    )
 
                     path_cfg_year = path_cfg.model_copy()
                     path_cfg_year.s3_uri = s3_uri
@@ -219,10 +372,11 @@ def main():
 
             else:
                 for year in year_values:
-                    if year:
-                        s3_uri = str(PurePosixPath(path_cfg.s3_uri) / str(year))
-                    else:
-                        s3_uri = path_cfg.s3_uri
+                    s3_uri = (
+                        join_s3_uri(path_cfg.s3_uri, str(year))
+                        if year
+                        else path_cfg.s3_uri
+                    )
 
                     path_cfg_year = path_cfg.model_copy()
                     path_cfg_year.s3_uri = s3_uri

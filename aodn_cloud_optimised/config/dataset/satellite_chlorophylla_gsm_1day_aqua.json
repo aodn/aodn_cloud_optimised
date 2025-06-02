@@ -5,7 +5,7 @@
   "run_settings": {
     "paths": [
       {
-        "s3_uri": "IMOS/SRS/OC/gridded/aqua/P1D/",
+        "s3_uri": "s3://imos-data/IMOS/SRS/OC/gridded/aqua/P1D/",
         "filter": [
           ".*aust\\.chl_gsm\\.nc"
         ],
@@ -19,7 +19,8 @@
       "mode": "coiled",
       "restart_every_path": true
     },
-    "clear_existing_data": true
+    "clear_existing_data": false,
+    "raise_error": false
   },
   "metadata_uuid": "f73daf07-eb81-4995-a72a-ca903834509f",
   "var_template_shape": "chl_gsm",
