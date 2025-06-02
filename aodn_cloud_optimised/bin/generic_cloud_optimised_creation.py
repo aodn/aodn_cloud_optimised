@@ -167,6 +167,18 @@ class RunSettings(BaseModel):
         description="Suffix used to identify relevant input files (e.g., '.nc').",
     )
     exclude: Optional[str] = None
+    optimised_bucket_name: Optional[str] = Field(
+        default=None,
+        description="Override the default cloud optimised S3 bucket name.",
+    )
+    root_prefix_cloud_optimised_path: Optional[str] = Field(
+        default=None,
+        description="Override the default root prefix path for the cloud-optimised output.",
+    )
+    bucket_raw_default_name: Optional[str] = Field(
+        default=None,
+        description="Override the input s3 bucket name where the input files are located.",
+    )
 
 
 class DatasetConfig(BaseModel):
@@ -269,9 +281,19 @@ def main():
         config_updated = json_update(config.model_dump(), overwrite_dict)
         config = DatasetConfig.model_validate(config_updated)
 
-    bucket_raw = load_variable_from_config("BUCKET_RAW_DEFAULT")
-    bucket_optimised = load_variable_from_config("BUCKET_OPTIMISED_DEFAULT")
-    root_prefix = load_variable_from_config("ROOT_PREFIX_CLOUD_OPTIMISED_PATH")
+    bucket_raw = (
+        config.run_settings.bucket_raw_default_name
+        or load_variable_from_config("BUCKET_RAW_DEFAULT")
+    )
+    bucket_optimised = (
+        config.run_settings.optimised_bucket_name
+        or load_variable_from_config("BUCKET_OPTIMISED_DEFAULT")
+    )
+    root_prefix = (
+        config.run_settings.root_prefix_cloud_optimised_path
+        or load_variable_from_config("ROOT_PREFIX_CLOUD_OPTIMISED_PATH")
+    )
+
     dataset_config_path = str(
         files("aodn_cloud_optimised.config.dataset").joinpath(f"{args.config}.json")
     )

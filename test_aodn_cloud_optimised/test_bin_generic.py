@@ -1,17 +1,24 @@
 import json
+from botocore import UNSIGNED
+from pathlib import Path
 import logging
 import os
 import sys
 import unittest
 from io import StringIO
 from unittest.mock import patch, MagicMock
+from botocore.client import Config as BotoConfig  # avoid conflict with json config
 
 import boto3
 import s3fs
 from moto import mock_aws
+from botocore.session import get_session
 from moto.moto_server.threaded_moto_server import ThreadedMotoServer
 
-from aodn_cloud_optimised.bin.generic_cloud_optimised_creation import main
+from aodn_cloud_optimised.bin.generic_cloud_optimised_creation import (
+    main,
+    DatasetConfig,
+)
 from aodn_cloud_optimised.lib.clusterLib import ClusterMode
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -119,58 +126,79 @@ class TestGenericCloudOptimisedCreation(unittest.TestCase):
         self.server.stop()
         del os.environ["RUNNING_UNDER_UNITTEST"]
 
-    @patch("argparse.ArgumentParser.parse_args")
-    @patch("sys.exit")
-    def test_main(self, mock_exit, mock_parse_args):
-        # Prepare mock arguments
-        mock_parse_args.return_value = MagicMock(
-            paths=["IMOS/ACORN/gridded_1h-avg-current-map_QC"],
-            filters=["TURQ"],
-            exclude="FV02",
-            suffix=".nc",
-            raise_error=False,
-            dataset_config=DATASET_CONFIG_NC_ACORN_JSON,
-            clear_existing_data=True,
-            force_previous_parquet_deletion=False,
-            cluster_mode=ClusterMode.LOCAL,
-            optimised_bucket_name=self.BUCKET_OPTIMISED_NAME,
-            root_prefix_cloud_optimised_path="testing",
-            bucket_raw="imos-data",
-        )
+    def test_main_with_config_and_json_overwrite(self):
+        with open(DATASET_CONFIG_NC_ACORN_JSON) as f:
+            raw_json = f.read()
+            config_validated = DatasetConfig.model_validate_json(raw_json)
 
-        # Capture logs
-        log_stream = StringIO()
-        log_handler = logging.StreamHandler(log_stream)
-        logger = logging.getLogger()
-        logger.addHandler(log_handler)
+        def _mock_boto3_client(service_name, *args, **kwargs):
+            if service_name == "s3":
+                session = get_session()
+                return session.create_client(
+                    "s3",
+                    endpoint_url="http://127.0.0.1:5555",
+                    region_name="us-east-1",
+                    config=BotoConfig(signature_version=UNSIGNED),
+                )
+            raise NotImplementedError(f"Unhandled boto3 service: {service_name}")
 
-        try:
-            # Run main function
-            main()
-
-            # Get captured logs
-            log_handler.flush()
-            captured_logs = log_stream.getvalue().strip().split("\n")
-
-            # Validate logs
-            self.assertTrue(
-                any("Cluster dask dashboard" in log for log in captured_logs)
+        with (
+            patch(
+                "aodn_cloud_optimised.bin.generic_cloud_optimised_creation.load_config",
+                new=lambda _: config_validated,
+            ),
+            patch("argparse.ArgumentParser.parse_args") as mock_parse_args,
+            patch("sys.exit") as mock_sys_exit,
+            patch(
+                "aodn_cloud_optimised.lib.s3Tools.boto3.client", new=_mock_boto3_client
+            ),
+        ):
+            mock_parse_args.return_value = MagicMock(
+                config="radar_TurquoiseCoast_velocity_hourly_averaged_delayed_qc",
+                json_overwrite=json.dumps(
+                    {
+                        "run_settings": {
+                            "cluster": {"mode": "local"},
+                            "raise_error": False,
+                            "force_previous_parquet_deletion": False,
+                            "clear_existing_data": False,
+                            "paths": [
+                                {
+                                    "s3_uri": "s3://imos-data/IMOS/ACORN/gridded_1h-avg-current-map_QC",
+                                    "filter": ["TURQ"],
+                                },
+                            ],
+                            "optimised_bucket_name": self.BUCKET_OPTIMISED_NAME,
+                            "root_prefix_cloud_optimised_path": self.ROOT_PREFIX_CLOUD_OPTIMISED_PATH,
+                        }
+                    }
+                ),
             )
-            self.assertTrue(any("Processing batch 1" in log for log in captured_logs))
-            self.assertTrue(
-                any(
-                    "Batch 1 successfully published to Zarr store" in log
+
+            log_stream = StringIO()
+            log_handler = logging.StreamHandler(log_stream)
+            logger = logging.getLogger()
+            logger.addHandler(log_handler)
+
+            try:
+                # Run main function
+                main()
+
+                log_handler.flush()
+                captured_logs = log_stream.getvalue().strip().split("\n")
+
+                assert any("Cluster dask dashboard" in log for log in captured_logs)
+                assert any("Processing batch 1" in log for log in captured_logs)
+                assert any(
+                    "successfully published to Zarr store" in log
                     for log in captured_logs
                 )
-            )
-            self.assertFalse(any("ERROR" in log for log in captured_logs))
+                assert not any("ERROR" in log for log in captured_logs)
 
-            # Ensure sys.exit was called with 0 (success)
-            mock_exit.assert_called_with(0)
+                mock_sys_exit.assert_called_with(0)
 
-        finally:
-            # Restore stdout
-            sys.stdout = sys.__stdout__
+            finally:
+                logger.removeHandler(log_handler)
 
 
 if __name__ == "__main__":
