@@ -10,6 +10,50 @@
     "cloud_optimised_format": {
       "type": "string"
     },
+    "run_settings": {
+      "type": "object",
+      "properties": {
+        "paths": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "s3_uri": {
+                "type": "string"
+              },
+              "filter": {
+                "type": "array",
+                "items": {}
+              },
+              "year_range": {
+                "type": "array",
+                "items": {}
+              }
+            },
+            "required": [
+              "s3_uri"
+            ]
+          }
+        },
+        "cluster": {
+          "type": "object",
+          "properties": {
+            "mode": {
+              "type": "string"
+            },
+            "restart_every_path": {
+              "type": "boolean"
+            }
+          }
+        },
+        "clear_existing_data": {
+          "type": "boolean"
+        },
+        "raise_error": {
+          "type": "boolean"
+        }
+      }
+    },
     "coiled_cluster_options": {
       "type": "object",
       "properties": {
