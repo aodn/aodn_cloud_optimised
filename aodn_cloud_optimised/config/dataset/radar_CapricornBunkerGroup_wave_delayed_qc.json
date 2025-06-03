@@ -71,8 +71,8 @@
         "s3_uri": "s3://imos-data/IMOS/IMOS/ACORN/gridded_1h-avg-wave-site-map_QC/CBG",
         "filter": [],
         "year_range": [
-          "2009",
-          "2025"
+          2009,
+          2025
         ]
       }
     ],

@@ -72,8 +72,8 @@
         "s3_uri": "s3://imos-data/IMOS/ACORN/gridded_1h-avg-current-map_QC/NWA//",
         "filter": [],
         "year_range": [
-          "2021",
-          "2025"
+          2021,
+          2025
         ]
       }
     ],

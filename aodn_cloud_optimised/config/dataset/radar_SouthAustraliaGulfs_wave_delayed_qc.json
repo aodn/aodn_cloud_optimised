@@ -64,13 +64,16 @@
   "run_settings": {
     "cluster": {
       "mode": "coiled",
-      "restart_every_path": false
+      "restart_every_path": true
     },
     "paths": [
       {
-        "s3_uri": "s3://imos-data/IMOS/",
+        "s3_uri": "s3://imos-data/ACORN/gridded_1h-avg-wave-site-map_QC/SAG//",
         "filter": [],
-        "year_range": []
+        "year_range": [
+          2007,
+          2025
+        ]
       }
     ],
     "clear_existing_data": true,
