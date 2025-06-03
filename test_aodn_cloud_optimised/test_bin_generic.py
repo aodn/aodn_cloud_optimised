@@ -1,25 +1,22 @@
 import json
-from botocore import UNSIGNED
-from pathlib import Path
 import logging
 import os
-import sys
 import unittest
 from io import StringIO
-from unittest.mock import patch, MagicMock
-from botocore.client import Config as BotoConfig  # avoid conflict with json config
+from unittest.mock import MagicMock, patch
 
 import boto3
 import s3fs
-from moto import mock_aws
+from botocore import UNSIGNED
+from botocore.client import Config as BotoConfig  # avoid conflict with json config
 from botocore.session import get_session
+from moto import mock_aws
 from moto.moto_server.threaded_moto_server import ThreadedMotoServer
 
 from aodn_cloud_optimised.bin.generic_cloud_optimised_creation import (
-    main,
     DatasetConfig,
+    main,
 )
-from aodn_cloud_optimised.lib.clusterLib import ClusterMode
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 

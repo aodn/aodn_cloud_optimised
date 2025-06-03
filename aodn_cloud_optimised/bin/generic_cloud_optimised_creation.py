@@ -18,7 +18,14 @@ from pathlib import Path, PurePosixPath
 from typing import Any, List, Optional
 from urllib.parse import urlparse
 
-from pydantic import BaseModel, Field, ValidationError, field_validator, StrictBool
+from pydantic import (
+    BaseModel,
+    Field,
+    StrictBool,
+    ValidationError,
+    field_validator,
+    model_validator,
+)
 
 from aodn_cloud_optimised.lib import clusterLib
 from aodn_cloud_optimised.lib.CommonHandler import cloud_optimised_creation
@@ -83,6 +90,8 @@ class PathConfig(BaseModel):
             start, end = v
             if start > end:
                 raise ValueError("year_range start year must be <= end year")
+            elif start == end:
+                raise ValueError("year_range start year must be != end year")
             # Return inclusive range list
             return list(range(start, end + 1))
 
@@ -142,6 +151,14 @@ class RunSettings(BaseModel):
         raise_error: Raise errors and exit instead of simply logging.
         suffix: File suffix for input file matching.
         exclude: Optional regex to exclude files.
+        optimised_bucket_name: Optional override for the destination S3 bucket where cloud-optimised output will be written.
+        root_prefix_cloud_optimised_path: Optional override for the root key prefix inside the optimised bucket.
+        bucket_raw_default_name: Optional override for the default raw data input bucket.
+            If provided, it must match the bucket in any `s3_uri` that begins with 's3://'.
+
+    Notes:
+        If `s3_uri` starts with 's3://', and `bucket_raw_default_name` is also provided,
+        the bucket in the URI must match `bucket_raw_default_name`, or validation will fail.
     """
 
     paths: List[PathConfig] = Field(
@@ -179,6 +196,21 @@ class RunSettings(BaseModel):
         default=None,
         description="Override the input s3 bucket name where the input files are located.",
     )
+
+    @model_validator(mode="after")
+    def validate_bucket_consistency(self) -> "RunSettings":
+        for path in self.paths:
+            if path.s3_uri.startswith("s3://"):
+                parsed = urlparse(path.s3_uri)
+                bucket_from_uri = parsed.netloc
+                if (
+                    self.bucket_raw_default_name is not None
+                    and bucket_from_uri != self.bucket_raw_default_name
+                ):
+                    raise ValueError(
+                        f"`bucket_raw_default_name` ('{self.bucket_raw_default_name}') does not match the bucket in s3_uri ('{bucket_from_uri}')."
+                    )
+        return self
 
 
 class DatasetConfig(BaseModel):
