@@ -7,32 +7,34 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.10.14'
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10.14"
 
-    - name: Install pre-commit
-      run: pip install pre-commit
+      - name: Install pre-commit
+        run: |
+          pip install pre-commit
+          pip install pydantic
 
-    - name: Install Poetry
-      uses: snok/install-poetry@v1
-      with:
-        virtualenvs-create: true
-        virtualenvs-in-project: true
-        installer-parallel: true
-        version: 2.0.1
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          installer-parallel: true
+          version: 2.0.1
 
-    - name: Clear Poetry Cache
-      run: |
-        poetry cache clear pypi --all
+      - name: Clear Poetry Cache
+        run: |
+          poetry cache clear pypi --all
 
-    - name: Run pre-commit
-      uses: pre-commit/action@v3.0.1
-      with:
-        extra_args: --all-files
-        hooks: |
-          poetry-lock
+      - name: Run pre-commit
+        uses: pre-commit/action@v3.0.1
+        with:
+          extra_args: --all-files
+          hooks: |
+            poetry-lock
