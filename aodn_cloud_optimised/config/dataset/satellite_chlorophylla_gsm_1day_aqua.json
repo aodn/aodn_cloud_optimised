@@ -20,11 +20,11 @@
       "restart_every_path": true
     },
     "clear_existing_data": false,
-    "raise_error": false
+    "raise_error": false,
+    "batch_size": 125
   },
   "metadata_uuid": "f73daf07-eb81-4995-a72a-ca903834509f",
   "var_template_shape": "chl_gsm",
-  "batch_size": 125,
   "schema": {
     "time": {
       "type": "timestamp[ns]",

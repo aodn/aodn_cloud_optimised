@@ -2,21 +2,6 @@
   "dataset_name": "vessel_air_sea_flux_product_delayed",
   "logger_name": "vessel_air_sea_flux_product_delayed",
   "cloud_optimised_format": "parquet",
-  "coiled_cluster_options": {
-    "n_workers": [
-      70,
-      160
-    ],
-    "scheduler_vm_types": "m7i.xlarge",
-    "worker_vm_types": "m7i.xlarge",
-    "allow_ingress_from": "me",
-    "compute_purchase_option": "spot_with_fallback",
-    "worker_options": {
-      "nthreads": 8,
-      "memory_limit": "32GB"
-    }
-  },
-  "batch_size": 400,
   "metadata_uuid": "07818819-2e5c-4a12-9395-0082b57b2fe8",
   "gattrs_to_variables": [
     "platform_code",
@@ -912,7 +897,6 @@
     "author": "Eric Schulz",
     "principal_investigator": "Eric Schulz"
   },
-  "force_old_pq_del": false,
   "aws_opendata_registry": {
     "Name": "Ships of Opportunity - Air-sea fluxes - Meteorological and flux - Delayed mode",
     "Description": "Enhancement of Measurements on Ships of Opportunity (SOOP)-Air Sea Flux sub-facility collects underway meteorological and oceanographic observations during scientific and Antarctic resupply voyages in the oceans adjacent to Australia. Data product is quality controlled bulk air-sea fluxes and input observations. Research Vessel Real Time Air-Sea Fluxes, equips the Marine National Facility (MNF) (Research Vessels Southern Surveyor and Investigator), the Australian Antarctic Division (Research and Supply Vessels Aurora Australis and Nuyina), and Research Vessel Tangaroa with \"climate quality\" meteorological measurement systems, capable of providing high quality air-sea flux measurements and delivered to researchers on a near real-time basis. Obtaining the full set of air-sea fluxes essential for climate studies requires observations of: wind, air and sea temperature, humidity, pressure, precipitation, long- and short-wave radiation. The existing ship meteorological sensor sets are completed with IMOS instruments and a comprehensive annual calibration program implemented. Data streams are fed into existing ship data management systems, and broadcast via satellite back to Australia routinely. The observations are quality controlled at the Bureau of Meteorology and air-sea fluxes calculated using the COARE Bulk Flux algorithm. A daily file of calculated bulk fluxes and the observations used in the calculation are generated shortly after 0000UTC and provided to IMOS.",
@@ -955,5 +939,36 @@
       ]
     },
     "Citation": "The citation in a list of references is: \"IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access].\""
+  },
+  "run_settings": {
+    "coiled_cluster_options": {
+      "n_workers": [
+        70,
+        160
+      ],
+      "scheduler_vm_types": "m7i.xlarge",
+      "worker_vm_types": "m7i.xlarge",
+      "allow_ingress_from": "me",
+      "compute_purchase_option": "spot_with_fallback",
+      "worker_options": {
+        "nthreads": 8,
+        "memory_limit": "32GB"
+      }
+    },
+    "batch_size": 400,
+    "cluster": {
+      "mode": "coiled",
+      "restart_every_path": false
+    },
+    "paths": [
+      {
+        "s3_uri": "s3://imos-data/IMOS/",
+        "filter": [],
+        "year_range": []
+      }
+    ],
+    "clear_existing_data": true,
+    "raise_error": false,
+    "force_previous_parquet_deletion": false
   }
 }

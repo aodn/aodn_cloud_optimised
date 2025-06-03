@@ -1,4 +1,5 @@
 import logging
+from typing import Optional
 from urllib.parse import urlparse
 
 import boto3
@@ -7,7 +8,9 @@ from botocore import UNSIGNED
 from botocore.config import Config
 
 
-def s3_ls(bucket, prefix, suffix=".nc", s3_path=True, exclude=None) -> list:
+def s3_ls(
+    bucket, prefix, suffix: Optional[str] = ".nc", s3_path=True, exclude=None
+) -> list:
     """
     Return a list of object keys under a specific prefix in the specified S3 bucket
     with the specified suffix.
@@ -15,7 +18,8 @@ def s3_ls(bucket, prefix, suffix=".nc", s3_path=True, exclude=None) -> list:
     Args:
         bucket (str): The name of the S3 bucket.
         prefix (str): The prefix to filter objects in the S3 bucket.
-        suffix (str, optional): The suffix to filter object keys (default is '.nc').
+        suffix (str or None, optional): The suffix to filter object keys (default is '.nc').
+                                        Set to None to disable suffix filtering.
         s3_path (bool, optional): Whether to return S3 paths or object keys without the bucket name (default is True).
 
     Returns:
@@ -50,7 +54,7 @@ def s3_ls(bucket, prefix, suffix=".nc", s3_path=True, exclude=None) -> list:
             if exclude and exclude in obj["Key"]:
                 continue
 
-            if obj["Key"].endswith(suffix):
+            if suffix is None or obj["Key"].endswith(suffix):
                 if s3_path:
                     s3_objs.append(f"s3://{bucket}/{obj['Key']}")
                 else:

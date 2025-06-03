@@ -2,21 +2,6 @@
   "dataset_name": "radar_wave_delayed_qc_no_I_J_version_main",
   "logger_name": "radar_wave_delayed_qc_no_I_J_version_main",
   "cloud_optimised_format": "zarr",
-  "coiled_cluster_options": {
-    "n_workers": [
-      12,
-      140
-    ],
-    "scheduler_vm_types": "m7i.large",
-    "worker_vm_types": "m7i.xlarge",
-    "allow_ingress_from": "me",
-    "compute_purchase_option": "spot_with_fallback",
-    "worker_options": {
-      "nthreads": 16,
-      "memory_limit": "64GB"
-    }
-  },
-  "batch_size": 3000,
   "var_template_shape": "VDIRT",
   "vars_incompatible_with_region": [
     "LATITUDE",
@@ -286,5 +271,35 @@
       ]
     },
     "Citation": "IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access]"
+  },
+  "run_settings": {
+    "coiled_cluster_options": {
+      "n_workers": [
+        12,
+        140
+      ],
+      "scheduler_vm_types": "m7i.large",
+      "worker_vm_types": "m7i.xlarge",
+      "allow_ingress_from": "me",
+      "compute_purchase_option": "spot_with_fallback",
+      "worker_options": {
+        "nthreads": 16,
+        "memory_limit": "64GB"
+      }
+    },
+    "batch_size": 3000,
+    "cluster": {
+      "mode": "coiled",
+      "restart_every_path": false
+    },
+    "paths": [
+      {
+        "s3_uri": "s3://imos-data/IMOS/",
+        "filter": [],
+        "year_range": []
+      }
+    ],
+    "clear_existing_data": true,
+    "raise_error": false
   }
 }

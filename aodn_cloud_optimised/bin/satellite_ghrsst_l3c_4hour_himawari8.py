@@ -3,15 +3,17 @@ import subprocess
 
 
 def main():
-    for i, year in enumerate(range(2012, 2025)):
+    for i, year in enumerate(range(2015, 2025)):
         command = [
             "generic_cloud_optimised_creation",
             "--paths",
-            f"IMOS/ACORN/gridded_1h-avg-wind-map_QC/COF/{year}",
-            "--filters",
-            ".nc",
+            f"IMOS/SRS/SST/ghrsst/L3C-4h/h08/{year}",
+            # "--filters",
+            # "FILTER_STRING_1",
+            # "FILTER_STRING_1",
             "--dataset-config",
-            "radar_CoffsHarbour_wind_delayed_qc.json",
+            "satellite_ghrsst_l3c_4hour_himawari8.json",
+            "--clear-existing-data",
             "--cluster-mode",
             "coiled",
         ]

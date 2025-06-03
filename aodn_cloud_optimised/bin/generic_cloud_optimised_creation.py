@@ -10,6 +10,7 @@ Example usage:
 
 import argparse
 import json
+import logging
 import re
 import sys
 import warnings
@@ -33,6 +34,8 @@ from aodn_cloud_optimised.lib.config import (
     load_variable_from_config,
 )
 from aodn_cloud_optimised.lib.s3Tools import s3_ls
+
+logger = logging.getLogger(__name__)
 
 
 # ---------- Pydantic schema for validating the config ----------
@@ -321,6 +324,17 @@ def json_update(base: dict, updates: dict) -> dict:
 def collect_files(
     path_cfg: PathConfig, suffix: str, exclude: Optional[str], bucket_raw: Optional[str]
 ) -> List[str]:
+    """Collect files from an S3 bucket using suffix and optional regex filtering.
+
+    Args:
+        path_cfg: Configuration object including the S3 URI and optional regex filters.
+        suffix: File suffix to filter by, e.g., '.nc'. Set to None to disable suffix filtering.
+        exclude: Optional regex string to exclude files.
+        bucket_raw: Required if `path_cfg.s3_uri` is not a full S3 URI.
+
+    Returns:
+        List of matching file keys (paths) as strings.
+    """
     s3_uri = path_cfg.s3_uri
 
     if s3_uri.startswith("s3://"):
@@ -337,11 +351,19 @@ def collect_files(
 
     prefix = str(PurePosixPath(prefix))  # normalise path
 
-    matching_files = s3_ls(bucket, prefix, suffix=suffix, exclude=exclude)
+    # matching_files = s3_ls(bucket, prefix, suffix=suffix, exclude=exclude)
+    matching_files = s3_ls(bucket, prefix, suffix=None, exclude=exclude)
 
     for pattern in path_cfg.filter or []:
+        logger.info(f"Filtering files with regex pattern: {pattern}")
         regex = re.compile(pattern)
         matching_files = [f for f in matching_files if regex.search(f)]
+        if matching_files == []:
+            raise ValueError(
+                f"No files matching {pattern} under {s3_uri}. Modify regexp filter or path in configuration file. Abort"
+            )
+
+        logger.info(f"Matched {len(matching_files)} files")
 
     return matching_files
 
@@ -387,19 +409,85 @@ def resolve_dataset_config_path(config_arg: str) -> str:
     return str(config_path)
 
 
+def validate_all_configs(config_dir: str, exclude_regex: Optional[str] = None) -> int:
+    """Validate all JSON config files in a directory using the DatasetConfig schema.
+
+    Args:
+        config_dir: Path to the directory containing JSON configuration files.
+        exclude_regex: Optional regex pattern to exclude files.
+
+    Returns:
+        Number of invalid configurations (0 if all valid).
+    """
+    config_path = Path(config_dir)
+    if not config_path.is_dir():
+        print(f"❌ Provided path is not a directory: {config_dir}")
+        return 1
+
+    exclude_pattern = re.compile(exclude_regex) if exclude_regex else None
+
+    json_files = sorted(
+        p
+        for p in config_path.glob("*.json")
+        if p.is_file() and not (exclude_pattern and exclude_pattern.match(str(p)))
+    )
+
+    if not json_files:
+        print(f"ℹ️ No JSON files to validate in {config_dir}")
+        return 0
+
+    print(f"🔍 Validating {len(json_files)} config file(s) in {config_dir}")
+    errors = 0
+    for json_file in json_files:
+        try:
+            with open(json_file, "r") as f:
+                raw = json.load(f)
+            DatasetConfig.model_validate(raw)
+        except ValidationError as e:
+            print(f"\n❌ Validation failed in: {json_file}")
+            print("─" * 80)
+            print(e)
+            print("─" * 80)
+            errors += 1
+        except Exception as e:
+            print(f"\n❌ Error reading {json_file}: {e}")
+            errors += 1
+
+    if errors > 0:
+        print(f"\n❌ {errors} configuration file(s) failed validation.")
+    else:
+        print("✅ All configurations are valid.")
+
+    return errors
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Run cloud-optimised creation using config."
     )
     parser.add_argument(
-        "--config", required=True, help="JSON filename in config/dataset/"
+        "--config", required=False, help="JSON filename in config/dataset/"
     )
     parser.add_argument(
         "--json-overwrite",
         type=str,
         help='JSON string to override config fields. Example:  \'{"run_settings": {"cluster": {"mode": null}, "raise_error": true}}\' ',
     )
+    parser.add_argument(
+        "--validate-configs",
+        type=str,
+        help="Validate all JSON configs in a directory (no processing is done).",
+    )
+
     args = parser.parse_args()
+
+    if args.validate_configs:
+        # Pre-commit pattern: match full path string
+        exclude_pattern = r"^.*dataset_template\.json$"
+        exit_code = validate_all_configs(
+            args.validate_configs, exclude_regex=exclude_pattern
+        )
+        sys.exit(exit_code)
 
     try:
         config = load_config_and_validate(args.config)

@@ -2,21 +2,6 @@
   "dataset_name": "satellite_ghrsst_l4_gamssa_1day_multi_sensor_world",
   "logger_name": "satellite_ghrsst_l4_gamssa_1day_multi_sensor_world",
   "cloud_optimised_format": "zarr",
-  "coiled_cluster_options": {
-    "n_workers": [
-      5,
-      30
-    ],
-    "scheduler_vm_types": "m7i.2xlarge",
-    "worker_vm_types": "m7i.2xlarge",
-    "allow_ingress_from": "me",
-    "compute_purchase_option": "spot_with_fallback",
-    "worker_options": {
-      "nthreads": 8,
-      "memory_limit": "32GB"
-    }
-  },
-  "batch_size": 300,
   "metadata_uuid": "2d496463-600c-465a-84a1-8a4ab76bd505",
   "dimensions": {
     "time": {
@@ -165,5 +150,35 @@
       ]
     },
     "Citation": "The citation in a list of references is: \"IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access].\""
+  },
+  "run_settings": {
+    "coiled_cluster_options": {
+      "n_workers": [
+        5,
+        30
+      ],
+      "scheduler_vm_types": "m7i.2xlarge",
+      "worker_vm_types": "m7i.2xlarge",
+      "allow_ingress_from": "me",
+      "compute_purchase_option": "spot_with_fallback",
+      "worker_options": {
+        "nthreads": 8,
+        "memory_limit": "32GB"
+      }
+    },
+    "batch_size": 300,
+    "cluster": {
+      "mode": "coiled",
+      "restart_every_path": false
+    },
+    "paths": [
+      {
+        "s3_uri": "s3://imos-data/IMOS/",
+        "filter": [],
+        "year_range": []
+      }
+    ],
+    "clear_existing_data": true,
+    "raise_error": false
   }
 }

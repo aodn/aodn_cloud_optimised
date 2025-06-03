@@ -97,7 +97,10 @@ class ClusterManager:
         return self._create_client_and_cluster(LocalCluster, self.local_cluster_options)
 
     def create_coiled_cluster(self):
-        coiled_cluster_options = self.dataset_config.get("coiled_cluster_options", None)
+        coiled_cluster_options = self.dataset_config.get("run_settings", {}).get(
+            "coiled_cluster_options", None
+        )
+
         if coiled_cluster_options is None:
             self.logger.warning(
                 f"Missing coiled_cluster_options in dataset_config. Using default value {self.coiled_cluster_default_options}"
@@ -136,7 +139,6 @@ class ClusterManager:
         return client, cluster, self.cluster_mode
 
     def create_cluster(self):
-
         if self.cluster_mode == ClusterMode.LOCAL:
             return self.create_local_cluster()
         elif self.cluster_mode == ClusterMode.COILED:

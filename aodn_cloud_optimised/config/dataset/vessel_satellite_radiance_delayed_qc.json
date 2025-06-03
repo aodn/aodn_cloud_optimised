@@ -2,21 +2,6 @@
   "dataset_name": "vessel_satellite_radiance_delayed_qc",
   "logger_name": "vessel_satellite_radiance_delayed_qc",
   "cloud_optimised_format": "zarr",
-  "coiled_cluster_options": {
-    "n_workers": [
-      8,
-      20
-    ],
-    "scheduler_vm_types": "m7i.xlarge",
-    "worker_vm_types": "m7i.large",
-    "allow_ingress_from": "me",
-    "compute_purchase_option": "spot_with_fallback",
-    "worker_options": {
-      "nthreads": 4,
-      "memory_limit": "16GB"
-    }
-  },
-  "batch_size": 25,
   "metadata_uuid": "28f8bfed-ca6a-472a-84e4-42563ce4df3f",
   "dimensions": {
     "time": {
@@ -343,5 +328,35 @@
       ]
     },
     "Citation": "IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access]"
+  },
+  "run_settings": {
+    "coiled_cluster_options": {
+      "n_workers": [
+        8,
+        20
+      ],
+      "scheduler_vm_types": "m7i.xlarge",
+      "worker_vm_types": "m7i.large",
+      "allow_ingress_from": "me",
+      "compute_purchase_option": "spot_with_fallback",
+      "worker_options": {
+        "nthreads": 4,
+        "memory_limit": "16GB"
+      }
+    },
+    "batch_size": 25,
+    "cluster": {
+      "mode": "coiled",
+      "restart_every_path": false
+    },
+    "paths": [
+      {
+        "s3_uri": "s3://imos-data/IMOS/",
+        "filter": [],
+        "year_range": []
+      }
+    ],
+    "clear_existing_data": true,
+    "raise_error": false
   }
 }

@@ -4,7 +4,6 @@
   "parent_config": "satellite_ocean_colour_1day_aqua_main.json",
   "metadata_uuid": "24055e3a-94e5-40bb-b97f-7519f0482d6a",
   "var_template_shape": "chl_oci",
-  "batch_size": 125,
   "schema": {
     "time": {
       "type": "timestamp[ns]",
@@ -117,5 +116,21 @@
       ]
     },
     "Citation": "The citation in a list of references is: \"IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access].\""
+  },
+  "run_settings": {
+    "batch_size": 125,
+    "cluster": {
+      "mode": "coiled",
+      "restart_every_path": false
+    },
+    "paths": [
+      {
+        "s3_uri": "s3://imos-data/IMOS/",
+        "filter": [],
+        "year_range": []
+      }
+    ],
+    "clear_existing_data": true,
+    "raise_error": false
   }
 }

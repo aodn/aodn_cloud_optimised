@@ -2,21 +2,6 @@
   "dataset_name": "mooring_ctd_delayed_qc",
   "logger_name": "mooring_ctd_delayed_qc",
   "cloud_optimised_format": "parquet",
-  "coiled_cluster_options": {
-    "n_workers": [
-      1,
-      20
-    ],
-    "scheduler_vm_types": "t3.small",
-    "worker_vm_types": "t3.xlarge",
-    "allow_ingress_from": "me",
-    "compute_purchase_option": "spot_with_fallback",
-    "worker_options": {
-      "nthreads": 8,
-      "memory_limit": "32GB"
-    }
-  },
-  "batch_size": 100,
   "metadata_uuid": "7b901002-b1dc-46c3-89f2-b4951cedca48",
   "gattrs_to_variables": [
     "site_code"
@@ -280,7 +265,6 @@
   "dataset_gattrs": {
     "title": "ANMN CTD timeseries"
   },
-  "force_old_pq_del": true,
   "aws_opendata_registry": {
     "Name": "National Mooring Network - CTD profiles",
     "Description": "This collection includes conductivity-temperature-depth (CTD) profiles obtained at the National Reference Stations (NRS) as part of the water sampling program. The instruments used also measure dissolved oxygen, fluorescence, and turbidity. The collection also includes practical salinity, water density and artificial chlorophyll concentration, as computed from the measured properties. The data are processed in delayed mode, with automated quality control applied. The National Reference Station network is designed to provide baseline information, at timescales relevant to human response, that is required to understand how large-scale, long-term change and variability in the global ocean are affecting the ecosystems of Australia's coastal seas. The stations are operated by the Australian National Moorings Network (ANMN), a facility of the Integrated Marine Observing System (IMOS).",
@@ -320,5 +304,66 @@
       ]
     },
     "Citation": "The citation in a list of references is: \"IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access].\" If using data from the Ningaloo (TAN100) mooring, please add to the citation - \"Department of Jobs, Tourism, Science and Innovation (DJTSI), Western Australian Government\". "
+  },
+  "run_settings": {
+    "coiled_cluster_options": {
+      "n_workers": [
+        1,
+        20
+      ],
+      "scheduler_vm_types": "t3.small",
+      "worker_vm_types": "t3.xlarge",
+      "allow_ingress_from": "me",
+      "compute_purchase_option": "spot_with_fallback",
+      "worker_options": {
+        "nthreads": 8,
+        "memory_limit": "32GB"
+      }
+    },
+    "batch_size": 100,
+    "cluster": {
+      "mode": "coiled",
+      "restart_every_path": false
+    },
+    "paths": [
+      {
+        "s3_uri": "s3://imos-data/IMOS/ANMN/NSW",
+        "filter": [
+          ".*/CTD_timeseries/.*FV01.*\\.nc$"
+        ],
+        "year_range": []
+      },
+      {
+        "s3_uri": "s3://imos-data/IMOS/ANMN/PA",
+        "filter": [
+          ".*/CTD_timeseries/.*FV01.*\\.nc$"
+        ],
+        "year_range": []
+      },
+      {
+        "s3_uri": "s3://imos-data/IMOS/ANMN/QLD",
+        "filter": [
+          ".*/CTD_timeseries/.*FV01.*\\.nc$"
+        ],
+        "year_range": []
+      },
+      {
+        "s3_uri": "s3://imos-data/IMOS/ANMN/SA",
+        "filter": [
+          ".*/CTD_timeseries/.*FV01.*\\.nc$"
+        ],
+        "year_range": []
+      },
+      {
+        "s3_uri": "s3://imos-data/IMOS/ANMN/WA",
+        "filter": [
+          ".*/CTD_timeseries/.*FV01.*\\.nc$"
+        ],
+        "year_range": []
+      }
+    ],
+    "clear_existing_data": true,
+    "raise_error": false,
+    "force_previous_parquet_deletion": true
   }
 }

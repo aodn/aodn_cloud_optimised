@@ -16,7 +16,20 @@
         "memory_limit": "64GB"
       }
     },
-    "batch_size": 125
+    "batch_size": 125,
+    "cluster": {
+      "mode": "coiled",
+      "restart_every_path": false
+    },
+    "paths": [
+      {
+        "s3_uri": "s3://imos-data/IMOS/",
+        "filter": [],
+        "year_range": []
+      }
+    ],
+    "clear_existing_data": true,
+    "raise_error": false
   },
   "dimensions": {
     "time": {

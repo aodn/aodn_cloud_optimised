@@ -2,21 +2,6 @@
   "dataset_name": "vessel_fishsoop_realtime_qc",
   "logger_name": "vessel_fishsoop_realtime_qc",
   "cloud_optimised_format": "parquet",
-  "coiled_cluster_options": {
-    "n_workers": [
-      1,
-      20
-    ],
-    "scheduler_vm_types": "t3.large",
-    "worker_vm_types": "t3.xlarge",
-    "allow_ingress_from": "me",
-    "compute_purchase_option": "spot_with_fallback",
-    "worker_options": {
-      "nthreads": 8,
-      "memory_limit": "32GB"
-    }
-  },
-  "batch_size": 300,
   "metadata_uuid": "bdb84466-dc53-49ad-a60f-83d9fa0baed5",
   "gattrs_to_variables": [],
   "partition_keys": [
@@ -213,7 +198,6 @@
     "principal_investigator_email": "",
     "featureType": ""
   },
-  "force_old_pq_del": true,
   "aws_opendata_registry": {
     "Name": "Ships of Opportunity - Fisheries vessels - Real time",
     "Description": "Fisheries Vessels as Ships of Opportunities (FishSOOP) is an IMOS Sub-Facility working with fishers to collect real-time temperature and depth data by installing equipment on a network of commercial fishing vessels using a range of common fishing gear.\n\nEvery day, fishing vessels operate broadly across the productive areas of Australia\u2019s Exclusive Economic Zone where we have few subsurface ocean measurements. The FishSOOP Sub-Facility is utilising this observing opportunity to cost-effectively increase the spatial and temporal resolution of subsurface temperature data in Australia\u2019s inshore, shelf, upper-slope, and offshore waters. The data is currently returned to each fishing boat in near-real time, so skippers can relate their catches to temperature-at-depth information.  The same data will also be collated to provide oceanographers with quality-controlled data for ground-truthing coastal models and to improve analysis and forecasts of oceanic conditions.\n\nThe IMOS funded data collection, follows on from a Fisheries Research and Development Corporation (FRDC) funded pilot project (2022-007) with the University of New South Wales, Fishwell Consulting and IMOS. In the first year of the project 32 commercial fishing vessels had been equipped with sensors. They covered a range of fishing vessels, including scallop dredges, tuna longlines, shark gillnets, otter board trawlers, lobster pots, fish traps, prawn trawlers, squid jigs, and danish seines. We also had a pre-trial test with one boat the year prior, with the sensor installed on a trawler.",
@@ -252,5 +236,36 @@
       ]
     },
     "Citation": "For data collected prior to 1 July 2024: \" UNSW Sydney [year-of-data-download], IMOS SOOP - Vessels as Ships of Opportunity Sub-Facility - Real-time data, Downloaded from [url] on [date-of-download]\". For data collected after 1 July 2024: \" UNSW Sydney; IMOS [year-of-data-download], IMOS SOOP - Vessels as Ships of Opportunity Sub-Facility - Real-time data, Downloaded from [url] on [date-of-download]\"."
+  },
+  "run_settings": {
+    "coiled_cluster_options": {
+      "n_workers": [
+        1,
+        20
+      ],
+      "scheduler_vm_types": "t3.large",
+      "worker_vm_types": "t3.xlarge",
+      "allow_ingress_from": "me",
+      "compute_purchase_option": "spot_with_fallback",
+      "worker_options": {
+        "nthreads": 8,
+        "memory_limit": "32GB"
+      }
+    },
+    "batch_size": 300,
+    "cluster": {
+      "mode": "coiled",
+      "restart_every_path": false
+    },
+    "paths": [
+      {
+        "s3_uri": "s3://imos-data/IMOS/",
+        "filter": [],
+        "year_range": []
+      }
+    ],
+    "clear_existing_data": true,
+    "raise_error": false,
+    "force_previous_parquet_deletion": true
   }
 }

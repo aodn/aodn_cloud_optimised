@@ -2,21 +2,6 @@
   "dataset_name": "vessel_xbt_realtime_nonqc",
   "logger_name": "vessel_xbt_realtime_nonqc",
   "cloud_optimised_format": "parquet",
-  "coiled_cluster_options": {
-    "n_workers": [
-      8,
-      20
-    ],
-    "scheduler_vm_types": "t3.small",
-    "worker_vm_types": "t3.large",
-    "allow_ingress_from": "me",
-    "compute_purchase_option": "spot_with_fallback",
-    "worker_options": {
-      "nthreads": 8,
-      "memory_limit": "32GB"
-    }
-  },
-  "batch_size": 40,
   "metadata_uuid": "35234913-aa3c-48ec-b9a4-77f822f66ef8",
   "gattrs_to_variables": [
     "XBT_line",
@@ -158,7 +143,6 @@
     "principal_investigator_email": "rebecca.cowley@csiro.au",
     "featureType": "profile"
   },
-  "force_old_pq_del": true,
   "aws_opendata_registry": {
     "Name": "Ships of Opportunity - Expendable bathythermographs - Real time",
     "Description": "XBT real-time data is available through the IMOS portal. Data is acquired by technicians who ride the ships of opportunity in order to perform high density sampling along well established transit lines. The data acquisition system used is the Quoll developed by Turo Technology. Data collected and is stored in netcdf files, with real-time data messages (JJVV bathy messages) created on the ship and sent to shore by iridium sbd. This is inserted onto the GTS by our colleagues at the Australian Bureau of Meteorology. The full resolution data is collected from the ship and returned for processing to scientists at CSIRO in Hobart. It undergoes a full scientific QC process which identifies both bad data and oceanic features such as eddies, fronts and temperature inversions. Finally, the data is distributed to the GTSPP global data acquisition centre in Washington DC where it is made freely available to all. This SOOP dataset covers waters around Australia and across to New Zealand.",
@@ -197,5 +181,36 @@
       ]
     },
     "Citation": "The citation in a list of references is: \"IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access].\""
+  },
+  "run_settings": {
+    "coiled_cluster_options": {
+      "n_workers": [
+        8,
+        20
+      ],
+      "scheduler_vm_types": "t3.small",
+      "worker_vm_types": "t3.large",
+      "allow_ingress_from": "me",
+      "compute_purchase_option": "spot_with_fallback",
+      "worker_options": {
+        "nthreads": 8,
+        "memory_limit": "32GB"
+      }
+    },
+    "batch_size": 40,
+    "cluster": {
+      "mode": "coiled",
+      "restart_every_path": false
+    },
+    "paths": [
+      {
+        "s3_uri": "s3://imos-data/IMOS/",
+        "filter": [],
+        "year_range": []
+      }
+    ],
+    "clear_existing_data": true,
+    "raise_error": false,
+    "force_previous_parquet_deletion": true
   }
 }

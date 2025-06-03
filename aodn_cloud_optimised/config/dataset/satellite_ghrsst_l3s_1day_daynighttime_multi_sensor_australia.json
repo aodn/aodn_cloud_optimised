@@ -3,21 +3,6 @@
   "logger_name": "satellite_ghrsst_l3s_1day_daynighttime_multi_sensor_australia",
   "cloud_optimised_format": "zarr",
   "parent_config": "satellite_ghrsst_main.json",
-  "coiled_cluster_options": {
-    "n_workers": [
-      60,
-      180
-    ],
-    "scheduler_vm_types": "m7i.2xlarge",
-    "worker_vm_types": "m7i.2xlarge",
-    "allow_ingress_from": "me",
-    "compute_purchase_option": "spot_with_fallback",
-    "worker_options": {
-      "nthreads": 8,
-      "memory_limit": "32GB"
-    }
-  },
-  "batch_size": 100,
   "metadata_uuid": "d7f3178d-869a-4eac-959d-71d1f5e24888",
   "aws_opendata_registry": {
     "Name": "Satellite - Sea surface temperature - Level 3 - Multi sensor - 1 day - Day and night time",
@@ -58,5 +43,35 @@
       ]
     },
     "Citation": "The citation in a list of references is: \"IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access].\""
+  },
+  "run_settings": {
+    "coiled_cluster_options": {
+      "n_workers": [
+        60,
+        180
+      ],
+      "scheduler_vm_types": "m7i.2xlarge",
+      "worker_vm_types": "m7i.2xlarge",
+      "allow_ingress_from": "me",
+      "compute_purchase_option": "spot_with_fallback",
+      "worker_options": {
+        "nthreads": 8,
+        "memory_limit": "32GB"
+      }
+    },
+    "batch_size": 100,
+    "cluster": {
+      "mode": "coiled",
+      "restart_every_path": false
+    },
+    "paths": [
+      {
+        "s3_uri": "s3://imos-data/IMOS/",
+        "filter": [],
+        "year_range": []
+      }
+    ],
+    "clear_existing_data": true,
+    "raise_error": false
   }
 }
