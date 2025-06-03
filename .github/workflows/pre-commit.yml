@@ -32,6 +32,9 @@ jobs:
         run: |
           poetry cache clear pypi --all
 
+      - name: Install project - needed for custom poetry hook
+        run: poetry install --no-interaction
+
       - name: Run pre-commit
         uses: pre-commit/action@v3.0.1
         with:
