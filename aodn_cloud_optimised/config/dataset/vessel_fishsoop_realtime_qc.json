@@ -259,8 +259,10 @@
     },
     "paths": [
       {
-        "s3_uri": "s3://imos-data/IMOS/",
-        "filter": [],
+        "s3_uri": "s3://imos-data/IMOS/SOOP/SOOP-FishSOOP/REALTIME//",
+        "filter": [
+          ".*\\.nc"
+        ],
         "year_range": []
       }
     ],
