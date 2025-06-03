@@ -17,6 +17,12 @@
         "memory_limit": "4GB"
       }
     },
+    "paths": [
+      {
+        "s3_uri": "s3://imos-data/Department_of_Transport-Western_Australia/WAVE-BUOYS/REALTIME/",
+        "filter": []
+      }
+    ],
     "batch_size": 300
   },
   "metadata_uuid": "b299cdcd-3dee-48aa-abdd-e0fcdbb9cadc",

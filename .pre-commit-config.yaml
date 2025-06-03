@@ -59,7 +59,7 @@ repos:
     hooks:
       - id: validate-json-configs
         name: Validate dataset JSON configs with Pydantic
-        entry: python3 aodn_cloud_optimised/bin/generic_cloud_optimised_creation.py --validate-configs aodn_cloud_optimised/config/dataset
+        entry: python3 aodn_cloud_optimised/bin/pydantic_precommit_hook.py --validate-configs aodn_cloud_optimised/config/dataset
         language: system
         types: [json]
         pass_filenames: false
