@@ -2,21 +2,23 @@
   "dataset_name": "wave_buoy_realtime_nonqc",
   "logger_name": "wave_buoy_realtime_nonqc",
   "cloud_optimised_format": "parquet",
-  "coiled_cluster_options": {
-    "n_workers": [
-      8,
-      20
-    ],
-    "scheduler_vm_types": "t3.small",
-    "worker_vm_types": "t3.medium",
-    "allow_ingress_from": "me",
-    "compute_purchase_option": "spot_with_fallback",
-    "worker_options": {
-      "nthreads": 8,
-      "memory_limit": "4GB"
-    }
+  "run_settings": {
+    "coiled_cluster_options": {
+      "n_workers": [
+        8,
+        20
+      ],
+      "scheduler_vm_types": "t3.small",
+      "worker_vm_types": "t3.medium",
+      "allow_ingress_from": "me",
+      "compute_purchase_option": "spot_with_fallback",
+      "worker_options": {
+        "nthreads": 8,
+        "memory_limit": "4GB"
+      }
+    },
+    "batch_size": 300
   },
-  "batch_size": 300,
   "metadata_uuid": "b299cdcd-3dee-48aa-abdd-e0fcdbb9cadc",
   "gattrs_to_variables": [
     "site_name",

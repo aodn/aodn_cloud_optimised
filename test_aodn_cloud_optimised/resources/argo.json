@@ -3,21 +3,23 @@
   "logger_name": "argo",
   "handler_class": "ArgoHandler",
   "cloud_optimised_format": "parquet",
-  "coiled_cluster_options": {
-    "n_workers": [
-      2,
-      80
-    ],
-    "scheduler_vm_types": "t3.xlarge",
-    "worker_vm_types": "t3.xlarge",
-    "allow_ingress_from": "me",
-    "compute_purchase_option": "spot_with_fallback",
-    "worker_options": {
-      "nthreads": 8,
-      "memory_limit": "12GB"
-    }
+  "run_settings": {
+    "coiled_cluster_options": {
+      "n_workers": [
+        2,
+        80
+      ],
+      "scheduler_vm_types": "t3.xlarge",
+      "worker_vm_types": "t3.xlarge",
+      "allow_ingress_from": "me",
+      "compute_purchase_option": "spot_with_fallback",
+      "worker_options": {
+        "nthreads": 8,
+        "memory_limit": "12GB"
+      }
+    },
+    "batch_size": 2500
   },
-  "batch_size": 2500,
   "metadata_uuid": "4402cb50-e20a-44ee-93e6-4728259250d2",
   "gattrs_to_variables": [],
   "partition_keys": [

@@ -1,8 +1,8 @@
 import unittest
-from unittest.mock import patch, mock_open
-from aodn_cloud_optimised.bin.generic_cloud_optimised_creation import DatasetConfig
+
 from pydantic import ValidationError
-import json
+
+from aodn_cloud_optimised.bin.generic_cloud_optimised_creation import DatasetConfig
 
 
 class TestDatasetConfigValidation(unittest.TestCase):
@@ -21,7 +21,6 @@ class TestDatasetConfigValidation(unittest.TestCase):
                 "clear_existing_data": False,
                 "raise_error": False,
                 "suffix": ".nc",
-                "bucket_raw_default_name": "",
             },
         }
 

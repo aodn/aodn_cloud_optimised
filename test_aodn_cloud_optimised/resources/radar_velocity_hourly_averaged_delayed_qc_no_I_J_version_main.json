@@ -2,21 +2,23 @@
   "dataset_name": "radar_velocity_hourly_averaged_delayed_qc_no_I_J_version_main",
   "logger_name": "radar_velocity_hourly_averaged_delayed_qc_no_I_J_version_main",
   "cloud_optimised_format": "zarr",
-  "coiled_cluster_options": {
-    "n_workers": [
-      12,
-      140
-    ],
-    "scheduler_vm_types": "m7i.large",
-    "worker_vm_types": "m7i.xlarge",
-    "allow_ingress_from": "me",
-    "compute_purchase_option": "spot_with_fallback",
-    "worker_options": {
-      "nthreads": 16,
-      "memory_limit": "64GB"
-    }
+  "run_settings": {
+    "coiled_cluster_options": {
+      "n_workers": [
+        12,
+        140
+      ],
+      "scheduler_vm_types": "m7i.large",
+      "worker_vm_types": "m7i.xlarge",
+      "allow_ingress_from": "me",
+      "compute_purchase_option": "spot_with_fallback",
+      "worker_options": {
+        "nthreads": 16,
+        "memory_limit": "64GB"
+      }
+    },
+    "batch_size": 6000
   },
-  "batch_size": 6000,
   "var_template_shape": "UCUR",
   "vars_incompatible_with_region": [
     "LATITUDE",

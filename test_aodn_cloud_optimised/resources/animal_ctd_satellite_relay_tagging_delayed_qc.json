@@ -3,21 +3,23 @@
   "logger_name": "animal_ctd_satellite_relay_tagging_delayed_qc",
   "handler_class": "ArgoHandler",
   "cloud_optimised_format": "parquet",
-  "coiled_cluster_options": {
-    "n_workers": [
-      40,
-      50
-    ],
-    "scheduler_vm_types": "m7i.large",
-    "worker_vm_types": "m7i.large",
-    "allow_ingress_from": "me",
-    "compute_purchase_option": "spot_with_fallback",
-    "worker_options": {
-      "nthreads": 8,
-      "memory_limit": "16GB"
-    }
+  "run_settings": {
+    "coiled_cluster_options": {
+      "n_workers": [
+        40,
+        50
+      ],
+      "scheduler_vm_types": "m7i.large",
+      "worker_vm_types": "m7i.large",
+      "allow_ingress_from": "me",
+      "compute_purchase_option": "spot_with_fallback",
+      "worker_options": {
+        "nthreads": 8,
+        "memory_limit": "16GB"
+      }
+    },
+    "batch_size": 60
   },
-  "batch_size": 60,
   "metadata_uuid": "95d6314c-cfc7-40ae-b439-85f14541db71",
   "gattrs_to_variables": [
     "wmo_platform_code",

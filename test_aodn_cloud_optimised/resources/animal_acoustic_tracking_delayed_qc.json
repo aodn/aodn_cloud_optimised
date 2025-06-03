@@ -2,21 +2,23 @@
   "dataset_name": "animal_acoustic_tracking_delayed_qc",
   "logger_name": "animal_acoustic_tracking_delayed_qc",
   "cloud_optimised_format": "parquet",
-  "coiled_cluster_options": {
-    "n_workers": [
-      4,
-      20
-    ],
-    "scheduler_vm_types": "t3.small",
-    "worker_vm_types": "t3.large",
-    "allow_ingress_from": "me",
-    "compute_purchase_option": "spot_with_fallback",
-    "worker_options": {
-      "nthreads": 8,
-      "memory_limit": "32GB"
-    }
+  "run_settings": {
+    "coiled_cluster_options": {
+      "n_workers": [
+        4,
+        20
+      ],
+      "scheduler_vm_types": "t3.small",
+      "worker_vm_types": "t3.large",
+      "allow_ingress_from": "me",
+      "compute_purchase_option": "spot_with_fallback",
+      "worker_options": {
+        "nthreads": 8,
+        "memory_limit": "32GB"
+      }
+    },
+    "batch_size": 20
   },
-  "batch_size": 20,
   "metadata_uuid": "541d4f15-122a-443d-ab4e-2b5feb08d6a0",
   "gattrs_to_variables": [],
   "partition_keys": [

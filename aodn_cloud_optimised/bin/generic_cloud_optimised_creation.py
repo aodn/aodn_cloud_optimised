@@ -13,7 +13,6 @@ import json
 import re
 import sys
 import warnings
-from importlib.resources import files
 from pathlib import Path, PurePosixPath
 from typing import Any, List, Optional
 from urllib.parse import urlparse
@@ -140,6 +139,40 @@ class PathConfig(BaseModel):
         return v
 
 
+class WorkerOptions(BaseModel):
+    """Worker configuration for Coiled clusters.
+
+    Attributes:
+        nthreads: Number of threads per worker.
+        memory_limit: Memory limit per worker (e.g., "64GB").
+    """
+
+    nthreads: int
+    memory_limit: str  # "64GB", etc.
+
+
+class CoiledClusterOptions(BaseModel):
+    """Configuration options for a Coiled cluster.
+
+    Attributes:
+        n_workers: List of two integers specifying the minimum and maximum number of workers (e.g., [25, 150]).
+        scheduler_vm_types: VM type to use for the Coiled cluster scheduler.
+        worker_vm_types: VM type to use for Coiled cluster workers.
+        allow_ingress_from: IP or CIDR block allowed to access the cluster.
+        compute_purchase_option: AWS compute purchase option (e.g., "on_demand", "spot").
+        worker_options: Configuration for individual Coiled cluster workers.
+    """
+
+    n_workers: List[int] = Field(
+        ..., description="List of integers: min and max workers (e.g., [25, 150])."
+    )
+    scheduler_vm_types: str
+    worker_vm_types: str
+    allow_ingress_from: str
+    compute_purchase_option: str
+    worker_options: WorkerOptions
+
+
 class RunSettings(BaseModel):
     """Run configuration for processing.
 
@@ -155,10 +188,17 @@ class RunSettings(BaseModel):
         root_prefix_cloud_optimised_path: Optional override for the root key prefix inside the optimised bucket.
         bucket_raw_default_name: Optional override for the default raw data input bucket.
             If provided, it must match the bucket in any `s3_uri` that begins with 's3://'.
+        batch_size: Optional maximum number of files to process in a single batch. Must be a positive integer.
+        coiled_cluster_options: Optional configuration block for Coiled clusters.
+            Required only when cluster mode is set to 'coiled'.
+
 
     Notes:
         If `s3_uri` starts with 's3://', and `bucket_raw_default_name` is also provided,
         the bucket in the URI must match `bucket_raw_default_name`, or validation will fail.
+
+        When `cluster.mode` is set to "coiled", `coiled_cluster_options` must be provided,
+        otherwise a validation error will be raised.
     """
 
     paths: List[PathConfig] = Field(
@@ -196,6 +236,15 @@ class RunSettings(BaseModel):
         default=None,
         description="Override the input s3 bucket name where the input files are located.",
     )
+    batch_size: Optional[int] = Field(
+        default=None,
+        description="Maximum number of files to process in a batch (must be a positive integer).",
+        ge=1,
+    )
+    coiled_cluster_options: Optional[CoiledClusterOptions] = Field(
+        default=None,
+        description="Configuration options required when cluster.mode is 'coiled'. Ignored otherwise.",
+    )
 
     @model_validator(mode="after")
     def validate_bucket_consistency(self) -> "RunSettings":
@@ -212,6 +261,16 @@ class RunSettings(BaseModel):
                     )
         return self
 
+    @model_validator(mode="after")
+    def validate_cluster_opts(self) -> "RunSettings":
+        # Validate_ coiled options if mode is coiled
+        if self.cluster.mode == "coiled" and self.coiled_cluster_options is None:
+            raise ValueError(
+                "coiled_cluster_options must be provided when cluster.mode is 'coiled'"
+            )
+
+        return self
+
 
 class DatasetConfig(BaseModel):
     """Dataset processing configuration.
@@ -225,12 +284,28 @@ class DatasetConfig(BaseModel):
     run_settings: RunSettings
 
 
-# ---------- Main logic ----------
-def load_config(config_filename: str) -> DatasetConfig:
-    config_path = Path(__file__).parents[1] / "config" / "dataset" / config_filename
-    with config_path.open() as f:
-        raw = f.read()
-    return DatasetConfig.model_validate_json(raw)
+def load_config_and_validate(config_filename: str) -> DatasetConfig:
+    """Load and validate a dataset configuration.
+
+    This function loads a dataset configuration file and validates it against the
+    `DatasetConfig` Pydantic model. If `config_filename` is a full path to an
+    existing file, it is used directly. Otherwise, it is assumed to be a filename
+    located in the default config directory:
+    `../config/dataset/` relative to this file.
+
+    Args:
+        config_filename: The name of the configuration file or a full path to one.
+
+    Returns:
+        A validated `DatasetConfig` instance.
+
+    Raises:
+        FileNotFoundError: If the configuration file does not exist.
+        pydantic.ValidationError: If the configuration is invalid.
+    """
+    config_path = resolve_dataset_config_path(config_filename)
+    dataset_config = load_dataset_config(str(config_path))
+    return DatasetConfig.model_validate(dataset_config)
 
 
 def json_update(base: dict, updates: dict) -> dict:
@@ -281,6 +356,37 @@ def join_s3_uri(base_uri: str, *parts: str) -> str:
         return str(PurePosixPath(base_uri, *parts))
 
 
+def resolve_dataset_config_path(config_arg: str) -> str:
+    """Resolve dataset config path from a given argument.
+
+    If `config_arg` is an existing file path, return it as-is.
+    Otherwise, treat it as a base name (with or without `.json`)
+    and look it up in `aodn_cloud_optimised.config.dataset`.
+
+    Args:
+        config_arg: The CLI config argument, either a path or a name.
+
+    Returns:
+        The path to the config file as a string.
+
+    Raises:
+        FileNotFoundError: If the resolved config file does not exist.
+    """
+    config_path = Path(config_arg)
+    if not config_path.is_file():
+        # Fall back to the default relative config path
+        # Ensure .json extension if missing
+        if not config_arg.endswith(".json"):
+            config_arg += ".json"
+
+        config_path = Path(__file__).parents[1] / "config" / "dataset" / config_arg
+
+    if not config_path.is_file():
+        raise FileNotFoundError(f"Configuration file not found: {config_path}")
+
+    return str(config_path)
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Run cloud-optimised creation using config."
@@ -296,7 +402,7 @@ def main():
     args = parser.parse_args()
 
     try:
-        config = load_config(f"{args.config}.json")
+        config = load_config_and_validate(args.config)
     except ValidationError as e:
         print(f"❌ Validation error in config file:\n{e}")
         sys.exit(1)
@@ -326,10 +432,10 @@ def main():
         or load_variable_from_config("ROOT_PREFIX_CLOUD_OPTIMISED_PATH")
     )
 
-    dataset_config_path = str(
-        files("aodn_cloud_optimised.config.dataset").joinpath(f"{args.config}.json")
-    )
-    dataset_config = load_dataset_config(dataset_config_path)
+    dataset_config_path = resolve_dataset_config_path(args.config)
+    dataset_config = load_dataset_config(
+        dataset_config_path
+    )  # not using config.model_dump() as it retains only the validated objects.
 
     # If restart_every_path is True, run one cloud_optimised_creation per path/year
     if config.run_settings.cluster.restart_every_path:

@@ -2,21 +2,23 @@
   "dataset_name": "vessel_sst_delayed_qc",
   "logger_name": "vessel_sst_delayed_qc",
   "cloud_optimised_format": "parquet",
-  "coiled_cluster_options": {
-    "n_workers": [
-      1,
-      25
-    ],
-    "scheduler_vm_types": "t3.xlarge",
-    "worker_vm_types": "t3.large",
-    "allow_ingress_from": "me",
-    "compute_purchase_option": "spot_with_fallback",
-    "worker_options": {
-      "nthreads": 8,
-      "memory_limit": "32GB"
-    }
+  "run_settings": {
+    "coiled_cluster_options": {
+      "n_workers": [
+        1,
+        25
+      ],
+      "scheduler_vm_types": "t3.xlarge",
+      "worker_vm_types": "t3.large",
+      "allow_ingress_from": "me",
+      "compute_purchase_option": "spot_with_fallback",
+      "worker_options": {
+        "nthreads": 8,
+        "memory_limit": "32GB"
+      }
+    },
+    "batch_size": 500
   },
-  "batch_size": 500,
   "metadata_uuid": "63db5801-cc19-40ef-83b3-85ccba884cf7",
   "gattrs_to_variables": [
     "platform_code"

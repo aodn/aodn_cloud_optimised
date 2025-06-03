@@ -2,21 +2,23 @@
   "dataset_name": "model_sea_level_anomaly_gridded_realtime",
   "logger_name": "model_sea_level_anomaly_gridded_realtime",
   "cloud_optimised_format": "zarr",
-  "coiled_cluster_options": {
-    "n_workers": [
-      1,
-      30
-    ],
-    "scheduler_vm_types": "t3.medium",
-    "worker_vm_types": "t3.large",
-    "allow_ingress_from": "me",
-    "compute_purchase_option": "spot_with_fallback",
-    "worker_options": {
-      "nthreads": 8,
-      "memory_limit": "32GB"
-    }
+  "run_settings": {
+    "coiled_cluster_options": {
+      "n_workers": [
+        1,
+        30
+      ],
+      "scheduler_vm_types": "t3.medium",
+      "worker_vm_types": "t3.large",
+      "allow_ingress_from": "me",
+      "compute_purchase_option": "spot_with_fallback",
+      "worker_options": {
+        "nthreads": 8,
+        "memory_limit": "32GB"
+      }
+    },
+    "batch_size": 4
   },
-  "batch_size": 4,
   "metadata_uuid": "0c9eb39c-9cbe-4c6a-8a10-5867087e703a",
   "dimensions": {
     "time": {

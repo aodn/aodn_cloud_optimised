@@ -114,7 +114,7 @@ class CommonHandler:
             "clear_existing_data", None
         )  # setting to True will recreate the zarr from scratch at every run!
 
-        self.coiled_cluster_options = self.dataset_config.get(
+        self.coiled_cluster_options = self.dataset_config.get("run_settings", {}).get(
             "coiled_cluster_options", None
         )
 
@@ -233,8 +233,8 @@ class CommonHandler:
             int: The calculated batch size for processing files.
         """
         # retrieve info from dataset config
-        if self.dataset_config.get("batch_size") is not None:
-            batch_size = int(self.dataset_config["batch_size"])
+        if self.dataset_config.get("run_settings", {}).get("batch_size") is not None:
+            batch_size = int(self.dataset_config["run_settings"]["batch_size"])
             self.logger.info(
                 f"Optimal batch size taken from dataset configuration: {batch_size}"
             )
