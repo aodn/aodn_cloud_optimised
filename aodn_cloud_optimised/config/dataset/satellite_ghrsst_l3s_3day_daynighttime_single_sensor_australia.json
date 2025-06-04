@@ -46,13 +46,16 @@
   "run_settings": {
     "cluster": {
       "mode": "coiled",
-      "restart_every_path": false
+      "restart_every_path": true
     },
     "paths": [
       {
-        "s3_uri": "s3://imos-data/IMOS/",
+        "s3_uri": "s3://imos-data/IMOS/SRS/SST/ghrsst/L3S-3d/dn/",
         "filter": [],
-        "year_range": []
+        "year_range": [
+          1992,
+          2025
+        ]
       }
     ],
     "clear_existing_data": true,

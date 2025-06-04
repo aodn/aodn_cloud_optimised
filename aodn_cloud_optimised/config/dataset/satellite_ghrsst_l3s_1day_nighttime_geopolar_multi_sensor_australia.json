@@ -255,13 +255,16 @@
     "batch_size": 125,
     "cluster": {
       "mode": "coiled",
-      "restart_every_path": false
+      "restart_every_path": true
     },
     "paths": [
       {
-        "s3_uri": "s3://imos-data/IMOS/",
+        "s3_uri": "s3://imos-data/IMOS/SRS/SST/ghrsst/L3SGM-1d/ngt",
         "filter": [],
-        "year_range": []
+        "year_range": [
+          2018,
+          2022
+        ]
       }
     ],
     "clear_existing_data": true,

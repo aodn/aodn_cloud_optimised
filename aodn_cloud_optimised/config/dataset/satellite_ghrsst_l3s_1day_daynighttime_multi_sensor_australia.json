@@ -62,13 +62,16 @@
     "batch_size": 100,
     "cluster": {
       "mode": "coiled",
-      "restart_every_path": false
+      "restart_every_path": true
     },
     "paths": [
       {
-        "s3_uri": "s3://imos-data/IMOS/",
+        "s3_uri": "s3://imos-data/IMOS/SRS/SST/ghrsst/L3SM-1d/dn",
         "filter": [],
-        "year_range": []
+        "year_range": [
+          2012,
+          2024
+        ]
       }
     ],
     "clear_existing_data": true,
