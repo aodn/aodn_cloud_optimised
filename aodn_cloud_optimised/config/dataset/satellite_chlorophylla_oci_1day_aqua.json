@@ -126,7 +126,9 @@
     "paths": [
       {
         "s3_uri": "s3://imos-data/IMOS/SRS/OC/gridded/aqua/P1D",
-        "filter": [],
+        "filter": [
+          ".*chl_oci\\.nc"
+        ],
         "year_range": [
           2002,
           2024

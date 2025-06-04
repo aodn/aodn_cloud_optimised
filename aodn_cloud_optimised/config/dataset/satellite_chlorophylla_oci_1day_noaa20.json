@@ -125,7 +125,9 @@
     "paths": [
       {
         "s3_uri": "s3://imos-data/IMOS/SRS/OC/gridded/noaa20/P1D",
-        "filter": [],
+        "filter": [
+          ".*chl_oci\\.nc"
+        ],
         "year_range": [
           2023,
           2025

@@ -84,7 +84,9 @@
     "paths": [
       {
         "s3_uri": "s3://imos-data/IMOS/SRS/OC/gridded/aqua/P1D",
-        "filter": [],
+        "filter": [
+          ".*aust\\.npp_vgpm_eppley_gsm\\.nc"
+        ],
         "year_range": [
           2024
         ]

@@ -86,7 +86,9 @@
     "paths": [
       {
         "s3_uri": "s3://imos-data/IMOS/SRS/OC/gridded/aqua/P1D",
-        "filter": [],
+        "filter": [
+          "aust\\.owtd\\.nc"
+        ],
         "year_range": [
           2002,
           2022

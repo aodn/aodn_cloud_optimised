@@ -84,7 +84,9 @@
     "paths": [
       {
         "s3_uri": "s3://imos-data/IMOS/SRS/OC/gridded/aqua/P1D",
-        "filter": [],
+        "filter": [
+          "aust\\.picop_brewin2012in\\.nc"
+        ],
         "year_range": [
           2004,
           2024

@@ -84,7 +84,9 @@
     "paths": [
       {
         "s3_uri": "s3://imos-data/IMOS/SRS/OC/gridded/snpp/P1D",
-        "filter": [],
+        "filter": [
+          ".*K_490\\.nc"
+        ],
         "year_range": [
           2022,
           2025
