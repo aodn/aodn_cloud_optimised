@@ -39,7 +39,10 @@
           "type": "object",
           "properties": {
             "mode": {
-              "type": "string"
+              "type": [
+                "string",
+                "null"
+              ]
             },
             "restart_every_path": {
               "type": "boolean"
