@@ -38,8 +38,8 @@ class ClusterManager:
         }
         self.coiled_cluster_default_options = {
             "n_workers": [1, 2],
-            "scheduler_vm_types": "t3.small",
-            "worker_vm_types": "t3.medium",
+            "scheduler_vm_types": "m7i-flex.large",
+            "worker_vm_types": "m7i-flex.large",
             "allow_ingress_from": "me",
             "compute_purchase_option": "spot_with_fallback",
             "worker_options": {"nthreads": 4, "memory_limit": "8GB"},
@@ -48,8 +48,8 @@ class ClusterManager:
         self.ec2_cluster_default_options = (
             {
                 "n_workers": 1,
-                "scheduler_instance_type": "t3.xlarge",
-                "worker_instance_type": "t3.2xlarge",
+                "scheduler_instance_type": "m7i-flex.xlarge",
+                "worker_instance_type": "m7i-flex.2xlarge",
                 "security": False,
                 "docker_image": "ghcr.io/aodn/aodn_cloud_optimised:latest",
             },

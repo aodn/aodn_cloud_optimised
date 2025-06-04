@@ -8,8 +8,8 @@
         1,
         25
       ],
-      "scheduler_vm_types": "t3.xlarge",
-      "worker_vm_types": "t3.large",
+      "scheduler_vm_types": "m7i-flex.xlarge",
+      "worker_vm_types": "m7i-flex.large",
       "allow_ingress_from": "me",
       "compute_purchase_option": "spot_with_fallback",
       "worker_options": {

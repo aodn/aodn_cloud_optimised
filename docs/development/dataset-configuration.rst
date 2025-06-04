@@ -574,8 +574,8 @@ Coiled Cluster configuration
 
      "coiled_cluster_options" : {
        "n_workers": [2, 20],
-       "scheduler_vm_types": "t3.small",
-       "worker_vm_types": "t3.large",
+       "scheduler_vm_types": "m7i-flex.large",
+       "worker_vm_types": "m7i-flex.large",
        "allow_ingress_from": "me",
        "compute_purchase_option": "spot_with_fallback",
        "worker_options": {
@@ -612,8 +612,8 @@ EC2 Cluster configuration
 
   "ec2_cluster_options": {
     "n_workers": 1,
-    "scheduler_instance_type": "t3.xlarge",
-    "worker_instance_type": "t3.2xlarge",
+    "scheduler_instance_type": "m7i-flex.xlarge",
+    "worker_instance_type": "m7i-flex.2xlarge",
     "security": false,
     "docker_image": "ghcr.io/aodn/aodn_cloud_optimised:latest"
   },

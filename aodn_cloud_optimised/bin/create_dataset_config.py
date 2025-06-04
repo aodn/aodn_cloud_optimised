@@ -714,8 +714,8 @@ def main():
     dataset_config["cloud_optimised_format"] = args.cloud_format
     dataset_config["coiled_cluster_options"] = {
         "n_workers": [1, 20],
-        "scheduler_vm_types": "t3.small",
-        "worker_vm_types": "t3.medium",
+        "scheduler_vm_types": "m7i-flex.large",
+        "worker_vm_types": "m7i-flex.large",
         "allow_ingress_from": "me",
         "compute_purchase_option": "spot_with_fallback",
         "worker_options": {"nthreads": 4, "memory_limit": "8GB"},
