@@ -1002,8 +1002,10 @@
     },
     "paths": [
       {
-        "s3_uri": "s3://imos-data/IMOS/",
-        "filter": [],
+        "s3_uri": "s3://imos-data/IMOS/SOOP/SOOP-ASF/",
+        "filter": [
+          "meteorological_sst_observations"
+        ],
         "year_range": []
       }
     ],

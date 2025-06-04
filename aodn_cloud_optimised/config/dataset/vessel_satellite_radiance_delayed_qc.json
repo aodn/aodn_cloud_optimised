@@ -351,8 +351,10 @@
     },
     "paths": [
       {
-        "s3_uri": "s3://imos-data/IMOS/",
-        "filter": [],
+        "s3_uri": "s3://imos-data/IMOS/SRS/OC/radiometer/",
+        "filter": [
+          ".*FV01.*\\.nc"
+        ],
         "year_range": []
       }
     ],

@@ -305,8 +305,10 @@
     },
     "paths": [
       {
-        "s3_uri": "s3://imos-data/IMOS/",
-        "filter": [],
+        "s3_uri": "s3://imos-data/IMOS/SOOP/SOOP-TRV/",
+        "filter": [
+          ".*\\.nc"
+        ],
         "year_range": []
       }
     ],

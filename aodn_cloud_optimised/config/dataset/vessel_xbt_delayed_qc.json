@@ -399,13 +399,15 @@
     },
     "paths": [
       {
-        "s3_uri": "s3://imos-data/IMOS/",
-        "filter": [],
+        "s3_uri": "s3://imos-data/IMOS/SOOP/SOOP-XBT/DELAYED/",
+        "filter": [
+          ".*\\.nc"
+        ],
         "year_range": []
       }
     ],
     "clear_existing_data": true,
     "raise_error": false,
-    "force_previous_parquet_deletion": true
+    "force_previous_parquet_deletion": false
   }
 }

@@ -5,14 +5,14 @@
   "run_settings": {
     "paths": [
       {
-        "s3_uri": "IMOS/SRS/OC/radiometer/VLHJ_Southern-Surveyor",
+        "s3_uri": "s3://imos-data/IMOS/SRS/OC/radiometer/VLHJ_Southern-Surveyor",
         "filter": [
           ".*FV02.*\\.nc"
         ],
         "year_range": []
       },
       {
-        "s3_uri": "IMOS/SRS/OC/radiometer/VMQ9273_Solander",
+        "s3_uri": "s3://imos-data/IMOS/SRS/OC/radiometer/VMQ9273_Solander",
         "filter": [
           ".*FV02.*\\.nc"
         ],
@@ -35,7 +35,7 @@
       "compute_purchase_option": "spot_with_fallback",
       "worker_options": {
         "nthreads": 4,
-        "memory_limit": "8GB"
+        "memory_limit": "16GB"
       }
     },
     "batch_size": 50,
