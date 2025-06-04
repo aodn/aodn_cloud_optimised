@@ -68,7 +68,7 @@
     },
     "paths": [
       {
-        "s3_uri": "s3://imos-data/ACORN/gridded_1h-avg-wave-site-map_QC/SAG//",
+        "s3_uri": "s3://imos-data/ACORN/gridded_1h-avg-wave-site-map_QC/SAG/",
         "filter": [],
         "year_range": [
           2007,

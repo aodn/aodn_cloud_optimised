@@ -4,8 +4,8 @@
   "cloud_optimised_format": "zarr",
   "ec2_cluster_options": {
     "n_workers": 1,
-    "scheduler_instance_type": "t3.xlarge",
-    "worker_instance_type": "t3.2xlarge",
+    "scheduler_instance_type": "m7i-flex.xlarge",
+    "worker_instance_type": "m7i-flex.2xlarge",
     "security": false,
     "docker_image": "ghcr.io/aodn/aodn_cloud_optimised:latest"
   },

@@ -69,7 +69,7 @@
     },
     "paths": [
       {
-        "s3_uri": "s3://imos-data/IMOS/ACORN/gridded_1h-avg-current-map_QC/NEWC//",
+        "s3_uri": "s3://imos-data/IMOS/ACORN/gridded_1h-avg-current-map_QC/NEWC/",
         "filter": [],
         "year_range": [
           2017,

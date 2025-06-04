@@ -240,11 +240,11 @@
   "run_settings": {
     "coiled_cluster_options": {
       "n_workers": [
-        1,
+        10,
         20
       ],
-      "scheduler_vm_types": "t3.large",
-      "worker_vm_types": "t3.xlarge",
+      "scheduler_vm_types": "m7i-flex.large",
+      "worker_vm_types": "m7i-flex.xlarge",
       "allow_ingress_from": "me",
       "compute_purchase_option": "spot_with_fallback",
       "worker_options": {
@@ -259,7 +259,7 @@
     },
     "paths": [
       {
-        "s3_uri": "s3://imos-data/IMOS/SOOP/SOOP-FishSOOP/REALTIME//",
+        "s3_uri": "s3://imos-data/IMOS/SOOP/SOOP-FishSOOP/REALTIME/",
         "filter": [
           ".*\\.nc"
         ],
