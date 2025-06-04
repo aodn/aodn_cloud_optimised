@@ -23,11 +23,15 @@
               },
               "filter": {
                 "type": "array",
-                "items": {}
+                "items": {
+                  "type": "string"
+                }
               },
               "year_range": {
                 "type": "array",
-                "items": {}
+                "items": {
+                  "type": "integer"
+                }
               }
             },
             "required": [
@@ -54,58 +58,58 @@
         },
         "raise_error": {
           "type": "boolean"
-        }
-      },
-      "coiled_cluster_options": {
-        "type": "object",
-        "properties": {
-          "n_workers": {
-            "type": "array",
-            "items": {
-              "type": "integer"
-            },
-            "minItems": 2,
-            "maxItems": 2
-          },
-          "scheduler_vm_types": {
-            "type": "string"
-          },
-          "worker_vm_types": {
-            "type": "string"
-          },
-          "allow_ingress_from": {
-            "type": "string"
-          },
-          "compute_purchase_option": {
-            "type": "string"
-          },
-          "worker_options": {
-            "type": "object",
-            "properties": {
-              "nthreads": {
+        },
+        "coiled_cluster_options": {
+          "type": "object",
+          "properties": {
+            "n_workers": {
+              "type": "array",
+              "items": {
                 "type": "integer"
               },
-              "memory_limit": {
-                "type": "string"
-              }
+              "minItems": 2,
+              "maxItems": 2
             },
-            "required": [
-              "nthreads",
-              "memory_limit"
-            ]
-          }
+            "scheduler_vm_types": {
+              "type": "string"
+            },
+            "worker_vm_types": {
+              "type": "string"
+            },
+            "allow_ingress_from": {
+              "type": "string"
+            },
+            "compute_purchase_option": {
+              "type": "string"
+            },
+            "worker_options": {
+              "type": "object",
+              "properties": {
+                "nthreads": {
+                  "type": "integer"
+                },
+                "memory_limit": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "nthreads",
+                "memory_limit"
+              ]
+            }
+          },
+          "required": [
+            "n_workers",
+            "scheduler_vm_types",
+            "worker_vm_types",
+            "allow_ingress_from",
+            "compute_purchase_option",
+            "worker_options"
+          ]
         },
-        "required": [
-          "n_workers",
-          "scheduler_vm_types",
-          "worker_vm_types",
-          "allow_ingress_from",
-          "compute_purchase_option",
-          "worker_options"
-        ]
-      },
-      "batch_size": {
-        "type": "integer"
+        "batch_size": {
+          "type": "integer"
+        }
       }
     },
     "metadata_uuid": {
