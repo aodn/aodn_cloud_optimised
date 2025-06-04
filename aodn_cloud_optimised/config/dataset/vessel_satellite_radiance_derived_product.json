@@ -2,21 +2,45 @@
   "dataset_name": "vessel_satellite_radiance_derived_product",
   "logger_name": "vessel_satellite_radiance_derived_product",
   "cloud_optimised_format": "zarr",
-  "coiled_cluster_options": {
-    "n_workers": [
-      5,
-      20
+  "run_settings": {
+    "paths": [
+      {
+        "s3_uri": "s3://imos-data/IMOS/SRS/OC/radiometer/VLHJ_Southern-Surveyor",
+        "filter": [
+          ".*FV02.*\\.nc"
+        ],
+        "year_range": []
+      },
+      {
+        "s3_uri": "s3://imos-data/IMOS/SRS/OC/radiometer/VMQ9273_Solander",
+        "filter": [
+          ".*FV02.*\\.nc"
+        ],
+        "year_range": []
+      }
     ],
-    "scheduler_vm_types": "m7i.xlarge",
-    "worker_vm_types": "m7i.xlarge",
-    "allow_ingress_from": "me",
-    "compute_purchase_option": "spot_with_fallback",
-    "worker_options": {
-      "nthreads": 4,
-      "memory_limit": "8GB"
-    }
+    "cluster": {
+      "mode": "coiled",
+      "restart_every_path": true
+    },
+    "clear_existing_data": true,
+    "coiled_cluster_options": {
+      "n_workers": [
+        5,
+        20
+      ],
+      "scheduler_vm_types": "m7i.xlarge",
+      "worker_vm_types": "m7i.xlarge",
+      "allow_ingress_from": "me",
+      "compute_purchase_option": "spot_with_fallback",
+      "worker_options": {
+        "nthreads": 4,
+        "memory_limit": "16GB"
+      }
+    },
+    "batch_size": 50,
+    "raise_error": false
   },
-  "batch_size": 50,
   "metadata_uuid": "28f8bfed-ca6a-472a-84e4-42563ce4df3f",
   "dimensions": {
     "time": {

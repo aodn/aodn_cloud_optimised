@@ -156,6 +156,7 @@ def generate_template(schema):
     """
     template = {}
     for key, subschema in schema["properties"].items():
+        # print(f"debug - {key} \n {subschema}")
         template[key] = generate_template_value(subschema)
 
     return template
@@ -178,7 +179,7 @@ def get_module_path():
     return module_path
 
 
-def create_dataset_script(dataset_name, dataset_json, nc_file_path, bucket):
+def create_dataset_script_deprecated(dataset_name, dataset_json, nc_file_path, bucket):
     """
     Create a Python script to run a cloud optimised creation command with the specified parameters.
 
@@ -191,31 +192,16 @@ def create_dataset_script(dataset_name, dataset_json, nc_file_path, bucket):
     Returns:
         str: The file system path to the created script.
     """
-    script_content = f"""#!/usr/bin/env python3
+    script_content = """#!/usr/bin/env python3
 import subprocess
+import os
 
 
 def main():
-    command = [
-        "generic_cloud_optimised_creation",
-        "--paths",
-        "{os.path.dirname(nc_file_path).replace(f"s3://{bucket}/", "")}",
-        #"--filters",
-        #"FILTER_STRING_1",
-        #"FILTER_STRING_1",
-        "--dataset-config",
-        "{dataset_json}",
-        "--clear-existing-data",
-        "--cluster-mode",
-        "coiled",
-    ]
+    config_name = os.path.splitext(os.path.basename(__file__))[0]
+    command = ["generic_cloud_optimised_creation", "--config", config_name]
 
-    # Run the command
     subprocess.run(command, check=True)
-
-
-if __name__ == "__main__":
-    main()
     """
 
     module_path = get_module_path()
@@ -225,6 +211,35 @@ if __name__ == "__main__":
         script_file.write(script_content)
     os.chmod(script_path, 0o755)  # Make the script executable
     return script_path
+
+
+def create_dataset_script(dataset_name, dataset_json, nc_file_path, bucket):
+    """
+    Create a symlink to generic_launcher.py named after the dataset in the bin folder.
+
+    Args:
+        dataset_name (str): The name of the dataset to be used in the symlink file name.
+        dataset_json (str): Unused, kept for compatibility.
+        nc_file_path (str): Unused, kept for compatibility.
+        bucket (str): Unused, kept for compatibility.
+
+    Returns:
+        str: The file system path to the created symlink.
+    """
+    module_path = get_module_path()
+    bin_dir = os.path.join(module_path, "bin")
+    os.makedirs(bin_dir, exist_ok=True)
+
+    symlink_path = os.path.join(bin_dir, f"{dataset_name}.py")
+    target_name = "generic_launcher.py"  # relative path within bin directory
+
+    # Remove existing symlink/file if exists
+    if os.path.exists(symlink_path) or os.path.islink(symlink_path):
+        os.remove(symlink_path)
+
+    # Create relative symlink (the symlink will point to "generic_launcher.py" relative to its own location)
+    os.symlink(target_name, symlink_path)
+    return symlink_path
 
 
 def update_pyproject_toml(dataset_name):
@@ -712,15 +727,27 @@ def main():
     dataset_config["metadata_uuid"] = args.uuid
     dataset_config["logger_name"] = args.dataset_name
     dataset_config["cloud_optimised_format"] = args.cloud_format
-    dataset_config["coiled_cluster_options"] = {
+
+    # run_settings
+    dataset_config["run_settings"]["coiled_cluster_options"] = {
         "n_workers": [1, 20],
-        "scheduler_vm_types": "t3.small",
-        "worker_vm_types": "t3.medium",
+        "scheduler_vm_types": "m7i-flex.large",
+        "worker_vm_types": "m7i-flex.large",
         "allow_ingress_from": "me",
         "compute_purchase_option": "spot_with_fallback",
         "worker_options": {"nthreads": 4, "memory_limit": "8GB"},
     }
-    dataset_config["batch_size"] = 5
+    dataset_config["run_settings"]["batch_size"] = 5
+    dataset_config["run_settings"]["clear_existing_data"] = True
+    dataset_config["run_settings"]["raise_error"] = False
+    dataset_config["run_settings"]["cluster"] = {
+        "mode": "coiled",
+        "restart_every_path": False,
+    }
+    dataset_config["run_settings"]["paths"] = [
+        {"s3_uri": f"{nc_file}", "filter": [".*\\.nc"], "year_range": []}
+    ]
+
     if "spatial_extent" in dataset_config:
         dataset_config["spatial_extent"]["spatial_resolution"] = 5
 
@@ -731,6 +758,7 @@ def main():
         dataset_config["schema"]["timestamp"] = {"type": "int64"}
         dataset_config["schema"]["polygon"] = {"type": "string"}
         dataset_config["schema"]["filename"] = {"type": "string"}
+        dataset_config["run_settings"]["force_previous_parquet_deletion"] = False
 
     module_path = get_module_path()
 

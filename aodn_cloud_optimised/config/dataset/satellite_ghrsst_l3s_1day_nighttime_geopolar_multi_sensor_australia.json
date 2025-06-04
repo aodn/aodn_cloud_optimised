@@ -2,21 +2,6 @@
   "dataset_name": "satellite_ghrsst_l3s_1day_nighttime_geopolar_multi_sensor_australia",
   "logger_name": "satellite_ghrsst_l3s_1day_nighttime_geopolar_multi_sensor_australia",
   "parent_config": "satellite_ghrsst_main.json",
-  "coiled_cluster_options": {
-    "n_workers": [
-      30,
-      150
-    ],
-    "scheduler_vm_types": "m7i.xlarge",
-    "worker_vm_types": "m7i.2xlarge",
-    "allow_ingress_from": "me",
-    "compute_purchase_option": "spot_with_fallback",
-    "worker_options": {
-      "nthreads": 16,
-      "memory_limit": "64GB"
-    }
-  },
-  "batch_size": 125,
   "metadata_uuid": "7d8d046b-6002-4897-b781-04e7324d6af8",
   "schema": {
     "lon": {
@@ -251,5 +236,38 @@
       ]
     },
     "Citation": "The citation in a list of references is: \"IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access].\""
+  },
+  "run_settings": {
+    "coiled_cluster_options": {
+      "n_workers": [
+        30,
+        150
+      ],
+      "scheduler_vm_types": "m7i.xlarge",
+      "worker_vm_types": "m7i.2xlarge",
+      "allow_ingress_from": "me",
+      "compute_purchase_option": "spot_with_fallback",
+      "worker_options": {
+        "nthreads": 16,
+        "memory_limit": "64GB"
+      }
+    },
+    "batch_size": 125,
+    "cluster": {
+      "mode": "coiled",
+      "restart_every_path": true
+    },
+    "paths": [
+      {
+        "s3_uri": "s3://imos-data/IMOS/SRS/SST/ghrsst/L3SGM-1d/ngt",
+        "filter": [],
+        "year_range": [
+          2018,
+          2022
+        ]
+      }
+    ],
+    "clear_existing_data": true,
+    "raise_error": false
   }
 }

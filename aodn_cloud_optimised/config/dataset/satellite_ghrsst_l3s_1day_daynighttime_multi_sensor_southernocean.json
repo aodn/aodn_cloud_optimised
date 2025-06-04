@@ -2,21 +2,6 @@
   "dataset_name": "satellite_ghrsst_l3s_1day_daynighttime_multi_sensor_southernocean",
   "logger_name": "satellite_ghrsst_l3s_1day_daynighttime_multi_sensor_southernocean",
   "cloud_optimised_format": "zarr",
-  "coiled_cluster_options": {
-    "n_workers": [
-      60,
-      120
-    ],
-    "scheduler_vm_types": "m7i.xlarge",
-    "worker_vm_types": "m7i.2xlarge",
-    "allow_ingress_from": "me",
-    "compute_purchase_option": "spot_with_fallback",
-    "worker_options": {
-      "nthreads": 16,
-      "memory_limit": "64GB"
-    }
-  },
-  "batch_size": 100,
   "metadata_uuid": "",
   "dimensions": {
     "time": {
@@ -281,5 +266,38 @@
         }
       ]
     }
+  },
+  "run_settings": {
+    "coiled_cluster_options": {
+      "n_workers": [
+        60,
+        120
+      ],
+      "scheduler_vm_types": "m7i.xlarge",
+      "worker_vm_types": "m7i.2xlarge",
+      "allow_ingress_from": "me",
+      "compute_purchase_option": "spot_with_fallback",
+      "worker_options": {
+        "nthreads": 16,
+        "memory_limit": "64GB"
+      }
+    },
+    "batch_size": 100,
+    "cluster": {
+      "mode": "coiled",
+      "restart_every_path": true
+    },
+    "paths": [
+      {
+        "s3_uri": "s3://imos-data/IMOS/SRS/SST/ghrsst/L3SM-1dS/dn",
+        "filter": [],
+        "year_range": [
+          2018,
+          2024
+        ]
+      }
+    ],
+    "clear_existing_data": true,
+    "raise_error": false
   }
 }

@@ -4,21 +4,6 @@
   "cloud_optimised_format": "zarr",
   "metadata_uuid": "023ae12a-8c0c-4abc-997a-7884f9fec9cd",
   "parent_config": "satellite_ghrsst_main.json",
-  "coiled_cluster_options": {
-    "n_workers": [
-      60,
-      180
-    ],
-    "scheduler_vm_types": "m7i.2xlarge",
-    "worker_vm_types": "m7i.2xlarge",
-    "allow_ingress_from": "me",
-    "compute_purchase_option": "spot_with_fallback",
-    "worker_options": {
-      "nthreads": 8,
-      "memory_limit": "32GB"
-    }
-  },
-  "batch_size": 100,
   "aws_opendata_registry": {
     "Name": "Satellite - Sea surface temperature - Level 3 - Single sensor - 6 day - Day and night time",
     "Description": "This is a single-sensor multi-satellite SSTfnd product for a 144 hour period, derived using observations from AVHRR instruments on all available NOAA polar-orbiting satellites.  It is provided as a 0.02deg x 0.02deg cylindrical equidistant projected map over the region 70\u00b0E to 170\u00b0W, 20\u00b0N to 70\u00b0S. Each grid cell contains the 144 hour average of all the highest available quality SSTs that overlap with that cell, weighted by the area of overlap.  The diagram at https://help.aodn.org.au/satellite-data-product-information/ indicates where this product fits within the GHRSST suite of NOAA/AVHRR products. The SSTfnd is derived by adding a constant 0.17 degC to the SSTskin observations after rejecting observations with low surface wind speeds (<6m/s by day and <2m/s at night) (see http://www.bom.gov.au/amoj/docs/2011/beggs.pdf). Matchups with buoy SSTfnd observations for the central date indicate typical 2014 biases of < 0.03 degC and standard deviations of 0.6 degC.  Refer to the IMOS SST products web page at http://imos.org.au/sstproducts.html and Beggs et al. (2013) at http://imos.org.au/sstdata_references.html for further information.",
@@ -58,5 +43,38 @@
       ]
     },
     "Citation": "The citation in a list of references is: \"IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access].\""
+  },
+  "run_settings": {
+    "coiled_cluster_options": {
+      "n_workers": [
+        60,
+        180
+      ],
+      "scheduler_vm_types": "m7i.2xlarge",
+      "worker_vm_types": "m7i.2xlarge",
+      "allow_ingress_from": "me",
+      "compute_purchase_option": "spot_with_fallback",
+      "worker_options": {
+        "nthreads": 8,
+        "memory_limit": "32GB"
+      }
+    },
+    "batch_size": 100,
+    "cluster": {
+      "mode": "coiled",
+      "restart_every_path": true
+    },
+    "paths": [
+      {
+        "s3_uri": "s3://imos-data/IMOS/SRS/SST/ghrsst/L3S-6d/dn",
+        "filter": [],
+        "year_range": [
+          1992,
+          2025
+        ]
+      }
+    ],
+    "clear_existing_data": true,
+    "raise_error": false
   }
 }

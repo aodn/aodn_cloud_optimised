@@ -10,56 +10,107 @@
     "cloud_optimised_format": {
       "type": "string"
     },
-    "coiled_cluster_options": {
+    "run_settings": {
       "type": "object",
       "properties": {
-        "n_workers": {
+        "paths": {
           "type": "array",
           "items": {
-            "type": "integer"
-          },
-          "minItems": 2,
-          "maxItems": 2
+            "type": "object",
+            "properties": {
+              "s3_uri": {
+                "type": "string"
+              },
+              "filter": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "year_range": {
+                "type": "array",
+                "items": {
+                  "type": "integer"
+                }
+              }
+            },
+            "required": [
+              "s3_uri"
+            ]
+          }
         },
-        "scheduler_vm_types": {
-          "type": "string"
-        },
-        "worker_vm_types": {
-          "type": "string"
-        },
-        "allow_ingress_from": {
-          "type": "string"
-        },
-        "compute_purchase_option": {
-          "type": "string"
-        },
-        "worker_options": {
+        "cluster": {
           "type": "object",
           "properties": {
-            "nthreads": {
-              "type": "integer"
+            "mode": {
+              "type": [
+                "string",
+                "null"
+              ]
             },
-            "memory_limit": {
+            "restart_every_path": {
+              "type": "boolean"
+            }
+          }
+        },
+        "clear_existing_data": {
+          "type": "boolean"
+        },
+        "raise_error": {
+          "type": "boolean"
+        },
+        "coiled_cluster_options": {
+          "type": "object",
+          "properties": {
+            "n_workers": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            "scheduler_vm_types": {
               "type": "string"
+            },
+            "worker_vm_types": {
+              "type": "string"
+            },
+            "allow_ingress_from": {
+              "type": "string"
+            },
+            "compute_purchase_option": {
+              "type": "string"
+            },
+            "worker_options": {
+              "type": "object",
+              "properties": {
+                "nthreads": {
+                  "type": "integer"
+                },
+                "memory_limit": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "nthreads",
+                "memory_limit"
+              ]
             }
           },
           "required": [
-            "nthreads",
-            "memory_limit"
+            "n_workers",
+            "scheduler_vm_types",
+            "worker_vm_types",
+            "allow_ingress_from",
+            "compute_purchase_option",
+            "worker_options"
           ]
+        },
+        "batch_size": {
+          "type": "integer"
         }
-      },
-      "required": [
-        "n_workers",
-        "scheduler_vm_types",
-        "worker_vm_types",
-        "allow_ingress_from",
-        "compute_purchase_option",
-        "worker_options"
-      ]
-    },
-    "batch_size": {
-      "type": "integer"
+      }
     },
     "metadata_uuid": {
       "type": "string"
@@ -293,8 +344,8 @@
   },
   "required": [
     "dataset_name",
-    "coiled_cluster_options",
     "cloud_optimised_format",
+    "run_settings",
     "time_extent",
     "spatial_extent",
     "metadata_uuid",

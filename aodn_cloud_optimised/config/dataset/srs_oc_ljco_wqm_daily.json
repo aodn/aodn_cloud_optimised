@@ -2,20 +2,6 @@
   "dataset_name": "srs_oc_ljco_wqm_daily",
   "logger_name": "srs_oc_ljco_wqm_daily",
   "cloud_optimised_format": "parquet",
-  "coiled_cluster_options": {
-    "n_workers": [
-      8,
-      20
-    ],
-    "scheduler_vm_types": "t3.small",
-    "worker_vm_types": "t3.large",
-    "allow_ingress_from": "me",
-    "compute_purchase_option": "spot_with_fallback",
-    "worker_options": {
-      "nthreads": 8,
-      "memory_limit": "32GB"
-    }
-  },
   "metadata_uuid": "4ac6bf81-cd37-4611-8da8-4d5ae5e2bda3",
   "gattrs_to_variables": [
     "site_code"
@@ -632,7 +618,6 @@
   "dataset_gattrs": {
     "title": "SRS OC LJCO"
   },
-  "force_old_pq_del": true,
   "aws_opendata_registry": {
     "Name": "Satellite - Ocean Colour - Lucinda Jetty Coastal Observatory",
     "Description": "The Lucinda Jetty Coastal Observatory (LJCO) is located on the end of the 5.8 km long Lucinda Jetty (18.52 S, 146.39 E) in the coastal waters of the Great Barrier Reef World Heritage Area close to the Herbert River Estuary and the Hinchinbrook Channel in Queensland.\n\nThe observatory acquires continuous above and in-water optical measurements with the objective to support satellite ocean colour validation and algorithm development. Data collection and delivery was interrupted in 2011 with tropical cyclone Yasi.  Currently, LJCO is the only southern-hemisphere ocean colour validation site integrated into NASA\u2019s AERONET-OC global network of ground-based radiometers and one of a few sites globally that combines the acquisition of both atmospheric and in-water optical measurements. \n\nMounted instruments on the LJCO included:\n- Met Station (Vaisala WXT520)\n- Above-water radiometry\n--- CIMEL SeaPRISM\n--- Satlantic HyperOCR\n--- DALEC instrument (added in mid-2016 for continuous hyper-spectral radiometric measurements)\n-Instrument telemetry\n--- Power supply\n--- UPS\n--- NextG Router\n--- WETLabs DAPCS\n--- PC controller\n--- Automated winch\n- Underwater optics\n--- WETLabs WQM\n--- WETLabs Eco Triplet\n--- WETLabs ac-s\n--- WETLabs BB9\n- Campbell Scientific submersible pressure transducer\n\nThe above-water measurements collected at LJCO compromise of multi-spectral water-leaving radiance and atmospheric observations for retrieving aerosol optical properties using an autonomous CIMEL SeaPRISM radiometer, in addition to hyper-spectral down-welling radiance\nmeasurements using the a Satlantic Hyper-OCR. In mid 2016 continuous hyper-spectral radiometric measurements were added using the DALEC instrument.\n\nThe in-water optical measurements consist of conductivity, temperature, pressure, dissolved oxygen, chlorophyll fluorescence and turbidity using a WETLabs WQM, coloured dissolved organic matter (CDOM) fluorescence using a WETLabs EcoTriplet, as well as particulate and dissolved spectral absorption and attenuation coefficients using a WETLabs AC-S. Further, total backscattering coefficients are measured using a WETLabs BB9 radiometer. \n\nAdditional meteorological and sea state measurements are continuously recorded such as barometric pressure, relative humidity, air  emperature, wind speed and direction using a Vaisala WXT520 weather transmitter. Wave height and water temperature are measured with a Campbell Scientific submersible pressure transducer that is used to keep the caged in-water optical instruments at a constant depth.\n\nAll data streams are processed in delayed-mode with automatic quality control applied and made publicly available through the AODN portal; and the data presented here is the daily in-water generated products.",
@@ -673,5 +658,37 @@
       ]
     },
     "Citation": "IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access]"
+  },
+  "run_settings": {
+    "coiled_cluster_options": {
+      "n_workers": [
+        8,
+        20
+      ],
+      "scheduler_vm_types": "m7i-flex.large",
+      "worker_vm_types": "m7i-flex.large",
+      "allow_ingress_from": "me",
+      "compute_purchase_option": "spot_with_fallback",
+      "worker_options": {
+        "nthreads": 8,
+        "memory_limit": "32GB"
+      }
+    },
+    "cluster": {
+      "mode": "coiled",
+      "restart_every_path": false
+    },
+    "paths": [
+      {
+        "s3_uri": "s3://imos-data/IMOS/SRS/OC/LJCO/WQM-daily/",
+        "filter": [
+          ".*\\.nc"
+        ],
+        "year_range": []
+      }
+    ],
+    "clear_existing_data": true,
+    "raise_error": false,
+    "force_previous_parquet_deletion": false
   }
 }

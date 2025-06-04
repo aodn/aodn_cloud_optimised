@@ -2,21 +2,6 @@
   "dataset_name": "autonomous_underwater_vehicle",
   "logger_name": "autonomous_underwater_vehicle",
   "cloud_optimised_format": "parquet",
-  "coiled_cluster_options": {
-    "n_workers": [
-      1,
-      20
-    ],
-    "scheduler_vm_types": "t3.small",
-    "worker_vm_types": "t3.large",
-    "allow_ingress_from": "me",
-    "compute_purchase_option": "spot_with_fallback",
-    "worker_options": {
-      "nthreads": 4,
-      "memory_limit": "8GB"
-    }
-  },
-  "batch_size": 50,
   "metadata_uuid": "af5d0ff9-bb9c-4b7c-a63c-854a630b6984",
   "object_key_info": {
     "key_pattern": ".*/IMOS/{campaign_name}/{dive_name}/hydro_netcdf/{filename}",
@@ -177,7 +162,6 @@
   "dataset_gattrs": {
     "title": "FILL UP MANUALLY - CHECK DOCUMENTATION"
   },
-  "force_old_pq_del": false,
   "aws_opendata_registry": {
     "Name": "Autonomous underwater vehicles",
     "Description": "The IMOS Autonomous Underwater Vehicle (AUV) Facility operates multiple ocean-going AUVs capable of undertaking high resolution, geo-referenced survey work. AUV Sirius is a modified version of a mid-size robotic vehicle Seabed built at the Woods Hole Oceanographic Institution. This class of AUV has been designed specifically for low speed, high resolution imaging and is passively stable in pitch and roll. AUV Nimbus is a custom design with the aim of deploying off smaller vessels than Sirius whilst remaining able to operate in similar environments. AUV Iver is an extended Ocean Server Iver2 class platform with additional navigation and imaging sensors but lacks the ability to work over complex underwater terrain. Based on its small size, it can be deployed from RHIBs and other small vessels. The main objective of the IMOS AUV Facility is to support sustained observations of the benthos, in support of the IMOS integrated benthic monitoring program. . The AUV facility is based at the Australian Centre for Field Robotics (ACFR) within the School of Aerospace, Mechanical and Mechatronic Engineering at the University of Sydney.\n\nThis IMOS Facility finished in June 2023, with data still available through the AODN Portal.",
@@ -218,5 +202,38 @@
       ]
     },
     "Citation": "The citation in a list of references is: \"IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access].\""
+  },
+  "run_settings": {
+    "coiled_cluster_options": {
+      "n_workers": [
+        1,
+        20
+      ],
+      "scheduler_vm_types": "m7i-flex.large",
+      "worker_vm_types": "m7i-flex.large",
+      "allow_ingress_from": "me",
+      "compute_purchase_option": "spot_with_fallback",
+      "worker_options": {
+        "nthreads": 4,
+        "memory_limit": "8GB"
+      }
+    },
+    "batch_size": 50,
+    "cluster": {
+      "mode": "coiled",
+      "restart_every_path": false
+    },
+    "paths": [
+      {
+        "s3_uri": "s3://imos-data/IMOS/AUV",
+        "filter": [
+          ".*\\.nc"
+        ],
+        "year_range": []
+      }
+    ],
+    "clear_existing_data": true,
+    "raise_error": false,
+    "force_previous_parquet_deletion": false
   }
 }

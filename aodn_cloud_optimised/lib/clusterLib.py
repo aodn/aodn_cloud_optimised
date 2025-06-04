@@ -38,8 +38,8 @@ class ClusterManager:
         }
         self.coiled_cluster_default_options = {
             "n_workers": [1, 2],
-            "scheduler_vm_types": "t3.small",
-            "worker_vm_types": "t3.medium",
+            "scheduler_vm_types": "m7i-flex.large",
+            "worker_vm_types": "m7i-flex.large",
             "allow_ingress_from": "me",
             "compute_purchase_option": "spot_with_fallback",
             "worker_options": {"nthreads": 4, "memory_limit": "8GB"},
@@ -48,8 +48,8 @@ class ClusterManager:
         self.ec2_cluster_default_options = (
             {
                 "n_workers": 1,
-                "scheduler_instance_type": "t3.xlarge",
-                "worker_instance_type": "t3.2xlarge",
+                "scheduler_instance_type": "m7i-flex.xlarge",
+                "worker_instance_type": "m7i-flex.2xlarge",
                 "security": False,
                 "docker_image": "ghcr.io/aodn/aodn_cloud_optimised:latest",
             },
@@ -97,7 +97,10 @@ class ClusterManager:
         return self._create_client_and_cluster(LocalCluster, self.local_cluster_options)
 
     def create_coiled_cluster(self):
-        coiled_cluster_options = self.dataset_config.get("coiled_cluster_options", None)
+        coiled_cluster_options = self.dataset_config.get("run_settings", {}).get(
+            "coiled_cluster_options", None
+        )
+
         if coiled_cluster_options is None:
             self.logger.warning(
                 f"Missing coiled_cluster_options in dataset_config. Using default value {self.coiled_cluster_default_options}"
@@ -111,7 +114,9 @@ class ClusterManager:
         )
 
     def create_ec2_cluster(self):
-        ec2_cluster_options = self.dataset_config.get("ec2_cluster_options", None)
+        ec2_cluster_options = self.dataset_config.get("run_settings", {}).get(
+            "ec2_cluster_options", None
+        )
 
         if ec2_cluster_options is None:
             self.logger.warning(
@@ -120,7 +125,9 @@ class ClusterManager:
             ec2_cluster_options = self.ec2_cluster_default_options
 
         cluster = EC2Cluster(**ec2_cluster_options)
-        ec2_adapt_options = self.dataset_config.get("ec2_adapt_options", None)
+        ec2_adapt_options = self.dataset_config.get("run_settings", {}).get(
+            "ec2_adapt_options", None
+        )
         if ec2_adapt_options:
             cluster.adapt(**ec2_adapt_options)
         else:
@@ -136,7 +143,6 @@ class ClusterManager:
         return client, cluster, self.cluster_mode
 
     def create_cluster(self):
-
         if self.cluster_mode == ClusterMode.LOCAL:
             return self.create_local_cluster()
         elif self.cluster_mode == ClusterMode.COILED:

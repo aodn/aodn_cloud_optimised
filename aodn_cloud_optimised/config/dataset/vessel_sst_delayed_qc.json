@@ -2,21 +2,6 @@
   "dataset_name": "vessel_sst_delayed_qc",
   "logger_name": "vessel_sst_delayed_qc",
   "cloud_optimised_format": "parquet",
-  "coiled_cluster_options": {
-    "n_workers": [
-      1,
-      25
-    ],
-    "scheduler_vm_types": "t3.xlarge",
-    "worker_vm_types": "t3.large",
-    "allow_ingress_from": "me",
-    "compute_purchase_option": "spot_with_fallback",
-    "worker_options": {
-      "nthreads": 8,
-      "memory_limit": "32GB"
-    }
-  },
-  "batch_size": 500,
   "metadata_uuid": "67f0b6ea-518f-4af5-9d21-dd3c08c7cb5c",
   "gattrs_to_variables": [
     "platform_code"
@@ -433,7 +418,6 @@
     "principal_investigator_email": "",
     "featureType": "trajectory"
   },
-  "force_old_pq_del": true,
   "aws_opendata_registry": {
     "Name": "Ships of Opportunity - Sea surface temperature - 1-minute average data products",
     "Description": "The Sea Surface Temperature (SST) sub-facility produces 1-minute average data products. Observed data are 1-minute median SST values and are retrieved from the vessel once an hour. High-resolution 1-minute median data are available in the delayed mode approximately every 3 months, these were produced in delayed mode using visual (manual) inspection of the quality flags after the data had been run through the automated quality control software at the Bureau of Meteorology The data products are produced from data from 3 ships: L'Astrolabe, Xutra Buhm and Wana Buhm, within this sub-facility working in the Australian region, Southern Ocean and South-East Asia. \n\nL'Astrolabe is a research vessel operating in Antarctic and sub-Antarctic waters during the summer period (usually October through March). 1-minute averaged SST (from the SBE 38 temperature sensor) and thermosalinograph salinity data are logged on the vessel and manually retrieved by CMAR staff after the voyage is completed. The data are run through the Bureau of Meteorology's automated quality control system followed by visual inspection and adjustment, if necessary, of the quality flags. This data stream is temporarily discontinued (2013). An SBE 48 hull-temperature sensor installed on both the MV Xutra Bhum and the MV Wana Buhm, produces observations of SST every 10 seconds. These data are recorded into 1 minute median SST values on the vessel and manually retrieved by Bureau of Meteorology staff approximately monthly. The data are run through the Bureau of Meteorology's automated quality control system followed by visual inspection and adjustment, if necessary, of the quality flags. Both of these data streams have now been discontinued (April 2013).",
@@ -474,5 +458,38 @@
       ]
     },
     "Citation": "The citation in a list of references is: \"IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access].\""
+  },
+  "run_settings": {
+    "coiled_cluster_options": {
+      "n_workers": [
+        1,
+        25
+      ],
+      "scheduler_vm_types": "m7i-flex.xlarge",
+      "worker_vm_types": "m7i-flex.large",
+      "allow_ingress_from": "me",
+      "compute_purchase_option": "spot_with_fallback",
+      "worker_options": {
+        "nthreads": 8,
+        "memory_limit": "32GB"
+      }
+    },
+    "batch_size": 500,
+    "cluster": {
+      "mode": "coiled",
+      "restart_every_path": false
+    },
+    "paths": [
+      {
+        "s3_uri": "s3://imos-data/IMOS/SOOP/SOOP-SST/",
+        "filter": [
+          ".*\\.nc"
+        ],
+        "year_range": []
+      }
+    ],
+    "clear_existing_data": true,
+    "raise_error": false,
+    "force_previous_parquet_deletion": false
   }
 }

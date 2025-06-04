@@ -61,5 +61,25 @@
       ]
     },
     "Citation": "The citation in a list of references is: \"IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access].\""
+  },
+  "run_settings": {
+    "cluster": {
+      "mode": "coiled",
+      "restart_every_path": true
+    },
+    "paths": [
+      {
+        "s3_uri": "s3://imos-data/IMOS/ACORN/gridded_1h-avg-current-map_QC/COF/",
+        "filter": [
+          ".*\\.nc"
+        ],
+        "year_range": [
+          2012,
+          2025
+        ]
+      }
+    ],
+    "clear_existing_data": true,
+    "raise_error": false
   }
 }

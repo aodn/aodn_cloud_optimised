@@ -1,21 +1,36 @@
 {
   "dataset_name": "satellite_ocean_colour_1day_aqua_main",
   "cloud_optimised_format": "zarr",
-  "coiled_cluster_options": {
-    "n_workers": [
-      25,
-      150
+  "run_settings": {
+    "coiled_cluster_options": {
+      "n_workers": [
+        25,
+        150
+      ],
+      "scheduler_vm_types": "m7i.2xlarge",
+      "worker_vm_types": "m7i.2xlarge",
+      "allow_ingress_from": "me",
+      "compute_purchase_option": "spot_with_fallback",
+      "worker_options": {
+        "nthreads": 32,
+        "memory_limit": "64GB"
+      }
+    },
+    "batch_size": 125,
+    "cluster": {
+      "mode": "coiled",
+      "restart_every_path": false
+    },
+    "paths": [
+      {
+        "s3_uri": "s3://imos-data/IMOS/",
+        "filter": [],
+        "year_range": []
+      }
     ],
-    "scheduler_vm_types": "m7i.2xlarge",
-    "worker_vm_types": "m7i.2xlarge",
-    "allow_ingress_from": "me",
-    "compute_purchase_option": "spot_with_fallback",
-    "worker_options": {
-      "nthreads": 32,
-      "memory_limit": "64GB"
-    }
+    "clear_existing_data": true,
+    "raise_error": false
   },
-  "batch_size": 125,
   "dimensions": {
     "time": {
       "name": "time",

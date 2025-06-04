@@ -1,18 +1,23 @@
 import json
 import logging
 import os
-import sys
 import unittest
 from io import StringIO
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 import boto3
 import s3fs
+from botocore import UNSIGNED
+from botocore.session import get_session
+from botocore.client import Config as BotoConfig  # avoid conflict with json config
 from moto import mock_aws
 from moto.moto_server.threaded_moto_server import ThreadedMotoServer
 
-from aodn_cloud_optimised.bin.generic_cloud_optimised_creation import main
-from aodn_cloud_optimised.lib.clusterLib import ClusterMode
+from aodn_cloud_optimised.bin.generic_cloud_optimised_creation import (
+    DatasetConfig,
+    main,
+)
+from aodn_cloud_optimised.lib.config import load_dataset_config
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -28,10 +33,10 @@ TEST_FILE_NC_ACORN = [
     os.path.join(ROOT_DIR, "resources", file_name) for file_name in filenames
 ]
 
+# On purpose wrong!
 DATASET_CONFIG_NC_ACORN_JSON = os.path.join(
     ROOT_DIR,
     "resources",
-    # "radar_TurquoiseCoast_velocity_hourly_averaged_delayed_qc.json",
     "wave_buoy_realtime_nonqc.json",
 )
 
@@ -120,41 +125,75 @@ class TestGenericCloudOptimisedCreation(unittest.TestCase):
         self.server.stop()
         del os.environ["RUNNING_UNDER_UNITTEST"]
 
-    @patch("argparse.ArgumentParser.parse_args")
-    def test_main(self, mock_parse_args):
-        # Prepare mock arguments
-        mock_parse_args.return_value = MagicMock(
-            paths=["IMOS/ACORN/gridded_1h-avg-current-map_QC"],
-            # filters=["TURQ"],
-            filters=[".nc"],
-            exclude="FV02",
-            suffix=".nc",
-            raise_error=True,
-            dataset_config=DATASET_CONFIG_NC_ACORN_JSON,
-            clear_existing_data=True,
-            force_previous_parquet_deletion=False,
-            # cluster_mode=ClusterMode.LOCAL,
-            cluster_mode=ClusterMode.NONE,
-            optimised_bucket_name=self.BUCKET_OPTIMISED_NAME,
-            root_prefix_cloud_optimised_path="testing",
-            bucket_raw="imos-data",
-        )
+    def test_main_with_config_and_json_overwrite_fail(self):
+        dataset_config = load_dataset_config(DATASET_CONFIG_NC_ACORN_JSON)
+        config_validated = DatasetConfig.model_validate(dataset_config)
 
-        # Capture logs
-        log_stream = StringIO()
-        log_handler = logging.StreamHandler(log_stream)
-        logger = logging.getLogger()
-        logger.addHandler(log_handler)
+        with open(DATASET_CONFIG_NC_ACORN_JSON) as f:
+            raw_json = f.read()
+            config_validated = DatasetConfig.model_validate_json(raw_json)
 
-        with self.assertRaises(Exception) as context:
-            main()
+        def _mock_boto3_client(service_name, *args, **kwargs):
+            if service_name == "s3":
+                session = get_session()
+                return session.create_client(
+                    "s3",
+                    endpoint_url="http://127.0.0.1:5555",
+                    region_name="us-east-1",
+                    config=BotoConfig(signature_version=UNSIGNED),
+                )
+            raise NotImplementedError(f"Unhandled boto3 service: {service_name}")
 
-        # with self.assertRaises(SystemExit) as cm:
-        #     main()
-        # self.assertEqual(cm.exception.code, 1)  # Verify exit code
+        with (
+            patch(
+                "aodn_cloud_optimised.bin.generic_cloud_optimised_creation.load_config_and_validate",
+                new=lambda _: config_validated,
+            ),
+            patch("argparse.ArgumentParser.parse_args") as mock_parse_args,
+            patch("sys.exit") as mock_sys_exit,
+            patch(
+                "aodn_cloud_optimised.lib.s3Tools.boto3.client", new=_mock_boto3_client
+            ),
+        ):
+            mock_parse_args.return_value = MagicMock(
+                config=DATASET_CONFIG_NC_ACORN_JSON,
+                json_overwrite=json.dumps(
+                    {
+                        "run_settings": {
+                            "cluster": {"mode": None},
+                            "raise_error": True,
+                            "force_previous_parquet_deletion": False,
+                            "clear_existing_data": False,
+                            "paths": [
+                                {
+                                    "s3_uri": "s3://imos-data/IMOS/ACORN/gridded_1h-avg-current-map_QC",
+                                    "filter": [],
+                                },
+                            ],
+                            "optimised_bucket_name": self.BUCKET_OPTIMISED_NAME,
+                            "root_prefix_cloud_optimised_path": self.ROOT_PREFIX_CLOUD_OPTIMISED_PATH,
+                        }
+                    }
+                ),
+            )
 
-        # Restore stdout
-        # sys.stdout = sys.__stdout__
+            log_stream = StringIO()
+            log_handler = logging.StreamHandler(log_stream)
+            logger = logging.getLogger()
+            logger.addHandler(log_handler)
+
+            with self.assertRaises(Exception) as context:
+                main()
+                mock_sys_exit.assert_called_with(0)
+
+            log_handler.flush()
+            captured_logs = log_stream.getvalue().strip().split("\n")
+
+            assert any(
+                "Exception: Error in Cloud Optimised process. Forcing script exit"
+                in log
+                for log in captured_logs
+            )
 
 
 if __name__ == "__main__":
