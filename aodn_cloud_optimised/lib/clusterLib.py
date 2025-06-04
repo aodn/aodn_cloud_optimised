@@ -114,7 +114,9 @@ class ClusterManager:
         )
 
     def create_ec2_cluster(self):
-        ec2_cluster_options = self.dataset_config.get("ec2_cluster_options", None)
+        ec2_cluster_options = self.dataset_config.get("run_settings", {}).get(
+            "ec2_cluster_options", None
+        )
 
         if ec2_cluster_options is None:
             self.logger.warning(
@@ -123,7 +125,9 @@ class ClusterManager:
             ec2_cluster_options = self.ec2_cluster_default_options
 
         cluster = EC2Cluster(**ec2_cluster_options)
-        ec2_adapt_options = self.dataset_config.get("ec2_adapt_options", None)
+        ec2_adapt_options = self.dataset_config.get("run_settings", {}).get(
+            "ec2_adapt_options", None
+        )
         if ec2_adapt_options:
             cluster.adapt(**ec2_adapt_options)
         else:

@@ -560,15 +560,105 @@ Creating the Schema
 See :ref:`creating_the_schema` section above. As for Parquet...
 
 
+Global Attributes to drop
+~~~~~~~~~~~~~~~~~
 
-Cluster options
+.. code:: json
+
+  "gattrs_to_delete": [
+    "Voyage_number",
+    "platform_code",
+    "geospatial_lat_max",
+    "geospatial_lat_min",
+    "geospatial_lon_max",
+    "geospatial_lon_min",
+    "date_created"
+  ],
+
+Global Attributes to variables
+~~~~~~~~~~~~~~~~~
+
+.. code:: json
+
+   "gatts_to_variable": {
+      "file_version": {
+        "destination_name": "quality_control_version",
+        "dimensions": "TIME",
+        "length": 49
+      },
+      "platform_code": {
+        "destination_name": "platform_code",
+        "dimensions": "TIME",
+        "length": 7
+      },
+      "voyage_number": {
+        "destination_name": "voyage_number",
+        "dimensions": "TIME",
+        "length": 10
+      }
+   },
+
+
+
+Run Settings Options
 ---------------
 
-In order to create the dataset on a remote cluster, the
-following configuration needs to be added:
+Example
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code:: json
+
+    "run_settings": {
+      "coiled_cluster_options": {
+        "n_workers": [
+          40,
+          50
+        ],
+        "scheduler_vm_types": "m7i.large",
+        "worker_vm_types": "m7i.large",
+        "allow_ingress_from": "me",
+        "compute_purchase_option": "spot_with_fallback",
+        "worker_options": {
+          "nthreads": 8,
+          "memory_limit": "16GB"
+        }
+      },
+      "batch_size": 60,
+      "cluster": {
+        "mode": "coiled",
+        "restart_every_path": false
+      },
+      "paths": [
+        {
+          "s3_uri": "s3://imos-data/IMOS/AATAMS/satellite_tagging/MEOP_QC_CTD/",
+          "filter": [
+            ".*\\.nc$"
+          ],
+          "year_range": []
+        }
+      ],
+      "clear_existing_data": true,
+      "raise_error": false,
+      "force_previous_parquet_deletion": true
+    }
+
+
+.. note:: Important Note
+   :class: custom-note
+   :name: cluster-config
+
+    * If cluster.mode is set to "coiled", the coiled_cluster_options need to be set.
+    * If cluster.mode is set to "ec2", the ec2_cluster_options and ec2_adapt_options need to be set.
+    * cluster.mode can be also set to "local" or null
+
+
+
+In order to create the dataset on a remote cluster (ec2/coiled), the
+following configuration needs to be added within the run_settings:
 
 Coiled Cluster configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+For a coiled cluster, simply put this in the ``run_settings`` config
 
 .. code:: json
 
@@ -582,10 +672,12 @@ Coiled Cluster configuration
          "nthreads": 8,
          "memory_limit": "16GB" }
      },
-     "batch_size": 1000,
+     "cluster": {
+      "mode": "coiled",
+      "restart_every_path": false
+    },
 
-See `coiled
-documentation <https://docs.coiled.io/user_guide/clusters/index.html>`__
+See `coiled documentation <https://docs.coiled.io/user_guide/clusters/index.html>`__
 
 .. note:: Important Note
    :class: custom-note
@@ -607,6 +699,7 @@ documentation <https://docs.coiled.io/user_guide/clusters/index.html>`__
 
 EC2 Cluster configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+As for above, in the EC2 cluster is to be chosen, simply put this in the ``run_settings`` config
 
 .. code:: json
 
@@ -621,7 +714,10 @@ EC2 Cluster configuration
     "minimum": 1,
     "maximum": 120
   },
-  "batch_size": 1500,
+  "cluster": {
+      "mode": "ec2",
+      "restart_every_path": false
+    },
 
 .. _aws-opendata-registry-1:
 

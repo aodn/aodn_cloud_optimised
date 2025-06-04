@@ -5,7 +5,8 @@ Runner to generate cloud-optimised datasets from S3 files, based on a dataset co
 
 Example usage:
   generic_cloud_optimised_creation --config mooring_hourly_timeseries_delayed_qc
-  generic_cloud_optimised_creation --config satellite_chlorophylla_gsm_1day_aqua --json-overwrite '{"run_settings": {"cluster": {"mode": null}, "raise_error": true}}'
+  generic_cloud_optimised_creation --config satellite_chlorophylla_gsm_1day_aqua --json-overwrite '{"run_settings": {"cluster": {"mode": null}, "raise_error": true}, "clear_existing_data": true}'  # useful for single file processing on prefect
+  generic_cloud_optimised_creation --config satellite_chlorophylla_gsm_1day_aqua --json-overwrite '{"run_settings": {"cluster": {"mode": null}, "raise_error": true},  "clear_existing_data": true, "force_previous_parquet_deletion": true }' # useful for parquet dataset to overwrite existing matching input files already processed
 """
 
 import argparse
@@ -176,6 +177,35 @@ class CoiledClusterOptions(BaseModel):
     worker_options: WorkerOptions
 
 
+class Ec2ClusterOptions(BaseModel):
+    """Configuration options for a EC2 cluster.
+
+    Attributes:
+        n_workers: integer specifying the number of workers (e.g., 25).
+        scheduler_instance_type: VM type to use for the Coiled cluster scheduler.
+        worker_instance_type: VM type to use for Coiled cluster workers.
+        security: boolean.
+        docker_image: url as string
+        worker_options: Configuration for individual Coiled cluster workers.
+    """
+
+    n_workers: int = Field(..., description="integer of workers  (e.g., 25).")
+    scheduler_instance_type: str
+    worker_instance_type: str
+    security: bool
+    docker_image: str
+
+
+class Ec2AdaptOptions(BaseModel):
+    """Configuration options for a EC2 cluster workers.
+
+    Attributes:
+    """
+
+    minimum: int = Field(..., description="integer of minimum workers  (e.g., 25).")
+    maximum: int = Field(..., description="integer of maximum workers  (e.g., 25).")
+
+
 class RunSettings(BaseModel):
     """Run configuration for processing.
 
@@ -248,6 +278,14 @@ class RunSettings(BaseModel):
         default=None,
         description="Configuration options required when cluster.mode is 'coiled'. Ignored otherwise.",
     )
+    ec2_cluster_options: Optional[Ec2ClusterOptions] = Field(
+        default=None,
+        description="Configuration options required when cluster.mode is 'ec2'. Ignored otherwise.",
+    )
+    ec2_adapt_options: Optional[Ec2AdaptOptions] = Field(
+        default=None,
+        description="Configuration min/max wokersoptions required when cluster.mode is 'ec2'. Ignored otherwise.",
+    )
 
     @model_validator(mode="after")
     def validate_bucket_consistency(self) -> "RunSettings":
@@ -270,6 +308,12 @@ class RunSettings(BaseModel):
         if self.cluster.mode == "coiled" and self.coiled_cluster_options is None:
             raise ValueError(
                 "coiled_cluster_options must be provided when cluster.mode is 'coiled'"
+            )
+        elif self.cluster.mode == "ec2" and (
+            self.ec2_cluster_options is None or self.ec2_adapt_options is None
+        ):
+            raise ValueError(
+                "ec2_cluster_options must be provided when cluster.mode is 'ec2'"
             )
 
         return self
