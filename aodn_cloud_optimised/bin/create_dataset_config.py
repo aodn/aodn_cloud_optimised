@@ -179,7 +179,7 @@ def get_module_path():
     return module_path
 
 
-def create_dataset_script(dataset_name, dataset_json, nc_file_path, bucket):
+def create_dataset_script_deprecated(dataset_name, dataset_json, nc_file_path, bucket):
     """
     Create a Python script to run a cloud optimised creation command with the specified parameters.
 
@@ -211,6 +211,35 @@ def main():
         script_file.write(script_content)
     os.chmod(script_path, 0o755)  # Make the script executable
     return script_path
+
+
+def create_dataset_script(dataset_name, dataset_json, nc_file_path, bucket):
+    """
+    Create a symlink to generic_launcher.py named after the dataset in the bin folder.
+
+    Args:
+        dataset_name (str): The name of the dataset to be used in the symlink file name.
+        dataset_json (str): Unused, kept for compatibility.
+        nc_file_path (str): Unused, kept for compatibility.
+        bucket (str): Unused, kept for compatibility.
+
+    Returns:
+        str: The file system path to the created symlink.
+    """
+    module_path = get_module_path()
+    bin_dir = os.path.join(module_path, "bin")
+    os.makedirs(bin_dir, exist_ok=True)
+
+    symlink_path = os.path.join(bin_dir, f"{dataset_name}.py")
+    target_name = "generic_launcher.py"  # relative path within bin directory
+
+    # Remove existing symlink/file if exists
+    if os.path.exists(symlink_path) or os.path.islink(symlink_path):
+        os.remove(symlink_path)
+
+    # Create relative symlink (the symlink will point to "generic_launcher.py" relative to its own location)
+    os.symlink(target_name, symlink_path)
+    return symlink_path
 
 
 def update_pyproject_toml(dataset_name):
