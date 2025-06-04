@@ -191,31 +191,16 @@ def create_dataset_script(dataset_name, dataset_json, nc_file_path, bucket):
     Returns:
         str: The file system path to the created script.
     """
-    script_content = f"""#!/usr/bin/env python3
+    script_content = """#!/usr/bin/env python3
 import subprocess
+import os
 
 
 def main():
-    command = [
-        "generic_cloud_optimised_creation",
-        "--paths",
-        "{os.path.dirname(nc_file_path).replace(f"s3://{bucket}/", "")}",
-        #"--filters",
-        #"FILTER_STRING_1",
-        #"FILTER_STRING_1",
-        "--dataset-config",
-        "{dataset_json}",
-        "--clear-existing-data",
-        "--cluster-mode",
-        "coiled",
-    ]
+    config_name = os.path.splitext(os.path.basename(__file__))[0]
+    command = ["generic_cloud_optimised_creation", "--config", config_name]
 
-    # Run the command
     subprocess.run(command, check=True)
-
-
-if __name__ == "__main__":
-    main()
     """
 
     module_path = get_module_path()
@@ -712,7 +697,9 @@ def main():
     dataset_config["metadata_uuid"] = args.uuid
     dataset_config["logger_name"] = args.dataset_name
     dataset_config["cloud_optimised_format"] = args.cloud_format
-    dataset_config["coiled_cluster_options"] = {
+
+    # run_settings
+    dataset_config["run_settings"]["coiled_cluster_options"] = {
         "n_workers": [1, 20],
         "scheduler_vm_types": "m7i-flex.large",
         "worker_vm_types": "m7i-flex.large",
@@ -720,7 +707,17 @@ def main():
         "compute_purchase_option": "spot_with_fallback",
         "worker_options": {"nthreads": 4, "memory_limit": "8GB"},
     }
-    dataset_config["batch_size"] = 5
+    dataset_config["run_settings"]["batch_size"] = 5
+    dataset_config["run_settings"]["clear_existing_data"] = True
+    dataset_config["run_settings"]["raise_error"] = False
+    dataset_config["run_settings"]["cluster"] = {
+        "mode": "coiled",
+        "restart_every_path": False,
+    }
+    dataset_config["run_settings"]["paths"] = [
+        {"s3_uri": f"{nc_file}", "filter": [".*\\.nc"], "year_range": []}
+    ]
+
     if "spatial_extent" in dataset_config:
         dataset_config["spatial_extent"]["spatial_resolution"] = 5
 
@@ -731,6 +728,7 @@ def main():
         dataset_config["schema"]["timestamp"] = {"type": "int64"}
         dataset_config["schema"]["polygon"] = {"type": "string"}
         dataset_config["schema"]["filename"] = {"type": "string"}
+        dataset_config["run_settings"]["force_previous_parquet_deletion"] = False
 
     module_path = get_module_path()
 
