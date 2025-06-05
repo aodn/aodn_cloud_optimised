@@ -1152,7 +1152,7 @@ def get_schema_metadata(dname: str) -> dict:
     # handling old configuration of parquet creation. Should be deprecated at some stage but not impacting much
     if "dataset_metadata" in decoded_meta:
         logger.warning(
-            "Old 'dataset_medata' deprecated key found in parquet schema. Renamed to 'global_attributes'. Dataset should be updated"
+            "Old 'dataset_metadata' deprecated key found in parquet schema. Renamed to 'global_attributes'. Dataset should be updated"
         )
         decoded_meta["global_attributes"] = decoded_meta.pop("dataset_metadata")
 
