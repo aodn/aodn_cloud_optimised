@@ -190,6 +190,96 @@
       "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
       "quality_control_global": "A"
     },
+    "LONGITUDE_quality_control": {
+      "type": "float",
+      "long_name": "quality flag for longitude",
+      "standard_name": "longitude status_flag",
+      "quality_control_set": 1.0,
+      "quality_control_conventions": "IMOS standard set using the IODE flags",
+      "valid_min": 0,
+      "valid_max": 9,
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value ",
+      "quality_control_indicator": 0.0
+    },
+    "LATITUDE_quality_control": {
+      "type": "float",
+      "long_name": "quality flag for latitude",
+      "standard_name": "latitude status_flag",
+      "quality_control_set": 1.0,
+      "quality_control_conventions": "IMOS standard set using the IODE flags",
+      "valid_min": 0,
+      "valid_max": 9,
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value ",
+      "quality_control_indicator": 0.0
+    },
+    "BAT_VOLT_quality_control": {
+      "type": "float",
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "long_name": "quality flag for battery_voltage",
+      "quality_control_conventions": "IMOS standard flags",
+      "quality_control_global": " ",
+      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)"
+    },
+    "TIME_quality_control": {
+      "type": "float",
+      "long_name": "quality flag for time",
+      "standard_name": "time status_flag",
+      "valid_min": 0,
+      "valid_max": 9,
+      "quality_control_set": 1.0,
+      "quality_control_conventions": "IMOS standard set using the IODE flags",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
+      "quality_control_global": "A"
+    },
     "timestamp": {
       "type": "int64"
     },
