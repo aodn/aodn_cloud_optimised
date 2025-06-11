@@ -39,7 +39,7 @@ from shapely import wkb
 from shapely.geometry import MultiPolygon, Polygon
 from windrose import WindroseAxes
 
-__version__ = "0.2.1"
+__version__ = "0.2.2"
 
 REGION: Final[str] = "ap-southeast-2"
 ENDPOINT_URL = f"https://s3.ap-southeast-2.amazonaws.com"
@@ -1231,6 +1231,47 @@ def get_zarr_metadata(dname: str) -> dict:
 # Work done during IMOS HACKATHON 2024
 # https://github.com/aodn/IMOS-hackathon/blob/main/2024/Projects/CARSv2/notebooks/get_aodn_example_hackathon.ipynb
 ###################################################################################################################
+
+
+class TimeSeriesResult:
+    """Wrapper for time series DataFrame that includes built-in plotting."""
+
+    def __init__(
+        self,
+        df: pd.DataFrame,
+        var_name: str,
+        lat: float,
+        lon: float,
+        date_start: str,
+        date_end: str,
+        actual_lat_name: str = "lat",
+        actual_lon_name: str = "lon",
+        actual_time_name: str = "time",
+    ):
+        self.df = df
+        self.var_name = var_name
+        self.lat = lat
+        self.lon = lon
+        self.date_start = date_start
+        self.date_end = date_end
+        self.lat_name = actual_lat_name
+        self.lon_name = actual_lon_name
+        self.time_name = actual_time_name
+
+    def plot_timeseries(self) -> pd.DataFrame:
+        """Plot and return the time series DataFrame."""
+        self.df.plot(x=self.time_name, y=self.var_name)
+        plt.title(
+            f"{self.var_name} at ({self.lat}, {self.lon}) from {self.date_start} to {self.date_end}"
+        )
+        plt.xlabel("Time")
+        plt.ylabel(self.var_name)
+        plt.grid(True)
+        plt.tight_layout()
+        plt.show()
+        return self.df  # Optional: return to maintain compatibility
+
+
 class DataSource(ABC):
     """Abstract Base Class for accessing different data source formats (Parquet, Zarr)."""
 
@@ -1330,7 +1371,7 @@ class DataSource(ABC):
         lat_name_override: str | None = None,
         lon_name_override: str | None = None,
         time_name_override: str | None = None,
-    ) -> pd.DataFrame:
+    ) -> TimeSeriesResult:
         """Extracts time series data for a variable (or all variables) at the nearest point."""
         pass
 
@@ -1578,7 +1619,7 @@ class ParquetDataSource(DataSource):
         lat_name_override: str | None = None,
         lon_name_override: str | None = None,
         time_name_override: str | None = None,
-    ) -> pd.DataFrame:
+    ) -> TimeSeriesResult:
         """Extracts time series data for a variable (or all variables) at the nearest point. (Not Implemented for Parquet)"""
         raise NotImplementedError(
             "get_timeseries_data is not implemented for ParquetDataSource."
@@ -1963,7 +2004,7 @@ class ZarrDataSource(DataSource):
         lat_name_override: str | None = None,
         lon_name_override: str | None = None,
         time_name_override: str | None = None,
-    ) -> pd.DataFrame:
+    ) -> TimeSeriesResult:
         """Extracts time series data for specified or all variables at the nearest point from the Zarr store.
 
         Args:
@@ -2112,103 +2153,45 @@ class ZarrDataSource(DataSource):
             if var in timeseries_df:
                 timeseries_df[var].attrs = ds[var].attrs
 
-        return timeseries_df
+        return TimeSeriesResult(
+            df=timeseries_df,
+            var_name=var_name,
+            lat=lat,
+            lon=lon,
+            date_start=date_start,
+            date_end=date_end,
+            actual_lat_name=actual_lat_name,
+            actual_lon_name=actual_lon_name,
+            actual_time_name=actual_time_name,
+        )
 
     def plot_timeseries(
         self,
+        var_name: str,
         lat: float,
         lon: float,
         date_start: str,
         date_end: str,
-        var_name: str | None = None,
-        lat_name_override: str | None = None,
-        lon_name_override: str | None = None,
-        time_name_override: str | None = None,
-    ) -> None:
-        """Plots the extracted time series data.
-
-        Args:
-            timeseries_df: DataFrame obtained from get_timeseries_data.
-            var_name: The name of the variable plotted.
-            lat: The target latitude for which data was extracted.
-            lon: The target longitude for which data was extracted.
-            start_time: The requested start time for the series.
-            end_time: The requested end time for the series.
-            lat_name_override: Actual latitude coordinate name in timeseries_df.
-            lon_name_override: Actual longitude coordinate name in timeseries_df.
-            time_name_override: Actual time coordinate name in timeseries_df.
+        lat_name_override: str = "lat",
+        lon_name_override: str = "lon",
+        time_name_override: str = "time",
+    ) -> pd.DataFrame:
         """
-        if self.zarr_store is None:
-            self.zarr_store = (
-                self._open_zarr_store()
-            )  # Ensures store is open and sorted by time
+        Shortcut to extract and plot time series data in one call.
 
-        ds = self.zarr_store
-
-        # Determine actual coordinate names
-        actual_time_name = (
-            time_name_override
-            if time_name_override
-            else _find_var_name_global(
-                ds,
-                ["time", "TIME", "datetime", "date", "Date", "DateTime", "JULD"],
-                "time",
-            )
+        Internally calls get_timeseries_data(...).plot_timeseries().
+        """
+        ts = self.get_timeseries_data(
+            var_name=var_name,
+            lat=lat,
+            lon=lon,
+            date_start=date_start,
+            date_end=date_end,
+            lat_name_override=lat_name_override,
+            lon_name_override=lon_name_override,
+            time_name_override=time_name_override,
         )
-        actual_lat_name = (
-            lat_name_override
-            if lat_name_override
-            else _find_var_name_global(
-                ds, ["latitude", "lat", "LATITUDE", "LAT"], "latitude"
-            )
-        )
-        actual_lon_name = (
-            lon_name_override
-            if lon_name_override
-            else _find_var_name_global(
-                ds, ["longitude", "lon", "LONGITUDE", "LON"], "longitude"
-            )
-        )
-
-        timeseries_df = self.get_timeseries_data(
-            lat,
-            lon,
-            date_start,
-            date_end,
-            var_name,
-            actual_lat_name,
-            actual_lon_name,
-            actual_time_name,
-        )
-
-        # Plotting
-        plt.figure()  # Create a new figure
-        plt.plot(timeseries_df[actual_time_name], timeseries_df[var_name])
-
-        # Use actual lat/lon values from the DataFrame for the title, as 'nearest' might pick a slightly different point.
-        plot_lat_val = (
-            timeseries_df[actual_lat_name].iloc[0] if not timeseries_df.empty else lat
-        )
-        plot_lon_val = (
-            timeseries_df[actual_lon_name].iloc[0] if not timeseries_df.empty else lon
-        )
-
-        norm_date_start = normalize_date(date_start)
-        norm_date_end = normalize_date(date_end)
-
-        # Get attributes from the original Zarr store for the plotted variable
-        long_name = timeseries_df[var_name].get("long_name", var_name)
-        units = timeseries_df[var_name].get("units", "unitless")
-
-        plt.title(
-            f"{long_name} at {actual_lat_name}={plot_lat_val:.2f}, "
-            f"{actual_lon_name}={plot_lon_val:.2f} from {norm_date_start} to {norm_date_end}"
-        )
-        plt.xlabel(f"Time ({actual_time_name})")
-        plt.ylabel(f"{long_name} ({units})")
-        plt.xticks(rotation=45)
-        plt.tight_layout()
-        plt.show()
+        return ts.plot_timeseries()
 
     def plot_gridded_variable(
         self,
