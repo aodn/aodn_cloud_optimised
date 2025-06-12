@@ -119,10 +119,6 @@ def get_temporal_extent(
         A tuple containing the minimum and maximum pandas Timestamp objects
         found within the dataset's time variable.
     """
-    # base_path = dataset.files[0].split(f".parquet")[0]  # crude,
-    # dname = f"s3://anonymous@{base_path}.parquet"
-
-    # dname = f"s3://anonymous@{dataset.__dict__['_base_dir']}"
     unique_timestamps = query_unique_value(dataset, "timestamp")
     unique_timestamps = np.array([np.int64(string) for string in unique_timestamps])
     unique_timestamps = np.sort(unique_timestamps)
@@ -655,7 +651,7 @@ def plot_time_coverage(ds: xr.Dataset, time_var: str = "time") -> None:
 
 
 def plot_radar_water_velocity_rose(
-    ds: xr.Dataset, time_start: str, time_end: str, time_name: str = "TIME"
+    ds: xr.Dataset, date_start: str, date_end: str, time_name_override: str = "TIME"
 ) -> None:
     """Plots a velocity rose (similar to wind rose) for radar data.
 
@@ -666,16 +662,16 @@ def plot_radar_water_velocity_rose(
     Args:
         ds: The input xarray Dataset, expected to contain 'UCUR', 'VCUR',
             'LONGITUDE', 'LATITUDE', and a time coordinate.
-        time_start: The start time string for averaging (e.g., "YYYY-MM-DDTHH:MM:SS").
-        time_end: The end time string for averaging (e.g., "YYYY-MM-DDTHH:MM:SS").
-        time_name: The name of the time coordinate in `ds`. Defaults to "TIME".
+        date_start: The start time string for averaging (e.g., "YYYY-MM-DDTHH:MM:SS").
+        date_end: The end time string for averaging (e.g., "YYYY-MM-DDTHH:MM:SS").
+        time_name_override: The name of the time coordinate in `ds`. Defaults to "TIME".
     """
     # Select the data in the specified time range
-    subset = ds.sel({time_name: slice(time_start, time_end)})
+    subset = ds.sel({time_name_override: slice(date_start, date_end)})
 
     # Calculate average speed and direction
-    u_avg = subset.UCUR.mean(dim=time_name).values
-    v_avg = subset.VCUR.mean(dim=time_name).values
+    u_avg = subset.UCUR.mean(dim=time_name_override).values
+    v_avg = subset.VCUR.mean(dim=time_name_override).values
     speed_avg = np.sqrt(u_avg**2 + v_avg**2)
 
     # Calculate direction in degrees (meteorological convention)
@@ -697,7 +693,7 @@ def plot_radar_water_velocity_rose(
     )
 
     # Add labels and legend
-    ax.set_title(f"Velocity Rose: {time_start} to {time_end}")
+    ax.set_title(f"Velocity Rose: {date_start} to {date_end}")
     ax.set_legend(title="Speed (m/s)", loc="lower right", bbox_to_anchor=(1.2, 0))
 
     # Show the plot
@@ -706,8 +702,8 @@ def plot_radar_water_velocity_rose(
 
 def plot_radar_water_velocity_gridded(
     ds: xr.Dataset,
-    time_start: str,
-    time_name: str = "TIME",
+    date_start: str,
+    time_name_override: str = "TIME",
     coastline_resolution: str = "50m",
 ) -> None:
     """Plots gridded radar velocity data for 6 consecutive time steps.
@@ -726,7 +722,7 @@ def plot_radar_water_velocity_gridded(
         coastline_resolution: The resolution for the Cartopy coastline
             feature ('110m', '50m', '10m'). Defaults to "50m".
     """
-    ds = ds.sortby(time_name)
+    ds = ds.sortby(time_name_override)
 
     # Create a 3x2 grid of subplots with Cartopy projections
     fig, axes = plt.subplots(
@@ -738,8 +734,8 @@ def plot_radar_water_velocity_gridded(
 
     # Locate the time index for the starting time
     ii = 0
-    iTime = list(ds[time_name].values).index(
-        ds.sel({time_name: time_start}, method="nearest")[time_name]
+    iTime = list(ds[time_name_override].values).index(
+        ds.sel({time_name_override: date_start}, method="nearest")[time_name_override]
     )
 
     # Create a colorbar axis
@@ -783,7 +779,7 @@ def plot_radar_water_velocity_gridded(
                 draw_labels=True, linestyle="--", color="gray", alpha=0.5
             )
             axes[i, j].set_title(
-                f"{np.datetime_as_string(ds[time_name].values[iTime + ii])}"
+                f"{np.datetime_as_string(ds[time_name_override].values[iTime + ii])}"
             )
 
             ii += 1
@@ -798,6 +794,7 @@ def plot_radar_water_velocity_gridded(
     plt.show()
 
 
+# TODO: check if this can be deprecated
 def plot_gridded_variable(
     ds,
     start_date,
@@ -1391,6 +1388,14 @@ class DataSource(ABC):
         """Plots the extracted time series data."""
         pass
 
+    @abstractmethod
+    def plot_radar_water_velocity_gridded(self, **kwargs) -> None:
+        pass
+
+    @abstractmethod
+    def plot_radar_water_velocity_rose(self, **kwargs) -> None:
+        pass
+
 
 class ParquetDataSource(DataSource):
     """DataSource implementation for Parquet datasets."""
@@ -1640,6 +1645,16 @@ class ParquetDataSource(DataSource):
         """Plots the extracted time series data. (Not Implemented for Parquet)"""
         raise NotImplementedError(
             "plot_timeseries is not implemented for ParquetDataSource."
+        )
+
+    def plot_radar_water_velocity_gridded(self, **kwargs) -> None:
+        raise NotImplementedError(
+            "plot_radar_water_velocity_gridded is not implemented for ParquetDataSource."
+        )
+
+    def plot_radar_water_velocity_rose(self, **kwargs) -> None:
+        raise NotImplementedError(
+            "plot_radar_water_velocity_gridded is not implemented for ParquetDataSource."
         )
 
 
@@ -2196,12 +2211,12 @@ class ZarrDataSource(DataSource):
     def plot_gridded_variable(
         self,
         var_name: str,
-        lon_slice: float | None,
-        lat_slice: float | None,
-        date_start: str,
+        lon_slice: tuple[float, float] | None = None,
+        lat_slice: tuple[float, float] | None = None,
+        date_start: str | None = None,
         date_end: str | None = None,
         n_days: int = 6,
-        coastline_resolution: str = "110m",
+        coastline_resolution: str | None = "110m",
         log_scale: bool = False,
         lat_name_override: str | None = None,
         lon_name_override: str | None = None,
@@ -2236,6 +2251,10 @@ class ZarrDataSource(DataSource):
                         or coordinate names cannot be determined.
             AssertionError: If the dataset does not have the determined time dimension.
         """
+
+        if date_start is None:
+            raise ValueError(f"date_start value must be a valid time string, not None")
+
         if self.zarr_store is None:
             self.zarr_store = self._open_zarr_store()
 
@@ -2509,6 +2528,12 @@ class ZarrDataSource(DataSource):
             rect=[0, 0, 0.85, 0.95]
         )  # Adjust rect to prevent suptitle overlap and leave space for cbar
         plt.show()
+
+    def plot_radar_water_velocity_gridded(self, **kwargs):
+        return plot_radar_water_velocity_gridded(self.zarr_store, **kwargs)
+
+    def plot_radar_water_velocity_rose(self, **kwargs):
+        return plot_radar_water_velocity_rose(self.zarr_store, **kwargs)
 
     def get_metadata(self) -> dict:
         """Retrieves metadata from the Zarr store.
