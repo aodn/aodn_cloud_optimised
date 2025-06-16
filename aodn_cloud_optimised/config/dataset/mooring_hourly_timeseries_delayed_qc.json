@@ -802,16 +802,16 @@
   "run_settings": {
     "coiled_cluster_options": {
       "n_workers": [
-        1,
+        15,
         20
       ],
       "scheduler_vm_types": "m7i-flex.large",
-      "worker_vm_types": "m7i-flex.large",
+      "worker_vm_types": "m7i-flex.xlarge",
       "allow_ingress_from": "me",
       "compute_purchase_option": "spot_with_fallback",
       "worker_options": {
         "nthreads": 8,
-        "memory_limit": "8GB"
+        "memory_limit": "32GB"
       }
     },
     "batch_size": 100,
@@ -823,35 +823,49 @@
       {
         "s3_uri": "s3://imos-data/IMOS/ANMN/NSW",
         "filter": [
-          ".*_FV02_hourly-timeseries.*\\.nc"
+          ".*_FV02_hourly-timeseries_END-.*\\.nc"
         ],
         "year_range": []
       },
       {
         "s3_uri": "s3://imos-data/IMOS/ANMN/PA",
         "filter": [
-          ".*_FV02_hourly-timeseries.*\\.nc"
+          ".*_FV02_hourly-timeseries_END-.*\\.nc"
         ],
         "year_range": []
       },
       {
         "s3_uri": "s3://imos-data/IMOS/ANMN/QLD",
         "filter": [
-          ".*_FV02_hourly-timeseries.*\\.nc"
+          ".*_FV02_hourly-timeseries_END-.*\\.nc"
         ],
         "year_range": []
       },
       {
         "s3_uri": "s3://imos-data/IMOS/ANMN/SA",
         "filter": [
-          ".*_FV02_hourly-timeseries.*\\.nc"
+          ".*_FV02_hourly-timeseries_END-.*\\.nc"
         ],
         "year_range": []
       },
       {
         "s3_uri": "s3://imos-data/IMOS/ANMN/WA",
         "filter": [
-          ".*_FV02_hourly-timeseries.*\\.nc"
+          ".*_FV02_hourly-timeseries_END-.*\\.nc"
+        ],
+        "year_range": []
+      },
+      {
+        "s3_uri": "s3://imos-data/IMOS/ANMN/NRS",
+        "filter": [
+          ".*_FV02_hourly-timeseries_END-.*\\.nc"
+        ],
+        "year_range": []
+      },
+      {
+        "s3_uri": "s3://imos-data/IMOS/DWM/DA",
+        "filter": [
+          ".*_FV02_hourly-timeseries_END-.*\\.nc"
         ],
         "year_range": []
       }
