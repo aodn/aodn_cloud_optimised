@@ -922,6 +922,9 @@ class GenericHandler(CommonHandler):
         dataset_metadata = dict()
         if "metadata_uuid" in self.dataset_config.keys():
             dataset_metadata["metadata_uuid"] = self.dataset_config["metadata_uuid"]
+
+        dataset_metadata["dataset_name"] = self.dataset_config["dataset_name"]
+
         if "dataset_gattrs" in self.dataset_config.keys():
             for gattr in self.dataset_config["dataset_gattrs"]:
                 dataset_metadata[gattr] = self.dataset_config["dataset_gattrs"][gattr]
