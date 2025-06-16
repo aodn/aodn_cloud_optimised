@@ -3,13 +3,17 @@ A currated list of functions used to facilitate reading AODN parquet files. Thes
 Notebooks
 """
 
+import hashlib
 import json
 import logging
+import os
 import posixpath
 import re
+import zipfile
 from abc import ABC, abstractmethod
 from datetime import datetime, timezone
 from functools import lru_cache
+from io import StringIO
 from typing import Any, Final, Set
 
 import boto3
@@ -33,13 +37,14 @@ from botocore import UNSIGNED
 from botocore.client import Config
 from dateutil.parser import parse
 from fuzzywuzzy import fuzz
+from IPython.display import FileLink
 from matplotlib.colors import LogNorm, Normalize
 from s3path import PureS3Path
 from shapely import wkb
 from shapely.geometry import MultiPolygon, Polygon
 from windrose import WindroseAxes
 
-__version__ = "0.2.2"
+__version__ = "0.2.3"
 
 REGION: Final[str] = "ap-southeast-2"
 ENDPOINT_URL = f"https://s3.ap-southeast-2.amazonaws.com"
@@ -1602,6 +1607,30 @@ class ParquetDataSource(DataSource):
         table = self.dataset.to_table(filter=data_filter, columns=columns)
         df = table.to_pandas()
 
+        def append_metadata_to_df(metadata, df):
+            global_attrs = metadata.get("global_attributes", {})
+            variable_attrs = {
+                k: v for k, v in metadata.items() if k != "global_attributes"
+            }
+
+            # Attach variable metadata to each column's attrs, if column exists in df
+            # for var, attrs in variable_attrs.items():
+            # breakpoint()
+            # if var in df.columns:
+            for var in df.columns:
+                if not hasattr(df[var], "attrs"):
+                    df[var].attrs = {}
+                if var in variable_attrs:
+                    df[var].attrs.update(variable_attrs[var])
+
+            # Attach global metadata to the DataFrame attrs
+            # has to be done here, otherwise, gattrs will be added to all variables for some obscure reason
+            df.attrs.update(global_attrs)
+
+            return df
+
+        df = append_metadata_to_df(self.get_metadata(), df)
+
         return df
 
     def get_metadata(self) -> dict:
@@ -2912,3 +2941,173 @@ class Metadata:
                 )
 
         return list(set(matching_datasets))
+
+
+# =====================================================================
+# Monkey patching of pandas dataframe to add custom downloading method
+# such as:
+# df.aodn.download_as_netcdf()
+# df.aodn.download_as_csv()
+# =====================================================================
+
+
+@pd.api.extensions.register_dataframe_accessor("aodn")
+class AODNAccessor:
+    """Custom accessor for AODN-specific DataFrame download utilities.
+
+    This accessor is available on any pandas DataFrame as `.aodn` and provides
+    methods to export the DataFrame in formats useful for AODN workflows.
+    """
+
+    def __init__(self, pandas_obj: pd.DataFrame):
+        """Initialises the AODN accessor with the parent DataFrame.
+
+        Args:
+            pandas_obj (pd.DataFrame): The DataFrame to which this accessor is attached.
+        """
+        self._obj = pandas_obj
+
+    @staticmethod
+    def df_to_cf_compliant_xarray(df: pd.DataFrame) -> xr.Dataset:
+        """
+        Convert a DataFrame with string (object) columns to a CF-compliant xarray Dataset.
+
+        Object (string) columns are converted to integer codes, with CF-compliant
+        'flag_values' and 'flag_meanings' attributes.
+
+        Args:
+            df (pd.DataFrame): Input DataFrame with potential object (string) columns.
+
+        Returns:
+            xr.Dataset: CF-compliant Dataset ready for NetCDF export.
+        """
+        data_vars = {}
+        for col in df.columns:
+            col_data = df[col]
+
+            # Exclude _QC columns from transformation
+            if col.endswith("_QC"):
+                data_vars[col] = xr.DataArray(col_data.values, dims=["obs"])
+                continue
+
+            if pd.api.types.is_object_dtype(col_data):
+                # Convert to categorical
+                cat = pd.Categorical(col_data)
+                codes = cat.codes
+                categories = list(cat.categories)
+
+                # Add CF-compliant flags
+                data_vars[col] = xr.DataArray(
+                    codes,
+                    dims=["obs"],
+                    attrs={
+                        "flag_values": list(range(len(categories))),
+                        "flag_meanings": " ".join(
+                            str(cat).replace(" ", "_") for cat in categories
+                        ),
+                    },
+                )
+            else:
+                # Use as-is
+                data_vars[col] = xr.DataArray(col_data.values, dims=["obs"])
+
+        # Create Dataset
+        return xr.Dataset(data_vars)
+
+    @staticmethod
+    def hash_dataframe(df: pd.DataFrame) -> str:
+        # Create a stable string representation of the DataFrame
+        content = df.to_csv(index=False).encode("utf-8")
+        return hashlib.sha256(content).hexdigest()[:8]
+
+    def to_csv(
+        self, dataset_name: str | None = None, output_dir: str | None = None
+    ) -> str:
+        """Save the DataFrame as a compressed CSV with metadata comments.
+
+        Args:
+            dataset_name (str | None): Name of the dataset. If None, tries df.attrs['dataset_name'], otherwise 'unknown'.
+
+        Returns:
+            str: Path to the .csv.zip file.
+        """
+        df = self._obj
+
+        # Resolve dataset name
+        if dataset_name is None:
+            dataset_name = df.attrs.get("dataset_name", "unknown")
+
+        hash_val = self.hash_dataframe(df)
+        metadata_uuid = df.attrs.get("metadata_uuid", "unknown")
+        filename_base = (
+            f"aodn_metadata-uuid_{metadata_uuid}_{dataset_name}_data-hash_{hash_val}"
+        )
+        zip_filename = f"{filename_base}.csv.zip"
+        csv_filename = f"{filename_base}.csv"
+
+        if output_dir is None:
+            temp_dir = os.getcwd()
+            # temp_dir = tempfile.mkdtemp()
+        else:
+            os.makedirs(output_dir)
+            temp_dir = output_dir
+
+        zip_path = os.path.join(temp_dir, zip_filename)
+
+        # Build metadata header
+        metadata_lines = []
+
+        if df.attrs:
+            metadata_lines.append("# Global Attributes:")
+            for key, value in df.attrs.items():
+                metadata_lines.append(f"# {key}: {value}")
+            metadata_lines.append("#")
+
+        metadata_lines.append("# Variable Attributes:")
+        for col in df.columns:
+            attrs = getattr(df[col], "attrs", {})
+            for key, value in attrs.items():
+                metadata_lines.append(f"# {col}.{key}: {value}")
+        metadata_lines.append("#")
+
+        # Write CSV to a string buffer
+        buffer = StringIO()
+        for line in metadata_lines:
+            buffer.write(line + "\n")
+        df.to_csv(buffer, index=False)
+
+        # Write to zip file
+        with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+            zf.writestr(csv_filename, buffer.getvalue())
+
+        return os.path.abspath(zip_path)
+
+    def download_as_csv(self, dataset_name: str | None = None) -> FileLink:
+        """Save the DataFrame as a zipped CSV and return a download link (Jupyter only).
+
+        Args:
+            dataset_name (str | None): Dataset name, defaults from df.attrs if not provided.
+
+        Returns:
+            FileLink: Jupyter download link.
+        """
+        zip_path = self.to_csv(dataset_name)
+        return FileLink(os.path.basename(zip_path))
+
+    def download_as_netcdf(
+        self, filename: str = "aodn_data.nc", compression_level: int = 4
+    ) -> FileLink:
+        df = self._obj.map(lambda x: x.strip() if isinstance(x, str) else x)
+
+        ds = self.df_to_cf_compliant_xarray(df)
+
+        comp = dict(zlib=True, complevel=compression_level)
+        encoding = {}
+
+        for var_name, da in ds.data_vars.items():
+            # Compress only numeric variables (skip strings / objects)
+            if da.dtype.kind in ("i", "u", "f"):  # integer, unsigned int, float
+                encoding[var_name] = comp
+
+        ds.to_netcdf(path=filename, encoding=encoding)
+        return FileLink(filename)

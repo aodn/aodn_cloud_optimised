@@ -292,6 +292,9 @@ def preprocess_xarray(ds, dataset_config):
     dataset_metadata = dict()
     if "metadata_uuid" in dataset_config.keys():
         dataset_metadata["metadata_uuid"] = dataset_config["metadata_uuid"]
+
+    dataset_metadata["dataset_name"] = dataset_config["dataset_name"]
+
     if "dataset_gattrs" in dataset_config.keys():
         for gattr in dataset_config["dataset_gattrs"]:
             dataset_metadata[gattr] = dataset_config["dataset_gattrs"][gattr]
