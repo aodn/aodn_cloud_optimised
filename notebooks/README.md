@@ -15,6 +15,8 @@ You can also click on the Binder or Colab button above to spin the environment a
 
 # Run locally
 
+Assuming you have [Mamba/Conda](https://github.com/conda-forge/miniforge) already installed on your machine.
+
 ```bash
 # clone the repository
 git clone https://github.com/aodn/aodn_cloud_optimised.git
@@ -35,6 +37,18 @@ Finally, start Jupyter Notebook accessible on all network interfaces at port 888
 ```bash
 jupyter notebook --ip=0.0.0.0 --port=8888
 ```
+
+### 💡 Windows tip: Use WSL with Mamba
+
+If you're on Windows, we recommend running this project inside **WSL (Windows Subsystem for Linux)** for better compatibility and support with Linux-based Python tools.
+
+To install WSL, open **PowerShell as Administrator** and run:
+
+```powershell
+wsl --install
+```
+
+More information available [here](https://github.com/conda-forge/miniforge?tab=readme-ov-file#windows-subsystem-for-linux-wsl)
 
 # Generic method to call any AODN parquet dataset
 
