@@ -570,7 +570,8 @@ def create_notebook(dataset_name):
     )
     cloud_optimised_format = dataset_config.get("cloud_optimised_format")
     metadata_uuid = dataset_config.get("metadata_uuid", "")
-    metadata_url = f"[here](https://catalogue-imos.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/{metadata_uuid})"
+    metadata_url = f"[in the AODN metadata catalogue](https://catalogue-imos.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/{metadata_uuid})"
+    notebook_url = f"[GitHub](https://github.com/aodn/aodn_cloud_optimised/tree/main/notebooks/{dataset_name}.ipynb)"
 
     if not os.path.exists(notebook_path):
         if cloud_optimised_format == "parquet":
@@ -599,9 +600,10 @@ def create_notebook(dataset_name):
         for cell in new_nb.cells:
             if cell.cell_type == "markdown":
                 cell.source = (
-                    f"## Access {dataset_name.replace('_', ' ').title()} data in {cloud_optimised_format.title()}\n"
-                    f"A jupyter notebook to show how to access and plot the AODN {dataset_name} dataset available as a {cloud_format_url} dataset on S3.\n\n"
-                    f"More information about the dataset available {metadata_url}."
+                    f"## Access {dataset_name.replace('_', ' ').title()} ({cloud_optimised_format.title()})\n"
+                    f"This Jupyter notebook demonstrates how to access and plot {dataset_name} data, available as a {cloud_format_url} dataset stored on S3.\n\n"
+                    f"🔗 More information about the dataset is available {metadata_url}.\n\n"
+                    f"📌 The source of truth for this notebook is maintained on {notebook_url}.\n"
                 )
                 break
 
