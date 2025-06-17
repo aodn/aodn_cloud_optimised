@@ -60,7 +60,9 @@ def install_requirements():
         import xarray as xr
 
         xr.set_options(display_style="text")
-        # run_command("uv pip install pyarrow --force-reinstall --upgrade")
+        run_command("pip install pyarrow=19.0")
+        import pyarrow.dataset  # google colab fix
+
         run_command(f"uv pip install --system -r {requirements_path}")
         run_command("uv pip install --system pyopenssl --upgrade")
         # run_command("uv pip install numpy --force-reinstall")
