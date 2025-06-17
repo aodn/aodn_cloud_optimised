@@ -102,8 +102,18 @@ Poetry Commands and Their Use Cases:
 - **`poetry lock`**:
   Use `poetry lock` to update `poetry.lock` based on changes in `pyproject.toml`.
 
-- **`poetry lock --no-update`**:
-  Use `poetry lock --no-update` to regenerate `poetry.lock` without updating dependencies.
+
+.. note:: Important Note
+   :class: custom-note
+   :name: poetry-lock-issue
+
+    It is possible to encounter differences in the poetry.lock file when running poetry lock locally versus in GitHub Actions, due to platform-specific metadata included by Poetry.
+
+    To ensure consistent lock file generation across environments, a helper script is provided at the root of the repository. This script runs poetry lock inside a Docker container with a fixed Python and Poetry version, making the process platform-agnostic.
+
+
+- **`poetry lock --regenerate`**:
+  Use `poetry lock --regenerate` to regenerate `poetry.lock` without updating dependencies.
 
 Updating `pyproject.toml`:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -49,7 +49,7 @@ repos:
       # args: ["-f", "requirements.txt", "--quiet"]
       # verbose: false
       - id: poetry-lock
-        args: []
+        args: ["--no-cache"]
         verbose: true
       - id: poetry-install
         args: ["--quiet"]
