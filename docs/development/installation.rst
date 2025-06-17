@@ -50,6 +50,8 @@ Create a virtual environment of your choice and activate it:
 
    curl -sSL https://install.python-poetry.org | python3 -
 
+   poetry self add poetry-plugin-shell
+
    poetry shell
    poetry install --with dev
    pre-commit install
