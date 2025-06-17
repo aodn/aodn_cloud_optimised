@@ -1,15 +1,46 @@
 [![Google Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/aodn/aodn_cloud_optimised/)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/aodn/aodn_cloud_optimised/main?filepath=notebooks)
 
-A curated list of Jupyter notebooks ready to be loaded in Google Colab
+A curated list of Jupyter notebooks to query all AODN cloud optimised datasets.
 
-You can also click on the binder/colab button above to spin the environment and execute the notebooks (note that Binder is free with limited resources)
+# Run remotely
+
+The notebooks can be run remotely using the following services:
+
+- [Google Colab](https://colab.research.google.com/)
+- [Nectar Research Cloud](https://jupyterhub.rc.nectar.org.au/)
+- [Binder](https://mybinder.org/)
+
+You can also click on the Binder or Colab button above to spin the environment and execute the notebooks (note that Binder is free with limited resources)
+
+# Run locally
+
+```bash
+# clone the repository
+git clone https://github.com/aodn/aodn_cloud_optimised.git
+cd aodn_cloud_optimised/notebooks
+
+# create the conda environment from the environment.yml file available in the notebook folder (not the repository root folder)
+mamba env create --file=environment.yml
+```
+
+Then activate the environment named `AodnCloudOptimisedQuery`:
+
+```bash
+mamba activate AodnCloudOptimisedQuery
+```
+
+Finally, start Jupyter Notebook accessible on all network interfaces at port 8888:
+
+```bash
+jupyter notebook --ip=0.0.0.0 --port=8888
+```
 
 # Generic method to call any AODN parquet dataset
 
 - [GetAodnData.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb)
 
-# AODN Notebooks
+# AODN Notebooks directly loadable into Google Colab
 
 - [animal_acoustic_tracking_delayed_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/animal_acoustic_tracking_delayed_qc.ipynb)
 - [animal_ctd_satellite_relay_tagging_delayed_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/animal_ctd_satellite_relay_tagging_delayed_qc.ipynb)
@@ -78,3 +109,7 @@ You can also click on the binder/colab button above to spin the environment and 
 - [vessel_trv_realtime_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/vessel_trv_realtime_qc.ipynb)
 - [vessel_xbt_realtime_nonqc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/vessel_xbt_realtime_nonqc.ipynb)
 - [wave_buoy_realtime_nonqc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/wave_buoy_realtime_nonqc.ipynb)
+
+```
+
+```
