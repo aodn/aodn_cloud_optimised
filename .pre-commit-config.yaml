@@ -40,7 +40,7 @@ repos:
         #exclude: ^aodn_cloud_optimised/bin/create_aws_registry_dataset.py$  # issue with black!
 
   - repo: https://github.com/python-poetry/poetry
-    rev: "2.1.3"
+    rev: "2.0.1"
     hooks:
       - id: poetry-check
         args: ["--lock", "--quiet"] # Add --quiet to run poetry-check quietly
