@@ -1,0 +1,17 @@
+# Usage:
+# mamba env create --file=environment.yml
+# mamba env update --file=environment.yml
+
+name: AodnCloudOptimisedQuery
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python>=3.10.14,<3.13
+  - notebook
+  - h5py
+  - scipy
+  - pip<24.1
+  - virtualenv==20.30.0 # https://github.com/python-poetry/poetry/issues/10378#issuecomment-285540959
+  - pip:
+      - -r requirements.txt
