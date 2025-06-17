@@ -2182,9 +2182,9 @@ class ZarrDataSource(DataSource):
         timeseries_df.attrs["actual_time_name"] = actual_time_name
         timeseries_df.attrs["actual_lat_name"] = actual_lat_name
         timeseries_df.attrs["actual_lon_name"] = actual_lon_name
-        timeseries_df.attrs[
-            "retrieved_vars"
-        ] = retrieved_var_names  # List of vars in the df
+        timeseries_df.attrs["retrieved_vars"] = (
+            retrieved_var_names  # List of vars in the df
+        )
         # If a single var was requested (and found), store its name for convenience in plotting
         if var_name and var_name in retrieved_var_names:
             timeseries_df.attrs["requested_var_name"] = var_name
