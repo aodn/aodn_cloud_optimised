@@ -137,6 +137,32 @@ def load_dataset_config(config_path) -> dict:
     return dataset_config
 
 
+def load_dataset_config_by_name(config_name: str) -> dict:
+    """
+    Load a dataset configuration by name from the
+    'aodn_cloud_optimised.config' package directory.
+
+    Args:
+        config_name (str): Name of the JSON configuration file (e.g., 'myconfigfile.json').
+
+    Returns:
+        dict: The loaded dataset configuration.
+
+    Raises:
+        FileNotFoundError: If the configuration file does not exist.
+    """
+    config_path = files("aodn_cloud_optimised").joinpath(
+        "config", "dataset", f"{config_name}.json"
+    )
+
+    if not config_path.is_file():
+        raise FileNotFoundError(
+            f"Configuration file '{config_name}' not found in package."
+        )
+
+    return load_dataset_config(str(config_path))
+
+
 def get_notebook_url(uuid: str):
     """
     Retrieve the jupyter notebook url based on a metadata uuid value
