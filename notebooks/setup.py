@@ -72,7 +72,11 @@ def install_requirements():
             "tabular",
         ]
 
-        run_command(f"uv pip install {' '.join(packages)}")
+        for pkg in packages:
+            try:
+                run_command(f"uv pip install {pkg}")
+            except Exception as e:
+                print(f"⚠️ Failed to install '{pkg}' with uv: {e}")
 
         # Important
         # with google colab, we've encountered many issues to install the correct env.
