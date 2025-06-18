@@ -5,8 +5,8 @@ Runner to generate cloud-optimised datasets from S3 files, based on a dataset co
 
 Example usage:
   generic_cloud_optimised_creation --config mooring_hourly_timeseries_delayed_qc
-  generic_cloud_optimised_creation --config satellite_chlorophylla_gsm_1day_aqua --json-overwrite '{"run_settings": {"cluster": {"mode": null}, "raise_error": true}, "clear_existing_data": true}'  # useful for single file processing on prefect
-  generic_cloud_optimised_creation --config satellite_chlorophylla_gsm_1day_aqua --json-overwrite '{"run_settings": {"cluster": {"mode": null}, "raise_error": true},  "clear_existing_data": true, "force_previous_parquet_deletion": true }' # useful for parquet dataset to overwrite existing matching input files already processed
+  generic_cloud_optimised_creation --config satellite_chlorophylla_gsm_1day_aqua --json-overwrite '{"run_settings": {"cluster": {"mode": null}, "raise_error": true}, "clear_existing_data": false}'  # useful for single file processing on prefect
+  generic_cloud_optimised_creation --config satellite_chlorophylla_gsm_1day_aqua --json-overwrite '{"run_settings": {"cluster": {"mode": null}, "raise_error": true},  "clear_existing_data": false, "force_previous_parquet_deletion": true }' # useful for parquet dataset to overwrite existing matching input files already processed
 """
 
 import argparse
