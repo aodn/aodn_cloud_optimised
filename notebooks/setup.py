@@ -60,11 +60,26 @@ def install_requirements():
         import xarray as xr
 
         xr.set_options(display_style="text")
-        # run_command("pip install pyarrow==19.0")
-        import pyarrow.dataset  # google colab fix
 
-        run_command(f"uv pip install --system -r {requirements_path}")
-        run_command("uv pip install --system pyopenssl --upgrade")
+        packages = [
+            "boto3",
+            "cartopy",
+            "cftime",
+            "gsw",
+            "fuzzywuzzy",
+            "s3path",
+            "windrose",
+            "tabular",
+        ]
+
+        run_command(f"uv pip install {' '.join(packages)}")
+
+        # Important
+        # with google colab, we've encountered many issues to install the correct env.
+        # The requirements.txt file stopped being compatible first quarter of 2025
+
+        # run_command(f"uv pip install --system -r {requirements_path}")
+        # run_command("uv pip install --system pyopenssl --upgrade")
         # run_command("uv pip install numpy --force-reinstall")
         # run_command("uv pip install pyarrow --force-reinstall --upgrade")
 
