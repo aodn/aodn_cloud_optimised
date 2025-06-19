@@ -328,7 +328,7 @@ Timestamp partition
 
 To add efficient time filtering, a timestamp variable is created.
 ``partition_timestamp_period`` is the period to choose (``M`` for month,
-``Y`` for year, ``Q`` for quarterly, etc.).
+``Y`` for year, ``Q`` for quarterly, etc.). Refer to https://pandas.pydata.org/docs/user_guide/timeseries.html#timeseries-period-aliases
 
 .. note:: Important Note
    :class: custom-note
@@ -580,7 +580,7 @@ Global Attributes to variables
 
 .. code:: json
 
-   "gatts_to_variable": {
+   "gattrs_to_variable": {
       "file_version": {
         "destination_name": "quality_control_version",
         "dimensions": "TIME",

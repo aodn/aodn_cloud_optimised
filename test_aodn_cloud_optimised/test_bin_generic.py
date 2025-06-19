@@ -13,11 +13,11 @@ from botocore.session import get_session
 from moto import mock_aws
 from moto.moto_server.threaded_moto_server import ThreadedMotoServer
 
-from aodn_cloud_optimised.lib.config import load_dataset_config
 from aodn_cloud_optimised.bin.generic_cloud_optimised_creation import (
     DatasetConfig,
     main,
 )
+from aodn_cloud_optimised.lib.config import load_dataset_config
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -127,10 +127,6 @@ class TestGenericCloudOptimisedCreation(unittest.TestCase):
     def test_main_with_config_and_json_overwrite(self):
         dataset_config = load_dataset_config(DATASET_CONFIG_NC_ACORN_JSON)
         config_validated = DatasetConfig.model_validate(dataset_config)
-
-        with open(DATASET_CONFIG_NC_ACORN_JSON) as f:
-            raw_json = f.read()
-            config_validated = DatasetConfig.model_validate_json(raw_json)
 
         def _mock_boto3_client(service_name, *args, **kwargs):
             if service_name == "s3":

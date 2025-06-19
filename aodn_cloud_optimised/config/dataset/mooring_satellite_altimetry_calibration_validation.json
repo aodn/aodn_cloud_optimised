@@ -283,7 +283,7 @@
     }
   },
   "dataset_gattrs": {
-    "title": "FILL UP MANUALLY - CHECK DOCUMENTATION"
+    "title": ""
   },
   "aws_opendata_registry": {
     "Name": "Satellite - Altimetry calibration and validation",

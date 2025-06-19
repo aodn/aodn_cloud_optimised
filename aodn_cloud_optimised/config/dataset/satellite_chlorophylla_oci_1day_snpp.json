@@ -74,7 +74,7 @@
     }
   },
   "dataset_gattrs": {
-    "title": "FILL UP MANUALLY - CHECK DOCUMENTATION"
+    "title": ""
   },
   "aws_opendata_registry": {
     "Name": "Satellite - Ocean Colour -  SNPP - 1 day - Chlorophyll-a concentration (OCI model)",
