@@ -305,11 +305,14 @@ class RunSettings(BaseModel):
     @model_validator(mode="after")
     def validate_cluster_opts(self) -> "RunSettings":
         # Validate_ coiled options if mode is coiled
-        if self.cluster.mode == "coiled" and self.coiled_cluster_options is None:
+        if (
+            self.cluster.mode == clusterLib.ClusterMode.COILED
+            and self.coiled_cluster_options is None
+        ):
             raise ValueError(
                 "coiled_cluster_options must be provided when cluster.mode is 'coiled'"
             )
-        elif self.cluster.mode == "ec2" and (
+        elif self.cluster.mode == clusterLib.ClusterMode.EC2 and (
             self.ec2_cluster_options is None or self.ec2_adapt_options is None
         ):
             raise ValueError(
@@ -321,7 +324,7 @@ class RunSettings(BaseModel):
 
 class DatasetConfig(BaseModel):
     dataset_name: str
-    run_settings: Any  # replace with concrete type
+    run_settings: RunSettings  # replace with concrete type
     schema: dict[str, Any]
     vars_incompatible_with_region: Optional[list[str]] = None
     gattrs_to_variables: Optional[Union[dict[str, dict[str, Any]], list[str]]] = None
