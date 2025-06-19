@@ -217,7 +217,7 @@
     }
   },
   "dataset_gattrs": {
-    "title": "FILL UP MANUALLY - CHECK DOCUMENTATION"
+    "title": ""
   },
   "aws_opendata_registry": {
     "Name": "Satellite - Sea surface temperature - Level 3 - Single sensor - 1 day - Day and night time - Southern Ocean",

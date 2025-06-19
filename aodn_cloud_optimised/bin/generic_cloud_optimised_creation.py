@@ -333,6 +333,32 @@ class DatasetConfig(BaseModel):
     partition_keys: Optional[list[str]] = None
     time_extent: Optional[dict[str, str]] = None
     spatial_extent: Optional[dict[str, Any]] = None
+    dataset_gattrs: Optional[dict[str, Any]] = None
+
+    # TODO: if we want to test for the existence of the PLACEHOLDER in the aws_opendata_regristry cloud_optimised_creation
+    # we should add this key in the class definition. However, having this placeholder doesn't cause problem to the dataset
+    # creation
+    @model_validator(mode="after")
+    def validate_no_manual_fill_placeholders(self) -> "DatasetConfig":
+        PLACEHOLDER = "FILL UP MANUALLY - CHECK DOCUMENTATION"
+
+        def check_recursive(value, path=""):
+            if isinstance(value, str):
+                if value.strip() == PLACEHOLDER:
+                    raise ValueError(
+                        f'Placeholder value found at "{path or "root"}": {PLACEHOLDER}'
+                    )
+            elif isinstance(value, dict):
+                for k, v in value.items():
+                    check_recursive(v, f"{path}.{k}" if path else k)
+            elif isinstance(value, list):
+                for idx, item in enumerate(value):
+                    check_recursive(item, f"{path}[{idx}]")
+            elif isinstance(value, BaseModel):
+                check_recursive(value.model_dump(), path)
+
+        check_recursive(self.model_dump())
+        return self
 
     @model_validator(mode="after")
     def validate_vars_incompatible_with_region(self) -> "DatasetConfig":

@@ -934,7 +934,7 @@
     }
   },
   "dataset_gattrs": {
-    "title": "FILL UP MANUALLY - CHECK DOCUMENTATION"
+    "title": ""
   },
   "aws_opendata_registry": {
     "Name": "Ships of Opportunity - Air-sea fluxes - Meteorological and sea surface temperature - Real time",
