@@ -106,6 +106,15 @@
         4,
         8
       ]
+    },
+    "crs": {
+      "type": "int32",
+      "long_name": "coordinate reference system",
+      "grid_mapping_name": "latitude_longitude",
+      "semi_major_axis": 6379137.0,
+      "inverse_flattening": 298.257223563,
+      "epsg_code": "EPSG:4326",
+      "drop_var": true
     }
   },
   "dataset_gattrs": {

@@ -116,10 +116,36 @@
       "type": "string"
     },
     "gattrs_to_variables": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "destination_name": {
+                "type": "string"
+              },
+              "dimensions": {
+                "type": "string"
+              },
+              "length": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "destination_name",
+              "dimensions",
+              "length"
+            ]
+          }
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      ]
     },
     "partition_keys": {
       "type": "array",

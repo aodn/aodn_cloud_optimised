@@ -16,7 +16,7 @@ import re
 import sys
 import warnings
 from pathlib import Path, PurePosixPath
-from typing import Any, List, Optional
+from typing import Any, List, Literal, Optional, Union
 from urllib.parse import urlparse
 
 from pydantic import (
@@ -320,15 +320,133 @@ class RunSettings(BaseModel):
 
 
 class DatasetConfig(BaseModel):
-    """Dataset processing configuration.
-
-    Attributes:
-        dataset_name: Dataset identifier.
-        run_settings: Processing run settings.
-    """
-
     dataset_name: str
-    run_settings: RunSettings
+    run_settings: Any  # replace with concrete type
+    schema: dict[str, Any]
+    vars_incompatible_with_region: Optional[list[str]] = None
+    gattrs_to_variables: Optional[Union[dict[str, dict[str, Any]], list[str]]] = None
+    dimensions: dict[str, dict[str, Any]] | None = None
+    cloud_optimised_format: Literal["zarr", "parquet"]
+    partition_keys: Optional[list[str]] = None
+    time_extent: Optional[dict[str, str]] = None
+    spatial_extent: Optional[dict[str, Any]] = None
+
+    @model_validator(mode="after")
+    def validate_vars_incompatible_with_region(self) -> "DatasetConfig":
+        if self.vars_incompatible_with_region:
+            missing = [
+                var
+                for var in self.vars_incompatible_with_region
+                if var not in self.schema
+            ]
+            if missing:
+                raise ValueError(
+                    f"The following vars_incompatible_with_region are not defined in schema configuration or mispelled: {missing}"
+                )
+        return self
+
+    @model_validator(mode="after")
+    def validate_gattrs_to_variable_dimensions(self) -> "DatasetConfig":
+        if self.gattrs_to_variables:
+            if self.cloud_optimised_format == "zarr":
+                valid_dimension_names = {
+                    dim_def["name"] for dim_def in self.dimensions.values()
+                }
+                invalid_entries = []
+                for key, var_def in self.gattrs_to_variables.items():
+                    dim_name = var_def.get("dimensions")
+                    if dim_name not in valid_dimension_names:
+                        invalid_entries.append((key, dim_name))
+                if invalid_entries:
+                    raise ValueError(
+                        f"The following gattrs_to_variables entries refer to undefined dimensions: "
+                        + ", ".join(f"{k} (dimension: {d})" for k, d in invalid_entries)
+                    )
+            if self.cloud_optimised_format == "parquet":
+                for var in self.gattrs_to_variables:
+                    var_def = self.schema.get(var)
+                    numeric_types = {
+                        "int",
+                        "int32",
+                        "int64",
+                        "float",
+                        "float32",
+                        "float64",
+                        "number",
+                    }
+
+                    if (
+                        not var_def
+                        or var_def.get("type") not in {"string"} | numeric_types
+                    ):
+                        raise ValueError(
+                            f"schema['{var}'] must be of type 'string' or a numeric type "
+                            f"(e.g. {sorted(numeric_types)}), required by gattrs_to_variables"
+                        )
+        return self
+
+    @model_validator(mode="after")
+    def validate_parquet_config(self) -> "DatasetConfig":
+        if self.cloud_optimised_format == "parquet":
+            if not self.partition_keys:
+                raise ValueError("partition_keys must be defined for parquet format")
+
+            # timestamp partition check
+            if "timestamp" in self.partition_keys:
+                # Validate time_extent block exists
+                if not self.time_extent:
+                    raise ValueError(
+                        "time_extent must be defined when 'timestamp' is a partition key"
+                    )
+                time_var = self.time_extent.get("time")
+                if time_var not in self.schema:
+                    raise ValueError(
+                        f"time_extent 'time' value '{time_var}' is not defined in schema"
+                    )
+
+                # Validate timestamp partition period
+                valid_periods = {"M", "Q", "Y", "h", "min", "s", "ms", "us", "ns"}
+                period = self.time_extent.get("partition_timestamp_period")
+                if period not in valid_periods:
+                    raise ValueError(
+                        f"Invalid partition_timestamp_period '{period}'. Must be one of {sorted(valid_periods)}"
+                    )
+
+                # Validate timestamp exists in schema
+                timestamp_def = self.schema.get("timestamp")
+                if not timestamp_def:
+                    raise ValueError("'timestamp' must be defined in schema")
+                if timestamp_def.get("type") != "int64":
+                    raise ValueError("schema['timestamp'] must have type 'int64'")
+
+            # polygon partition check
+            if "polygon" in self.partition_keys:
+                if not self.spatial_extent:
+                    raise ValueError(
+                        "spatial_extent must be defined when 'polygon' is a partition key"
+                    )
+
+                lat_var = self.spatial_extent.get("lat")
+                lon_var = self.spatial_extent.get("lon")
+                resolution = self.spatial_extent.get("spatial_resolution")
+
+                missing = [v for v in (lat_var, lon_var) if v not in self.schema]
+                if missing:
+                    raise ValueError(
+                        f"The following spatial_extent variables are not defined in schema: {missing}"
+                    )
+
+                if not isinstance(resolution, int) or resolution >= 50:
+                    raise ValueError(
+                        "spatial_extent.spatial_resolution must be an integer less than 50"
+                    )
+
+                polygon_def = self.schema.get("polygon")
+                if not polygon_def or polygon_def.get("type") != "string":
+                    raise ValueError(
+                        "schema['polygon'] must be defined with type 'string'"
+                    )
+        return self
 
 
 def load_config_and_validate(config_filename: str) -> DatasetConfig:

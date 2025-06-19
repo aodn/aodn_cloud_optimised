@@ -23,7 +23,7 @@
       "mode": "coiled",
       "restart_every_path": true
     },
-    "clear_existing_data": true,
+    "clear_existing_data": false,
     "coiled_cluster_options": {
       "n_workers": [
         5,
@@ -56,9 +56,9 @@
   },
   "var_template_shape": "rho",
   "vars_incompatible_with_region": [
-    "WAVELENTGH"
+    "WAVELENGTH"
   ],
-  "gatts_to_variable": {
+  "gattrs_to_variables": {
     "file_version": {
       "destination_name": "quality_control_version",
       "dimensions": "TIME",

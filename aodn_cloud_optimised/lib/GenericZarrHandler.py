@@ -144,14 +144,14 @@ def preprocess_xarray(ds, dataset_config):
             var_required.pop(var_name, None)
 
     # create variables from gatts
-    gatts_to_variable = dataset_config.get("gatts_to_variable", None)
-    if gatts_to_variable:
-        for gatts_var in gatts_to_variable:
-            dest_name = gatts_to_variable[gatts_var]["destination_name"]
-            dim_name = gatts_to_variable[gatts_var]["dimensions"]
+    gattrs_to_variables = dataset_config.get("gattrs_to_variables", None)
+    if gattrs_to_variables:
+        for gatts_var in gattrs_to_variables:
+            dest_name = gattrs_to_variables[gatts_var]["destination_name"]
+            dim_name = gattrs_to_variables[gatts_var]["dimensions"]
 
             # Get the string length from the config, defaulting to 61 if not specified
-            length = gatts_to_variable[gatts_var].get("length", 255)
+            length = gattrs_to_variables[gatts_var].get("length", 255)
 
             # Define the string dtype dynamically with the given length
             string_dtype = f"<U{length}"
@@ -888,6 +888,17 @@ class GenericHandler(CommonHandler):
             # TODO:
             # compute() was added as unittests failed on github, but not locally. related to
             # https://github.com/pydata/xarray/issues/5219
+            missing = [
+                var
+                for var in self.vars_incompatible_with_region
+                if var not in ds.variables and var not in ds.dims
+            ]
+
+            if missing:
+                raise ValueError(
+                    f"The following variables or dimensions are not present/mispelled in the dataset: {missing}"
+                )
+
             ds.isel(**{time_dimension_name: indexes}).drop_vars(
                 self.vars_incompatible_with_region, errors="ignore"
             ).pad(**{time_dimension_name: (0, amount_to_pad)}).to_zarr(

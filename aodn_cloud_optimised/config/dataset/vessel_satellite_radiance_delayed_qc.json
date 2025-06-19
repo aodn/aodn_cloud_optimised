@@ -31,7 +31,7 @@
     "WAVELENGTH_Lu",
     "WAVELENGTH_Lsky"
   ],
-  "gatts_to_variable": {
+  "gattrs_to_variables": {
     "file_version": {
       "destination_name": "quality_control_version",
       "dimensions": "TIME",
