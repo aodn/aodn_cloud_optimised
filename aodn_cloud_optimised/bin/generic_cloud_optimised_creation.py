@@ -12,6 +12,7 @@ Example usage:
 import argparse
 import json
 import logging
+from logging.config import valid_ident
 import re
 import sys
 import warnings
@@ -19,6 +20,7 @@ from pathlib import Path, PurePosixPath
 from typing import Any, List, Literal, Optional, Union
 from urllib.parse import urlparse
 
+import numpy as np
 from pydantic import (
     BaseModel,
     Field,
@@ -334,6 +336,20 @@ class DatasetConfig(BaseModel):
     time_extent: Optional[dict[str, str]] = None
     spatial_extent: Optional[dict[str, Any]] = None
     dataset_gattrs: Optional[dict[str, Any]] = None
+    dataset_sort_by: Optional[list[str]] = None
+
+    @model_validator(mode="after")
+    def validate_dataset_sortby(self) -> "DatasetConfig":
+        if self.dataset_sort_by:
+            valid_names = {
+                dim["name"] for dim in self.dimensions.values() if "name" in dim
+            }
+            for var in self.dataset_sort_by:
+                if var not in valid_names:
+                    raise ValueError(
+                        f"{var} does not exist in the dimensions list and can't be used to sort the dataset"
+                    )
+        return self
 
     # TODO: if we want to test for the existence of the PLACEHOLDER in the aws_opendata_regristry cloud_optimised_creation
     # we should add this key in the class definition. However, having this placeholder doesn't cause problem to the dataset
@@ -386,6 +402,20 @@ class DatasetConfig(BaseModel):
                     dim_name = var_def.get("dimensions")
                     if dim_name not in valid_dimension_names:
                         invalid_entries.append((key, dim_name))
+
+                    def is_valid_dtype(attr_type) -> bool:
+                        try:
+                            np.dtype(attr_type)
+                            return True
+                        except TypeError:
+                            return False
+
+                    attr_type = var_def.get("dtype", None)
+                    if not is_valid_dtype(attr_type) or attr_type is None:
+                        raise ValueError(
+                            f"{attr_type} for variable {key} is not a valid type"
+                        )
+
                 if invalid_entries:
                     raise ValueError(
                         f"The following gattrs_to_variables entries refer to undefined dimensions: "

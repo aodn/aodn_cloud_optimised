@@ -128,14 +128,14 @@
               "dimensions": {
                 "type": "string"
               },
-              "length": {
-                "type": "integer"
+              "dtype": {
+                "type": "string"
               }
             },
             "required": [
               "destination_name",
               "dimensions",
-              "length"
+              "dtype"
             ]
           }
         },

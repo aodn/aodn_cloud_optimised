@@ -3,6 +3,12 @@
   "logger_name": "vessel_satellite_radiance_delayed_qc",
   "cloud_optimised_format": "zarr",
   "metadata_uuid": "28f8bfed-ca6a-472a-84e4-42563ce4df3f",
+  "dataset_sort_by": [
+    "WAVELENGTH_Ed",
+    "WAVELENGTH_Lsky",
+    "WAVELENGTH_Lu",
+    "TIME"
+  ],
   "dimensions": {
     "time": {
       "name": "TIME",
@@ -35,17 +41,17 @@
     "file_version": {
       "destination_name": "quality_control_version",
       "dimensions": "TIME",
-      "length": 49
+      "dtype": "<U49"
     },
     "platform_code": {
       "destination_name": "platform_code",
       "dimensions": "TIME",
-      "length": 7
+      "dtype": "<U7"
     },
-    "voyage_number": {
+    "Voyage_number": {
       "destination_name": "voyage_number",
       "dimensions": "TIME",
-      "length": 10
+      "dtype": "int32"
     }
   },
   "gattrs_to_delete": [

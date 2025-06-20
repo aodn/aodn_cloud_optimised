@@ -150,25 +150,46 @@ def preprocess_xarray(ds, dataset_config):
             dest_name = gattrs_to_variables[gatts_var]["destination_name"]
             dim_name = gattrs_to_variables[gatts_var]["dimensions"]
 
-            # Get the string length from the config, defaulting to 61 if not specified
-            length = gattrs_to_variables[gatts_var].get("length", 255)
+            dtype = gattrs_to_variables[gatts_var].get("dtype", None)
+            # Validate dtype
+            try:
+                dtype_obj = np.dtype(dtype)
+            except TypeError:
+                raise ValueError(f"Invalid dtype: {dtype}")
 
-            # Define the string dtype dynamically with the given length
-            string_dtype = f"<U{length}"
+            if dtype_obj.kind == "U":
+                # Get the string length from the config, defaulting to 61 if not specified
+                length = dtype_obj.itemsize // 4  # 4 bytes per Unicode character
 
-            # Create padded string to have consistent variable size accross the whole dataset
-            gatt_var_value = getattr(ds, gatts_var, None)
-            if gatt_var_value is None:
-                gatt_var_value_padded = "".ljust(
-                    length
-                )  # Ensures dtype becomes <U{length}
+                # Create padded string to have consistent variable size accross the whole dataset
+                gatt_var_value = getattr(ds, gatts_var, None)
+                if gatt_var_value is None:
+                    logger.debug(
+                        f"{gatts_var} empty for dataset with time_coverage_start {getattr(ds, 'time_coverage_start', None)} and time_coverage_end {getattr(ds, 'time_coverage_end', None)}"
+                    )
+                if gatt_var_value is None:
+                    gatt_var_value_padded = "".ljust(
+                        length
+                    )  # Ensures dtype becomes <U{length}
+                else:
+                    gatt_var_value_padded = str(gatt_var_value).ljust(length)
+
+                ds[dest_name] = (
+                    dim_name,
+                    np.full(ds.dims[dim_name], gatt_var_value_padded, dtype=dtype),
+                )
             else:
-                gatt_var_value_padded = str(gatt_var_value).ljust(length)
+                attr_value = getattr(ds, gatts_var, np.nan)
+                if attr_value is np.nan:
+                    if np.issubdtype(np.dtype(dtype), np.integer):
+                        attr_value = -9999  # or whatever makes sense
+                    elif np.issubdtype(np.dtype(dtype), np.floating):
+                        attr_value = np.nan
 
-            ds[dest_name] = (
-                dim_name,
-                np.full(ds.dims[dim_name], gatt_var_value_padded, dtype=string_dtype),
-            )
+                ds[dest_name] = (
+                    dim_name,
+                    np.full(ds.dims[dim_name], attr_value, dtype=dtype),
+                )
 
     # TODO: make the variable below something more generic? a parameter?
     var_template_shape = dataset_config.get("var_template_shape")
@@ -1078,6 +1099,7 @@ class GenericHandler(CommonHandler):
         }
 
         ds = xr.open_mfdataset(batch_files, **open_mfdataset_params)
+        # ds = self.sort_dataset_by_config(ds)
         try:
             ds = ds.chunk(chunks="auto")
         except Exception as err:
@@ -1087,6 +1109,12 @@ class GenericHandler(CommonHandler):
             ds = ds.chunk(chunks=self.chunks)
 
         ds = ds.unify_chunks()
+        dataset_sort_by = self.dataset_config.get("dataset_sort_by")
+        if dataset_sort_by:
+            self.logger.info(
+                f"{self.uuid_log}: sorting the dataset by {self.dataset_config['dataset_sort_by']}"
+            )
+            ds = ds.sortby(self.dataset_config["dataset_sort_by"])
         # ds = ds.map_blocks(partial_preprocess) ## EXTREMELY DANGEROUS TO USE. CORRUPTS SOME DATA CHUNKS SILENTLY while it's working fine with preprocess
         # ds = ds.persist()
 
