@@ -70,6 +70,8 @@ def install_requirements():
             "s3path",
             "windrose",
             "tabular",
+            "s3fs",
+            "xarray[zarr]",
         ]
 
         for pkg in packages:
