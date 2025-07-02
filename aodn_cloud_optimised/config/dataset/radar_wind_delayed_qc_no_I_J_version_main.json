@@ -2,17 +2,6 @@
   "dataset_name": "radar_wind_delayed_qc_no_I_J_version_main",
   "logger_name": "radar_wind_delayed_qc_no_I_J_version_main",
   "cloud_optimised_format": "zarr",
-  "ec2_cluster_options": {
-    "n_workers": 1,
-    "scheduler_instance_type": "m7i-flex.xlarge",
-    "worker_instance_type": "m7i-flex.2xlarge",
-    "security": false,
-    "docker_image": "ghcr.io/aodn/aodn_cloud_optimised:latest"
-  },
-  "ec2_adapt_options": {
-    "minimum": 1,
-    "maximum": 120
-  },
   "var_template_shape": "WDIR",
   "vars_incompatible_with_region": [
     "LATITUDE",
@@ -146,6 +135,17 @@
     }
   },
   "run_settings": {
+    "ec2_cluster_options": {
+      "n_workers": 1,
+      "scheduler_instance_type": "m7i-flex.xlarge",
+      "worker_instance_type": "m7i-flex.2xlarge",
+      "security": false,
+      "docker_image": "ghcr.io/aodn/aodn_cloud_optimised:latest"
+    },
+    "ec2_adapt_options": {
+      "minimum": 1,
+      "maximum": 120
+    },
     "coiled_cluster_options": {
       "n_workers": [
         12,

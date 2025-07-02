@@ -265,7 +265,7 @@ def preprocess_xarray(ds, dataset_config):
             )
             append_dim_varname = dimensions["time"]["name"]
         else:
-            append_dim_varname = append_dims[0]
+            append_dim_varname = dimensions[append_dims[0]]["name"]
 
         return append_dim_varname
 
@@ -554,7 +554,7 @@ class GenericHandler(CommonHandler):
             return self.dimensions["time"]["name"]
 
         else:
-            return append_dims[0]
+            return self.dimensions[append_dims[0]]["name"]
 
     def publish_cloud_optimised_fileset_batch(self, s3_file_uri_list):
         """Processes and publishes batches of NetCDF files to the Zarr store.
