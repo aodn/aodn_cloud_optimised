@@ -337,6 +337,7 @@
     "Citation": "IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access]"
   },
   "run_settings": {
+    "_COMMENT": "2025-07-01: running this dataset with a batch size of more than 1 results in some silent data corruption with dask v2. It is unclear why. Maybe similar to xarray/issues/8882. Spent too much time on this. Maybe race conditions. But proof that xarray/zarr... is not reliable",
     "coiled_cluster_options": {
       "n_workers": [
         1,
