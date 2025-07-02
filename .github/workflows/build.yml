@@ -73,7 +73,7 @@ jobs:
           source .venv/bin/activate
           #poetry run pytest
           poetry add --dev pytest-xdist
-          poetry run coverage run -m pytest -n 1
+          poetry run coverage run -m pytest # -n 1
           poetry run coverage report --fail-under=60
           poetry run coverage xml -o coverage.xml
 
