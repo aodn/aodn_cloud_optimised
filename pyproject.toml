@@ -41,7 +41,7 @@ rechunker = ">=0.5.2"
 s3fs = ">=2025.3.2"
 fsspec = "==2025.3.2"
 shapely = ">=2.0.4"
-xarray = { version = "==2024.9.0", extras = ["complete"] }
+xarray = { version = "==2025.6.1", extras = ["complete"] }
 cftime = ">=1.6.3"
 zarr = "==2.18.3"
 geopandas = ">=0.14.4"

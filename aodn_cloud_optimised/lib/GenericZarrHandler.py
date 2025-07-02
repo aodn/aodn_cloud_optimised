@@ -11,7 +11,7 @@ import numpy as np
 import s3fs
 import xarray as xr
 from dask import array as da
-from xarray.core.merge import MergeError
+from xarray.structure.merge import MergeError
 
 from aodn_cloud_optimised.lib.CommonHandler import CommonHandler
 from aodn_cloud_optimised.lib.logging import get_logger
@@ -1040,7 +1040,8 @@ class GenericHandler(CommonHandler):
                 region=region,
                 compute=True,
                 consolidated=self.consolidated,
-                safe_chunks=self.safe_chunks,
+                # safe_chunks=self.safe_chunks,
+                safe_chunks=False,  # required for xarray> 2024.9
                 mode="r+",
             )
             self.logger.info(
