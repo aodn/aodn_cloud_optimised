@@ -5,7 +5,8 @@
     "time": {
       "name": "time",
       "chunk": 5,
-      "rechunk": false
+      "rechunk": false,
+      "append_dim": true
     },
     "latitude": {
       "name": "latitude",

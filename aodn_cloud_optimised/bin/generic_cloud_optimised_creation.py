@@ -351,6 +351,37 @@ class DatasetConfig(BaseModel):
                     )
         return self
 
+    @model_validator(mode="after")
+    def validate_dimensions_config(self) -> "DatasetConfig":
+        if not self.dimensions:
+            return self  # Nothing to check
+
+        # Check how many dimensions have "append_dim" set
+        has_append_flag = [
+            (dim_key, props.get("append_dim"))
+            for dim_key, props in self.dimensions.items()
+            if "append_dim" in props
+        ]
+
+        if has_append_flag:
+            # Ensure exactly one is True
+            true_dims = [k for k, v in has_append_flag if v is True]
+            if len(true_dims) != 1:
+                raise ValueError(
+                    f"Exactly one dimension must have 'append_dim: true'. Found: {true_dims}"
+                )
+        else:
+            # No dimension has an append_dim key
+            warnings.warn(
+                f"{self.dataset_name}\n"
+                "No 'append_dim' key was found in any dimension config. "
+                "will default to using dimensions[\"time\"]. Consider adding 'append_dim: true' "
+                "to one dimension explicitly for clarity.",
+                stacklevel=1,
+            )
+
+        return self
+
     # TODO: if we want to test for the existence of the PLACEHOLDER in the aws_opendata_regristry cloud_optimised_creation
     # we should add this key in the class definition. However, having this placeholder doesn't cause problem to the dataset
     # creation
@@ -410,11 +441,21 @@ class DatasetConfig(BaseModel):
                         except TypeError:
                             return False
 
+                    def not_implemented_dtype(attr_type) -> bool:
+                        if np.dtype(attr_type).kind != "U":
+                            raise ValueError(
+                                f"{attr_type} to convert a global attribute to a variable is currently not implemented in this library due to dask issues and data loss. Use string or <U type instead"
+                            )
+                        else:
+                            return False
+
                     attr_type = var_def.get("dtype", None)
                     if not is_valid_dtype(attr_type) or attr_type is None:
                         raise ValueError(
                             f"{attr_type} for variable {key} is not a valid type"
                         )
+
+                    not_implemented_dtype(attr_type)
 
                 if invalid_entries:
                     raise ValueError(

@@ -13,7 +13,8 @@
     "time": {
       "name": "TIME",
       "chunk": 1000,
-      "rechunk": false
+      "rechunk": false,
+      "append_dim": true
     },
     "WAVELENGTH_Ed": {
       "name": "WAVELENGTH_Ed",
@@ -51,7 +52,7 @@
     "Voyage_number": {
       "destination_name": "voyage_number",
       "dimensions": "TIME",
-      "dtype": "int32"
+      "dtype": "<U10"
     }
   },
   "gattrs_to_delete": [
@@ -338,7 +339,7 @@
   "run_settings": {
     "coiled_cluster_options": {
       "n_workers": [
-        8,
+        1,
         20
       ],
       "scheduler_vm_types": "m7i.xlarge",
@@ -350,7 +351,7 @@
         "memory_limit": "16GB"
       }
     },
-    "batch_size": 25,
+    "batch_size": 1,
     "cluster": {
       "mode": "coiled",
       "restart_every_path": false
