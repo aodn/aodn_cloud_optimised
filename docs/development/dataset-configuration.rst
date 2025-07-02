@@ -494,7 +494,8 @@ The chunks
        "dimensions": {
            "time": {"name": "TIME",
                     "chunk": 1500,
-                    "rechunk": true},
+                    "rechunk": true,
+                    "append_dim": true},
            "latitude": {"name": "J",
                         "chunk": 60},
            "longitude": {"name": "I",

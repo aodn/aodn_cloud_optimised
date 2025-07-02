@@ -5,14 +5,7 @@
   "run_settings": {
     "paths": [
       {
-        "s3_uri": "s3://imos-data/IMOS/SRS/OC/radiometer/VLHJ_Southern-Surveyor",
-        "filter": [
-          ".*FV02.*\\.nc"
-        ],
-        "year_range": []
-      },
-      {
-        "s3_uri": "s3://imos-data/IMOS/SRS/OC/radiometer/VMQ9273_Solander",
+        "s3_uri": "s3://imos-data/IMOS/SRS/OC/radiometer/",
         "filter": [
           ".*FV02.*\\.nc"
         ],
@@ -21,15 +14,15 @@
     ],
     "cluster": {
       "mode": "coiled",
-      "restart_every_path": true
+      "restart_every_path": false
     },
-    "clear_existing_data": false,
+    "clear_existing_data": true,
     "coiled_cluster_options": {
       "n_workers": [
-        5,
+        1,
         20
       ],
-      "scheduler_vm_types": "m7i.xlarge",
+      "scheduler_vm_types": "m7i.2xlarge",
       "worker_vm_types": "m7i.xlarge",
       "allow_ingress_from": "me",
       "compute_purchase_option": "spot_with_fallback",
@@ -38,20 +31,27 @@
         "memory_limit": "16GB"
       }
     },
-    "batch_size": 50,
+    "_comment": "2025-07-01: running this dataset with a batch size of more than 1 results in some silent data corruption with dask v2. It is unclear why. Maybe similar to xarray/issues/8882. Spent too much time on this. Maybe race conditions. But proof that xarray/zarr... is not reliable",
+    "batch_size": 1,
     "raise_error": false
   },
   "metadata_uuid": "28f8bfed-ca6a-472a-84e4-42563ce4df3f",
+  "dataset_sort_by": [
+    "WAVELENGTH",
+    "TIME"
+  ],
   "dimensions": {
     "time": {
       "name": "TIME",
       "chunk": 10000,
-      "rechunk": false
+      "rechunk": false,
+      "append_dim": true
     },
     "WAVELENGTH": {
       "name": "WAVELENGTH",
       "chunk": 596,
-      "size": 596
+      "size": 596,
+      "append_dim": false
     }
   },
   "var_template_shape": "rho",
@@ -62,17 +62,17 @@
     "file_version": {
       "destination_name": "quality_control_version",
       "dimensions": "TIME",
-      "length": 49
+      "dtype": "<U49"
     },
     "platform_code": {
       "destination_name": "platform_code",
       "dimensions": "TIME",
-      "length": 7
+      "dtype": "<U7"
     },
-    "voyage_number": {
+    "Voyage_number": {
       "destination_name": "voyage_number",
       "dimensions": "TIME",
-      "length": 10
+      "dtype": "<U10"
     }
   },
   "gattrs_to_delete": [

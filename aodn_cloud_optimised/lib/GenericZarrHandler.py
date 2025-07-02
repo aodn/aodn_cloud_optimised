@@ -5,6 +5,7 @@ import traceback
 import uuid
 import warnings
 from functools import partial
+import numcodecs
 
 import numpy as np
 import s3fs
@@ -149,47 +150,139 @@ def preprocess_xarray(ds, dataset_config):
         for gatts_var in gattrs_to_variables:
             dest_name = gattrs_to_variables[gatts_var]["destination_name"]
             dim_name = gattrs_to_variables[gatts_var]["dimensions"]
+            dtype = gattrs_to_variables[gatts_var].get("dtype")
 
-            # Get the string length from the config, defaulting to 61 if not specified
-            length = gattrs_to_variables[gatts_var].get("length", 255)
+            # Validate dtype
+            try:
+                dtype_obj = np.dtype(dtype)
+            except TypeError:
+                raise ValueError(f"Invalid dtype: {dtype}")
 
-            # Define the string dtype dynamically with the given length
-            string_dtype = f"<U{length}"
+            if dtype_obj.kind == "U":
+                gatt_var_value = getattr(ds, gatts_var, None)
+                length = ds.sizes[dim_name]
+                string_array = np.full(length, gatt_var_value, dtype=object)
 
-            # Create padded string to have consistent variable size accross the whole dataset
-            gatt_var_value = getattr(ds, gatts_var, None)
-            if gatt_var_value is None:
-                gatt_var_value_padded = "".ljust(
-                    length
-                )  # Ensures dtype becomes <U{length}
+                ds[dest_name] = (dim_name, string_array)
+                ds[dest_name].encoding = {
+                    "_FillValue": "",
+                    "dtype": object,
+                    "compressor": None,
+                    "filters": None,
+                    "object_codec": numcodecs.VLenUTF8(),  # crucial!
+                }
+
+                # if not (ds[dest_name] != "").all():
+                #     logger.debug(
+                #         f"{dest_name} variable created some empty values for dataset with time_coverage_start {getattr(ds, 'time_coverage_start', None)} and time_coverage_end {getattr(ds, 'time_coverage_end', None)}"
+                #     )
+
             else:
-                gatt_var_value_padded = str(gatt_var_value).ljust(length)
+                # TODO: issues implementing numbers for zarrs. heaps of issues.
+                # if _FillValue is set, the type automatically becomes float64.
+                # and when removing fillvalue some random values get written as 0
+                # when to_zarr is called. but only on the append.
+                # Could maybe try doing re minimum repadocucable example?
+                # for now, maybe do a dirty raise error os user known not to have numbers as gatt for now
+                #
+                raise ValueError(
+                    "gattrs to variables is currently not supported for non string objects. Modify the dataset configuration"
+                )
 
-            ds[dest_name] = (
-                dim_name,
-                np.full(ds.dims[dim_name], gatt_var_value_padded, dtype=string_dtype),
-            )
+                # Get the attribute value or fallback
+                raw_attr_value = getattr(ds, gatts_var, None)
+
+                # Type-safe conversion based on dtype
+                if np.issubdtype(dtype_obj, np.integer):
+                    fill_value = -99
+                    try:
+                        attr_value = int(raw_attr_value)
+                    except (TypeError, ValueError):
+                        attr_value = fill_value
+
+                elif np.issubdtype(dtype_obj, np.floating):
+                    fill_value = np.nan
+                    try:
+                        attr_value = float(raw_attr_value)
+                    except (TypeError, ValueError):
+                        attr_value = fill_value
+
+                else:
+                    raise ValueError(
+                        f"Unsupported dtype for numeric fallback: {dtype_obj}"
+                    )
+
+                if attr_value == 0:
+                    raise ValueError("shoud not be None")
+
+                # TODO: known bug https://discourse.pangeo.io/t/dtype-is-ignored-if-fillvalue-in-encoding-is-provided-for-xr-to-zarr/2653
+                # if fill_Value is added, then on append, some fill_values are created, and the type of the data becomes float64
+                encoding = {
+                    # "_FillValue": fill_value,
+                    "dtype": dtype_obj,
+                    # "compressor": None,
+                    # "filters": None,
+                }
+
+                ds[dest_name] = (
+                    (dim_name,),
+                    np.full(ds.sizes[dim_name], attr_value, dtype=dtype_obj),
+                )
+                ds[dest_name] = ds[dest_name].astype(dtype_obj)
+                ds[dest_name].encoding = encoding
 
     # TODO: make the variable below something more generic? a parameter?
     var_template_shape = dataset_config.get("var_template_shape")
 
     # retrieve filename from ds
-    var = next(var for var in ds)
-    try:
-        filename = os.path.basename(ds[var].encoding["source"])
+    filename_placeholder = "UNKNOWN_FILENAME.nc"
+    filename = filename_placeholder
 
-    except KeyError as e:
+    try:
+        var = next(var for var in ds)  # get the first variable
+        if hasattr(ds[var], "encoding") and "source" in ds[var].encoding:
+            filename = os.path.basename(ds[var].encoding["source"])
+        elif hasattr(ds, "encoding") and "source" in ds.encoding:
+            filename = os.path.basename(ds.encoding["source"])
+    except Exception as e:
         logger.debug(f"Original filename not available in the xarray dataset: {e}")
-        filename = "UNKOWN_FILENAME.nc"
+        filename = filename_placeholder
 
     # TODO: get filename; Should be from https://github.com/pydata/xarray/issues/9142
-    ds["filename"] = (
-        dimensions["time"]["name"],
-        np.full(ds.dims[dimensions["time"]["name"]], filename),
-    )
-    # ds = ds.assign(
-    # filename=((dimensions["time"]["name"],), [filename])
-    # )  # add new filename variable with time dimension
+    def get_append_dim(dimensions):
+        append_dims = [
+            varname for varname, props in dimensions.items() if props.get("append_dim")
+        ]
+
+        if len(append_dims) > 1:
+            raise ValueError(
+                f"Dataset configuration error: Multiple dimensions with 'append_dim: true': {append_dims}"
+            )
+        elif not append_dims:
+            logger.warning(
+                "Dataset configuration does not have a default append_dim set. "
+                'Please modify. Will default to using dimensions["time"].'
+            )
+            append_dim_varname = dimensions["time"]["name"]
+        else:
+            append_dim_varname = dimensions[append_dims[0]]["name"]
+
+        return append_dim_varname
+
+    dest_name = "filename"
+    append_dim = get_append_dim(dimensions)
+
+    length = ds.sizes[append_dim]
+    string_array = np.full(length, filename, dtype=object)
+
+    ds[dest_name] = (append_dim, string_array)
+    ds[dest_name].encoding = {
+        "_FillValue": "",
+        "dtype": object,
+        "compressor": None,
+        "filters": None,
+        "object_codec": numcodecs.VLenUTF8(),  # crucial!
+    }
 
     # TODO: when filename is added, this can be used to find the equivalent data already stored as CO, and create a NAN
     # version to push back as CO in order to "delete". If UNKOWN_FILENAME.nc, either run an error, or have another approach,
@@ -303,6 +396,7 @@ def preprocess_xarray(ds, dataset_config):
     ds.attrs.update(dataset_metadata)
 
     logger.info(f"Successfully applied preprocessing to the dataset from {filename}")
+
     return ds
 
 
@@ -393,6 +487,7 @@ class GenericHandler(CommonHandler):
         self.vars_incompatible_with_region = self.dataset_config.get(
             "vars_incompatible_with_region", None
         )
+        self.append_dim_varname = self.get_append_dim()
 
         # Generic chunks structure
         self.chunks = {
@@ -423,6 +518,43 @@ class GenericHandler(CommonHandler):
         self.safe_chunks = True
         self.write_empty_chunks = False
         self.consolidated = True
+
+    def get_append_dim(self):
+        """
+        Determine the dimension marked with `append_dim: true` in the dataset configuration.
+
+        This method scans the `self.dimensions` dictionary for a dimension where the
+        `append_dim` property is set to `true`. If exactly one such dimension is found,
+        it sets `self.append_dim_varname` to that dimension's key.
+
+        If no dimension has `append_dim: true`, a warning is logged and
+        `self.append_dim_varname` is defaulted to `self.dimensions["time"]["name"]`.
+
+        If more than one dimension has `append_dim: true`, an error is raised.
+
+        Raises:
+            ValueError: If more than one dimension is marked with `append_dim: true`.
+        """
+
+        # TODO: add a pydantic check
+        append_dims = [
+            varname
+            for varname, props in self.dimensions.items()
+            if props.get("append_dim")
+        ]
+
+        if len(append_dims) > 1:
+            raise ValueError(
+                f"Dataset configuration error: Multiple dimensions with 'append_dim: true': {append_dims}"
+            )
+        elif not append_dims:
+            self.logger.warning(
+                'Dataset configuration does not have a default append_dim set. Please modify. Will default to using dimensions["time"].'
+            )
+            return self.dimensions["time"]["name"]
+
+        else:
+            return self.dimensions[append_dims[0]]["name"]
 
     def publish_cloud_optimised_fileset_batch(self, s3_file_uri_list):
         """Processes and publishes batches of NetCDF files to the Zarr store.
@@ -791,14 +923,14 @@ class GenericHandler(CommonHandler):
         self,
         ds,
         idx,
-        common_time_values,
-        time_values_org,
-        time_values_new,
+        common_append_dim_values,
+        append_dim_values_org,
+        append_dim_values_new,
     ):
         """Handles writing data when time values overlap with existing Zarr store.
 
         Identifies contiguous regions in the existing Zarr store that overlap
-        in time with the new dataset (`ds`). Writes the corresponding slices
+        in append_dim (or time) with the new dataset (`ds`). Writes the corresponding slices
         from `ds` into these regions using `mode='r+'` and `region=...`.
         Also handles potential size mismatches (padding) and ensures variables
         incompatible with region writing are dropped. Finally, identifies and
@@ -807,24 +939,25 @@ class GenericHandler(CommonHandler):
         Args:
             ds (xr.Dataset): The new dataset batch to write.
             idx (int): The index of the current batch (for logging).
-            common_time_values (np.ndarray): Array of time values present in
+            common_append_dim_values (np.ndarray): Array of time values present in
                 both the existing store and the new dataset.
-            time_values_org (np.ndarray): Array of time values from the
+            append_dim_values_org (np.ndarray): Array of time values from the
                 existing Zarr store.
-            time_values_new (np.ndarray): Array of time values from the new
+            append_dim_values_new (np.ndarray): Array of time values from the new
                 dataset (`ds`).
 
         Returns:
             xr.Dataset | None: The dataset containing only the non-overlapping
                 (unprocessed) time values, or None if all data overlapped.
         """
-        time_dimension_name = self.dimensions["time"]["name"]
 
         self.logger.info(
-            f"{self.uuid_log}: Duplicate values of '{time_dimension_name}' found in the existing dataset. Overwriting."
+            f"{self.uuid_log}: Duplicate values of '{self.append_dim_varname}' found in the existing dataset. Overwriting."
         )
         # Get indices of common time values in the original dataset
-        common_indices = np.nonzero(np.isin(time_values_org, common_time_values))[0]
+        common_indices = np.nonzero(
+            np.isin(append_dim_values_org, common_append_dim_values)
+        )[0]
 
         # regions must be CONTIGIOUS!! very important. so looking for different regions
         # Define regions as slices for the common time values
@@ -835,12 +968,12 @@ class GenericHandler(CommonHandler):
         for i in range(1, len(common_indices)):
             if common_indices[i] != common_indices[i - 1] + 1:
                 end = common_indices[i - 1]
-                regions.append({time_dimension_name: slice(start, end + 1)})
+                regions.append({self.append_dim_varname: slice(start, end + 1)})
                 matching_indexes.append(
                     np.where(
                         np.isin(
-                            time_values_new,
-                            time_values_org[start : end + 1],
+                            append_dim_values_new,
+                            append_dim_values_org[start : end + 1],
                         )
                     )[0]
                 )
@@ -848,12 +981,12 @@ class GenericHandler(CommonHandler):
 
         # Append the last region
         end = common_indices[-1]
-        regions.append({time_dimension_name: slice(start, end + 1)})
+        regions.append({self.append_dim_varname: slice(start, end + 1)})
         matching_indexes.append(
             np.where(
                 np.isin(
-                    time_values_new,
-                    time_values_org[start : end + 1],
+                    append_dim_values_new,
+                    append_dim_values_org[start : end + 1],
                 )
             )[0]
         )
@@ -866,7 +999,7 @@ class GenericHandler(CommonHandler):
 
             ##########################################
             # extremely rare!! only happened once, and why??
-            s = regions[0][time_dimension_name]
+            s = regions[0][self.append_dim_varname]
             region_num_elements = s.stop - s.start
             matching_indexes_array_size = np.size(matching_indexes[0])
 
@@ -899,9 +1032,9 @@ class GenericHandler(CommonHandler):
                     f"The following variables or dimensions are not present/mispelled in the dataset: {missing}"
                 )
 
-            ds.isel(**{time_dimension_name: indexes}).drop_vars(
+            ds.isel(**{self.append_dim_varname: indexes}).drop_vars(
                 self.vars_incompatible_with_region, errors="ignore"
-            ).pad(**{time_dimension_name: (0, amount_to_pad)}).to_zarr(
+            ).pad(**{self.append_dim_varname: (0, amount_to_pad)}).to_zarr(
                 self.store,
                 write_empty_chunks=self.write_empty_chunks,
                 region=region,
@@ -923,14 +1056,18 @@ class GenericHandler(CommonHandler):
         )
         # Now find the time values in ds that were NOT reprocessed
         # These are the time values not found in any of the common regions
-        unprocessed_time_values = np.setdiff1d(time_values_new, common_time_values)
+        unprocessed_append_dim_values = np.setdiff1d(
+            append_dim_values_new, common_append_dim_values
+        )
 
         # Return a dataset with the unprocessed time values
-        if len(unprocessed_time_values) > 0:
+        if len(unprocessed_append_dim_values) > 0:
             self.logger.info(
-                f"{self.uuid_log}: Found {len(unprocessed_time_values)} non-overlapping data points from Batch {idx + 1} to append to the Zarr store: {self.store}"
+                f"{self.uuid_log}: Found {len(unprocessed_append_dim_values)} non-overlapping data points from Batch {idx + 1} to append to the Zarr store: {self.store}"
             )
-            ds_unprocessed = ds.sel({time_dimension_name: unprocessed_time_values})
+            ds_unprocessed = ds.sel(
+                {self.append_dim_varname: unprocessed_append_dim_values}
+            )
             self._write_ds(ds_unprocessed, idx)
             return ds_unprocessed
         else:
@@ -997,7 +1134,7 @@ class GenericHandler(CommonHandler):
 
         Used when `open_mfdataset` fails even with fallback engines. Opens each
         file using `_open_file_with_fallback` and then concatenates the list
-        of resulting datasets along the time dimension.
+        of resulting datasets along the append_dim dimension.
 
         Args:
             batch_files (list[str]): List of S3 file paths in the batch.
@@ -1022,7 +1159,7 @@ class GenericHandler(CommonHandler):
             compat="override",
             coords="minimal",
             data_vars="all",
-            dim=self.dimensions["time"]["name"],
+            dim=self.append_dim_varname,
         )
         ds = ds.unify_chunks()
         # ds = ds.persist()
@@ -1078,6 +1215,16 @@ class GenericHandler(CommonHandler):
         }
 
         ds = xr.open_mfdataset(batch_files, **open_mfdataset_params)
+
+        dataset_sort_by = self.dataset_config.get("dataset_sort_by", None)
+        if dataset_sort_by:
+            self.logger.info(
+                f"{self.uuid_log}: sorting the dataset by {self.dataset_config['dataset_sort_by']}"
+            )
+            ds = ds.sortby(self.dataset_config["dataset_sort_by"])
+        else:
+            ds = ds.sortby(self.append_dim_varname)
+
         try:
             ds = ds.chunk(chunks="auto")
         except Exception as err:
@@ -1087,6 +1234,7 @@ class GenericHandler(CommonHandler):
             ds = ds.chunk(chunks=self.chunks)
 
         ds = ds.unify_chunks()
+
         # ds = ds.map_blocks(partial_preprocess) ## EXTREMELY DANGEROUS TO USE. CORRUPTS SOME DATA CHUNKS SILENTLY while it's working fine with preprocess
         # ds = ds.persist()
 
@@ -1144,9 +1292,9 @@ class GenericHandler(CommonHandler):
         return ds
 
     def _find_duplicated_values(self, ds_org):
-        """Checks for duplicate time values in the existing Zarr store.
+        """Checks for duplicate self.append_dim_varname values in the existing Zarr store.
 
-        Logs an error if duplicate values are found in the time dimension of
+        Logs an error if duplicate values are found in the append_dim dimension of
         the provided dataset (assumed to be the existing Zarr store).
 
         Args:
@@ -1156,16 +1304,15 @@ class GenericHandler(CommonHandler):
             bool: Always returns True. The main purpose is logging the error.
         """
         # Find duplicates
-        time_dimension_name = self.dimensions["time"]["name"]
-        time_values_org = ds_org[time_dimension_name].values
+        append_dim_values_org = ds_org[self.append_dim_varname].values
 
-        unique, counts = np.unique(time_values_org, return_counts=True)
+        unique, counts = np.unique(append_dim_values_org, return_counts=True)
         duplicates = unique[counts > 1]
 
         # TODO: Raise error if duplicates are found? Not necessarily an issue. For example, some SOOP dataset, same TIME, 2 different NetCDF files, 2 different vessel and location.
         if len(duplicates) > 0:
             self.logger.warning(
-                f"{self.uuid_log}: Duplicate values of '{time_dimension_name}' dimension "
+                f"{self.uuid_log}: Duplicate values of '{self.append_dim_varname}' dimension "
                 f"found in the original Zarr dataset. This could lead to a corrupted dataset. Duplicates: {duplicates}"
             )
 
@@ -1174,18 +1321,17 @@ class GenericHandler(CommonHandler):
     def _write_ds(self, ds, idx):
         """Writes a dataset batch to the Zarr store.
 
-        Sorts the dataset by time, ensures correct chunking, removes incompatible
+        Sorts the dataset by append_dim, ensures correct chunking, removes incompatible
         encoding information, and determines whether to write to a new store,
         append to an existing store, or handle overlapping regions based on
-        time values.
+        append_dim values.
 
         Args:
             ds (xr.Dataset): The preprocessed dataset batch to write.
             idx (int): The index of the current batch (used for determining
                 if it's the first write and for logging).
         """
-        time_dimension_name = self.dimensions["time"]["name"]
-        ds = ds.sortby(time_dimension_name)
+
         if any(chunk == 0 for chunk in self.chunks.values()):
             self.logger.warning(
                 f"{self.uuid_log}: One or more dimensions in the dataset configuration have a chunk size of 0: {self.chunks}. "
@@ -1222,16 +1368,22 @@ class GenericHandler(CommonHandler):
             ) as ds_org:
                 self._find_duplicated_values(ds_org)
 
-                time_values_org = ds_org[time_dimension_name].values
-                time_values_new = ds[time_dimension_name].values
+                append_dim_values_org = ds_org[self.append_dim_varname].values
+                append_dim_values_new = ds[self.append_dim_varname].values
 
-                # Find common time values
-                common_time_values = np.intersect1d(time_values_org, time_values_new)
+                # Find common append_dim (or time) values
+                common_append_dim_values = np.intersect1d(
+                    append_dim_values_org, append_dim_values_new
+                )
 
                 # Handle the 2 scenarios, reprocessing of a batch, or append new data
-                if len(common_time_values) > 0:
+                if len(common_append_dim_values) > 0:
                     self._handle_duplicate_regions(
-                        ds, idx, common_time_values, time_values_org, time_values_new
+                        ds,
+                        idx,
+                        common_append_dim_values,
+                        append_dim_values_org,
+                        append_dim_values_new,
                     )
 
                 # No reprocessing needed
@@ -1275,18 +1427,21 @@ class GenericHandler(CommonHandler):
         Args:
             ds (xr.Dataset): The dataset to append.
         """
-        time_dimension_name = self.dimensions["time"]["name"]
+
+        # commented as already performed after calling open_mfdataset
+        # ds = ds.sortby(self.dataset_config["dataset_sort_by"])
 
         self.logger.info(
             f"{self.uuid_log}: Appending data to the existing Zarr store at {self.store}."
         )
         ds.to_zarr(
             self.store,
+            # align_chunks=True, # new xarray feature
             mode="a-",
             write_empty_chunks=self.write_empty_chunks,
             compute=True,  # Compute the result immediately
             consolidated=self.consolidated,
-            append_dim=time_dimension_name,
+            append_dim=self.append_dim_varname,
             safe_chunks=self.safe_chunks,
         )
 

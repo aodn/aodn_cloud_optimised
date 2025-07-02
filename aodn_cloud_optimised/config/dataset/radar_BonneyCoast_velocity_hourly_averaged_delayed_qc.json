@@ -7,7 +7,8 @@
     "time": {
       "name": "TIME",
       "chunk": 100,
-      "rechunk": false
+      "rechunk": false,
+      "append_dim": true
     },
     "latitude": {
       "name": "J",

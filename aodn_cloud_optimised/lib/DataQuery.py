@@ -44,13 +44,24 @@ from shapely import wkb
 from shapely.geometry import MultiPolygon, Polygon
 from windrose import WindroseAxes
 
-__version__ = "0.2.3"
+__version__ = "0.2.4"
 
 REGION: Final[str] = "ap-southeast-2"
 ENDPOINT_URL = f"https://s3.ap-southeast-2.amazonaws.com"
+# BUCKET_OPTIMISED_DEFAULT = "imos-data-lab-optimised"
 BUCKET_OPTIMISED_DEFAULT = "aodn-cloud-optimised"
 ROOT_PREFIX_CLOUD_OPTIMISED_PATH = ""
 DEFAULT_TIME = datetime(1900, 1, 1)
+
+
+def is_colab():
+    # google colab
+    try:
+        import google.colab
+
+        return True
+    except ImportError:
+        return False
 
 
 @lru_cache(maxsize=1)
@@ -1859,6 +1870,7 @@ class ZarrDataSource(DataSource):
 
         ds = self.zarr_store
         selectors = {}
+        mask_conditions = []
 
         # Time slicing
         if date_start is not None or date_end is not None:
@@ -1878,17 +1890,41 @@ class ZarrDataSource(DataSource):
         if lat_min is not None or lat_max is not None:
             lat_names = ["latitude", "lat", "LATITUDE", "LAT"]
             lat_var_name = _find_var_name_global(ds, lat_names, "latitude")
-            selectors[lat_var_name] = slice(lat_min, lat_max)
+            lat_is_dim = lat_var_name in ds.dims
+
+            if lat_is_dim:
+                selectors[lat_var_name] = slice(lat_min, lat_max)
+            else:
+                if lat_min is not None:
+                    mask_conditions.append(ds[lat_var_name] >= lat_min)
+                if lat_max is not None:
+                    mask_conditions.append(ds[lat_var_name] <= lat_max)
 
         # Longitude slicing
         if lon_min is not None or lon_max is not None:
             lon_names = ["longitude", "lon", "LONGITUDE", "LON"]
             lon_var_name = _find_var_name_global(ds, lon_names, "longitude")
-            selectors[lon_var_name] = slice(lon_min, lon_max)
+            lon_is_dim = lon_var_name in ds.dims
 
-        # Perform spatio-temporal slicing first
+            if lon_is_dim:
+                selectors[lon_var_name] = slice(lon_min, lon_max)
+            else:
+                if lon_min is not None:
+                    mask_conditions.append(ds[lon_var_name] >= lon_min)
+                if lon_max is not None:
+                    mask_conditions.append(ds[lon_var_name] <= lon_max)
+
+        # Apply .sel() first if possible
         if selectors:
             ds = ds.sel(selectors)
+
+        # Apply .where() if needed
+        # will be slow as LATITUDE and LONGITUDE are variables and not indexed dimensions
+        if mask_conditions:
+            combined_mask = mask_conditions[0]
+            for cond in mask_conditions[1:]:
+                combined_mask &= cond
+            ds = ds.where(combined_mask, drop=True)
 
         # Scalar filters (e.g. {'vessel_name': 'VNCF'})
         if scalar_filter:
@@ -3092,7 +3128,15 @@ class AODNAccessor:
             FileLink: Jupyter download link.
         """
         zip_path = self.to_csv(dataset_name)
-        return FileLink(os.path.basename(zip_path))
+        if is_colab():
+            from google.colab import files
+
+            print(
+                "run in a new cell the following to download the CSV file:\n\nfiles.download(zip_path)\n\n Alternatively, the file is accessible via the folder icon on the left menu"
+            )
+
+        else:
+            return FileLink(os.path.basename(zip_path))
 
     def download_as_netcdf(
         self, filename: str = "aodn_data.nc", compression_level: int = 4
