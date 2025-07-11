@@ -1748,6 +1748,7 @@ class ZarrDataSource(DataSource):
             ds = xr.open_zarr(
                 fsspec.get_mapper(self.dname, anon=True), chunks=None, consolidated=True
             )
+            ds = ds.unify_chunks()
             # Find the time variable name to sort by
             time_names = [
                 "time",

@@ -163,6 +163,7 @@ class ClusterManager:
             client.shutdown()  # Graceful cleanup
             client.close()
             self.logger.info("Successfully closed Dask client.")
+
             cluster.close()
             self.logger.info("Successfully closed Dask cluster.")
 

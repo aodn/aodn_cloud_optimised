@@ -163,7 +163,7 @@ def preprocess_xarray(ds, dataset_config):
             if dtype_obj.kind == "U":
                 gatt_var_value = getattr(ds, gatts_var, None)
                 length = ds.sizes[dim_name]
-                string_array = np.full(length, gatt_var_value, dtype=object)
+                string_array = da.full(length, gatt_var_value, dtype=object)
 
                 ds[dest_name] = (dim_name, string_array)
                 ds[dest_name].encoding = {
@@ -279,7 +279,9 @@ def preprocess_xarray(ds, dataset_config):
     append_dim = get_append_dim(dimensions)
 
     length = ds.sizes[append_dim]
-    string_array = np.full(length, filename, dtype=object)
+    string_array = da.full(
+        length, filename, dtype=object
+    )  # having da.full could break things
 
     ds[dest_name] = (append_dim, string_array)
     ds[dest_name].encoding = {
@@ -980,6 +982,7 @@ class GenericHandler(CommonHandler):
             use_cftime=True,
             decode_coords=True,
         ) as ds_zarr:
+            ds_zarr = ds_zarr.unify_chunks()
             append_dim_values_org = ds_zarr[append_dim].values
             ds_stored_org_dims = ds_zarr.dims
             common_values = np.intersect1d(append_dim_values_org, append_dim_values_new)
@@ -1087,6 +1090,8 @@ class GenericHandler(CommonHandler):
             use_cftime=True,
             decode_coords=True,
         ) as ds_stored_zarr:
+            ds_stored_zarr = ds_stored_zarr.align_chunks()
+
             for dim, size in ds_stored_org_dims.items():
                 updated_size = ds_stored_zarr.dims.get(dim)
                 if updated_size is None:
@@ -1213,7 +1218,7 @@ class GenericHandler(CommonHandler):
             dim=self.append_dim_varname,
         )
         ds = ds.chunk(chunks=self.chunks)
-        # ds = ds.unify_chunks()
+        ds = ds.unify_chunks()
         # ds = ds.persist()
         self.logger.info(
             f"{self.uuid_log}: Successfully concatenated files from batch."
@@ -1277,6 +1282,7 @@ class GenericHandler(CommonHandler):
             ds = ds.sortby(self.append_dim_varname)
 
         ds = ds.chunk(chunks=self.chunks)
+        ds = ds.unify_chunks()
 
         # ds = ds.map_blocks(partial_preprocess) ## EXTREMELY DANGEROUS TO USE. CORRUPTS SOME DATA CHUNKS SILENTLY while it's working fine with preprocess
         # ds = ds.persist()
@@ -1318,6 +1324,7 @@ class GenericHandler(CommonHandler):
         # for GSLA files
         # https://github.com/pydata/xarray/issues/4055
         ds = ds.chunk(chunks=self.chunks)
+        ds = ds.unify_chunks()
 
         ds = preprocess_xarray(ds, self.dataset_config)
 
@@ -1399,6 +1406,7 @@ class GenericHandler(CommonHandler):
                 use_cftime=True,
                 decode_coords=True,
             ) as ds_org:
+                ds_org = ds_org.unify_chunks()
                 self._find_duplicated_values(ds_org)
                 self.logger.debug(
                     f"{self.uuid_log}: loading existing Zarr dataset:\n{ds_org}"
