@@ -163,7 +163,7 @@ def preprocess_xarray(ds, dataset_config):
             if dtype_obj.kind == "U":
                 gatt_var_value = getattr(ds, gatts_var, None)
                 length = ds.sizes[dim_name]
-                string_array = da.full(length, gatt_var_value, dtype=object)
+                string_array = np.full(length, gatt_var_value, dtype=object)
 
                 ds[dest_name] = (dim_name, string_array)
                 ds[dest_name].encoding = {
@@ -279,7 +279,7 @@ def preprocess_xarray(ds, dataset_config):
     append_dim = get_append_dim(dimensions)
 
     length = ds.sizes[append_dim]
-    string_array = da.full(
+    string_array = np.full(
         length, filename, dtype=object
     )  # having da.full could break things
 
