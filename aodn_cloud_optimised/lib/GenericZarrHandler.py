@@ -246,8 +246,12 @@ def preprocess_xarray(ds, dataset_config):
             filename = os.path.basename(ds[var].encoding["source"])
         elif hasattr(ds, "encoding") and "source" in ds.encoding:
             filename = os.path.basename(ds.encoding["source"])
+
+        logger.debug(f"Filename found in ds.encoding: {filename}")
     except Exception as e:
-        logger.debug(f"Original filename not available in the xarray dataset: {e}")
+        logger.debug(
+            f"Original filename not available in the xarray dataset: {e} - will default to use {filename_placeholder}"
+        )
         filename = filename_placeholder
 
     # TODO: get filename; Should be from https://github.com/pydata/xarray/issues/9142
