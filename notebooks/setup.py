@@ -70,6 +70,7 @@ def install_requirements():
             "s3path",
             "windrose",
             "s3fs",
+            "zarr",
         ]
 
         for pkg in packages:
