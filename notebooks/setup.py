@@ -69,7 +69,7 @@ def install_requirements():
             "fuzzywuzzy",
             "s3path",
             "windrose",
-            "tabular",
+            "s3fs",
         ]
 
         for pkg in packages:
