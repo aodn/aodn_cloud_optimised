@@ -20,7 +20,14 @@
     }
   },
   "dataset_gattrs": {
-    "title": ""
+    "title": "",
+    "instrument": "",
+    "source": "",
+    "site_code": "",
+    "file_version_quality_control": "",
+    "author": "",
+    "author_email": "",
+    "citation": ""
   },
   "aws_opendata_registry": {
     "Name": "Ocean Radar - Bonney coast site - Sea water velocity - Delayed mode",
@@ -76,7 +83,7 @@
         ],
         "year_range": [
           2010,
-          2025
+          2017
         ]
       }
     ],
