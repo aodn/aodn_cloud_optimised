@@ -1271,6 +1271,9 @@ class GenericHandler(CommonHandler):
         }
 
         ds = xr.open_mfdataset(batch_files, **open_mfdataset_params)
+        self.logger.info(
+            f"{self.uuid_log}: Engine {engine} used to open the batch of files"
+        )
 
         dataset_sort_by = self.dataset_config.get("dataset_sort_by", None)
         if dataset_sort_by:
