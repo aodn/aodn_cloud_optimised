@@ -21,8 +21,6 @@
   },
   "dataset_gattrs": {
     "title": "IMOS Ocean Radar Facility Turqoise Coast (TURQ), one hour averaged current QC data",
-    "instrument": "CODAR Ocean Sensors/SeaSonde",
-    "source": "Terrestrial HF radar",
     "site_code": "TURQ, Turqoise Coast",
     "ssr_Stations": "Lancelin (LANC), Green Head (GHED)"
   },
