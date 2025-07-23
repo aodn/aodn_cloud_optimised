@@ -20,14 +20,11 @@
     }
   },
   "dataset_gattrs": {
-    "title": "",
+    "title": "IMOS ACORN Bonney Coast (BONC), one hour averaged current QC data",
     "instrument": "CODAR Ocean Sensors/SeaSonde",
     "source": "Terrestrial HF radar",
     "site_code": "BONC, Bonney Coast",
-    "file_version_quality_control": "Data in this file has been through the quality control procedure as described in the document: Offline QC procedures for ACORN radars.  Every data point in this file has an associated quality flag.",
-    "author": "Cosoli, Simone",
-    "author_email": "simone.cosoli@uwa.edu.au",
-    "citation": "The citation in a list of references is: IMOS, [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access]"
+    "ssr_Stations": "Cape Douglas (BFCV), Nora Creina (NOCR)"
   },
   "aws_opendata_registry": {
     "Name": "Ocean Radar - Bonney coast site - Sea water velocity - Delayed mode",
