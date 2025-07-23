@@ -94,7 +94,7 @@
       "ancillary_variables": "VCUR_quality_control"
     },
     "NOBS1": {
-      "type": "byte",
+      "type": "float",
       "long_name": "Number of observations of sea water velocity in 1 hour from station 1, after rejection of obvious bad data (see abstract).",
       "units": "1"
     },

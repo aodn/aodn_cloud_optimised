@@ -20,7 +20,11 @@
     }
   },
   "dataset_gattrs": {
-    "title": ""
+    "title": "IMOS Ocean Radar Facility ACORN Newcastle (NEWC), one hour averaged current QC data",
+    "instrument": "CODAR Ocean Sensors/SeaSonde",
+    "source": "Terrestrial HF radar",
+    "site_code": "NEWC, Newcastle",
+    "ssr_Stations": "Seal Rocks (SEAL), Red Head (RHED)"
   },
   "aws_opendata_registry": {
     "Name": "Ocean Radar - Newcastle site - Sea water velocity - Delayed mode",
