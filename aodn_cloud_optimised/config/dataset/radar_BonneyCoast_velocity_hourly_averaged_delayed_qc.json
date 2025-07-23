@@ -21,8 +21,6 @@
   },
   "dataset_gattrs": {
     "title": "IMOS ACORN Bonney Coast (BONC), one hour averaged current QC data",
-    "instrument": "CODAR Ocean Sensors/SeaSonde",
-    "source": "Terrestrial HF radar",
     "site_code": "BONC, Bonney Coast",
     "ssr_Stations": "Cape Douglas (BFCV), Nora Creina (NOCR)"
   },

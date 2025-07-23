@@ -21,8 +21,6 @@
   },
   "dataset_gattrs": {
     "title": "IMOS Ocean Radar Facility ACORN Newcastle (NEWC), one hour averaged current QC data",
-    "instrument": "CODAR Ocean Sensors/SeaSonde",
-    "source": "Terrestrial HF radar",
     "site_code": "NEWC, Newcastle",
     "ssr_Stations": "Seal Rocks (SEAL), Red Head (RHED)"
   },

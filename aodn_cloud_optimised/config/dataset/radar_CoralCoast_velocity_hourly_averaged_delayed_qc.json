@@ -20,7 +20,9 @@
     }
   },
   "dataset_gattrs": {
-    "title": ""
+    "title": "IMOS ACORN Coral Coast (CORL), one hour averaged current QC data",
+    "site_code": "CORL, Coral Coast",
+    "ssr_Stations": "Dongara (DONG), Green Head (GHED)"
   },
   "aws_opendata_registry": {
     "Name": "Ocean Radar - Coral coast site - Sea water velocity - Delayed mode",
