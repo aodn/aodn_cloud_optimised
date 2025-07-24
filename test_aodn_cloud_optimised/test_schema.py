@@ -138,8 +138,8 @@ class TestNetCDFSchemaGeneration(unittest.TestCase):
             with open(file1_path, "r") as f1, open(file2_path, "r") as f2:
                 content1 = f1.read()
                 content2 = f2.read()
-                assert (
-                    content1 == content2
+                assert json.loads(content1) == json.loads(
+                    content2
                 ), f"File contents do not match: {file1_path} != {file2_path}"
 
         try:
@@ -152,7 +152,6 @@ class TestNetCDFSchemaGeneration(unittest.TestCase):
             os.remove(loaded_schema_file)
 
     def test_generate_json_schema_var_from_netcdf(self):
-
         json_expected = {
             "TEMP": {
                 "type": "float",
