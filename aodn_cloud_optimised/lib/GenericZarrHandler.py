@@ -1090,7 +1090,8 @@ class GenericHandler(CommonHandler):
             use_cftime=True,
             decode_coords=True,
         ) as ds_stored_zarr:
-            ds_stored_zarr = ds_stored_zarr.align_chunks()
+            # breakpoint()
+            # ds_stored_zarr = ds_stored_zarr.align_chunks()
 
             for dim, size in ds_stored_org_dims.items():
                 updated_size = ds_stored_zarr.dims.get(dim)

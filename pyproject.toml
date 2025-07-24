@@ -41,7 +41,7 @@ rechunker = ">=0.5.2"
 s3fs = ">=2025.5.1"
 fsspec = "==2025.5.1"
 shapely = ">=2.0.4"
-xarray = { git = "https://github.com/pydata/xarray.git", rev = "8e9c2847689d58280942e5c439f3ecf2001ef6f1", extras = [
+xarray = { git = "https://github.com/pydata/xarray.git", rev = "0c620cf164d985307974634d55e1999e594a655d", extras = [
   "complete",
 ] } # https://github.com/pydata/xarray/issues/10501
 # xarray = { version = "==2025.7.1", extras = ["complete"] }
