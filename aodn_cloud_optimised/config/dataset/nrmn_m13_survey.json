@@ -1,0 +1,218 @@
+{
+  "dataset_name": "nrmn_m13_survey_qc",
+  "logger_name": "nrmn_m13_survey_qc",
+  "cloud_optimised_format": "parquet",
+  "metadata_uuid": "",
+  "pandas_read_csv_config": {
+    "delimiter": ",",
+    "header": 0,
+    "index_col": null,
+    "parse_dates": false,
+    "na_values": null,
+    "encoding": "utf-8"
+  },
+  "schema": {
+    "survey_id": {
+        "type": "int64",
+        "nullable": false,
+        "long_name": "Survey Identifier",
+        "standard_name": "survey_id"
+    },
+    "dataset_id": {
+        "type": "string",
+        "nullable": false,
+        "long_name": "Dataset Identifier",
+        "standard_name": "dataset_id"
+    },
+    "country": {
+        "type": "string",
+        "nullable": true,
+        "long_name": "Country of the survey",
+        "standard_name": "country"
+    },
+    "area": {
+        "type": "string",
+        "nullable": true,
+        "long_name": "Survey Area Description",
+        "standard_name": "area"
+    },
+    "location": {
+        "type": "string",
+        "nullable": true,
+        "long_name": "Location Description",
+        "standard_name": "location"
+    },
+    "site_code": {
+        "type": "string",
+        "nullable": true,
+        "long_name": "Site Code Identifier",
+        "standard_name": "site_code"
+    },
+    "site_name": {
+        "type": "string",
+        "nullable": true,
+        "long_name": "Site Name Description",
+        "standard_name": "site_name"
+    },
+    "lat": {
+        "type": "float64",
+        "nullable": false,
+        "long_name": "Latitude of the survey site",
+        "standard_name": "latitude",
+        "units": "degrees"
+    },
+    "lon": {
+        "type": "float64",
+        "nullable": false,
+        "long_name": "Longitude of the survey site",
+        "standard_name": "longitude",
+        "units": "degrees"
+    },
+    "timestamp": {
+        "type": "string",
+        "nullable": false,
+        "long_name": "Survey Date",
+        "standard_name": "date"
+    },
+    "depth": {
+        "type": "float64",
+        "nullable": false,
+        "long_name": "Depth of survey location",
+        "standard_name": "depth",
+        "units": "meters"
+    },
+    "program": {
+        "type": "string",
+        "nullable": false,
+        "long_name": "Program Name",
+        "standard_name": "program"
+    },
+    "visibility": {
+        "type": "float64",
+        "nullable": true,
+        "long_name": "Visibility during survey",
+        "standard_name": "visibility",
+        "units": "meters"
+    },
+    "original_label_scheme": {
+        "type": "string",
+        "nullable": false,
+        "long_name": "Original Labeling Scheme",
+        "standard_name": "original_label_scheme"
+    },
+    "original_category": {
+        "type": "string",
+        "nullable": false,
+        "long_name": "Original Category Label",
+        "standard_name": "original_category"
+    },
+    "rls_category": {
+        "type": "string",
+        "nullable": false,
+        "long_name": "RLS Category",
+        "standard_name": "rls_category"
+    },
+    "catami_category": {
+        "type": "string",
+        "nullable": false,
+        "long_name": "CATAMI Category",
+        "standard_name": "catami_category"
+    },
+    "catami_lineage": {
+        "type": "string",
+        "nullable": false,
+        "long_name": "CATAMI Lineage",
+        "standard_name": "catami_lineage"
+    },
+    "dead": {
+        "type": "bool",
+        "nullable": false,
+        "long_name": "Is the organism dead",
+        "standard_name": "dead"
+    },
+    "bleached": {
+        "type": "bool",
+        "nullable": false,
+        "long_name": "Is the organism bleached",
+        "standard_name": "bleached"
+    },
+    "count": {
+        "type": "float64",
+        "nullable": true,
+        "long_name": "Count of organisms",
+        "standard_name": "count"
+    },
+    "label_count": {
+        "type": "float64",
+        "nullable": true,
+        "long_name": "Label Count",
+        "standard_name": "label_count"
+    },
+    "coverage": {
+        "type": "float64",
+        "nullable": false,
+        "long_name": "Coverage Percentage",
+        "standard_name": "coverage",
+        "units": "%"
+    },
+    "source": {
+        "type": "string",
+        "nullable": false,
+        "long_name": "Data Source",
+        "standard_name": "source"
+    },
+    "rls_lineage": {
+        "type": "string",
+        "nullable": false,
+        "long_name": "RLS Lineage",
+        "standard_name": "rls_lineage"
+    },
+    "deployment_id": {
+        "type": "float64",
+        "nullable": true,
+        "long_name": "Deployment Identifier",
+        "standard_name": "deployment_id"
+    },
+    "campaign_id": {
+        "type": "float64",
+        "nullable": true,
+        "long_name": "Campaign Identifier",
+        "standard_name": "campaign_id"
+    },
+    "annotation_method": {
+        "type": "string",
+        "nullable": true,
+        "long_name": "Annotation Method",
+        "standard_name": "annotation_method"
+    },
+    "sq_annotation_set_id": {
+        "type": "float64",
+        "nullable": true,
+        "long_name": "SQ Annotation Set Identifier",
+        "standard_name": "sq_annotation_set_id"
+    },
+    "sq_annotation_set_owner": {
+        "type": "string",
+        "nullable": true,
+        "long_name": "SQ Annotation Set Owner",
+        "standard_name": "sq_annotation_set_owner"
+    }
+  },
+  "aws_opendata_registry": null,
+  "run_settings": {
+    "batch_size": 1,
+    "cluster": {
+      "mode": "coiled",
+      "restart_every_path": false
+    },
+    "paths": [
+      {
+        "s3_uri": "s3://aodn-dataflow-dev/thomas.galindo/processing/stored/transformed_surveys.csv",
+        "filter": []
+      }
+    ],
+    "clear_existing_data": true,
+    "raise_error": true,
+    "force_previous_parquet_deletion": true
+  }
+}
