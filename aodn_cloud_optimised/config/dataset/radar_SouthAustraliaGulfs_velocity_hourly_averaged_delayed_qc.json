@@ -20,7 +20,9 @@
     }
   },
   "dataset_gattrs": {
-    "title": ""
+    "title": "IMOS Ocean Radar Facility South Australian Gulf (SAG), one hour averaged current QC data",
+    "site_code": "SAG, South Australian Gulf",
+    "ssr_Stations": "Cape Wiles (CWI), Cape Spencer (CSP)"
   },
   "aws_opendata_registry": {
     "Name": "Ocean Radar - South Australian gulfs site - Sea water velocity - Delayed mode",
@@ -73,7 +75,7 @@
         "s3_uri": "s3://imos-data/IMOS/ACORN/gridded_1h-avg-current-map_QC/SAG/",
         "filter": [],
         "year_range": [
-          2007,
+          2009,
           2025
         ]
       }

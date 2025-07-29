@@ -20,7 +20,9 @@
     }
   },
   "dataset_gattrs": {
-    "title": ""
+    "title": "IMOS Ocean Radar Facility Northwest Shelf (WA), one hour averaged current QC data",
+    "site_code": "NWA, Northwest Australia",
+    "ssr_Stations": "Point Billie (PTB), Jurabi Turtle Centre (JTC)"
   },
   "aws_opendata_registry": {
     "Name": "Ocean Radar - Northwest shelf site - Sea water velocity - Delayed mode",
