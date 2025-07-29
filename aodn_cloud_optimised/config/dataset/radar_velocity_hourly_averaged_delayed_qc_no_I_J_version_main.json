@@ -143,7 +143,23 @@
     }
   },
   "dataset_gattrs": {
-    "title": ""
+    "title": "",
+    "project": "Integrated Marine Observing System (IMOS)",
+    "Conventions": "CF-1.6,IMOS-1.4",
+    "abstract": "The IMOS Ocean Radar Facility is producing NetCDF files containing quality controlled vector current maps at 1 hour time interval. They are produced from radial currents, which represent the surface sea water current component along the radial direction from a receiver antenna. Radials are calculated from the shift of the Bragg peaks in a power spectrum. They are mapped onto specific angles through a Direction-Finding algorithm and are converted into current vector components using an unweighted least-squares fit. Radials and vector maps are computed using the standard software provided by the ocean radar manifacturer, CODAR Ocean Sensors (COS). Radials are extracted from the Doppler spectra using the calibrated antenna pattern. Thresholds for radial SNR and velocities are set to 6dB, and 150 cm s-1. Vectors are produced at each grid point using an unweighted least-squares fit. Radial velocities from the two sites falling within a search radius R=20 km around each grid point are used in the computation. At least two radials per site are required in computation of the velocity components. QC procedures apply first to intersection angle (GDOP>=30 & GDOP<=150); the U, V current components are then further inspected using 4 different statistical methods: absolute deviation from the median (MAD); statistics of the velocity distributions; statistics of the distributions of the 1st derivative; statistics of the distributions of the high-frequency components. Data are flagged based on the results of the statistical tests: 4, if three or more tests fail; 3, if two tests fail; 2, if one test fails; 1, no test fails. The final product is produced on a regular geographic grid. More information on the data processing is available through the document: Quality Control procedures for ACORN radars Manual Version 3.0 Integrated Marine Observing System. DOI: 10.26198/5c89b59a931cb (http://dx.doi.org/10.26198/5c89b59a931cb)",
+    "author": "Cosoli, Simone; Hetzel, Yasha",
+    "author_email": "simone.cosoli@uwa.edu.au; yasha.hetzel@uwa.edu.au",
+    "institution": "IMOS Ocean Radar Facility",
+    "institution_references": "https://imos.org.au/facility/ocean-radar",
+    "data_centre": "Australian Ocean Data Network (AODN)",
+    "data_centre_email": "info@aodn.org.au",
+    "instrument": "WERA Oceanographic HF Radar/Helzel Messtechnik, GmbH",
+    "source": "Terrestrial HF radar",
+    "file_version": "Level 1 - Quality Controlled data",
+    "file_version_quality_control": "Data in this file has been through the quality control procedure as described in the document: Offline QC procedures for ACORN radars.  Every data point in this file has an associated quality flag.",
+    "citation": "The citation in a list of references is: IMOS, [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access]",
+    "acknowledgement": "Any users of IMOS data are required to clearly acknowledge the source of the material derived from IMOS in the format: 'Data was sourced from the Integrated Marine Observing System (IMOS) - IMOS is a national collaborative research infrastructure, supported by the Australian Government. If relevant, also credit other organisations involved in collection of this particular datastream (as listed in 'credit' in the metadata record).'",
+    "disclaimer": "Data, products and services from IMOS are provided 'as is' without any warranty as to fitness for a particular purpose."
   },
   "run_settings": {
     "coiled_cluster_options": {
@@ -165,13 +181,7 @@
       "mode": "coiled",
       "restart_every_path": false
     },
-    "paths": [
-      {
-        "s3_uri": "s3://imos-data/IMOS/",
-        "filter": [],
-        "year_range": []
-      }
-    ],
+    "paths": [],
     "clear_existing_data": true,
     "raise_error": false
   }
