@@ -12,15 +12,16 @@ Example usage:
 import argparse
 import json
 import logging
-from logging.config import valid_ident
 import re
 import sys
 import warnings
+from logging.config import valid_ident
 from pathlib import Path, PurePosixPath
-from typing import Any, List, Literal, Optional, Union
+from typing import Any, Dict, List, Literal, Optional, Union
 from urllib.parse import urlparse
 
 import numpy as np
+from cfunits import Units
 from pydantic import (
     BaseModel,
     Field,
@@ -324,19 +325,402 @@ class RunSettings(BaseModel):
         return self
 
 
+class ZarrSchemaTransformation(BaseModel):
+    # Placeholder for zarr-specific logic
+    pass
+
+
+class ParquetSchemaTransformation(BaseModel):
+    drop_variables: Optional[List[str]] = Field(
+        default=None,
+        description="List of variables to remove from the schema before publishing.",
+    )
+    add_variables: Optional[dict[str, Any]] = Field(
+        default=None,
+        description="Variables to add to the schema, specified as a dictionary.",
+    )
+    global_attributes: Dict[str, Any] = Field(
+        default_factory=dict,
+        description="Global attributes to modify. Supports 'delete' and 'set' keys.",
+    )
+    partitioning: List[Dict[str, Any]] = Field(
+        ..., description="Partitioning information for the dataset."
+    )
+
+    functions: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description="Custom functions used to extract metadata from object keys and turn into variables, required if @function: is used in add_variables.",
+    )
+
+    @field_validator("add_variables")
+    @classmethod
+    def validate_add_variables(cls, value):
+        if value is None:
+            return value
+
+        allowed_sources = {
+            "@filename",
+            "@variable_attribute:",
+            "@global_attribute:",
+            "@partitioning:",
+            "@function:",
+        }
+
+        # TODO: add test for @function (only used by autonomous_underwater_vehicle config)
+        if not isinstance(value, dict):
+            raise ValueError("add_variables must be a dictionary.")
+
+        for var_name, var_config in value.items():
+            if not isinstance(var_config, dict):
+                raise ValueError(
+                    f"Value for variable '{var_name}' must be a dictionary."
+                )
+
+            # Check 'source' key
+            source = var_config.get("source")
+            if not (
+                source in allowed_sources
+                or any(source.startswith(allowed) for allowed in allowed_sources)
+            ):
+                raise ValueError(
+                    f"Invalid or missing 'source' for variable '{var_name}'. "
+                    f"Expected to start with one of {allowed_sources}, got {source}."
+                )
+
+            # Check 'schema' key
+            schema = var_config.get("schema")
+            if not isinstance(schema, dict):
+                raise ValueError(
+                    f"Missing or invalid 'schema' for variable '{var_name}'."
+                )
+            # type = var_config.get("type")
+            # if not isinstance(type, dict):
+            #     raise ValueError(
+            #         f"Missing or invalid 'type' for variable '{var_name}'."
+            #     )
+            #
+            valid_types = {"int32", "int64", "float32", "float64", "string", "bool"}
+            if "type" not in schema:
+                raise ValueError(
+                    f"'schema' for variable '{var_name}' must contain a 'type' key."
+                )
+            else:
+                if schema["type"] not in valid_types:
+                    raise ValueError(
+                        f"Invalid type '{schema['type']}' for variable '{var_name}'. "
+                        f"Must be one of: {', '.join(sorted(valid_types))}"
+                    )
+
+            if "units" not in schema:
+                raise ValueError(
+                    f"'schema' for variable '{var_name}' must contain a 'units' key."
+                )
+            else:
+                unit_str = schema["units"]
+                unit = Units(unit_str, calendar="gregorian")
+                if not unit.isvalid:
+                    raise ValueError(
+                        f"Invalid CF unit '{unit_str}' for variable '{var_name}'."
+                    )
+
+        return value
+
+    @model_validator(mode="after")
+    def validate_required_patitions(self):
+        if not self.partitioning:
+            raise ValueError("'partitioning' key missing")
+
+        partition_keys = [x["source_variable"] for x in self.partitioning]
+
+        required_partitioning_keys = ["polygon", "timestamp"]
+        if not all(key in partition_keys for key in required_partitioning_keys):
+            raise ValueError(
+                f"Required variables {required_partitioning_keys} must be present in the 'partitioning' key. Only {partition_keys} available"
+            )
+
+        return self
+
+    @model_validator(mode="after")
+    def validate_time_extent_partitioning(self):
+        if not self.add_variables:
+            return self
+
+        valid_partition_values = ["time_extent", "spatial_extent"]
+
+        for var_name, definition in self.add_variables.items():
+            source = definition.get("source")
+            schema = definition.get("schema", {})
+
+            if source == "@partitioning:time_extent":
+                if schema.get("type") != "int64":
+                    raise ValueError(
+                        f"When using source '@partitioning:time_extent', schema type for variable '{var_name}' must be 'int64'."
+                    )
+
+                if not self.partitioning:
+                    raise ValueError(
+                        f"'partitioning' must be defined when using '@partitioning:time_extent'."
+                    )
+
+                matching_parts = [
+                    part
+                    for part in self.partitioning
+                    if isinstance(part, dict) and part.get("type") == "time_extent"
+                ]
+
+                if not matching_parts:
+                    raise ValueError(
+                        f"No partitioning entry of type 'time_extent' found under the partitioning section, required for variable '{var_name}'."
+                    )
+
+                for part in matching_parts:
+                    time_extent = part.get("time_extent", {})
+                    period = time_extent.get("partition_period")
+                    valid_periods = {"M", "Q", "Y", "h", "min", "s", "ms", "us", "ns"}
+                    if period not in valid_periods:
+                        raise ValueError(
+                            f"Invalid partition_period '{period}' in time_extent. "
+                            f"Must be one of {sorted(valid_periods)}"
+                        )
+            elif source == "@partitioning:spatial_extent":
+                pass
+            elif source.startswith("@partitioning:") and not any(
+                x in source for x in valid_partition_values
+            ):
+                raise ValueError(
+                    f"Source: {source} is not valid. Must be one of {valid_partition_values}"
+                )
+
+        return self
+
+    @model_validator(mode="after")
+    def validate_spatial_extent_partitioning(self):
+        if not self.add_variables:
+            return self
+
+        valid_partition_values = ["time_extent", "spatial_extent"]
+
+        for var_name, definition in self.add_variables.items():
+            source = definition.get("source")
+            schema = definition.get("schema", {})
+
+            if source == "@partitioning:spatial_extent":
+                if schema.get("type") != "string":
+                    raise ValueError(
+                        f"When using source '@partitioning:spatial_extent', schema type for variable '{var_name}' must be 'string'."
+                    )
+
+                if not self.partitioning:
+                    raise ValueError(
+                        f"'partitioning' must be defined when using '@partitioning:spatial_extent'."
+                    )
+
+                matching_parts = [
+                    part
+                    for part in self.partitioning
+                    if isinstance(part, dict) and part.get("type") == "spatial_extent"
+                ]
+
+                if not matching_parts:
+                    raise ValueError(
+                        f"No partitioning entry of type 'spatial_extent' found, required for added variable '{var_name}'."
+                    )
+
+                for part in matching_parts:
+                    spatial = part.get("spatial_extent", {})
+
+                    lat_varname = spatial.get("lat_varname")
+                    lon_varname = spatial.get("lon_varname")
+                    resolution = spatial.get("spatial_resolution")
+
+                    if not lat_varname or not isinstance(lat_varname, str):
+                        raise ValueError(
+                            "spatial_extent must define a non-empty string lat_varname."
+                        )
+
+                    if not lon_varname or not isinstance(lon_varname, str):
+                        raise ValueError(
+                            "spatial_extent must define a non-empty string lon_varname."
+                        )
+
+                    if not isinstance(resolution, int):
+                        raise ValueError(
+                            "spatial_extent must define an integer spatial_resolution."
+                        )
+            elif source == "@partitioning:time_extent":
+                pass
+            elif source.startswith("@partitioning:") and not any(
+                x in source for x in valid_partition_values
+            ):
+                raise ValueError(
+                    f"Source: {source} is not valid. Must be one of {valid_partition_values}"
+                )
+
+        return self
+
+    @model_validator(mode="after")
+    def validate_global_attributes(self):
+        if not self.global_attributes:
+            return self
+
+        if not isinstance(self.global_attributes, dict):
+            raise ValueError("'global_attributes' must be a dictionary if present.")
+
+        valid_keys = {"delete", "set"}
+        if self.global_attributes:
+            invalid_keys = [k for k in self.global_attributes if k not in valid_keys]
+            if invalid_keys:
+                raise ValueError(
+                    f"Invalid global_attributes keys: {invalid_keys}. "
+                    f"Only {valid_keys} are allowed."
+                )
+
+        if "delete" in self.global_attributes:
+            delete = self.global_attributes["delete"]
+            if not isinstance(delete, list) or not all(
+                isinstance(item, str) for item in delete
+            ):
+                raise ValueError(
+                    "'delete' under 'global_attributes' must be a list of strings."
+                )
+
+        if "set" in self.global_attributes:
+            set_attrs = self.global_attributes["set"]
+            if not isinstance(set_attrs, dict):
+                raise ValueError(
+                    "'set' under 'global_attributes' must be a dictionary."
+                )
+
+        return self
+
+    @model_validator(mode="after")
+    def validate_function_sources(self):
+        if not self.add_variables:
+            return self
+
+        # Only validate if any function source exists
+        function_sources = {
+            var_name: var_config.get("source")
+            for var_name, var_config in self.add_variables.items()
+            if isinstance(var_config, dict)
+            and isinstance(var_config.get("source"), str)
+            and var_config["source"].startswith("@function:")
+        }
+
+        if function_sources:
+            if not hasattr(self, "functions") or not isinstance(self.functions, dict):
+                raise ValueError(
+                    f"'functions' section must be defined when using @function: sources (used in variables: {list(function_sources.keys())})"
+                )
+
+            for var_name, source in function_sources.items():
+                function_name = source.split(":", 1)[-1]
+                if function_name not in self.functions:
+                    raise ValueError(
+                        f"Function '{function_name}' (referenced in variable '{var_name}') not found in 'functions' section."
+                    )
+
+                function_def = self.functions[function_name]
+
+                if function_def.get("extract_method") != "object_key":
+                    raise ValueError(
+                        f"'extract_method' for function '{function_name}' must be 'object_key'."
+                    )
+
+                method = function_def.get("method", {})
+                code = method.get("extraction_code", "")
+                if (
+                    not isinstance(code, str)
+                    or "def " not in code
+                    or "return " not in code
+                ):
+                    raise ValueError(
+                        f"'extraction_code' for function '{function_name}' must contain a function definition and return statement."
+                    )
+
+                # Optional: enforce `return {` or `return dict(...)` pattern
+                if not re.search(r"return\s+{", code) and "return dict(" not in code:
+                    raise ValueError(
+                        f"'extraction_code' for function '{function_name}' must return a dictionary."
+                    )
+
+        return self
+
+
 class DatasetConfig(BaseModel):
     dataset_name: str
-    run_settings: RunSettings  # replace with concrete type
-    schema: dict[str, Any]
+    run_settings: RunSettings
+    schema_transformation: Optional[dict] = Field(
+        default=None,
+        description="Schema transformation settings depending on cloud_optimised_format. "
+        "Should match ZarrSchemaTransformation if format is 'zarr', "
+        "or ParquetSchemaTransformation if format is 'parquet'.",
+    )
+    dataset_schema: dict[str, Any] = Field(..., alias="schema")
     vars_incompatible_with_region: Optional[list[str]] = None
     gattrs_to_variables: Optional[Union[dict[str, dict[str, Any]], list[str]]] = None
     dimensions: dict[str, dict[str, Any]] | None = None
     cloud_optimised_format: Literal["zarr", "parquet"]
     partition_keys: Optional[list[str]] = None
-    time_extent: Optional[dict[str, str]] = None
-    spatial_extent: Optional[dict[str, Any]] = None
     dataset_gattrs: Optional[dict[str, Any]] = None
     dataset_sort_by: Optional[list[str]] = None
+
+    @model_validator(mode="after")
+    def validate_schema_transformation_type(self) -> "DatasetConfig":
+        if self.cloud_optimised_format == "parquet":
+            ParquetSchemaTransformation.model_validate(self.schema_transformation)
+        if self.cloud_optimised_format == "zarr":
+            # ZarrSchemaTransformation.model_validate(self.schema_transformation)
+            pass
+        return self
+
+    @model_validator(mode="after")
+    def validate_parquet_partition_time_varname_in_schema(self) -> "DatasetConfig":
+        if (
+            isinstance(self.schema_transformation, ParquetSchemaTransformation)
+            and self.schema_transformation.partitioning
+        ):
+            keys_in_schema = set(self.dataset_schema.keys())
+
+            for part in self.schema_transformation.partitioning:
+                if not isinstance(part, dict):
+                    continue
+                time_extent = part.get("time_extent")
+                if time_extent:
+                    time_varname = time_extent.get("time_varname")
+                    if time_varname not in keys_in_schema:
+                        raise ValueError(
+                            f"'time_varname' '{time_varname}' in partitioning "
+                            f"is not present in dataset_schema keys."
+                        )
+        return self
+
+    @model_validator(mode="after")
+    def validate_parquet_partition_spatial_varnames_in_schema(self) -> "DatasetConfig":
+        if (
+            isinstance(self.schema_transformation, ParquetSchemaTransformation)
+            and self.schema_transformation.partitioning
+        ):
+            keys_in_schema = set(self.dataset_schema.keys())
+
+            for part in self.schema_transformation.partitioning:
+                if not isinstance(part, dict):
+                    continue
+                spatial_extent = part.get("spatial_extent")
+                if spatial_extent:
+                    lat_varname = spatial_extent.get("lat_varname")
+                    lon_varname = spatial_extent.get("lon_varname")
+
+                    missing_vars = [
+                        varname
+                        for varname in (lat_varname, lon_varname)
+                        if varname not in keys_in_schema
+                    ]
+                    if missing_vars:
+                        raise ValueError(
+                            f"The following spatial_extent varnames are missing in dataset_schema keys: {missing_vars}"
+                        )
+        return self
 
     @model_validator(mode="after")
     def validate_dataset_sortby(self) -> "DatasetConfig":
@@ -413,7 +797,7 @@ class DatasetConfig(BaseModel):
             missing = [
                 var
                 for var in self.vars_incompatible_with_region
-                if var not in self.schema
+                if var not in self.dataset_schema
             ]
             if missing:
                 raise ValueError(
@@ -462,91 +846,93 @@ class DatasetConfig(BaseModel):
                         f"The following gattrs_to_variables entries refer to undefined dimensions: "
                         + ", ".join(f"{k} (dimension: {d})" for k, d in invalid_entries)
                     )
-            if self.cloud_optimised_format == "parquet":
-                for var in self.gattrs_to_variables:
-                    var_def = self.schema.get(var)
-                    numeric_types = {
-                        "int",
-                        "int32",
-                        "int64",
-                        "float",
-                        "float32",
-                        "float64",
-                        "number",
-                    }
-
-                    if (
-                        not var_def
-                        or var_def.get("type") not in {"string"} | numeric_types
-                    ):
-                        raise ValueError(
-                            f"schema['{var}'] must be of type 'string' or a numeric type "
-                            f"(e.g. {sorted(numeric_types)}), required by gattrs_to_variables"
-                        )
+            # if self.cloud_optimised_format == "parquet":
+            #     for var in self.gattrs_to_variables:
+            #         var_def = self.schema.get(var)
+            #         numeric_types = {
+            #             "int",
+            #             "int32",
+            #             "int64",
+            #             "float",
+            #             "float32",
+            #             "float64",
+            #             "number",
+            #         }
+            #
+            #         if (
+            #             not var_def
+            #             or var_def.get("type") not in {"string"} | numeric_types
+            #         ):
+            #             raise ValueError(
+            #                 f"schema['{var}'] must be of type 'string' or a numeric type "
+            #                 f"(e.g. {sorted(numeric_types)}), required by gattrs_to_variables"
+            #             )
         return self
 
-    @model_validator(mode="after")
-    def validate_parquet_config(self) -> "DatasetConfig":
-        if self.cloud_optimised_format == "parquet":
-            if not self.partition_keys:
-                raise ValueError("partition_keys must be defined for parquet format")
-
-            # timestamp partition check
-            if "timestamp" in self.partition_keys:
-                # Validate time_extent block exists
-                if not self.time_extent:
-                    raise ValueError(
-                        "time_extent must be defined when 'timestamp' is a partition key"
-                    )
-                time_var = self.time_extent.get("time")
-                if time_var not in self.schema:
-                    raise ValueError(
-                        f"time_extent 'time' value '{time_var}' is not defined in schema"
-                    )
-
-                # Validate timestamp partition period
-                valid_periods = {"M", "Q", "Y", "h", "min", "s", "ms", "us", "ns"}
-                period = self.time_extent.get("partition_timestamp_period")
-                if period not in valid_periods:
-                    raise ValueError(
-                        f"Invalid partition_timestamp_period '{period}'. Must be one of {sorted(valid_periods)}"
-                    )
-
-                # Validate timestamp exists in schema
-                timestamp_def = self.schema.get("timestamp")
-                if not timestamp_def:
-                    raise ValueError("'timestamp' must be defined in schema")
-                if timestamp_def.get("type") != "int64":
-                    raise ValueError("schema['timestamp'] must have type 'int64'")
-
-            # polygon partition check
-            if "polygon" in self.partition_keys:
-                if not self.spatial_extent:
-                    raise ValueError(
-                        "spatial_extent must be defined when 'polygon' is a partition key"
-                    )
-
-                lat_var = self.spatial_extent.get("lat")
-                lon_var = self.spatial_extent.get("lon")
-                resolution = self.spatial_extent.get("spatial_resolution")
-
-                missing = [v for v in (lat_var, lon_var) if v not in self.schema]
-                if missing:
-                    raise ValueError(
-                        f"The following spatial_extent variables are not defined in schema: {missing}"
-                    )
-
-                if not isinstance(resolution, int) or resolution >= 50:
-                    raise ValueError(
-                        "spatial_extent.spatial_resolution must be an integer less than 50"
-                    )
-
-                polygon_def = self.schema.get("polygon")
-                if not polygon_def or polygon_def.get("type") != "string":
-                    raise ValueError(
-                        "schema['polygon'] must be defined with type 'string'"
-                    )
-        return self
+    #
+    # @model_validator(mode="after")
+    # def validate_parquet_config(self) -> "DatasetConfig":
+    #     if self.cloud_optimised_format == "parquet":
+    #         if not self.partition_keys:
+    #             raise ValueError("partition_keys must be defined for parquet format")
+    #
+    #         # timestamp partition check
+    #         if "timestamp" in self.partition_keys:
+    #             # Validate time_extent block exists
+    #             if not self.time_extent:
+    #                 raise ValueError(
+    #                     "time_extent must be defined when 'timestamp' is a partition key"
+    #                 )
+    #             time_var = self.time_extent.get("time")
+    #             if time_var not in self.schema:
+    #                 raise ValueError(
+    #                     f"time_extent 'time' value '{time_var}' is not defined in schema"
+    #                 )
+    #
+    #             # Validate timestamp partition period
+    #             valid_periods = {"M", "Q", "Y", "h", "min", "s", "ms", "us", "ns"}
+    #             period = self.time_extent.get("partition_timestamp_period")
+    #             if period not in valid_periods:
+    #                 raise ValueError(
+    #                     f"Invalid partition_timestamp_period '{period}'. Must be one of {sorted(valid_periods)}"
+    #                 )
+    #
+    #             # Validate timestamp exists in schema
+    #             timestamp_def = self.schema.get("timestamp")
+    #             if not timestamp_def:
+    #                 raise ValueError("'timestamp' must be defined in schema")
+    #             if timestamp_def.get("type") != "int64":
+    #                 raise ValueError("schema['timestamp'] must have type 'int64'")
+    #
+    #         # polygon partition check
+    #         if "polygon" in self.partition_keys:
+    #             if not self.spatial_extent:
+    #                 raise ValueError(
+    #                     "spatial_extent must be defined when 'polygon' is a partition key"
+    #                 )
+    #
+    #             lat_var = self.spatial_extent.get("lat")
+    #             lon_var = self.spatial_extent.get("lon")
+    #             resolution = self.spatial_extent.get("spatial_resolution")
+    #
+    #             missing = [v for v in (lat_var, lon_var) if v not in self.schema]
+    #             if missing:
+    #                 raise ValueError(
+    #                     f"The following spatial_extent variables are not defined in schema: {missing}"
+    #                 )
+    #
+    #             if not isinstance(resolution, int) or resolution >= 50:
+    #                 raise ValueError(
+    #                     "spatial_extent.spatial_resolution must be an integer less than 50"
+    #                 )
+    #
+    #             polygon_def = self.schema.get("polygon")
+    #             if not polygon_def or polygon_def.get("type") != "string":
+    #                 raise ValueError(
+    #                     "schema['polygon'] must be defined with type 'string'"
+    #                 )
+    #     return self
+    #
 
 
 def load_config_and_validate(config_filename: str) -> DatasetConfig:

@@ -248,7 +248,47 @@ def create_pyrarrow_schema_from_dict(schema_dict):
     return schema
 
 
-def create_pyarrow_schema(schema_input):
+def extract_new_variables_schema(schema_transformation: dict) -> dict:
+    """
+    Extracts new variables from the 'add_variables' section of a schema_transformation dict
+    and returns a dictionary where each key is the variable name and the value is a dictionary
+    that includes the 'type' and all schema fields from the original 'schema' entry.
+
+    Args:
+        schema_transformation (dict): The input dictionary containing the schema transformation.
+
+    Returns:
+        dict: A dictionary of variables with their full schema definitions.
+    """
+    new_variables_schema = {}
+    add_variables = schema_transformation.get("add_variables", {})
+
+    for var_name, var_info in add_variables.items():
+        schema = var_info.get("schema", {})
+        var_type = schema.get("type", "unknown")
+        # Build new dictionary with 'type' and other schema attributes
+        new_variables_schema[var_name] = {"type": var_type}
+        for key, value in schema.items():
+            if key != "type":
+                new_variables_schema[var_name][key] = value
+
+    return new_variables_schema
+
+
+def merge_schema_dict(schema_input, schema_transformation):
+    """
+    Merge the orginal schema and the schema_transformation from a json configuration to output a new dict containing
+    ALL of the variables in the dataset
+    """
+    new_variables_schema = extract_new_variables_schema(schema_transformation)
+
+    if isinstance(schema_input, dict):
+        schema_input.update(new_variables_schema)
+
+    return schema_input
+
+
+def create_pyarrow_schema(schema_input, schema_transformation=None):
     """
     handles 2 different ways to write the pyarrow_schema
     Args:
@@ -257,6 +297,12 @@ def create_pyarrow_schema(schema_input):
     Returns:
 
     """
+    if schema_transformation:
+        new_variables_schema = extract_new_variables_schema(schema_transformation)
+
+        if isinstance(schema_input, dict):
+            schema_input.update(new_variables_schema)
+
     if isinstance(schema_input, list):
         return create_pyarrow_schema_from_list(schema_input)
     elif isinstance(schema_input, dict):

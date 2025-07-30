@@ -27,7 +27,11 @@ from aodn_cloud_optimised.lib.s3Tools import (
 )
 
 from .CommonHandler import CommonHandler
-from .schema import create_pyarrow_schema, generate_json_schema_var_from_netcdf
+from .schema import (
+    create_pyarrow_schema,
+    generate_json_schema_var_from_netcdf,
+    merge_schema_dict,
+)
 
 # TODO: improve log for parallism by adding a uuid for each task
 
@@ -58,7 +62,9 @@ class GenericHandler(CommonHandler):
 
         self.delete_pq_unmatch_enable = kwargs.get(
             "force_previous_parquet_deletion",
-            self.dataset_config.get("force_previous_parquet_deletion", False),
+            self.dataset_config["run_settings"].get(
+                "force_previous_parquet_deletion", False
+            ),
         )
 
         json_validation_path = str(
@@ -70,13 +76,15 @@ class GenericHandler(CommonHandler):
             json_validation_path
         )  # we cannot validate the json config until self.dataset_config and self.logger are set
 
-        self.partition_period = self.dataset_config["time_extent"].get(
-            "partition_timestamp_period", "M"
+        self.pyarrow_schema = create_pyarrow_schema(
+            self.dataset_config["schema"], self.dataset_config["schema_transformation"]
         )
 
-        self.pyarrow_schema = create_pyarrow_schema(self.dataset_config["schema"])
-
         self.attributes_list_to_check = ["units", "standard_name", "reference_datum"]
+
+        self.full_schema = merge_schema_dict(
+            self.dataset_config["schema"], self.dataset_config["schema_transformation"]
+        )
 
     def preprocess_data_csv(
         self, csv_fp
@@ -316,19 +324,19 @@ class GenericHandler(CommonHandler):
             The DataFrame is assumed to contain 'LONGITUDE' and 'LATITUDE' columns representing
             longitude and latitude coordinates respectively.
         """
-        # Create Point objects from latitude and longitude
-        if not "spatial_extent" in self.dataset_config:
-            self.logger.error(
-                f"{self.uuid_log}: Spatial_extent configuration is missing from dataset configuration."
-            )
-            raise ValueError
+        partitioning_info = self.dataset_config["schema_transformation"]["partitioning"]
+        for item in partitioning_info:
+            if item.get("spatial_extent") is not None:
+                spatial_extent_info = item
 
-        # load default values if not available in config
-        lat_varname = self.dataset_config["spatial_extent"].get("lat", "LATITUDE")
-        lon_varname = self.dataset_config["spatial_extent"].get("lon", "LONGITUDE")
-        spatial_res = self.dataset_config["spatial_extent"].get(
-            "spatial_resolution", 5
-        )  # Define delta for the polygon (in degrees)
+        spatial_extent_varname = spatial_extent_info.get("source_variable")
+        lat_varname = spatial_extent_info["spatial_extent"].get(
+            "lat_varname", "LATITUDE"
+        )
+        lon_varname = spatial_extent_info["spatial_extent"].get(
+            "lon_varname", "LONGITUDE"
+        )
+        spatial_res = spatial_extent_info["spatial_extent"].get("spatial_resolution", 5)
 
         # Check for invalid latitude and longitude values outside of [-180, 180; -90; 90]
         invalid_lat = ~df[lat_varname].between(-90, 90)
@@ -364,7 +372,7 @@ class GenericHandler(CommonHandler):
 
         # Create Polygon objects around each Point
 
-        df["polygon"] = [
+        df[spatial_extent_varname] = [
             self.create_polygon(point, spatial_res) for point in point_geometry
         ]
 
@@ -396,7 +404,7 @@ class GenericHandler(CommonHandler):
 
     def _add_timestamp_df(self, df: pd.DataFrame, f) -> pd.DataFrame:
         """
-        Adds timestamp to the DataFrame.
+        Adds timestamp variable for partitioning to the DataFrame.
 
         Parameters:
             df (pd.DataFrame): Input DataFrame.
@@ -404,8 +412,14 @@ class GenericHandler(CommonHandler):
         Returns:
             pd.DataFrame: DataFrame with added columns.
         """
+        partitioning_info = self.dataset_config["schema_transformation"]["partitioning"]
+        for item in partitioning_info:
+            if item.get("time_extent") is not None:
+                timestamp_info = item
 
-        time_varname = self.dataset_config["time_extent"].get("time", "TIME")
+        timestamp_varname = timestamp_info.get("source_variable")
+        time_varname = timestamp_info["time_extent"].get("time_varname", "TIME")
+        partition_period = timestamp_info["time_extent"].get("partition_period")
         # look for the variable or column with datetime64 type
         if isinstance(df.index, pd.MultiIndex) and (time_varname in df.index.names):
             # for example, files with timeSeries and TIME dimensions such as
@@ -446,10 +460,10 @@ class GenericHandler(CommonHandler):
                 df.reset_index()
 
         try:
-            df["timestamp"] = (
+            df[timestamp_varname] = (
                 np.int64(
                     pd.to_datetime(datetime_var)
-                    .to_period(self.partition_period)
+                    .to_period(partition_period)
                     .to_timestamp()
                 )
                 / 10**9
@@ -473,30 +487,69 @@ class GenericHandler(CommonHandler):
         Returns:
             pd.DataFrame: DataFrame with added columns.
         """
-        gattrs_to_variables = self.dataset_config["gattrs_to_variables"]
-        for attr in gattrs_to_variables:
-            if attr in ds.attrs:
-                df[attr] = getattr(ds, attr)
-            else:
-                self.logger.warning(
-                    f"{self.uuid_log}: The global attribute '{attr}' does not exist in the original NetCDF. The corresponding variable won't be created."
-                )
 
-        df["filename"] = os.path.basename(f.path)
+        schema_transformation = self.dataset_config["schema_transformation"]
+        if schema_transformation.get("add_variables") is not None:
+            variables_to_add = schema_transformation.get("add_variables")
 
-        if "object_key_info" in self.dataset_config:
-            extracted_info = self.get_variables_from_object_key(f)
-            self.logger.info(f"{extracted_info}")
-            for var_name in extracted_info:
-                self.logger.info(
-                    f"{self.uuid_log}: {f.path}: Adding extracted info from object key as variable {var_name}: {extracted_info[var_name]}"
-                )
+            for variable_to_add in variables_to_add.items():
+                variable_to_add_name = variable_to_add[0]
+                variable_to_add_info = variable_to_add[1]
+                if variable_to_add_info["source"].startswith("@filename"):
+                    df[variable_to_add_name] = os.path.basename(f.path)
+                    self.logger.info(
+                        f"{self.uuid_log}: variable {variable_to_add_name} created with value {f.path}"
+                    )
 
-                df[var_name] = extracted_info[var_name]
+                elif variable_to_add_info["source"].startswith("@variable_attribute:"):
+                    varname = variable_to_add_info["source"].split(":")[1].split(".")[0]
+                    attr = variable_to_add_info["source"].split(":")[1].split(".")[1]
+                    if not hasattr(ds, varname):
+                        self.logger.warning(
+                            f"{self.uuid_log}: cannot create variable {variable_to_add_name} from {varname}.{attr} as {varname} does not exist in current file"
+                        )
+
+                    else:
+                        attr_value = getattr(ds[varname], attr)
+                        df[variable_to_add_name] = attr_value
+                        self.logger.info(
+                            f"{self.uuid_log}: variable {variable_to_add_name} created with value {attr_value}"
+                        )
+
+                elif variable_to_add_info["source"].startswith("@global_attribute:"):
+                    gattr = variable_to_add_info["source"].split(":")[1]
+                    if gattr in ds.attrs:
+                        gattr_value = getattr(ds, gattr)
+
+                        df[variable_to_add_name] = gattr_value
+                        self.logger.info(
+                            f"{self.uuid_log}: variable {variable_to_add_name} created with value {gattr_value}"
+                        )
+                    else:
+                        self.logger.warning(
+                            f"{self.uuid_log}: The global attribute '{gattr}' does not exist in the original NetCDF. The corresponding variable won't be created."
+                        )
+
+                elif variable_to_add_info["source"].startswith("@function:"):
+                    extract_function = variable_to_add_info["source"].split(":")[1]
+                    function_info = schema_transformation["functions"][extract_function]
+                    # other extracting method could be created here. but for now we only need to extract info from an object key
+                    if "object_key" in function_info["extract_method"]:
+                        extraction_code = function_info["method"].get("extraction_code")
+                        extracted_info = self.get_variables_from_object_key(
+                            f, extraction_code
+                        )
+
+                        self.logger.info(f"{extracted_info}")
+                        self.logger.info(
+                            f"{self.uuid_log}: {f.path}: Adding extracted info from object key as variable {variable_to_add_name}: {extracted_info[variable_to_add_name]}"
+                        )
+
+                        df[variable_to_add_name] = extracted_info[variable_to_add_name]
 
         return df
 
-    def get_variables_from_object_key(self, f) -> dict:
+    def get_variables_from_object_key(self, f, extraction_code) -> dict:
         """
         Extract variables from an object key using a dynamically defined extraction function.
 
@@ -507,6 +560,8 @@ class GenericHandler(CommonHandler):
         Args:
             f (object): An object that has a `path` attribute, representing the object key
                         from which to extract variables.
+            extraction_code (string): a function writen as a string, outputting a dict. For example
+                "def extract_info_from_key(key):\n    parts = key.split('/')\n    return {'campaign_name': parts[-4]}"
 
         Returns:
             dict: A dictionary containing the extracted variables. The contents depend on
@@ -520,7 +575,6 @@ class GenericHandler(CommonHandler):
                        if the input does not meet its requirements.
         """
         # Access the extraction code from the config
-        extraction_code = self.dataset_config["object_key_info"]["extraction_code"]
 
         # Define a local scope to execute the extraction code
         local_scope = {}
@@ -546,13 +600,19 @@ class GenericHandler(CommonHandler):
         if isinstance(df.index, pd.MultiIndex):
             df = df.reset_index()
 
-        time_varname = self.dataset_config["time_extent"].get("time", "TIME")
+        partitioning_info = self.dataset_config["schema_transformation"]["partitioning"]
+        for item in partitioning_info:
+            if item.get("time_extent") is not None:
+                timestamp_info = item
 
-        if any(df["timestamp"] <= 0):
+        timestamp_varname = timestamp_info.get("source_variable")
+        time_varname = timestamp_info["time_extent"].get("time_varname", "TIME")
+
+        if any(df[timestamp_varname] <= 0):
             self.logger.warning(
                 f"{self.uuid_log}: {f.path}: Bad values detected in {time_varname} time variable. Trimming corresponding data."
             )
-            df2 = df[df["timestamp"] > 0].copy()
+            df2 = df[df[timestamp_varname] > 0].copy()
             df = df2
             df = df.reset_index()
 
@@ -688,19 +748,15 @@ class GenericHandler(CommonHandler):
         Returns:
             None
         """
-        partition_keys = self.dataset_config["partition_keys"]
+        partition_keys = [
+            x["source_variable"]
+            for x in self.dataset_config["schema_transformation"]["partitioning"]
+        ]
         df = self._fix_datetimejulian(df)
         df = self._add_timestamp_df(df, s3_file_handle)
         df = self._add_columns_df(df, ds, s3_file_handle)
         df = self._rm_bad_timestamp_df(df, s3_file_handle)
-        if "polygon" in partition_keys:
-            if not "spatial_extent" in self.dataset_config:
-                self.logger.error(
-                    f"{self.uuid_log}: Missing spatial_extent from dataset configuration"
-                )
-                # raise ValueError
-            else:
-                df = self._add_polygon(df)
+        df = self._add_polygon(df)
 
         filename = os.path.basename(s3_file_handle.path)
 
@@ -823,27 +879,12 @@ class GenericHandler(CommonHandler):
         # Create an empty list to store fields
         fields = []
         byte_dict_list = []
-        # Iterate over variables in the PyArrow table (pdf)
-        # for col_name in pdf.column_names:
-        # Check if the variable exists in the xarray Dataset
-        # if col_name in ds.variables:
-        # Get the xarray variable
-        #    var_data = ds.variables[col_name]
 
-        # Convert xarray variable attributes to PyArrow column metadata
-        # column_metadata = {}
-        # for attr_name, attr_value in var_data.attrs.items():
-        ## Ensure attribute values are strings
-        # attr_value_str = str(attr_value)
-        # column_metadata[attr_name] = attr_value_str
         fields = []
         byte_dict_list = []
-        column_metadata = {}
-        for var in self.dataset_config.get("schema"):
-            # column_metadata[attr_name] = attr_value_str
-            var_metadata = self.dataset_config.get("schema")[var]
+        for var in self.full_schema:
+            var_metadata = self.full_schema[var]
             # Convert xarray variable values to PyArrow data type
-            # Adjust data type mapping as needed based on your data
             if var_metadata["type"] == "float64":
                 data_type = pa.float64()
             elif var_metadata["type"] == "float32":
@@ -908,7 +949,7 @@ class GenericHandler(CommonHandler):
         # Create a dictionary where keys are the names and values are the elements
         # schema_dict = {obj.name: obj for obj in pdf_schema}
         # Now you can access elements by name
-        # schema_dict['TIMESERIES'].metadata.get(b'cf_role')  isntead of pdf_schema[0].metadata[b'cf_role'] but here the metadata is kinda lost, see https://github.com/apache/arrow/issues/38575
+        # schema_dict['TIMESERIES'].metadata.get(b'cf_role')  instead of pdf_schema[0].metadata[b'cf_role'] but here the metadata is kinda lost, see https://github.com/apache/arrow/issues/38575
 
         # alternative way: need to create a horrible byte dict
         # var_atts_dict = {col_name: byte_dict for col_name, byte_dict in zip(pdf.column_names, byte_dict_list)}
@@ -918,17 +959,23 @@ class GenericHandler(CommonHandler):
                 self.dataset_config.get("schema").keys(), byte_dict_list
             )
         }
-        # Add Global attributes into metadata (no schema)
+        # Add Global attributes into metadata
         dataset_metadata = dict()
         if "metadata_uuid" in self.dataset_config.keys():
             dataset_metadata["metadata_uuid"] = self.dataset_config["metadata_uuid"]
 
         dataset_metadata["dataset_name"] = self.dataset_config["dataset_name"]
 
-        if "dataset_gattrs" in self.dataset_config.keys():
-            for gattr in self.dataset_config["dataset_gattrs"]:
-                dataset_metadata[gattr] = self.dataset_config["dataset_gattrs"][gattr]
-        # TODO: add a check this exists
+        if self.dataset_config["schema_transformation"].get("global_attributes"):
+            if self.dataset_config["schema_transformation"]["global_attributes"].get(
+                "set"
+            ):
+                gattr_to_set = self.dataset_config["schema_transformation"][
+                    "global_attributes"
+                ].get("set")
+
+                for gattr in gattr_to_set:
+                    dataset_metadata[gattr] = gattr_to_set[gattr]
 
         var_atts_dict["global_attributes"] = str(dataset_metadata).encode()
 
