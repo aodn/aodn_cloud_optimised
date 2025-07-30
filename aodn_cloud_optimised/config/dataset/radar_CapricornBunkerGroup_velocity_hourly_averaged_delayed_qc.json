@@ -22,7 +22,8 @@
   "dataset_gattrs": {
     "title": "IMOS ACORN Capricorn Bunker Group (CBG), one hour averaged current QC data",
     "site_code": "CBG, Capricorn Bunker Group",
-    "ssr_Stations": "Tannum Sands (TAN), Lady Elliott (LEI)"
+    "ssr_Stations": "Tannum Sands (TAN), Lady Elliott (LEI)",
+    "local_time_zone": "10."
   },
   "aws_opendata_registry": {
     "Name": "Ocean Radar - Capricorn bunker group site - Sea water velocity - Delayed mode",

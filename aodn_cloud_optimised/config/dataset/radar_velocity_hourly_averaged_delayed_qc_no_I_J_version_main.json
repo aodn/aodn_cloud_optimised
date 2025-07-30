@@ -16,8 +16,7 @@
       "axis": "T",
       "valid_min": 0.0,
       "valid_max": 999999.0,
-      "comment": "Given time lays at the middle of the averaging time period.",
-      "local_time_zone": 8.0
+      "comment": "Given time lays at the middle of the averaging time period."
     },
     "LATITUDE": {
       "type": "double",

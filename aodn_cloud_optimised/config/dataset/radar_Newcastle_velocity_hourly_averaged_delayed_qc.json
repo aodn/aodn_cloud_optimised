@@ -22,7 +22,8 @@
   "dataset_gattrs": {
     "title": "IMOS Ocean Radar Facility ACORN Newcastle (NEWC), one hour averaged current QC data",
     "site_code": "NEWC, Newcastle",
-    "ssr_Stations": "Seal Rocks (SEAL), Red Head (RHED)"
+    "ssr_Stations": "Seal Rocks (SEAL), Red Head (RHED)",
+    "local_time_zone": "10."
   },
   "aws_opendata_registry": {
     "Name": "Ocean Radar - Newcastle site - Sea water velocity - Delayed mode",

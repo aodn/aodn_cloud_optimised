@@ -22,7 +22,8 @@
   "dataset_gattrs": {
     "title": "IMOS ACORN Bonney Coast (BONC), one hour averaged current QC data",
     "site_code": "BONC, Bonney Coast",
-    "ssr_Stations": "Cape Douglas (BFCV), Nora Creina (NOCR)"
+    "ssr_Stations": "Cape Douglas (BFCV), Nora Creina (NOCR)",
+    "local_time_zone": "8."
   },
   "aws_opendata_registry": {
     "Name": "Ocean Radar - Bonney coast site - Sea water velocity - Delayed mode",

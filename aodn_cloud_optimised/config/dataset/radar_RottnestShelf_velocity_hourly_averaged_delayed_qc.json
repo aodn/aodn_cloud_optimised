@@ -22,7 +22,8 @@
   "dataset_gattrs": {
     "title": "IMOS Ocean Radar Facility Rottnest Shelf (ROT), one hour averaged current QC data",
     "site_code": "ROT, Rottnest Shelf",
-    "ssr_Stations": "Fremantle (FRE), Guilderton (GUI)"
+    "ssr_Stations": "Fremantle (FRE), Guilderton (GUI)",
+    "local_time_zone": "8."
   },
   "aws_opendata_registry": {
     "Name": "Ocean Radar - Rottnest shelf site - Sea water velocity - Delayed mode",

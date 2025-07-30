@@ -22,7 +22,8 @@
   "dataset_gattrs": {
     "title": "IMOS Ocean Radar Facility Turqoise Coast (TURQ), one hour averaged current QC data",
     "site_code": "TURQ, Turqoise Coast",
-    "ssr_Stations": "Lancelin (LANC), Green Head (GHED)"
+    "ssr_Stations": "Lancelin (LANC), Green Head (GHED)",
+    "local_time_zone": "8."
   },
   "aws_opendata_registry": {
     "Name": "Ocean Radar - Turquoise coast site - Sea water velocity - Delayed mode",
