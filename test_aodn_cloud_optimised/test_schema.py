@@ -15,6 +15,7 @@ from aodn_cloud_optimised.lib.schema import (
     generate_json_schema_from_s3_netcdf,
     generate_json_schema_var_from_netcdf,
 )
+from aodn_cloud_optimised.lib.s3Tools import get_free_local_port
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -62,12 +63,13 @@ class TestNetCDFSchemaGeneration(unittest.TestCase):
 
         self.nc_s3_path = s3_ls("imos-data", "good_nc_anmn")[0]
 
-        self.server = ThreadedMotoServer(ip_address="127.0.0.1", port=5555)
+        self.port = get_free_local_port()
+        self.server = ThreadedMotoServer(ip_address="127.0.0.1", port=self.port)
         self.server.start()
         self.s3_fs = s3fs.S3FileSystem(
             anon=False,
             client_kwargs={
-                "endpoint_url": "http://127.0.0.1:5555/",
+                "endpoint_url": f"http://127.0.0.1:{self.port}/",
                 "region_name": "us-east-1",
             },
         )
@@ -152,7 +154,6 @@ class TestNetCDFSchemaGeneration(unittest.TestCase):
             os.remove(loaded_schema_file)
 
     def test_generate_json_schema_var_from_netcdf(self):
-
         json_expected = {
             "TEMP": {
                 "type": "float",

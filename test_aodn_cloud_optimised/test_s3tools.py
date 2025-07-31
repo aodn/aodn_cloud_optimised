@@ -7,6 +7,7 @@ from moto.moto_server.threaded_moto_server import ThreadedMotoServer
 
 from aodn_cloud_optimised.lib.s3Tools import (
     s3_ls,
+    get_free_local_port,
     create_fileset,
     split_s3_path,
     delete_objects_in_prefix,
@@ -19,7 +20,8 @@ import s3fs
 @mock_aws()
 class TestS3Tools(unittest.TestCase):
     def setUp(self):
-        self.server = ThreadedMotoServer(ip_address="127.0.0.1", port=5555)
+        self.port = get_free_local_port()
+        self.server = ThreadedMotoServer(ip_address="127.0.0.1", port=self.port)
         self.server.start()
 
         # Create a mock S3 service
@@ -87,7 +89,7 @@ class TestS3Tools(unittest.TestCase):
     @patch("s3fs.S3FileSystem")
     def test_create_fileset(self, MockS3FileSystem):
         MockS3FileSystem.return_value = s3fs.S3FileSystem(
-            anon=False, client_kwargs={"endpoint_url": "http://127.0.0.1:5555/"}
+            anon=False, client_kwargs={"endpoint_url": f"http://127.0.0.1:{self.port}/"}
         )
 
         fileset = create_fileset("s3://test-bucket/prefix/file1.nc")

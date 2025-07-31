@@ -14,9 +14,9 @@ from moto.moto_server.threaded_moto_server import ThreadedMotoServer
 from shapely import wkb
 from shapely.geometry import Polygon
 
-from aodn_cloud_optimised.lib.GenericParquetHandler import GenericHandler
 from aodn_cloud_optimised.lib.config import load_dataset_config
-from aodn_cloud_optimised.lib.s3Tools import s3_ls
+from aodn_cloud_optimised.lib.GenericParquetHandler import GenericHandler
+from aodn_cloud_optimised.lib.s3Tools import get_free_local_port, s3_ls
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -82,12 +82,13 @@ class TestGenericHandler(unittest.TestCase):
         self.s3.create_bucket(Bucket=self.BUCKET_OPTIMISED_NAME)
 
         # create moto server; needed for s3fs and parquet
-        self.server = ThreadedMotoServer(ip_address="127.0.0.1", port=5555)
+        self.port = get_free_local_port()
+        self.server = ThreadedMotoServer(ip_address="127.0.0.1", port=self.port)
 
         self.s3_fs = s3fs.S3FileSystem(
             anon=False,
             client_kwargs={
-                "endpoint_url": "http://127.0.0.1:5555/",
+                "endpoint_url": f"http://127.0.0.1:{self.port}/",
                 "region_name": "us-east-1",
             },
         )
@@ -248,7 +249,7 @@ class TestGenericHandler(unittest.TestCase):
             dname,
             engine="pyarrow",
             storage_options={
-                "client_kwargs": {"endpoint_url": "http://127.0.0.1:5555"}
+                "client_kwargs": {"endpoint_url": f"http://127.0.0.1:{self.port}"}
             },
         )
 
@@ -334,7 +335,7 @@ class TestGenericHandler(unittest.TestCase):
             dname,
             engine="pyarrow",
             storage_options={
-                "client_kwargs": {"endpoint_url": "http://127.0.0.1:5555"}
+                "client_kwargs": {"endpoint_url": f"http://127.0.0.1:{self.port}"}
             },
         )
 
@@ -394,7 +395,7 @@ class TestGenericHandler(unittest.TestCase):
             dname,
             engine="pyarrow",
             storage_options={
-                "client_kwargs": {"endpoint_url": "http://127.0.0.1:5555"}
+                "client_kwargs": {"endpoint_url": f"http://127.0.0.1:{self.port}"}
             },
         )
 
@@ -450,8 +451,8 @@ class TestGenericHandler(unittest.TestCase):
 
     def test_parquet_csv_generic_handler(self):  # , MockS3FileSystem):
         csv_obj_ls = s3_ls("imos-data", "good_csv", suffix=".csv")
-        # with patch('s3fs.S3FileSystem', lambda anon, client_kwargs: s3fs.S3FileSystem(anon=False, client_kwargs={"endpoint_url": "http://127.0.0.1:5555/"})):
-        # MockS3FileSystem.return_value = s3fs.S3FileSystem(anon=False, client_kwargs={"endpoint_url": "http://127.0.0.1:5555"})
+        # with patch('s3fs.S3FileSystem', lambda anon, client_kwargs: s3fs.S3FileSystem(anon=False, client_kwargs={"endpoint_url": f"http://127.0.0.1:{self.port}/"})):
+        # MockS3FileSystem.return_value = s3fs.S3FileSystem(anon=False, client_kwargs={"endpoint_url": f"http://127.0.0.1:{self.port}"})
 
         # with mock_aws(aws_credentials):
         # 1st pass, could have some errors distributed.worker - ERROR - Failed to communicate with scheduler during heartbeat.
@@ -472,7 +473,7 @@ class TestGenericHandler(unittest.TestCase):
             dname,
             engine="pyarrow",
             storage_options={
-                "client_kwargs": {"endpoint_url": "http://127.0.0.1:5555"}
+                "client_kwargs": {"endpoint_url": f"http://127.0.0.1:{self.port}"}
             },
         )
 

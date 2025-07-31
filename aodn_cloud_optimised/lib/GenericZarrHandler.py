@@ -502,10 +502,11 @@ class GenericHandler(CommonHandler):
         #       zarr! why? it works fine for parquet, but if I remove this if condition, my unittest breaks! maybe
         #       self.s3_fs is overwritten somewhere?? need to check
         if os.getenv("RUNNING_UNDER_UNITTEST") == "true":
+            port = os.getenv("MOTO_PORT", "5555")
             self.s3_fs = s3fs.S3FileSystem(
                 anon=False,
                 client_kwargs={
-                    "endpoint_url": "http://127.0.0.1:5555/",
+                    "endpoint_url": f"http://127.0.0.1:{port}/",
                     "region_name": "us-east-1",
                 },
             )

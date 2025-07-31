@@ -8,8 +8,8 @@ from unittest.mock import MagicMock, patch
 import boto3
 import s3fs
 from botocore import UNSIGNED
-from botocore.session import get_session
 from botocore.client import Config as BotoConfig  # avoid conflict with json config
+from botocore.session import get_session
 from moto import mock_aws
 from moto.moto_server.threaded_moto_server import ThreadedMotoServer
 
@@ -18,6 +18,7 @@ from aodn_cloud_optimised.bin.generic_cloud_optimised_creation import (
     main,
 )
 from aodn_cloud_optimised.lib.config import load_dataset_config
+from aodn_cloud_optimised.lib.s3Tools import get_free_local_port
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -46,6 +47,7 @@ class TestGenericCloudOptimisedCreation(unittest.TestCase):
     def setUp(self):
         # TODO: remove this abomination for unittesting. but it works. Only for zarr !
         os.environ["RUNNING_UNDER_UNITTEST"] = "true"
+
         # Create a mock S3 service
         self.BUCKET_OPTIMISED_NAME = "optimised-bucket"
         self.ROOT_PREFIX_CLOUD_OPTIMISED_PATH = "testing"
@@ -54,12 +56,14 @@ class TestGenericCloudOptimisedCreation(unittest.TestCase):
         self.s3.create_bucket(Bucket=self.BUCKET_OPTIMISED_NAME)
 
         # create moto server; needed for s3fs and parquet
-        self.server = ThreadedMotoServer(ip_address="127.0.0.1", port=5555)
+        self.port = get_free_local_port()
+        os.environ["MOTO_PORT"] = str(self.port)
+        self.server = ThreadedMotoServer(ip_address="127.0.0.1", port=self.port)
 
         self.s3_fs = s3fs.S3FileSystem(
             anon=False,
             client_kwargs={
-                "endpoint_url": "http://127.0.0.1:5555/",
+                "endpoint_url": f"http://127.0.0.1:{self.port}/",
                 "region_name": "us-east-1",
             },
         )
@@ -138,7 +142,7 @@ class TestGenericCloudOptimisedCreation(unittest.TestCase):
                 session = get_session()
                 return session.create_client(
                     "s3",
-                    endpoint_url="http://127.0.0.1:5555",
+                    endpoint_url=f"http://127.0.0.1:{self.port}",
                     region_name="us-east-1",
                     config=BotoConfig(signature_version=UNSIGNED),
                 )

@@ -1,4 +1,5 @@
 import logging
+import socket
 from typing import Optional
 from urllib.parse import urlparse
 
@@ -6,6 +7,12 @@ import boto3
 import s3fs
 from botocore import UNSIGNED
 from botocore.config import Config
+
+
+def get_free_local_port():
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind(("127.0.0.1", 0))  # 0 tells the OS to find an available port
+        return s.getsockname()[1]
 
 
 def s3_ls(
