@@ -24,6 +24,7 @@ import numpy as np
 from cfunits import Units
 from pydantic import (
     BaseModel,
+    ConfigDict,
     Field,
     StrictBool,
     ValidationError,
@@ -648,6 +649,9 @@ class ParquetSchemaTransformation(BaseModel):
 
 
 class DatasetConfig(BaseModel):
+    model_config = ConfigDict(
+        validate_by_name=True, validate_by_alias=True
+    )  # useful to use the alias="schema" in dataset_schema
     dataset_name: str
     run_settings: RunSettings
     schema_transformation: Optional[dict] = Field(
@@ -656,7 +660,9 @@ class DatasetConfig(BaseModel):
         "Should match ZarrSchemaTransformation if format is 'zarr', "
         "or ParquetSchemaTransformation if format is 'parquet'.",
     )
-    dataset_schema: dict[str, Any] = Field(..., alias="schema")
+    dataset_schema: dict[str, Any] = Field(
+        ..., description="Schema definition of the input dataset", alias="schema"
+    )
     vars_incompatible_with_region: Optional[list[str]] = None
     gattrs_to_variables: Optional[Union[dict[str, dict[str, Any]], list[str]]] = None
     dimensions: dict[str, dict[str, Any]] | None = None

@@ -754,12 +754,72 @@ def main():
         dataset_config["spatial_extent"]["spatial_resolution"] = 5
 
     if args.cloud_format == "parquet":
+        schema_transformation_parquet_str = """
+        {
+        "drop_variables": [],
+        "add_variables": {
+            "filename": {
+            "source": "@filename",
+            "schema": {
+                "type": "string",
+                "units": "1",
+                "long_name": "Filename of the source file"
+            }
+            },
+            "timestamp": {
+            "source": "@partitioning:time_extent",
+            "schema": {
+                "type": "int64",
+                "units": "1",
+                "long_name": "Partition timestamp"
+            }
+            },
+            "polygon": {
+            "source": "@partitioning:spatial_extent",
+            "schema": {
+                "type": "string",
+                "units": "1",
+                "long_name": "Spatial partition polygon"
+            }
+            }
+        },
+        "partitioning": [
+            {
+            "source_variable": "timestamp",
+            "type": "time_extent",
+            "time_extent": {
+                "time_varname": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+                "partition_period": "M"
+            }
+            },
+            {
+            "source_variable": "polygon",
+            "type": "spatial_extent",
+            "spatial_extent": {
+                "lat_varname": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+                "lon_varname": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+                "spatial_resolution": 5
+            }
+            }
+        ],
+        "global_attributes": {
+            "delete": [
+            "geospatial_lat_max",
+            "geospatial_lat_min",
+            "geospatial_lon_max",
+            "geospatial_lon_min",
+            "date_created"
+            ],
+            "set": {
+            "title": "FILL UP MANUALLY - CHECK DOCUMENTATION"
+            }
+        }
+        }
+        """
+        schema_transformation_parquet = json.loads(schema_transformation_parquet_str)
         # default partition keys
-        dataset_config["partition_keys"] = ["timestamp", "polygon"]
+        dataset_config["schema_transformation"] = schema_transformation_parquet
 
-        dataset_config["schema"]["timestamp"] = {"type": "int64"}
-        dataset_config["schema"]["polygon"] = {"type": "string"}
-        dataset_config["schema"]["filename"] = {"type": "string"}
         dataset_config["run_settings"]["force_previous_parquet_deletion"] = False
 
     module_path = get_module_path()
