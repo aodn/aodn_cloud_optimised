@@ -14,32 +14,6 @@
           "long_name": "Filename of the source file"
         }
       },
-      "TEMP_instrument_number": {
-        "source": "@variable_attribute:TEMP.instrument_number",
-        "schema": {
-          "type": "int32",
-          "units": "1",
-          "long_name": "Instrument number for TEMP",
-          "_FillValue": -99
-        }
-      },
-      "voyage_id": {
-        "source": "@global_attribute:voyage_id",
-        "schema": {
-          "type": "string",
-          "units": "1",
-          "_FillValue": "",
-          "long_name": "voyage identifier"
-        }
-      },
-      "site_code": {
-        "source": "@global_attribute:site_code",
-        "schema": {
-          "type": "string",
-          "units": "1",
-          "long_name": "IMOS site code"
-        }
-      },
       "timestamp": {
         "source": "@partitioning:time_extent",
         "schema": {
@@ -74,9 +48,6 @@
           "lon_varname": "LONGITUDE",
           "spatial_resolution": 5
         }
-      },
-      {
-        "source_variable": "site_code"
       }
     ],
     "global_attributes": {
