@@ -31,6 +31,8 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y libudunits2-dev
       #----------------------------------------------
       #  -----  install & configure poetry  -----
       #----------------------------------------------

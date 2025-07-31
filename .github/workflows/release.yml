@@ -19,6 +19,9 @@ jobs:
         with:
           python-version: "3.11.9"
 
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y libudunits2-dev
+
       - name: Install Poetry
         uses: snok/install-poetry@v1
         with:
