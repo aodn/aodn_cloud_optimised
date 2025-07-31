@@ -31,6 +31,8 @@ from .schema import (
     create_pyarrow_schema,
     generate_json_schema_var_from_netcdf,
     merge_schema_dict,
+    cast_value_to_config_type,
+    map_config_type_to_pyarrow_type,
 )
 
 # TODO: improve log for parallism by adding a uuid for each task
@@ -495,8 +497,10 @@ class GenericHandler(CommonHandler):
             for variable_to_add in variables_to_add.items():
                 variable_to_add_name = variable_to_add[0]
                 variable_to_add_info = variable_to_add[1]
+                var_type = variable_to_add_info["schema"].get("type")
+
                 if variable_to_add_info["source"].startswith("@filename"):
-                    df[variable_to_add_name] = os.path.basename(f.path)
+                    df[variable_to_add_name] = os.path.basename(f.path)  # always string
                     self.logger.info(
                         f"{self.uuid_log}: variable {variable_to_add_name} created with value {f.path}"
                     )
@@ -511,6 +515,10 @@ class GenericHandler(CommonHandler):
 
                     else:
                         attr_value = getattr(ds[varname], attr)
+
+                        attr_value = cast_value_to_config_type(
+                            attr_value, var_type
+                        )  # convert variable to required type
                         df[variable_to_add_name] = attr_value
                         self.logger.info(
                             f"{self.uuid_log}: variable {variable_to_add_name} created with value {attr_value}"
@@ -518,8 +526,12 @@ class GenericHandler(CommonHandler):
 
                 elif variable_to_add_info["source"].startswith("@global_attribute:"):
                     gattr = variable_to_add_info["source"].split(":")[1]
+
                     if gattr in ds.attrs:
                         gattr_value = getattr(ds, gattr)
+                        gattr_value = cast_value_to_config_type(
+                            gattr_value, var_type
+                        )  # convert variable to required type
 
                         df[variable_to_add_name] = gattr_value
                         self.logger.info(
@@ -544,9 +556,12 @@ class GenericHandler(CommonHandler):
                         self.logger.info(
                             f"{self.uuid_log}: {f.path}: Adding extracted info from object key as variable {variable_to_add_name}: {extracted_info[variable_to_add_name]}"
                         )
+                        info_value = extracted_info[variable_to_add_name]
 
-                        df[variable_to_add_name] = extracted_info[variable_to_add_name]
-
+                        info_value = cast_value_to_config_type(
+                            info_value, var_type
+                        )  # convert variable to required type
+                        df[variable_to_add_name] = info_value
         return df
 
     def get_variables_from_object_key(self, f, extraction_code) -> dict:
@@ -880,51 +895,11 @@ class GenericHandler(CommonHandler):
         fields = []
         byte_dict_list = []
 
-        fields = []
-        byte_dict_list = []
         for var in self.full_schema:
             var_metadata = self.full_schema[var]
-            # Convert xarray variable values to PyArrow data type
-            if var_metadata["type"] == "float64":
-                data_type = pa.float64()
-            elif var_metadata["type"] == "float32":
-                data_type = pa.float32()
-            elif var_metadata["type"] == "float":
-                data_type = pa.float32()
-            elif var_metadata["type"] == "double":
-                data_type = pa.float64()
-            elif var_metadata["type"] == "int64":
-                data_type = pa.int64()
-            elif var_metadata["type"] == "int32":
-                data_type = pa.int32()
-            elif var_metadata["type"] == "int16":
-                data_type = pa.int16()
-            elif var_metadata["type"] == "int8":
-                data_type = pa.int8()
-            elif var_metadata["type"] == "uint64":
-                data_type = pa.uint64()
-            elif var_metadata["type"] == "uint32":
-                data_type = pa.uint32()
-            elif var_metadata["type"] == "uint16":
-                data_type = pa.uint16()
-            elif var_metadata["type"] == "uint8":
-                data_type = pa.uint8()
-            elif var_metadata["type"] == "bool":
-                data_type = pa.bool_()
-            elif var_metadata["type"] == "datetime64[ns]":
-                data_type = pa.timestamp("ns")
-            elif var_metadata["type"] == "timestamp[ns]":
-                data_type = pa.timestamp("ns")
-            elif var_metadata["type"] == "object":
-                data_type = pa.string()
-            elif var_metadata["type"] == "|S1":
-                data_type = pa.string()
-            elif var_metadata["type"] == "string":
-                data_type = pa.string()
-            else:
-                raise ValueError(
-                    f"Unsupported data type: {var_metadata['type']}  while creating metadata sidecar"
-                )
+
+            # Convert config type to PyArrow data type
+            data_type = map_config_type_to_pyarrow_type(var_metadata["type"])
 
             # TODO: once pyarrow matures on the metadata side, we should modify this ...
             # Create a PyArrow field with metadata
@@ -937,8 +912,8 @@ class GenericHandler(CommonHandler):
             # Append the field to the list of fields
             fields.append(field)  # The metadata still exists here... Good sign
 
-            # Because of some obscure reason, the above doesnt work as expected, the byte_dict_list is an alternative way to store the metadata
-
+            # Because of some obscure reason, the above doesn't work as expected,
+            # the byte_dict_list is an alternative way to store the metadata
             byte_dict = str(var_metadata).encode("utf-8")
             byte_dict_list.append(byte_dict)
 

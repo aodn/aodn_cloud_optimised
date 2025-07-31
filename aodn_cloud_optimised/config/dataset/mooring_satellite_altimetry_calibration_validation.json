@@ -3,49 +3,109 @@
   "logger_name": "mooring_satellite_altimetry_calibration_validation",
   "cloud_optimised_format": "parquet",
   "metadata_uuid": "78d588ed-79dd-47e2-b806-d39025194e7e",
-  "gattrs_to_variables": [
-    "site_code",
-    "site",
-    "instrument",
-    "instrument_serial_number"
-  ],
-  "partition_keys": [
-    "site_code",
-    "instrument",
-    "timestamp",
-    "polygon"
-  ],
-  "time_extent": {
-    "time": "TIME",
-    "partition_timestamp_period": "Y"
-  },
-  "spatial_extent": {
-    "lat": "LATITUDE",
-    "lon": "LONGITUDE",
-    "spatial_resolution": 2
+  "schema_transformation": {
+    "drop_variables": [],
+    "add_variables": {
+      "filename": {
+        "source": "@filename",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "long_name": "Filename of the source file"
+        }
+      },
+      "site_code": {
+        "source": "@global_attribute:site_code",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": "",
+          "long_name": "site code"
+        }
+      },
+      "site": {
+        "source": "@global_attribute:site",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": "",
+          "long_name": "site"
+        }
+      },
+      "instrument": {
+        "source": "@global_attribute:instrument",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": "",
+          "long_name": "instrument"
+        }
+      },
+      "instrument_serial_number": {
+        "source": "@global_attribute:instrument_serial_number",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": "",
+          "long_name": "instrument serial number"
+        }
+      },
+      "timestamp": {
+        "source": "@partitioning:time_extent",
+        "schema": {
+          "type": "int64",
+          "units": "1",
+          "long_name": "Partition timestamp"
+        }
+      },
+      "polygon": {
+        "source": "@partitioning:spatial_extent",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "long_name": "Spatial partition polygon"
+        }
+      }
+    },
+    "partitioning": [
+      {
+        "source_variable": "site_code"
+      },
+      {
+        "source_variable": "instrument"
+      },
+      {
+        "source_variable": "timestamp",
+        "type": "time_extent",
+        "time_extent": {
+          "time_varname": "TIME",
+          "partition_period": "Y"
+        }
+      },
+      {
+        "source_variable": "polygon",
+        "type": "spatial_extent",
+        "spatial_extent": {
+          "lat_varname": "LATITUDE",
+          "lon_varname": "LONGITUDE",
+          "spatial_resolution": 2
+        }
+      }
+    ],
+    "global_attributes": {
+      "delete": [
+        "geospatial_lat_max",
+        "geospatial_lat_min",
+        "geospatial_lon_max",
+        "geospatial_lon_min",
+        "date_created"
+      ],
+      "set": {
+        "title": "Alimetry Calibration Validation"
+      }
+    }
   },
   "schema": {
-    "timestamp": {
-      "type": "int64"
-    },
-    "polygon": {
-      "type": "string"
-    },
-    "filename": {
-      "type": "string"
-    },
-    "site_code": {
-      "type": "string"
-    },
-    "site": {
-      "type": "string"
-    },
-    "instrument": {
-      "type": "string"
-    },
-    "instrument_serial_number": {
-      "type": "string"
-    },
     "TIME": {
       "type": "timestamp[ns]",
       "long_name": "time",
@@ -281,9 +341,6 @@
       ],
       "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed Not_used Not_used Not_used Missing_values"
     }
-  },
-  "dataset_gattrs": {
-    "title": ""
   },
   "aws_opendata_registry": {
     "Name": "Satellite - Altimetry calibration and validation",

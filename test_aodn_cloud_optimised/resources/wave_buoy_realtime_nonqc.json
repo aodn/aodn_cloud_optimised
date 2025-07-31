@@ -33,6 +33,7 @@
       "filename": {
         "source": "@filename",
         "schema": {
+          "units": "1",
           "type": "string",
           "long_name": "Filename of the source file"
         }
@@ -67,6 +68,7 @@
         "source": "@partitioning:time_extent",
         "schema": {
           "type": "int64",
+          "units": "1",
           "long_name": "Partition timestamp"
         }
       },
@@ -74,6 +76,7 @@
         "source": "@partitioning:spatial_extent",
         "schema": {
           "type": "string",
+          "units": "1",
           "long_name": "Spatial partition polygon"
         }
       }

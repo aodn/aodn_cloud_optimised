@@ -3,36 +3,77 @@
   "logger_name": "vessel_trv_realtime_qc",
   "cloud_optimised_format": "parquet",
   "metadata_uuid": "8af21108-c535-43bf-8dab-c1f45a26088c",
-  "gattrs_to_variables": [
-    "platform_code"
-  ],
-  "partition_keys": [
-    "platform_code",
-    "timestamp",
-    "polygon"
-  ],
-  "time_extent": {
-    "time": "TIME",
-    "partition_timestamp_period": "M"
-  },
-  "spatial_extent": {
-    "lat": "LATITUDE",
-    "lon": "LONGITUDE",
-    "spatial_resolution": 15
+  "schema_transformation": {
+    "drop_variables": [],
+    "add_variables": {
+      "filename": {
+        "source": "@filename",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "long_name": "Filename of the source file"
+        }
+      },
+      "platform_code": {
+        "source": "@global_attribute:platform_code",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": "",
+          "long_name": "platform code"
+        }
+      },
+      "timestamp": {
+        "source": "@partitioning:time_extent",
+        "schema": {
+          "type": "int64",
+          "units": "1",
+          "long_name": "Partition timestamp"
+        }
+      },
+      "polygon": {
+        "source": "@partitioning:spatial_extent",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "long_name": "Spatial partition polygon"
+        }
+      }
+    },
+    "partitioning": [
+      {
+        "source_variable": "platform_code"
+      },
+      {
+        "source_variable": "timestamp",
+        "type": "time_extent",
+        "time_extent": {
+          "time_varname": "TIME",
+          "partition_period": "M"
+        }
+      },
+      {
+        "source_variable": "polygon",
+        "type": "spatial_extent",
+        "spatial_extent": {
+          "lat_varname": "LATITUDE",
+          "lon_varname": "LONGITUDE",
+          "spatial_resolution": 15
+        }
+      }
+    ],
+    "global_attributes": {
+      "delete": [
+        "geospatial_lat_max",
+        "geospatial_lat_min",
+        "geospatial_lon_max",
+        "geospatial_lon_min",
+        "date_created"
+      ],
+      "set": {}
+    }
   },
   "schema": {
-    "platform_code": {
-      "type": "string"
-    },
-    "timestamp": {
-      "type": "int64"
-    },
-    "polygon": {
-      "type": "string"
-    },
-    "filename": {
-      "type": "string"
-    },
     "LATITUDE_quality_control": {
       "type": "double",
       "long_name": "LATITUDE quality control",
@@ -239,9 +280,6 @@
       ],
       "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values"
     }
-  },
-  "dataset_gattrs": {
-    "title": ""
   },
   "aws_opendata_registry": {
     "Name": "Ships of Opportunity - Tropical research vessels - Real time",

@@ -3,21 +3,74 @@
   "logger_name": "srs_oc_ljco_wqm_daily",
   "cloud_optimised_format": "parquet",
   "metadata_uuid": "4ac6bf81-cd37-4611-8da8-4d5ae5e2bda3",
-  "gattrs_to_variables": [
-    "site_code"
-  ],
-  "partition_keys": [
-    "timestamp",
-    "polygon"
-  ],
-  "time_extent": {
-    "time": "TIME",
-    "partition_timestamp_period": "M"
-  },
-  "spatial_extent": {
-    "lat": "LATITUDE",
-    "lon": "LONGITUDE",
-    "spatial_resolution": 5
+  "schema_transformation": {
+    "drop_variables": [],
+    "add_variables": {
+      "filename": {
+        "source": "@filename",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "long_name": "Filename of the source file"
+        }
+      },
+      "site_code": {
+        "source": "@global_attribute:site_code",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": "",
+          "long_name": "site code"
+        }
+      },
+      "timestamp": {
+        "source": "@partitioning:time_extent",
+        "schema": {
+          "type": "int64",
+          "units": "1",
+          "long_name": "Partition timestamp"
+        }
+      },
+      "polygon": {
+        "source": "@partitioning:spatial_extent",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "long_name": "Spatial partition polygon"
+        }
+      }
+    },
+    "partitioning": [
+      {
+        "source_variable": "timestamp",
+        "type": "time_extent",
+        "time_extent": {
+          "time_varname": "TIME",
+          "partition_period": "M"
+        }
+      },
+      {
+        "source_variable": "polygon",
+        "type": "spatial_extent",
+        "spatial_extent": {
+          "lat_varname": "LATITUDE",
+          "lon_varname": "LONGITUDE",
+          "spatial_resolution": 5
+        }
+      }
+    ],
+    "global_attributes": {
+      "delete": [
+        "geospatial_lat_max",
+        "geospatial_lat_min",
+        "geospatial_lon_max",
+        "geospatial_lon_min",
+        "date_created"
+      ],
+      "set": {
+        "title": "SRS OC LJCO"
+      }
+    }
   },
   "schema": {
     "TIME": {
@@ -601,22 +654,7 @@
       "type": "double",
       "long_name": "total number of observations in the time bins including flagged observations",
       "units": "1"
-    },
-    "timestamp": {
-      "type": "int64"
-    },
-    "polygon": {
-      "type": "string"
-    },
-    "site_code": {
-      "type": "string"
-    },
-    "filename": {
-      "type": "string"
     }
-  },
-  "dataset_gattrs": {
-    "title": "SRS OC LJCO"
   },
   "aws_opendata_registry": {
     "Name": "Satellite - Ocean Colour - Lucinda Jetty Coastal Observatory",

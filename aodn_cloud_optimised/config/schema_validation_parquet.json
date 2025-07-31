@@ -130,20 +130,6 @@
       },
       "required": []
     },
-    "dataset_gattrs": {
-      "type": "object",
-      "properties": {
-        "title": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "title"
-      ]
-    },
-    "force_old_pq_del": {
-      "type": "boolean"
-    },
     "aws_opendata_registry": {
       "type": "object",
       "properties": {

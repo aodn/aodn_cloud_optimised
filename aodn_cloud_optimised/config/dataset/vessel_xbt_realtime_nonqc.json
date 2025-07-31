@@ -3,25 +3,105 @@
   "logger_name": "vessel_xbt_realtime_nonqc",
   "cloud_optimised_format": "parquet",
   "metadata_uuid": "35234913-aa3c-48ec-b9a4-77f822f66ef8",
-  "gattrs_to_variables": [
-    "XBT_line",
-    "ship_name",
-    "Callsign",
-    "imo_number"
-  ],
-  "partition_keys": [
-    "XBT_line",
-    "timestamp",
-    "polygon"
-  ],
-  "time_extent": {
-    "time": "TIME",
-    "partition_timestamp_period": "M"
-  },
-  "spatial_extent": {
-    "lat": "LATITUDE",
-    "lon": "LONGITUDE",
-    "spatial_resolution": 5
+  "schema_transformation": {
+    "drop_variables": [],
+    "add_variables": {
+      "filename": {
+        "source": "@filename",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "long_name": "Filename of the source file"
+        }
+      },
+      "XBT_line": {
+        "source": "@global_attribute:XBT_line",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": "",
+          "long_name": "XBT_line"
+        }
+      },
+      "ship_name": {
+        "source": "@global_attribute:ship_name",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": "",
+          "long_name": "ship name"
+        }
+      },
+      "Callsign": {
+        "source": "@global_attribute:Callsign",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "long_name": "vessel callsign"
+        }
+      },
+      "imo_number": {
+        "source": "@global_attribute:imo_number",
+        "schema": {
+          "type": "int32",
+          "units": "1",
+          "long_name": "IMO number"
+        }
+      },
+      "timestamp": {
+        "source": "@partitioning:time_extent",
+        "schema": {
+          "type": "int64",
+          "units": "1",
+          "long_name": "Partition timestamp"
+        }
+      },
+      "polygon": {
+        "source": "@partitioning:spatial_extent",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "long_name": "Spatial partition polygon"
+        }
+      }
+    },
+    "partitioning": [
+      {
+        "source_variable": "XBT_line"
+      },
+      {
+        "source_variable": "timestamp",
+        "type": "time_extent",
+        "time_extent": {
+          "time_varname": "TIME",
+          "partition_period": "M"
+        }
+      },
+      {
+        "source_variable": "polygon",
+        "type": "spatial_extent",
+        "spatial_extent": {
+          "lat_varname": "LATITUDE",
+          "lon_varname": "LONGITUDE",
+          "spatial_resolution": 5
+        }
+      }
+    ],
+    "global_attributes": {
+      "delete": [
+        "geospatial_lat_max",
+        "geospatial_lat_min",
+        "geospatial_lon_max",
+        "geospatial_lon_min",
+        "date_created"
+      ],
+      "set": {
+        "title": "Upper Ocean Thermal Data collected using XBT (expendable bathythermographs)",
+        "principal_investigator": "Cowley, Rebecca",
+        "principal_investigator_email": "rebecca.cowley@csiro.au",
+        "featureType": "profile"
+      }
+    }
   },
   "schema": {
     "TIME": {
@@ -114,34 +194,7 @@
         15
       ],
       "flag_meanings": "Unqualified Correct_value_all_checks_passed Probably_good_but_value_inconsistent_with_statistics_differ_from_climatology Probably_bad_spike_gradient_etc_if_other_tests_passed Bad_value_impossible_value_out_of_scale_vertical_instability_constant_profile Value_modified_during_quality_control Interpolated_value Good_for_operational_use_caution_check_literature_for_other_uses Missing_value"
-    },
-    "imo_number": {
-      "type": "int32"
-    },
-    "timestamp": {
-      "type": "int64"
-    },
-    "polygon": {
-      "type": "string"
-    },
-    "XBT_line": {
-      "type": "string"
-    },
-    "ship_name": {
-      "type": "string"
-    },
-    "Callsign": {
-      "type": "string"
-    },
-    "filename": {
-      "type": "string"
     }
-  },
-  "dataset_gattrs": {
-    "title": "Upper Ocean Thermal Data collected using XBT (expendable bathythermographs)",
-    "principal_investigator": "Cowley, Rebecca",
-    "principal_investigator_email": "rebecca.cowley@csiro.au",
-    "featureType": "profile"
   },
   "aws_opendata_registry": {
     "Name": "Ships of Opportunity - Expendable bathythermographs - Real time",
