@@ -38,7 +38,7 @@
         "type": "time_extent",
         "time_extent": {
           "time_varname": "JULD",
-          "partition_period": "M"
+          "partition_period": "Y"
         }
       },
       {
