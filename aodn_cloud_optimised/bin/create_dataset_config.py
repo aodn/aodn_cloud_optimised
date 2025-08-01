@@ -698,10 +698,31 @@ def main():
     if args.cloud_format == "zarr":
         nc_nullify_path = nullify_netcdf_variables(nc_file, args.dataset_name)
 
-    # Generate JSON schema from the NetCDF file
-    temp_file_path = generate_json_schema_from_s3_netcdf(
-        nc_file, cloud_format=args.cloud_format
-    )
+    # Generate schema based on input type (NetCDF or CSV)
+    if obj_key.lower().endswith(".csv"):
+        import pandas as pd
+
+        csv_opts = json.loads(args.csv_opts) if args.csv_opts else {}
+        df = pd.read_csv(nc_file, **csv_opts)
+        dataset_config_schema = {"type": "object", "properties": {}}
+        for col, dtype in df.dtypes.items():
+            if pd.api.types.is_integer_dtype(dtype):
+                js_type = "integer"
+            elif pd.api.types.is_float_dtype(dtype):
+                js_type = "number"
+            elif pd.api.types.is_bool_dtype(dtype):
+                js_type = "boolean"
+            else:
+                js_type = "string"
+            dataset_config_schema["properties"][col] = {"type": js_type}
+    else:
+        # Generate JSON schema from the NetCDF file
+        temp_file_path = generate_json_schema_from_s3_netcdf(
+            nc_file, cloud_format=args.cloud_format
+        )
+        with open(temp_file_path, "r") as file:
+            dataset_config_schema = json.load(file)
+        os.remove(temp_file_path)
 
     with open(temp_file_path, "r") as file:
         dataset_config_schema = json.load(file)
