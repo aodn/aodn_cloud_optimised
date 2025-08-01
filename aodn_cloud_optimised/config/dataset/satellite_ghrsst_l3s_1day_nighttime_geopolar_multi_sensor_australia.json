@@ -194,9 +194,6 @@
       "valid_max": 127
     }
   },
-  "dataset_gattrs": {
-    "title": ""
-  },
   "aws_opendata_registry": {
     "Name": "Satellite - Sea surface temperature - Level 3 - GeoPolar Multi sensor - 1 day - Night time",
     "Description": "This is a GeoPolar Multi-sensor SSTskin L3S product for a single night-time period, derived using sea surface temperature retrievals from the AHI sensor on the Himawari-8, the VIIRS sensor on the Suomi-NPP satellite and JPSS series of satellites, and AVHRR sensor on the NOAA and Metop series of Polar-orbiting satellites. The sensors and satellite platforms contributing to each file are listed in the sensor and platform global attributes in the file header. The GeoPolar Multi-sensor L3S product is provided as a 0.02deg x 0.02deg cylindrical equidistant projected map over the region 70E to 170W, 20N to 70S. The quality level for each pixel was remapped using the original ACSPO VIIRS and AVHRR L3U quality levels and Sensor Specific Error Statistics (SSES), as described in Govekar et al. (2022) https://doi.org/10.3390/rs14153785 and Griffin et al. (2017) Appendix at http://imos.org.au/facilities/srs/sstproducts/sstdata0/sstdata-references/, before compositing single swaths from the sensors. Each grid cell contains the 1 night average of all the highest available quality SSTs that overlap with that cell, weighted by the area of overlap. Refer to the IMOS SST products web page at http://imos.org.au/sstproducts.html for further information.",
@@ -269,5 +266,12 @@
     ],
     "clear_existing_data": true,
     "raise_error": false
+  },
+  "schema_transformation": {
+    "global_attributes": {
+      "set": {
+        "title": ""
+      }
+    }
   }
 }

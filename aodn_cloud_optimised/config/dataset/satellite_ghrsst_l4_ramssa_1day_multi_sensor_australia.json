@@ -3,28 +3,6 @@
   "logger_name": "satellite_ghrsst_l4_ramssa_1day_multi_sensor_australia",
   "cloud_optimised_format": "zarr",
   "metadata_uuid": "a4170ca8-0942-4d13-bdb8-ad4718ce14bb",
-  "dimensions": {
-    "time": {
-      "name": "time",
-      "chunk": 3,
-      "rechunk": true,
-      "append_dim": true
-    },
-    "latitude": {
-      "name": "lat",
-      "chunk": 360
-    },
-    "longitude": {
-      "name": "lon",
-      "chunk": 720
-    }
-  },
-  "var_template_shape": "analysed_sst",
-  "vars_incompatible_with_region": [
-    "lon",
-    "lat",
-    "crs"
-  ],
   "schema": {
     "time": {
       "type": "timestamp[ns]",
@@ -116,9 +94,6 @@
       "drop_var": true
     }
   },
-  "dataset_gattrs": {
-    "title": ""
-  },
   "aws_opendata_registry": {
     "Name": "Satellite - Sea surface temperature - Level 4 - Multi sensor - Regional Australian",
     "Description": "An International Group for High Resolution Sea Surface Temperature (GHRSST) Level 4 sea surface temperature analysis, produced daily on an operational basis at the Australian Bureau of Meteorology using optimal interpolation (OI) on a regional 1/12 degree grid over the Australian region (20N - 70S, 60E - 170W). This Regional Australian Multi-Sensor SST Analysis (RAMSSA) v1.0 system blends infra-red SST observations from the Advanced Very High Resolution Radiometer (AVHRR) on NOAA and METOP polar-orbiting satellites, microwave SST observations from the Advanced Microwave Scanning Radiometer-2 (AMSR-2) on GCOM-W, and in situ data from ships, and drifting and moored buoys from the Global Telecommunications System (GTS).  \n\nAll SST observations are filtered for those values suspected to be affected by diurnal warming by excluding cases which have experienced recent surface wind speeds of below 6 m/s during the day and less than 2 m/s during the night, thereby resulting in daily foundation SST estimates that are largely free of diurnal warming effects.",
@@ -191,5 +166,34 @@
     ],
     "clear_existing_data": true,
     "raise_error": false
+  },
+  "schema_transformation": {
+    "global_attributes": {
+      "set": {
+        "title": ""
+      }
+    },
+    "var_template_shape": "analysed_sst",
+    "vars_incompatible_with_region": [
+      "lon",
+      "lat",
+      "crs"
+    ],
+    "dimensions": {
+      "time": {
+        "name": "time",
+        "chunk": 3,
+        "rechunk": true,
+        "append_dim": true
+      },
+      "latitude": {
+        "name": "lat",
+        "chunk": 360
+      },
+      "longitude": {
+        "name": "lon",
+        "chunk": 720
+      }
+    }
   }
 }

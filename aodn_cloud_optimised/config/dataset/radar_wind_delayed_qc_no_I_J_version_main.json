@@ -2,11 +2,6 @@
   "dataset_name": "radar_wind_delayed_qc_no_I_J_version_main",
   "logger_name": "radar_wind_delayed_qc_no_I_J_version_main",
   "cloud_optimised_format": "zarr",
-  "var_template_shape": "WDIR",
-  "vars_incompatible_with_region": [
-    "LATITUDE",
-    "LONGITUDE"
-  ],
   "schema": {
     "TIME": {
       "type": "timestamp[ns]",
@@ -168,5 +163,12 @@
     "paths": [],
     "clear_existing_data": true,
     "raise_error": false
+  },
+  "schema_transformation": {
+    "var_template_shape": "WDIR",
+    "vars_incompatible_with_region": [
+      "LATITUDE",
+      "LONGITUDE"
+    ]
   }
 }

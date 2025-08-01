@@ -31,24 +31,26 @@
     "clear_existing_data": true,
     "raise_error": false
   },
-  "dimensions": {
-    "time": {
-      "name": "time",
-      "chunk": 5,
-      "rechunk": false,
-      "append_dim": true
-    },
-    "latitude": {
-      "name": "latitude",
-      "chunk": 500
-    },
-    "longitude": {
-      "name": "longitude",
-      "chunk": 500
+  "schema_transformation": {
+    "vars_incompatible_with_region": [
+      "latitude",
+      "longitude"
+    ],
+    "dimensions": {
+      "time": {
+        "name": "time",
+        "chunk": 5,
+        "rechunk": false,
+        "append_dim": true
+      },
+      "latitude": {
+        "name": "latitude",
+        "chunk": 500
+      },
+      "longitude": {
+        "name": "longitude",
+        "chunk": 500
+      }
     }
-  },
-  "vars_incompatible_with_region": [
-    "latitude",
-    "longitude"
-  ]
+  }
 }

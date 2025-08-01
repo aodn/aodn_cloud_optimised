@@ -3,7 +3,6 @@
   "logger_name": "satellite_diffuse_attenuation_coefficent_1day_noaa20",
   "parent_config": "satellite_ocean_colour_1day_noaa20_main.json",
   "metadata_uuid": "37751f5b-3c93-40df-9913-951df310cbc8",
-  "var_template_shape": "K_490",
   "schema": {
     "time": {
       "type": "timestamp[ns]",
@@ -31,9 +30,6 @@
       "long_name": "Diffuse attenuation coefficient at 490 nm (OBPG)",
       "flag_applied": "HISATZEN HIGLINT LAND CLDICE NAVFAIL"
     }
-  },
-  "dataset_gattrs": {
-    "title": ""
   },
   "aws_opendata_registry": {
     "Name": "Satellite - Ocean Colour - NOAA20 - 1 day - Diffuse attenuation coefficient (k490)",
@@ -95,5 +91,13 @@
     ],
     "clear_existing_data": true,
     "raise_error": false
+  },
+  "schema_transformation": {
+    "global_attributes": {
+      "set": {
+        "title": ""
+      }
+    },
+    "var_template_shape": "K_490"
   }
 }

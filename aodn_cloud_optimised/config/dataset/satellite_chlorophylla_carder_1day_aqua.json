@@ -3,7 +3,6 @@
   "logger_name": "satellite_chlorophylla_carder_1day_aqua",
   "parent_config": "satellite_ocean_colour_1day_aqua_main.json",
   "metadata_uuid": "43ac4663-c8de-4eb0-9711-3da65cbecdd3",
-  "var_template_shape": "chl_carder",
   "schema": {
     "time": {
       "type": "timestamp[ns]",
@@ -37,9 +36,6 @@
       "long_name": "Product-specific flags, Carder model",
       "flag_applied": "HISATZEN LAND CLDICE NAVFAIL"
     }
-  },
-  "dataset_gattrs": {
-    "title": ""
   },
   "aws_opendata_registry": {
     "Name": "Satellite - Ocean Colour -  MODIS - 1 day - Chlorophyll-a concentration (Carder model)",
@@ -102,5 +98,13 @@
     ],
     "clear_existing_data": true,
     "raise_error": false
+  },
+  "schema_transformation": {
+    "global_attributes": {
+      "set": {
+        "title": ""
+      }
+    },
+    "var_template_shape": "chl_carder"
   }
 }

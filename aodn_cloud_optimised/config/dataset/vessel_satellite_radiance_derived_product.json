@@ -36,54 +36,79 @@
     "raise_error": false
   },
   "metadata_uuid": "28f8bfed-ca6a-472a-84e4-42563ce4df3f",
-  "dataset_sort_by": [
-    "WAVELENGTH",
-    "TIME"
-  ],
-  "dimensions": {
-    "time": {
-      "name": "TIME",
-      "chunk": 10000,
-      "rechunk": false,
-      "append_dim": true
+  "schema_transformation": {
+    "global_attributes": {
+      "set": {
+        "title": ""
+      },
+      "delete": [
+        "Voyage_number",
+        "platform_code",
+        "geospatial_lat_max",
+        "geospatial_lat_min",
+        "geospatial_lon_max",
+        "geospatial_lon_min",
+        "date_created"
+      ]
     },
-    "WAVELENGTH": {
-      "name": "WAVELENGTH",
-      "chunk": 596,
-      "size": 596,
-      "append_dim": false
+    "dataset_sort_by": [
+      "WAVELENGTH",
+      "TIME"
+    ],
+    "dimensions": {
+      "time": {
+        "name": "TIME",
+        "chunk": 10000,
+        "rechunk": false,
+        "append_dim": true
+      },
+      "WAVELENGTH": {
+        "name": "WAVELENGTH",
+        "chunk": 596,
+        "size": 596,
+        "append_dim": false
+      }
+    },
+    "var_template_shape": "rho",
+    "vars_incompatible_with_region": [
+      "WAVELENGTH"
+    ],
+    "add_variables": {
+      "filename": {
+        "source": "@filename",
+        "schema": {
+          "type": "object",
+          "units": "1",
+          "long_name": "Filename of the source file",
+          "dimensions": "TIME"
+        }
+      },
+      "quality_control_version": {
+        "source": "@global_attribute:file_version",
+        "schema": {
+          "type": "<U49",
+          "units": "1",
+          "dimensions": "TIME"
+        }
+      },
+      "platform_code": {
+        "source": "@global_attribute:platform_code",
+        "schema": {
+          "type": "<U7",
+          "units": "1",
+          "dimensions": "TIME"
+        }
+      },
+      "voyage_number": {
+        "source": "@global_attribute:Voyage_number",
+        "schema": {
+          "type": "<U10",
+          "units": "1",
+          "dimensions": "TIME"
+        }
+      }
     }
   },
-  "var_template_shape": "rho",
-  "vars_incompatible_with_region": [
-    "WAVELENGTH"
-  ],
-  "gattrs_to_variables": {
-    "file_version": {
-      "destination_name": "quality_control_version",
-      "dimensions": "TIME",
-      "dtype": "<U49"
-    },
-    "platform_code": {
-      "destination_name": "platform_code",
-      "dimensions": "TIME",
-      "dtype": "<U7"
-    },
-    "Voyage_number": {
-      "destination_name": "voyage_number",
-      "dimensions": "TIME",
-      "dtype": "<U10"
-    }
-  },
-  "gattrs_to_delete": [
-    "Voyage_number",
-    "platform_code",
-    "geospatial_lat_max",
-    "geospatial_lat_min",
-    "geospatial_lon_max",
-    "geospatial_lon_min",
-    "date_created"
-  ],
   "schema": {
     "TIME": {
       "type": "timestamp[ns]",
@@ -244,9 +269,6 @@
         2
       ]
     }
-  },
-  "dataset_gattrs": {
-    "title": ""
   },
   "aws_opendata_registry": {
     "Name": "IMOS - Satellite Remote Sensing - Ocean Colour - Ships of Opportunity - Radiometer Sub-Facility",

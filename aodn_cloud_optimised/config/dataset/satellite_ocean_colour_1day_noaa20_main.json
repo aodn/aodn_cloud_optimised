@@ -1,26 +1,6 @@
 {
   "dataset_name": "satellite_ocean_colour_1day_noaa20_main",
   "cloud_optimised_format": "zarr",
-  "dimensions": {
-    "time": {
-      "name": "time",
-      "chunk": 5,
-      "rechunk": false,
-      "append_dim": true
-    },
-    "latitude": {
-      "name": "latitude",
-      "chunk": 600
-    },
-    "longitude": {
-      "name": "longitude",
-      "chunk": 800
-    }
-  },
-  "vars_incompatible_with_region": [
-    "latitude",
-    "longitude"
-  ],
   "run_settings": {
     "coiled_cluster_options": {
       "n_workers": [
@@ -50,5 +30,27 @@
     ],
     "clear_existing_data": true,
     "raise_error": false
+  },
+  "schema_transformation": {
+    "vars_incompatible_with_region": [
+      "latitude",
+      "longitude"
+    ],
+    "dimensions": {
+      "time": {
+        "name": "time",
+        "chunk": 5,
+        "rechunk": false,
+        "append_dim": true
+      },
+      "latitude": {
+        "name": "latitude",
+        "chunk": 600
+      },
+      "longitude": {
+        "name": "longitude",
+        "chunk": 800
+      }
+    }
   }
 }

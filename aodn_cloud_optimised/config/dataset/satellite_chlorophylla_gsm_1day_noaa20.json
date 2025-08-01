@@ -3,7 +3,6 @@
   "logger_name": "satellite_chlorophylla_gsm_1day_noaa20",
   "parent_config": "satellite_ocean_colour_1day_noaa20_main.json",
   "metadata_uuid": "ad4d6908-3a36-4991-996a-5b00ac162794",
-  "var_template_shape": "chl_gsm",
   "schema": {
     "time": {
       "type": "timestamp[ns]",
@@ -31,9 +30,6 @@
       "long_name": "Chlorophyll Concentration, GSM model",
       "flag_applied": "HISATZEN HIGLINT LAND CLDICE NAVFAIL"
     }
-  },
-  "dataset_gattrs": {
-    "title": ""
   },
   "aws_opendata_registry": {
     "Name": "Satellite - Ocean Colour -  NOAA20 - 1 day - Chlorophyll-a concentration (GSM model)",
@@ -95,5 +91,13 @@
     ],
     "clear_existing_data": true,
     "raise_error": false
+  },
+  "schema_transformation": {
+    "global_attributes": {
+      "set": {
+        "title": ""
+      }
+    },
+    "var_template_shape": "chl_gsm"
   }
 }

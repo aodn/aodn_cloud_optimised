@@ -3,7 +3,6 @@
   "logger_name": "satellite_chlorophylla_oci_1day_noaa20",
   "parent_config": "satellite_ocean_colour_1day_noaa20_main.json",
   "metadata_uuid": "a9e03db8-f277-45d1-821d-cfcbfe8ae6be",
-  "var_template_shape": "chl_oci",
   "schema": {
     "time": {
       "type": "timestamp[ns]",
@@ -73,9 +72,6 @@
       "units": "1"
     }
   },
-  "dataset_gattrs": {
-    "title": ""
-  },
   "aws_opendata_registry": {
     "Name": "Satellite - Ocean Colour -  NOAA20 - 1 day - Chlorophyll-a concentration (OCI model)",
     "Description": "The NOAA20 satellite platform carries a VIIRS sensor that observes sunlight reflected from within the ocean surface layer at multiple wavelengths. These multi-spectral measurements are used to infer the concentration of chlorophyll-a (Chl-a), most typically due to phytoplankton, present in the water. \n\nThere are multiple retrieval algorithms for estimating Chl-a. These data use the OCI method (Hu et al 2012, doi: 10.1029/2011jc007395) recommended by the NASA Ocean Biology Processing Group and implemented in the SeaDAS processing software l2gen. The OCI algorithm is described at https://oceancolor.gsfc.nasa.gov/atbd/chlor_a/ (and links therein).",
@@ -136,5 +132,13 @@
     ],
     "clear_existing_data": true,
     "raise_error": false
+  },
+  "schema_transformation": {
+    "global_attributes": {
+      "set": {
+        "title": ""
+      }
+    },
+    "var_template_shape": "chl_oci"
   }
 }

@@ -3,7 +3,6 @@
   "logger_name": "satellite_optical_water_type_1day_aqua",
   "parent_config": "satellite_ocean_colour_1day_aqua_main.json",
   "metadata_uuid": "60e57a2e-f88c-4b18-a3a1-1164c6259a10",
-  "var_template_shape": "owtd_csiro",
   "schema": {
     "time": {
       "type": "timestamp[ns]",
@@ -34,9 +33,6 @@
       "valid_max": 8,
       "comment": "CSIRO implementation of algorithm by Moore et al. (2009), RSE, 113, pp2424-2430, doi:10.1016/j.rse.2009.07.016"
     }
-  },
-  "dataset_gattrs": {
-    "title": ""
   },
   "aws_opendata_registry": {
     "Name": "Satellite - Ocean Colour - MODIS - 1 day - Optical Water Type (Moore et al 2009 algorithm)",
@@ -97,5 +93,13 @@
     ],
     "clear_existing_data": true,
     "raise_error": false
+  },
+  "schema_transformation": {
+    "global_attributes": {
+      "set": {
+        "title": ""
+      }
+    },
+    "var_template_shape": "owtd_csiro"
   }
 }

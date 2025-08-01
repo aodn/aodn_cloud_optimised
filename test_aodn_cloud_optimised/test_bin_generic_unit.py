@@ -102,9 +102,13 @@ class TestDatasetConfigValidation(unittest.TestCase):
     def test_vars_incompatible_with_region_invalid(self):
         config = self.base_valid_config.copy()
         config["schema"] = {"TEMP": {"type": "float32"}}
-        config["vars_incompatible_with_region"] = ["WAVELENTGH"]
+
+        config["schema_transformation"] = {}
+        config["schema_transformation"]["vars_incompatible_with_region"] = [
+            "WAVELENTGH"
+        ]
         config["cloud_optimised_format"] = "zarr"
-        config["dimensions"] = {"TIME": {"name": "TIME"}}
+        config["schema_transformation"]["dimensions"] = {"TIME": {"name": "TIME"}}
         with self.assertRaises(ValidationError) as ctx:
             DatasetConfig.model_validate(config)
         self.assertIn("not defined in schema", str(ctx.exception))

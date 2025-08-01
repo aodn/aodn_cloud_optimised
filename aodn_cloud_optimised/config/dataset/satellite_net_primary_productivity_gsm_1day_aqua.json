@@ -3,7 +3,6 @@
   "logger_name": "satellite_net_primary_productivity_gsm_1day_aqua",
   "parent_config": "satellite_ocean_colour_1day_aqua_main.json",
   "metadata_uuid": "27cc65c0-d453-4ba3-a0d6-55e4449fee8c",
-  "var_template_shape": "npp_vgpm_eppley_gsm",
   "schema": {
     "time": {
       "type": "timestamp[ns]",
@@ -31,9 +30,6 @@
       "flag_applied": "HISATZEN LAND CLDICE NAVFAIL",
       "units": "mg.m^-3.d^-1"
     }
-  },
-  "dataset_gattrs": {
-    "title": ""
   },
   "aws_opendata_registry": {
     "Name": "Satellite - Ocean Colour - MODIS - 1 day - Net Primary Productivity (GSM model and Eppley-VGPM algorithm)",
@@ -94,5 +90,13 @@
     ],
     "clear_existing_data": true,
     "raise_error": false
+  },
+  "schema_transformation": {
+    "global_attributes": {
+      "set": {
+        "title": ""
+      }
+    },
+    "var_template_shape": "npp_vgpm_eppley_gsm"
   }
 }

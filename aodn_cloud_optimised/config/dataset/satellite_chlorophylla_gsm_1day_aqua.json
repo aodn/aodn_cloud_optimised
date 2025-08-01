@@ -24,7 +24,6 @@
     "batch_size": 125
   },
   "metadata_uuid": "f73daf07-eb81-4995-a72a-ca903834509f",
-  "var_template_shape": "chl_gsm",
   "schema": {
     "time": {
       "type": "timestamp[ns]",
@@ -52,9 +51,6 @@
       "long_name": "Chlorophyll Concentration, GSM model",
       "flag_applied": "HISATZEN LAND CLDICE NAVFAIL"
     }
-  },
-  "dataset_gattrs": {
-    "title": ""
   },
   "aws_opendata_registry": {
     "Name": "Satellite - Ocean Colour -  MODIS - 1 day - Chlorophyll-a concentration (GSM model)",
@@ -96,5 +92,13 @@
       ]
     },
     "Citation": "The citation in a list of references is: \"IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access].\""
+  },
+  "schema_transformation": {
+    "global_attributes": {
+      "set": {
+        "title": ""
+      }
+    },
+    "var_template_shape": "chl_gsm"
   }
 }

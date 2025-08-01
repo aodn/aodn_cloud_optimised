@@ -20,30 +20,6 @@
     "batch_size": 1000
   },
   "metadata_uuid": "",
-  "dimensions": {
-    "time": {
-      "name": "TIME",
-      "chunk": 1500,
-      "rechunk": true,
-      "append_dim": true
-    },
-    "latitude": {
-      "name": "J",
-      "chunk": 59
-    },
-    "longitude": {
-      "name": "I",
-      "chunk": 60
-    }
-  },
-  "var_template_shape": "UCUR",
-  "vars_incompatible_with_region": [
-    "I",
-    "J",
-    "LATITUDE",
-    "LONGITUDE",
-    "GDOP"
-  ],
   "schema": {
     "TIME": {
       "type": "datetime64[ns]"
@@ -89,7 +65,35 @@
       "type": "float32"
     }
   },
-  "dataset_gattrs": {
-    "title": "Temperature logger"
+  "schema_transformation": {
+    "dimensions": {
+      "time": {
+        "name": "TIME",
+        "chunk": 1500,
+        "rechunk": true,
+        "append_dim": true
+      },
+      "latitude": {
+        "name": "J",
+        "chunk": 59
+      },
+      "longitude": {
+        "name": "I",
+        "chunk": 60
+      }
+    },
+    "global_attributes": {
+      "set": {
+        "title": "Temperature logger"
+      }
+    },
+    "var_template_shape": "UCUR",
+    "vars_incompatible_with_region": [
+      "I",
+      "J",
+      "LATITUDE",
+      "LONGITUDE",
+      "GDOP"
+    ]
   }
 }

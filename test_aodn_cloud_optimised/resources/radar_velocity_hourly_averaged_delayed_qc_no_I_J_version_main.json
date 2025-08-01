@@ -19,12 +19,6 @@
     },
     "batch_size": 6000
   },
-  "var_template_shape": "UCUR",
-  "vars_incompatible_with_region": [
-    "LATITUDE",
-    "LONGITUDE",
-    "GDOP"
-  ],
   "schema": {
     "TIME": {
       "type": "timestamp[ns]",
@@ -159,7 +153,17 @@
       "comment": "This value is set on the basis of the offline quality controls applied in the time domain (see abstract)."
     }
   },
-  "dataset_gattrs": {
-    "title": ""
+  "schema_transformation": {
+    "global_attributes": {
+      "set": {
+        "title": ""
+      }
+    },
+    "var_template_shape": "UCUR",
+    "vars_incompatible_with_region": [
+      "LATITUDE",
+      "LONGITUDE",
+      "GDOP"
+    ]
   }
 }
