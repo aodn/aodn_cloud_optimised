@@ -4,26 +4,113 @@
   "handler_class": "ArgoHandler",
   "cloud_optimised_format": "parquet",
   "metadata_uuid": "95d6314c-cfc7-40ae-b439-85f14541db71",
-  "gattrs_to_variables": [
-    "wmo_platform_code",
-    "smru_platform_code",
-    "species",
-    "location",
-    "instr_id"
-  ],
-  "partition_keys": [
-    "timestamp",
-    "PLATFORM_NUMBER",
-    "polygon"
-  ],
-  "time_extent": {
-    "time": "JULD",
-    "partition_timestamp_period": "Y"
-  },
-  "spatial_extent": {
-    "lat": "LATITUDE",
-    "lon": "LONGITUDE",
-    "spatial_resolution": 5
+  "schema_transformation": {
+    "drop_variables": [],
+    "add_variables": {
+      "filename": {
+        "source": "@filename",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "long_name": "Filename of the source file"
+        }
+      },
+      "smru_platform_code": {
+        "source": "@global_attribute:smru_platform_code",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": "",
+          "long_name": "smru platform code"
+        }
+      },
+      "wmo_platform_code": {
+        "source": "@global_attribute:wmo_platform_code",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": "",
+          "long_name": "wmo platform code"
+        }
+      },
+      "species": {
+        "source": "@global_attribute:species",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": "",
+          "long_name": "species"
+        }
+      },
+      "location": {
+        "source": "@global_attribute:location",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": "",
+          "long_name": "location"
+        }
+      },
+      "instr_id": {
+        "source": "@global_attribute:instr_id",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": "",
+          "long_name": "instrument identifier"
+        }
+      },
+      "timestamp": {
+        "source": "@partitioning:time_extent",
+        "schema": {
+          "type": "int64",
+          "units": "1",
+          "long_name": "Partition timestamp"
+        }
+      },
+      "polygon": {
+        "source": "@partitioning:spatial_extent",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "long_name": "Spatial partition polygon"
+        }
+      }
+    },
+    "partitioning": [
+      {
+        "source_variable": "timestamp",
+        "type": "time_extent",
+        "time_extent": {
+          "time_varname": "JULD",
+          "partition_period": "Y"
+        }
+      },
+      {
+        "source_variable": "PLATFORM_NUMBER"
+      },
+      {
+        "source_variable": "polygon",
+        "type": "spatial_extent",
+        "spatial_extent": {
+          "lat_varname": "LATITUDE",
+          "lon_varname": "LONGITUDE",
+          "spatial_resolution": 5
+        }
+      }
+    ],
+    "global_attributes": {
+      "delete": [
+        "geospatial_lat_max",
+        "geospatial_lat_min",
+        "geospatial_lon_max",
+        "geospatial_lon_min",
+        "date_created"
+      ],
+      "set": {
+        "title": "Satellite Relay Tagging Program - Southern Ocean - MEOP Quality Controlled CTD Profiles"
+      }
+    }
   },
   "schema": {
     "DATA_TYPE": {
@@ -386,34 +473,7 @@
     "SCIENTIFIC_CALIB_COEFFICIENT": {
       "type": "string",
       "long_name": "SRDL identifier in the SMRU database"
-    },
-    "timestamp": {
-      "type": "int64"
-    },
-    "polygon": {
-      "type": "string"
-    },
-    "filename": {
-      "type": "string"
-    },
-    "wmo_platform_code": {
-      "type": "string"
-    },
-    "smru_platform_code": {
-      "type": "string"
-    },
-    "species": {
-      "type": "string"
-    },
-    "location": {
-      "type": "string"
-    },
-    "instr_id": {
-      "type": "string"
     }
-  },
-  "dataset_gattrs": {
-    "title": "Satellite Relay Tagging Program - Southern Ocean - MEOP Quality Controlled CTD Profiles"
   },
   "aws_opendata_registry": {
     "Name": "Marine Animal - Satellite Relay Tagging -  Quality controlled profiles",

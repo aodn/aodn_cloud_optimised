@@ -115,58 +115,6 @@
     "metadata_uuid": {
       "type": "string"
     },
-    "gattrs_to_variables": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
-    },
-    "gattrs_to_delete": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
-    },
-    "partition_keys": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
-    },
-    "time_extent": {
-      "type": "object",
-      "properties": {
-        "time": {
-          "type": "string"
-        },
-        "partition_timestamp_period": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "time",
-        "partition_timestamp_period"
-      ]
-    },
-    "spatial_extent": {
-      "type": "object",
-      "properties": {
-        "lat": {
-          "type": "string"
-        },
-        "lon": {
-          "type": "string"
-        },
-        "spatial_resolution": {
-          "type": "integer"
-        }
-      },
-      "required": [
-        "lat",
-        "lon",
-        "spatial_resolution"
-      ]
-    },
     "schema": {
       "type": "object",
       "properties": {
@@ -180,25 +128,7 @@
           "type": "object"
         }
       },
-      "required": [
-        "timestamp",
-        "polygon",
-        "filename"
-      ]
-    },
-    "dataset_gattrs": {
-      "type": "object",
-      "properties": {
-        "title": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "title"
-      ]
-    },
-    "force_old_pq_del": {
-      "type": "boolean"
+      "required": []
     },
     "aws_opendata_registry": {
       "type": "object",
@@ -346,8 +276,6 @@
     "dataset_name",
     "cloud_optimised_format",
     "run_settings",
-    "time_extent",
-    "spatial_extent",
     "metadata_uuid",
     "schema"
   ]

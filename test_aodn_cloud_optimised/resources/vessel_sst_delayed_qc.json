@@ -20,22 +20,80 @@
     "batch_size": 500
   },
   "metadata_uuid": "63db5801-cc19-40ef-83b3-85ccba884cf7",
-  "gattrs_to_variables": [
-    "platform_code"
-  ],
-  "partition_keys": [
-    "timestamp",
-    "polygon",
-    "platform_code"
-  ],
-  "time_extent": {
-    "time": "TIME",
-    "partition_timestamp_period": "M"
-  },
-  "spatial_extent": {
-    "lat": "LATITUDE",
-    "lon": "LONGITUDE",
-    "spatial_resolution": 5
+  "schema_transformation": {
+    "drop_variables": [],
+    "add_variables": {
+      "filename": {
+        "source": "@filename",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "long_name": "Filename of the source file"
+        }
+      },
+      "platform_code": {
+        "source": "@global_attribute:platform_code",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": "",
+          "long_name": "platform code"
+        }
+      },
+      "timestamp": {
+        "source": "@partitioning:time_extent",
+        "schema": {
+          "type": "int64",
+          "units": "1",
+          "long_name": "Partition timestamp"
+        }
+      },
+      "polygon": {
+        "source": "@partitioning:spatial_extent",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "long_name": "Spatial partition polygon"
+        }
+      }
+    },
+    "partitioning": [
+      {
+        "source_variable": "timestamp",
+        "type": "time_extent",
+        "time_extent": {
+          "time_varname": "TIME",
+          "partition_period": "M"
+        }
+      },
+      {
+        "source_variable": "polygon",
+        "type": "spatial_extent",
+        "spatial_extent": {
+          "lat_varname": "LATITUDE",
+          "lon_varname": "LONGITUDE",
+          "spatial_resolution": 5
+        }
+      },
+      {
+        "source_variable": "platform_code"
+      }
+    ],
+    "global_attributes": {
+      "delete": [
+        "platform_code",
+        "geospatial_lat_max",
+        "geospatial_lat_min",
+        "geospatial_lon_max",
+        "geospatial_lon_min",
+        "date_created"
+      ],
+      "set": {
+        "featureType": "trajectory",
+        "standard_name_vocabulary": "CF Standard Name Table v79",
+        "title": "my dataset"
+      }
+    }
   },
   "schema": {
     "TIME": {
@@ -415,27 +473,8 @@
       "quality_control_set": 3,
       "quality_control_flag_values": "B, C, D, E, F, G, H, J, K, L, M, Q, S, T, U, V, X, Z",
       "quality_control_flag_meanings": "Value_out_of_bounds Time_not_sequential Failed_T_Tw_Td_test Failed_true_wind_recomputation_test Platform_velocity_unrealistic Value_exceeds_threshold Discontinuity Erroneous_value Suspect_value_(visual) Value_located_over_land Instrument_malfunction Pre-flagged_as_suspect Spike_in_data_(visual) Time_duplicate Suspect_value_(statistical) Step_in_data_(statistical) Spike_in_data_(statistical) Value_passed_all_tests"
-    },
-    "timestamp": {
-      "type": "int64"
-    },
-    "polygon": {
-      "type": "string"
-    },
-    "platform_code": {
-      "type": "string"
-    },
-    "filename": {
-      "type": "string"
     }
   },
-  "dataset_gattrs": {
-    "title": "",
-    "principal_investigator": "",
-    "principal_investigator_email": "",
-    "featureType": "trajectory"
-  },
-  "force_old_pq_del": true,
   "aws_opendata_registry": {
     "Name": "IMOS - SOOP Underway CO2 Measurements Research Group - delayed mode data",
     "Description": "The IMOS Ship of Opportunity Underway CO2 Measurements group is a research and data collection project working within the IMOS Ship of Opportunity Multi-Disciplinary Underway Network sub-facility. The CO2 group sample critical regions of the Southern Ocean and the Australian shelf waters have a major impact on CO2 uptake by the ocean. These are regions where biogeochemical cycling is predicted to be particularly sensitive to a changing climate. The pCO2 Underway System measures the fugacity of carbon dioxide (fCO2) along with other variables such as sea surface salinity (SSS) and sea surface temperature (SST) using an automated system. The data represented by this record are presented in delayed mode. \n\nThe RV Aurora Australis provides data on surface ocean CO2 for the Southern Ocean, while the Southern Surveyor and its replacement in 2014, RV Investigator, covers shelf and offshore waters around Australia from the tropics to the sea-ice edge. The  RV L'Astrolabe is also used to collect data on route from Tasmania to Dumont d'Urville station, Antarctica. The New Zealand National Institute of Water & Atmospheric Research Ltd. (NIWA) has supported the setup of underway CO2 measurements on the RV Tangaroa. The Tangaroa covers oceans adjacent to New Zealand.",

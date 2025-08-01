@@ -14,7 +14,7 @@ from shapely.geometry import Polygon
 from aodn_cloud_optimised.lib.config import load_dataset_config
 from aodn_cloud_optimised.lib.DataQuery import GetAodn
 from aodn_cloud_optimised.lib.GenericParquetHandler import GenericHandler
-from aodn_cloud_optimised.lib.s3Tools import s3_ls
+from aodn_cloud_optimised.lib.s3Tools import get_free_local_port, s3_ls
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -50,12 +50,13 @@ class TestGenericHandler(unittest.TestCase):
         self.s3.create_bucket(Bucket=self.BUCKET_OPTIMISED_NAME)
 
         # create moto server; needed for s3fs and parquet
-        self.server = ThreadedMotoServer(ip_address="127.0.0.1", port=5555)
+        self.port = get_free_local_port()
+        self.server = ThreadedMotoServer(ip_address="127.0.0.1", port=self.port)
 
         self.s3_fs = s3fs.S3FileSystem(
             anon=False,
             client_kwargs={
-                "endpoint_url": "http://127.0.0.1:5555/",
+                "endpoint_url": f"http://127.0.0.1:{self.port}/",
                 "region_name": "us-east-1",
             },
         )
@@ -150,62 +151,63 @@ class TestGenericHandler(unittest.TestCase):
         self.server.stop()
 
     @patch("aodn_cloud_optimised.lib.DataQuery.REGION", "us-east-1")
-    @patch(
-        "aodn_cloud_optimised.lib.DataQuery.ENDPOINT_URL",
-        "http://127.0.0.1:5555",
-    )
     def test_parquet_queries(self):
         """Creating 2 Parquet dataset and then use the GetAodn Class to query data"""
+        with patch(
+            "aodn_cloud_optimised.lib.DataQuery.ENDPOINT_URL",
+            f"http://127.0.0.1:{self.port}",
+        ):
+            # dataset 1
+            nc_obj_ls = s3_ls("imos-data", "good_nc_ardc")
+            with patch.object(self.handler_nc_ardc_file, "s3_fs", new=self.s3_fs):
+                self.handler_nc_ardc_file.to_cloud_optimised([nc_obj_ls[0]])
 
-        # dataset 1
-        nc_obj_ls = s3_ls("imos-data", "good_nc_ardc")
-        with patch.object(self.handler_nc_ardc_file, "s3_fs", new=self.s3_fs):
-            self.handler_nc_ardc_file.to_cloud_optimised([nc_obj_ls[0]])
+            # dataset 2
+            nc_obj_ls = s3_ls("imos-data", "good_nc_soop_sst")
+            with patch.object(self.handler_nc_soop_sst_file, "s3_fs", new=self.s3_fs):
+                self.handler_nc_soop_sst_file.to_cloud_optimised([nc_obj_ls[0]])
 
-        # dataset 2
-        nc_obj_ls = s3_ls("imos-data", "good_nc_soop_sst")
-        with patch.object(self.handler_nc_soop_sst_file, "s3_fs", new=self.s3_fs):
-            self.handler_nc_soop_sst_file.to_cloud_optimised([nc_obj_ls[0]])
+            aodn_instance = GetAodn()
 
-        aodn_instance = GetAodn()
+            # test metadata and available dataset
+            aodn_meta = aodn_instance.get_metadata()
+            self.assertEqual(
+                ["vessel_sst_delayed_qc.parquet", "wave_buoy_realtime_nonqc.parquet"],
+                list(aodn_meta.metadata_catalog().keys()),
+            )
 
-        # test metadata and available dataset
-        aodn_meta = aodn_instance.get_metadata()
-        self.assertEqual(
-            ["vessel_sst_delayed_qc.parquet", "wave_buoy_realtime_nonqc.parquet"],
-            list(aodn_meta.metadata_catalog().keys()),
-        )
+            # test fuzzysearch
+            res = aodn_meta.find_datasets_with_attribute(
+                "temp", target_key="standard_name"
+            )
+            self.assertEqual(["vessel_sst_delayed_qc.parquet"], res)
 
-        # test fuzzysearch
-        res = aodn_meta.find_datasets_with_attribute("temp", target_key="standard_name")
-        self.assertEqual(["vessel_sst_delayed_qc.parquet"], res)
+            # test temporal extents
+            res = aodn_instance.get_dataset(
+                "vessel_sst_delayed_qc.parquet"
+            ).get_temporal_extent()
 
-        # test temporal extents
-        res = aodn_instance.get_dataset(
-            "vessel_sst_delayed_qc.parquet"
-        ).get_temporal_extent()
+            self.assertEqual(
+                (
+                    pd.Timestamp("2011-01-01 00:00:00").floor("min"),
+                    pd.Timestamp("2011-01-01 21:59:00").floor("min"),
+                ),
+                (
+                    res[0].floor("min"),
+                    res[1].floor("min"),
+                ),
+            )
 
-        self.assertEqual(
-            (
-                pd.Timestamp("2011-01-01 00:00:00").floor("min"),
-                pd.Timestamp("2011-01-01 21:59:00").floor("min"),
-            ),
-            (
-                res[0].floor("min"),
-                res[1].floor("min"),
-            ),
-        )
+            # test spatial extent
+            expected_polygon_0 = Polygon(
+                [(160, -25), (170, -25), (170, -15), (160, -15), (160, -25)]
+            )
 
-        # test spatial extent
-        expected_polygon_0 = Polygon(
-            [(160, -25), (170, -25), (170, -15), (160, -15), (160, -25)]
-        )
+            res = aodn_instance.get_dataset(
+                "vessel_sst_delayed_qc.parquet"
+            ).get_spatial_extent()
 
-        res = aodn_instance.get_dataset(
-            "vessel_sst_delayed_qc.parquet"
-        ).get_spatial_extent()
-
-        self.assertEqual(expected_polygon_0, res.geoms[0])
+            self.assertEqual(expected_polygon_0, res.geoms[0])
 
 
 if __name__ == "__main__":

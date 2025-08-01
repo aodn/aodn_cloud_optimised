@@ -3,12 +3,69 @@
   "logger_name": "animal_acoustic_tracking_delayed_qc",
   "cloud_optimised_format": "parquet",
   "metadata_uuid": "541d4f15-122a-443d-ab4e-2b5feb08d6a0",
-  "gattrs_to_variables": [],
-  "partition_keys": [
-    "transmitter_id",
-    "timestamp",
-    "polygon"
-  ],
+  "schema_transformation": {
+    "drop_variables": [],
+    "add_variables": {
+      "filename": {
+        "source": "@filename",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "long_name": "Filename of the source file"
+        }
+      },
+      "timestamp": {
+        "source": "@partitioning:time_extent",
+        "schema": {
+          "type": "int64",
+          "units": "1",
+          "long_name": "Partition timestamp"
+        }
+      },
+      "polygon": {
+        "source": "@partitioning:spatial_extent",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "long_name": "Spatial partition polygon"
+        }
+      }
+    },
+    "partitioning": [
+      {
+        "source_variable": "transmitter_id"
+      },
+      {
+        "source_variable": "timestamp",
+        "type": "time_extent",
+        "time_extent": {
+          "time_varname": "detection_timestamp",
+          "partition_period": "M"
+        }
+      },
+      {
+        "source_variable": "polygon",
+        "type": "spatial_extent",
+        "spatial_extent": {
+          "lat_varname": "latitude",
+          "lon_varname": "longitude",
+          "spatial_resolution": 5
+        }
+      }
+    ],
+    "global_attributes": {
+      "delete": [
+        "geospatial_lat_max",
+        "geospatial_lat_min",
+        "geospatial_lon_max",
+        "geospatial_lon_min",
+        "date_created"
+      ],
+      "set": {
+        "title": "AATAMS Acoustic"
+      }
+    }
+  },
   "pandas_read_csv_config": {
     "delimiter": ";",
     "header": 0,
@@ -21,15 +78,6 @@
       "NaN"
     ],
     "encoding": "utf-8"
-  },
-  "time_extent": {
-    "time": "detection_timestamp",
-    "partition_timestamp_period": "M"
-  },
-  "spatial_extent": {
-    "lat": "latitude",
-    "lon": "longitude",
-    "spatial_resolution": 5
   },
   "schema": {
     "detection_timestamp": {
@@ -150,31 +198,7 @@
       "long_name": "",
       "units": "",
       "comments": ""
-    },
-    "filename": {
-      "type": "string",
-      "standard_name": "",
-      "long_name": "",
-      "units": "",
-      "comments": ""
-    },
-    "timestamp": {
-      "type": "int64",
-      "standard_name": "",
-      "long_name": "",
-      "units": "",
-      "comments": ""
-    },
-    "polygon": {
-      "type": "string",
-      "standard_name": "",
-      "long_name": "",
-      "units": "",
-      "comments": ""
     }
-  },
-  "dataset_gattrs": {
-    "title": "AATAMS ACOUSTIC"
   },
   "aws_opendata_registry": {
     "Name": "Animal Tracking - Acoustic Telemetry - Quality controlled detections",

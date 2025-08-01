@@ -184,71 +184,105 @@ def extract_serialisable_attrs(attrs):
     return serialisable_attrs
 
 
+def map_config_type_to_pyarrow_type(config_type: str) -> pa.DataType:
+    """
+    Maps a schema config type string to a corresponding PyArrow DataType.
+
+    Args:
+        config_type (str): Type string (e.g. 'int32', 'string', 'timestamp[ns]').
+
+    Returns:
+        pa.DataType: The corresponding PyArrow type.
+
+    Raises:
+        ValueError: If the type is not supported.
+    """
+    type_map = {
+        "int8": pa.int8(),
+        "int16": pa.int16(),
+        "int32": pa.int32(),
+        "int64": pa.int64(),
+        "uint8": pa.uint8(),
+        "uint16": pa.uint16(),
+        "uint32": pa.uint32(),
+        "uint64": pa.uint64(),
+        "float": pa.float32(),
+        "float32": pa.float32(),
+        "float64": pa.float64(),
+        "double": pa.float64(),
+        "string": pa.string(),
+        "object": pa.string(),
+        "|S1": pa.string(),
+        "byte": pa.binary(),
+        "bool": pa.bool_(),
+        "datetime64[ns]": pa.timestamp("ns"),
+        "timestamp[ns]": pa.timestamp("ns"),
+    }
+
+    if config_type not in type_map:
+        raise ValueError(f"Unsupported data type: {config_type}")
+
+    return type_map[config_type]
+
+
 def create_pyarrow_schema_from_list(schema_strings):
     fields = []
     for line in schema_strings:
-        name, dtype_str = line.split(":")
-        name = name.strip()
-        dtype_str = dtype_str.strip()
-
-        # Convert dtype string to PyArrow type
-        if dtype_str == "int32":
-            dtype = pa.int32()
-        elif dtype_str == "int64":
-            dtype = pa.int64()
-        elif dtype_str == "double":
-            dtype = pa.float64()  # assuming 'double' refers to float64
-        elif dtype_str == "float":
-            dtype = pa.float32()  # assuming 'float' refers to float32
-        elif dtype_str == "string":
-            dtype = pa.string()
-        elif dtype_str == "byte":
-            dtype = pa.binary()
-        elif dtype_str == "timestamp[ns]":
-            dtype = pa.timestamp("ns")
-        else:
-            raise ValueError(f"Unsupported data type: {dtype_str}")
-
+        name, dtype_str = map(str.strip, line.split(":"))
+        dtype = map_config_type_to_pyarrow_type(dtype_str)
         fields.append(pa.field(name, dtype))
-
-    schema = pa.schema(fields)
-    return schema
+    return pa.schema(fields)
 
 
 def create_pyrarrow_schema_from_dict(schema_dict):
     fields = []
     for name, info in schema_dict.items():
-        dtype_str = info["type"].strip()
-
-        # Convert dtype string to PyArrow type
-        if dtype_str == "int32":
-            dtype = pa.int32()
-        elif dtype_str == "int64":
-            dtype = pa.int64()
-        elif dtype_str == "double":
-            dtype = pa.float64()  # assuming 'double' refers to float64
-        elif dtype_str == "float":
-            dtype = pa.float32()  # assuming 'float' refers to float32
-        elif dtype_str == "float32":
-            dtype = pa.float32()
-        elif dtype_str == "string":
-            dtype = pa.string()
-        elif dtype_str == "byte":
-            dtype = pa.binary()
-        elif dtype_str == "timestamp[ns]":
-            dtype = pa.timestamp("ns")
-        else:
-            raise ValueError(f"Unsupported data type: {dtype_str}")
-
-        # Create PyArrow field
+        dtype = map_config_type_to_pyarrow_type(info["type"].strip())
         fields.append(pa.field(name, dtype))
-
-    # Create PyArrow pyarrow_schema from the list of fields
-    schema = pa.schema(fields)
-    return schema
+    return pa.schema(fields)
 
 
-def create_pyarrow_schema(schema_input):
+def extract_new_variables_schema(schema_transformation: dict) -> dict:
+    """
+    Extracts new variables from the 'add_variables' section of a schema_transformation dict
+    and returns a dictionary where each key is the variable name and the value is a dictionary
+    that includes the 'type' and all schema fields from the original 'schema' entry.
+
+    Args:
+        schema_transformation (dict): The input dictionary containing the schema transformation.
+
+    Returns:
+        dict: A dictionary of variables with their full schema definitions.
+    """
+    new_variables_schema = {}
+    add_variables = schema_transformation.get("add_variables", {})
+
+    for var_name, var_info in add_variables.items():
+        schema = var_info.get("schema", {})
+        var_type = schema.get("type", "unknown")
+        # Build new dictionary with 'type' and other schema attributes
+        new_variables_schema[var_name] = {"type": var_type}
+        for key, value in schema.items():
+            if key != "type":
+                new_variables_schema[var_name][key] = value
+
+    return new_variables_schema
+
+
+def merge_schema_dict(schema_input, schema_transformation):
+    """
+    Merge the orginal schema and the schema_transformation from a json configuration to output a new dict containing
+    ALL of the variables in the dataset
+    """
+    new_variables_schema = extract_new_variables_schema(schema_transformation)
+
+    if isinstance(schema_input, dict):
+        schema_input.update(new_variables_schema)
+
+    return schema_input
+
+
+def create_pyarrow_schema(schema_input, schema_transformation=None):
     """
     handles 2 different ways to write the pyarrow_schema
     Args:
@@ -257,12 +291,63 @@ def create_pyarrow_schema(schema_input):
     Returns:
 
     """
+    if schema_transformation:
+        new_variables_schema = extract_new_variables_schema(schema_transformation)
+
+        if isinstance(schema_input, dict):
+            schema_input.update(new_variables_schema)
+
     if isinstance(schema_input, list):
         return create_pyarrow_schema_from_list(schema_input)
     elif isinstance(schema_input, dict):
         return create_pyrarrow_schema_from_dict(schema_input)
     else:
         raise ValueError("Unsupported pyarrow_schema input type. Expected str or dict.")
+
+
+def map_config_type_to_python_type(config_type: str):
+    """
+    Map config-defined type (as string) to a Python or NumPy type.
+
+    Args:
+        config_type (str): The type string from the schema config.
+
+    Returns:
+        type: A corresponding Python or NumPy type.
+    """
+    type_map = {
+        "string": str,
+        "int": int,
+        "int32": np.int32,
+        "int64": np.int64,
+        "float": float,
+        "float32": np.float32,
+        "float64": np.float64,
+        "bool": bool,
+        # Extend as needed
+    }
+    return type_map.get(config_type, str)  # Default to str if unknown
+
+
+def cast_value_to_config_type(value, config_type: str):
+    """
+    Cast a value to the type specified in the schema config.
+
+    Args:
+        value (Any): The value to cast.
+        config_type (str): The type string from the schema config.
+
+    Returns:
+        Any: The casted value.
+
+    Raises:
+        ValueError: If the casting fails.
+    """
+    python_type = map_config_type_to_python_type(config_type)
+    try:
+        return python_type(value)
+    except Exception as e:
+        raise ValueError(f"Cannot cast value '{value}' to type '{config_type}': {e}")
 
 
 def nullify_netcdf_variables(nc_path, dataset_name, s3_fs=None):

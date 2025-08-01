@@ -3,19 +3,69 @@
   "logger_name": "vessel_fishsoop_realtime_qc",
   "cloud_optimised_format": "parquet",
   "metadata_uuid": "bdb84466-dc53-49ad-a60f-83d9fa0baed5",
-  "gattrs_to_variables": [],
-  "partition_keys": [
-    "timestamp",
-    "polygon"
-  ],
-  "time_extent": {
-    "time": "TIME",
-    "partition_timestamp_period": "M"
-  },
-  "spatial_extent": {
-    "lat": "LATITUDE",
-    "lon": "LONGITUDE",
-    "spatial_resolution": 5
+  "schema_transformation": {
+    "drop_variables": [],
+    "add_variables": {
+      "filename": {
+        "source": "@filename",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "long_name": "Filename of the source file"
+        }
+      },
+      "timestamp": {
+        "source": "@partitioning:time_extent",
+        "schema": {
+          "type": "int64",
+          "units": "1",
+          "long_name": "Partition timestamp"
+        }
+      },
+      "polygon": {
+        "source": "@partitioning:spatial_extent",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "long_name": "Spatial partition polygon"
+        }
+      }
+    },
+    "partitioning": [
+      {
+        "source_variable": "timestamp",
+        "type": "time_extent",
+        "time_extent": {
+          "time_varname": "TIME",
+          "partition_period": "M"
+        }
+      },
+      {
+        "source_variable": "polygon",
+        "type": "spatial_extent",
+        "spatial_extent": {
+          "lat_varname": "LATITUDE",
+          "lon_varname": "LONGITUDE",
+          "spatial_resolution": 5
+        }
+      }
+    ],
+    "global_attributes": {
+      "delete": [
+        "Voyage_number",
+        "platform_code",
+        "geospatial_lat_max",
+        "geospatial_lat_min",
+        "geospatial_lon_max",
+        "geospatial_lon_min",
+        "date_created"
+      ],
+      "set": {
+        "featureType": "timeSeries",
+        "standard_name_vocabulary": "CF Standard Name Table v79",
+        "title": "my dataset"
+      }
+    }
   },
   "schema": {
     "TRAJECTORY_ID": {
@@ -181,22 +231,7 @@
         9
       ],
       "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value"
-    },
-    "timestamp": {
-      "type": "int64"
-    },
-    "polygon": {
-      "type": "string"
-    },
-    "filename": {
-      "type": "string"
     }
-  },
-  "dataset_gattrs": {
-    "title": "",
-    "principal_investigator": "",
-    "principal_investigator_email": "",
-    "featureType": ""
   },
   "aws_opendata_registry": {
     "Name": "Ships of Opportunity - Fisheries vessels - Real time",

@@ -905,6 +905,28 @@ numpy = [
 ]
 
 [[package]]
+name = "cfunits"
+version = "3.3.7"
+description = "A python interface to UNIDATA's UDUNITS-2 package with CF extensions"
+optional = false
+python-versions = ">=3.6"
+groups = ["main"]
+markers = "python_version <= \"3.11\" or python_version >= \"3.12\""
+files = [
+    {file = "cfunits-3.3.7.tar.gz", hash = "sha256:e271ae2c01765cc437e7eefd802846894367179e3208653ab9b520ade48286d6"},
+]
+
+[package.dependencies]
+cftime = ">=1.5.0"
+numpy = ">=1.15"
+packaging = ">=20.0"
+
+[package.extras]
+documentation = ["sphinx (>=2,<=4)", "sphinx-copybutton", "sphinx-toggleprompt", "sphinxcontrib-spelling"]
+pre-commit-hooks = ["black", "docformatter", "flake8", "pre-commit", "pydocstyle"]
+required-c-libraries = ["udunits2 (==2.2.20)"]
+
+[[package]]
 name = "charset-normalizer"
 version = "3.4.2"
 description = "The Real First Universal Charset Detector. Open, modern and actively maintained alternative to Chardet."
@@ -7176,4 +7198,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10, <4.0"
-content-hash = "2e730bc4b457fafbf8d3e903c825dfd93ba3590b905e8ee8d63a416828847765"
+content-hash = "39d8111d728b8adca02805d00a463b442edaf2d3078b0c00fb646a66bb70ed85"

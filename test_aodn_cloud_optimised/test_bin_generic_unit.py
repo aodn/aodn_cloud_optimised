@@ -91,39 +91,6 @@ class TestDatasetConfigValidation(unittest.TestCase):
             DatasetConfig.model_validate(config)
         self.assertIn("coiled_cluster_options must be provided", str(ctx.exception))
 
-    def test_parquet_missing_time_extent(self):
-        config = self.base_valid_config.copy()
-        config["cloud_optimised_format"] = "parquet"
-        config["partition_keys"] = ["timestamp"]
-        config["schema"] = {
-            "timestamp": {"type": "int64"},
-        }
-        with self.assertRaises(ValidationError) as ctx:
-            DatasetConfig.model_validate(config)
-        self.assertIn("time_extent must be defined", str(ctx.exception))
-
-    def test_gattrs_to_variables_parquet_valid(self):
-        config = self.base_valid_config.copy()
-        config["schema"] = {"station_id": {"type": "string"}}
-        config["gattrs_to_variables"] = ["station_id"]
-        config["cloud_optimised_format"] = "parquet"
-        config["partition_keys"] = ["timestamp"]
-        config["time_extent"] = {"time": "timestamp", "partition_timestamp_period": "Y"}
-        config["schema"]["timestamp"] = {"type": "int64"}
-        self.assertIsInstance(DatasetConfig.model_validate(config), DatasetConfig)
-
-    def test_gattrs_to_variables_parquet_invalid_type(self):
-        config = self.base_valid_config.copy()
-        config["schema"] = {"station_id": {"type": "object"}}
-        config["gattrs_to_variables"] = ["station_id"]
-        config["cloud_optimised_format"] = "parquet"
-        config["partition_keys"] = ["timestamp"]
-        config["time_extent"] = {"time": "timestamp", "partition_timestamp_period": "Y"}
-        config["schema"]["timestamp"] = {"type": "int64"}
-        with self.assertRaises(ValidationError) as ctx:
-            DatasetConfig.model_validate(config)
-        self.assertIn("must be of type 'string' or a numeric type", str(ctx.exception))
-
     def test_vars_incompatible_with_region_valid(self):
         config = self.base_valid_config.copy()
         config["schema"] = {"TEMP": {"type": "float32"}}

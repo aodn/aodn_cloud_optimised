@@ -214,108 +214,187 @@ Simply copy this into the ``schema`` key of the dataset config, so that we have:
     In order to add them, it is advised to create a first pass of the dataset. The module will log the json info to be
     added into the config for each missing variable, which can simply be paste.
 
-Global attributes as variables
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Parquet Schema Transformation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Some NetCDF global attributes may have to be converted into variables so
-that users/API can filter the data based on these values.
+Adding Variables Dynamically
+----------------------------
 
-In the following example, ``deployment_code`` is a global attribute that
-we want to have as a variable. It is then added in the
-``gattrs_to_variables``. **However**, this needs to also be present in
-the schema definition:
+You can define new variables to add to the dataset using the following `source` types:
 
-.. code:: json
+**@filename** (required)
+^^^^^^^^^^^^^^^^^^^^^^^^
 
-   ...
-     "gattrs_to_variables": [
-       "deployment_code"
-     ],
-    "schema": {
-   ...
-       "deployment_code": {
-         "type": "string"
+Adds the original file name as a variable. This is required for traceability and to safely overwrite old data.
+
+The IMOS/AODN processing is very file-oriented. To reprocess data and delete previously generated output, we need to keep track of the original filename. That’s why it must be included in the schema definition:
+
+.. code-block:: json
+
+   "filename": {
+     "source": "@filename",
+     "schema": {
+       "type": "string",
+       "units": "1",
+       "long_name": "Filename of the source file"
+     }
+   }
+
+**@partitioning** (required)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Generates time and space partitioning variables (`timestamp`, `polygon`) for optimised cloud access.
+
+.. code-block:: json
+
+   "timestamp": {
+     "source": "@partitioning:time_extent",
+     "schema": {
+       "type": "int64",
+       "units": "1",
+       "long_name": "Partition timestamp"
+     }
+   },
+   "polygon": {
+     "source": "@partitioning:spatial_extent",
+     "schema": {
+       "type": "string",
+       "units": "1",
+       "long_name": "Spatial partition polygon"
+     }
+   }
+
+The above requires a corresponding `partitioning` section:
+
+.. code-block:: json
+
+   "partitioning": [
+     {
+       "source_variable": "timestamp",
+       "type": "time_extent",
+       "time_extent": {
+         "time_varname": "TIME",
+         "partition_period": "M"
        }
-    }
-
-Object key path as variables
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-This section explains the configuration for extracting information from object keys when some information are missing from the
-NetCDF files but available from the filepath.
-
-The following JSON snippet illustrates how to specify the `object_key_info` in your configuration:
-
-.. code:: json
-
-   ...
-      "object_key_info": {
-        "key_pattern": ".*/IMOS/{campaign_name}/{dive_name}/hydro_netcdf/{filename}",
-        "extraction_code": "def extract_info_from_key(key):\n    parts = key.split('/')\n    return {'campaign_name': parts[-4], 'dive_name': parts[-3]}"
-        },
-
-In this example, `campaign_name` and `dive_name` are extracted from the path. The `extraction_code` returns a dictionary of variables.
-
-After extraction, `campaign_name` and `dive_name` should be added as string variables, and they can also be included in the `partition_keys`.
-
-The following snippet shows how to define these keys in your JSON configuration:
-
-.. code:: json
-
-   ...
-     "partition_keys": [
-       "campaign_name"
-     ],
-    "schema": {
-   ...
-       "campaign_name": {
-         "type": "string"
+     },
+     {
+       "source_variable": "polygon",
+       "type": "spatial_extent",
+       "spatial_extent": {
+         "lat_varname": "LATITUDE",
+         "lon_varname": "LONGITUDE",
+         "spatial_resolution": 5
        }
-    }
+     }
+   ]
 
 
-The ``extract_info_from_key`` function should always be structured as follows:
+**@global_attribute:<name>**
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. code:: python
+Copies the value from a NetCDF global attribute into a new variable.
 
-    def extract_info_from_key(key):
-        """
-        Extract information from a key string while ensuring a consistent return structure.
+.. code-block:: json
 
-        Args:
-            key (str): The input string containing information formatted with slashes.
+   "vessel_name": {
+     "source": "@global_attribute:vessel_name",
+     "schema": {
+       "type": "string",
+       "units": "1",
+       "_FillValue": "",
+       "long_name": "vessel name"
+     }
+   }
 
-        Returns:
-            dict: A dictionary with the extracted information, including predefined keys
-                  with default values if information is not available.
-        """
-        parts = key.split('/')
+**@variable_attribute:<varname>.<varatt>**
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-        return {
-            'campaign_name': parts[-4] if len(parts) > 3 else None,
-            'dive_name': parts[-3] if len(parts) > 2 else None,
-            'project_id': parts[-2] if len(parts) > 1 else None,
-            'file_type': parts[-1] if len(parts) > 0 else None,
-            'timestamp': None  # This could be added or derived if applicable
-        }
+Extracting specific variable attributes and promoting them to variables.
+
+**Example:**
+
+.. code-block:: json
+
+   "instrument_identifgier": {
+     "source": "@variable_attribute:TEMP.instrument_id",
+     "schema": {
+       "type": "string",
+       "units": "1",
+       "_FillValue": "",
+       "long_name": "my instrument id"
+     }
+   }
+
+**@function:<function_name>** to Extract from File Paths
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Custom logic can be applied to the object key (e.g. S3 path) using the `@function:<name>` syntax in `add_variables`. These require a corresponding function definition in the `functions` block.
+
+This is helpful when useful information are missing from the NetCDF files but available from the filepath.
+
+**Example:**
+
+.. code-block:: json
+
+   "campaign_name": {
+     "source": "@function:campaign_name_extract",
+     "schema": {
+       "type": "string",
+       "units": "1",
+       "_FillValue": "",
+       "long_name": "voyage identifier"
+     }
+   }
+
+And the function definition:
+
+.. code-block:: json
+
+   "functions": {
+     "campaign_name_extract": {
+       "extract_method": "object_key",
+       "method": {
+         "key_pattern": ".*/IMOS/AUV/{campaign_name}/{dive_name}/hydro_netcdf/{filename}",
+         "extraction_code": "def extract_info_from_key(key):\n    parts = key.split('/')\n    return {'campaign_name': parts[-4]}"
+       }
+     }
+   }
+
+You may define multiple functions this way. They are applied to every input path at runtime.
 
 
-Filename as variable
-~~~~~~~~~~~~~~~~~~~~
+Global Attributes
+-----------------
 
-The IMOS/AODN data (re)processing is very file oriented. In order to
-reprocess data and delete the old matching data, the original filename
-is stored as a variable. It is required to add it in the schema
-definition:
+The `global_attributes` section allows you to delete or override global attributes on the output dataset.
 
-.. code:: json
+**Delete global attributes**
 
-    "schema": {
-   ...
-       "filename": {
-         "type": "string"
-       },
-   ...
+.. code-block:: json
+
+   "global_attributes": {
+     "delete": [
+       "geospatial_lat_max",
+       "geospatial_lat_min",
+       "geospatial_lon_max",
+       "geospatial_lon_min",
+       "date_created"
+     ]
+   }
+
+**Set or override global attributes**
+
+.. code-block:: json
+
+   "global_attributes": {
+     "set": {
+       "title": "IMOS Underway CO2 dataset measured",
+       "featureType": "trajectory",
+       "principal_investigator": "",
+       "principal_investigator_email": ""
+     }
+   }
+
 
 Choosing the Partition keys
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -323,12 +402,41 @@ Choosing the Partition keys
 Any variable available in the schema definition could be used as a
 partition.
 
+Partition keys are defined through the ``schema_transformation.partitioning`` section.
+
+Each partitioning variable must exist, either in the original ``schema`` section, or added in ``add_variables``.
+
 Timestamp partition
 ^^^^^^^^^^^^^^^^^^^
 
-To add efficient time filtering, a timestamp variable is created.
-``partition_timestamp_period`` is the period to choose (``M`` for month,
-``Y`` for year, ``Q`` for quarterly, etc.). Refer to https://pandas.pydata.org/docs/user_guide/timeseries.html#timeseries-period-aliases
+To enable time-based partitioning, a variable like ``timestamp`` is added using:
+
+.. code-block:: json
+
+    "timestamp": {
+      "source": "@partitioning:time_extent",
+      "schema": {
+        "type": "int64",
+        "units": "1",
+        "long_name": "Partition timestamp"
+      }
+    }
+
+This must be matched with a partitioning definition like:
+
+.. code-block:: json
+
+    {
+      "source_variable": "timestamp",
+      "type": "time_extent",
+      "time_extent": {
+        "time_varname": "TIME",
+        "partition_period": "Q"
+      }
+    }
+
+``partition_period`` controls how time is grouped: ``M`` (monthly), ``Y`` (yearly), ``Q`` (quarterly), etc. See the full list of supported values at:
+https://pandas.pydata.org/docs/user_guide/timeseries.html#timeseries-period-aliases
 
 .. note:: Important Note
    :class: custom-note
@@ -337,49 +445,39 @@ To add efficient time filtering, a timestamp variable is created.
     Choose the period wisely though testing! A finer period, such as day, will create a lot more objects or chunks
     and will slow considerably data queries
 
-The following information needs to be added in the relevant sections:
-
-.. code:: json
-
-     "partition_keys": [
-       "timestamp",
-       ...
-     ],
-     "time_extent": {
-       "time": "TIME",
-       "partition_timestamp_period": "Q"
-     },
-     "schema":
-       ...
-       "timestamp": {
-         "type": "int64"
-       },
-       ...
 
 Geospatial Partition
 ^^^^^^^^^^^^^^^^^^^^
 
-To add efficient geospatial filtering, a polygon variable is created.
+To add spatial filtering, define a variable like ``polygon``:
 
-The following information needs to be added in the relevant sections:
+.. code-block:: json
 
-.. code:: json
+    "polygon": {
+      "source": "@partitioning:spatial_extent",
+      "schema": {
+        "type": "string",
+        "units": "1",
+        "long_name": "Spatial partition polygon"
+      }
+    }
 
-     "partition_keys": [
-        ...
-       "polygon"
-     ],
-     "spatial_extent": {
-       "lat": "LATITUDE",
-       "lon": "LONGITUDE",
-       "spatial_resolution": 5
-     },
-     "schema":
-       ...
-       "polygon": {
-         "type": "string"
-       },
-       ...
+Then define how it's calculated from the coordinates:
+
+.. code-block:: json
+
+    {
+      "source_variable": "polygon",
+      "type": "spatial_extent",
+      "spatial_extent": {
+        "lat_varname": "LATITUDE",
+        "lon_varname": "LONGITUDE",
+        "spatial_resolution": 5
+      }
+    }
+
+``spatial_resolution`` controls the grid size in degrees. Smaller values give finer granularity.
+
 
 .. note:: Important Note
    :class: custom-note
@@ -388,27 +486,39 @@ The following information needs to be added in the relevant sections:
     Choose the spatial_resolution wisely though testing! Similarly to the ``partition_timestamp_period`` above, a smaller
     value will lead to more objects.
 
-Global Attributes
-~~~~~~~~~~~~~~~~~
 
-To add common global attributes to the metadata parquet sidecar, add:
+Partition Key Summary
+^^^^^^^^^^^^^^^^^^^^^
 
-.. code:: json
+All partition keys must also be listed under the ``partitioning`` config, the order will matter. For example:
 
-     "dataset_gattrs": {
-       "title": "ANFOG glider"
-     },
+.. code-block:: json
 
-Force search and deletion of previous parquet files
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    "partitioning": [
+      {
+        "source_variable": "timestamp",
+        "type": "time_extent",
+        "time_extent": {
+          "time_varname": "TIME",
+          "partition_period": "M"
+        }
+      },
+      {
+        "source_variable": "polygon",
+        "type": "spatial_extent",
+        "spatial_extent": {
+          "lat_varname": "LATITUDE",
+          "lon_varname": "LONGITUDE",
+          "spatial_resolution": 5
+        }
+      },
+      {
+        "source_variable": "platform_code"
+      }
+    ],
 
-Force search for existing parquet files to delete when creating new
-ones. This can end up being really slow if there are a lot of objets
-(for example Argo)
 
-.. code:: json
-
-     "force_previous_parquet_deletion": true
+In this example, the order of partitions will be ``timestamp`` -> ``polygon`` -> ``platform_code``
 
 Parquet Configuration from CSV file
 -----------------------------------
@@ -651,6 +761,8 @@ Example
     * If cluster.mode is set to "coiled", the coiled_cluster_options need to be set.
     * If cluster.mode is set to "ec2", the ec2_cluster_options and ec2_adapt_options need to be set.
     * cluster.mode can be also set to "local" or null
+    * force_previous_parquet_deletion forces the search for existing parquet files to delete matching the new one to ingest. This can end up being really slow if there are a lot of objets
+(for example Argo)
 
 
 

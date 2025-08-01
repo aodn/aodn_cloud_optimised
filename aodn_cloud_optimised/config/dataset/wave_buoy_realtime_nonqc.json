@@ -3,24 +3,96 @@
   "logger_name": "wave_buoy_realtime_nonqc",
   "cloud_optimised_format": "parquet",
   "metadata_uuid": "b299cdcd-3dee-48aa-abdd-e0fcdbb9cadc",
-  "gattrs_to_variables": [
-    "site_name",
-    "water_depth",
-    "wmo_id"
-  ],
-  "partition_keys": [
-    "site_name",
-    "timestamp",
-    "polygon"
-  ],
-  "time_extent": {
-    "time": "TIME",
-    "partition_timestamp_period": "M"
-  },
-  "spatial_extent": {
-    "lat": "LATITUDE",
-    "lon": "LONGITUDE",
-    "spatial_resolution": 5
+  "schema_transformation": {
+    "drop_variables": [],
+    "add_variables": {
+      "filename": {
+        "source": "@filename",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "long_name": "Filename of the source file"
+        }
+      },
+      "site_name": {
+        "source": "@global_attribute:site_name",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": "",
+          "long_name": "site name"
+        }
+      },
+      "wmo_id": {
+        "source": "@global_attribute:wmo_id",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": "",
+          "long_name": "wmo identifier"
+        }
+      },
+      "water_depth": {
+        "source": "@global_attribute:water_depth",
+        "schema": {
+          "type": "int64",
+          "units": "meters",
+          "long_name": "water depth"
+        }
+      },
+      "timestamp": {
+        "source": "@partitioning:time_extent",
+        "schema": {
+          "type": "int64",
+          "units": "1",
+          "long_name": "Partition timestamp"
+        }
+      },
+      "polygon": {
+        "source": "@partitioning:spatial_extent",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "long_name": "Spatial partition polygon"
+        }
+      }
+    },
+    "partitioning": [
+      {
+        "source_variable": "site_name"
+      },
+      {
+        "source_variable": "timestamp",
+        "type": "time_extent",
+        "time_extent": {
+          "time_varname": "TIME",
+          "partition_period": "M"
+        }
+      },
+      {
+        "source_variable": "polygon",
+        "type": "spatial_extent",
+        "spatial_extent": {
+          "lat_varname": "LATITUDE",
+          "lon_varname": "LONGITUDE",
+          "spatial_resolution": 5
+        }
+      }
+    ],
+    "global_attributes": {
+      "delete": [
+        "geospatial_lat_max",
+        "geospatial_lat_min",
+        "geospatial_lon_max",
+        "geospatial_lon_min",
+        "date_created"
+      ],
+      "set": {
+        "featureType": "timeSeries",
+        "standard_name_vocabulary": "CF Standard Name Table v79",
+        "title": "ARDC"
+      }
+    }
   },
   "schema": {
     "timeSeries": {
@@ -178,28 +250,7 @@
       "units": "Degrees",
       "valid_max": 360.0,
       "valid_min": 0.0
-    },
-    "water_depth": {
-      "type": "int64"
-    },
-    "wmo_id": {
-      "type": "string"
-    },
-    "timestamp": {
-      "type": "int64"
-    },
-    "polygon": {
-      "type": "string"
-    },
-    "site_name": {
-      "type": "string"
-    },
-    "filename": {
-      "type": "string"
     }
-  },
-  "dataset_gattrs": {
-    "title": "ARDC"
   },
   "aws_opendata_registry": {
     "Name": "Wave buoys observations - Real time",

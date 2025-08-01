@@ -13,7 +13,7 @@ from numpy.testing import assert_array_equal
 
 from aodn_cloud_optimised.lib.ArgoHandler import ArgoHandler
 from aodn_cloud_optimised.lib.config import load_dataset_config
-from aodn_cloud_optimised.lib.s3Tools import s3_ls
+from aodn_cloud_optimised.lib.s3Tools import s3_ls, get_free_local_port
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -35,13 +35,14 @@ class TestArgoHandler(unittest.TestCase):
         self.s3.create_bucket(Bucket=self.BUCKET_OPTIMISED_NAME)
 
         # create moto server; needed for s3fs and parquet
-        self.server = ThreadedMotoServer(ip_address="127.0.0.1", port=5555)
+        self.port = get_free_local_port()
+        self.server = ThreadedMotoServer(ip_address="127.0.0.1", port=self.port)
 
         # TODO: use it for patching?
         self.s3_fs = s3fs.S3FileSystem(
             anon=False,
             client_kwargs={
-                "endpoint_url": "http://127.0.0.1:5555/",
+                "endpoint_url": f"http://127.0.0.1:{self.port}/",
                 "region_name": "us-east-1",
             },
         )
@@ -132,7 +133,7 @@ class TestArgoHandler(unittest.TestCase):
             dname,
             engine="pyarrow",
             storage_options={
-                "client_kwargs": {"endpoint_url": "http://127.0.0.1:5555"}
+                "client_kwargs": {"endpoint_url": f"http://127.0.0.1:{self.port}"}
             },
         )
 

@@ -42,18 +42,25 @@ from collections import OrderedDict
 from importlib.resources import files
 
 import nbformat
+import pandas as pd
+import s3fs
 from s3path import PureS3Path
 from termcolor import colored
 
 from aodn_cloud_optimised.bin.create_aws_registry_dataset import (
     populate_dataset_config_with_geonetwork_metadata,
 )
-from aodn_cloud_optimised.lib.config import load_dataset_config
-from aodn_cloud_optimised.lib.config import load_variable_from_config, merge_dicts
+from aodn_cloud_optimised.lib.config import (
+    load_dataset_config,
+    load_variable_from_config,
+    merge_dicts,
+)
 from aodn_cloud_optimised.lib.schema import (
     generate_json_schema_from_s3_netcdf,
     nullify_netcdf_variables,
 )
+
+TO_REPLACE_PLACEHOLDER = "FILL UP MANUALLY - CHECK DOCUMENTATION"
 
 
 def validate_dataset_name(value):
@@ -121,7 +128,7 @@ def generate_template_value(schema):
     schema_type = schema["type"]
 
     if schema_type == "string":
-        return "FILL UP MANUALLY - CHECK DOCUMENTATION"
+        return TO_REPLACE_PLACEHOLDER
     elif schema_type == "integer":
         return 0
     elif schema_type == "boolean":
@@ -441,7 +448,7 @@ def next_steps(dataset_name):
     )
     print(
         colored("   2.1) Update all occurrences of ", "yellow")
-        + colored("'FILL UP MANUALLY - CHECK DOCUMENTATION'", "cyan", attrs=["bold"])
+        + colored(f"'{TO_REPLACE_PLACEHOLDER}'", "cyan", attrs=["bold"])
     )
     print(
         colored(
@@ -614,11 +621,11 @@ def create_notebook(dataset_name):
 
 def main():
     """
-    Script to generate a dataset configuration from a NetCDF file stored in S3.
+    Script to generate a dataset configuration from a NetCDF or CSV file stored in S3.
 
     This script performs the following tasks:
 
-    1. a. Generates a JSON schema from the NetCDF file located in the S3 bucket.
+    1. a. Generates a JSON schema from the NetCDF/CSV file located in the S3 bucket.
        b. Generates a NetCDF file template with fill with NaNs alongside the json schema. Used to restore missing dimensions
     2. Reads and merges the validation schema template with the generated schema.
     3. Populates the dataset configuration with additional metadata including dataset name, metadata UUID, logger name,
@@ -630,7 +637,7 @@ def main():
     8. Optionally, fills up the AWS registry with Geonetwork metadata if a UUID is provided.
 
     Usage:
-        cloud_optimised_create_dataset_config -f <NetCDF file object key> -c <cloud optimised format> -d <dataset name> [-b <S3 bucket name>] [-u <Geonetwork Metadata UUID>]
+        cloud_optimised_create_dataset_config -f <NetCDF/CSV file object key> -c <cloud optimised format> -d <dataset name> [-b <S3 bucket name>] [-u <Geonetwork Metadata UUID>]
 
     Arguments:
         -f, --file: Object key for the NetCDF file (required).
@@ -638,6 +645,7 @@ def main():
         -c, --cloud-format: Cloud optimised format, either "zarr" or "parquet" (required).
         -u, --uuid: Geonetwork Metadata UUID (optional).
         -d, --dataset-name: Name of the dataset (required, no spaces or underscores).
+        --csv-opts: pandas read_csv optional arguments as json format
 
     Example:
         cloud_optimised_create_dataset_config \
@@ -684,6 +692,13 @@ def main():
         type=validate_dataset_name,
         help="Name of the dataset (no spaces or underscores)",
     )
+    parser.add_argument(
+        "--csv-opts",
+        "--pandas-read-csv-config",
+        dest="csv_opts",
+        required=False,
+        help="JSON string of options to pass to pandas.read_csv when input is CSV.",
+    )
 
     # Parse arguments
     args = parser.parse_args()
@@ -698,14 +713,34 @@ def main():
     if args.cloud_format == "zarr":
         nc_nullify_path = nullify_netcdf_variables(nc_file, args.dataset_name)
 
-    # Generate JSON schema from the NetCDF file
-    temp_file_path = generate_json_schema_from_s3_netcdf(
-        nc_file, cloud_format=args.cloud_format
-    )
+    # Generate schema based on input type (NetCDF or CSV)
+    if obj_key.lower().endswith(".csv"):
+        csv_file = nc_file  # TODO: rename
+        fs = s3fs.S3FileSystem(anon=True)
 
-    with open(temp_file_path, "r") as file:
-        dataset_config_schema = json.load(file)
-    os.remove(temp_file_path)
+        csv_opts = json.loads(args.csv_opts) if args.csv_opts else {}
+        with fs.open(csv_file, "rb") as f:
+            df = pd.read_csv(f, **csv_opts)
+
+        dataset_config_schema = {"type": "object", "properties": {}}
+        for col, dtype in df.dtypes.items():
+            if pd.api.types.is_integer_dtype(dtype):
+                js_type = "integer"
+            elif pd.api.types.is_float_dtype(dtype):
+                js_type = "number"
+            elif pd.api.types.is_bool_dtype(dtype):
+                js_type = "boolean"
+            else:
+                js_type = "string"
+            dataset_config_schema["properties"][col] = {"type": js_type}
+    else:
+        # Generate JSON schema from the NetCDF file
+        temp_file_path = generate_json_schema_from_s3_netcdf(
+            nc_file, cloud_format=args.cloud_format
+        )
+        with open(temp_file_path, "r") as file:
+            dataset_config_schema = json.load(file)
+        os.remove(temp_file_path)
 
     dataset_config = {"schema": dataset_config_schema}
     # Define the path to the validation schema file
@@ -753,13 +788,84 @@ def main():
     if "spatial_extent" in dataset_config:
         dataset_config["spatial_extent"]["spatial_resolution"] = 5
 
-    if args.cloud_format == "parquet":
-        # default partition keys
-        dataset_config["partition_keys"] = ["timestamp", "polygon"]
+    if obj_key.lower().endswith(".csv") and args.cloud_format == "parquet":
+        pandas_read_csv_config_default = {
+            "delimiter": ";",
+            "header": 0,
+            "index_col": f"{TO_REPLACE_PLACEHOLDER}",
+            "parse_dates": [f"{TO_REPLACE_PLACEHOLDER}"],
+            "na_values": ["N/A", "NaN"],
+            "encoding": "utf-8",
+        }
+        dataset_config["pandas_read_cvs_config"] = pandas_read_csv_config_default
 
-        dataset_config["schema"]["timestamp"] = {"type": "int64"}
-        dataset_config["schema"]["polygon"] = {"type": "string"}
-        dataset_config["schema"]["filename"] = {"type": "string"}
+    if args.cloud_format == "parquet":
+        schema_transformation_parquet_str = """
+        {
+        "drop_variables": [],
+        "add_variables": {
+            "filename": {
+            "source": "@filename",
+            "schema": {
+                "type": "string",
+                "units": "1",
+                "long_name": "Filename of the source file"
+            }
+            },
+            "timestamp": {
+            "source": "@partitioning:time_extent",
+            "schema": {
+                "type": "int64",
+                "units": "1",
+                "long_name": "Partition timestamp"
+            }
+            },
+            "polygon": {
+            "source": "@partitioning:spatial_extent",
+            "schema": {
+                "type": "string",
+                "units": "1",
+                "long_name": "Spatial partition polygon"
+            }
+            }
+        },
+        "partitioning": [
+            {
+            "source_variable": "timestamp",
+            "type": "time_extent",
+            "time_extent": {
+                "time_varname": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+                "partition_period": "M"
+            }
+            },
+            {
+            "source_variable": "polygon",
+            "type": "spatial_extent",
+            "spatial_extent": {
+                "lat_varname": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+                "lon_varname": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+                "spatial_resolution": 5
+            }
+            }
+        ],
+        "global_attributes": {
+            "delete": [
+            "geospatial_lat_max",
+            "geospatial_lat_min",
+            "geospatial_lon_max",
+            "geospatial_lon_min",
+            "date_created"
+            ],
+            "set": {
+            "title": "FILL UP MANUALLY - CHECK DOCUMENTATION"
+            }
+        }
+        }
+        """
+        schema_transformation_parquet = json.loads(schema_transformation_parquet_str)
+        # default partition keys
+        dataset_config["schema_transformation"] = schema_transformation_parquet
+
         dataset_config["run_settings"]["force_previous_parquet_deletion"] = False
 
     module_path = get_module_path()
