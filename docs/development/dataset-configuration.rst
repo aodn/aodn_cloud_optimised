@@ -53,7 +53,7 @@ https://github.com/aodn/aodn_cloud_optimised/blob/main/aodn_cloud_optimised/conf
 
 
 The Basics
-~~~~~~~~~~
+^^^^^^^^^^
 
 The first sections to add are
 
@@ -76,7 +76,7 @@ The first sections to add are
 .. _creating_the_schema:
 
 Creating the Schema
-~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^
 
 For both zarr and parquet format, consistency of the dataset is essential.
 
@@ -215,15 +215,15 @@ Simply copy this into the ``schema`` key of the dataset config, so that we have:
     added into the config for each missing variable, which can simply be paste.
 
 Parquet Schema Transformation
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Adding Variables Dynamically
-----------------------------
+""""""""""""""""""""""""""""
 
 You can define new variables to add to the dataset using the following `source` types:
 
 **@filename** (required)
-^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 Adds the original file name as a variable. This is required for traceability and to safely overwrite old data.
 
@@ -241,7 +241,7 @@ The IMOS/AODN processing is very file-oriented. To reprocess data and delete pre
    }
 
 **@partitioning** (required)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Generates time and space partitioning variables (`timestamp`, `polygon`) for optimised cloud access.
 
@@ -290,7 +290,7 @@ The above requires a corresponding `partitioning` section:
 
 
 **@global_attribute:<name>**
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Copies the value from a NetCDF global attribute into a new variable.
 
@@ -307,7 +307,7 @@ Copies the value from a NetCDF global attribute into a new variable.
    }
 
 **@variable_attribute:<varname>.<varatt>**
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Extracting specific variable attributes and promoting them to variables.
 
@@ -326,7 +326,7 @@ Extracting specific variable attributes and promoting them to variables.
    }
 
 **@function:<function_name>** to Extract from File Paths
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Custom logic can be applied to the object key (e.g. S3 path) using the `@function:<name>` syntax in `add_variables`. These require a corresponding function definition in the `functions` block.
 
@@ -364,7 +364,7 @@ You may define multiple functions this way. They are applied to every input path
 
 
 Global Attributes
------------------
+""""""""""""""""""
 
 The `global_attributes` section allows you to delete or override global attributes on the output dataset.
 
@@ -397,7 +397,7 @@ The `global_attributes` section allows you to delete or override global attribut
 
 
 Choosing the Partition keys
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+""""""""""""""""""""""""""""
 
 Any variable available in the schema definition could be used as a
 partition.
@@ -407,7 +407,7 @@ Partition keys are defined through the ``schema_transformation.partitioning`` se
 Each partitioning variable must exist, either in the original ``schema`` section, or added in ``add_variables``.
 
 Timestamp partition
-^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~
 
 To enable time-based partitioning, a variable like ``timestamp`` is added using:
 
@@ -447,7 +447,7 @@ https://pandas.pydata.org/docs/user_guide/timeseries.html#timeseries-period-alia
 
 
 Geospatial Partition
-^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~
 
 To add spatial filtering, define a variable like ``polygon``:
 
@@ -488,7 +488,7 @@ Then define how it's calculated from the coordinates:
 
 
 Partition Key Summary
-^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~
 
 All partition keys must also be listed under the ``partitioning`` config, the order will matter. For example:
 
