@@ -18,20 +18,22 @@
     "clear_existing_data": false,
     "raise_error": false
   },
-  "dimensions": {
-    "time": {
-      "name": "TIME",
-      "chunk": 100,
-      "rechunk": false,
-      "append_dim": true
-    },
-    "latitude": {
-      "name": "J",
-      "chunk": 60
-    },
-    "longitude": {
-      "name": "I",
-      "chunk": 59
+  "schema_transformation": {
+    "dimensions": {
+      "time": {
+        "name": "TIME",
+        "chunk": 100,
+        "rechunk": false,
+        "append_dim": true
+      },
+      "latitude": {
+        "name": "J",
+        "chunk": 60
+      },
+      "longitude": {
+        "name": "I",
+        "chunk": 59
+      }
     }
   },
   "aws_opendata_registry": {

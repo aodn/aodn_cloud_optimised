@@ -110,7 +110,7 @@ def preprocess_xarray(ds, dataset_config):
     # https://discourse.pangeo.io/t/remote-cluster-with-dask-distributed-uses-the-deployment-machines-memory-and-internet-bandwitch/4637
     # https://github.com/dask/distributed/discussions/8913
     logger_name = dataset_config.get("logger_name", "generic")
-    dimensions = dataset_config.get("dimensions")
+    dimensions = dataset_config["schema_transformation"].get("dimensions")
     schema = dataset_config.get("schema")
 
     logger = get_logger(logger_name)
@@ -144,95 +144,112 @@ def preprocess_xarray(ds, dataset_config):
         if var_details.get("drop_var", False):
             var_required.pop(var_name, None)
 
-    # create variables from gatts
-    gattrs_to_variables = dataset_config.get("gattrs_to_variables", None)
-    if gattrs_to_variables:
-        for gatts_var in gattrs_to_variables:
-            dest_name = gattrs_to_variables[gatts_var]["destination_name"]
-            dim_name = gattrs_to_variables[gatts_var]["dimensions"]
-            dtype = gattrs_to_variables[gatts_var].get("dtype")
+    schema_transformation = dataset_config["schema_transformation"]
+    if schema_transformation.get("add_variables") is not None:
+        variables_to_add = schema_transformation.get("add_variables")
 
-            # Validate dtype
-            try:
-                dtype_obj = np.dtype(dtype)
-            except TypeError:
-                raise ValueError(f"Invalid dtype: {dtype}")
+        for variable_to_add in variables_to_add.items():
+            variable_to_add_name = variable_to_add[0]
+            variable_to_add_info = variable_to_add[1]
+            var_type = variable_to_add_info["schema"].get("type")
 
-            if dtype_obj.kind == "U":
-                gatt_var_value = getattr(ds, gatts_var, None)
-                length = ds.sizes[dim_name]
-                string_array = np.full(length, gatt_var_value, dtype=object)
+            if variable_to_add_info["source"].startswith("@filename"):
+                # TODO: prob not needed for zarr. the code creates the filename anyway further below. Would be cleaner
+                pass
 
-                ds[dest_name] = (dim_name, string_array)
-                ds[dest_name].encoding = {
-                    "_FillValue": "",
-                    "dtype": object,
-                    "compressor": None,
-                    "filters": None,
-                    "object_codec": numcodecs.VLenUTF8(),  # crucial!
-                }
+            elif variable_to_add_info["source"].startswith("@global_attribute:"):
+                gattr = variable_to_add_info["source"].split(":")[1]
+                dim_name = variable_to_add_info["schema"].get("dimensions")
 
-                # if not (ds[dest_name] != "").all():
-                #     logger.debug(
-                #         f"{dest_name} variable created some empty values for dataset with time_coverage_start {getattr(ds, 'time_coverage_start', None)} and time_coverage_end {getattr(ds, 'time_coverage_end', None)}"
-                #     )
+                # Validate dtype
+                try:
+                    dtype_obj = np.dtype(var_type)
+                except TypeError:
+                    raise ValueError(f"Invalid dtype: {var_type}")
 
-            else:
-                # TODO: issues implementing numbers for zarrs. heaps of issues.
-                # if _FillValue is set, the type automatically becomes float64.
-                # and when removing fillvalue some random values get written as 0
-                # when to_zarr is called. but only on the append.
-                # Could maybe try doing re minimum repadocucable example?
-                # for now, maybe do a dirty raise error os user known not to have numbers as gatt for now
-                #
-                raise ValueError(
-                    "gattrs to variables is currently not supported for non string objects. Modify the dataset configuration"
-                )
+                if dtype_obj.kind == "U":
+                    gatt_var_value = getattr(ds, gattr, None)
+                    length = ds.sizes[dim_name]
+                    string_array = np.full(length, gatt_var_value, dtype=object)
 
-                # Get the attribute value or fallback
-                raw_attr_value = getattr(ds, gatts_var, None)
+                    ds[variable_to_add_name] = (dim_name, string_array)
+                    ds[variable_to_add_name].encoding = {
+                        "_FillValue": "",
+                        "dtype": object,
+                        "compressor": None,
+                        "filters": None,
+                        "object_codec": numcodecs.VLenUTF8(),  # crucial!
+                    }
 
-                # Type-safe conversion based on dtype
-                if np.issubdtype(dtype_obj, np.integer):
-                    fill_value = -99
-                    try:
-                        attr_value = int(raw_attr_value)
-                    except (TypeError, ValueError):
-                        attr_value = fill_value
+                    # add other variable attributes defined in the config, except for type and dimensions
+                    for key, value in variable_to_add_info["schema"].items():
+                        if key not in {"type", "dimensions"}:
+                            ds[variable_to_add_name].attrs[key] = value
 
-                elif np.issubdtype(dtype_obj, np.floating):
-                    fill_value = np.nan
-                    try:
-                        attr_value = float(raw_attr_value)
-                    except (TypeError, ValueError):
-                        attr_value = fill_value
+                    # if not (ds[variable_to_add_name] != "").all():
+                    #     logger.debug(
+                    #         f"{variable_to_add_name} variable created some empty values for dataset with time_coverage_start {getattr(ds, 'time_coverage_start', None)} and time_coverage_end {getattr(ds, 'time_coverage_end', None)}"
+                    #     )
 
                 else:
+                    # TODO: issues implementing numbers for zarrs. heaps of issues.
+                    # if _FillValue is set, the type automatically becomes float64.
+                    # and when removing fillvalue some random values get written as 0
+                    # when to_zarr is called. but only on the append.
+                    # Could maybe try doing re minimum repadocucable example?
+                    # for now, maybe do a dirty raise error os user known not to have numbers as gatt for now
+                    #
                     raise ValueError(
-                        f"Unsupported dtype for numeric fallback: {dtype_obj}"
+                        "gattrs to variables is currently not supported for non string objects. Modify the dataset configuration"
                     )
+                    # Get the attribute value or fallback
+                    raw_attr_value = getattr(ds, gattr, None)
 
-                if attr_value == 0:
-                    raise ValueError("shoud not be None")
+                    # Type-safe conversion based on dtype
+                    if np.issubdtype(dtype_obj, np.integer):
+                        fill_value = -99
+                        try:
+                            attr_value = int(raw_attr_value)
+                        except (TypeError, ValueError):
+                            attr_value = fill_value
 
-                # TODO: known bug https://discourse.pangeo.io/t/dtype-is-ignored-if-fillvalue-in-encoding-is-provided-for-xr-to-zarr/2653
-                # if fill_Value is added, then on append, some fill_values are created, and the type of the data becomes float64
-                encoding = {
-                    # "_FillValue": fill_value,
-                    "dtype": dtype_obj,
-                    # "compressor": None,
-                    # "filters": None,
-                }
+                    elif np.issubdtype(dtype_obj, np.floating):
+                        fill_value = np.nan
+                        try:
+                            attr_value = float(raw_attr_value)
+                        except (TypeError, ValueError):
+                            attr_value = fill_value
 
-                ds[dest_name] = (
-                    (dim_name,),
-                    np.full(ds.sizes[dim_name], attr_value, dtype=dtype_obj),
-                )
-                ds[dest_name] = ds[dest_name].astype(dtype_obj)
-                ds[dest_name].encoding = encoding
+                    else:
+                        raise ValueError(
+                            f"Unsupported dtype for numeric fallback: {dtype_obj}"
+                        )
+
+                    if attr_value == 0:
+                        raise ValueError("shoud not be None")
+
+                    # TODO: known bug https://discourse.pangeo.io/t/dtype-is-ignored-if-fillvalue-in-encoding-is-provided-for-xr-to-zarr/2653
+                    # if fill_Value is added, then on append, some fill_values are created, and the type of the data becomes float64
+                    encoding = {
+                        # "_FillValue": fill_value,
+                        "dtype": dtype_obj,
+                        # "compressor": None,
+                        # "filters": None,
+                    }
+
+                    ds[variable_to_add_name] = (
+                        (dim_name,),
+                        np.full(ds.sizes[dim_name], attr_value, dtype=dtype_obj),
+                    )
+                    ds[variable_to_add_name] = ds[variable_to_add_name].astype(
+                        dtype_obj
+                    )
+                    ds[variable_to_add_name].encoding = encoding
 
     # TODO: make the variable below something more generic? a parameter?
-    var_template_shape = dataset_config.get("var_template_shape")
+    var_template_shape = dataset_config["schema_transformation"].get(
+        "var_template_shape"
+    )
 
     # retrieve filename from ds
     filename_placeholder = "UNKNOWN_FILENAME.nc"
@@ -376,27 +393,38 @@ def preprocess_xarray(ds, dataset_config):
 
             ds[variable_name] = ds[variable_name].astype(datatype)
 
-    # delete global attributes as in config
-    if "gattrs_to_delete" in dataset_config.keys():
-        for gattr_to_delete in dataset_config["gattrs_to_delete"]:
-            del ds.attrs[gattr_to_delete]
+    ds = _update_ds_gattr(ds, dataset_config)
 
+    logger.info(f"Successfully applied preprocessing to the dataset from {filename}")
+
+    return ds
+
+
+def _update_ds_gattr(ds, dataset_config):
+    ## Update all global attributes.
     # Add Global attributes into metadata (no schema)
     dataset_metadata = dict()
+    global_attributes_dict = dataset_config["schema_transformation"].get(
+        "global_attributes"
+    )
+    if global_attributes_dict:
+        gattrs_to_delete = global_attributes_dict.get("delete")
+        if gattrs_to_delete:
+            for gattr_to_delete in gattrs_to_delete:
+                del ds.attrs[gattr_to_delete]
+
+        gattrs_to_set = global_attributes_dict.get("set")
+        if gattrs_to_set:
+            for gattr in gattrs_to_set:
+                dataset_metadata[gattr] = gattrs_to_set[gattr]
+
     if "metadata_uuid" in dataset_config.keys():
         dataset_metadata["metadata_uuid"] = dataset_config["metadata_uuid"]
 
     dataset_metadata["dataset_name"] = dataset_config["dataset_name"]
 
-    if "dataset_gattrs" in dataset_config.keys():
-        for gattr in dataset_config["dataset_gattrs"]:
-            dataset_metadata[gattr] = dataset_config["dataset_gattrs"][gattr]
-
     # Update global attributes of the Dataset
     ds.attrs.update(dataset_metadata)
-
-    logger.info(f"Successfully applied preprocessing to the dataset from {filename}")
-
     return ds
 
 
@@ -480,13 +508,18 @@ class GenericHandler(CommonHandler):
 
         self.validate_json(
             json_validation_path
-        )  # we cannot validate the json config until self.dataset_config and self.logger are set
+        )  # we cannot validate the json config until self.dataset_config and self.logger["schema_transformation"] are set
 
-        self.dimensions = self.dataset_config.get("dimensions")
+        self.dimensions = self.dataset_config["schema_transformation"].get("dimensions")
+        if self.dimensions is None:
+            raise ValueError(
+                "Missing required 'dimensions' key in 'schema_transformation'"
+            )
+
         self.rechunk_drop_vars = kwargs.get("rechunk_drop_vars", None)
-        self.vars_incompatible_with_region = self.dataset_config.get(
-            "vars_incompatible_with_region", None
-        )
+        self.vars_incompatible_with_region = self.dataset_config[
+            "schema_transformation"
+        ].get("vars_incompatible_with_region", None)
         self.append_dim_varname = self.get_append_dim()
 
         # Generic chunks structure
@@ -1218,12 +1251,16 @@ class GenericHandler(CommonHandler):
 
         ds = xr.open_mfdataset(batch_files, **open_mfdataset_params)
 
-        dataset_sort_by = self.dataset_config.get("dataset_sort_by", None)
+        dataset_sort_by = self.dataset_config["schema_transformation"].get(
+            "dataset_sort_by", None
+        )
         if dataset_sort_by:
             self.logger.info(
-                f"{self.uuid_log}: sorting the dataset by {self.dataset_config['dataset_sort_by']}"
+                f"{self.uuid_log}: sorting the dataset by {self.dataset_config['schema_transformation']['dataset_sort_by']}"
             )
-            ds = ds.sortby(self.dataset_config["dataset_sort_by"])
+            ds = ds.sortby(
+                self.dataset_config["schema_transformation"]["dataset_sort_by"]
+            )
         else:
             ds = ds.sortby(self.append_dim_varname)
 
@@ -1431,7 +1468,7 @@ class GenericHandler(CommonHandler):
         """
 
         # commented as already performed after calling open_mfdataset
-        # ds = ds.sortby(self.dataset_config["dataset_sort_by"])
+        # ds = ds.sortby(self.dataset_config["schema_transformation"]["dataset_sort_by"])
 
         self.logger.info(
             f"{self.uuid_log}: Appending data to the existing Zarr store at {self.store}."

@@ -3,25 +3,6 @@
   "logger_name": "radar_RottnestShelf_wind_delayed_qc",
   "parent_config": "radar_wind_delayed_qc_no_I_J_version_main.json",
   "metadata_uuid": "5ad9a6da-3f0b-4b2f-8212-48b386e1b98c",
-  "dimensions": {
-    "time": {
-      "name": "TIME",
-      "chunk": 100,
-      "rechunk": false,
-      "append_dim": true
-    },
-    "latitude": {
-      "name": "LATITUDE",
-      "chunk": 92
-    },
-    "longitude": {
-      "name": "LONGITUDE",
-      "chunk": 62
-    }
-  },
-  "dataset_gattrs": {
-    "title": ""
-  },
   "aws_opendata_registry": {
     "Name": "Ocean Radar - Rottnest shelf site - Wind - Delayed mode",
     "Description": "The Rottnest Shelf (ROT) HF ocean radar system covers an area which includes Rottnest Island and the Perth Canyon to the north-west.  The Perth Canyon has the highest marine biodiversity in the region with whale and fish aggregations, and high primary and secondary productions which are controlled by the physical oceanographic processes.  \n\nCombined with the dynamics of the Perth Canyon is the dominant Leeuwin Current which produces a wake on the leeward side of Rottnest Island.   This is a topographically induced up-welling and associated primary and secondary productivity.  The region is influenced by Swan River outflow, submarine groundwater discharges , and waste-water outfalls.  \n\nThe ROT HF ocean radar is a WERA phased array system with 16-element receive arrays located at Fremantle (32.031 S, 115.746 E) and Guilderton (31.342 S, 115.489 E).  These radars operate at a frequency of 8.512 MHz, with a bandwidth of 33 KHz and a maximum range of 200 Km.  Within the HF radar coverage area surface currents are measured.  Data are also collected from which wind directions and significant wave height can be calculated.  \n\nThe ROT area of coverage has a small overlap of commonly observed ocean with the Turqoise Coast (TURQ) SeaSonde HF ocean radar system on its north side.  Together, the ROT and TURQ systems provide continuous monitoring of the shelf from Fremantle to Jurien Bay.",
@@ -80,5 +61,28 @@
     ],
     "clear_existing_data": true,
     "raise_error": false
+  },
+  "schema_transformation": {
+    "global_attributes": {
+      "set": {
+        "title": ""
+      }
+    },
+    "dimensions": {
+      "time": {
+        "name": "TIME",
+        "chunk": 100,
+        "rechunk": false,
+        "append_dim": true
+      },
+      "latitude": {
+        "name": "LATITUDE",
+        "chunk": 92
+      },
+      "longitude": {
+        "name": "LONGITUDE",
+        "chunk": 62
+      }
+    }
   }
 }

@@ -599,6 +599,8 @@ The first section to add is
 The chunks
 ~~~~~~~~~~
 
+Add the following to the "schema_transformation" section
+
 .. code:: json
 
        "dimensions": {
@@ -671,44 +673,69 @@ Creating the Schema
 See :ref:`creating_the_schema` section above. As for Parquet...
 
 
-Global Attributes to drop
-~~~~~~~~~~~~~~~~~
+Global Attributes to drop and set
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Similar to Parquet. Add the following under the "schema_transformation" section
 
 .. code:: json
 
-  "gattrs_to_delete": [
-    "Voyage_number",
-    "platform_code",
-    "geospatial_lat_max",
-    "geospatial_lat_min",
-    "geospatial_lon_max",
-    "geospatial_lon_min",
-    "date_created"
-  ],
+  "global_attributes": {
+      "set": {
+        "title": ""
+      },
+      "delete": [
+        "Voyage_number",
+        "platform_code",
+        "geospatial_lat_max",
+        "geospatial_lat_min",
+        "geospatial_lon_max",
+        "geospatial_lon_min",
+        "date_created"
+      ]
+    }
+
 
 Global Attributes to variables
-~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Similar to Parquet. Add the following to the "schema_transformation" section.
+
+.. note:: Important Note
+   :class: custom-note
+   :name: string_vars
+
+     Due to some zarr/xarray bugs, only string variables are supported
+
 
 .. code:: json
 
-   "gattrs_to_variable": {
-      "file_version": {
-        "destination_name": "quality_control_version",
-        "dimensions": "TIME",
-        "length": 49
+  "add_variables": {
+      "quality_control_version": {
+        "source": "@global_attribute:file_version",
+        "schema": {
+          "type": "<U49",
+          "units": "1",
+          "dimensions": "TIME"
+        }
       },
       "platform_code": {
-        "destination_name": "platform_code",
-        "dimensions": "TIME",
-        "length": 7
+        "source": "@global_attribute:platform_code",
+        "schema": {
+          "type": "<U7",
+          "units": "1",
+          "dimensions": "TIME"
+        }
       },
       "voyage_number": {
-        "destination_name": "voyage_number",
-        "dimensions": "TIME",
-        "length": 10
+        "source": "@global_attribute:Voyage_number",
+        "schema": {
+          "type": "<U10",
+          "units": "1",
+          "dimensions": "TIME"
+        }
       }
-   },
-
+    }
 
 
 Run Settings Options
