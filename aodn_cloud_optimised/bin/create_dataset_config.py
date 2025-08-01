@@ -684,6 +684,11 @@ def main():
         type=validate_dataset_name,
         help="Name of the dataset (no spaces or underscores)",
     )
+    parser.add_argument(
+        "--csv-opts",
+        required=False,
+        help="JSON string of options to pass to pandas.read_csv when input is CSV.",
+    )
 
     # Parse arguments
     args = parser.parse_args()
