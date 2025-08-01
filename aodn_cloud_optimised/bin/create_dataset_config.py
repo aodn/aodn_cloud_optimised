@@ -686,6 +686,8 @@ def main():
     )
     parser.add_argument(
         "--csv-opts",
+        "--pandas-read-csv-config",
+        dest="csv_opts",
         required=False,
         help="JSON string of options to pass to pandas.read_csv when input is CSV.",
     )
