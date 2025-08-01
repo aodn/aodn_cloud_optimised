@@ -105,21 +105,6 @@
     }
   },
   "schema": {
-    "timestamp": {
-      "type": "int64"
-    },
-    "polygon": {
-      "type": "string"
-    },
-    "filename": {
-      "type": "string"
-    },
-    "campaign_name": {
-      "type": "string"
-    },
-    "dive_name": {
-      "type": "string"
-    },
     "TIME": {
       "type": "timestamp[ns]",
       "standard_name": "time",
