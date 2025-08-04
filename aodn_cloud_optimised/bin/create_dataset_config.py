@@ -730,10 +730,18 @@ def main():
                 js_type = "number"
             elif pd.api.types.is_bool_dtype(dtype):
                 js_type = "boolean"
-            else:
+            elif pd.api.types.is_object_dtype(dtype) | pd.api.types.is_string_dtype(
+                dtype
+            ):
                 js_type = "string"
+            else:
+                raise NotImplementedError(
+                    f"found dtype that did not fit into configured categories: `{dtype}`"
+                )
+
             dataset_config_schema["properties"][col] = {"type": js_type}
-    else:
+
+    elif obj_key.lower().endswith(".nc"):
         # Generate JSON schema from the NetCDF file
         temp_file_path = generate_json_schema_from_s3_netcdf(
             nc_file, cloud_format=args.cloud_format
@@ -741,6 +749,8 @@ def main():
         with open(temp_file_path, "r") as file:
             dataset_config_schema = json.load(file)
         os.remove(temp_file_path)
+    else:
+        raise NotImplementedError(f"input file type `{obj_key}` not implemented")
 
     dataset_config = {"schema": dataset_config_schema}
     # Define the path to the validation schema file
