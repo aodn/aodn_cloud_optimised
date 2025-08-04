@@ -892,82 +892,94 @@ class GenericHandler(CommonHandler):
         # a dict, a string? where to put the sidecar file? It's pretty poor implementation
         #
         # Create an empty list to store fields
-        fields = []
-        byte_dict_list = []
 
-        for var in self.full_schema:
-            var_metadata = self.full_schema[var]
-
-            # Convert config type to PyArrow data type
-            data_type = map_config_type_to_pyarrow_type(var_metadata["type"])
-
-            # TODO: once pyarrow matures on the metadata side, we should modify this ...
-            # Create a PyArrow field with metadata
-            # Convert all values in var_metadata to strings as pyarrow schema wants bytes..
-            var_metadata_str = {key: str(value) for key, value in var_metadata.items()}
-
-            field = pa.field(
-                var, data_type, metadata=var_metadata_str
-            )  # Here the metadata is properly attached as expected
-            # Append the field to the list of fields
-            fields.append(field)  # The metadata still exists here... Good sign
-
-            # Because of some obscure reason, the above doesn't work as expected,
-            # the byte_dict_list is an alternative way to store the metadata
-            byte_dict = str(var_metadata).encode("utf-8")
-            byte_dict_list.append(byte_dict)
-
-        # Create a PyArrow schema from the list of fields
-        pdf_schema = pa.schema(fields)
-        # above the fields is lost
-        # TODO: to access the metadata by variable name do the following
-        # Create a dictionary where keys are the names and values are the elements
-        # schema_dict = {obj.name: obj for obj in pdf_schema}
-        # Now you can access elements by name
-        # schema_dict['TIMESERIES'].metadata.get(b'cf_role')  instead of pdf_schema[0].metadata[b'cf_role'] but here the metadata is kinda lost, see https://github.com/apache/arrow/issues/38575
-
-        # alternative way: need to create a horrible byte dict
-        # var_atts_dict = {col_name: byte_dict for col_name, byte_dict in zip(pdf.column_names, byte_dict_list)}
-        var_atts_dict = {
-            col_name: byte_dict
-            for col_name, byte_dict in zip(
-                self.dataset_config.get("schema").keys(), byte_dict_list
+        if prefix_exists(self.cloud_optimised_output_path):
+            self.logger.info(
+                f"{self.uuid_log}: Existing Parquet store found at {self.cloud_optimised_output_path}. Updating Metadata"
             )
-        }
-        # Add Global attributes into metadata
-        dataset_metadata = dict()
-        if "metadata_uuid" in self.dataset_config.keys():
-            dataset_metadata["metadata_uuid"] = self.dataset_config["metadata_uuid"]
+            fields = []
+            byte_dict_list = []
 
-        dataset_metadata["dataset_name"] = self.dataset_config["dataset_name"]
+            for var in self.full_schema:
+                var_metadata = self.full_schema[var]
 
-        if self.dataset_config["schema_transformation"].get("global_attributes"):
-            if self.dataset_config["schema_transformation"]["global_attributes"].get(
-                "set"
-            ):
-                gattr_to_set = self.dataset_config["schema_transformation"][
+                # Convert config type to PyArrow data type
+                data_type = map_config_type_to_pyarrow_type(var_metadata["type"])
+
+                # TODO: once pyarrow matures on the metadata side, we should modify this ...
+                # Create a PyArrow field with metadata
+                # Convert all values in var_metadata to strings as pyarrow schema wants bytes..
+                var_metadata_str = {
+                    key: str(value) for key, value in var_metadata.items()
+                }
+
+                field = pa.field(
+                    var, data_type, metadata=var_metadata_str
+                )  # Here the metadata is properly attached as expected
+                # Append the field to the list of fields
+                fields.append(field)  # The metadata still exists here... Good sign
+
+                # Because of some obscure reason, the above doesn't work as expected,
+                # the byte_dict_list is an alternative way to store the metadata
+                byte_dict = str(var_metadata).encode("utf-8")
+                byte_dict_list.append(byte_dict)
+
+            # Create a PyArrow schema from the list of fields
+            pdf_schema = pa.schema(fields)
+            # above the fields is lost
+            # TODO: to access the metadata by variable name do the following
+            # Create a dictionary where keys are the names and values are the elements
+            # schema_dict = {obj.name: obj for obj in pdf_schema}
+            # Now you can access elements by name
+            # schema_dict['TIMESERIES'].metadata.get(b'cf_role')  instead of pdf_schema[0].metadata[b'cf_role'] but here the metadata is kinda lost, see https://github.com/apache/arrow/issues/38575
+
+            # alternative way: need to create a horrible byte dict
+            # var_atts_dict = {col_name: byte_dict for col_name, byte_dict in zip(pdf.column_names, byte_dict_list)}
+            var_atts_dict = {
+                col_name: byte_dict
+                for col_name, byte_dict in zip(
+                    self.dataset_config.get("schema").keys(), byte_dict_list
+                )
+            }
+            # Add Global attributes into metadata
+            dataset_metadata = dict()
+            if "metadata_uuid" in self.dataset_config.keys():
+                dataset_metadata["metadata_uuid"] = self.dataset_config["metadata_uuid"]
+
+            dataset_metadata["dataset_name"] = self.dataset_config["dataset_name"]
+
+            if self.dataset_config["schema_transformation"].get("global_attributes"):
+                if self.dataset_config["schema_transformation"][
                     "global_attributes"
-                ].get("set")
+                ].get("set"):
+                    gattr_to_set = self.dataset_config["schema_transformation"][
+                        "global_attributes"
+                    ].get("set")
 
-                for gattr in gattr_to_set:
-                    dataset_metadata[gattr] = gattr_to_set[gattr]
+                    for gattr in gattr_to_set:
+                        dataset_metadata[gattr] = gattr_to_set[gattr]
 
-        var_atts_dict["global_attributes"] = str(dataset_metadata).encode()
+            var_atts_dict["global_attributes"] = str(dataset_metadata).encode()
 
-        pdf_schema = pdf_schema.with_metadata(var_atts_dict)
+            pdf_schema = pdf_schema.with_metadata(var_atts_dict)
 
-        dataset_metadata_path = os.path.join(
-            self.cloud_optimised_output_path, "_common_metadata"
-        )
-        pq.write_metadata(
-            pdf_schema,
-            dataset_metadata_path,
-            filesystem=self.s3_fs,
-        )
+            dataset_metadata_path = os.path.join(
+                self.cloud_optimised_output_path, "_common_metadata"
+            )
+            pq.write_metadata(
+                pdf_schema,
+                dataset_metadata_path,
+                filesystem=self.s3_fs,
+            )
 
-        self.logger.info(
-            f"{self.uuid_log}: Parquet metadata file successfully published to {dataset_metadata_path} \n"
-        )
+            self.logger.info(
+                f"{self.uuid_log}: Parquet metadata file successfully published to {dataset_metadata_path} \n"
+            )
+
+        else:
+            self.logger.error(
+                f"Dataset {self.dataset_name} does not exist yet - cannot update metadata"
+            )
 
     def delete_existing_matching_parquet(self, filename) -> None:
         """

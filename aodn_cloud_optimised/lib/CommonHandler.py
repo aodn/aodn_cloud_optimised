@@ -341,11 +341,11 @@ class CommonHandler:
         try:
             validate(instance=self.dataset_config, schema=schema)
             self.logger.info(
-                f"Successfully validated JSON configuration for dataset {os.path.basename(json_validation_path)}."
+                f"Successfully validated JSON configuration for dataset {self.dataset_name} against {os.path.basename(json_validation_path)}."
             )
         except ValidationError as e:
             raise ValueError(
-                f"JSON configuration for dataset {os.path.basename(json_validation_path)}: Validation failed: {e}"
+                f"Failed to validat JSON configuration for dataset {self.dataset_name} against {os.path.basename(json_validation_path)}: {e}"
             )
 
     # TODO: remove as not used anymore

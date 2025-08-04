@@ -159,6 +159,7 @@ cloud_optimised_vessel_xbt_realtime_nonqc = "aodn_cloud_optimised.bin.vessel_xbt
 cloud_optimised_wave_buoy_realtime_nonqc = "aodn_cloud_optimised.bin.wave_buoy_realtime_nonqc:main"
 generic_cloud_optimised_creation = "aodn_cloud_optimised.bin.generic_cloud_optimised_creation:main"
 pydantic_precommit_hook = "aodn_cloud_optimised.bin.pydantic_precommit_hook:main"
+cloud_optimised_update_all_metadata = "aodn_cloud_optimised.bin.update_metadata:main"
 
 #[tool.poetry.include]
 #data = ["aodn_cloud_optimised/config/*.json", "aodn_cloud_optimised/config/dataset/*.json"]
