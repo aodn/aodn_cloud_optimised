@@ -10,6 +10,7 @@ class TestDatasetConfigValidation(unittest.TestCase):
         self.base_valid_config = {
             "dataset_name": "example_dataset",
             "cloud_optimised_format": "zarr",  # required
+            "metadata_uuid": "123b1lkjh",
             "schema": {
                 "TEMP": {"type": "float32"},  # minimal valid schema
             },
