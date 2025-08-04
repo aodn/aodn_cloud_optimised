@@ -3,8 +3,6 @@
   "logger_name": "satellite_nanoplankton_fraction_oc3_1day_aqua",
   "parent_config": "satellite_ocean_colour_1day_aqua_main.json",
   "metadata_uuid": "9fde091c-9d38-4b2f-ba23-c262c21a41a2",
-  "var_template_shape": "nanop_brewin2012in",
-  "vars_incompatible_with_region": [],
   "schema": {
     "time": {
       "type": "timestamp[ns]",
@@ -32,9 +30,6 @@
       "long_name": "Nanoplankton fraction\nMethod: Brewin et al (2012), Deep Sea Research II, 77-80, 117-127",
       "flag_applied": "HISATZEN LAND CLDICE NAVFAIL"
     }
-  },
-  "dataset_gattrs": {
-    "title": ""
   },
   "aws_opendata_registry": {
     "Name": "Satellite - Ocean Colour - MODIS - 1 day - Nanoplankton fraction (OC3 model and Brewin et al 2012 algorithm)",
@@ -96,5 +91,14 @@
     ],
     "clear_existing_data": true,
     "raise_error": false
+  },
+  "schema_transformation": {
+    "global_attributes": {
+      "set": {
+        "title": ""
+      }
+    },
+    "var_template_shape": "nanop_brewin2012in",
+    "vars_incompatible_with_region": []
   }
 }

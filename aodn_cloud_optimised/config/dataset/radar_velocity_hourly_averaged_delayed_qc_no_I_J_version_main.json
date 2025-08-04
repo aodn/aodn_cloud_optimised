@@ -2,12 +2,6 @@
   "dataset_name": "radar_velocity_hourly_averaged_delayed_qc_no_I_J_version_main",
   "logger_name": "radar_velocity_hourly_averaged_delayed_qc_no_I_J_version_main",
   "cloud_optimised_format": "zarr",
-  "var_template_shape": "UCUR",
-  "vars_incompatible_with_region": [
-    "LATITUDE",
-    "LONGITUDE",
-    "GDOP"
-  ],
   "schema": {
     "TIME": {
       "type": "timestamp[ns]",
@@ -142,9 +136,6 @@
       "comment": "This value is set on the basis of the offline quality controls applied in the time domain (see abstract)."
     }
   },
-  "dataset_gattrs": {
-    "title": ""
-  },
   "run_settings": {
     "coiled_cluster_options": {
       "n_workers": [
@@ -174,5 +165,18 @@
     ],
     "clear_existing_data": true,
     "raise_error": false
+  },
+  "schema_transformation": {
+    "global_attributes": {
+      "set": {
+        "title": ""
+      }
+    },
+    "var_template_shape": "UCUR",
+    "vars_incompatible_with_region": [
+      "LATITUDE",
+      "LONGITUDE",
+      "GDOP"
+    ]
   }
 }

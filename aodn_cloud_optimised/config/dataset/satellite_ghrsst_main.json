@@ -3,27 +3,6 @@
   "logger_name": "srs_ghrsst_main",
   "cloud_optimised_format": "zarr",
   "metadata_uuid": "",
-  "dimensions": {
-    "time": {
-      "name": "time",
-      "chunk": 5,
-      "rechunk": true,
-      "append_dim": true
-    },
-    "latitude": {
-      "name": "lat",
-      "chunk": 500
-    },
-    "longitude": {
-      "name": "lon",
-      "chunk": 500
-    }
-  },
-  "var_template_shape": "sea_surface_temperature",
-  "vars_incompatible_with_region": [
-    "lat",
-    "lon"
-  ],
   "schema": {
     "lon": {
       "type": "float32"
@@ -99,9 +78,6 @@
       "drop_var": true
     }
   },
-  "dataset_gattrs": {
-    "title": "Temperature logger"
-  },
   "run_settings": {
     "coiled_cluster_options": {
       "n_workers": [
@@ -131,5 +107,33 @@
     ],
     "clear_existing_data": true,
     "raise_error": false
+  },
+  "schema_transformation": {
+    "global_attributes": {
+      "set": {
+        "title": "Temperature logger"
+      }
+    },
+    "var_template_shape": "sea_surface_temperature",
+    "vars_incompatible_with_region": [
+      "lat",
+      "lon"
+    ],
+    "dimensions": {
+      "time": {
+        "name": "time",
+        "chunk": 5,
+        "rechunk": true,
+        "append_dim": true
+      },
+      "latitude": {
+        "name": "lat",
+        "chunk": 500
+      },
+      "longitude": {
+        "name": "lon",
+        "chunk": 500
+      }
+    }
   }
 }

@@ -3,27 +3,6 @@
   "logger_name": "model_sea_level_anomaly_gridded_realtime",
   "cloud_optimised_format": "zarr",
   "metadata_uuid": "0c9eb39c-9cbe-4c6a-8a10-5867087e703a",
-  "dimensions": {
-    "time": {
-      "name": "TIME",
-      "chunk": 5,
-      "rechunk": true,
-      "append_dim": true
-    },
-    "latitude": {
-      "name": "LATITUDE",
-      "chunk": 351
-    },
-    "longitude": {
-      "name": "LONGITUDE",
-      "chunk": 641
-    }
-  },
-  "var_template_shape": "UCUR",
-  "vars_incompatible_with_region": [
-    "LATITUDE",
-    "LONGITUDE"
-  ],
   "schema": {
     "TIME": {
       "type": "datetime64[ns]",
@@ -114,9 +93,6 @@
       "drop_var": true
     }
   },
-  "dataset_gattrs": {
-    "title": "Ocean Current"
-  },
   "aws_opendata_registry": {
     "Name": "OceanCurrent - Gridded sea level anomaly - Near real time",
     "Description": "Gridded (adjusted) sea level anomaly (GSLA), gridded sea level (GSL) and surface geostrophic velocity (UCUR,VCUR) for the Australasian region. GSLA is mapped using optimal interpolation of detided, de-meaned, inverse-barometer-adjusted altimeter and tidegauge estimates of sea level. GSL is GSLA plus an estimate of the departure of mean sea level from the geoid \u2013 mean sea level (over 18 years of model time) of Ocean Forecasting Australia Model version 3 (OFAM3). The geostrophic velocities are derived from GSLA and the mean surface velocity from OFAM3. \n\n\nThe altimeter data window for input to the Delayed Mode (DM) maps is symmetrical about the map date. The width of the window is dependent on the number of altimeters flying at the time and ranges from 30 days to 14 days. The altimeter data window for Near Real Time (NRT) maps is asymmetrical about the analysis date (-21 to 4 days). For both NRT and DM, altimeter data is weighted by the difference between the analysis date of the map and the time of each altimeter observation.\n\nReferences: http://imos.aodn.org.au/oceancurrent",
@@ -189,5 +165,33 @@
     ],
     "clear_existing_data": true,
     "raise_error": false
+  },
+  "schema_transformation": {
+    "global_attributes": {
+      "set": {
+        "title": "Ocean Current"
+      }
+    },
+    "var_template_shape": "UCUR",
+    "vars_incompatible_with_region": [
+      "LATITUDE",
+      "LONGITUDE"
+    ],
+    "dimensions": {
+      "time": {
+        "name": "TIME",
+        "chunk": 5,
+        "rechunk": true,
+        "append_dim": true
+      },
+      "latitude": {
+        "name": "LATITUDE",
+        "chunk": 351
+      },
+      "longitude": {
+        "name": "LONGITUDE",
+        "chunk": 641
+      }
+    }
   }
 }

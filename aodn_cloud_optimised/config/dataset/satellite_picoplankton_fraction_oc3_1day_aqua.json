@@ -3,7 +3,6 @@
   "logger_name": "satellite_picoplankton_fraction_oc3_1day_aqua",
   "parent_config": "satellite_ocean_colour_1day_aqua_main.json",
   "metadata_uuid": "bc428d0b-eff7-41b9-8d4c-10e666ee1312",
-  "var_template_shape": "picop_brewin2012in",
   "schema": {
     "time": {
       "type": "timestamp[ns]",
@@ -31,9 +30,6 @@
       "long_name": "Picoplankton fraction\nMethod: Brewin et al (2012), Deep Sea Research II, 77-80, 117-127",
       "flag_applied": "HISATZEN LAND CLDICE NAVFAIL"
     }
-  },
-  "dataset_gattrs": {
-    "title": ""
   },
   "aws_opendata_registry": {
     "Name": "Satellite - Ocean Colour - MODIS - 1 day - Picoplankton fraction (OC3 model and Brewin et al 2012 algorithm)",
@@ -95,5 +91,13 @@
     ],
     "clear_existing_data": true,
     "raise_error": false
+  },
+  "schema_transformation": {
+    "global_attributes": {
+      "set": {
+        "title": ""
+      }
+    },
+    "var_template_shape": "picop_brewin2012in"
   }
 }

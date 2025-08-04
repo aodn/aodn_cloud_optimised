@@ -115,81 +115,91 @@
     "metadata_uuid": {
       "type": "string"
     },
-    "dimensions": {
+    "schema_transformation": {
       "type": "object",
       "properties": {
-        "time": {
+        "dimensions": {
           "type": "object",
           "properties": {
-            "name": {
-              "type": "string"
+            "time": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "chunk": {
+                  "type": "integer"
+                },
+                "rechunk": {
+                  "type": "boolean"
+                },
+                "append_dim": {
+                  "type": "boolean"
+                }
+              }
             },
-            "chunk": {
-              "type": "integer"
+            "latitude": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "chunk": {
+                  "type": "integer"
+                },
+                "size": {
+                  "type": "integer"
+                }
+              }
             },
-            "rechunk": {
-              "type": "boolean"
-            },
-            "append_dim": {
-              "type": "boolean"
+            "longitude": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "chunk": {
+                  "type": "integer"
+                },
+                "size": {
+                  "type": "integer"
+                }
+              }
             }
           }
         },
-        "latitude": {
-          "type": "object",
-          "properties": {
-            "name": {
-              "type": "string"
-            },
-            "chunk": {
-              "type": "integer"
-            },
-            "size": {
-              "type": "integer"
-            }
+        "var_template_shape": {
+          "type": "string"
+        },
+        "vars_incompatible_with_region": {
+          "type": "array",
+          "items": {
+            "type": "string"
           }
         },
-        "longitude": {
+        "global_attributes": {
           "type": "object",
           "properties": {
-            "name": {
-              "type": "string"
-            },
-            "chunk": {
-              "type": "integer"
-            },
-            "size": {
-              "type": "integer"
+            "dimensions": {
+              "type": "object",
+              "properties": {
+                "delete": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "set": {
+                  "type": "object"
+                }
+              }
             }
           }
         }
-      }
-    },
-    "var_template_shape": {
-      "type": "string"
-    },
-    "vars_incompatible_with_region": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
-    },
-    "gattrs_to_delete": {
-      "type": "array",
-      "items": {
-        "type": "string"
       }
     },
     "schema": {
       "type": "object"
-    },
-    "dataset_gattrs": {
-      "type": "object",
-      "properties": {
-        "title": {
-          "type": "string"
-        }
-      }
     },
     "aws_opendata_registry": {
       "type": "object",
@@ -319,9 +329,7 @@
     "dataset_name",
     "run_settings",
     "cloud_optimised_format",
-    "dimensions",
-    "var_template_shape",
-    "vars_incompatible_with_region",
-    "schema"
+    "schema",
+    "schema_transformation"
   ]
 }

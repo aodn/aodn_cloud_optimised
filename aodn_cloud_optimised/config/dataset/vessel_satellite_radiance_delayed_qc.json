@@ -3,67 +3,6 @@
   "logger_name": "vessel_satellite_radiance_delayed_qc",
   "cloud_optimised_format": "zarr",
   "metadata_uuid": "28f8bfed-ca6a-472a-84e4-42563ce4df3f",
-  "dataset_sort_by": [
-    "WAVELENGTH_Ed",
-    "WAVELENGTH_Lsky",
-    "WAVELENGTH_Lu",
-    "TIME"
-  ],
-  "dimensions": {
-    "time": {
-      "name": "TIME",
-      "chunk": 1000,
-      "rechunk": false,
-      "append_dim": true
-    },
-    "WAVELENGTH_Ed": {
-      "name": "WAVELENGTH_Ed",
-      "chunk": 200,
-      "size": 200
-    },
-    "WAVELENGTH_Lu": {
-      "name": "WAVELENGTH_Lu",
-      "chunk": 200,
-      "size": 200
-    },
-    "WAVELENGTH_Lsky": {
-      "name": "WAVELENGTH_Lsky",
-      "chunk": 200,
-      "size": 200
-    }
-  },
-  "var_template_shape": "Ed",
-  "vars_incompatible_with_region": [
-    "WAVELENGTH_Ed",
-    "WAVELENGTH_Lu",
-    "WAVELENGTH_Lsky"
-  ],
-  "gattrs_to_variables": {
-    "file_version": {
-      "destination_name": "quality_control_version",
-      "dimensions": "TIME",
-      "dtype": "<U49"
-    },
-    "platform_code": {
-      "destination_name": "platform_code",
-      "dimensions": "TIME",
-      "dtype": "<U7"
-    },
-    "Voyage_number": {
-      "destination_name": "voyage_number",
-      "dimensions": "TIME",
-      "dtype": "<U10"
-    }
-  },
-  "gattrs_to_delete": [
-    "Voyage_number",
-    "platform_code",
-    "geospatial_lat_max",
-    "geospatial_lat_min",
-    "geospatial_lon_max",
-    "geospatial_lon_min",
-    "date_created"
-  ],
   "schema": {
     "TIME": {
       "type": "timestamp[ns]",
@@ -294,9 +233,6 @@
       "quality_control_conventions": "IMOS standard flags"
     }
   },
-  "dataset_gattrs": {
-    "title": ""
-  },
   "aws_opendata_registry": {
     "Name": "IMOS - Satellite Remote Sensing - Ocean Colour - Ships of Opportunity - Radiometer Sub-Facility",
     "Description": "Calibrated DALEC Transect data The Dynamic above water radiance and irradiance collector (DALEC) is a radiometrically calibrated hyperspectral radiometer developed by In situ Marine Optics for autonomous ship based deployment. It contains three Zeiss UV-Vis enhanced spectroradiometers designed to measure near-simultaneous spectral upwelling radiance (Lu), downwelling radiance (Lsky) and downwelling irradiance (Ed). DALEC0001 is deployed on the foremast of the RV Southern Surveyor (VLHJ) and on the RV Solander. Spectra are collected during daylight hours when the ship is at sea subject to suitable sea conditions. Ancillary attitude data for the DALEC included in the dataset are pitch (degrees), pitch standard deviation (degrees), roll (degrees), roll standard deviation (degrees) and gear position (degrees from the bow). The dataset begins July 2011 and is on-going.",
@@ -368,5 +304,91 @@
     ],
     "clear_existing_data": true,
     "raise_error": false
+  },
+  "schema_transformation": {
+    "global_attributes": {
+      "set": {
+        "title": ""
+      },
+      "delete": [
+        "Voyage_number",
+        "platform_code",
+        "geospatial_lat_max",
+        "geospatial_lat_min",
+        "geospatial_lon_max",
+        "geospatial_lon_min",
+        "date_created"
+      ]
+    },
+    "dataset_sort_by": [
+      "WAVELENGTH_Ed",
+      "WAVELENGTH_Lsky",
+      "WAVELENGTH_Lu",
+      "TIME"
+    ],
+    "var_template_shape": "Ed",
+    "vars_incompatible_with_region": [
+      "WAVELENGTH_Ed",
+      "WAVELENGTH_Lu",
+      "WAVELENGTH_Lsky"
+    ],
+    "dimensions": {
+      "time": {
+        "name": "TIME",
+        "chunk": 1000,
+        "rechunk": false,
+        "append_dim": true
+      },
+      "WAVELENGTH_Ed": {
+        "name": "WAVELENGTH_Ed",
+        "chunk": 200,
+        "size": 200
+      },
+      "WAVELENGTH_Lu": {
+        "name": "WAVELENGTH_Lu",
+        "chunk": 200,
+        "size": 200
+      },
+      "WAVELENGTH_Lsky": {
+        "name": "WAVELENGTH_Lsky",
+        "chunk": 200,
+        "size": 200
+      }
+    },
+    "add_variables": {
+      "filename": {
+        "source": "@filename",
+        "schema": {
+          "type": "object",
+          "units": "1",
+          "long_name": "Filename of the source file",
+          "dimensions": "TIME"
+        }
+      },
+      "quality_control_version": {
+        "source": "@global_attribute:file_version",
+        "schema": {
+          "type": "<U49",
+          "units": "1",
+          "dimensions": "TIME"
+        }
+      },
+      "platform_code": {
+        "source": "@global_attribute:platform_code",
+        "schema": {
+          "type": "<U7",
+          "units": "1",
+          "dimensions": "TIME"
+        }
+      },
+      "voyage_number": {
+        "source": "@global_attribute:Voyage_number",
+        "schema": {
+          "type": "<U10",
+          "units": "1",
+          "dimensions": "TIME"
+        }
+      }
+    }
   }
 }

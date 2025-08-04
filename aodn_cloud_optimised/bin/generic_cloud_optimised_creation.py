@@ -327,8 +327,241 @@ class RunSettings(BaseModel):
 
 
 class ZarrSchemaTransformation(BaseModel):
-    # Placeholder for zarr-specific logic
-    pass
+    dataset_schema: dict[str, Any]
+    dataset_name: str
+    add_variables: Optional[dict[str, Any]] = Field(
+        default=None,
+        description="Variables to add to the schema, specified as a dictionary.",
+    )
+    global_attributes: Dict[str, Any] = Field(
+        default_factory=dict,
+        description="Global attributes to modify. Supports 'delete' and 'set' keys.",
+    )
+    dimensions: Optional[dict[str, dict[str, Any]]] = None
+    dataset_sort_by: Optional[list[str]] = None
+    vars_incompatible_with_region: Optional[list[str]] = None
+
+    @model_validator(mode="after")
+    def validate_dataset_sortby(self):
+        if self.dataset_sort_by:
+            valid_names = {
+                dim["name"] for dim in self.dimensions.values() if "name" in dim
+            }
+            for var in self.dataset_sort_by:
+                if var not in valid_names:
+                    raise ValueError(
+                        f"{var} does not exist in the dimensions list and can't be used to sort the dataset"
+                    )
+        return self
+
+    @model_validator(mode="after")
+    def validate_dimensions_config(self):
+        if not self.dimensions:
+            return self  # Nothing to check
+
+        # Check how many dimensions have "append_dim" set
+        has_append_flag = [
+            (dim_key, props.get("append_dim"))
+            for dim_key, props in self.dimensions.items()
+            if "append_dim" in props
+        ]
+
+        if has_append_flag:
+            # Ensure exactly one is True
+            true_dims = [k for k, v in has_append_flag if v is True]
+            if len(true_dims) != 1:
+                raise ValueError(
+                    f"Exactly one dimension must have 'append_dim: true'. Found: {true_dims}"
+                )
+        else:
+            # No dimension has an append_dim key
+            warnings.warn(
+                f"{self.dataset_name}\n"
+                "No 'append_dim' key was found in any dimension config. "
+                "will default to using dimensions[\"time\"]. Consider adding 'append_dim: true' "
+                "to one dimension explicitly for clarity.",
+                stacklevel=1,
+            )
+
+        return self
+
+    @model_validator(mode="after")
+    def validate_vars_incompatible_with_region(self):
+        if self.vars_incompatible_with_region:
+            missing = [
+                var
+                for var in self.vars_incompatible_with_region
+                if var not in self.dataset_schema
+            ]
+            if missing:
+                raise ValueError(
+                    f"The following vars_incompatible_with_region are not defined in schema configuration or mispelled: {missing}"
+                )
+        return self
+
+    @model_validator(mode="after")
+    def validate_global_attributes(self):
+        if not self.global_attributes:
+            return self
+
+        if not isinstance(self.global_attributes, dict):
+            raise ValueError("'global_attributes' must be a dictionary if present.")
+
+        valid_keys = {"delete", "set"}
+        if self.global_attributes:
+            invalid_keys = [k for k in self.global_attributes if k not in valid_keys]
+            if invalid_keys:
+                raise ValueError(
+                    f"Invalid global_attributes keys: {invalid_keys}. "
+                    f"Only {valid_keys} are allowed."
+                )
+
+        if "delete" in self.global_attributes:
+            delete = self.global_attributes["delete"]
+            if not isinstance(delete, list) or not all(
+                isinstance(item, str) for item in delete
+            ):
+                raise ValueError(
+                    "'delete' under 'global_attributes' must be a list of strings."
+                )
+
+        if "set" in self.global_attributes:
+            set_attrs = self.global_attributes["set"]
+            if not isinstance(set_attrs, dict):
+                raise ValueError(
+                    "'set' under 'global_attributes' must be a dictionary."
+                )
+
+        return self
+
+    @classmethod
+    def is_valid_dtype(cls, attr_type: str) -> bool:
+        try:
+            np.dtype(attr_type)
+            return True
+        except TypeError:
+            return False
+
+    @classmethod
+    def not_implemented_dtype(cls, attr_type: str) -> bool:
+        # Only support string types, i.e. Unicode kind 'U'
+        if np.dtype(attr_type).kind != "U":
+            raise ValueError(
+                f"{attr_type} is not supported for global attribute conversion. "
+                "Only Unicode string types (e.g., '<U49') are supported due to Dask limitations."
+            )
+        return False
+
+    @field_validator("add_variables", mode="after")
+    def validate_add_variables(cls, value):
+        if value is None:
+            return value
+
+        allowed_sources = {
+            "@filename",
+            "@global_attribute:",
+        }
+
+        # TODO: add test for @function (only used by autonomous_underwater_vehicle config)
+        if not isinstance(value, dict):
+            raise ValueError("add_variables must be a dictionary.")
+
+        for var_name, var_config in value.items():
+            if not isinstance(var_config, dict):
+                raise ValueError(
+                    f"Value for variable '{var_name}' must be a dictionary."
+                )
+
+            # Check 'source' key
+            source = var_config.get("source")
+            if not (
+                source in allowed_sources
+                or any(source.startswith(allowed) for allowed in allowed_sources)
+            ):
+                raise ValueError(
+                    f"Invalid or missing 'source' for variable '{var_name}'. "
+                    f"Expected to start with one of {allowed_sources}, got {source}."
+                )
+
+            # Check 'schema' key
+            schema = var_config.get("schema")
+            if not isinstance(schema, dict):
+                raise ValueError(
+                    f"Missing or invalid 'schema' for variable '{var_name}'."
+                )
+            #
+            # 'type' field check
+            dtype = schema.get("type")
+            if dtype is None:
+                raise ValueError(
+                    f"'schema' for variable '{var_name}' must contain a 'type' key."
+                )
+
+            if var_name != "filename":
+                if not cls.is_valid_dtype(dtype):
+                    raise ValueError(
+                        f"'{dtype}' for variable '{var_name}' is not a valid NumPy dtype."
+                    )
+
+                cls.not_implemented_dtype(dtype)
+
+            if "units" not in schema:
+                raise ValueError(
+                    f"'schema' for variable '{var_name}' must contain a 'units' key."
+                )
+            else:
+                unit_str = schema["units"]
+                unit = Units(unit_str, calendar="gregorian")
+                if not unit.isvalid:
+                    raise ValueError(
+                        f"Invalid CF unit '{unit_str}' for variable '{var_name}'."
+                    )
+
+        return value
+
+    # @model_validator(mode="after")
+    # def validate_gattrs_to_variable_dimensions(self) -> "DatasetConfig":
+    #     if self.gattrs_to_variables:
+    #         if self.cloud_optimised_format == "zarr":
+    #             valid_dimension_names = {
+    #                 dim_def["name"] for dim_def in self.dimensions.values()
+    #             }
+    #             invalid_entries = []
+    #             for key, var_def in self.gattrs_to_variables.items():
+    #                 dim_name = var_def.get("dimensions")
+    #                 if dim_name not in valid_dimension_names:
+    #                     invalid_entries.append((key, dim_name))
+    #
+    #                 def is_valid_dtype(attr_type) -> bool:
+    #                     try:
+    #                         np.dtype(attr_type)
+    #                         return True
+    #                     except TypeError:
+    #                         return False
+    #
+    #                 def not_implemented_dtype(attr_type) -> bool:
+    #                     if np.dtype(attr_type).kind != "U":
+    #                         raise ValueError(
+    #                             f"{attr_type} to convert a global attribute to a variable is currently not implemented in this library due to dask issues and data loss. Use string or <U type instead"
+    #                         )
+    #                     else:
+    #                         return False
+    #
+    #                 attr_type = var_def.get("dtype", None)
+    #                 if not is_valid_dtype(attr_type) or attr_type is None:
+    #                     raise ValueError(
+    #                         f"{attr_type} for variable {key} is not a valid type"
+    #                     )
+    #
+    #                 not_implemented_dtype(attr_type)
+    #
+    #             if invalid_entries:
+    #                 raise ValueError(
+    #                     f"The following gattrs_to_variables entries refer to undefined dimensions: "
+    #                     + ", ".join(f"{k} (dimension: {d})" for k, d in invalid_entries)
+    #                 )
+    #     return self
+    #
 
 
 class ParquetSchemaTransformation(BaseModel):
@@ -663,21 +896,20 @@ class DatasetConfig(BaseModel):
     dataset_schema: dict[str, Any] = Field(
         ..., description="Schema definition of the input dataset", alias="schema"
     )
-    vars_incompatible_with_region: Optional[list[str]] = None
-    gattrs_to_variables: Optional[Union[dict[str, dict[str, Any]], list[str]]] = None
-    dimensions: dict[str, dict[str, Any]] | None = None
     cloud_optimised_format: Literal["zarr", "parquet"]
-    partition_keys: Optional[list[str]] = None
-    dataset_gattrs: Optional[dict[str, Any]] = None
-    dataset_sort_by: Optional[list[str]] = None
 
     @model_validator(mode="after")
     def validate_schema_transformation_type(self) -> "DatasetConfig":
         if self.cloud_optimised_format == "parquet":
             ParquetSchemaTransformation.model_validate(self.schema_transformation)
         if self.cloud_optimised_format == "zarr":
-            # ZarrSchemaTransformation.model_validate(self.schema_transformation)
-            pass
+            if self.schema_transformation is not None:
+                combined_data = {
+                    **self.schema_transformation,
+                    "dataset_name": self.dataset_name,
+                    "dataset_schema": self.dataset_schema,  # inject here
+                }
+                ZarrSchemaTransformation.model_validate(combined_data)
         return self
 
     @model_validator(mode="after")
@@ -728,50 +960,6 @@ class DatasetConfig(BaseModel):
                         )
         return self
 
-    @model_validator(mode="after")
-    def validate_dataset_sortby(self) -> "DatasetConfig":
-        if self.dataset_sort_by:
-            valid_names = {
-                dim["name"] for dim in self.dimensions.values() if "name" in dim
-            }
-            for var in self.dataset_sort_by:
-                if var not in valid_names:
-                    raise ValueError(
-                        f"{var} does not exist in the dimensions list and can't be used to sort the dataset"
-                    )
-        return self
-
-    @model_validator(mode="after")
-    def validate_dimensions_config(self) -> "DatasetConfig":
-        if not self.dimensions:
-            return self  # Nothing to check
-
-        # Check how many dimensions have "append_dim" set
-        has_append_flag = [
-            (dim_key, props.get("append_dim"))
-            for dim_key, props in self.dimensions.items()
-            if "append_dim" in props
-        ]
-
-        if has_append_flag:
-            # Ensure exactly one is True
-            true_dims = [k for k, v in has_append_flag if v is True]
-            if len(true_dims) != 1:
-                raise ValueError(
-                    f"Exactly one dimension must have 'append_dim: true'. Found: {true_dims}"
-                )
-        else:
-            # No dimension has an append_dim key
-            warnings.warn(
-                f"{self.dataset_name}\n"
-                "No 'append_dim' key was found in any dimension config. "
-                "will default to using dimensions[\"time\"]. Consider adding 'append_dim: true' "
-                "to one dimension explicitly for clarity.",
-                stacklevel=1,
-            )
-
-        return self
-
     # TODO: if we want to test for the existence of the PLACEHOLDER in the aws_opendata_regristry cloud_optimised_creation
     # we should add this key in the class definition. However, having this placeholder doesn't cause problem to the dataset
     # creation
@@ -796,149 +984,6 @@ class DatasetConfig(BaseModel):
 
         check_recursive(self.model_dump())
         return self
-
-    @model_validator(mode="after")
-    def validate_vars_incompatible_with_region(self) -> "DatasetConfig":
-        if self.vars_incompatible_with_region:
-            missing = [
-                var
-                for var in self.vars_incompatible_with_region
-                if var not in self.dataset_schema
-            ]
-            if missing:
-                raise ValueError(
-                    f"The following vars_incompatible_with_region are not defined in schema configuration or mispelled: {missing}"
-                )
-        return self
-
-    @model_validator(mode="after")
-    def validate_gattrs_to_variable_dimensions(self) -> "DatasetConfig":
-        if self.gattrs_to_variables:
-            if self.cloud_optimised_format == "zarr":
-                valid_dimension_names = {
-                    dim_def["name"] for dim_def in self.dimensions.values()
-                }
-                invalid_entries = []
-                for key, var_def in self.gattrs_to_variables.items():
-                    dim_name = var_def.get("dimensions")
-                    if dim_name not in valid_dimension_names:
-                        invalid_entries.append((key, dim_name))
-
-                    def is_valid_dtype(attr_type) -> bool:
-                        try:
-                            np.dtype(attr_type)
-                            return True
-                        except TypeError:
-                            return False
-
-                    def not_implemented_dtype(attr_type) -> bool:
-                        if np.dtype(attr_type).kind != "U":
-                            raise ValueError(
-                                f"{attr_type} to convert a global attribute to a variable is currently not implemented in this library due to dask issues and data loss. Use string or <U type instead"
-                            )
-                        else:
-                            return False
-
-                    attr_type = var_def.get("dtype", None)
-                    if not is_valid_dtype(attr_type) or attr_type is None:
-                        raise ValueError(
-                            f"{attr_type} for variable {key} is not a valid type"
-                        )
-
-                    not_implemented_dtype(attr_type)
-
-                if invalid_entries:
-                    raise ValueError(
-                        f"The following gattrs_to_variables entries refer to undefined dimensions: "
-                        + ", ".join(f"{k} (dimension: {d})" for k, d in invalid_entries)
-                    )
-            # if self.cloud_optimised_format == "parquet":
-            #     for var in self.gattrs_to_variables:
-            #         var_def = self.schema.get(var)
-            #         numeric_types = {
-            #             "int",
-            #             "int32",
-            #             "int64",
-            #             "float",
-            #             "float32",
-            #             "float64",
-            #             "number",
-            #         }
-            #
-            #         if (
-            #             not var_def
-            #             or var_def.get("type") not in {"string"} | numeric_types
-            #         ):
-            #             raise ValueError(
-            #                 f"schema['{var}'] must be of type 'string' or a numeric type "
-            #                 f"(e.g. {sorted(numeric_types)}), required by gattrs_to_variables"
-            #             )
-        return self
-
-    #
-    # @model_validator(mode="after")
-    # def validate_parquet_config(self) -> "DatasetConfig":
-    #     if self.cloud_optimised_format == "parquet":
-    #         if not self.partition_keys:
-    #             raise ValueError("partition_keys must be defined for parquet format")
-    #
-    #         # timestamp partition check
-    #         if "timestamp" in self.partition_keys:
-    #             # Validate time_extent block exists
-    #             if not self.time_extent:
-    #                 raise ValueError(
-    #                     "time_extent must be defined when 'timestamp' is a partition key"
-    #                 )
-    #             time_var = self.time_extent.get("time")
-    #             if time_var not in self.schema:
-    #                 raise ValueError(
-    #                     f"time_extent 'time' value '{time_var}' is not defined in schema"
-    #                 )
-    #
-    #             # Validate timestamp partition period
-    #             valid_periods = {"M", "Q", "Y", "h", "min", "s", "ms", "us", "ns"}
-    #             period = self.time_extent.get("partition_timestamp_period")
-    #             if period not in valid_periods:
-    #                 raise ValueError(
-    #                     f"Invalid partition_timestamp_period '{period}'. Must be one of {sorted(valid_periods)}"
-    #                 )
-    #
-    #             # Validate timestamp exists in schema
-    #             timestamp_def = self.schema.get("timestamp")
-    #             if not timestamp_def:
-    #                 raise ValueError("'timestamp' must be defined in schema")
-    #             if timestamp_def.get("type") != "int64":
-    #                 raise ValueError("schema['timestamp'] must have type 'int64'")
-    #
-    #         # polygon partition check
-    #         if "polygon" in self.partition_keys:
-    #             if not self.spatial_extent:
-    #                 raise ValueError(
-    #                     "spatial_extent must be defined when 'polygon' is a partition key"
-    #                 )
-    #
-    #             lat_var = self.spatial_extent.get("lat")
-    #             lon_var = self.spatial_extent.get("lon")
-    #             resolution = self.spatial_extent.get("spatial_resolution")
-    #
-    #             missing = [v for v in (lat_var, lon_var) if v not in self.schema]
-    #             if missing:
-    #                 raise ValueError(
-    #                     f"The following spatial_extent variables are not defined in schema: {missing}"
-    #                 )
-    #
-    #             if not isinstance(resolution, int) or resolution >= 50:
-    #                 raise ValueError(
-    #                     "spatial_extent.spatial_resolution must be an integer less than 50"
-    #                 )
-    #
-    #             polygon_def = self.schema.get("polygon")
-    #             if not polygon_def or polygon_def.get("type") != "string":
-    #                 raise ValueError(
-    #                     "schema['polygon'] must be defined with type 'string'"
-    #                 )
-    #     return self
-    #
 
 
 def load_config_and_validate(config_filename: str) -> DatasetConfig:
