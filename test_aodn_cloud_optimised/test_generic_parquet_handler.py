@@ -1,3 +1,4 @@
+import copy
 import json
 import logging
 import os
@@ -199,6 +200,18 @@ class TestGenericHandler(unittest.TestCase):
             s3_client_opts=self.s3_client_opts,
         )
 
+        dataset_ardc_netcdf_config_mod = copy.deepcopy(dataset_ardc_netcdf_config)
+        self.mod_title = "modified_title"
+        dataset_ardc_netcdf_config_mod["schema_transformation"]["global_attributes"][
+            "set"
+        ]["title"] = self.mod_title
+        self.handler_nc_ardc_mod_metadata = GenericHandler(
+            optimised_bucket_name=self.BUCKET_OPTIMISED_NAME,
+            root_prefix_cloud_optimised_path=self.ROOT_PREFIX_CLOUD_OPTIMISED_PATH,
+            dataset_config=dataset_ardc_netcdf_config_mod,
+            s3_client_opts=self.s3_client_opts,
+        )
+
         dataset_soop_sst_netcdf_config = load_dataset_config(
             DATASET_CONFIG_NC_SOOP_SST_JSON
         )
@@ -388,6 +401,26 @@ class TestGenericHandler(unittest.TestCase):
             "b299cdcd-3dee-48aa-abdd-e0fcdbb9cadc",
         )
         self.assertEqual(decoded_meta["global_attributes"]["title"], "ARDC")
+
+        #################################################################################
+        # another test to modify the global_attributes and making sure this works as expected
+        with patch.object(self.handler_nc_ardc_mod_metadata, "s3_fs", new=self.s3_fs):
+            self.handler_nc_ardc_mod_metadata._add_metadata_sidecar()
+
+        parquet_meta_file_path = os.path.join(
+            self.handler_nc_ardc_mod_metadata.cloud_optimised_output_path,
+            "_common_metadata",
+        )
+        parquet_meta = pa.parquet.read_schema(
+            parquet_meta_file_path, filesystem=self.s3_fs
+        )
+
+        decoded_meta = {
+            key.decode("utf-8"): json.loads(value.decode("utf-8").replace("'", '"'))
+            for key, value in parquet_meta.metadata.items()
+        }
+
+        self.assertEqual(decoded_meta["global_attributes"]["title"], self.mod_title)
 
     def test_parquet_nc_generic_handler_scipy(self):
         # test with the scipy engine

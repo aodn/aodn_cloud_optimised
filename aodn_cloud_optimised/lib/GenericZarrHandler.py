@@ -595,7 +595,9 @@ class GenericHandler(CommonHandler):
         """
         Update dataset variable attributes and global attributes without having to process new file
         """
-        if prefix_exists(self.cloud_optimised_output_path):
+        if prefix_exists(
+            self.cloud_optimised_output_path, s3_client_opts=self.s3_client_opts
+        ):
             self.logger.info(
                 f"{self.uuid_log}: Existing Zarr store found at {self.cloud_optimised_output_path}. Updating Metadata"
             )
@@ -1546,7 +1548,9 @@ class GenericHandler(CommonHandler):
                 del ds[var].encoding["chunks"]
 
         # Write the dataset to Zarr
-        if prefix_exists(self.cloud_optimised_output_path):
+        if prefix_exists(
+            self.cloud_optimised_output_path, s3_client_opts=self.s3_client_opts
+        ):
             self.logger.info(
                 f"{self.uuid_log}: Existing Zarr store found at {self.cloud_optimised_output_path}. Appending data."
             )
@@ -1662,7 +1666,9 @@ class GenericHandler(CommonHandler):
                 f"Option 'clear_existing_data' is True. DELETING all existing Zarr objects at {self.cloud_optimised_output_path} if they exist."
             )
             # TODO: delete all objects
-            if prefix_exists(self.cloud_optimised_output_path):
+            if prefix_exists(
+                self.cloud_optimised_output_path, s3_client_opts=self.s3_client_opts
+            ):
                 bucket_name, prefix = split_s3_path(self.cloud_optimised_output_path)
                 self.logger.info(
                     f"Deleting existing Zarr objects from bucket '{bucket_name}' with prefix '{prefix}'."

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 
+from typing import Optional
 from pydantic import (
     ValidationError,
 )
@@ -23,7 +24,7 @@ from aodn_cloud_optimised.lib.GenericZarrHandler import (
 
 
 def main(
-    json_files=None,
+    json_files: Optional[list[str]] = None,
 ):
     """
     Validate and apply metadata updates to cloud-optimised datasets (Zarr or Parquet).
