@@ -77,23 +77,30 @@ class TestGenericHandler(unittest.TestCase):
         # Create a mock S3 service
         self.BUCKET_OPTIMISED_NAME = "imos-data-lab-optimised"
         self.ROOT_PREFIX_CLOUD_OPTIMISED_PATH = "testing"
-        self.s3 = boto3.client("s3", region_name="us-east-1")
+
+        self.port = get_free_local_port()
+        self.endpoint_ip = "127.0.0.1"
+        self.server = ThreadedMotoServer(ip_address=self.endpoint_ip, port=self.port)
+        self.server.start()
+
+        self.s3_client_opts = {
+            "service_name": "s3",
+            "region_name": "us-east-1",
+            "endpoint_url": f"http://{self.endpoint_ip}:{self.port}",
+        }
+        self.s3 = boto3.client(**self.s3_client_opts)
+
         self.s3.create_bucket(Bucket="imos-data")
         self.s3.create_bucket(Bucket=self.BUCKET_OPTIMISED_NAME)
 
         # create moto server; needed for s3fs and parquet
-        self.port = get_free_local_port()
-        self.server = ThreadedMotoServer(ip_address="127.0.0.1", port=self.port)
-
         self.s3_fs = s3fs.S3FileSystem(
             anon=False,
             client_kwargs={
-                "endpoint_url": f"http://127.0.0.1:{self.port}/",
+                "endpoint_url": f"http://{self.endpoint_ip}:{self.port}/",
                 "region_name": "us-east-1",
             },
         )
-
-        self.server.start()
 
         # Make the "imos-data" bucket public
         public_policy_imos_data = {
@@ -178,6 +185,7 @@ class TestGenericHandler(unittest.TestCase):
             clear_existing_data=True,
             force_previous_parquet_deletion=True,
             cluster_mode="local",
+            s3_client_opts=self.s3_client_opts,
         )
 
         dataset_ardc_netcdf_config = load_dataset_config(DATASET_CONFIG_NC_ARDC_JSON)
@@ -188,6 +196,7 @@ class TestGenericHandler(unittest.TestCase):
             clear_existing_data=True,
             force_previous_parquet_deletion=True,
             cluster_mode="local",
+            s3_client_opts=self.s3_client_opts,
         )
 
         dataset_soop_sst_netcdf_config = load_dataset_config(
@@ -200,6 +209,7 @@ class TestGenericHandler(unittest.TestCase):
             clear_existing_data=True,
             force_previous_parquet_deletion=True,
             cluster_mode="local",
+            s3_client_opts=self.s3_client_opts,
         )
 
         dataset_aatams_csv_config = load_dataset_config(DATASET_CONFIG_CSV_AATAMS_JSON)
@@ -208,6 +218,7 @@ class TestGenericHandler(unittest.TestCase):
             root_prefix_cloud_optimised_path=self.ROOT_PREFIX_CLOUD_OPTIMISED_PATH,
             dataset_config=dataset_aatams_csv_config,
             clear_existing_data=True,
+            s3_client_opts=self.s3_client_opts,
             # cluster_mode="local",  # TEST without the localcluster
         )
 
@@ -249,7 +260,9 @@ class TestGenericHandler(unittest.TestCase):
             dname,
             engine="pyarrow",
             storage_options={
-                "client_kwargs": {"endpoint_url": f"http://127.0.0.1:{self.port}"}
+                "client_kwargs": {
+                    "endpoint_url": f"http://{self.endpoint_ip}:{self.port}"
+                }
             },
         )
 
@@ -335,7 +348,9 @@ class TestGenericHandler(unittest.TestCase):
             dname,
             engine="pyarrow",
             storage_options={
-                "client_kwargs": {"endpoint_url": f"http://127.0.0.1:{self.port}"}
+                "client_kwargs": {
+                    "endpoint_url": f"http://{self.endpoint_ip}:{self.port}"
+                }
             },
         )
 
@@ -395,7 +410,9 @@ class TestGenericHandler(unittest.TestCase):
             dname,
             engine="pyarrow",
             storage_options={
-                "client_kwargs": {"endpoint_url": f"http://127.0.0.1:{self.port}"}
+                "client_kwargs": {
+                    "endpoint_url": f"http://{self.endpoint_ip}:{self.port}"
+                }
             },
         )
 
@@ -473,7 +490,9 @@ class TestGenericHandler(unittest.TestCase):
             dname,
             engine="pyarrow",
             storage_options={
-                "client_kwargs": {"endpoint_url": f"http://127.0.0.1:{self.port}"}
+                "client_kwargs": {
+                    "endpoint_url": f"http://{self.endpoint_ip}:{self.port}"
+                }
             },
         )
 

@@ -1,7 +1,6 @@
 import json
 import os
 import unittest
-from datetime import datetime, timezone
 from unittest.mock import patch
 
 import boto3
@@ -45,23 +44,29 @@ class TestGenericHandler(unittest.TestCase):
         # Create a mock S3 service
         self.BUCKET_OPTIMISED_NAME = "aodn-cloud-optimised"
         self.ROOT_PREFIX_CLOUD_OPTIMISED_PATH = ""
-        self.s3 = boto3.client("s3", region_name="us-east-1")
-        self.s3.create_bucket(Bucket="imos-data")
-        self.s3.create_bucket(Bucket=self.BUCKET_OPTIMISED_NAME)
-
         # create moto server; needed for s3fs and parquet
         self.port = get_free_local_port()
-        self.server = ThreadedMotoServer(ip_address="127.0.0.1", port=self.port)
+        self.endpoint_ip = "127.0.0.1"
+        self.server = ThreadedMotoServer(ip_address=self.endpoint_ip, port=self.port)
+
+        self.server.start()
+
+        self.s3_client_opts = {
+            "service_name": "s3",
+            "region_name": "us-east-1",
+            "endpoint_url": f"http://{self.endpoint_ip}:{self.port}",
+        }
+        self.s3 = boto3.client(**self.s3_client_opts)
+        self.s3.create_bucket(Bucket="imos-data")
+        self.s3.create_bucket(Bucket=self.BUCKET_OPTIMISED_NAME)
 
         self.s3_fs = s3fs.S3FileSystem(
             anon=False,
             client_kwargs={
-                "endpoint_url": f"http://127.0.0.1:{self.port}/",
+                "endpoint_url": f"http://{self.endpoint_ip}:{self.port}/",
                 "region_name": "us-east-1",
             },
         )
-
-        self.server.start()
 
         # Make the "imos-data" bucket public
         public_policy_imos_data = {
@@ -120,6 +125,7 @@ class TestGenericHandler(unittest.TestCase):
             clear_existing_data=True,
             force_previous_parquet_deletion=True,
             cluster_mode="local",
+            s3_client_opts=self.s3_client_opts,
         )
 
         dataset_soop_sst_netcdf_config = load_dataset_config(
@@ -132,6 +138,7 @@ class TestGenericHandler(unittest.TestCase):
             clear_existing_data=True,
             force_previous_parquet_deletion=True,
             cluster_mode="local",
+            s3_client_opts=self.s3_client_opts,
         )
 
     def _upload_to_s3(self, bucket_name, key, file_path):
@@ -155,7 +162,7 @@ class TestGenericHandler(unittest.TestCase):
         """Creating 2 Parquet dataset and then use the GetAodn Class to query data"""
         with patch(
             "aodn_cloud_optimised.lib.DataQuery.ENDPOINT_URL",
-            f"http://127.0.0.1:{self.port}",
+            f"http://{self.endpoint_ip}:{self.port}",
         ):
             # dataset 1
             nc_obj_ls = s3_ls("imos-data", "good_nc_ardc")

@@ -163,7 +163,7 @@ def split_s3_path(s3_path):
     return bucket_name, prefix
 
 
-def prefix_exists(s3_path):
+def prefix_exists(s3_path: str, s3_client_opts: Optional[dict] = None):
     """
     Check if a given S3 prefix exists.
 
@@ -172,6 +172,12 @@ def prefix_exists(s3_path):
 
     Args:
         s3_path (str): The S3 path to check, in the format "s3://bucket-name/prefix".
+        s3_client_opts(dict): s3 client dict. Example:
+                                s3_client_opts = {
+                                    "service_name": "s3",
+                                    "region_name": "us-east-1",
+                                    "endpoint_url": f"http://{endpoint_ip}:{port}",
+                                    }
 
     Returns:
         bool: True if the prefix exists, False otherwise.
@@ -189,7 +195,11 @@ def prefix_exists(s3_path):
     bucket_name = parsed_url.netloc
     prefix = parsed_url.path.lstrip("/")
 
-    s3_client = boto3.client("s3")
+    if s3_client_opts is None:
+        s3_client = boto3.client("s3")  # default, real AWS
+    else:
+        s3_client = boto3.client(**s3_client_opts)
+
     response = s3_client.list_objects_v2(Bucket=bucket_name, Prefix=prefix, MaxKeys=1)
     return "Contents" in response
 

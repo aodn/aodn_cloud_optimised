@@ -893,7 +893,9 @@ class GenericHandler(CommonHandler):
         #
         # Create an empty list to store fields
 
-        if prefix_exists(self.cloud_optimised_output_path):
+        if prefix_exists(
+            self.cloud_optimised_output_path, s3_client_opts=self.s3_client_opts
+        ):
             self.logger.info(
                 f"{self.uuid_log}: Existing Parquet store found at {self.cloud_optimised_output_path}. Updating Metadata"
             )
@@ -1143,7 +1145,9 @@ class GenericHandler(CommonHandler):
             self.logger.info(
                 f"Creating new Parquet dataset - DELETING existing all Parquet objects if exist"
             )
-            if prefix_exists(self.cloud_optimised_output_path):
+            if prefix_exists(
+                self.cloud_optimised_output_path, s3_client_opts=self.s3_client_opts
+            ):
                 bucket_name, prefix = split_s3_path(self.cloud_optimised_output_path)
                 self.logger.info(
                     f"Deleting existing Parquet objects from {self.cloud_optimised_output_path}."
