@@ -5,22 +5,24 @@ import traceback
 import uuid
 import warnings
 from functools import partial
-import numcodecs
 
+import numcodecs
 import numpy as np
 import s3fs
 import xarray as xr
+import zarr
 from dask import array as da
 from xarray.structure.merge import MergeError
 
 from aodn_cloud_optimised.lib.CommonHandler import CommonHandler
 from aodn_cloud_optimised.lib.logging import get_logger
 from aodn_cloud_optimised.lib.s3Tools import (
-    delete_objects_in_prefix,
-    split_s3_path,
-    prefix_exists,
     create_fileset,
+    delete_objects_in_prefix,
+    prefix_exists,
+    split_s3_path,
 )
+from aodn_cloud_optimised.lib.schema import merge_schema_dict
 
 
 def check_variable_values_dask(
@@ -428,6 +430,38 @@ def _update_ds_gattr(ds, dataset_config):
     return ds
 
 
+def _update_store_gattr(store, dataset_config: dict) -> None:
+    """
+    Update global attributes directly in a Zarr store based on dataset configuration.
+
+    Parameters
+    ----------
+    store : zarr.Group
+        The Zarr group/store to update.
+    dataset_config : dict
+        Dataset configuration dict including global attribute transforms.
+    """
+    dataset_metadata = {}
+
+    global_attributes_dict = dataset_config.get("schema_transformation", {}).get(
+        "global_attributes", {}
+    )
+
+    gattrs_to_delete = global_attributes_dict.get("delete", [])
+    for gattr in gattrs_to_delete:
+        store.attrs.pop(gattr, None)
+
+    gattrs_to_set = global_attributes_dict.get("set", {})
+    dataset_metadata.update(gattrs_to_set)
+
+    if "metadata_uuid" in dataset_config:
+        dataset_metadata["metadata_uuid"] = dataset_config["metadata_uuid"]
+
+    dataset_metadata["dataset_name"] = dataset_config["dataset_name"]
+
+    store.attrs.update(dataset_metadata)
+
+
 def add_missing_coordinate_from_template(ds, dim, dataset_name):
     """
     Add a missing coordinate from a dataset template file.
@@ -552,6 +586,134 @@ class GenericHandler(CommonHandler):
         self.safe_chunks = True
         self.write_empty_chunks = False
         self.consolidated = True
+
+        self.full_schema = merge_schema_dict(
+            self.dataset_config["schema"], self.dataset_config["schema_transformation"]
+        )
+
+    def _update_metadata(self):
+        """
+        Update dataset variable attributes and global attributes without having to process new file
+        """
+        if prefix_exists(
+            self.cloud_optimised_output_path, s3_client_opts=self.s3_client_opts
+        ):
+            self.logger.info(
+                f"{self.uuid_log}: Existing Zarr store found at {self.cloud_optimised_output_path}. Updating Metadata"
+            )
+
+            self.logger.info(f"Dataset {self.dataset_name}: Updating Global Attributes")
+
+            self.zarr_org = zarr.open_group(self.store, mode="a")
+            _update_store_gattr(self.zarr_org, self.dataset_config)
+
+            self.logger.info(
+                f"Dataset {self.dataset_name}: Updating Variable Attributes"
+            )
+            self.update_store_varattrs_from_schema(
+                self.zarr_org, self.full_schema
+            )  # self.full_schema is the merge of schema and schema_transformation.get("add_variables")
+            zarr.consolidate_metadata(self.zarr_org.store)
+
+            with xr.open_zarr(
+                self.store,
+                consolidated=True,
+                decode_cf=True,
+                decode_times=True,
+                use_cftime=True,
+                decode_coords=True,
+            ) as ds_mod:
+                # assert self.dataset_config["schema_transformation"]["global_attributes"]["set"].items() <= ds_mod.attrs.items()
+                expected_attrs = self.dataset_config["schema_transformation"][
+                    "global_attributes"
+                ]["set"]
+                missing_or_mismatched = {
+                    k: v for k, v in expected_attrs.items() if ds_mod.attrs.get(k) != v
+                }
+
+                if missing_or_mismatched:
+                    self.logger.error(
+                        f"{self.uuid_log}: Global attribute update mismatch for dataset '{self.dataset_name}'. "
+                        f"The following attributes are missing or incorrect in the dataset: {missing_or_mismatched}"
+                    )
+                    raise AssertionError(
+                        f"Metadata update failed for keys: {list(missing_or_mismatched.keys())}"
+                    )
+                else:
+                    self.logger.info(
+                        f"{self.uuid_log}: All expected global attributes successfully updated for dataset '{self.dataset_name}'."
+                    )
+
+        else:
+            self.logger.error(
+                f"Dataset {self.dataset_name} does not exist yet - cannot update metadata"
+            )
+
+    def update_store_varattrs_from_schema(self, store, schema: dict) -> None:
+        """
+        Update variable attributes directly in a Zarr store based on a schema dictionary.
+
+        For each variable:
+        - Add or update attributes defined in the schema
+        - Delete attributes present in the store but not in the schema
+        - Log type mismatches and other observations
+
+        Parameters
+        ----------
+        store : zarr.Group
+            The Zarr group/store to update.
+        schema : dict
+            A dictionary where keys are variable names and values are dictionaries of metadata.
+        """
+        non_attributes = {"drop_var", "type"}
+
+        preserve_attributes = {
+            "_ARRAY_DIMENSIONS",
+            "units",
+            "calendar",
+            "_FillValue",
+            "coordinates",
+            "grid_mapping",
+        }
+
+        for var, attrs in schema.items():
+            if var in store:
+                var_array = store[var]
+                current_attrs = dict(var_array.attrs)
+
+                # type check (schema vs actual Zarr array dtype)
+                declared_type = attrs.get("type")
+                actual_dtype = str(var_array.dtype)
+
+                if declared_type and declared_type != actual_dtype:
+                    self.logger.warning(
+                        f"{self.uuid_log}: ⚠️  Type mismatch for '{var}': schema says '{declared_type}', Zarr store has '{actual_dtype}'"
+                    )
+
+                schema_attrs = {
+                    k: v for k, v in attrs.items() if k not in non_attributes
+                }
+
+                # ---- Delete unexpected attributes ----
+                for attr_key in current_attrs:
+                    if (
+                        attr_key not in schema_attrs
+                        and not attr_key.startswith("_")
+                        and attr_key not in preserve_attributes
+                    ):
+                        del var_array.attrs[attr_key]
+                        self.logger.info(
+                            f"{self.uuid_log}: Deleted unexpected attribute '{attr_key}' from variable '{var}'"
+                        )
+
+                # ---- Set or update expected attributes ----
+                for attr_key, attr_value in schema_attrs.items():
+                    var_array.attrs[attr_key] = attr_value
+
+            else:
+                self.logger.warning(
+                    f"{self.uuid_log}: ⚠️  Variable '{var}' in schema not found in Zarr store. Skipping."
+                )
 
     def get_append_dim(self):
         """
@@ -1386,7 +1548,9 @@ class GenericHandler(CommonHandler):
                 del ds[var].encoding["chunks"]
 
         # Write the dataset to Zarr
-        if prefix_exists(self.cloud_optimised_output_path):
+        if prefix_exists(
+            self.cloud_optimised_output_path, s3_client_opts=self.s3_client_opts
+        ):
             self.logger.info(
                 f"{self.uuid_log}: Existing Zarr store found at {self.cloud_optimised_output_path}. Appending data."
             )
@@ -1502,7 +1666,9 @@ class GenericHandler(CommonHandler):
                 f"Option 'clear_existing_data' is True. DELETING all existing Zarr objects at {self.cloud_optimised_output_path} if they exist."
             )
             # TODO: delete all objects
-            if prefix_exists(self.cloud_optimised_output_path):
+            if prefix_exists(
+                self.cloud_optimised_output_path, s3_client_opts=self.s3_client_opts
+            ):
                 bucket_name, prefix = split_s3_path(self.cloud_optimised_output_path)
                 self.logger.info(
                     f"Deleting existing Zarr objects from bucket '{bucket_name}' with prefix '{prefix}'."

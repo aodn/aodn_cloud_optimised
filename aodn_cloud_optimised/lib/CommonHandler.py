@@ -39,6 +39,7 @@ class CommonHandler:
                 dataset_config (dict): Configuration dictionary for the dataset.
                 clear_existing_data (bool, optional): Flag to clear existing data. Defaults to None.
                 raise_error (bool, optional): raise error if logger.error
+                s3_client_opts (dict, s3 client otions, optional): specify the s3 client options if needed. Can't be an object because Dask s* and needs to serialize objects which aren't serializable. This is an abomination
 
         Attributes:
             start_time (float): The start time of the handler.
@@ -124,6 +125,8 @@ class CommonHandler:
             dataset_config=self.dataset_config,
             logger=self.logger,
         )
+
+        self.s3_client_opts = kwargs.get("s3_client_opts", None)
 
         self.s3_fs = s3fs.S3FileSystem(
             anon=False, default_cache_type=None, session=kwargs.get("s3fs_session")
@@ -341,11 +344,11 @@ class CommonHandler:
         try:
             validate(instance=self.dataset_config, schema=schema)
             self.logger.info(
-                f"Successfully validated JSON configuration for dataset {os.path.basename(json_validation_path)}."
+                f"Successfully validated JSON configuration for dataset {self.dataset_name} against {os.path.basename(json_validation_path)}."
             )
         except ValidationError as e:
             raise ValueError(
-                f"JSON configuration for dataset {os.path.basename(json_validation_path)}: Validation failed: {e}"
+                f"Failed to validat JSON configuration for dataset {self.dataset_name} against {os.path.basename(json_validation_path)}: {e}"
             )
 
     # TODO: remove as not used anymore

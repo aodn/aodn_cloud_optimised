@@ -16,7 +16,12 @@ def get_free_local_port():
 
 
 def s3_ls(
-    bucket, prefix, suffix: Optional[str] = ".nc", s3_path=True, exclude=None
+    bucket: str,
+    prefix: str,
+    suffix: Optional[str] = ".nc",
+    s3_path: Optional[bool] = True,
+    exclude: Optional[str] = None,
+    s3_client_opts: Optional[dict] = None,
 ) -> list:
     """
     Return a list of object keys under a specific prefix in the specified S3 bucket
@@ -28,6 +33,13 @@ def s3_ls(
         suffix (str or None, optional): The suffix to filter object keys (default is '.nc').
                                         Set to None to disable suffix filtering.
         s3_path (bool, optional): Whether to return S3 paths or object keys without the bucket name (default is True).
+        s3_client_opts(dict): s3 client dict. Example:
+                                s3_client_opts = {
+                                    "service_name": "s3",
+                                    "region_name": "us-east-1",
+                                    "endpoint_url": f"http://{endpoint_ip}:{port}",
+                                    }
+
 
     Returns:
         list[str]: A list of object keys under the specified prefix and with the specified suffix.
@@ -48,8 +60,10 @@ def s3_ls(
     logger.info(f"Listing S3 objects in {bucket} under {prefix} ending with {suffix}")
 
     # DONE: allow S3 connection publicly. Is this a regression doing so?
-    # s3 = boto3.client("s3")
-    s3 = boto3.client("s3", config=Config(signature_version=UNSIGNED))
+    if s3_client_opts is None:
+        s3 = boto3.client("s3", config=Config(signature_version=UNSIGNED))
+    else:
+        s3 = boto3.client(**s3_client_opts)
 
     paginator = s3.get_paginator("list_objects_v2")
     pages = paginator.paginate(Bucket=bucket, Prefix=prefix)
@@ -74,7 +88,11 @@ def s3_ls(
     return s3_objs
 
 
-def delete_objects_in_prefix(bucket_name, prefix):
+def delete_objects_in_prefix(
+    bucket_name: str,
+    prefix: str,
+    s3_client_opts: Optional[dict] = None,
+):
     """
     Delete all objects in an S3 bucket under a specified prefix recursively.
 
@@ -86,6 +104,13 @@ def delete_objects_in_prefix(bucket_name, prefix):
         bucket_name (str): The name of the S3 bucket.
         prefix (str): The prefix under which to delete objects. This can be a folder
                       or directory-like structure in S3.
+        s3_client_opts(dict): s3 client dict. Example:
+                                s3_client_opts = {
+                                    "service_name": "s3",
+                                    "region_name": "us-east-1",
+                                    "endpoint_url": f"http://{endpoint_ip}:{port}",
+                                    }
+
 
     Example:
         delete_objects_in_prefix('my-bucket', 'my/prefix/')
@@ -100,7 +125,11 @@ def delete_objects_in_prefix(bucket_name, prefix):
     Raises:
         botocore.exceptions.ClientError: If there is an error with the S3 client operation.
     """
-    s3 = boto3.client("s3")
+
+    if s3_client_opts is None:
+        s3 = boto3.client("s3")  # default, real AWS
+    else:
+        s3 = boto3.client(**s3_client_opts)
 
     # Get the logger instance
     logger = logging.getLogger()
@@ -147,7 +176,7 @@ def delete_objects_in_prefix(bucket_name, prefix):
             break
 
 
-def split_s3_path(s3_path):
+def split_s3_path(s3_path: str):
     """
     Split an S3 path into bucket name and prefix.
 
@@ -163,7 +192,7 @@ def split_s3_path(s3_path):
     return bucket_name, prefix
 
 
-def prefix_exists(s3_path):
+def prefix_exists(s3_path: str, s3_client_opts: Optional[dict] = None):
     """
     Check if a given S3 prefix exists.
 
@@ -172,6 +201,12 @@ def prefix_exists(s3_path):
 
     Args:
         s3_path (str): The S3 path to check, in the format "s3://bucket-name/prefix".
+        s3_client_opts(dict): s3 client dict. Example:
+                                s3_client_opts = {
+                                    "service_name": "s3",
+                                    "region_name": "us-east-1",
+                                    "endpoint_url": f"http://{endpoint_ip}:{port}",
+                                    }
 
     Returns:
         bool: True if the prefix exists, False otherwise.
@@ -189,7 +224,11 @@ def prefix_exists(s3_path):
     bucket_name = parsed_url.netloc
     prefix = parsed_url.path.lstrip("/")
 
-    s3_client = boto3.client("s3")
+    if s3_client_opts is None:
+        s3_client = boto3.client("s3")  # default, real AWS
+    else:
+        s3_client = boto3.client(**s3_client_opts)
+
     response = s3_client.list_objects_v2(Bucket=bucket_name, Prefix=prefix, MaxKeys=1)
     return "Contents" in response
 

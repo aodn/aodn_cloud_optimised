@@ -897,6 +897,7 @@ class DatasetConfig(BaseModel):
         ..., description="Schema definition of the input dataset", alias="schema"
     )
     cloud_optimised_format: Literal["zarr", "parquet"]
+    metadata_uuid: str
 
     @model_validator(mode="after")
     def validate_schema_transformation_type(self) -> "DatasetConfig":

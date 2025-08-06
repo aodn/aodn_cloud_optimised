@@ -1,3 +1,4 @@
+import copy
 import json
 import logging
 import os
@@ -71,24 +72,32 @@ class TestGenericZarrHandler(unittest.TestCase):
         # Create a mock S3 service
         self.BUCKET_OPTIMISED_NAME = "imos-data-lab-optimised"
         self.ROOT_PREFIX_CLOUD_OPTIMISED_PATH = "testing"
-        self.s3 = boto3.client("s3", region_name="us-east-1")
-        self.s3.create_bucket(Bucket="imos-data")
-        self.s3.create_bucket(Bucket=self.BUCKET_OPTIMISED_NAME)
 
         # create moto server; needed for s3fs and parquet
         self.port = get_free_local_port()
         os.environ["MOTO_PORT"] = str(self.port)
-        self.server = ThreadedMotoServer(ip_address="127.0.0.1", port=self.port)
+        self.endpoint_ip = "127.0.0.1"
+        self.server = ThreadedMotoServer(ip_address=self.endpoint_ip, port=self.port)
+
+        self.server.start()
+
+        self.s3_client_opts = {
+            "service_name": "s3",
+            "region_name": "us-east-1",
+            "endpoint_url": f"http://{self.endpoint_ip}:{self.port}",
+        }
+        self.s3 = boto3.client(**self.s3_client_opts)
+
+        self.s3.create_bucket(Bucket="imos-data")
+        self.s3.create_bucket(Bucket=self.BUCKET_OPTIMISED_NAME)
 
         self.s3_fs = s3fs.S3FileSystem(
             anon=False,
             client_kwargs={
-                "endpoint_url": f"http://127.0.0.1:{self.port}/",
+                "endpoint_url": f"http://{self.endpoint_ip}:{self.port}/",
                 "region_name": "us-east-1",
             },
         )
-
-        self.server.start()
 
         # Make the "imos-data" bucket public
         public_policy_imos_data = {
@@ -139,6 +148,7 @@ class TestGenericZarrHandler(unittest.TestCase):
             dataset_config=dataset_acorn_turq_netcdf_config,
             # clear_existing_data=True,
             cluster_mode="local",
+            s3_client_opts=self.s3_client_opts,
         )
 
         # Copy files to the mock S3 bucket
@@ -156,6 +166,24 @@ class TestGenericZarrHandler(unittest.TestCase):
             dataset_config=dataset_acorn_nwa_netcdf_config,
             # clear_existing_data=True,
             cluster_mode="local",
+            s3_client_opts=self.s3_client_opts,
+        )
+
+        dataset_acorn_nwa_netcdf_config_mod = copy.deepcopy(
+            dataset_acorn_nwa_netcdf_config
+        )
+        self.mod_title = "modified_title"
+        dataset_acorn_nwa_netcdf_config_mod["schema_transformation"][
+            "global_attributes"
+        ]["set"]["title"] = self.mod_title
+        dataset_acorn_nwa_netcdf_config_mod["schema_transformation"][
+            "global_attributes"
+        ]["delete"] = ["time_coverage_start", "time_coverage_end"]
+        self.handler_nc_acorn_nwa_mod_metadata = GenericHandler(
+            optimised_bucket_name=self.BUCKET_OPTIMISED_NAME,
+            root_prefix_cloud_optimised_path=self.ROOT_PREFIX_CLOUD_OPTIMISED_PATH,
+            dataset_config=dataset_acorn_nwa_netcdf_config_mod,
+            s3_client_opts=self.s3_client_opts,
         )
 
     def _upload_to_s3(self, bucket_name, key, file_path):
@@ -323,6 +351,16 @@ class TestGenericZarrHandler(unittest.TestCase):
             expected.astype(float),
             atol=1e-9,
         ), f"TIME values are not as expected: {expected}"
+
+        ### modification of metadata
+        with patch.object(
+            self.handler_nc_acorn_nwa_mod_metadata, "s3_fs", new=self.s3_fs
+        ):
+            self.handler_nc_acorn_nwa_mod_metadata._update_metadata()
+        ds = xr.open_zarr(self.s3_fs.get_mapper(dname), consolidated=True)
+        self.assertEqual(ds.title, self.mod_title)
+        self.assertNotIn("time_coverage_start", ds.attrs)
+        self.assertNotIn("time_coverage_end", ds.attrs)
 
 
 if __name__ == "__main__":

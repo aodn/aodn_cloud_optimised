@@ -15,3 +15,4 @@ Development
    dataset-configuration
    documentation-build
    notebooks
+   update-metadata

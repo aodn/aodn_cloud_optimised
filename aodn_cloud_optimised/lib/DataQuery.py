@@ -1626,7 +1626,6 @@ class ParquetDataSource(DataSource):
 
             # Attach variable metadata to each column's attrs, if column exists in df
             # for var, attrs in variable_attrs.items():
-            # breakpoint()
             # if var in df.columns:
             for var in df.columns:
                 if not hasattr(df[var], "attrs"):
