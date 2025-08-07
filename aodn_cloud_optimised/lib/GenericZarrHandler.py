@@ -313,10 +313,11 @@ def preprocess_xarray(ds, dataset_config):
 
     # Add manually created filename variable (if it was created)
     if "filename" in ds and "filename" not in var_required:
-        if "filename" in schema_transformation["add_variables"].get("filename"):
-            var_required["filename"] = schema_transformation["add_variables"][
-                "filename"
-            ].get("schema")
+        if schema_transformation.get("add_variables"):
+            if "filename" in schema_transformation["add_variables"]:
+                var_required["filename"] = schema_transformation["add_variables"][
+                    "filename"
+                ].get("schema")
         else:
             # fallback schema in case it's not in schema
             var_required["filename"] = {
@@ -327,10 +328,13 @@ def preprocess_xarray(ds, dataset_config):
             }
 
     # Add other known constructed variables if present
-    for extra_var in schema_transformation["add_variables"]:
-        if extra_var in ds and extra_var not in var_required:
-            if extra_var in schema:
-                var_required[extra_var] = schema_transformation[extra_var].get("schema")
+    if schema_transformation.get("add_variables"):
+        for extra_var in schema_transformation["add_variables"]:
+            if extra_var in ds and extra_var not in var_required:
+                if extra_var in schema:
+                    var_required[extra_var] = schema_transformation[extra_var].get(
+                        "schema"
+                    )
 
     # TODO: when filename is added, this can be used to find the equivalent data already stored as CO, and create a NAN
     # version to push back as CO in order to "delete". If UNKOWN_FILENAME.nc, either run an error, or have another approach,
