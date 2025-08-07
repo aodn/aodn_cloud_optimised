@@ -23,6 +23,8 @@ from aodn_cloud_optimised.lib.s3Tools import (
     split_s3_path,
 )
 from aodn_cloud_optimised.lib.schema import merge_schema_dict
+from contextlib import nullcontext
+from dask.distributed import Lock
 
 
 def check_variable_values_dask(
@@ -263,8 +265,12 @@ def preprocess_xarray(ds, dataset_config):
             filename = os.path.basename(ds[var].encoding["source"])
         elif hasattr(ds, "encoding") and "source" in ds.encoding:
             filename = os.path.basename(ds.encoding["source"])
+
+        logger.debug(f"Filename found in ds.encoding: {filename}")
     except Exception as e:
-        logger.debug(f"Original filename not available in the xarray dataset: {e}")
+        logger.debug(
+            f"Original filename not available in the xarray dataset: {e} - will default to use {filename_placeholder}"
+        )
         filename = filename_placeholder
     #
     # Normalise filename to remove trailing > for encoding source
@@ -295,7 +301,9 @@ def preprocess_xarray(ds, dataset_config):
     append_dim = get_append_dim(dimensions)
 
     length = ds.sizes[append_dim]
-    string_array = np.full(length, filename, dtype=object)
+    string_array = np.full(
+        length, filename, dtype=object
+    )  # having da.full could break things
 
     ds[dest_name] = (append_dim, string_array)
     ds[dest_name].encoding = {
@@ -630,7 +638,8 @@ class GenericHandler(CommonHandler):
         )
 
         # to_zarr common options
-        self.safe_chunks = True
+        self.safe_chunks = False
+        self.align_chunks = True
         self.write_empty_chunks = False
         self.consolidated = True
 
@@ -849,6 +858,26 @@ class GenericHandler(CommonHandler):
                 self.logger.warning(
                     f"{self.uuid_log}: ⚠️  Variable '{var}' in schema not found in Zarr store. Skipping."
                 )
+
+    def log_chunking_strategy(self, ds):
+        chunk_str = {k: v for k, v in ds.chunks.items()}
+        self.logger.debug(
+            f"{self.uuid_log}: Chunking strategy for the dataset to write: {chunk_str}"
+        )
+
+    def create_sync_lock(self):
+        if self.cluster_mode:
+            self.lock = Lock(
+                "zarr-append-lock"
+            )  # Use a consistent name for locking access across all workers
+            self.logger.info(
+                f"Creating lock {self.lock} to prevent chunk loss/overwrite"
+            )
+        else:
+            self.lock = nullcontext()
+            self.logger.info("No lock needed as no cluster is used")
+
+        return self.lock
 
     def get_append_dim(self):
         """
@@ -1251,15 +1280,12 @@ class GenericHandler(CommonHandler):
         return problematic_files
 
     def _handle_duplicate_regions(
-        self,
-        ds,
-        idx,
-        common_append_dim_values,
-        append_dim_values_org,
-        append_dim_values_new,
-    ):
+        self, ds: xr.Dataset, idx: int, region_n: int = 1
+    ) -> xr.Dataset | None:
         """Handles writing data when time values overlap with existing Zarr store.
 
+        Processes one contiguous overlapping region at a time, then recursively calls
+        itself to handle any remaining overlapping data.
         Identifies contiguous regions in the existing Zarr store that overlap
         in append_dim (or time) with the new dataset (`ds`). Writes the corresponding slices
         from `ds` into these regions using `mode='r+'` and `region=...`.
@@ -1270,140 +1296,170 @@ class GenericHandler(CommonHandler):
         Args:
             ds (xr.Dataset): The new dataset batch to write.
             idx (int): The index of the current batch (for logging).
-            common_append_dim_values (np.ndarray): Array of time values present in
-                both the existing store and the new dataset.
-            append_dim_values_org (np.ndarray): Array of time values from the
-                existing Zarr store.
-            append_dim_values_new (np.ndarray): Array of time values from the new
-                dataset (`ds`).
+            region_n (int): The number of the current region being processed.
 
         Returns:
             xr.Dataset | None: The dataset containing only the non-overlapping
                 (unprocessed) time values, or None if all data overlapped.
         """
+        append_dim = self.append_dim_varname
+        append_dim_values_new = ds[append_dim].values
+
+        with xr.open_zarr(
+            self.store,
+            consolidated=True,
+            decode_cf=True,
+            decode_times=True,
+            use_cftime=True,
+            decode_coords=True,
+        ) as ds_zarr:
+            ds_zarr = ds_zarr.unify_chunks()
+            append_dim_values_org = ds_zarr[append_dim].values
+            ds_stored_org_dims = ds_zarr.dims
+            common_values = np.intersect1d(append_dim_values_org, append_dim_values_new)
+
+        if len(common_values) == 0:
+            self.logger.info(
+                f"{self.uuid_log}: No overlapping {append_dim} values found in batch {idx + 1}. Writing full dataset."
+            )
+            self._write_ds(ds, idx)
+            return ds
 
         self.logger.info(
-            f"{self.uuid_log}: Duplicate values of '{self.append_dim_varname}' found in the existing dataset. Overwriting."
+            f"{self.uuid_log}: Duplicate values of '{append_dim}' found in the existing dataset. Overwriting."
         )
-        # Get indices of common time values in the original dataset
-        common_indices = np.nonzero(
-            np.isin(append_dim_values_org, common_append_dim_values)
-        )[0]
 
+        # Get indices of common time values in the original dataset
+        common_indices = np.nonzero(np.isin(append_dim_values_org, common_values))[0]
+
+        # Identify first contiguous region
+        #
         # regions must be CONTIGIOUS!! very important. so looking for different regions
         # Define regions as slices for the common time values
-        regions = []
-        matching_indexes = []
-
         start = common_indices[0]
         for i in range(1, len(common_indices)):
             if common_indices[i] != common_indices[i - 1] + 1:
                 end = common_indices[i - 1]
-                regions.append({self.append_dim_varname: slice(start, end + 1)})
-                matching_indexes.append(
-                    np.where(
-                        np.isin(
-                            append_dim_values_new,
-                            append_dim_values_org[start : end + 1],
-                        )
-                    )[0]
-                )
-                start = common_indices[i]
+                break
+        else:
+            end = common_indices[-1]
 
-        # Append the last region
-        end = common_indices[-1]
-        regions.append({self.append_dim_varname: slice(start, end + 1)})
-        matching_indexes.append(
-            np.where(
-                np.isin(
-                    append_dim_values_new,
-                    append_dim_values_org[start : end + 1],
-                )
-            )[0]
+        region_slice = slice(start, end + 1)
+        region = {append_dim: region_slice}
+        region_values = append_dim_values_org[region_slice]
+
+        matching_indexes = np.where(np.isin(append_dim_values_new, region_values))[0]
+        matching_indexes_array_size = matching_indexes.size
+        region_num_elements = end - start + 1
+
+        ##########################################
+        # extremely rare!! only happened once, and why??
+        if matching_indexes_array_size != region_num_elements:
+            amount_to_pad = region_num_elements - matching_indexes_array_size
+            self.logger.warning(
+                f"{self.uuid_log}: Mismatch in size for region {region}. Original region size: {region_num_elements}, new data size: {matching_indexes_array_size}. "
+                f"Attempting to pad the new dataset with {amount_to_pad} NaN index(es)."
+            )
+        else:
+            amount_to_pad = 0
+
+        sub_ds_for_region = (
+            ds.isel({append_dim: matching_indexes})
+            .drop_vars(self.vars_incompatible_with_region, errors="ignore")
+            .pad({append_dim: (0, amount_to_pad)})
+        )
+        ##########################################
+
+        for var in sub_ds_for_region:
+            if "chunks" in sub_ds_for_region[var].encoding:
+                del sub_ds_for_region[var].encoding["chunks"]
+
+        # TODO:
+        # compute() was added as unittests failed on github, but not locally. related to
+        # https://github.com/pydata/xarray/issues/5219
+        # missing = [
+        #     var
+        #     for var in self.vars_incompatible_with_region
+        #     if var not in sub_ds_for_region.variables
+        #     and var not in sub_ds_for_region.dims
+        # ]
+        #
+        # if missing:
+        #     raise ValueError(
+        #         f"The following variables or dimensions are not present/mispelled in the dataset: {missing}"
+        #     )
+        #
+        self.lock = self.create_sync_lock()
+        self.logger.info(
+            f"{self.uuid_log}: Batch {idx + 1}, Region {region_n} - Overwriting Zarr dataset in region: {region}, "
+            f"with matching indexes in the new dataset: {matching_indexes}"
         )
 
-        n_region = 0
-        for region, indexes in zip(regions, matching_indexes):
-            self.logger.info(
-                f"{self.uuid_log}: Batch {idx + 1}, Region {n_region + 1} - Overwriting Zarr dataset in region: {region}, with matching indexes in the new dataset: {indexes}"
-            )
+        self.logger.debug(
+            f"{self.uuid_log}: Attempt at overwriting the following dataset to an existing Zarr region:\n{sub_ds_for_region}"
+        )
+        self.log_chunking_strategy(sub_ds_for_region)
+        self.logger.debug(f"{self.uuid_log}: The region used for this is: {region}")
 
-            ##########################################
-            # extremely rare!! only happened once, and why??
-            s = regions[0][self.append_dim_varname]
-            region_num_elements = s.stop - s.start
-            matching_indexes_array_size = np.size(matching_indexes[0])
-
-            if matching_indexes_array_size != region_num_elements:
-                amount_to_pad = region_num_elements - matching_indexes_array_size
-
-                self.logger.error(
-                    f"{self.uuid_log}: Mismatch in size for region {region}. Original region size: {region_num_elements}, new data size: {matching_indexes_array_size}. "
-                    f"Attempting to pad the new dataset with {amount_to_pad} NaN index(es)."
-                )
-            else:
-                amount_to_pad = 0
-                ds = ds.pad(time=(0, amount_to_pad))
-            ##########################################
-            for var in ds:
-                if "chunks" in ds[var].encoding:
-                    del ds[var].encoding["chunks"]
-
-            # TODO:
-            # compute() was added as unittests failed on github, but not locally. related to
-            # https://github.com/pydata/xarray/issues/5219
-            missing = [
-                var
-                for var in self.vars_incompatible_with_region
-                if var not in ds.variables and var not in ds.dims
-            ]
-
-            if missing:
-                raise ValueError(
-                    f"The following variables or dimensions are not present/mispelled in the dataset: {missing}"
-                )
-
-            ds.isel(**{self.append_dim_varname: indexes}).drop_vars(
-                self.vars_incompatible_with_region, errors="ignore"
-            ).pad(**{self.append_dim_varname: (0, amount_to_pad)}).to_zarr(
+        with self.lock:
+            sub_ds_for_region.to_zarr(
                 self.store,
-                write_empty_chunks=self.write_empty_chunks,
                 region=region,
+                mode="r+",
                 compute=True,
                 consolidated=self.consolidated,
-                # safe_chunks=self.safe_chunks,
-                safe_chunks=False,  # required for xarray> 2024.9
-                mode="r+",
+                safe_chunks=self.safe_chunks,
+                align_chunks=self.align_chunks,
+                write_empty_chunks=self.write_empty_chunks,
             )
+
+        with xr.open_zarr(
+            self.store,
+            consolidated=True,
+            decode_cf=True,
+            decode_times=True,
+            use_cftime=True,
+            decode_coords=True,
+        ) as ds_stored_zarr:
+            # breakpoint()
+            # ds_stored_zarr = ds_stored_zarr.align_chunks()
+
+            for dim, size in ds_stored_org_dims.items():
+                updated_size = ds_stored_zarr.dims.get(dim)
+                if updated_size is None:
+                    self.logger.error(
+                        f"{self.uuid_log}: Dimension '{dim}' is present in the incoming dataset but missing in the updated Zarr store."
+                    )
+                elif updated_size != size:
+                    self.logger.error(
+                        f"{self.uuid_log}: Mismatch in dimension '{dim}': incoming dataset has size {size}, "
+                        f"but updated Zarr store has size {updated_size}."
+                    )
+                else:
+                    self.logger.debug(
+                        f"{self.uuid_log}: {dim} has the same size after region overwrite"
+                    )
+
+            self.logger.debug(
+                f"{self.uuid_log}: Zarr dataset after region overwriting has the following definition: {ds_stored_zarr.dims}"
+            )
+
+        self.logger.info(
+            f"{self.uuid_log}: Batch {idx + 1}, Region {region_n} - Successfully published to the Zarr store: {self.store}"
+        )
+
+        remaining_values = np.setdiff1d(append_dim_values_new, region_values)
+        if len(remaining_values) > 0:
             self.logger.info(
-                f"{self.uuid_log}: Batch {idx + 1}, Region {n_region + 1} - Successfully published to the Zarr store: {self.store}"
+                f"{self.uuid_log}: Continuing to recursively handle remaining overlapping regions."
             )
-            n_region += 1
+            ds_remaining = ds.sel({append_dim: remaining_values})
+            return self._handle_duplicate_regions(ds_remaining, idx, region_n + 1)
 
         self.logger.info(
             f"{self.uuid_log}: All overlapping regions from Batch {idx + 1} were successfully published to the Zarr store: {self.store}"
         )
-        self.logger.info(
-            f"{self.uuid_log}: Checking for non-overlapping data from Batch {idx + 1} to append to the Zarr store: {self.store}"
-        )
-        # Now find the time values in ds that were NOT reprocessed
-        # These are the time values not found in any of the common regions
-        unprocessed_append_dim_values = np.setdiff1d(
-            append_dim_values_new, common_append_dim_values
-        )
-
-        # Return a dataset with the unprocessed time values
-        if len(unprocessed_append_dim_values) > 0:
-            self.logger.info(
-                f"{self.uuid_log}: Found {len(unprocessed_append_dim_values)} non-overlapping data points from Batch {idx + 1} to append to the Zarr store: {self.store}"
-            )
-            ds_unprocessed = ds.sel(
-                {self.append_dim_varname: unprocessed_append_dim_values}
-            )
-            self._write_ds(ds_unprocessed, idx)
-            return ds_unprocessed
-        else:
-            return None
+        return None
 
     def _open_file_with_fallback(self, file, partial_preprocess, drop_vars_list):
         """Opens a single file, trying 'scipy' then 'h5netcdf' engine.
@@ -1493,6 +1549,7 @@ class GenericHandler(CommonHandler):
             data_vars="all",
             dim=self.append_dim_varname,
         )
+        ds = ds.chunk(chunks=self.chunks)
         ds = ds.unify_chunks()
         # ds = ds.persist()
         self.logger.info(
@@ -1507,7 +1564,6 @@ class GenericHandler(CommonHandler):
 
         Configures and calls `xr.open_mfdataset` with appropriate parameters
         for parallel processing, preprocessing, chunking, and decoding.
-        Includes fallback for chunking if 'auto' fails.
 
         Args:
             partial_preprocess (callable): The pre-configured preprocessing function
@@ -1547,6 +1603,9 @@ class GenericHandler(CommonHandler):
         }
 
         ds = xr.open_mfdataset(batch_files, **open_mfdataset_params)
+        self.logger.info(
+            f"{self.uuid_log}: Engine {engine} used to open the batch of files"
+        )
 
         dataset_sort_by = self.dataset_config["schema_transformation"].get(
             "dataset_sort_by", None
@@ -1561,14 +1620,7 @@ class GenericHandler(CommonHandler):
         else:
             ds = ds.sortby(self.append_dim_varname)
 
-        try:
-            ds = ds.chunk(chunks="auto")
-        except Exception as err:
-            self.logger.warning(
-                f"{self.uuid_log}: Error auto-chunking dataset: {err}. Defaulting to specified chunks: {self.chunks}"
-            )
-            ds = ds.chunk(chunks=self.chunks)
-
+        ds = ds.chunk(chunks=self.chunks)
         ds = ds.unify_chunks()
 
         # ds = ds.map_blocks(partial_preprocess) ## EXTREMELY DANGEROUS TO USE. CORRUPTS SOME DATA CHUNKS SILENTLY while it's working fine with preprocess
@@ -1580,9 +1632,7 @@ class GenericHandler(CommonHandler):
     def _open_ds(self, file, partial_preprocess, drop_vars_list, engine="h5netcdf"):
         """Opens and preprocesses a single file.
 
-        Uses `xr.open_dataset` with specified engine and parameters. Applies
-        chunking (with fallback from 'auto') and the `preprocess_xarray`
-        function.
+        Uses `xr.open_dataset` with specified engine and parameters.
 
         Args:
             file (str | object): The file path or file-like object to open.
@@ -1612,19 +1662,11 @@ class GenericHandler(CommonHandler):
         # *** NotImplementedError: Can not use auto rechunking with object dtype. We are unable to estimate the size in bytes of object data
         # for GSLA files
         # https://github.com/pydata/xarray/issues/4055
-        try:
-            ds = ds.chunk(chunks="auto")
-        except Exception as err:
-            self.logger.warning(
-                f"{self.uuid_log}: Error auto-chunking dataset from file '{file}': {err}. Defaulting to specified chunks: {self.chunks}"
-            )
-            ds = ds.chunk(chunks=self.chunks)
-
-        # ds = ds.map_blocks(partial_preprocess)
+        ds = ds.chunk(chunks=self.chunks)
         ds = ds.unify_chunks()
 
         ds = preprocess_xarray(ds, self.dataset_config)
-        # ds = ds.persist()
+
         return ds
 
     def _find_duplicated_values(self, ds_org):
@@ -1677,10 +1719,11 @@ class GenericHandler(CommonHandler):
         else:
             ds = ds.chunk(chunks=self.chunks)
 
-        # TODO: see https://github.com/pydata/xarray/issues/5219  https://github.com/pydata/xarray/issues/5286
-        for var in ds:
-            if "chunks" in ds[var].encoding:
-                del ds[var].encoding["chunks"]
+        # Reason for the following, see: https://github.com/pydata/xarray/issues/5219  https://github.com/pydata/xarray/issues/5286
+        for var in ds.variables:
+            encoding = ds[var].encoding
+            if "chunks" in encoding:
+                encoding.clear()
 
         # Write the dataset to Zarr
         if prefix_exists(
@@ -1704,7 +1747,14 @@ class GenericHandler(CommonHandler):
                 use_cftime=True,
                 decode_coords=True,
             ) as ds_org:
+                ds_org = ds_org.unify_chunks()
                 self._find_duplicated_values(ds_org)
+                self.logger.debug(
+                    f"{self.uuid_log}: loading existing Zarr dataset:\n{ds_org}"
+                )
+                self.logger.debug(
+                    f"{self.uuid_log}: Existing Zarr dataset has the following chunk definition: {ds_org.chunks.items()}"
+                )
 
                 append_dim_values_org = ds_org[self.append_dim_varname].values
                 append_dim_values_new = ds[self.append_dim_varname].values
@@ -1719,9 +1769,6 @@ class GenericHandler(CommonHandler):
                     self._handle_duplicate_regions(
                         ds,
                         idx,
-                        common_append_dim_values,
-                        append_dim_values_org,
-                        append_dim_values_new,
                     )
 
                 # No reprocessing needed
@@ -1747,14 +1794,20 @@ class GenericHandler(CommonHandler):
         self.logger.info(
             f"{self.uuid_log}: Writing data to a new Zarr store at {self.store}."
         )
-        ds.to_zarr(
-            self.store,
-            mode="w",  # Overwrite mode for the first batch
-            write_empty_chunks=self.write_empty_chunks,
-            compute=True,  # Compute the result immediately
-            consolidated=self.consolidated,
-            safe_chunks=self.safe_chunks,
-        )
+
+        self.lock = self.create_sync_lock()
+        self.log_chunking_strategy(ds)
+
+        with self.lock:
+            ds.to_zarr(
+                self.store,
+                mode="w",  # Overwrite mode for the first batch
+                write_empty_chunks=self.write_empty_chunks,
+                compute=True,  # Compute the result immediately
+                consolidated=self.consolidated,
+                safe_chunks=self.safe_chunks,
+                align_chunks=self.align_chunks,
+            )
 
     def _append_zarr_store(self, ds):
         """Appends the dataset to an existing Zarr store (mode='a-').
@@ -1766,22 +1819,24 @@ class GenericHandler(CommonHandler):
             ds (xr.Dataset): The dataset to append.
         """
 
-        # commented as already performed after calling open_mfdataset
-        # ds = ds.sortby(self.dataset_config["schema_transformation"]["dataset_sort_by"])
-
         self.logger.info(
             f"{self.uuid_log}: Appending data to the existing Zarr store at {self.store}."
         )
-        ds.to_zarr(
-            self.store,
-            # align_chunks=True, # new xarray feature
-            mode="a-",
-            write_empty_chunks=self.write_empty_chunks,
-            compute=True,  # Compute the result immediately
-            consolidated=self.consolidated,
-            append_dim=self.append_dim_varname,
-            safe_chunks=self.safe_chunks,
-        )
+
+        self.lock = self.create_sync_lock()
+        self.log_chunking_strategy(ds)
+
+        with self.lock:
+            ds.to_zarr(
+                self.store,
+                mode="a-",
+                write_empty_chunks=self.write_empty_chunks,
+                compute=True,  # Compute the result immediately
+                consolidated=self.consolidated,
+                append_dim=self.append_dim_varname,
+                safe_chunks=self.safe_chunks,
+                align_chunks=self.align_chunks,
+            )
 
     def to_cloud_optimised(self, s3_file_uri_list=None):
         """Main entry point to convert NetCDF files to a Zarr dataset.

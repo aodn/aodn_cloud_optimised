@@ -327,9 +327,7 @@ class CommonHandler:
             client,
             cluster,
             self.cluster_mode,
-        ) = (
-            self.cluster_manager.create_cluster()
-        )  # self.cluster_mode is overwritten if necessary
+        ) = self.cluster_manager.create_cluster()  # self.cluster_mode is overwritten if necessary
 
         return client, cluster
 
