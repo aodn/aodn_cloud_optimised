@@ -6,6 +6,6 @@ docker run --rm -t \
   -v "$PWD":/app \
   -w /app \
   python:3.12.11 bash -c "
-    pip install poetry==2.0.1 &&
+    pip install poetry==2.1.4 &&
     poetry lock
   "
