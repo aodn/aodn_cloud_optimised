@@ -22,6 +22,14 @@
           "long_name": "instrument name"
         }
       },
+      "instrument_serial_number": {
+        "source": "@global_attribute:instrument_serial_number",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "long_name": "instrument serial number"
+        }
+      },
       "timestamp": {
         "source": "@partitioning:time_extent",
         "schema": {
