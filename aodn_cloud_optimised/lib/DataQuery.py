@@ -1876,15 +1876,6 @@ class ZarrDataSource(DataSource):
             ValueError: If a suitable time variable cannot be found for sorting.
         """
         try:
-            # storage_opts = self.s3_fs_opts.get("storage_options", {})
-            # anon_flag = self.s3_fs_opts.get("anon", True)
-            # ds = xr.open_zarr(
-            #     fsspec.get_mapper(self.dname, anon=anon_flag, **storage_opts),
-            #     chunks=None,
-            #     consolidated=True,
-            # )
-            # mapper = fsspec.get_mapper(self.dname, storage_options={"fs": self.s3})
-
             mapper = self.s3.get_mapper(self.dname)
             ds = xr.open_zarr(mapper, chunks=None, consolidated=True)
 
@@ -2555,9 +2546,9 @@ class ZarrDataSource(DataSource):
         start_date_parsed = pd.to_datetime(date_start)
         end_date_parsed = pd.to_datetime(date_end) if date_end else None
 
-        assert (
-            actual_time_name in ds.dims
-        ), f"Dataset does not have a '{actual_time_name}' dimension"
+        assert actual_time_name in ds.dims, (
+            f"Dataset does not have a '{actual_time_name}' dimension"
+        )
 
         # Find the nearest date in the dataset to start_date_parsed
         try:
@@ -2623,7 +2614,9 @@ class ZarrDataSource(DataSource):
         # First pass: gather all data to find global vmin and vmax for consistent color scaling
         for date_obj in dates_to_plot:
             try:
-                data = ds[var_name].sel(
+                data = ds[
+                    var_name
+                ].sel(
                     {
                         actual_time_name: date_obj,  # Use exact match for already selected dates
                         actual_lon_name: slice(
