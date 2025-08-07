@@ -303,6 +303,35 @@ def preprocess_xarray(ds, dataset_config):
         "object_codec": numcodecs.VLenUTF8(),  # crucial!
     }
 
+    # Extend var_required with add_variables
+    if schema_transformation.get("add_variables") is not None:
+        for variable_to_add_name, variable_to_add_info in schema_transformation[
+            "add_variables"
+        ].items():
+            if variable_to_add_name not in var_required:
+                var_required[variable_to_add_name] = variable_to_add_info["schema"]
+
+    # Add manually created filename variable (if it was created)
+    if "filename" in ds and "filename" not in var_required:
+        if "filename" in schema_transformation["add_variables"].get("filename"):
+            var_required["filename"] = schema_transformation["add_variables"][
+                "filename"
+            ].get("schema")
+        else:
+            # fallback schema in case it's not in schema
+            var_required["filename"] = {
+                "type": "object",
+                "units": "1",
+                "long_name": "Filename of the source file",
+                "dimensions": append_dim,
+            }
+
+    # Add other known constructed variables if present
+    for extra_var in schema_transformation["add_variables"]:
+        if extra_var in ds and extra_var not in var_required:
+            if extra_var in schema:
+                var_required[extra_var] = schema_transformation[extra_var].get("schema")
+
     # TODO: when filename is added, this can be used to find the equivalent data already stored as CO, and create a NAN
     # version to push back as CO in order to "delete". If UNKOWN_FILENAME.nc, either run an error, or have another approach,
     # Maybe the file to delete, would be a filename, OR the physical og NetCDF, which means then that we have all of the info in it, and simply making it NAN
@@ -382,17 +411,18 @@ def preprocess_xarray(ds, dataset_config):
             ):  # Timestamps do not have an astype method. But numpy.datetime64 do.
                 datatype = "datetime64[ns]"
 
-            elif not np.issubdtype(datatype, np.number):
-                # we repeat the string variable to match the size of the TIME dimension
-                ds[variable_name] = (
-                    (dimensions["time"]["name"],),
-                    da.full_like(
-                        ds[dimensions["time"]["name"]],
-                        ds[variable_name],
-                        dtype="<S1",
-                    ),
-                )
-
+            # TODO: commented as never triggered, and causing some issues
+            # elif not np.issubdtype(datatype, np.number):
+            #     # we repeat the string variable to match the size of the TIME dimension
+            #     ds[variable_name] = (
+            #         (dimensions["time"]["name"],),
+            #         da.full_like(
+            #             ds[dimensions["time"]["name"]],
+            #             ds[variable_name],
+            #             dtype="<S1",
+            #         ),
+            #     )
+            #
             ds[variable_name] = ds[variable_name].astype(datatype)
 
     ds = _update_ds_gattr(ds, dataset_config)
