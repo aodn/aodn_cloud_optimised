@@ -211,8 +211,18 @@ def delete_objects_in_prefix(
             },
         )
 
-        logger.info(f"Deleted {len(delete_response['Deleted'])} objects.")
+        # Raise if the API call did not return the 'Deleted' list
+        if "Deleted" not in delete_response:
+            if delete_response.get("Errors"):
+                code = delete_response.get("Errors")[0]["Code"]
+                msg = delete_response.get("Errors")[0]["Message"]
+                raise RuntimeError(f"{code}: {msg}")
+            else:
+                raise RuntimeError(
+                    "S3 delete_objects response did not include 'Deleted'. Possible failure."
+                )
 
+        logger.info(f"Deleted {len(delete_response['Deleted'])} objects.")
         # Check if there are more objects to delete
         if response["IsTruncated"]:
             continuation_token = response["NextContinuationToken"]
