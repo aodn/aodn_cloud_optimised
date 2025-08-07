@@ -14,6 +14,14 @@
           "long_name": "Filename of the source file"
         }
       },
+      "instrument": {
+        "source": "@global_attribute:instrument",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "long_name": "instrument name"
+        }
+      },
       "timestamp": {
         "source": "@partitioning:time_extent",
         "schema": {
@@ -61,7 +69,11 @@
         "date_created"
       ],
       "set": {
-        "featureType": "timeSeries",
+        "cdm_data_type": "Trajectory",
+        "institution": "UNSW",
+        "author": "Lago, Veronique",
+        "principal_investigator": "Roughan, Moninya",
+        "data_mode": "Near Real-Time",
         "standard_name_vocabulary": "CF Standard Name Table v79",
         "title": "my dataset"
       }
