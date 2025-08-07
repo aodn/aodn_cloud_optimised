@@ -1,5 +1,5 @@
 [build-system]
-requires = ["poetry-core==2.0.1", "wheel"]
+requires = ["poetry-core==2.1.4", "wheel"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
@@ -55,7 +55,7 @@ s3path = ">=0.5.7"
 python-levenshtein = "^0.25.1"
 
 [tool.poetry.group.dev.dependencies]
-poetry = "==2.0.1"
+poetry = "==2.1.4"
 poetry-plugin-freeze = ">=1.2.0"
 virtualenv = "==20.30.0" # TODO: pinned because of https://github.com/python-poetry/poetry/issues/10378
 pytest = "^8.2.1"

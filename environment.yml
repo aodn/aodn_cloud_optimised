@@ -15,5 +15,5 @@ dependencies:
   - virtualenv==20.30.0 # https://github.com/python-poetry/poetry/issues/10378#issuecomment-285540959
   - udunits2=2.2.20
   - pip:
-      - poetry==2.0.1
+      - poetry==2.1.4
       - -r requirements.txt
