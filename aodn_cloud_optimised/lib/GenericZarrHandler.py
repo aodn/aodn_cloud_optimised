@@ -266,6 +266,9 @@ def preprocess_xarray(ds, dataset_config):
     except Exception as e:
         logger.debug(f"Original filename not available in the xarray dataset: {e}")
         filename = filename_placeholder
+    #
+    # Normalise filename to remove trailing > for encoding source
+    filename = filename.strip().strip(">")
 
     # TODO: get filename; Should be from https://github.com/pydata/xarray/issues/9142
     def get_append_dim(dimensions):
@@ -624,6 +627,94 @@ class GenericHandler(CommonHandler):
         self.full_schema = merge_schema_dict(
             self.dataset_config["schema"], self.dataset_config["schema_transformation"]
         )
+
+    def delete_cloud_optimised_data(self, filename: str):
+        """
+        Deletes data in the cloud-optimised Zarr dataset corresponding to a specific filename by
+        replacing all data variables with NaNs, except dimension coordinates and the filename variable.
+
+        Args:
+            filename (str): The filename identifying the subset of data to delete.
+
+        Returns:
+            None
+
+        Notes:
+            - The function expects that the filename variable varies along a single dimension.
+            - Before writing, the function checks that exactly one slice along the filename dimension
+            is selected to prevent accidental overwrites.
+        """
+        if not filename:
+            self.logger.error("Filename to delete is not defined")
+
+        if prefix_exists(
+            self.cloud_optimised_output_path, s3_client_opts=self.s3_client_opts
+        ):
+            with xr.open_zarr(
+                self.store,
+                consolidated=True,
+                decode_cf=True,
+                decode_times=True,
+                use_cftime=True,
+                decode_coords=True,
+            ) as ds_org:
+                # Compute only the filename variable to memory
+                filenames = ds_org["filename"].compute().values
+
+                # Normalise: remove trailing '>' which came from ds.encoding and strip whitespace
+                filenames_clean = np.array(
+                    [str(f).strip().strip(">") for f in filenames]
+                )
+
+                # Find matching indices (filename varies along a single dimension)
+                matching_indices = np.where(filenames_clean == filename)[0]
+
+                if matching_indices.size == 0:
+                    self.logger.error(
+                        f'No data matching the filename "{filename}" was found in the existing zarr dataset. Nothing to delete'
+                    )
+                    return
+
+                # Identify the dimension that filename varies over
+                filename_dim = ds_org["filename"].dims[0]
+
+                # Subset ds_org to just the matching indices (along filename_dim)
+                ds_mod = ds_org.isel({filename_dim: matching_indices})
+
+                # Variables to preserve
+                keep_vars = list(ds_mod.dims) + ["filename"]
+
+                # Replace variables with NaN / None (only inside ds_mod)
+                for var in ds_mod.data_vars:
+                    if var not in keep_vars:
+                        if np.issubdtype(ds_mod[var].dtype, np.number):
+                            ds_mod[var] = ds_mod[var].copy(deep=True)
+                            ds_mod[var].values = np.full(ds_mod[var].shape, np.nan)
+                        else:
+                            ds_mod[var] = ds_mod[var].copy(deep=True)
+                            ds_mod[var].values = np.full(ds_mod[var].shape, None)
+
+                if ds_mod.sizes.get(filename_dim, 0) != 1:
+                    self.logger.error(
+                        f"Unexpected number of slices for filename '{filename}' along dimension '{filename_dim}': "
+                        f"expected 1, got {ds_mod.sizes.get(filename_dim)}. Deletion of data aborted"
+                    )
+                    return
+
+                # Write back modified dataset
+                self.logger.info(
+                    f'Data matching "{filename}" replaced with NaNs. Writing back to zarr store.'
+                )
+                self._write_ds(ds_mod, idx=0)
+
+                self.logger.info(
+                    f'Data matching "{filename}" successfully replaced with NaN values'
+                )
+
+        else:
+            self.logger.warning(
+                f"The dataset {self.cloud_optimised_output_path} does not exist yet. Nothing to delete"
+            )
 
     def _update_metadata(self):
         """
