@@ -88,6 +88,15 @@ class GenericHandler(CommonHandler):
             self.dataset_config["schema"], self.dataset_config["schema_transformation"]
         )
 
+    def delete_cloud_optimised_data(self, filename: str):
+        """
+        Function to delete data where filename is found in the CO dataset
+        """
+        if filename:
+            self.delete_existing_matching_parquet(filename)
+        else:
+            self.logger.error("Filename to delete is not defined")
+
     def preprocess_data_csv(
         self, csv_fp
     ) -> Generator[Tuple[pd.DataFrame, xr.Dataset], None, None]:

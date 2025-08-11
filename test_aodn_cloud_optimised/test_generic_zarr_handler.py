@@ -361,6 +361,55 @@ class TestGenericZarrHandler(unittest.TestCase):
         self.assertEqual(ds.title, self.mod_title)
         self.assertNotIn("time_coverage_start", ds.attrs)
         self.assertNotIn("time_coverage_end", ds.attrs)
+        #################################
+
+        ### test delete data ##############
+        ################
+
+        filename_to_delete = filenames_acorn_nwa[1]
+
+        ## 1) we check that the data we re about to delete is not full of NaNs
+        ds = xr.open_zarr(self.s3_fs.get_mapper(dname), consolidated=True)
+
+        # Get the dimension that filename is attached to
+        time_dim = ds["filename"].dims[0]
+
+        # Find the index/indices for this filename
+        filenames = ds["filename"].compute().values
+        matching_idx = np.where(filenames == filename_to_delete)[0]
+
+        # Select UCUR only for those time steps
+        ucur_selected = ds["UCUR"].isel({time_dim: matching_idx}).compute().values
+
+        # Assert they are all NaN
+        assert not np.isnan(
+            ucur_selected
+        ).all(), (
+            f"UCUR for {filenames_acorn_nwa[1]} are already fully NaN. Not possible"
+        )
+
+        ## 2) delete the data
+        with patch.object(
+            self.handler_nc_acorn_nwa_mod_metadata, "s3_fs", new=self.s3_fs
+        ):
+            self.handler_nc_acorn_nwa_mod_metadata.delete_cloud_optimised_data(
+                filename="test"
+            )
+            self.handler_nc_acorn_nwa_mod_metadata.delete_cloud_optimised_data(
+                filename=filename_to_delete
+            )
+
+        ## 3) check the data was deleted
+        ds = xr.open_zarr(self.s3_fs.get_mapper(dname), consolidated=True)
+        time_dim = ds["filename"].dims[0]
+        filenames = ds["filename"].compute().values
+        matching_idx = np.where(filenames == filename_to_delete)[0]
+        ucur_selected = ds["UCUR"].isel({time_dim: matching_idx}).compute().values
+
+        # Assert they are all NaN
+        assert np.isnan(
+            ucur_selected
+        ).all(), f"UCUR for {filenames_acorn_nwa[1]} not fully NaN"
 
 
 if __name__ == "__main__":
