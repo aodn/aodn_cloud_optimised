@@ -327,14 +327,14 @@ def populate_dataset_config_with_geonetwork_metadata(json_file):
         "Tutorials": [
             {
                 "Title": f"Accessing {dataset_config['aws_opendata_registry']['Name']}",
-                "URL": f"https://nbviewer.org/github/aodn/aodn_cloud_optimised/blob/main/notebooks/{dataset_config['dataset_name']}.ipynb",
+                "URL": f"https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/{dataset_config['dataset_name']}.ipynb",
                 "NotebookURL": f"https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/{dataset_config['dataset_name']}.ipynb",
                 "AuthorName": "Laurent Besnard",
                 "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised",
             },
             {
                 "Title": f"Accessing and search for any AODN dataset",
-                "URL": f"https://nbviewer.org/github/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+                "URL": f"https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
                 "NotebookURL": f"https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
                 "AuthorName": "Laurent Besnard",
                 "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised",
