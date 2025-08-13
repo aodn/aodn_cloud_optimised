@@ -53,8 +53,9 @@
       {
         "s3_uri": "s3://imos-data/IMOS/ACORN/gridded_1h-avg-wind-map_QC/SAG",
         "filter": [],
+        "_comment": "The data here should start at 2009. See reason here https://github.com/aodn/PO-Backlog/issues/4016",
         "year_range": [
-          2009,
+          2011,
           2025
         ]
       }
