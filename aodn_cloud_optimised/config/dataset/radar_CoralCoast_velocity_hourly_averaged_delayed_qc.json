@@ -65,7 +65,10 @@
   "schema_transformation": {
     "global_attributes": {
       "set": {
-        "title": ""
+        "title": "IMOS ACORN Coral Coast (CORL), one hour averaged current QC data",
+        "site_code": "CORL, Coral Coast",
+        "ssr_Stations": "Dongara (DONG), Green Head (GHED)",
+        "local_time_zone": "8."
       }
     },
     "dimensions": {

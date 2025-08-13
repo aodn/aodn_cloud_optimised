@@ -66,7 +66,10 @@
   "schema_transformation": {
     "global_attributes": {
       "set": {
-        "title": ""
+        "title": "IMOS Ocean Radar Facility Rottnest Shelf (ROT), one hour averaged current QC data",
+        "site_code": "ROT, Rottnest Shelf",
+        "ssr_Stations": "Fremantle (FRE), Guilderton (GUI)",
+        "local_time_zone": "8."
       }
     },
     "dimensions": {

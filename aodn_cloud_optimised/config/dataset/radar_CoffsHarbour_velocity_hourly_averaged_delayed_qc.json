@@ -67,7 +67,10 @@
   "schema_transformation": {
     "global_attributes": {
       "set": {
-        "title": ""
+        "title": "IMOS Ocean Radar Facility Coffs Harbour (COF), one hour averaged current QC data",
+        "site_code": "COF, Coffs Harbour",
+        "ssr_Stations": "Red Rock (RRK), North Nambucca (NNB)",
+        "local_time_zone": "10."
       }
     },
     "dimensions": {
