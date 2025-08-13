@@ -450,7 +450,8 @@ def _update_ds_gattr(ds, dataset_config):
         gattrs_to_delete = global_attributes_dict.get("delete")
         if gattrs_to_delete:
             for gattr_to_delete in gattrs_to_delete:
-                del ds.attrs[gattr_to_delete]
+                if gattr_to_delete in ds.attrs:
+                    del ds.attrs[gattr_to_delete]
 
         gattrs_to_set = global_attributes_dict.get("set")
         if gattrs_to_set:
