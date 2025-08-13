@@ -51,7 +51,7 @@
     },
     "paths": [
       {
-        "s3_uri": "s3://imos-data/IMOS/ACORN/gridded_1h-avg-current-map_QC/TURQ",
+        "s3_uri": "s3://imos-data/IMOS/ACORN/gridded_1h-avg-current-map_QC/TURQ/",
         "filter": [],
         "year_range": [
           2009,
@@ -65,7 +65,10 @@
   "schema_transformation": {
     "global_attributes": {
       "set": {
-        "title": ""
+        "title": "IMOS Ocean Radar Facility Turqoise Coast (TURQ), one hour averaged current QC data",
+        "site_code": "TURQ, Turqoise Coast",
+        "ssr_Stations": "Lancelin (LANC), Green Head (GHED)",
+        "local_time_zone": "8."
       }
     },
     "dimensions": {

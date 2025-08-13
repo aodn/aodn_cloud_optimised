@@ -54,8 +54,8 @@
         "s3_uri": "s3://imos-data/IMOS/ACORN/gridded_1h-avg-current-map_QC/CBG/",
         "filter": [],
         "year_range": [
-          2009,
-          2025
+          2007,
+          2017
         ]
       }
     ],
@@ -65,7 +65,10 @@
   "schema_transformation": {
     "global_attributes": {
       "set": {
-        "title": ""
+        "title": "IMOS ACORN Capricorn Bunker Group (CBG), one hour averaged current QC data",
+        "site_code": "CBG, Capricorn Bunker Group",
+        "ssr_Stations": "Tannum Sands (TAN), Lady Elliott (LEI)",
+        "local_time_zone": "10."
       }
     },
     "dimensions": {
