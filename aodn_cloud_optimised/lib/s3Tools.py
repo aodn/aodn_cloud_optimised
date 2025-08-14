@@ -15,6 +15,42 @@ def get_free_local_port():
         return s.getsockname()[1]
 
 
+def s3fs_from_opts(s3_fs_opts: dict) -> s3fs.S3FileSystem:
+    """Create an s3fs filesystem from s3_fs_opts."""
+    return s3fs.S3FileSystem(**s3_fs_opts)
+
+
+def boto3_from_opts_dict(s3_fs_opts: dict) -> dict:
+    """Convert s3_fs_opts into boto3-compatible keyword arguments."""
+    boto_kwargs = {}
+    if "key" in s3_fs_opts:
+        boto_kwargs["aws_access_key_id"] = s3_fs_opts["key"]
+    if "secret" in s3_fs_opts:
+        boto_kwargs["aws_secret_access_key"] = s3_fs_opts["secret"]
+    if "token" in s3_fs_opts:
+        boto_kwargs["aws_session_token"] = s3_fs_opts["token"]
+    if "client_kwargs" in s3_fs_opts and "endpoint_url" in s3_fs_opts["client_kwargs"]:
+        boto_kwargs["endpoint_url"] = s3_fs_opts["client_kwargs"]["endpoint_url"]
+    return boto_kwargs
+
+
+def boto3_s3_from_opts_dict(s3_fs_opts: dict) -> dict:
+    """
+    Convert s3_fs_opts into boto3-compatible keyword arguments for S3,
+    including the service name.
+    """
+    boto_kwargs = boto3_from_opts_dict(s3_fs_opts)
+    # Include service_name in the returned dict
+    boto_kwargs["service_name"] = "s3"
+    return boto_kwargs
+
+
+def boto3_from_opts(s3_fs_opts: dict, service_name="s3"):
+    """Create a boto3 client from s3_fs_opts."""
+    boto_kwargs = boto3_from_opts_dict(s3_fs_opts)
+    return boto3.client(service_name, **boto_kwargs)
+
+
 def s3_ls(
     bucket: str,
     prefix: str,
@@ -63,7 +99,8 @@ def s3_ls(
     if s3_client_opts is None:
         s3 = boto3.client("s3", config=Config(signature_version=UNSIGNED))
     else:
-        s3 = boto3.client(**s3_client_opts)
+        # s3_client_opts = boto3_from_opts_dict(s3_client_opts)
+        s3 = boto3.client("s3", **s3_client_opts)
 
     paginator = s3.get_paginator("list_objects_v2")
     pages = paginator.paginate(Bucket=bucket, Prefix=prefix)

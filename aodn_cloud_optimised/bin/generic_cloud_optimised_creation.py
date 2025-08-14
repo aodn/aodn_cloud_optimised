@@ -21,6 +21,7 @@ from typing import Any, Dict, List, Literal, Optional, Union
 from urllib.parse import urlparse
 
 import numpy as np
+import s3fs
 from cfunits import Units
 from pydantic import (
     BaseModel,
@@ -38,7 +39,7 @@ from aodn_cloud_optimised.lib.config import (
     load_dataset_config,
     load_variable_from_config,
 )
-from aodn_cloud_optimised.lib.s3Tools import s3_ls
+from aodn_cloud_optimised.lib.s3Tools import s3_ls, boto3_from_opts_dict
 
 logger = logging.getLogger(__name__)
 
@@ -290,6 +291,13 @@ class RunSettings(BaseModel):
         default=None,
         description="Configuration min/max wokersoptions required when cluster.mode is 'ec2'. Ignored otherwise.",
     )
+    s3_fs_opts: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description=(
+            "Optional arguments passed directly to s3fs.S3FileSystem for this path. "
+            "Can include `key`, `secret`, `token`, `client_kwargs` (with `endpoint_url` for MinIO), etc."
+        ),
+    )
 
     @model_validator(mode="after")
     def validate_bucket_consistency(self) -> "RunSettings":
@@ -323,6 +331,16 @@ class RunSettings(BaseModel):
                 "ec2_cluster_options must be provided when cluster.mode is 'ec2'"
             )
 
+        return self
+
+    @model_validator(mode="after")
+    def validate_s3_fs_opts(self) -> "RunSettings":
+        """Ensure that s3_fs_opts, if provided, can instantiate an s3fs filesystem."""
+        if self.s3_fs_opts:
+            try:
+                s3fs.S3FileSystem(**self.s3_fs_opts)
+            except Exception as e:
+                raise ValueError(f"s3_fs_opts validation failed: {e}") from e
         return self
 
 
@@ -1022,7 +1040,11 @@ def json_update(base: dict, updates: dict) -> dict:
 
 
 def collect_files(
-    path_cfg: PathConfig, suffix: str, exclude: Optional[str], bucket_raw: Optional[str]
+    path_cfg: PathConfig,
+    suffix: str,
+    exclude: Optional[str],
+    bucket_raw: Optional[str],
+    s3_client_opts: Optional[dict] = None,
 ) -> List[str]:
     """Collect files from an S3 bucket using suffix and optional regex filtering.
 
@@ -1052,7 +1074,9 @@ def collect_files(
     prefix = str(PurePosixPath(prefix))  # normalise path
 
     # matching_files = s3_ls(bucket, prefix, suffix=suffix, exclude=exclude)
-    matching_files = s3_ls(bucket, prefix, suffix=None, exclude=exclude)
+    matching_files = s3_ls(
+        bucket, prefix, suffix=None, exclude=exclude, s3_client_opts=s3_client_opts
+    )
 
     for pattern in path_cfg.filter or []:
         logger.info(f"Filtering files with regex pattern: {pattern}")
@@ -1154,6 +1178,8 @@ def main():
         config.run_settings.root_prefix_cloud_optimised_path
         or load_variable_from_config("ROOT_PREFIX_CLOUD_OPTIMISED_PATH")
     )
+    s3_fs_opts = config.run_settings.s3_fs_opts
+    s3_client_opts = boto3_from_opts_dict(s3_fs_opts)
 
     dataset_config_path = resolve_dataset_config_path(args.config)
     dataset_config = load_dataset_config(
@@ -1171,6 +1197,7 @@ def main():
                     suffix=config.run_settings.suffix,
                     exclude=config.run_settings.exclude,
                     bucket_raw=bucket_raw,
+                    s3_client_opts=s3_client_opts,
                 )
 
                 if not matching_files:
@@ -1212,6 +1239,7 @@ def main():
                         suffix=config.run_settings.suffix,
                         exclude=config.run_settings.exclude,
                         bucket_raw=bucket_raw,
+                        s3_client_opts=s3_client_opts,
                     )
 
                     if not matching_files:
@@ -1250,6 +1278,7 @@ def main():
                     suffix=config.run_settings.suffix,
                     exclude=config.run_settings.exclude,
                     bucket_raw=bucket_raw,
+                    s3_client_opts=s3_client_opts,
                 )
                 all_files.extend(files_found)
 
@@ -1268,6 +1297,7 @@ def main():
                         suffix=config.run_settings.suffix,
                         exclude=config.run_settings.exclude,
                         bucket_raw=bucket_raw,
+                        s3_client_opts=s3_client_opts,
                     )
                     all_files.extend(files_found)
 

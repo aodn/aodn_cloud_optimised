@@ -1044,7 +1044,7 @@
     },
     "batch_size": 200,
     "cluster": {
-      "mode": "coiled",
+      "mode": "local",
       "restart_every_path": false
     },
     "paths": [
@@ -1056,6 +1056,13 @@
         "year_range": []
       }
     ],
+    "s3_fs_opts": {
+      "key": "minioadmin",
+      "secret": "minioadmin",
+      "client_kwargs": {
+        "endpoint_url": "http://localhost:9000"
+      }
+    },
     "clear_existing_data": true,
     "raise_error": false,
     "force_previous_parquet_deletion": false

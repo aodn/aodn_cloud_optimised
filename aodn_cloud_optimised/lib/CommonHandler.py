@@ -39,7 +39,8 @@ class CommonHandler:
                 dataset_config (dict): Configuration dictionary for the dataset.
                 clear_existing_data (bool, optional): Flag to clear existing data. Defaults to None.
                 raise_error (bool, optional): raise error if logger.error
-                s3_client_opts (dict, s3 client otions, optional): specify the s3 client options if needed. Can't be an object because Dask s* and needs to serialize objects which aren't serializable. This is an abomination
+                s3_client_opts (dict, s3 client options, optional): specify the s3 client options if needed. Can't be an object because Dask s* and needs to serialize objects which aren't serializable (This is an abomination)
+                s3_fs_opts (dict, s3_fs options, optional): specify the s3_fs options if needed. For example to communicate to output MinIO buckets.
 
         Attributes:
             start_time (float): The start time of the handler.
@@ -128,9 +129,19 @@ class CommonHandler:
 
         self.s3_client_opts = kwargs.get("s3_client_opts", None)
 
-        self.s3_fs = s3fs.S3FileSystem(
-            anon=False, default_cache_type=None, session=kwargs.get("s3fs_session")
-        )  # variable overwritten in unittest to use moto server
+        # TODO: for now, we assume having the same s3_fs for both input s3_fs options, and output s3_fs options. This should change
+        self.s3_fs_opts = self.dataset_config["run_settings"].get("s3_fs_opts", None)
+        if self.s3_fs_opts:
+            self.s3_fs = s3fs.S3FileSystem(**self.s3_fs_opts)
+
+            if not self.s3_client_opts:
+                from aodn_cloud_optimised.lib.s3Tools import boto3_s3_from_opts_dict
+
+                self.s3_client_opts = boto3_s3_from_opts_dict(self.s3_fs_opts)
+        else:
+            self.s3_fs = s3fs.S3FileSystem(
+                anon=False, default_cache_type=None, session=kwargs.get("s3fs_session")
+            )  # variable overwritten in unittest to use moto server
 
         self.uuid_log = None
         self.s3_file_uri_list = None
