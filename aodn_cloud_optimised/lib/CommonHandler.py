@@ -129,7 +129,10 @@ class CommonHandler:
         self.s3_client_opts = kwargs.get("s3_client_opts", None)
 
         self.s3_fs = s3fs.S3FileSystem(
-            anon=False, default_cache_type=None, session=kwargs.get("s3fs_session")
+            anon=False,
+            default_cache_type="readahead",
+            default_fill_cache=False,
+            session=kwargs.get("s3fs_session"),
         )  # variable overwritten in unittest to use moto server
 
         self.uuid_log = None
