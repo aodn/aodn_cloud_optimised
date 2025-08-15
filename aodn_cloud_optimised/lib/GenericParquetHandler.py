@@ -1161,7 +1161,7 @@ class GenericHandler(CommonHandler):
                 self.logger.info(
                     f"Deleting existing Parquet objects from {self.cloud_optimised_output_path}."
                 )
-                delete_objects_in_prefix(bucket_name, prefix)
+                delete_objects_in_prefix(bucket_name, prefix, self.s3_client_opts)
 
         def task(f, i):
             try:
