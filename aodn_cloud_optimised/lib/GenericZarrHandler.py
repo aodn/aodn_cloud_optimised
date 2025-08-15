@@ -1800,7 +1800,7 @@ class GenericHandler(CommonHandler):
                     f"Deleting existing Zarr objects from bucket '{bucket_name}' with prefix '{prefix}'."
                 )
 
-                delete_objects_in_prefix(bucket_name, prefix)
+                delete_objects_in_prefix(bucket_name, prefix, self.s3_client_opts)
 
         # Multiple file processing with cluster
         if s3_file_uri_list is not None:
