@@ -28,11 +28,11 @@ from aodn_cloud_optimised.lib.s3Tools import (
 
 from .CommonHandler import CommonHandler
 from .schema import (
+    cast_value_to_config_type,
     create_pyarrow_schema,
     generate_json_schema_var_from_netcdf,
-    merge_schema_dict,
-    cast_value_to_config_type,
     map_config_type_to_pyarrow_type,
+    merge_schema_dict,
 )
 
 # TODO: improve log for parallism by adding a uuid for each task

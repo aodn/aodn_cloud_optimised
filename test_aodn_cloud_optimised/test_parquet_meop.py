@@ -13,7 +13,7 @@ from numpy.testing import assert_array_equal
 
 from aodn_cloud_optimised.lib.ArgoHandler import ArgoHandler
 from aodn_cloud_optimised.lib.config import load_dataset_config
-from aodn_cloud_optimised.lib.s3Tools import s3_ls, get_free_local_port
+from aodn_cloud_optimised.lib.s3Tools import get_free_local_port, s3_ls
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 

@@ -39,7 +39,7 @@ from aodn_cloud_optimised.lib.config import (
     load_dataset_config,
     load_variable_from_config,
 )
-from aodn_cloud_optimised.lib.s3Tools import s3_ls, boto3_from_opts_dict
+from aodn_cloud_optimised.lib.s3Tools import boto3_from_opts_dict, s3_ls
 
 logger = logging.getLogger(__name__)
 

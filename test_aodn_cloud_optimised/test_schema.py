@@ -8,14 +8,13 @@ import s3fs
 from moto import mock_aws
 from moto.moto_server.threaded_moto_server import ThreadedMotoServer
 
-from aodn_cloud_optimised.lib.s3Tools import s3_ls
+from aodn_cloud_optimised.lib.s3Tools import get_free_local_port, s3_ls
 from aodn_cloud_optimised.lib.schema import (
-    create_pyrarrow_schema_from_dict,
     create_pyarrow_schema,
+    create_pyrarrow_schema_from_dict,
     generate_json_schema_from_s3_netcdf,
     generate_json_schema_var_from_netcdf,
 )
-from aodn_cloud_optimised.lib.s3Tools import get_free_local_port
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 

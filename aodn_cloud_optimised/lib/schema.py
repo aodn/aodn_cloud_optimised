@@ -1,3 +1,4 @@
+import importlib.resources
 import json
 import tempfile
 
@@ -5,7 +6,6 @@ import numpy as np
 import pyarrow as pa
 import s3fs
 import xarray as xr
-import importlib.resources
 
 
 def custom_encoder(obj):

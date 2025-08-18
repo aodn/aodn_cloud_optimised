@@ -5,7 +5,6 @@ import timeit
 from enum import Enum
 from typing import Any, Dict, List, Literal, Optional, Union
 
-
 import s3fs
 import xarray as xr
 import yaml

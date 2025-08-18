@@ -1,6 +1,6 @@
 import logging
 import socket
-from typing import Optional, Tuple, Union, Dict
+from typing import Dict, Optional, Tuple, Union
 from urllib.parse import urlparse
 
 import boto3

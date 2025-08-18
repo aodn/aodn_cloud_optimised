@@ -2,6 +2,7 @@
 
 
 from typing import Optional
+
 from pydantic import (
     ValidationError,
 )
@@ -18,9 +19,7 @@ from aodn_cloud_optimised.lib.config import (
 from aodn_cloud_optimised.lib.GenericParquetHandler import (
     GenericHandler as ParquetHandler,
 )
-from aodn_cloud_optimised.lib.GenericZarrHandler import (
-    GenericHandler as ZarrHandler,
-)
+from aodn_cloud_optimised.lib.GenericZarrHandler import GenericHandler as ZarrHandler
 
 
 def main(
