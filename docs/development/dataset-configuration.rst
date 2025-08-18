@@ -742,7 +742,7 @@ Run Settings Options
 ---------------
 
 Example
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^
 
 .. code:: json
 
@@ -797,7 +797,8 @@ In order to create the dataset on a remote cluster (ec2/coiled), the
 following configuration needs to be added within the run_settings:
 
 Coiled Cluster configuration
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 For a coiled cluster, simply put this in the ``run_settings`` config
 
 .. code:: json
@@ -838,7 +839,8 @@ See `coiled documentation <https://docs.coiled.io/user_guide/clusters/index.html
 
 
 EC2 Cluster configuration
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
 As for above, in the EC2 cluster is to be chosen, simply put this in the ``run_settings`` config
 
 .. code:: json
@@ -860,6 +862,77 @@ As for above, in the EC2 cluster is to be chosen, simply put this in the ``run_s
     },
 
 .. _aws-opendata-registry-1:
+
+S3FS bucket endpoint patching
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Two new optional settings allow to configure access to S3 (or S3-compatible) storage for **input** and **output** datasets.
+These settings control authentication and client configuration used by ``s3fs`` / ``boto3``.
+
+.. code:: json
+
+  "s3_fs_common_opts": {
+    "key": "minioadmin",
+    "secret": "minioadmin",
+    "client_kwargs": {
+      "endpoint_url": "http://localhost:9000"
+    }
+  },
+  "s3_bucket_opts": {
+    "input_data": {
+      "bucket": "imos-data",
+      "s3_fs_opts": {
+        "key": "minioadmin",
+        "secret": "minioadmin",
+        "client_kwargs": {
+          "endpoint_url": "http://localhost:9000"
+        }
+      }
+    },
+    "output_data": {
+      "bucket": "aodn-cloud-optimised",
+      "s3_fs_opts": {
+        "key": "minioadmin",
+        "secret": "minioadmin",
+          "client_kwargs": {
+          "endpoint_url": "http://localhost:9000"
+        }
+      }
+    }
+  }
+
+**Explanation**
+~~~~~~~~~~~~~~~
+
+- ``s3_fs_common_opts``
+  Defines the **default connection options** shared by both input and output S3 clients (e.g. access keys, endpoint).
+  If set, these options are used unless explicitly overridden by per-bucket configuration.
+
+- ``s3_bucket_opts``
+  Allows configuring **per-bucket overrides** for input and output datasets.
+  Each section may define:
+  - ``bucket`` → the bucket name to use for reading/writing data
+  - ``s3_fs_opts`` → optional overrides to connection options defined in ``s3_fs_common_opts``
+
+- Both ``input_data`` and ``output_data`` are optional.
+  If not specified, the system falls back to default bucket names (``bucket_raw_default_name`` and ``optimised_bucket_name``) or environment variables.
+
+**Precedence Rules**
+~~~~~~~~~~~~~~~~~~~~
+
+1. If ``s3_bucket_opts.<input_data|output_data>.s3_fs_opts`` is defined → it takes priority.
+2. Otherwise, ``s3_fs_common_opts`` is used.
+3. If neither is defined → the default global configuration is used.
+
+.. note:: Important Note
+   :class: custom-note
+   :name: s3-config
+
+   * ``s3_fs_common_opts`` and ``s3_bucket_opts`` are optional — they are mainly useful when pointing to **non-AWS endpoints** (e.g. MinIO, localstack) or when input and output buckets require different credentials.
+   * If ``s3_fs_common_opts`` is provided, both a valid ``s3fs.S3FileSystem`` session and corresponding ``boto3`` client will be created automatically.
+   * If you provide only one of (``s3_fs_common_opts`` or its corresponding boto client options), a validation error will be raised.
+
+---
 
 AWS OpenData registry
 ---------------------
