@@ -1423,7 +1423,7 @@ class GenericHandler(CommonHandler):
         """
         try:
             engine = "scipy"
-            with self.s3_fs_output.open(file, "rb") as f:  # Open the file-like object
+            with self.s3_fs_input.open(file, "rb") as f:  # Open the file-like object
                 ds = self._open_ds(f, partial_preprocess, drop_vars_list, engine=engine)
             self.logger.info(
                 f"{self.uuid_log}: Successfully opened {file} with '{engine}' engine."
