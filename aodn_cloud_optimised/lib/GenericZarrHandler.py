@@ -608,7 +608,14 @@ class GenericHandler(CommonHandler):
         #       self.s3_fs is overwritten somewhere?? need to check
         if os.getenv("RUNNING_UNDER_UNITTEST") == "true":
             port = os.getenv("MOTO_PORT", "5555")
-            self.s3_fs = s3fs.S3FileSystem(
+            self.s3_fs_output = s3fs.S3FileSystem(
+                anon=False,
+                client_kwargs={
+                    "endpoint_url": f"http://127.0.0.1:{port}/",
+                    "region_name": "us-east-1",
+                },
+            )
+            self.s3_fs_input = s3fs.S3FileSystem(
                 anon=False,
                 client_kwargs={
                     "endpoint_url": f"http://127.0.0.1:{port}/",
@@ -617,7 +624,9 @@ class GenericHandler(CommonHandler):
             )
 
         self.store = s3fs.S3Map(
-            root=f"{self.cloud_optimised_output_path}", s3=self.s3_fs, check=False
+            root=f"{self.cloud_optimised_output_path}",
+            s3=self.s3_fs_output,
+            check=False,
         )
 
         # to_zarr common options
@@ -649,7 +658,7 @@ class GenericHandler(CommonHandler):
             self.logger.error("Filename to delete is not defined")
 
         if prefix_exists(
-            self.cloud_optimised_output_path, s3_client_opts=self.s3_client_opts
+            self.cloud_optimised_output_path, s3_client_opts=self.s3_client_opts_output
         ):
             with xr.open_zarr(
                 self.store,
@@ -722,7 +731,7 @@ class GenericHandler(CommonHandler):
         Update dataset variable attributes and global attributes without having to process new file
         """
         if prefix_exists(
-            self.cloud_optimised_output_path, s3_client_opts=self.s3_client_opts
+            self.cloud_optimised_output_path, s3_client_opts=self.s3_client_opts_output
         ):
             self.logger.info(
                 f"{self.uuid_log}: Existing Zarr store found at {self.cloud_optimised_output_path}. Updating Metadata"
@@ -923,7 +932,7 @@ class GenericHandler(CommonHandler):
                 f"{self.uuid_log}: Listing objects to process and creating S3 file handle list for batch {idx + 1}."
             )
 
-            batch_files = create_fileset(batch_uri_list, self.s3_fs)
+            batch_files = create_fileset(batch_uri_list, self.s3_fs_input)
 
             self.logger.info(
                 f"{self.uuid_log}: Processing batch {idx + 1} with files: {batch_files}"
@@ -1414,7 +1423,7 @@ class GenericHandler(CommonHandler):
         """
         try:
             engine = "scipy"
-            with self.s3_fs.open(file, "rb") as f:  # Open the file-like object
+            with self.s3_fs_input.open(file, "rb") as f:  # Open the file-like object
                 ds = self._open_ds(f, partial_preprocess, drop_vars_list, engine=engine)
             self.logger.info(
                 f"{self.uuid_log}: Successfully opened {file} with '{engine}' engine."
@@ -1675,7 +1684,7 @@ class GenericHandler(CommonHandler):
 
         # Write the dataset to Zarr
         if prefix_exists(
-            self.cloud_optimised_output_path, s3_client_opts=self.s3_client_opts
+            self.cloud_optimised_output_path, s3_client_opts=self.s3_client_opts_output
         ):
             self.logger.info(
                 f"{self.uuid_log}: Existing Zarr store found at {self.cloud_optimised_output_path}. Appending data."
@@ -1793,14 +1802,17 @@ class GenericHandler(CommonHandler):
             )
             # TODO: delete all objects
             if prefix_exists(
-                self.cloud_optimised_output_path, s3_client_opts=self.s3_client_opts
+                self.cloud_optimised_output_path,
+                s3_client_opts=self.s3_client_opts_output,
             ):
                 bucket_name, prefix = split_s3_path(self.cloud_optimised_output_path)
                 self.logger.info(
                     f"Deleting existing Zarr objects from bucket '{bucket_name}' with prefix '{prefix}'."
                 )
 
-                delete_objects_in_prefix(bucket_name, prefix)
+                delete_objects_in_prefix(
+                    bucket_name, prefix, self.s3_client_opts_output
+                )
 
         # Multiple file processing with cluster
         if s3_file_uri_list is not None:

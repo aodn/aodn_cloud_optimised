@@ -6,7 +6,7 @@ import tempfile
 import unittest
 from io import StringIO
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 from aodn_cloud_optimised.bin.create_aws_registry_dataset import main
 

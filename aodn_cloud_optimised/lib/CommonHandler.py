@@ -3,18 +3,17 @@ import os
 import tempfile
 import timeit
 from enum import Enum
-from typing import List
+from typing import Any, Dict, List, Literal, Optional, Union
 
 import s3fs
 import xarray as xr
 import yaml
-from dask.distributed import Client
-from dask.distributed import LocalCluster
-from jsonschema import validate, ValidationError
+from dask.distributed import Client, LocalCluster
+from jsonschema import ValidationError, validate
 from s3path import PureS3Path
 
-from .clusterLib import ClusterMode, ClusterManager
-from .config import load_variable_from_config, load_dataset_config
+from .clusterLib import ClusterManager, ClusterMode
+from .config import load_dataset_config, load_variable_from_config
 from .logging import get_logger
 
 
@@ -39,7 +38,7 @@ class CommonHandler:
                 dataset_config (dict): Configuration dictionary for the dataset.
                 clear_existing_data (bool, optional): Flag to clear existing data. Defaults to None.
                 raise_error (bool, optional): raise error if logger.error
-                s3_client_opts (dict, s3 client otions, optional): specify the s3 client options if needed. Can't be an object because Dask s* and needs to serialize objects which aren't serializable. This is an abomination
+                s3_client_opts_common (dict, s3 client options, optional): specify the s3 client options if needed. Can't be an object because Dask s* and needs to serialize objects which aren't serializable (This is an abomination)
 
         Attributes:
             start_time (float): The start time of the handler.
@@ -54,7 +53,7 @@ class CommonHandler:
             cloud_optimised_output_path (str): S3 path for cloud optimised output.
             clear_existing_data (bool): Flag to clear existing data.
             coiled_cluster_options (dict): Options for the cluster configuration.
-            s3_fs (s3fs.S3FileSystem): S3 file system object for accessing S3.
+            s3_fs_common_session (s3fs.S3FileSystem): S3 file system object for accessing S3.
 
         Raises:
             ValueError: If an invalid cluster_mode is specified.
@@ -126,14 +125,150 @@ class CommonHandler:
             logger=self.logger,
         )
 
-        self.s3_client_opts = kwargs.get("s3_client_opts", None)
+        self.s3_client_opts_common = kwargs.get("s3_client_opts_common", None)
 
-        self.s3_fs = s3fs.S3FileSystem(
-            anon=False, default_cache_type=None, session=kwargs.get("s3fs_session")
-        )  # variable overwritten in unittest to use moto server
+        self.s3_fs_common_opts = self.dataset_config["run_settings"].get(
+            "s3_fs_common_opts", None
+        )
+        self.s3_bucket_opts = self.dataset_config["run_settings"].get(
+            "s3_bucket_opts", None
+        )
+
+        self.s3_fs_common_session = kwargs.get("s3_fs_common_session", None)
+
+        # Validation: if one is defined, both must be
+        if (self.s3_client_opts_common is not None) != (
+            self.s3_fs_common_session is not None
+        ):
+            raise ValueError(
+                "Both 's3_client_opts_common' and 's3_fs_common_session' must be provided together."
+            )
+
+        self.init_s3_filesystems(
+            s3_bucket_opts=self.s3_bucket_opts,
+            s3_fs_common_opts=self.s3_fs_common_opts,
+            s3_fs_common_session=self.s3_fs_common_session,
+            s3_client_opts_common=self.s3_client_opts_common,
+        )
 
         self.uuid_log = None
         self.s3_file_uri_list = None
+
+    def init_s3_filesystems(
+        self,
+        s3_fs_common_opts=None,
+        s3_bucket_opts=None,
+        s3_fs_common_session=None,
+        s3_client_opts_common=None,
+    ):
+        """
+        Initialise S3FileSystem and boto3 client options for input/output buckets.
+
+        Args:
+            s3_fs_common_opts (dict, optional): Common S3FS options applied if per-bucket options are missing.
+            s3_bucket_opts (dict, optional): Per-bucket options for input_data and output_data.
+            s3_fs_common_session (Any, optional): Optional s3fs session object (used in tests/mocking). Overwrites any other options from config as this is comming from kwargs
+            s3_client_opts_common (dict, optional): Optional boto3 s3 client dict. Overwrite any other options from config as this is coming from kwargs
+        """
+        from aodn_cloud_optimised.lib.s3Tools import boto3_s3_from_opts_dict
+
+        # Validate s3_fs_common_session type
+        if s3_fs_common_session is not None and not isinstance(
+            s3_fs_common_session, s3fs.S3FileSystem
+        ):
+            raise TypeError("s3_fs_common_session must be an s3fs.S3FileSystem object")
+
+        # --- S3FileSystem setup ---
+        if s3_fs_common_session is not None:
+            # Use the provided session regardless of s3_fs_common_opts
+            self.s3_fs = s3_fs_common_session
+            self.s3_fs_common_opts = s3_fs_common_opts  # keep options if provided
+        elif s3_fs_common_opts:
+            self.s3_fs_common_opts = s3_fs_common_opts
+            self.s3_fs = s3fs.S3FileSystem(**s3_fs_common_opts)
+        else:
+            self.s3_fs_common_opts = None
+            self.s3_fs = s3fs.S3FileSystem(
+                anon=False, default_cache_type=None, session=None
+            )
+
+        # --- Input bucket S3FS ---
+        if (
+            s3_bucket_opts
+            and "input_data" in s3_bucket_opts
+            and s3_bucket_opts["input_data"].get("s3_fs_opts")
+        ):
+            # If session is provided, override options
+            if s3_fs_common_session is not None:
+                self.s3_fs_input = s3_fs_common_session
+            else:
+                self.s3_fs_input = s3fs.S3FileSystem(
+                    **s3_bucket_opts["input_data"]["s3_fs_opts"]
+                )
+        elif s3_fs_common_opts or s3_fs_common_session:
+            self.s3_fs_input = self.s3_fs
+        else:
+            self.s3_fs_input = s3fs.S3FileSystem(anon=False, default_cache_type=None)
+
+        # --- Output bucket S3FS ---
+        if (
+            s3_bucket_opts
+            and "output_data" in s3_bucket_opts
+            and s3_bucket_opts["output_data"].get("s3_fs_opts")
+        ):
+            if s3_fs_common_session is not None:
+                self.s3_fs_output = s3_fs_common_session
+            else:
+                self.s3_fs_output = s3fs.S3FileSystem(
+                    **s3_bucket_opts["output_data"]["s3_fs_opts"]
+                )
+        elif s3_fs_common_opts or s3_fs_common_session:
+            self.s3_fs_output = self.s3_fs
+        else:
+            self.s3_fs_output = s3fs.S3FileSystem(anon=False, default_cache_type=None)
+
+        #
+        # --- Boto3 client options setup ---
+        # Common boto3 client options
+
+        if s3_client_opts_common is not None:
+            self.s3_client_opts_common = s3_client_opts_common
+        elif s3_fs_common_opts:
+            self.s3_client_common_opts = boto3_s3_from_opts_dict(s3_fs_common_opts)
+        else:
+            self.s3_client_common_opts = None
+
+        # Input bucket boto3 client options
+        if s3_client_opts_common is not None:
+            self.s3_client_opts_input = s3_client_opts_common
+        elif (
+            s3_bucket_opts
+            and "input_data" in s3_bucket_opts
+            and s3_bucket_opts["input_data"].get("s3_fs_opts")
+        ):
+            self.s3_client_opts_input = boto3_s3_from_opts_dict(
+                s3_bucket_opts["input_data"]["s3_fs_opts"]
+            )
+        elif s3_fs_common_opts:
+            self.s3_client_opts_input = boto3_s3_from_opts_dict(s3_fs_common_opts)
+        else:
+            self.s3_client_opts_input = None
+
+        # Output bucket boto3 client options
+        if s3_client_opts_common is not None:
+            self.s3_client_opts_output = s3_client_opts_common
+        elif (
+            s3_bucket_opts
+            and "output_data" in s3_bucket_opts
+            and s3_bucket_opts["output_data"].get("s3_fs_opts")
+        ):
+            self.s3_client_opts_output = boto3_s3_from_opts_dict(
+                s3_bucket_opts["output_data"]["s3_fs_opts"]
+            )
+        elif s3_fs_common_opts:
+            self.s3_client_opts_output = boto3_s3_from_opts_dict(s3_fs_common_opts)
+        else:
+            self.s3_client_opts_output = None
 
     def __enter__(self):
         # Initialize resources if necessary
@@ -488,7 +623,7 @@ def cloud_optimised_creation(
         **kwargs: Additional keyword arguments for customization.
             handler_class (class, optional): Handler class for cloud optimised creation.
             force_previous_parquet_deletion (bool, optional): Whether to force deletion of old Parquet files (default is False).
-            s3fs_session: An aiobotocore authenticated session
+            s3_fs_common_session: An aiobotocore authenticated session
 
     Returns:
         str: cluster_id for the cluster used. This will be a cluster name for local clusters and an id for Coiled clusters.
@@ -520,7 +655,7 @@ def cloud_optimised_creation(
             load_variable_from_config("ROOT_PREFIX_CLOUD_OPTIMISED_PATH"),
         ),
         "cluster_mode": kwargs.get("cluster_mode", "local"),
-        "s3fs_session": kwargs.get("s3fs_session", None),
+        "s3_fs_common_session": kwargs.get("s3_fs_common_session", None),
         "raise_error": kwargs.get("raise_error", False),
     }
 

@@ -1,6 +1,6 @@
 import logging
 import socket
-from typing import Optional
+from typing import Dict, Optional, Tuple, Union
 from urllib.parse import urlparse
 
 import boto3
@@ -13,6 +13,40 @@ def get_free_local_port():
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.bind(("127.0.0.1", 0))  # 0 tells the OS to find an available port
         return s.getsockname()[1]
+
+
+def s3fs_from_opts(s3_fs_opts: dict) -> s3fs.S3FileSystem:
+    """Create an s3fs filesystem from s3_fs_opts."""
+    return s3fs.S3FileSystem(**s3_fs_opts)
+
+
+def boto3_from_opts_dict(s3_fs_opts: Optional[dict]) -> dict:
+    """Convert s3_fs_opts into boto3-compatible keyword arguments."""
+    if not s3_fs_opts:
+        return {}
+    boto_kwargs = {}
+    if "key" in s3_fs_opts:
+        boto_kwargs["aws_access_key_id"] = s3_fs_opts["key"]
+    if "secret" in s3_fs_opts:
+        boto_kwargs["aws_secret_access_key"] = s3_fs_opts["secret"]
+    if "token" in s3_fs_opts:
+        boto_kwargs["aws_session_token"] = s3_fs_opts["token"]
+    if "client_kwargs" in s3_fs_opts and "endpoint_url" in s3_fs_opts["client_kwargs"]:
+        boto_kwargs["endpoint_url"] = s3_fs_opts["client_kwargs"]["endpoint_url"]
+    return boto_kwargs
+
+
+def boto3_s3_from_opts_dict(s3_fs_opts: Optional[dict]) -> Tuple[str, dict]:
+    """
+    Return a (service_name, kwargs) tuple for creating a boto3 S3 client.
+    """
+    return "s3", boto3_from_opts_dict(s3_fs_opts)
+
+
+def boto3_from_opts(s3_fs_opts: Optional[dict], service_name: str = "s3"):
+    """Create a boto3 client from s3_fs_opts."""
+    kwargs = boto3_from_opts_dict(s3_fs_opts)
+    return boto3.client(service_name, **kwargs)
 
 
 def s3_ls(
@@ -63,7 +97,7 @@ def s3_ls(
     if s3_client_opts is None:
         s3 = boto3.client("s3", config=Config(signature_version=UNSIGNED))
     else:
-        s3 = boto3.client(**s3_client_opts)
+        s3 = boto3.client("s3", **s3_client_opts)
 
     paginator = s3.get_paginator("list_objects_v2")
     pages = paginator.paginate(Bucket=bucket, Prefix=prefix)
@@ -91,7 +125,7 @@ def s3_ls(
 def delete_objects_in_prefix(
     bucket_name: str,
     prefix: str,
-    s3_client_opts: Optional[dict] = None,
+    s3_client_opts: Optional[Union[Tuple[str, Dict], Dict]] = None,
 ):
     """
     Delete all objects in an S3 bucket under a specified prefix recursively.
@@ -126,10 +160,20 @@ def delete_objects_in_prefix(
         botocore.exceptions.ClientError: If there is an error with the S3 client operation.
     """
 
+    # Create boto3 client depending on opts format
     if s3_client_opts is None:
-        s3 = boto3.client("s3")  # default, real AWS
+        s3_client = boto3.client("s3")  # default, real AWS
+    elif isinstance(s3_client_opts, tuple) and len(s3_client_opts) == 2:
+        service_name, kwargs = s3_client_opts
+        s3_client = boto3.client(service_name, **kwargs)
+    elif isinstance(s3_client_opts, dict):
+        # legacy format where service_name is inside the dict
+        service_name = s3_client_opts.pop("service_name", "s3")
+        s3_client = boto3.client(service_name, **s3_client_opts)
     else:
-        s3 = boto3.client(**s3_client_opts)
+        raise ValueError(
+            "s3_client_opts must be None, a (service_name, kwargs) tuple, or a dict."
+        )
 
     # Get the logger instance
     logger = logging.getLogger()
@@ -147,7 +191,7 @@ def delete_objects_in_prefix(
         if continuation_token:
             list_kwargs["ContinuationToken"] = continuation_token
 
-        response = s3.list_objects_v2(**list_kwargs)
+        response = s3_client.list_objects_v2(**list_kwargs)
 
         # Check if there are any objects to delete
         if "Contents" not in response:
@@ -160,7 +204,7 @@ def delete_objects_in_prefix(
         objects_to_delete = [{"Key": obj["Key"]} for obj in response["Contents"]]
 
         # Delete objects
-        delete_response = s3.delete_objects(
+        delete_response = s3_client.delete_objects(
             Bucket=bucket_name,
             Delete={
                 "Objects": objects_to_delete,
@@ -192,7 +236,9 @@ def split_s3_path(s3_path: str):
     return bucket_name, prefix
 
 
-def prefix_exists(s3_path: str, s3_client_opts: Optional[dict] = None):
+def prefix_exists(
+    s3_path: str, s3_client_opts: Optional[Union[Tuple[str, Dict], Dict]] = None
+):
     """
     Check if a given S3 prefix exists.
 
@@ -224,10 +270,20 @@ def prefix_exists(s3_path: str, s3_client_opts: Optional[dict] = None):
     bucket_name = parsed_url.netloc
     prefix = parsed_url.path.lstrip("/")
 
+    # Create boto3 client depending on opts format
     if s3_client_opts is None:
         s3_client = boto3.client("s3")  # default, real AWS
+    elif isinstance(s3_client_opts, tuple) and len(s3_client_opts) == 2:
+        service_name, kwargs = s3_client_opts
+        s3_client = boto3.client(service_name, **kwargs)
+    elif isinstance(s3_client_opts, dict):
+        # legacy format where service_name is inside the dict
+        service_name = s3_client_opts.pop("service_name", "s3")
+        s3_client = boto3.client(service_name, **s3_client_opts)
     else:
-        s3_client = boto3.client(**s3_client_opts)
+        raise ValueError(
+            "s3_client_opts must be None, a (service_name, kwargs) tuple, or a dict."
+        )
 
     response = s3_client.list_objects_v2(Bucket=bucket_name, Prefix=prefix, MaxKeys=1)
     return "Contents" in response

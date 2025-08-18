@@ -1,13 +1,15 @@
-import unittest
+import json
 import os
 import shutil
-import json
-import yaml
 import tempfile
+import unittest
+
+import yaml
+
 from aodn_cloud_optimised.lib.config import (
-    load_variable_from_file,
-    load_variable_from_config,
     load_dataset_config,
+    load_variable_from_config,
+    load_variable_from_file,
 )
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))

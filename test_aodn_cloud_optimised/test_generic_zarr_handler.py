@@ -67,7 +67,7 @@ def mock_aws_server():
 class TestGenericZarrHandler(unittest.TestCase):
     def setUp(self):
         # TODO: remove this abomination for unittesting. but it works. Only for zarr !
-        os.environ["RUNNING_UNDER_UNITTEST"] = "true"
+        # os.environ["RUNNING_UNDER_UNITTEST"] = "true"
 
         # Create a mock S3 service
         self.BUCKET_OPTIMISED_NAME = "imos-data-lab-optimised"
@@ -81,12 +81,12 @@ class TestGenericZarrHandler(unittest.TestCase):
 
         self.server.start()
 
-        self.s3_client_opts = {
+        self.s3_client_opts_common = {
             "service_name": "s3",
             "region_name": "us-east-1",
             "endpoint_url": f"http://{self.endpoint_ip}:{self.port}",
         }
-        self.s3 = boto3.client(**self.s3_client_opts)
+        self.s3 = boto3.client(**self.s3_client_opts_common)
 
         self.s3.create_bucket(Bucket="imos-data")
         self.s3.create_bucket(Bucket=self.BUCKET_OPTIMISED_NAME)
@@ -148,7 +148,8 @@ class TestGenericZarrHandler(unittest.TestCase):
             dataset_config=dataset_acorn_turq_netcdf_config,
             # clear_existing_data=True,
             cluster_mode="local",
-            s3_client_opts=self.s3_client_opts,
+            s3_client_opts_common=self.s3_client_opts_common,
+            s3_fs_common_session=self.s3_fs,
         )
 
         # Copy files to the mock S3 bucket
@@ -166,7 +167,8 @@ class TestGenericZarrHandler(unittest.TestCase):
             dataset_config=dataset_acorn_nwa_netcdf_config,
             # clear_existing_data=True,
             cluster_mode="local",
-            s3_client_opts=self.s3_client_opts,
+            s3_client_opts_common=self.s3_client_opts_common,
+            s3_fs_common_session=self.s3_fs,
         )
 
         dataset_acorn_nwa_netcdf_config_mod = copy.deepcopy(
@@ -183,7 +185,8 @@ class TestGenericZarrHandler(unittest.TestCase):
             optimised_bucket_name=self.BUCKET_OPTIMISED_NAME,
             root_prefix_cloud_optimised_path=self.ROOT_PREFIX_CLOUD_OPTIMISED_PATH,
             dataset_config=dataset_acorn_nwa_netcdf_config_mod,
-            s3_client_opts=self.s3_client_opts,
+            s3_client_opts_common=self.s3_client_opts_common,
+            s3_fs_common_session=self.s3_fs,
         )
 
     def _upload_to_s3(self, bucket_name, key, file_path):
@@ -201,7 +204,7 @@ class TestGenericZarrHandler(unittest.TestCase):
             self.s3.delete_bucket(Bucket=bucket_name)
 
         self.server.stop()
-        del os.environ["RUNNING_UNDER_UNITTEST"]
+        # del os.environ["RUNNING_UNDER_UNITTEST"]
 
     # TODO: find a solution to patch s3fs properly and not relying on changing the s3fs values in the code
     def test_zarr_nc_acorn_turq_handler(self):
@@ -219,8 +222,7 @@ class TestGenericZarrHandler(unittest.TestCase):
         # 2024-07-02 11:16:16,538 - INFO - GenericZarrHandler.py:381 - publish_cloud_optimised_fileset_batch - Writing data to new Zarr dataset
         # 2024-07-02 11:16:19,366 - INFO - GenericZarrHandler.py:391 - publish_cloud_optimised_fileset_batch - Batch 1 processed and written to <fsspec.mapping.FSMap object at 0x78166762b730>
 
-        with patch.object(self.handler_nc_acorn_turq_file, "s3_fs", new=self.s3_fs):
-            self.handler_nc_acorn_turq_file.to_cloud_optimised(nc_obj_ls)
+        self.handler_nc_acorn_turq_file.to_cloud_optimised(nc_obj_ls)
 
         log_handler.flush()
         captured_logs = log_stream.getvalue().strip().split("\n")
@@ -233,8 +235,8 @@ class TestGenericZarrHandler(unittest.TestCase):
         # 2024-07-02 11:16:21,649 - INFO - GenericZarrHandler.py:303 - publish_cloud_optimised_fileset_batch - Duplicate values of TIME
         # 2024-07-02 11:16:21,650 - INFO - GenericZarrHandler.py:353 - publish_cloud_optimised_fileset_batch - Overwriting Zarr dataset in Region: {'TIME': slice(0, 4, None)}, Matching Indexes in new ds: [0 1 2 3]
         # 2024-07-02 11:16:22,573 - INFO - GenericZarrHandler.py:391 - publish_cloud_optimised_fileset_batch - Batch 1 processed and written to <fsspec.mapping.FSMap object at 0x78166762b730>
-        with patch.object(self.handler_nc_acorn_turq_file, "s3_fs", new=self.s3_fs):
-            self.handler_nc_acorn_turq_file.to_cloud_optimised(nc_obj_ls)
+
+        self.handler_nc_acorn_turq_file.to_cloud_optimised(nc_obj_ls)
 
         log_handler.flush()
         captured_logs = log_stream.getvalue().strip().split("\n")
@@ -257,8 +259,7 @@ class TestGenericZarrHandler(unittest.TestCase):
         # 2024-07-02 11:16:25,905 - INFO - GenericZarrHandler.py:353 - publish_cloud_optimised_fileset_batch - Overwriting Zarr dataset in Region: {'TIME': slice(2, 4, None)}, Matching Indexes in new ds: [1 2]
         # 2024-07-02 11:16:26,631 - INFO - GenericZarrHandler.py:391 - publish_cloud_optimised_fileset_batch - Batch 1 processed and written to <fsspec.mapping.FSMap object at 0x78166762b730>
         nc_obj_ls_non_contiguous = nc_obj_ls[0:1] + nc_obj_ls[2:4]
-        with patch.object(self.handler_nc_acorn_turq_file, "s3_fs", new=self.s3_fs):
-            self.handler_nc_acorn_turq_file.to_cloud_optimised(nc_obj_ls_non_contiguous)
+        self.handler_nc_acorn_turq_file.to_cloud_optimised(nc_obj_ls_non_contiguous)
 
         log_handler.flush()
         captured_logs = log_stream.getvalue().strip().split("\n")
@@ -303,8 +304,7 @@ class TestGenericZarrHandler(unittest.TestCase):
         nc_obj_ls = s3_ls("imos-data", "acorn/nwa")
 
         # TODO: capture logging from handler
-        with patch.object(self.handler_nc_acorn_nwa_file, "s3_fs", new=self.s3_fs):
-            self.handler_nc_acorn_nwa_file.to_cloud_optimised(nc_obj_ls)
+        self.handler_nc_acorn_nwa_file.to_cloud_optimised(nc_obj_ls)
 
         log_handler.flush()
         captured_logs = log_stream.getvalue().strip().split("\n")
@@ -353,10 +353,7 @@ class TestGenericZarrHandler(unittest.TestCase):
         ), f"TIME values are not as expected: {expected}"
 
         ### modification of metadata
-        with patch.object(
-            self.handler_nc_acorn_nwa_mod_metadata, "s3_fs", new=self.s3_fs
-        ):
-            self.handler_nc_acorn_nwa_mod_metadata._update_metadata()
+        self.handler_nc_acorn_nwa_mod_metadata._update_metadata()
         ds = xr.open_zarr(self.s3_fs.get_mapper(dname), consolidated=True)
         self.assertEqual(ds.title, self.mod_title)
         self.assertNotIn("time_coverage_start", ds.attrs)
@@ -389,15 +386,12 @@ class TestGenericZarrHandler(unittest.TestCase):
         )
 
         ## 2) delete the data
-        with patch.object(
-            self.handler_nc_acorn_nwa_mod_metadata, "s3_fs", new=self.s3_fs
-        ):
-            self.handler_nc_acorn_nwa_mod_metadata.delete_cloud_optimised_data(
-                filename="test"
-            )
-            self.handler_nc_acorn_nwa_mod_metadata.delete_cloud_optimised_data(
-                filename=filename_to_delete
-            )
+        self.handler_nc_acorn_nwa_mod_metadata.delete_cloud_optimised_data(
+            filename="test"
+        )
+        self.handler_nc_acorn_nwa_mod_metadata.delete_cloud_optimised_data(
+            filename=filename_to_delete
+        )
 
         ## 3) check the data was deleted
         ds = xr.open_zarr(self.s3_fs.get_mapper(dname), consolidated=True)

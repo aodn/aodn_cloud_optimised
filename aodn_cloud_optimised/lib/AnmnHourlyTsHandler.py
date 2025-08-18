@@ -1,4 +1,4 @@
-from typing import Tuple, Generator
+from typing import Generator, Tuple
 
 import pandas as pd
 import xarray as xr

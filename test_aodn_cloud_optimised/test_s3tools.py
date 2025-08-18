@@ -1,20 +1,20 @@
 import json
 import unittest
+from unittest.mock import MagicMock, Mock, patch
 
 import boto3
+import s3fs
 from moto import mock_aws
 from moto.moto_server.threaded_moto_server import ThreadedMotoServer
 
 from aodn_cloud_optimised.lib.s3Tools import (
-    s3_ls,
-    get_free_local_port,
     create_fileset,
-    split_s3_path,
     delete_objects_in_prefix,
+    get_free_local_port,
     prefix_exists,
+    s3_ls,
+    split_s3_path,
 )
-from unittest.mock import patch, MagicMock, Mock
-import s3fs
 
 
 @mock_aws()

@@ -58,15 +58,17 @@ class TestGenericCloudOptimisedCreation(unittest.TestCase):
         # create moto server; needed for s3fs and parquet
         self.port = get_free_local_port()
         os.environ["MOTO_PORT"] = str(self.port)
-        self.server = ThreadedMotoServer(ip_address="127.0.0.1", port=self.port)
-
-        self.s3_fs = s3fs.S3FileSystem(
-            anon=False,
-            client_kwargs={
-                "endpoint_url": f"http://127.0.0.1:{self.port}/",
+        self.endpoint_ip = "127.0.0.1"
+        self.server = ThreadedMotoServer(ip_address=self.endpoint_ip, port=self.port)
+        self.s3_fs_opts = {
+            "anon": False,
+            "client_kwargs": {
+                "endpoint_url": f"http://{self.endpoint_ip}:{self.port}/",
                 "region_name": "us-east-1",
             },
-        )
+        }
+
+        self.s3_fs = s3fs.S3FileSystem(**self.s3_fs_opts)
 
         self.server.start()
 
@@ -142,7 +144,7 @@ class TestGenericCloudOptimisedCreation(unittest.TestCase):
                 session = get_session()
                 return session.create_client(
                     "s3",
-                    endpoint_url=f"http://127.0.0.1:{self.port}",
+                    endpoint_url=f"http://{self.endpoint_ip}:{self.port}",
                     region_name="us-east-1",
                     config=BotoConfig(signature_version=UNSIGNED),
                 )
@@ -155,9 +157,6 @@ class TestGenericCloudOptimisedCreation(unittest.TestCase):
             ),
             patch("argparse.ArgumentParser.parse_args") as mock_parse_args,
             patch("sys.exit") as mock_sys_exit,
-            patch(
-                "aodn_cloud_optimised.lib.s3Tools.boto3.client", new=_mock_boto3_client
-            ),
         ):
             mock_parse_args.return_value = MagicMock(
                 config=DATASET_CONFIG_NC_ACORN_JSON,
@@ -174,8 +173,17 @@ class TestGenericCloudOptimisedCreation(unittest.TestCase):
                                     "filter": [],
                                 },
                             ],
-                            "optimised_bucket_name": self.BUCKET_OPTIMISED_NAME,
                             "root_prefix_cloud_optimised_path": self.ROOT_PREFIX_CLOUD_OPTIMISED_PATH,
+                            "s3_bucket_opts": {
+                                "input_data": {
+                                    "bucket": "imos-data",
+                                    "s3_fs_opts": self.s3_fs_opts,
+                                },
+                                "output_data": {
+                                    "bucket": self.BUCKET_OPTIMISED_NAME,
+                                    "s3_fs_opts": self.s3_fs_opts,
+                                },
+                            },
                         }
                     }
                 ),

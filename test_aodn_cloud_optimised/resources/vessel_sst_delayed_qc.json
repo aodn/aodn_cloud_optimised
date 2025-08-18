@@ -81,7 +81,6 @@
     ],
     "global_attributes": {
       "delete": [
-        "platform_code",
         "geospatial_lat_max",
         "geospatial_lat_min",
         "geospatial_lon_max",

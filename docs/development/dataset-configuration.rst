@@ -742,7 +742,7 @@ Run Settings Options
 ---------------
 
 Example
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^
 
 .. code:: json
 
@@ -797,10 +797,11 @@ In order to create the dataset on a remote cluster (ec2/coiled), the
 following configuration needs to be added within the run_settings:
 
 Coiled Cluster configuration
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 For a coiled cluster, simply put this in the ``run_settings`` config
 
-.. code:: json
+.. code-block:: json
 
      "coiled_cluster_options" : {
        "n_workers": [2, 20],
@@ -838,10 +839,11 @@ See `coiled documentation <https://docs.coiled.io/user_guide/clusters/index.html
 
 
 EC2 Cluster configuration
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
 As for above, in the EC2 cluster is to be chosen, simply put this in the ``run_settings`` config
 
-.. code:: json
+.. code-block:: json
 
   "ec2_cluster_options": {
     "n_workers": 1,
@@ -861,6 +863,137 @@ As for above, in the EC2 cluster is to be chosen, simply put this in the ``run_s
 
 .. _aws-opendata-registry-1:
 
+Local Development with MinIO (S3-Compatible Bucket)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+If you want to develop locally without connecting to AWS S3, you can use
+`MinIO <https://min.io>`_, an S3-compatible object store that can run in Docker.
+
+This allows you to test features such as bucket creation, file uploads, and
+`s3fs` integration without needing real S3 credentials.
+
+Running MinIO with Docker Compose
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Save the following as ``docker-compose.yml`` in your project root:
+
+.. code-block:: yaml
+
+    services:
+      minio:
+        image: quay.io/minio/minio:latest
+        container_name: minio
+        ports:
+          - "9000:9000"  # S3 API
+          - "9001:9001"  # Web console
+        environment:
+          MINIO_ROOT_USER: minioadmin
+          MINIO_ROOT_PASSWORD: minioadmin
+        command: server /data --console-address ":9001"
+        volumes:
+          - minio_data:/data
+
+    volumes:
+      minio_data:
+
+Start MinIO with:
+
+.. code-block:: bash
+
+    docker compose up -d
+
+Access the MinIO web console at: http://localhost:9001
+(Default login: ``minioadmin / minioadmin``).
+
+Creating a Bucket
+~~~~~~~~~~~~~~~~~
+
+Once MinIO is running, create a bucket (for example ``test-bucket``) either via
+the web console or with the ``mc`` (MinIO client) CLI:
+
+.. code-block:: bash
+
+    docker run --rm -it \
+      --network host \
+      quay.io/minio/mc alias set local http://localhost:9000 minioadmin minioadmin
+
+    docker run --rm -it \
+      --network host \
+      quay.io/minio/mc mb local/test-bucket
+
+
+S3FS bucket endpoint patching for MinIO
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Two new optional settings allow to configure access to S3 (or S3-compatible) storage for **input** and **output** datasets.
+These settings control authentication and client configuration used by ``s3fs`` / ``boto3``.
+
+.. code-block:: json
+
+  "s3_fs_common_opts": {
+    "key": "minioadmin",
+    "secret": "minioadmin",
+    "client_kwargs": {
+      "endpoint_url": "http://localhost:9000"
+    }
+  },
+  "s3_bucket_opts": {
+    "input_data": {
+      "bucket": "imos-data",
+      "s3_fs_opts": {
+        "key": "minioadmin",
+        "secret": "minioadmin",
+        "client_kwargs": {
+          "endpoint_url": "http://localhost:9000"
+        }
+      }
+    },
+    "output_data": {
+      "bucket": "aodn-cloud-optimised",
+      "s3_fs_opts": {
+        "key": "minioadmin",
+        "secret": "minioadmin",
+          "client_kwargs": {
+          "endpoint_url": "http://localhost:9000"
+        }
+      }
+    }
+  }
+
+**Explanation**
+~~~~~~~~~~~~~~~
+
+- ``s3_fs_common_opts``
+  Defines the **default connection options** shared by both input and output S3 clients (e.g. access keys, endpoint).
+  If set, these options are used unless explicitly overridden by per-bucket configuration.
+
+- ``s3_bucket_opts``
+  Allows configuring **per-bucket overrides** for input and output datasets.
+  Each section may define:
+  - ``bucket`` → the bucket name to use for reading/writing data
+  - ``s3_fs_opts`` → optional overrides to connection options defined in ``s3_fs_common_opts``
+
+- Both ``input_data`` and ``output_data`` are optional.
+  If not specified, the system falls back to default bucket names (``bucket_raw_default_name`` and ``optimised_bucket_name``) or environment variables.
+
+**Precedence Rules**
+~~~~~~~~~~~~~~~~~~~~
+
+1. If ``s3_bucket_opts.<input_data|output_data>.s3_fs_opts`` is defined → it takes priority.
+2. Otherwise, ``s3_fs_common_opts`` is used.
+3. If neither is defined → the default global configuration is used.
+
+.. note:: Important Note
+   :class: custom-note
+   :name: s3-config
+
+   * ``s3_fs_common_opts`` and ``s3_bucket_opts`` are optional — they are mainly useful when pointing to **non-AWS endpoints** (e.g. MinIO, localstack) or when input and output buckets require different credentials.
+   * If ``s3_fs_common_opts`` is provided, both a valid ``s3fs.S3FileSystem`` session and corresponding ``boto3`` client will be created automatically.
+   * If you provide only one of (``s3_fs_common_opts`` or its corresponding boto client options), a validation error will be raised.
+
+---
+
 AWS OpenData registry
 ---------------------
 
@@ -872,7 +1005,7 @@ below, and then added to the AWS OpenData Github repository:
 `AWS Open Data Registry <https://github.com/awslabs/open-data-registry>`_.
 
 
-.. code:: json
+.. code-block:: json
 
      "aws_opendata_registry": {
        "Name": "",
