@@ -863,6 +863,66 @@ As for above, in the EC2 cluster is to be chosen, simply put this in the ``run_s
 
 .. _aws-opendata-registry-1:
 
+Local Development with MinIO (S3-Compatible Bucket)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+If you want to develop locally without connecting to AWS S3, you can use
+`MinIO <https://min.io>`_, an S3-compatible object store that can run in Docker.
+
+This allows you to test features such as bucket creation, file uploads, and
+`s3fs` integration without needing real S3 credentials.
+
+Running MinIO with Docker Compose
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Save the following as ``docker-compose.yml`` in your project root:
+
+.. code-block:: yaml
+
+    services:
+      minio:
+        image: quay.io/minio/minio:latest
+        container_name: minio
+        ports:
+          - "9000:9000"  # S3 API
+          - "9001:9001"  # Web console
+        environment:
+          MINIO_ROOT_USER: minioadmin
+          MINIO_ROOT_PASSWORD: minioadmin
+        command: server /data --console-address ":9001"
+        volumes:
+          - minio_data:/data
+
+    volumes:
+      minio_data:
+
+Start MinIO with:
+
+.. code-block:: bash
+
+    docker compose up -d
+
+Access the MinIO web console at: http://localhost:9001
+(Default login: ``minioadmin / minioadmin``).
+
+Creating a Bucket
+~~~~~~~~~~~~~~~~~
+
+Once MinIO is running, create a bucket (for example ``test-bucket``) either via
+the web console or with the ``mc`` (MinIO client) CLI:
+
+.. code-block:: bash
+
+    docker run --rm -it \
+      --network host \
+      quay.io/minio/mc alias set local http://localhost:9000 minioadmin minioadmin
+
+    docker run --rm -it \
+      --network host \
+      quay.io/minio/mc mb local/test-bucket
+
+
 S3FS bucket endpoint patching for MinIO
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

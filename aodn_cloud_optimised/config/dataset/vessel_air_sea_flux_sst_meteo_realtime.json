@@ -1056,35 +1056,6 @@
         "year_range": []
       }
     ],
-    "s3_fs_common_opts": {
-      "key": "minioadmin",
-      "secret": "minioadmin",
-      "client_kwargs": {
-        "endpoint_url": "http://localhost:9000"
-      }
-    },
-    "s3_bucket_opts": {
-      "input_data": {
-        "bucket": "imos-data",
-        "s3_fs_opts": {
-          "key": "minioadmin",
-          "secret": "minioadmin",
-          "client_kwargs": {
-            "endpoint_url": "http://localhost:9000"
-          }
-        }
-      },
-      "output_data": {
-        "bucket": "aodn-cloud-optimised",
-        "s3_fs_opts": {
-          "key": "minioadmin",
-          "secret": "minioadmin",
-          "client_kwargs": {
-            "endpoint_url": "http://localhost:9000"
-          }
-        }
-      }
-    },
     "clear_existing_data": true,
     "raise_error": false,
     "force_previous_parquet_deletion": false
