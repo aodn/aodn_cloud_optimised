@@ -157,9 +157,6 @@ class TestGenericCloudOptimisedCreation(unittest.TestCase):
             ),
             patch("argparse.ArgumentParser.parse_args") as mock_parse_args,
             patch("sys.exit") as mock_sys_exit,
-            # patch(
-            #     "aodn_cloud_optimised.lib.s3Tools.boto3.client", new=_mock_boto3_client
-            # ),
         ):
             mock_parse_args.return_value = MagicMock(
                 config=DATASET_CONFIG_NC_ACORN_JSON,

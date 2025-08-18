@@ -97,7 +97,6 @@ def s3_ls(
     if s3_client_opts is None:
         s3 = boto3.client("s3", config=Config(signature_version=UNSIGNED))
     else:
-        # s3_client_opts = boto3_from_opts_dict(s3_client_opts)
         s3 = boto3.client("s3", **s3_client_opts)
 
     paginator = s3.get_paginator("list_objects_v2")
