@@ -863,8 +863,8 @@ As for above, in the EC2 cluster is to be chosen, simply put this in the ``run_s
 
 .. _aws-opendata-registry-1:
 
-S3FS bucket endpoint patching
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+S3FS bucket endpoint patching for MinIO
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Two new optional settings allow to configure access to S3 (or S3-compatible) storage for **input** and **output** datasets.
 These settings control authentication and client configuration used by ``s3fs`` / ``boto3``.
