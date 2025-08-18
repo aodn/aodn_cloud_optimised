@@ -801,7 +801,7 @@ Coiled Cluster configuration
 
 For a coiled cluster, simply put this in the ``run_settings`` config
 
-.. code:: json
+.. code-block:: json
 
      "coiled_cluster_options" : {
        "n_workers": [2, 20],
@@ -843,7 +843,7 @@ EC2 Cluster configuration
 
 As for above, in the EC2 cluster is to be chosen, simply put this in the ``run_settings`` config
 
-.. code:: json
+.. code-block:: json
 
   "ec2_cluster_options": {
     "n_workers": 1,
@@ -929,7 +929,7 @@ S3FS bucket endpoint patching for MinIO
 Two new optional settings allow to configure access to S3 (or S3-compatible) storage for **input** and **output** datasets.
 These settings control authentication and client configuration used by ``s3fs`` / ``boto3``.
 
-.. code:: json
+.. code-block:: json
 
   "s3_fs_common_opts": {
     "key": "minioadmin",
@@ -1005,7 +1005,7 @@ below, and then added to the AWS OpenData Github repository:
 `AWS Open Data Registry <https://github.com/awslabs/open-data-registry>`_.
 
 
-.. code:: json
+.. code-block:: json
 
      "aws_opendata_registry": {
        "Name": "",
