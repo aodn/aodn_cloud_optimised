@@ -20,6 +20,8 @@ repos:
         files: \.json$
         args: ["--autofix", "--no-sort-keys"]
         exclude: ^aodn_cloud_optimised/config/dataset/dataset_template.json$
+      - id: debug-statements
+      - id: check-executables-have-shebangs
 
   - repo: https://github.com/python-jsonschema/check-jsonschema
     rev: 0.33.0

@@ -837,7 +837,7 @@ class GenericHandler(CommonHandler):
                 if column_name not in pdf.schema.names:
                     try:
                         var_config = generate_json_schema_var_from_netcdf(
-                            s3_file_handle, column_name, s3_fs=self.s3_fs
+                            s3_file_handle, column_name, s3_fs=self.s3_fs_input
                         )
                         # if df.index.name is not None and column_name in df.index.name:
                         #    self.logger.warning(f'missing variable from provided pyarrow_schema, please add {column_name} : {df.index.dtype}')
@@ -863,7 +863,7 @@ class GenericHandler(CommonHandler):
         pq.write_to_dataset(
             pdf,
             root_path=self.cloud_optimised_output_path,
-            filesystem=self.s3_fs,
+            filesystem=self.s3_fs_output,
             existing_data_behavior="overwrite_or_ignore",
             row_group_size=20000,
             partition_cols=partition_keys,
@@ -903,7 +903,7 @@ class GenericHandler(CommonHandler):
         # Create an empty list to store fields
 
         if prefix_exists(
-            self.cloud_optimised_output_path, s3_client_opts=self.s3_client_opts
+            self.cloud_optimised_output_path, s3_client_opts=self.s3_client_opts_output
         ):
             self.logger.info(
                 f"{self.uuid_log}: Existing Parquet store found at {self.cloud_optimised_output_path}. Updating Metadata"
@@ -980,7 +980,7 @@ class GenericHandler(CommonHandler):
             pq.write_metadata(
                 pdf_schema,
                 dataset_metadata_path,
-                filesystem=self.s3_fs,
+                filesystem=self.s3_fs_output,
             )
 
             self.logger.info(
@@ -1024,7 +1024,7 @@ class GenericHandler(CommonHandler):
             parquet_files = pq.ParquetDataset(
                 self.cloud_optimised_output_path,
                 partitioning="hive",
-                filesystem=self.s3_fs,
+                filesystem=self.s3_fs_output,
             )
         except Exception as e:
             self.logger.info(
@@ -1100,7 +1100,9 @@ class GenericHandler(CommonHandler):
         try:
             start_time = timeit.default_timer()
 
-            s3_file_handle = create_fileset(s3_file_uri, self.s3_fs)[0]  # only one file
+            s3_file_handle = create_fileset(s3_file_uri, self.s3_fs_input)[
+                0
+            ]  # only one file
 
             generator = self.preprocess_data(s3_file_handle)
             for df, ds in generator:
@@ -1155,13 +1157,16 @@ class GenericHandler(CommonHandler):
                 f"Creating new Parquet dataset - DELETING existing all Parquet objects if exist"
             )
             if prefix_exists(
-                self.cloud_optimised_output_path, s3_client_opts=self.s3_client_opts
+                self.cloud_optimised_output_path,
+                s3_client_opts=self.s3_client_opts_output,
             ):
                 bucket_name, prefix = split_s3_path(self.cloud_optimised_output_path)
                 self.logger.info(
                     f"Deleting existing Parquet objects from {self.cloud_optimised_output_path}."
                 )
-                delete_objects_in_prefix(bucket_name, prefix, self.s3_client_opts)
+                delete_objects_in_prefix(
+                    bucket_name, prefix, self.s3_client_opts_output
+                )
 
         def task(f, i):
             try:

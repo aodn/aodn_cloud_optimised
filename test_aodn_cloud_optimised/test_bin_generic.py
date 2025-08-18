@@ -56,12 +56,12 @@ class TestGenericCloudOptimisedCreation(unittest.TestCase):
         # create moto server; needed for s3fs and parquet
         self.port = get_free_local_port()
         os.environ["MOTO_PORT"] = str(self.port)
-        self.server = ThreadedMotoServer(ip_address="127.0.0.1", port=self.port)
-
+        self.endpoint_ip = "127.0.0.1"
+        self.server = ThreadedMotoServer(ip_address=self.endpoint_ip, port=self.port)
         self.s3_fs = s3fs.S3FileSystem(
             anon=False,
             client_kwargs={
-                "endpoint_url": f"http://127.0.0.1:{self.port}/",
+                "endpoint_url": f"http://{self.endpoint_ip}:{self.port}/",
                 "region_name": "us-east-1",
             },
         )

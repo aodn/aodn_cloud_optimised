@@ -48,30 +48,38 @@ def mock_aws_server():
 class TestGenericZarrHandler(unittest.TestCase):
     def setUp(self):
         # TODO: remove this abomination for unittesting. but it works. Only for zarr !
-        os.environ["RUNNING_UNDER_UNITTEST"] = "true"
+        # os.environ["RUNNING_UNDER_UNITTEST"] = "true"
 
         # Create a mock S3 service
         self.BUCKET_OPTIMISED_NAME = "imos-data-lab-optimised"
         self.ROOT_PREFIX_CLOUD_OPTIMISED_PATH = "testing"
         self.ROOT_PREFIX_CLOUD_OPTIMISED_PATH_NO_CLUSTER = "nocluster"
-        self.s3 = boto3.client("s3", region_name="us-east-1")
-        self.s3.create_bucket(Bucket="imos-data")
-        self.s3.create_bucket(Bucket=self.BUCKET_OPTIMISED_NAME)
 
         # create moto server; needed for s3fs and parquet
         self.port = get_free_local_port()
         os.environ["MOTO_PORT"] = str(self.port)
-        self.server = ThreadedMotoServer(ip_address="127.0.0.1", port=self.port)
+        self.endpoint_ip = "127.0.0.1"
+        self.server = ThreadedMotoServer(ip_address=self.endpoint_ip, port=self.port)
+
+        self.server.start()
+
+        self.s3_client_opts_common = {
+            "service_name": "s3",
+            "region_name": "us-east-1",
+            "endpoint_url": f"http://{self.endpoint_ip}:{self.port}",
+        }
+        self.s3 = boto3.client(**self.s3_client_opts_common)
+
+        self.s3.create_bucket(Bucket="imos-data")
+        self.s3.create_bucket(Bucket=self.BUCKET_OPTIMISED_NAME)
 
         self.s3_fs = s3fs.S3FileSystem(
             anon=False,
             client_kwargs={
-                "endpoint_url": f"http://127.0.0.1:{self.port}/",
+                "endpoint_url": f"http://{self.endpoint_ip}:{self.port}/",
                 "region_name": "us-east-1",
             },
         )
-
-        self.server.start()
 
         # Make the "imos-data" bucket public
         public_policy_imos_data = {
@@ -122,6 +130,8 @@ class TestGenericZarrHandler(unittest.TestCase):
             optimised_bucket_name=self.BUCKET_OPTIMISED_NAME,
             root_prefix_cloud_optimised_path=self.ROOT_PREFIX_CLOUD_OPTIMISED_PATH_NO_CLUSTER,
             dataset_config=dataset_acorn_netcdf_config,
+            s3_client_opts_common=self.s3_client_opts_common,
+            s3_fs_common_session=self.s3_fs,
             # clear_existing_data=True,
             # cluster_mode="local",
         )
@@ -141,7 +151,7 @@ class TestGenericZarrHandler(unittest.TestCase):
             self.s3.delete_bucket(Bucket=bucket_name)
 
         self.server.stop()
-        del os.environ["RUNNING_UNDER_UNITTEST"]
+        # del os.environ["RUNNING_UNDER_UNITTEST"]
 
     # TODO: find a solution to patch s3fs properly and not relying on changing the s3fs values in the code
     def test_zarr_nc_acorn_handler_no_cluster(self):
@@ -159,10 +169,7 @@ class TestGenericZarrHandler(unittest.TestCase):
         # 2024-07-02 11:16:16,538 - INFO - GenericZarrHandler.py:381 - publish_cloud_optimised_fileset_batch - Writing data to new Zarr dataset
         # 2024-07-02 11:16:19,366 - INFO - GenericZarrHandler.py:391 - publish_cloud_optimised_fileset_batch - Batch 1 processed and written to <fsspec.mapping.FSMap object at 0x78166762b730>
 
-        with patch.object(
-            self.handler_nc_acorn_file_no_cluster, "s3_fs", new=self.s3_fs
-        ):
-            self.handler_nc_acorn_file_no_cluster.to_cloud_optimised(nc_obj_ls)
+        self.handler_nc_acorn_file_no_cluster.to_cloud_optimised(nc_obj_ls)
 
         log_handler.flush()
         captured_logs = log_stream.getvalue().strip().split("\n")
@@ -175,10 +182,7 @@ class TestGenericZarrHandler(unittest.TestCase):
         # 2024-07-02 11:16:21,649 - INFO - GenericZarrHandler.py:303 - publish_cloud_optimised_fileset_batch - Duplicate values of TIME
         # 2024-07-02 11:16:21,650 - INFO - GenericZarrHandler.py:353 - publish_cloud_optimised_fileset_batch - Overwriting Zarr dataset in Region: {'TIME': slice(0, 4, None)}, Matching Indexes in new ds: [0 1 2 3]
         # 2024-07-02 11:16:22,573 - INFO - GenericZarrHandler.py:391 - publish_cloud_optimised_fileset_batch - Batch 1 processed and written to <fsspec.mapping.FSMap object at 0x78166762b730>
-        with patch.object(
-            self.handler_nc_acorn_file_no_cluster, "s3_fs", new=self.s3_fs
-        ):
-            self.handler_nc_acorn_file_no_cluster.to_cloud_optimised(nc_obj_ls)
+        self.handler_nc_acorn_file_no_cluster.to_cloud_optimised(nc_obj_ls)
 
         log_handler.flush()
         captured_logs = log_stream.getvalue().strip().split("\n")

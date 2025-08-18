@@ -47,29 +47,37 @@ def mock_aws_server():
 class TestGenericZarrHandler(unittest.TestCase):
     def setUp(self):
         # TODO: remove this abomination for unittesting. but it works. Only for zarr !
-        os.environ["RUNNING_UNDER_UNITTEST"] = "true"
+        # os.environ["RUNNING_UNDER_UNITTEST"] = "true"
 
         # Create a mock S3 service
         self.BUCKET_OPTIMISED_NAME = "imos-data-lab-optimised"
         self.ROOT_PREFIX_CLOUD_OPTIMISED_PATH = "testing"
-        self.s3 = boto3.client("s3", region_name="us-east-1")
-        self.s3.create_bucket(Bucket="imos-data")
-        self.s3.create_bucket(Bucket=self.BUCKET_OPTIMISED_NAME)
 
         # create moto server; needed for s3fs and parquet
         self.port = get_free_local_port()
         os.environ["MOTO_PORT"] = str(self.port)
-        self.server = ThreadedMotoServer(ip_address="127.0.0.1", port=self.port)
+        self.endpoint_ip = "127.0.0.1"
+        self.server = ThreadedMotoServer(ip_address=self.endpoint_ip, port=self.port)
+
+        self.server.start()
+
+        self.s3_client_opts_common = {
+            "service_name": "s3",
+            "region_name": "us-east-1",
+            "endpoint_url": f"http://{self.endpoint_ip}:{self.port}",
+        }
+        self.s3 = boto3.client(**self.s3_client_opts_common)
+
+        self.s3.create_bucket(Bucket="imos-data")
+        self.s3.create_bucket(Bucket=self.BUCKET_OPTIMISED_NAME)
 
         self.s3_fs = s3fs.S3FileSystem(
             anon=False,
             client_kwargs={
-                "endpoint_url": f"http://127.0.0.1:{self.port}/",
+                "endpoint_url": f"http://{self.endpoint_ip}:{self.port}/",
                 "region_name": "us-east-1",
             },
         )
-
-        self.server.start()
 
         # Make the "imos-data" bucket public
         public_policy_imos_data = {
@@ -119,6 +127,8 @@ class TestGenericZarrHandler(unittest.TestCase):
             dataset_config=dataset_gsla_netcdf_config,
             # clear_existing_data=True,
             cluster_mode="local",
+            s3_client_opts_common=self.s3_client_opts_common,
+            s3_fs_common_session=self.s3_fs,
         )
 
     def _upload_to_s3(self, bucket_name, key, file_path):
@@ -136,7 +146,7 @@ class TestGenericZarrHandler(unittest.TestCase):
             self.s3.delete_bucket(Bucket=bucket_name)
 
         self.server.stop()
-        del os.environ["RUNNING_UNDER_UNITTEST"]
+        # del os.environ["RUNNING_UNDER_UNITTEST"]
 
     # TODO: find a solution to patch s3fs properly and not relying on changing the s3fs values in the code
     def test_zarr_nc_handler(self):
@@ -152,8 +162,7 @@ class TestGenericZarrHandler(unittest.TestCase):
         logger.addHandler(log_handler)
 
         nc_obj_ls = s3_ls("imos-data", "gsla")
-        with patch.object(self.handler_nc_gsla_file, "s3_fs", new=self.s3_fs):
-            self.handler_nc_gsla_file.to_cloud_optimised(nc_obj_ls)
+        self.handler_nc_gsla_file.to_cloud_optimised(nc_obj_ls)
 
         # Get captured logs
         log_handler.flush()

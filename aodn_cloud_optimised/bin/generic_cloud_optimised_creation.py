@@ -230,13 +230,17 @@ class RunSettings(BaseModel):
         coiled_cluster_options: Optional configuration block for Coiled clusters.
             Required only when cluster mode is set to 'coiled'.
 
+        s3_fs_common_opts: Optional shared S3 credentials/endpoint configuration.
+        s3_bucket_opts: Optional dictionary specifying input/output buckets and per-bucket overrides.
 
     Notes:
-        If `s3_uri` starts with 's3://', and `bucket_raw_default_name` is also provided,
+        - If `s3_uri` starts with 's3://', and `bucket_raw_default_name` is also provided,
         the bucket in the URI must match `bucket_raw_default_name`, or validation will fail.
 
-        When `cluster.mode` is set to "coiled", `coiled_cluster_options` must be provided,
+        - When `cluster.mode` is set to "coiled", `coiled_cluster_options` must be provided,
         otherwise a validation error will be raised.
+
+        - s3_fs_common_opts can be overridden per bucket in s3_bucket_opts.
     """
 
     paths: List[PathConfig] = Field(
@@ -291,7 +295,15 @@ class RunSettings(BaseModel):
         default=None,
         description="Configuration min/max wokersoptions required when cluster.mode is 'ec2'. Ignored otherwise.",
     )
-    s3_fs_opts: Optional[Dict[str, Any]] = Field(
+    s3_bucket_opts: Optional[Dict[str, Dict[str, Any]]] = Field(
+        default=None,
+        description=(
+            "Optional per-bucket configuration. "
+            "Example: {'input_data': {'bucket': 'my-bucket', 's3_fs_opts': {...}}, "
+            "'output_data': {'bucket': 'my-other-bucket', 's3_fs_opts': {...}}}"
+        ),
+    )
+    s3_fs_common_opts: Optional[Dict[str, Any]] = Field(
         default=None,
         description=(
             "Optional arguments passed directly to s3fs.S3FileSystem for this path. "
@@ -334,13 +346,37 @@ class RunSettings(BaseModel):
         return self
 
     @model_validator(mode="after")
-    def validate_s3_fs_opts(self) -> "RunSettings":
-        """Ensure that s3_fs_opts, if provided, can instantiate an s3fs filesystem."""
-        if self.s3_fs_opts:
+    def validate_s3_fs_common_opts(self) -> "RunSettings":
+        """Ensure that s3_fs_common_opts, if provided, can instantiate an s3fs filesystem."""
+        if self.s3_fs_common_opts:
             try:
-                s3fs.S3FileSystem(**self.s3_fs_opts)
+                s3fs.S3FileSystem(**self.s3_fs_common_opts)
             except Exception as e:
-                raise ValueError(f"s3_fs_opts validation failed: {e}") from e
+                raise ValueError(f"s3_fs_common_opts validation failed: {e}") from e
+        return self
+
+    @model_validator(mode="after")
+    def validate_s3_bucket_opts(self) -> "RunSettings":
+        """Validate that per-bucket s3_fs_opts are correct and only allowed buckets exist."""
+        allowed_buckets = {"input_data", "output_data"}
+        if self.s3_bucket_opts:
+            # Ensure only allowed keys are present
+            invalid_keys = set(self.s3_bucket_opts.keys()) - allowed_buckets
+            if invalid_keys:
+                raise ValueError(
+                    f"Invalid keys in s3_bucket_opts: {invalid_keys}. Allowed keys: {allowed_buckets}"
+                )
+
+            # Validate each bucket's s3_fs_opts
+            for bucket_name, cfg in self.s3_bucket_opts.items():
+                opts = cfg.get("s3_fs_opts")
+                if opts:
+                    try:
+                        s3fs.S3FileSystem(**opts)
+                    except Exception as e:
+                        raise ValueError(
+                            f"s3_fs_opts validation failed for '{bucket_name}': {e}"
+                        ) from e
         return self
 
 
@@ -1166,20 +1202,39 @@ def main():
         config_updated = json_update(config.model_dump(), overwrite_dict)
         config = DatasetConfig.model_validate(config_updated)
 
+    # Set bucket values
+    s3_bucket_opts = config.run_settings.s3_bucket_opts or {}
+
     bucket_raw = (
-        config.run_settings.bucket_raw_default_name
+        s3_bucket_opts.get("input_data", {}).get("bucket")
+        or config.run_settings.bucket_raw_default_name
         or load_variable_from_config("BUCKET_RAW_DEFAULT")
     )
+
     bucket_optimised = (
-        config.run_settings.optimised_bucket_name
+        s3_bucket_opts.get("output_data", {}).get("bucket")
+        or config.run_settings.optimised_bucket_name
         or load_variable_from_config("BUCKET_OPTIMISED_DEFAULT")
     )
+
     root_prefix = (
         config.run_settings.root_prefix_cloud_optimised_path
         or load_variable_from_config("ROOT_PREFIX_CLOUD_OPTIMISED_PATH")
     )
-    s3_fs_opts = config.run_settings.s3_fs_opts
-    s3_client_opts = boto3_from_opts_dict(s3_fs_opts)
+
+    s3_fs_common_opts = config.run_settings.s3_fs_common_opts
+    s3_client_opts = boto3_from_opts_dict(s3_fs_common_opts)
+
+    # overwrite the above with specific options if set for the input bucket
+    if (
+        config.run_settings.s3_bucket_opts
+        and "input_data" in config.run_settings.s3_bucket_opts
+        and config.run_settings.s3_bucket_opts["input_data"].get("s3_fs_opts")
+    ):
+        s3_fs_opts_input = config.run_settings.s3_bucket_opts["input_data"][
+            "s3_fs_opts"
+        ]
+        s3_client_opts = boto3_from_opts_dict(s3_fs_opts_input)
 
     dataset_config_path = resolve_dataset_config_path(args.config)
     dataset_config = load_dataset_config(

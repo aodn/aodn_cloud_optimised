@@ -29,24 +29,31 @@ class TestArgoHandler(unittest.TestCase):
     def setUp(self):
         self.BUCKET_OPTIMISED_NAME = "imos-data-lab-optimised"
         self.ROOT_PREFIX_CLOUD_OPTIMISED_PATH = "testing"
-        self.s3 = boto3.client("s3", region_name="us-east-1")
+
+        # create moto server; needed for s3fs and parquet
+        self.port = get_free_local_port()
+        self.endpoint_ip = "127.0.0.1"
+        self.server = ThreadedMotoServer(ip_address=self.endpoint_ip, port=self.port)
+        self.server.start()
+
+        self.s3_client_opts_common = {
+            "service_name": "s3",
+            "region_name": "us-east-1",
+            "endpoint_url": f"http://{self.endpoint_ip}:{self.port}",
+        }
+        self.s3 = boto3.client(**self.s3_client_opts_common)
+
         self.s3.create_bucket(Bucket="imos-data")
         self.s3.create_bucket(Bucket=self.BUCKET_OPTIMISED_NAME)
 
         # create moto server; needed for s3fs and parquet
-        self.port = get_free_local_port()
-        self.server = ThreadedMotoServer(ip_address="127.0.0.1", port=self.port)
-
-        # TODO: use it for patching?
         self.s3_fs = s3fs.S3FileSystem(
             anon=False,
             client_kwargs={
-                "endpoint_url": f"http://127.0.0.1:{self.port}/",
+                "endpoint_url": f"http://{self.endpoint_ip}:{self.port}/",
                 "region_name": "us-east-1",
             },
         )
-
-        self.server.start()
 
         # Make the "imos-data" bucket public
         public_policy_imos_data = {
@@ -101,6 +108,8 @@ class TestArgoHandler(unittest.TestCase):
             clear_existing_data=True,
             force_previous_parquet_deletion=True,
             cluster_mode="local",
+            s3_client_opts_common=self.s3_client_opts_common,
+            s3_fs_common_session=self.s3_fs,
         )
 
     def _upload_to_s3(self, bucket_name, key, file_path):
@@ -123,14 +132,12 @@ class TestArgoHandler(unittest.TestCase):
         nc_obj_ls = s3_ls("imos-data", "good_nc_argo")
 
         # 1st pass
-        with patch.object(self.handler_nc_argo_file, "s3_fs", new=self.s3_fs):
-            self.handler_nc_argo_file.to_cloud_optimised([nc_obj_ls[0]])
+        self.handler_nc_argo_file.to_cloud_optimised([nc_obj_ls[0]])
 
         # 2nd pass, process the same file a second time. Should be deleted
         # TODO: Not a big big deal breaker, but got an issue which should be fixed in the try except only for the unittest
         #       2024-07-01 16:04:54,721 - INFO - GenericParquetHandler.py:824 - delete_existing_matching_parquet - No files to delete: GetFileInfo() yielded path 'imos-data-lab-optimised/testing/anmn_ctd_ts_fv01.parquet/site_code=SYD140/timestamp=1625097600/polygon=01030000000100000005000000000000000020624000000000008041C0000000000060634000000000008041C0000000000060634000000000000039C0000000000020624000000000000039C0000000000020624000000000008041C0/IMOS_ANMN-NSW_CDSTZ_20210429T015500Z_SYD140_FV01_SYD140-2104-SBE37SM-RS232-128_END-20210812T011500Z_C-20210827T074819Z.nc-0.parquet', which is outside base dir 's3://imos-data-lab-optimised/testing/anmn_ctd_ts_fv01.parquet/'
-        with patch.object(self.handler_nc_argo_file, "s3_fs", new=self.s3_fs):
-            self.handler_nc_argo_file.to_cloud_optimised_single(nc_obj_ls[0])
+        self.handler_nc_argo_file.to_cloud_optimised_single(nc_obj_ls[0])
 
         # read parquet
         dataset_name = self.dataset_argo_netcdf_config["dataset_name"]
@@ -163,8 +170,7 @@ class TestArgoHandler(unittest.TestCase):
         nc_obj_ls = s3_ls("imos-data", "bad_geom_argo")
 
         # 1st pass
-        with patch.object(self.handler_nc_argo_file, "s3_fs", new=self.s3_fs):
-            self.handler_nc_argo_file.to_cloud_optimised_single(nc_obj_ls[0])
+        self.handler_nc_argo_file.to_cloud_optimised_single(nc_obj_ls[0])
 
         # read parquet
         dataset_name = self.dataset_argo_netcdf_config["dataset_name"]
