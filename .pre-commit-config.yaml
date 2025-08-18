@@ -24,7 +24,7 @@ repos:
       - id: check-executables-have-shebangs
 
   - repo: https://github.com/pycqa/isort
-    rev: 5.11.5
+    rev: 6.0.1
     hooks:
       - id: isort
         args: ["--profile", "black"]
