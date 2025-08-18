@@ -1044,7 +1044,7 @@
     },
     "batch_size": 200,
     "cluster": {
-      "mode": "local",
+      "mode": "coiled",
       "restart_every_path": false
     },
     "paths": [
