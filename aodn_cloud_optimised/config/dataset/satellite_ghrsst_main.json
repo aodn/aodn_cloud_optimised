@@ -2,7 +2,7 @@
   "dataset_name": "srs_ghrsst_main",
   "logger_name": "srs_ghrsst_main",
   "cloud_optimised_format": "zarr",
-  "metadata_uuid": "",
+  "metadata_uuid": null,
   "schema": {
     "lon": {
       "type": "float32"
