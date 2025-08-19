@@ -143,6 +143,7 @@ class GenericHandler(CommonHandler):
             )
             df = pd.read_csv(csv_fp)
 
+        df = df.drop(columns=self.drop_variables, errors="ignore")
         ds = xr.Dataset.from_dataframe(df)
 
         for var in ds.variables:
@@ -188,9 +189,16 @@ class GenericHandler(CommonHandler):
         }
         ```
         """
+
+        self.logger.info(f"Dropping {self.drop_variables}, from dataset")
+
         try:
-            with xr.open_dataset(netcdf_fp, engine="h5netcdf") as ds:
+            with xr.open_dataset(
+                netcdf_fp,
+                engine="h5netcdf",
+            ) as ds:
                 # Convert xarray to pandas DataFrame
+                ds = ds.drop_vars(self.drop_variables, errors="ignore")
                 df = ds.to_dataframe()
                 # TODO: call check function on variable attributes
                 if self.check_var_attributes(ds):
@@ -208,6 +216,7 @@ class GenericHandler(CommonHandler):
             # https://thredds.aodn.org.au/thredds/dodsC/IMOS/SOOP/SOOP-SST/9HA2479_Pacific-Sun/2011/IMOS_SOOP-SST_MT_20110101T000000Z_9HA2479_FV01_C-20120528T071958Z.nc.html
             with xr.open_dataset(netcdf_fp, engine="scipy") as ds:
                 # Convert xarray to pandas DataFrame
+                ds = ds.drop_vars(self.drop_variables, errors="ignore")
                 df = ds.to_dataframe()
                 # TODO: call check function on variable attributes
                 if self.check_var_attributes(ds):
@@ -354,8 +363,13 @@ class GenericHandler(CommonHandler):
         invalid_lon = ~df[lon_varname].between(-180, 180)
 
         if invalid_lat.any() or invalid_lon.any():
+            # Collect examples of invalid values (up to 5 of each for readability)
+            bad_lats = df.loc[invalid_lat, lat_varname].head().tolist()
+            bad_lons = df.loc[invalid_lon, lon_varname].head().tolist()
+
             self.logger.warning(
-                f"{self.uuid_log}: Dataset contains latitude or longitude values outside the valid ranges. Cleaning data"
+                f"{self.uuid_log}: Dataset contains latitude or longitude values outside the valid ranges [-90, 90], [-180, 180]. Cleaning data"
+                f"Invalid lat samples={bad_lats}, Invalid lon samples={bad_lons}"
             )
 
             # Clean dataset
@@ -954,7 +968,10 @@ class GenericHandler(CommonHandler):
             }
             # Add Global attributes into metadata
             dataset_metadata = dict()
-            if "metadata_uuid" in self.dataset_config.keys():
+            if (
+                "metadata_uuid" in self.dataset_config
+                and self.dataset_config["metadata_uuid"] is not None
+            ):
                 dataset_metadata["metadata_uuid"] = self.dataset_config["metadata_uuid"]
 
             dataset_metadata["dataset_name"] = self.dataset_config["dataset_name"]

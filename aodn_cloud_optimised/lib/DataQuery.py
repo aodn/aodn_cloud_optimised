@@ -31,6 +31,7 @@ import pyarrow as pa
 import pyarrow.compute as pc
 import pyarrow.dataset as ds
 import pyarrow.fs as fs
+import s3fs
 import seaborn as sns
 import xarray as xr
 from botocore import UNSIGNED
@@ -44,10 +45,11 @@ from shapely import wkb
 from shapely.geometry import MultiPolygon, Polygon
 from windrose import WindroseAxes
 
-__version__ = "0.2.4"
+__version__ = "0.2.5"
 
 REGION: Final[str] = "ap-southeast-2"
-ENDPOINT_URL = f"https://s3.ap-southeast-2.amazonaws.com"
+ENDPOINT_URL = "https://s3.ap-southeast-2.amazonaws.com"
+# ENDPOINT_URL = "http://127.0.0.1:9000"  # for local MinIo buckets
 # BUCKET_OPTIMISED_DEFAULT = "imos-data-lab-optimised"
 BUCKET_OPTIMISED_DEFAULT = "aodn-cloud-optimised"
 ROOT_PREFIX_CLOUD_OPTIMISED_PATH = ""
@@ -64,11 +66,97 @@ def is_colab():
         return False
 
 
+def _make_hashable(obj):
+    """Recursively convert dicts/lists to tuples for hashing."""
+    if isinstance(obj, dict):
+        return tuple((k, _make_hashable(v)) for k, v in sorted(obj.items()))
+    elif isinstance(obj, list):
+        return tuple(_make_hashable(x) for x in obj)
+    else:
+        return obj
+
+
+def _unhashable_to_dict(obj):
+    """Recursively convert tuple back to dict."""
+    if isinstance(obj, tuple):
+        d = {}
+        for k, v in obj:
+            if isinstance(v, tuple):
+                d[k] = _unhashable_to_dict(v)
+            else:
+                d[k] = v
+        return d
+    return obj
+
+
 @lru_cache(maxsize=1)
-def get_s3_filesystem():
-    return fs.S3FileSystem(
-        region=REGION, endpoint_override=ENDPOINT_URL, anonymous=True
-    )
+def _get_s3_filesystem_cached(hashable_opts=None):
+    """Internal cached function that expects hashable options."""
+    if hashable_opts is not None:
+        opts_dict = _unhashable_to_dict(hashable_opts)
+        return fs.S3FileSystem(**s3_opts_to_pyarrow(opts_dict))
+    else:
+        return fs.S3FileSystem(
+            region=REGION, endpoint_override=ENDPOINT_URL, anonymous=True
+        )
+
+
+def get_s3_filesystem(s3_fs_opts=None):
+    """
+    Return a cached pyarrow.fs.S3FileSystem instance.
+
+    Args:
+        s3_fs_opts (dict, optional): Dictionary of S3 options (s3fs-style).
+            Can include keys like 'key', 'secret', 'anon', 'client_kwargs'.
+    """
+    hashable_opts = _make_hashable(s3_fs_opts) if s3_fs_opts else None
+    return _get_s3_filesystem_cached(hashable_opts)
+
+
+def s3_opts_to_pyarrow(s3_fs_opts: dict) -> dict:
+    """
+    Convert a generic S3 options dict (like for s3fs) into pyarrow.fs.S3FileSystem arguments.
+
+    Automatically maps common keys and flattens nested 'client_kwargs' for PyArrow.
+
+    Args:
+        s3_fs_opts (dict): S3 options dictionary.
+
+    Returns:
+        dict: PyArrow-compatible S3FileSystem options.
+    """
+    # Define a mapping from generic keys to PyArrow S3FileSystem keys
+    key_map = {
+        "key": "access_key",
+        "access_key": "access_key",
+        "secret": "secret_key",
+        "secret_key": "secret_key",
+        "anon": "anonymous",
+        "anonymous": "anonymous",
+        # endpoint_override comes from client_kwargs.endpoint_url
+    }
+
+    pa_opts = {}
+
+    for k, v in s3_fs_opts.items():
+        if k in key_map:
+            pa_opts[key_map[k]] = v
+        elif k == "client_kwargs" and isinstance(v, dict):
+            # Flatten client_kwargs
+            if "endpoint_url" in v:
+                pa_opts["endpoint_override"] = v["endpoint_url"]
+            # Could extend here for region, profile, etc.
+        else:
+            # Pass other keys as-is (future-proofing)
+            pa_opts[k] = v
+
+    # Ensure anonymous is a boolean if provided
+    if "anonymous" in pa_opts:
+        pa_opts["anonymous"] = bool(pa_opts["anonymous"])
+    else:
+        pa_opts["anonymous"] = False
+
+    return pa_opts
 
 
 def query_unique_value(dataset: ds.Dataset, partition: str) -> Set[str]:
@@ -289,6 +377,13 @@ def create_bbox_filter(dataset: ds.Dataset, **kwargs) -> pc.Expression:
     return expression
 
 
+def ensure_utc_aware(dt):
+    """Convert naive datetime to UTC-aware. Leave aware datetimes unchanged."""
+    if dt.tzinfo is None:
+        return dt.replace(tzinfo=timezone.utc)
+    return dt
+
+
 def create_time_filter(dataset: ds.Dataset, **kwargs) -> pc.Expression:
     """Creates a PyArrow filter expression for temporal range queries.
 
@@ -318,11 +413,15 @@ def create_time_filter(dataset: ds.Dataset, **kwargs) -> pc.Expression:
     if None in (date_start, date_end):
         raise ValueError("Start and end dates must be provided.")
 
-    timestamp_start, timestamp_end = get_temporal_extent_v1(dataset)
+    # timestamp_start, timestamp_end = get_temporal_extent_v1(dataset)
+    timestamp_start, timestamp_end = get_temporal_extent(dataset)
+    timestamp_start = ensure_utc_aware(timestamp_start)
+    timestamp_end = ensure_utc_aware(timestamp_end)
 
     # boundary check
     # Convert date_start string to a datetime object
-    date_start_dt = parse(date_start, default=DEFAULT_TIME).replace(tzinfo=timezone.utc)
+    # date_start_dt = parse(date_start, default=DEFAULT_TIME).replace(tzinfo=timezone.utc)
+    date_start_dt = ensure_utc_aware(parse(date_start, default=DEFAULT_TIME))
 
     # Compare
     is_date_start_after_timestamp_end = date_start_dt > timestamp_end
@@ -334,7 +433,8 @@ def create_time_filter(dataset: ds.Dataset, **kwargs) -> pc.Expression:
         )
     # do the same for the other part of the time boundary check
     # Convert date_start string to a datetime object
-    date_end_dt = parse(date_end, default=DEFAULT_TIME).replace(tzinfo=timezone.utc)
+    # date_end_dt = parse(date_end, default=DEFAULT_TIME).replace(tzinfo=timezone.utc)
+    date_end_dt = ensure_utc_aware(parse(date_end, default=DEFAULT_TIME))
 
     # Compare
     is_date_end_before_timestamp_start = date_end_dt < timestamp_start
@@ -1114,7 +1214,7 @@ def plot_ts_diagram(
     plt.show()
 
 
-def get_schema_metadata(dname: str) -> dict:
+def get_schema_metadata(dname: str, s3_fs_opts=None) -> dict:
     """Retrieves and decodes metadata from a Parquet dataset's common metadata.
 
     Reads the schema from the `_common_metadata` file within the specified
@@ -1137,7 +1237,7 @@ def get_schema_metadata(dname: str) -> dict:
     logger = logging.getLogger("aodn.GetAodn")
     logger.info(f"Retrieving metadata for {name}")
 
-    s3 = get_s3_filesystem()
+    s3 = get_s3_filesystem(s3_fs_opts=s3_fs_opts)
     meta_name = posixpath.join(name, "_common_metadata")
     dataset = ds.dataset(meta_name, format="parquet", filesystem=s3)
     parquet_meta = dataset.schema
@@ -1206,7 +1306,7 @@ def decode_and_load_json(metadata: dict[bytes, bytes]) -> dict[str, any]:
     return decoded_metadata
 
 
-def get_zarr_metadata(dname: str) -> dict:
+def get_zarr_metadata(dname: str, s3_fs_opts=None) -> dict:
     """Retrieves metadata from a Zarr store using xarray.
 
     Opens the Zarr store located at the S3 path `dname` using xarray and
@@ -1226,11 +1326,18 @@ def get_zarr_metadata(dname: str) -> dict:
     name = dname.replace("anonymous@", "")
     logger.info(f"Retrieving metadata for {name}")
 
+    if s3_fs_opts:
+        # Use provided S3 filesystem
+        s3 = s3fs.S3FileSystem(**s3_fs_opts)
+        # mapper = fsspec.get_mapper(name, storage_options={"fs": s3})
+        mapper = s3.get_mapper(name)
+    else:
+        # Default: anonymous access
+        mapper = fsspec.get_mapper(name, anon=True)
+
     try:
         # Use fsspec mapper for xarray to access S3 anonymously
-        with xr.open_zarr(
-            fsspec.get_mapper(name, anon=True), chunks=None, consolidated=True
-        ) as ds:
+        with xr.open_zarr(mapper, chunks=None, consolidated=True) as ds:
             metadata = {"global_attributes": ds.attrs.copy()}
             for var_name, variable in ds.variables.items():
                 metadata[var_name] = variable.attrs.copy()
@@ -1294,6 +1401,7 @@ class DataSource(ABC):
         prefix: str,
         dataset_name: str,
         logger: logging.Logger | None = None,
+        s3_fs_opts: dict | None = None,
     ):
         """Initialises the DataSource.
 
@@ -1308,6 +1416,7 @@ class DataSource(ABC):
         self.prefix = prefix
         self.dataset_name = dataset_name
         self.dname = self._build_data_path()
+        self.s3_fs_opts = s3_fs_opts
 
         self.logger = logger or logging.getLogger("aodn.GetAodn")
         if not self.logger.handlers:
@@ -1320,7 +1429,7 @@ class DataSource(ABC):
             self.logger.propagate = False
 
         if ".parquet" in self.dname:
-            self.s3 = get_s3_filesystem()
+            self.s3 = get_s3_filesystem(s3_fs_opts=self.s3_fs_opts)
             self.dataset = self._create_pyarrow_dataset()
 
     @abstractmethod
@@ -1401,7 +1510,7 @@ class DataSource(ABC):
         actual_lon_name: str,
         actual_time_name: str,
     ) -> None:
-        """Plots the extracted time series data."""
+        """Plotsthe extracted time series data."""
         pass
 
     @abstractmethod
@@ -1416,16 +1525,28 @@ class DataSource(ABC):
 class ParquetDataSource(DataSource):
     """DataSource implementation for Parquet datasets."""
 
-    def __init__(self, bucket_name: str, prefix: str, dataset_name: str):
-        """Initialises the ParquetDataSource.
+    def __init__(
+        self,
+        bucket_name: str,
+        prefix: str,
+        dataset_name: str,
+        s3_fs_opts: dict | None = None,
+    ):
+        """Initialises the ParquetDataSource with optional S3 filesystem overrides."""
+        self.s3_fs_opts = s3_fs_opts or {}
+        if self.s3_fs_opts:
+            self.s3 = fs.S3FileSystem(**s3_opts_to_pyarrow(self.s3_fs_opts))
+        else:
+            self.s3 = fs.S3FileSystem(
+                region=self.s3_fs_opts.get("region", REGION),
+                endpoint_override=ENDPOINT_URL,
+                anonymous=True,
+            )
 
-        Args:
-            bucket_name: The S3 bucket name.
-            prefix: The S3 prefix (folder path) within the bucket.
-            dataset_name: The name of the dataset including the '.parquet'
-                extension.
-        """
-        super().__init__(bucket_name, prefix, dataset_name)
+        super().__init__(bucket_name, prefix, dataset_name, s3_fs_opts=s3_fs_opts)
+        if ".parquet" in self.dname:
+            # override S3 filesystem and re-create dataset with custom options
+            self.dataset = self._create_pyarrow_dataset()
 
     def _build_data_path(self) -> str:
         """Constructs the S3 path for the Parquet dataset directory.
@@ -1651,7 +1772,7 @@ class ParquetDataSource(DataSource):
         Returns:
             A dictionary containing the decoded metadata.
         """
-        return get_schema_metadata(self.dname)
+        return get_schema_metadata(self.dname, s3_fs_opts=self.s3_fs_opts)
 
     def get_timeseries_data(
         self,
@@ -1721,15 +1842,26 @@ class ZarrDataSource(DataSource):
             dname_uri = f"s3://{dname_uri}"
         return dname_uri
 
-    def __init__(self, bucket_name: str, prefix: str, dataset_name: str):
-        """Initialises the ZarrDataSource.
+    def __init__(
+        self,
+        bucket_name: str,
+        prefix: str,
+        dataset_name: str,
+        s3_fs_opts: dict | None = None,
+    ):
+        """Initialises the ZarrDataSource with optional S3 filesystem overrides."""
+        self.s3_fs_opts = s3_fs_opts or {}
+        if self.s3_fs_opts:
+            self.s3 = s3fs.S3FileSystem(**self.s3_fs_opts)
+        else:
+            # Default anonymous S3 with optional region and endpoint
+            self.s3 = s3fs.S3FileSystem(
+                anon=True,
+                key=None,
+                secret=None,
+                client_kwargs={"endpoint_url": ENDPOINT_URL, "region_name": REGION},
+            )
 
-        Args:
-            bucket_name: The S3 bucket name.
-            prefix: The S3 prefix (folder path) within the bucket.
-            dataset_name: The name of the dataset including the '.zarr'
-                extension.
-        """
         super().__init__(bucket_name, prefix, dataset_name)
         self.zarr_store = self._open_zarr_store()
 
@@ -1744,9 +1876,18 @@ class ZarrDataSource(DataSource):
             ValueError: If a suitable time variable cannot be found for sorting.
         """
         try:
-            ds = xr.open_zarr(
-                fsspec.get_mapper(self.dname, anon=True), chunks=None, consolidated=True
-            )
+            # storage_opts = self.s3_fs_opts.get("storage_options", {})
+            # anon_flag = self.s3_fs_opts.get("anon", True)
+            # ds = xr.open_zarr(
+            #     fsspec.get_mapper(self.dname, anon=anon_flag, **storage_opts),
+            #     chunks=None,
+            #     consolidated=True,
+            # )
+            # mapper = fsspec.get_mapper(self.dname, storage_options={"fs": self.s3})
+
+            mapper = self.s3.get_mapper(self.dname)
+            ds = xr.open_zarr(mapper, chunks=None, consolidated=True)
+
             # Find the time variable name to sort by
             time_names = [
                 "time",
@@ -2646,12 +2787,24 @@ def _find_var_name_global(
 
 
 class GetAodn:
-    """Main class for discovering and accessing AODN cloud-optimised datasets."""
+    """
+    Main class for discovering and accessing AODN cloud-optimised datasets
 
-    def __init__(self):
-        """Initialises GetAodn with default S3 bucket and prefix."""
-        self.bucket_name = BUCKET_OPTIMISED_DEFAULT
-        self.prefix = ROOT_PREFIX_CLOUD_OPTIMISED_PATH
+    Example:
+        aodn = GetAodn()
+        aodn = GetAodn(bucket_name="aodn-cloud-optimised", prefix="", s3_fs_opts={ "client_kwargs": {"endpoint_url": "http://127.0.0.1:9000"}, "key": "minioadmin", "secret":"minioadmin"})
+    """
+
+    def __init__(
+        self,
+        bucket_name: str = BUCKET_OPTIMISED_DEFAULT,
+        prefix: str = ROOT_PREFIX_CLOUD_OPTIMISED_PATH,
+        s3_fs_opts: dict | None = None,
+    ):
+        """Initialises GetAodn with default S3 bucket, prefix, and s3 filesystem options."""
+        self.bucket_name = bucket_name
+        self.prefix = prefix
+        self.s3_fs_opts = s3_fs_opts or {}
 
         self.logger = logging.getLogger("aodn.GetAodn")
         self.logger.setLevel(logging.INFO)
@@ -2722,10 +2875,18 @@ class GetAodn:
         """
         if dataset_name_with_ext.endswith(".parquet"):
             return ParquetDataSource(
-                self.bucket_name, self.prefix, dataset_name_with_ext
+                self.bucket_name,
+                self.prefix,
+                dataset_name_with_ext,
+                s3_fs_opts=self.s3_fs_opts,
             )
         elif dataset_name_with_ext.endswith(".zarr"):
-            return ZarrDataSource(self.bucket_name, self.prefix, dataset_name_with_ext)
+            return ZarrDataSource(
+                self.bucket_name,
+                self.prefix,
+                dataset_name_with_ext,
+                s3_fs_opts=self.s3_fs_opts,
+            )
         else:
             raise ValueError(
                 f"Unsupported dataset extension in '{dataset_name_with_ext}'. Must end with '.parquet' or '.zarr'."
@@ -2753,6 +2914,7 @@ class Metadata:
         bucket_name: str,
         prefix: str,
         logger: logging.Logger | None = None,
+        s3_fs_opts: dict | None = None,
     ):
         """Initialises the Metadata object.
 
@@ -2776,9 +2938,10 @@ class Metadata:
 
         self.bucket_name = bucket_name
         self.prefix = prefix
+        self.s3_fs_opts = s3_fs_opts
         self.catalog = self.metadata_catalog()
 
-    def metadata_catalog_uncached(self) -> dict:
+    def metadata_catalog_uncached(self, s3_fs_opts=None) -> dict:
         """Builds the metadata catalog by scanning S3 and reading metadata.
 
         Lists folders ending in ".parquet/" and ".zarr/" under the configured
@@ -2816,7 +2979,7 @@ class Metadata:
             dname = dname.replace("s3://anonymous%40", "")
 
             try:
-                metadata = get_schema_metadata(dname)
+                metadata = get_schema_metadata(dname, s3_fs_opts=s3_fs_opts)
             except Exception as e:
                 self.logger.error(
                     f"Processing Parquet metadata from {dataset_path}: {e}"
@@ -2840,7 +3003,7 @@ class Metadata:
             dname = dname.replace("s3://anonymous%40", "s3://")
 
             try:
-                metadata = get_zarr_metadata(dname)
+                metadata = get_zarr_metadata(dname, s3_fs_opts=s3_fs_opts)
             except Exception as e:
                 self.logger.error(f"Processing Zarr metadata from {dataset_path}: {e}")
                 continue
@@ -2867,7 +3030,7 @@ class Metadata:
         if "catalog" in self.__dict__:
             return self.catalog
         else:
-            return self.metadata_catalog_uncached()
+            return self.metadata_catalog_uncached(s3_fs_opts=self.s3_fs_opts)
 
     def list_folders_with_data(self, extension_filter: str = ".parquet/") -> list[str]:
         """Lists folders in S3 matching a specific extension filter.

@@ -154,6 +154,10 @@ class CommonHandler:
         self.uuid_log = None
         self.s3_file_uri_list = None
 
+        self.drop_variables = self.dataset_config.get("schema_transformation", {}).get(
+            "drop_variables", []
+        )
+
     def init_s3_filesystems(
         self,
         s3_fs_common_opts=None,

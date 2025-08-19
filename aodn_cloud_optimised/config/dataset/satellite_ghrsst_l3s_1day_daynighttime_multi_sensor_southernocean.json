@@ -2,7 +2,7 @@
   "dataset_name": "satellite_ghrsst_l3s_1day_daynighttime_multi_sensor_southernocean",
   "logger_name": "satellite_ghrsst_l3s_1day_daynighttime_multi_sensor_southernocean",
   "cloud_optimised_format": "zarr",
-  "metadata_uuid": "",
+  "metadata_uuid": null,
   "schema": {
     "lat": {
       "type": "float",
