@@ -1418,16 +1418,19 @@ class DataSource(ABC):
 class ParquetDataSource(DataSource):
     """DataSource implementation for Parquet datasets."""
 
-    def __init__(self, bucket_name: str, prefix: str, dataset_name: str):
-        """Initialises the ParquetDataSource.
-
-        Args:
-            bucket_name: The S3 bucket name.
-            prefix: The S3 prefix (folder path) within the bucket.
-            dataset_name: The name of the dataset including the '.parquet'
-                extension.
-        """
+    def __init__(self, bucket_name: str, prefix: str, dataset_name: str, s3_fs_opts: dict | None = None):
+        """Initialises the ParquetDataSource with optional S3 filesystem overrides."""
+        self.s3_fs_opts = s3_fs_opts or {}
         super().__init__(bucket_name, prefix, dataset_name)
+        if ".parquet" in self.dname:
+            # override S3 filesystem and re-create dataset with custom options
+            self.s3 = fs.S3FileSystem(
+                region=self.s3_fs_opts.get("region", REGION),
+                endpoint_override=self.s3_fs_opts.get("endpoint_override", ENDPOINT_URL),
+                anonymous=self.s3_fs_opts.get("anon", True),
+                **self.s3_fs_opts.get("client_kwargs", {})
+            )
+            self.dataset = self._create_pyarrow_dataset()
 
     def _build_data_path(self) -> str:
         """Constructs the S3 path for the Parquet dataset directory.
@@ -1723,15 +1726,9 @@ class ZarrDataSource(DataSource):
             dname_uri = f"s3://{dname_uri}"
         return dname_uri
 
-    def __init__(self, bucket_name: str, prefix: str, dataset_name: str):
-        """Initialises the ZarrDataSource.
-
-        Args:
-            bucket_name: The S3 bucket name.
-            prefix: The S3 prefix (folder path) within the bucket.
-            dataset_name: The name of the dataset including the '.zarr'
-                extension.
-        """
+    def __init__(self, bucket_name: str, prefix: str, dataset_name: str, s3_fs_opts: dict | None = None):
+        """Initialises the ZarrDataSource with optional S3 filesystem overrides."""
+        self.s3_fs_opts = s3_fs_opts or {}
         super().__init__(bucket_name, prefix, dataset_name)
         self.zarr_store = self._open_zarr_store()
 
@@ -1746,8 +1743,12 @@ class ZarrDataSource(DataSource):
             ValueError: If a suitable time variable cannot be found for sorting.
         """
         try:
+            storage_opts = self.s3_fs_opts.get("storage_options", {})
+            anon_flag = self.s3_fs_opts.get("anon", True)
             ds = xr.open_zarr(
-                fsspec.get_mapper(self.dname, anon=True), chunks=None, consolidated=True
+                fsspec.get_mapper(self.dname, anon=anon_flag, **storage_opts),
+                chunks=None,
+                consolidated=True,
             )
             # Find the time variable name to sort by
             time_names = [
