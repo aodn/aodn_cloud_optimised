@@ -2652,10 +2652,11 @@ def _find_var_name_global(
 class GetAodn:
     """Main class for discovering and accessing AODN cloud-optimised datasets."""
 
-    def __init__(self):
-        """Initialises GetAodn with default S3 bucket and prefix."""
-        self.bucket_name = BUCKET_OPTIMISED_DEFAULT
-        self.prefix = ROOT_PREFIX_CLOUD_OPTIMISED_PATH
+    def __init__(self, bucket_name: str = BUCKET_OPTIMISED_DEFAULT, prefix: str = ROOT_PREFIX_CLOUD_OPTIMISED_PATH, s3_fs_opts: dict | None = None):
+        """Initialises GetAodn with default S3 bucket, prefix, and s3 filesystem options."""
+        self.bucket_name = bucket_name
+        self.prefix = prefix
+        self.s3_fs_opts = s3_fs_opts or {}
 
         self.logger = logging.getLogger("aodn.GetAodn")
         self.logger.setLevel(logging.INFO)
@@ -2726,10 +2727,12 @@ class GetAodn:
         """
         if dataset_name_with_ext.endswith(".parquet"):
             return ParquetDataSource(
-                self.bucket_name, self.prefix, dataset_name_with_ext
+                self.bucket_name, self.prefix, dataset_name_with_ext, s3_fs_opts=self.s3_fs_opts
             )
         elif dataset_name_with_ext.endswith(".zarr"):
-            return ZarrDataSource(self.bucket_name, self.prefix, dataset_name_with_ext)
+            return ZarrDataSource(
+                self.bucket_name, self.prefix, dataset_name_with_ext, s3_fs_opts=self.s3_fs_opts
+            )
         else:
             raise ValueError(
                 f"Unsupported dataset extension in '{dataset_name_with_ext}'. Must end with '.parquet' or '.zarr'."
