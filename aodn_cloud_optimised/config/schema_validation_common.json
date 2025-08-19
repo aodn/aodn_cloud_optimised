@@ -113,7 +113,11 @@
       }
     },
     "metadata_uuid": {
-      "type": "string"
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "uuid"
     },
     "gattrs_to_variables": {
       "oneOf": [

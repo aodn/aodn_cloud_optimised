@@ -113,7 +113,11 @@
       }
     },
     "metadata_uuid": {
-      "type": "string"
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "uuid"
     },
     "schema_transformation": {
       "type": "object",
