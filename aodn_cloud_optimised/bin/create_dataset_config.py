@@ -619,6 +619,19 @@ def create_notebook(dataset_name):
             nbformat.write(new_nb, f)
 
 
+def validate_s3fs_opts(value: str) -> dict:
+    """Validate and parse the s3fs options JSON string."""
+    try:
+        opts = json.loads(value)
+        if not isinstance(opts, dict):
+            raise ValueError("s3fs options must be a JSON object")
+        # validate by trying to instantiate
+        s3fs.S3FileSystem(**opts)
+        return opts
+    except Exception as e:
+        raise argparse.ArgumentTypeError(f"Invalid s3fs options: {e}")
+
+
 def main():
     """
     Script to generate a dataset configuration from a NetCDF or CSV file stored in S3.
@@ -646,6 +659,8 @@ def main():
         -u, --uuid: Geonetwork Metadata UUID (optional).
         -d, --dataset-name: Name of the dataset (required, no spaces or underscores).
         --csv-opts: pandas read_csv optional arguments as json format
+        --s3fs-opts: Optional JSON string of arguments for s3fs.S3FileSystem,
+                            e.g. '{"key": "minioadmin", "secret": "minioadmin", "client_kwargs": {"endpoint_url": "http://localhost:9000"}}'
 
     Example:
         cloud_optimised_create_dataset_config \
@@ -653,6 +668,7 @@ def main():
             -d vessel_trv_realtime_qc \
             -u 8af21108-c535-43bf-8dab-c1f45a26088c \
             -c parquet
+            --s3fs-opts '{"key": "minioadmin", "secret": "minioadmin", "client_kwargs": {"endpoint_url": "http://localhost:9000"}}'
     """
     # Load the default BUCKET_RAW_DEFAULT
     default_bucket = load_variable_from_config("BUCKET_RAW_DEFAULT")
@@ -662,7 +678,10 @@ def main():
         description="Generate JSON schema from S3 NetCDF file."
     )
     parser.add_argument(
-        "-f", "--file", required=True, help="Object key for the NetCDF file."
+        "-f",
+        "--file",
+        required=True,
+        help="S3 object key or full s3:// URI for the NetCDF/CSV file.",
     )
     parser.add_argument(
         "-b",
@@ -700,23 +719,48 @@ def main():
         help="JSON string of options to pass to pandas.read_csv when input is CSV.",
     )
 
+    parser.add_argument(
+        "--s3fs-opts",
+        dest="s3fs_opts",
+        required=False,
+        type=validate_s3fs_opts,
+        help="JSON string of options to pass to s3fs.S3FileSystem for custom S3 endpoints/authentication.",
+    )
+
     # Parse arguments
     args = parser.parse_args()
-    obj_key = args.file
-    bucket = args.bucket
 
     # Construct the S3 file path
-    nc_file = PureS3Path.from_uri(f"s3://{bucket}").joinpath(obj_key).as_uri()
+
+    # Handle S3 path
+    if args.file.startswith("s3://"):
+        nc_file = args.file
+        p = PureS3Path.from_uri(nc_file)
+        bucket = p.bucket
+        obj_key = str(p.key)
+    else:
+        obj_key = args.file
+        bucket = args.bucket
+        nc_file = (
+            PureS3Path.from_uri(f"s3://{args.bucket}").joinpath(args.file).as_uri()
+        )
 
     # Create an empty NetCDF with NaN variables alongside the JSON files. Acts as the source of truth for restoring missing dimensions.
     # only useful for Zarr to concatenate NetCDF together with missing var/dim in some NetCDF files
     if args.cloud_format == "zarr":
         nc_nullify_path = nullify_netcdf_variables(nc_file, args.dataset_name)
 
+    # optionals s3fs options
+    if args.s3fs_opts:
+        fs = s3fs.S3FileSystem(**args.s3fs_opts)
+    else:
+        fs = s3fs.S3FileSystem(
+            anon=False,
+        )
+
     # Generate schema based on input type (NetCDF or CSV)
     if obj_key.lower().endswith(".csv"):
         csv_file = nc_file  # TODO: rename
-        fs = s3fs.S3FileSystem(anon=True)
 
         csv_opts = json.loads(args.csv_opts) if args.csv_opts else {}
         with fs.open(csv_file, "rb") as f:
@@ -744,7 +788,7 @@ def main():
     elif obj_key.lower().endswith(".nc"):
         # Generate JSON schema from the NetCDF file
         temp_file_path = generate_json_schema_from_s3_netcdf(
-            nc_file, cloud_format=args.cloud_format
+            nc_file, cloud_format=args.cloud_format, s3_fs=fs
         )
         with open(temp_file_path, "r") as file:
             dataset_config_schema = json.load(file)
@@ -788,12 +832,25 @@ def main():
     dataset_config["run_settings"]["clear_existing_data"] = True
     dataset_config["run_settings"]["raise_error"] = False
     dataset_config["run_settings"]["cluster"] = {
-        "mode": "coiled",
+        "mode": f"{TO_REPLACE_PLACEHOLDER}",
         "restart_every_path": False,
     }
+    parent_s3_path = PureS3Path.from_uri(nc_file).parent.as_uri()
     dataset_config["run_settings"]["paths"] = [
-        {"s3_uri": f"{nc_file}", "filter": [".*\\.nc"], "year_range": []}
+        {"s3_uri": parent_s3_path, "filter": [".*\\.nc"], "year_range": []}
     ]
+
+    if args.s3fs_opts:
+        dataset_config.setdefault("run_settings", {})["s3_bucket_opts"] = {
+            "input_data": {
+                "bucket": bucket,  # ← comes from parsed path
+                "s3_fs_opts": args.s3fs_opts,  # ← user-provided json
+            },
+            "output_data": {
+                "bucket": f"{TO_REPLACE_PLACEHOLDER}",  # ← fixed or could also be config-driven
+                "s3_fs_opts": args.s3fs_opts,
+            },
+        }
 
     if "spatial_extent" in dataset_config:
         dataset_config["spatial_extent"]["spatial_resolution"] = 5

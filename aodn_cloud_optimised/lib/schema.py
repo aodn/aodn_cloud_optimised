@@ -32,7 +32,9 @@ def generate_json_schema_var_from_netcdf(nc_path, var_name, indent=2, s3_fs=None
     """
     if isinstance(nc_path, s3fs.S3File):
         if s3_fs is None:
-            s3_fs = s3fs.S3FileSystem(anon=True)
+            s3_fs = s3fs.S3FileSystem(
+                anon=False,  # because we are authenticating
+            )
 
         # Open dataset from S3 file-like object using with statement
         with s3_fs.open(nc_path) as f:
@@ -105,10 +107,17 @@ def generate_json_schema_from_s3_netcdf(
     """
 
     if s3_fs is None:
-        s3_fs = s3fs.S3FileSystem(anon=True)
+        s3_fs = s3fs.S3FileSystem(
+            anon=False,  # because we are authenticating
+        )
 
-    with s3_fs.open(s3_object_address, "rb") as f:
-        dataset = xr.open_dataset(f)
+    from aodn_cloud_optimised.lib.s3Tools import (
+        create_fileset,
+    )
+
+    fileset = create_fileset(s3_object_address, s3_fs)
+    # with s3_fs.open(s3_object_address, "rb") as f:
+    dataset = xr.open_dataset(fileset[0])
 
     schema = {}
 
@@ -296,6 +305,12 @@ def create_pyarrow_schema(schema_input, schema_transformation=None):
 
         if isinstance(schema_input, dict):
             schema_input.update(new_variables_schema)
+
+        # Drop unwanted variables
+        drop_variables = schema_transformation.get("drop_variables", [])
+        if isinstance(schema_input, dict):
+            for var in drop_variables:
+                schema_input.pop(var, None)  # safe removal
 
     if isinstance(schema_input, list):
         return create_pyarrow_schema_from_list(schema_input)
