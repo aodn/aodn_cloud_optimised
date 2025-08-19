@@ -44,10 +44,11 @@ from shapely import wkb
 from shapely.geometry import MultiPolygon, Polygon
 from windrose import WindroseAxes
 
-__version__ = "0.2.4"
+__version__ = "0.2.5"
 
 REGION: Final[str] = "ap-southeast-2"
-ENDPOINT_URL = f"https://s3.ap-southeast-2.amazonaws.com"
+# ENDPOINT_URL = f"https://s3.ap-southeast-2.amazonaws.com"
+ENDPOINT_URL = "http://127.0.0.1:9000"  # for local MinIo buckets
 # BUCKET_OPTIMISED_DEFAULT = "imos-data-lab-optimised"
 BUCKET_OPTIMISED_DEFAULT = "aodn-cloud-optimised"
 ROOT_PREFIX_CLOUD_OPTIMISED_PATH = ""
@@ -66,6 +67,7 @@ def is_colab():
 
 @lru_cache(maxsize=1)
 def get_s3_filesystem():
+    breakpoint()
     return fs.S3FileSystem(
         region=REGION, endpoint_override=ENDPOINT_URL, anonymous=True
     )
@@ -2414,9 +2416,9 @@ class ZarrDataSource(DataSource):
         start_date_parsed = pd.to_datetime(date_start)
         end_date_parsed = pd.to_datetime(date_end) if date_end else None
 
-        assert (
-            actual_time_name in ds.dims
-        ), f"Dataset does not have a '{actual_time_name}' dimension"
+        assert actual_time_name in ds.dims, (
+            f"Dataset does not have a '{actual_time_name}' dimension"
+        )
 
         # Find the nearest date in the dataset to start_date_parsed
         try:
@@ -2482,7 +2484,9 @@ class ZarrDataSource(DataSource):
         # First pass: gather all data to find global vmin and vmax for consistent color scaling
         for date_obj in dates_to_plot:
             try:
-                data = ds[var_name].sel(
+                data = ds[
+                    var_name
+                ].sel(
                     {
                         actual_time_name: date_obj,  # Use exact match for already selected dates
                         actual_lon_name: slice(
