@@ -165,6 +165,26 @@
     "raise_error": false
   },
   "schema_transformation": {
+    "global_attributes": {
+      "set": {
+        "project": "Integrated Marine Observing System (IMOS)",
+        "Conventions": "CF-1.6,IMOS-1.4",
+        "abstract": "The ACORN facility is producing NetCDF files with wind direction and short wave direction and spread data for each site every hour. These are obtained using modified software supplied by Seaview Sensing Ltd which applies the method described in Wyatt et al, 1996, Maximum Likelihood estimation of the directional distribution of 0.53Hz ocean waves, Journal of Atmospheric and Oceanic Technology, 14, 591-603, 1996. Directions are all towards which the wave is propagating or the wind is blowing.  Each value has a corresponding quality control flag where a value of 2 means that the data have passed all the standard Seaview Sensing QC procedures.",
+        "author": "Cosoli, Simone",
+        "author_email": "simone.cosoli@uwa.edu.au",
+        "institution": "IMOS Ocean Radar Facility",
+        "institution_references": "https://imos.org.au/facility/ocean-radar",
+        "data_centre": "Australian Ocean Data Network (AODN)",
+        "data_centre_email": "info@aodn.org.au",
+        "instrument": "WERA Oceanographic HF Radar/Helzel Messtechnik, GmbH using modified Seaview Sensing Ltd software",
+        "source": "Terrestrial HF radar",
+        "file_version": "Level 1 - Quality Controlled data",
+        "file_version_quality_control": "Data in this file has been through the quality control procedure as described in the document: Quality Control procedures for ACORN radars Manual Version 2.0. Integrated Marine Observing System. DOI: 10.26198/5c89b59a931cb (http://dx.doi.org/10.26198/5c89b59a931cb). Every data point in this file has an associated quality flag.",
+        "citation": "The citation in a list of references is: IMOS, [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access]",
+        "acknowledgement": "Any users of IMOS data are required to clearly acknowledge the source of the material derived from IMOS in the format: 'Data was sourced from the Integrated Marine Observing System (IMOS) - IMOS is a national collaborative research infrastructure, supported by the Australian Government. If relevant, also credit other organisations involved in collection of this particular datastream (as listed in 'credit' in the metadata record).'",
+        "disclaimer": "Data, products and services from IMOS are provided 'as is' without any warranty as to fitness for a particular purpose."
+      }
+    },
     "var_template_shape": "WDIR",
     "vars_incompatible_with_region": [
       "LATITUDE",

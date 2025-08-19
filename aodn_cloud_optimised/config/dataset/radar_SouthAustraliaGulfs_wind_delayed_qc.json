@@ -66,7 +66,10 @@
   "schema_transformation": {
     "global_attributes": {
       "set": {
-        "title": ""
+        "title": "IMOS Ocean Radar Facility South Australian Gulf (SAG), one hour averaged wind and short wave QC data",
+        "site_code": "SAG, South Australian Gulf",
+        "ssr_Stations": "Cape Wiles (CWI), Cape Spencer (CSP)",
+        "local_time_zone": "9.5"
       }
     },
     "dimensions": {
