@@ -216,7 +216,7 @@ class GenericHandler(CommonHandler):
             # https://thredds.aodn.org.au/thredds/dodsC/IMOS/SOOP/SOOP-SST/9HA2479_Pacific-Sun/2011/IMOS_SOOP-SST_MT_20110101T000000Z_9HA2479_FV01_C-20120528T071958Z.nc.html
             with xr.open_dataset(netcdf_fp, engine="scipy") as ds:
                 # Convert xarray to pandas DataFrame
-                ds = ds.drop_vars(drop_variables, errors="ignore")
+                ds = ds.drop_vars(self.drop_variables, errors="ignore")
                 df = ds.to_dataframe()
                 # TODO: call check function on variable attributes
                 if self.check_var_attributes(ds):
