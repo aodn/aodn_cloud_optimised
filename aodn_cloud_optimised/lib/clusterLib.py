@@ -33,7 +33,7 @@ class ClusterManager:
         self.logger = logger or logging.getLogger(__name__)
         self.local_cluster_options = {
             "n_workers": 2,
-            "memory_limit": "8GB",
+            "memory_limit": "16GB",
             "threads_per_worker": 2,
         }
         self.coiled_cluster_default_options = {
