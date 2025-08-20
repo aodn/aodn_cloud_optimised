@@ -521,6 +521,7 @@ class GenericHandler(CommonHandler):
                 variable_to_add_name = variable_to_add[0]
                 variable_to_add_info = variable_to_add[1]
                 var_type = variable_to_add_info["schema"].get("type")
+                var_fillvalue = variable_to_add_info["schema"].get("_FillValue", None)
 
                 if variable_to_add_info["source"].startswith("@filename"):
                     df[variable_to_add_name] = os.path.basename(f.path)  # always string
@@ -540,7 +541,7 @@ class GenericHandler(CommonHandler):
                         attr_value = getattr(ds[varname], attr)
 
                         attr_value = cast_value_to_config_type(
-                            attr_value, var_type
+                            attr_value, var_type, fillvalue=var_fillvalue
                         )  # convert variable to required type
                         df[variable_to_add_name] = attr_value
                         self.logger.info(
@@ -553,7 +554,7 @@ class GenericHandler(CommonHandler):
                     if gattr in ds.attrs:
                         gattr_value = getattr(ds, gattr)
                         gattr_value = cast_value_to_config_type(
-                            gattr_value, var_type
+                            gattr_value, var_type, fillvalue=var_fillvalue
                         )  # convert variable to required type
 
                         df[variable_to_add_name] = gattr_value
@@ -582,7 +583,7 @@ class GenericHandler(CommonHandler):
                         info_value = extracted_info[variable_to_add_name]
 
                         info_value = cast_value_to_config_type(
-                            info_value, var_type
+                            info_value, var_type, fillvalue=var_fillvalue
                         )  # convert variable to required type
                         df[variable_to_add_name] = info_value
         return df

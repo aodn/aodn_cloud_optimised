@@ -7,6 +7,18 @@ import pyarrow as pa
 import s3fs
 import xarray as xr
 
+# Standard NetCDF-style fill values
+FILL_VALUES = {
+    str: "",
+    int: -9999,
+    float: -9999.0,
+    bool: False,  # often False is used for empty/missing
+    np.int32: np.int32(-9999),
+    np.int64: np.int64(-9999),
+    np.float32: np.float32(-9999.0),
+    np.float64: np.float64(-9999.0),
+}
+
 
 def custom_encoder(obj):
     if isinstance(obj, np.generic):
@@ -344,25 +356,34 @@ def map_config_type_to_python_type(config_type: str):
     return type_map.get(config_type, str)  # Default to str if unknown
 
 
-def cast_value_to_config_type(value, config_type: str):
+def cast_value_to_config_type(value, config_type: str, fillvalue=None):
     """
     Cast a value to the type specified in the schema config.
+    If the value is None or empty, return either the provided fillvalue
+    or a sensible NetCDF-style default fill value.
 
     Args:
         value (Any): The value to cast.
         config_type (str): The type string from the schema config.
+        fillvalue (Any, optional): Custom fill value to use if value is missing/empty.
 
     Returns:
-        Any: The casted value.
-
-    Raises:
-        ValueError: If the casting fails.
+        Any: The casted value or fill value.
     """
     python_type = map_config_type_to_python_type(config_type)
+
+    # Handle None or empty string → use fill value
+    if value is None or (isinstance(value, str) and value.strip() == ""):
+        if fillvalue is not None:
+            return python_type(fillvalue)
+        return FILL_VALUES.get(python_type, None)
+
     try:
         return python_type(value)
     except Exception as e:
-        raise ValueError(f"Cannot cast value '{value}' to type '{config_type}': {e}")
+        raise ValueError(
+            f"Cannot cast value '{value}' to type '{config_type}' ({python_type}): {e}"
+        )
 
 
 def nullify_netcdf_variables(nc_path, dataset_name, s3_fs=None):
