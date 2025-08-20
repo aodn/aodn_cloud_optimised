@@ -276,11 +276,11 @@
     "_COMMENT": "2025-07-01: running this dataset with a batch size of more than 1 results in some silent data corruption with dask v2. It is unclear why. Maybe similar to xarray/issues/8882. Spent too much time on this. Maybe race conditions. But proof that xarray/zarr... is not reliable",
     "coiled_cluster_options": {
       "n_workers": [
-        1,
+        5,
         20
       ],
       "scheduler_vm_types": "m7i.xlarge",
-      "worker_vm_types": "m7i.large",
+      "worker_vm_types": "m7i.2xlarge",
       "allow_ingress_from": "me",
       "compute_purchase_option": "spot_with_fallback",
       "worker_options": {
@@ -288,7 +288,7 @@
         "memory_limit": "16GB"
       }
     },
-    "batch_size": 1,
+    "batch_size": 2,
     "cluster": {
       "mode": "coiled",
       "restart_every_path": false

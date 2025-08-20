@@ -211,8 +211,18 @@ def delete_objects_in_prefix(
             },
         )
 
-        logger.info(f"Deleted {len(delete_response['Deleted'])} objects.")
+        # Raise if the API call did not return the 'Deleted' list
+        if "Deleted" not in delete_response:
+            if delete_response.get("Errors"):
+                code = delete_response.get("Errors")[0]["Code"]
+                msg = delete_response.get("Errors")[0]["Message"]
+                raise RuntimeError(f"{code}: {msg}")
+            else:
+                raise RuntimeError(
+                    "S3 delete_objects response did not include 'Deleted'. Possible failure."
+                )
 
+        logger.info(f"Deleted {len(delete_response['Deleted'])} objects.")
         # Check if there are more objects to delete
         if response["IsTruncated"]:
             continuation_token = response["NextContinuationToken"]
@@ -301,7 +311,11 @@ def create_fileset(s3_paths, s3_fs=None):
         list[file-like object]: List of file-like objects representing each object in the fileset.
     """
     if s3_fs is None:
-        s3_fs = s3fs.S3FileSystem(anon=True)
+        s3_fs = s3fs.S3FileSystem(
+            anon=True,
+            default_cache_type="readahead",
+            default_fill_cache=False,
+        )
 
     if isinstance(s3_paths, str):
         s3_paths = [s3_paths]
