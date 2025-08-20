@@ -53,8 +53,8 @@
         "s3_uri": "s3://imos-data/IMOS/ACORN/gridded_1h-avg-wave-site-map_QC/ROT/",
         "filter": [],
         "year_range": [
-          2007,
-          2025
+          2010,
+          2019
         ]
       }
     ],
@@ -64,7 +64,10 @@
   "schema_transformation": {
     "global_attributes": {
       "set": {
-        "title": ""
+        "title": "IMOS ACORN Rottnest Shelf (ROT), one hour averaged wave QC data",
+        "site_code": "ROT, Rottnest Shelf",
+        "ssr_Stations": "Fremantle (FRE), Guilderton (GUI)",
+        "local_time_zone": "8."
       }
     },
     "dimensions": {
