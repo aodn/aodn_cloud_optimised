@@ -2792,7 +2792,17 @@ class GetAodn:
 
     Example:
         aodn = GetAodn()
-        aodn = GetAodn(bucket_name="aodn-cloud-optimised", prefix="", s3_fs_opts={ "client_kwargs": {"endpoint_url": "http://127.0.0.1:9000"}, "key": "minioadmin", "secret":"minioadmin"})
+        aodn = GetAodn(
+                    bucket_name="aodn-cloud-optimised",
+                    prefix="",
+                    s3_fs_opts={
+                        "key": "minioadmin",
+                        "secret": "minioadmin",
+                        "client_kwargs": {
+                            "endpoint_url": "http://127.0.0.1:9000"
+                        }
+                    }
+                    )
     """
 
     def __init__(
