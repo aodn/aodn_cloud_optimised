@@ -2546,9 +2546,9 @@ class ZarrDataSource(DataSource):
         start_date_parsed = pd.to_datetime(date_start)
         end_date_parsed = pd.to_datetime(date_end) if date_end else None
 
-        assert actual_time_name in ds.dims, (
-            f"Dataset does not have a '{actual_time_name}' dimension"
-        )
+        assert (
+            actual_time_name in ds.dims
+        ), f"Dataset does not have a '{actual_time_name}' dimension"
 
         # Find the nearest date in the dataset to start_date_parsed
         try:
@@ -2614,9 +2614,7 @@ class ZarrDataSource(DataSource):
         # First pass: gather all data to find global vmin and vmax for consistent color scaling
         for date_obj in dates_to_plot:
             try:
-                data = ds[
-                    var_name
-                ].sel(
+                data = ds[var_name].sel(
                     {
                         actual_time_name: date_obj,  # Use exact match for already selected dates
                         actual_lon_name: slice(

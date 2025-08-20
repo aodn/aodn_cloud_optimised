@@ -388,7 +388,9 @@ class TestGenericZarrHandler(unittest.TestCase):
         ucur_selected = ds["UCUR"].isel({time_dim: matching_idx}).compute().values
 
         # Assert they are all NaN
-        assert not np.isnan(ucur_selected).all(), (
+        assert not np.isnan(
+            ucur_selected
+        ).all(), (
             f"UCUR for {filenames_acorn_nwa[1]} are already fully NaN. Not possible"
         )
 
@@ -408,9 +410,9 @@ class TestGenericZarrHandler(unittest.TestCase):
         ucur_selected = ds["UCUR"].isel({time_dim: matching_idx}).compute().values
 
         # Assert they are all NaN
-        assert np.isnan(ucur_selected).all(), (
-            f"UCUR for {filenames_acorn_nwa[1]} not fully NaN"
-        )
+        assert np.isnan(
+            ucur_selected
+        ).all(), f"UCUR for {filenames_acorn_nwa[1]} not fully NaN"
 
 
 if __name__ == "__main__":

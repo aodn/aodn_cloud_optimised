@@ -4,6 +4,7 @@ import re
 import traceback
 import uuid
 import warnings
+from contextlib import nullcontext
 from functools import partial
 
 import numcodecs
@@ -12,6 +13,7 @@ import s3fs
 import xarray as xr
 import zarr
 from dask import array as da
+from dask.distributed import Lock
 from xarray.structure.merge import MergeError
 
 from aodn_cloud_optimised.lib.CommonHandler import CommonHandler
@@ -23,8 +25,6 @@ from aodn_cloud_optimised.lib.s3Tools import (
     split_s3_path,
 )
 from aodn_cloud_optimised.lib.schema import merge_schema_dict
-from contextlib import nullcontext
-from dask.distributed import Lock
 
 
 def check_variable_values_dask(
