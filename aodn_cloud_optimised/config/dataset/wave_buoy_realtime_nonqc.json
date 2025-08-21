@@ -297,13 +297,13 @@
         8,
         20
       ],
-      "scheduler_vm_types": "m7i-flex.large",
-      "worker_vm_types": "m7i-flex.large",
+      "scheduler_vm_types": "m7i-flex.xlarge",
+      "worker_vm_types": "m7i-flex.2xlarge",
       "allow_ingress_from": "me",
       "compute_purchase_option": "spot_with_fallback",
       "worker_options": {
         "nthreads": 8,
-        "memory_limit": "4GB"
+        "memory_limit": "32GB"
       }
     },
     "batch_size": 300,
