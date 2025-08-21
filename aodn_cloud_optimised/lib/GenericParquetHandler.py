@@ -552,12 +552,12 @@ class GenericHandler(CommonHandler):
                     gattr = variable_to_add_info["source"].split(":")[1]
 
                     if gattr in ds.attrs:
+                        gattr_value = getattr(ds, gattr)
                         if gattr_value is None:
                             self.logger.warning(
                                 f"{self.uuid_log}: variable {variable_to_add_name} will be created with _Fillvalue as missing from input NetCDF"
                             )
 
-                        gattr_value = getattr(ds, gattr)
                         gattr_value = cast_value_to_config_type(
                             gattr_value, var_type, fillvalue=var_fillvalue
                         )  # convert variable to required type
