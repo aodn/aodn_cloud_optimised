@@ -1,5 +1,6 @@
 import importlib.resources
 import json
+import re
 import tempfile
 
 import numpy as np
@@ -359,30 +360,40 @@ def map_config_type_to_python_type(config_type: str):
 def cast_value_to_config_type(value, config_type: str, fillvalue=None):
     """
     Cast a value to the type specified in the schema config.
-    If the value is None or empty, return either the provided fillvalue
-    or a sensible NetCDF-style default fill value.
+    If the value is None, empty, or uncastable, return either the provided
+    fillvalue or a sensible NetCDF-style default fill value.
 
-    Args:
-        value (Any): The value to cast.
-        config_type (str): The type string from the schema config.
-        fillvalue (Any, optional): Custom fill value to use if value is missing/empty.
-
-    Returns:
-        Any: The casted value or fill value.
+    For numeric types, attempts to clean strings like "16m" -> 16.
     """
     python_type = map_config_type_to_python_type(config_type)
 
-    # Handle None or empty string → use fill value
+    # Missing or empty string
     if value is None or (isinstance(value, str) and value.strip() == ""):
-        if fillvalue is not None:
-            return python_type(fillvalue)
-        return FILL_VALUES.get(python_type, None)
+        return (
+            python_type(fillvalue)
+            if fillvalue is not None
+            else FILL_VALUES.get(python_type, None)
+        )
 
+    # Try normal casting
     try:
         return python_type(value)
-    except Exception as e:
-        raise ValueError(
-            f"Cannot cast value '{value}' to type '{config_type}' ({python_type}): {e}"
+    except Exception:
+        # Special case: try to extract numbers if config_type is numeric
+        if python_type in [int, float, np.int32, np.int64, np.float32, np.float64]:
+            if isinstance(value, str):
+                match = re.match(r"^[-+]?\d*\.?\d+", value.strip())
+                if match:
+                    try:
+                        return python_type(match.group(0))
+                    except Exception:
+                        pass  # fallback to fillvalue/default
+
+        # If still failing → use fillvalue or fallback
+        return (
+            python_type(fillvalue)
+            if fillvalue is not None
+            else FILL_VALUES.get(python_type, None)
         )
 
 
