@@ -7490,13 +7490,15 @@ files = [
 
 [[package]]
 name = "xarray"
-version = "2025.9.1.dev77+g177db1635"
+version = "2025.9.1"
 description = "N-D labeled arrays and datasets in Python"
 optional = false
 python-versions = ">=3.11"
 groups = ["main"]
-files = []
-develop = false
+files = [
+    {file = "xarray-2025.9.1-py3-none-any.whl", hash = "sha256:3e9708db0d7915c784ed6c227d81b398dca4957afe68d119481f8a448fc88c44"},
+    {file = "xarray-2025.9.1.tar.gz", hash = "sha256:f34a27a52c13d1f3cceb7b27276aeec47021558363617dd7ef4f4c8b379011c0"},
+]
 
 [package.dependencies]
 bottleneck = {version = "*", optional = true, markers = "extra == \"accel\""}
@@ -7509,12 +7511,9 @@ h5netcdf = {version = "*", optional = true, markers = "extra == \"io\""}
 matplotlib = {version = "*", optional = true, markers = "extra == \"viz\""}
 nc-time-axis = {version = "*", optional = true, markers = "extra == \"viz\""}
 netCDF4 = {version = ">=1.6.0", optional = true, markers = "extra == \"io\""}
-numba = {version = ">=0.59", optional = true, markers = "extra == \"accel\""}
+numba = {version = ">=0.62", optional = true, markers = "extra == \"accel\""}
 numbagg = {version = ">=0.8", optional = true, markers = "extra == \"accel\""}
-numpy = [
-    {version = ">=1.26"},
-    {version = ">=1.26,<2.3", optional = true, markers = "extra == \"accel\""},
-]
+numpy = ">=1.26"
 opt_einsum = {version = "*", optional = true, markers = "extra == \"accel\""}
 packaging = ">=24.1"
 pandas = ">=2.2"
@@ -7526,19 +7525,13 @@ sparse = {version = ">=0.15", optional = true, markers = "extra == \"etc\""}
 zarr = {version = ">=2.18", optional = true, markers = "extra == \"io\""}
 
 [package.extras]
-accel = ["bottleneck", "flox (>=0.9)", "numba (>=0.59)", "numbagg (>=0.8)", "numpy (<2.3)", "opt_einsum", "scipy (>=1.13)"]
+accel = ["bottleneck", "flox (>=0.9)", "numba (>=0.62)", "numbagg (>=0.8)", "opt_einsum", "scipy (>=1.13)"]
 complete = ["xarray[accel,etc,io,parallel,viz]"]
 etc = ["sparse (>=0.15)"]
 io = ["cftime", "fsspec", "h5netcdf", "netCDF4 (>=1.6.0)", "pooch", "pydap", "scipy (>=1.13)", "zarr (>=2.18)"]
 parallel = ["dask[complete]"]
 types = ["pandas-stubs", "scipy-stubs", "types-PyYAML", "types-Pygments", "types-colorama", "types-decorator", "types-defusedxml", "types-docutils", "types-networkx", "types-openpyxl", "types-pexpect", "types-psutil", "types-pycurl", "types-python-dateutil", "types-pytz", "types-requests", "types-setuptools"]
 viz = ["cartopy (>=0.23)", "matplotlib", "nc-time-axis", "seaborn"]
-
-[package.source]
-type = "git"
-url = "https://github.com/pydata/xarray.git"
-reference = "177db16"
-resolved_reference = "177db163525aa4caf83ecf80b0d29c159cdfa98c"
 
 [[package]]
 name = "xattr"
@@ -7969,4 +7962,4 @@ cffi = ["cffi (>=1.17,<2.0) ; platform_python_implementation != \"PyPy\" and pyt
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11, <4.0"
-content-hash = "e50bda59698eda6ba212adeffa598eb68b4118dac3da862f559f244108f246ca"
+content-hash = "392c59b1085b562ba63ea08df0bd7aebee5e7ed5bbbc81515498c58998cc5cee"
