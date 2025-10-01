@@ -14,6 +14,7 @@ import xarray as xr
 import zarr
 from dask import array as da
 from dask.distributed import Lock
+from xarray.coding.times import CFDatetimeCoder
 from xarray.structure.merge import MergeError
 
 from aodn_cloud_optimised.lib.CommonHandler import CommonHandler
@@ -647,6 +648,8 @@ class GenericHandler(CommonHandler):
             self.dataset_config["schema"], self.dataset_config["schema_transformation"]
         )
 
+        self.time_coder = CFDatetimeCoder(use_cftime=True)
+
     def delete_cloud_optimised_data(self, filename: str):
         """
         Deletes data in the cloud-optimised Zarr dataset corresponding to a specific filename by
@@ -673,8 +676,7 @@ class GenericHandler(CommonHandler):
                 self.store,
                 consolidated=True,
                 decode_cf=True,
-                decode_times=True,
-                use_cftime=True,
+                decode_times=self.time_coder,
                 decode_coords=True,
             ) as ds_org:
                 # Compute only the filename variable to memory
@@ -763,8 +765,7 @@ class GenericHandler(CommonHandler):
                 self.store,
                 consolidated=True,
                 decode_cf=True,
-                decode_times=True,
-                use_cftime=True,
+                decode_times=self.time_coder,
                 decode_coords=True,
             ) as ds_mod:
                 # assert self.dataset_config["schema_transformation"]["global_attributes"]["set"].items() <= ds_mod.attrs.items()
@@ -1309,8 +1310,7 @@ class GenericHandler(CommonHandler):
             self.store,
             consolidated=True,
             decode_cf=True,
-            decode_times=True,
-            use_cftime=True,
+            decode_times=self.time_coder,
             decode_coords=True,
         ) as ds_zarr:
             ds_zarr = ds_zarr.unify_chunks()
@@ -1417,8 +1417,7 @@ class GenericHandler(CommonHandler):
             self.store,
             consolidated=True,
             decode_cf=True,
-            decode_times=True,
-            use_cftime=True,
+            decode_times=self.time_coder,
             decode_coords=True,
         ) as ds_stored_zarr:
             # breakpoint()
@@ -1594,8 +1593,7 @@ class GenericHandler(CommonHandler):
             "concat_characters": True,
             "mask_and_scale": True,
             "decode_cf": True,
-            "decode_times": True,
-            "use_cftime": True,
+            "decode_times": self.time_coder,
             "decode_coords": True,
             "compat": "override",
             "coords": "minimal",
@@ -1650,8 +1648,7 @@ class GenericHandler(CommonHandler):
             "engine": engine,
             "mask_and_scale": True,
             "decode_cf": True,
-            "decode_times": True,
-            "use_cftime": True,
+            "decode_times": self.time_coder,
             "decode_coords": True,
             "drop_variables": drop_vars_list,
         }
@@ -1743,8 +1740,7 @@ class GenericHandler(CommonHandler):
                 self.store,
                 consolidated=True,
                 decode_cf=True,
-                decode_times=True,
-                use_cftime=True,
+                decode_times=self.time_coder,
                 decode_coords=True,
             ) as ds_org:
                 ds_org = ds_org.unify_chunks()
