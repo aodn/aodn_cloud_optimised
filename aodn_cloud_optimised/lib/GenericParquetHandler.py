@@ -360,7 +360,7 @@ class GenericHandler(CommonHandler):
 
         # Check for invalid latitude and longitude values outside of [-180, 180; -90; 90]
         lat_min = self.dataset_config["schema"][lat_varname].get("valid_min", -90)
-        lat_max = self.dataset_config["schema"][lat_varname].get("valid_max", -90)
+        lat_max = self.dataset_config["schema"][lat_varname].get("valid_max", 90)
         lon_min = self.dataset_config["schema"][lon_varname].get("valid_min", -180)
         lon_max = self.dataset_config["schema"][lon_varname].get("valid_max", 180)
 
