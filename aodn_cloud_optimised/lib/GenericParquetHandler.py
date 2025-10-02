@@ -358,10 +358,14 @@ class GenericHandler(CommonHandler):
         )
         spatial_res = spatial_extent_info["spatial_extent"].get("spatial_resolution", 5)
 
-        # TODO: remove hard coded values, and take them from valid_min and valid_max. Default to those values if missing from var attrs
         # Check for invalid latitude and longitude values outside of [-180, 180; -90; 90]
-        invalid_lat = ~df[lat_varname].between(-90, 90)
-        invalid_lon = ~df[lon_varname].between(-180, 180)
+        lat_min = self.dataset_config["schema"][lat_varname].get("valid_min", -90)
+        lat_max = self.dataset_config["schema"][lat_varname].get("valid_max", -90)
+        lon_min = self.dataset_config["schema"][lon_varname].get("valid_min", -180)
+        lon_max = self.dataset_config["schema"][lon_varname].get("valid_max", 180)
+
+        invalid_lat = ~df[lat_varname].between(lat_min, lat_max)
+        invalid_lon = ~df[lon_varname].between(lon_min, lon_max)
 
         if invalid_lat.any() or invalid_lon.any():
             # Collect examples of invalid values (up to 5 of each for readability)
@@ -369,14 +373,14 @@ class GenericHandler(CommonHandler):
             bad_lons = df.loc[invalid_lon, lon_varname].head().tolist()
 
             self.logger.warning(
-                f"{self.uuid_log}: Dataset contains latitude or longitude values outside the valid ranges [-90, 90], [-180, 180]. Cleaning data"
+                f"{self.uuid_log}: Dataset contains latitude or longitude values outside the valid ranges [{lat_min}, {lat_max}], [{lon_min}, {lon_max}]. Cleaning data.\n"
                 f"Invalid lat samples={bad_lats}, Invalid lon samples={bad_lons}"
             )
 
             # Clean dataset
             df = df[
-                (df[lat_varname].between(-90, 90))
-                & (df[lon_varname].between(-180, 180))
+                (df[lat_varname].between(lat_min, lat_max))
+                & (df[lon_varname].between(lon_min, lon_max))
             ]
 
             if df.empty:
