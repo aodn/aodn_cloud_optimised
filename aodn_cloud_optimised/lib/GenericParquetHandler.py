@@ -6,7 +6,7 @@ import timeit
 import traceback
 import uuid
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import datetime
+from datetime import date, datetime
 from typing import Generator, Tuple
 
 import boto3
@@ -358,6 +358,7 @@ class GenericHandler(CommonHandler):
         )
         spatial_res = spatial_extent_info["spatial_extent"].get("spatial_resolution", 5)
 
+        # TODO: remove hard coded values, and take them from valid_min and valid_max. Default to those values if missing from var attrs
         # Check for invalid latitude and longitude values outside of [-180, 180; -90; 90]
         invalid_lat = ~df[lat_varname].between(-90, 90)
         invalid_lon = ~df[lon_varname].between(-180, 180)
@@ -378,6 +379,10 @@ class GenericHandler(CommonHandler):
                 & (df[lon_varname].between(-180, 180))
             ]
 
+            if df.empty:
+                self.logger.error(
+                    f"{self.uuid_log}: The dataframe is now empty after removing out of range latitude/longitude data. Operation Cancelled"
+                )
             df.reset_index()
 
         # Clean dataset from NaN values of LAT and LON; for ex 'IMOS/Argo/dac/csiro/5905017/5905017_prof.nc'
@@ -802,6 +807,11 @@ class GenericHandler(CommonHandler):
         df = self._rm_bad_timestamp_df(df, s3_file_handle)
         df = self._add_polygon(df)
 
+        if df.empty:
+            raise ValueError(
+                "df is empty after dataframe transformation. Operation aborted"
+            )
+
         filename = os.path.basename(s3_file_handle.path)
 
         # Needs to be specified here as df is here a pandas df, while later on, it is a pyarrow table. some renaming should happen
@@ -875,7 +885,7 @@ class GenericHandler(CommonHandler):
         for partition_key in partition_keys:
             if all(not elem for elem in pdf[partition_key].is_null()):
                 self.logger.error(
-                    f"{self.uuid_log}: The '{partition_key}' variable is filled with NULL values, likely because '{partition_key}' is missing from 'gattrs_to_variables' in the dataset configuration."
+                    f"{self.uuid_log}: The '{partition_key}' variable is filled with NULL values, likely because '{partition_key}' is missing from 'partitioning' in the dataset configuration."
                 )
                 raise ValueError
 
