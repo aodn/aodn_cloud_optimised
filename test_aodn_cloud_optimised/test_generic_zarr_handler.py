@@ -208,6 +208,11 @@ class TestGenericZarrHandler(unittest.TestCase):
 
     # TODO: find a solution to patch s3fs properly and not relying on changing the s3fs values in the code
     def test_zarr_nc_acorn_turq_handler(self):
+        # read output zarr dataset - location definition part
+        dataset_config = load_dataset_config(DATASET_CONFIG_NC_ACORN_TURQ_JSON)
+        dataset_name = dataset_config["dataset_name"]
+        dname = f"s3://{self.BUCKET_OPTIMISED_NAME}/{self.ROOT_PREFIX_CLOUD_OPTIMISED_PATH}/{dataset_name}.zarr/"
+
         # Capture logs
         log_stream = StringIO()
         log_handler = logging.StreamHandler(log_stream)
@@ -267,16 +272,20 @@ class TestGenericZarrHandler(unittest.TestCase):
         # Validate logs
         self.assertTrue(
             any(
-                "Batch 1, Region 2 - Overwriting Zarr dataset in region: {'TIME': slice(2, 4, None)}, with matching indexes in the new dataset: [1 2]"
+                "Batch 1, Region 1 - Overwriting Zarr dataset in region: {'TIME': slice(0, 1, None)}, with matching indexes in the new dataset: [0]"
                 in log
                 for log in captured_logs
             )
         )
 
-        # read zarr
-        dataset_config = load_dataset_config(DATASET_CONFIG_NC_ACORN_TURQ_JSON)
-        dataset_name = dataset_config["dataset_name"]
-        dname = f"s3://{self.BUCKET_OPTIMISED_NAME}/{self.ROOT_PREFIX_CLOUD_OPTIMISED_PATH}/{dataset_name}.zarr/"
+        # Validate logs
+        self.assertTrue(
+            any(
+                "Batch 1, Region 2 - Overwriting Zarr dataset in region: {'TIME': slice(2, 4, None)}, with matching indexes in the new dataset: [0 1]"
+                in log
+                for log in captured_logs
+            )
+        )
 
         # TODO: calling open_zarr in the unitest is crazy finiky. Sometimes it works sometimes it doesnt
         #       ValueError: The future belongs to a different loop than the one specified as the loop argument
