@@ -291,6 +291,9 @@
     },
     "partitioning": [
       {
+        "source_variable": "site_code"
+      },
+      {
         "source_variable": "timestamp",
         "type": "time_extent",
         "time_extent": {
