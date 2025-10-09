@@ -158,6 +158,7 @@ cloud_optimised_vessel_fishsoop_realtime_qc = "aodn_cloud_optimised.bin.vessel_f
 cloud_optimised_vessel_satellite_radiance_delayed_qc = "aodn_cloud_optimised.bin.vessel_satellite_radiance_delayed_qc:main"
 cloud_optimised_vessel_satellite_radiance_derived_product = "aodn_cloud_optimised.bin.vessel_satellite_radiance_derived_product:main"
 cloud_optimised_vessel_sst_delayed_qc = "aodn_cloud_optimised.bin.vessel_sst_delayed_qc:main"
+cloud_optimised_vessel_sst_realtime_nonqc = "aodn_cloud_optimised.bin.vessel_sst_realtime_nonqc:main"
 cloud_optimised_vessel_trv_realtime_qc = "aodn_cloud_optimised.bin.vessel_trv_realtime_qc:main"
 cloud_optimised_vessel_xbt_delayed_qc = "aodn_cloud_optimised.bin.vessel_xbt_delayed_qc:main"
 cloud_optimised_vessel_xbt_realtime_nonqc = "aodn_cloud_optimised.bin.vessel_xbt_realtime_nonqc:main"
