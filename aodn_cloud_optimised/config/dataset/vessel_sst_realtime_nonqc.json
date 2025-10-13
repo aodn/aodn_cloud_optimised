@@ -73,6 +73,164 @@
       "reference_datum": "geographical coordinates, WGS84",
       "ancillary_variables": "LONGITUDE_quality_control"
     },
+    "GPS_HEIGHT": {
+      "type": "float",
+      "long_name": "GPS receiver altitude",
+      "units": "meters",
+      "instrument": "Garmin GPS 17x-HVS",
+      "observation_type": "measured",
+      "distance_from_bow": -9999.0,
+      "centerline_offset": -9999.0,
+      "sensor_height": -9999.0,
+      "ancillary_variables": "GPS_HEIGHT_quality_control"
+    },
+    "GPS_HEIGHT_quality_control": {
+      "type": "string",
+      "standard_name": " status_flag",
+      "long_name": "quality flags for",
+      "quality_control_conventions": "IMOS Reference Table F",
+      "quality_control_set": 3,
+      "quality_control_flag_values": "B, C, D, E, F, G, H, J, K, L, M, Q, S, T, U, V, X, Z",
+      "quality_control_flag_meanings": "Value_out_of_bounds Time_not_sequential Failed_T_Tw_Td_test Failed_true_wind_recomputation_test Platform_velocity_unrealistic Value_exceeds_threshold Discontinuity Erroneous_value Suspect_value_(visual) Value_located_over_land Instrument_malfunction Pre-flagged_as_suspect Spike_in_data_(visual) Time_duplicate Suspect_value_(statistical) Step_in_data_(statistical) Spike_in_data_(statistical) Value_passed_all_tests"
+    },
+    "TEMP_2": {
+      "type": "float",
+      "long_name": "sea temperature",
+      "units": "celsius",
+      "instrument": "Seabird SBE38",
+      "observation_type": "measured",
+      "distance_from_bow": -9999.0,
+      "centerline_offset": -9999.0,
+      "sensor_depth": 0.800000011920929,
+      "standard_name": "sea_surface_temperature",
+      "ancillary_variables": "TEMP_2_quality_control"
+    },
+    "PSAL": {
+      "type": "float",
+      "long_name": "sea salinity",
+      "units": "1e-3",
+      "instrument": "Seabird SBE45 MicroTSG",
+      "observation_type": "calculated",
+      "distance_from_bow": -9999.0,
+      "centerline_offset": -9999.0,
+      "sensor_depth": 0.800000011920929,
+      "standard_name": "sea_water_salinity",
+      "ancillary_variables": "PSAL_quality_control"
+    },
+    "TEMP_2_quality_control": {
+      "type": "string",
+      "standard_name": "sea_surface_temperature status_flag",
+      "long_name": "quality flags for sea_surface_temperature",
+      "quality_control_conventions": "IMOS Reference Table F",
+      "quality_control_set": 3,
+      "quality_control_flag_values": "B, C, D, E, F, G, H, J, K, L, M, Q, S, T, U, V, X, Z",
+      "quality_control_flag_meanings": "Value_out_of_bounds Time_not_sequential Failed_T_Tw_Td_test Failed_true_wind_recomputation_test Platform_velocity_unrealistic Value_exceeds_threshold Discontinuity Erroneous_value Suspect_value_(visual) Value_located_over_land Instrument_malfunction Pre-flagged_as_suspect Spike_in_data_(visual) Time_duplicate Suspect_value_(statistical) Step_in_data_(statistical) Spike_in_data_(statistical) Value_passed_all_tests"
+    },
+    "PSAL_quality_control": {
+      "type": "string",
+      "standard_name": "sea_water_salinity status_flag",
+      "long_name": "quality flags for sea_water_salinity",
+      "quality_control_conventions": "IMOS Reference Table F",
+      "quality_control_set": 3,
+      "quality_control_flag_values": "B, C, D, E, F, G, H, J, K, L, M, Q, S, T, U, V, X, Z",
+      "quality_control_flag_meanings": "Value_out_of_bounds Time_not_sequential Failed_T_Tw_Td_test Failed_true_wind_recomputation_test Platform_velocity_unrealistic Value_exceeds_threshold Discontinuity Erroneous_value Suspect_value_(visual) Value_located_over_land Instrument_malfunction Pre-flagged_as_suspect Spike_in_data_(visual) Time_duplicate Suspect_value_(statistical) Step_in_data_(statistical) Spike_in_data_(statistical) Value_passed_all_tests"
+    },
+    "VIS": {
+      "type": "float",
+      "long_name": "visibility",
+      "units": "meter",
+      "instrument": "unknown",
+      "sensor_height": -9999.0,
+      "distance_from_bow": -9999.0,
+      "centerline_offset": -9999.0,
+      "observation_type": "measured",
+      "standard_name": "visibility_in_air",
+      "ancillary_variables": "VIS_quality_control"
+    },
+    "WX": {
+      "type": "float",
+      "long_name": "present weather",
+      "units": "WMO code (table 4677)",
+      "ancillary_variables": "WX_quality_control"
+    },
+    "TCA": {
+      "type": "float",
+      "long_name": "total cloud amount",
+      "units": "oktas",
+      "ancillary_variables": "TCA_quality_control"
+    },
+    "LMCA": {
+      "type": "float",
+      "long_name": "low/middle cloud amount",
+      "units": "oktas",
+      "ancillary_variables": "LMCA_quality_control"
+    },
+    "ZCL": {
+      "type": "float",
+      "long_name": "cloud height",
+      "units": "meters",
+      "observation_type": "measured",
+      "ancillary_variables": "ZCL_quality_control"
+    },
+    "LCT": {
+      "type": "float",
+      "long_name": "low cloud type",
+      "ancillary_variables": "LCT_quality_control"
+    },
+    "MCT": {
+      "type": "float",
+      "long_name": "middle cloud type",
+      "ancillary_variables": "MCT_quality_control"
+    },
+    "HCT": {
+      "type": "float",
+      "long_name": "high cloud type",
+      "ancillary_variables": "HCT_quality_control"
+    },
+    "VIS_quality_control": {
+      "type": "string",
+      "standard_name": "visibility_in_air status_flag",
+      "long_name": "quality flags for visibility_in_air",
+      "quality_control_conventions": "IMOS Reference Table F",
+      "quality_control_set": 3,
+      "quality_control_flag_values": "B, C, D, E, F, G, H, J, K, L, M, Q, S, T, U, V, X, Z",
+      "quality_control_flag_meanings": "Value_out_of_bounds Time_not_sequential Failed_T_Tw_Td_test Failed_true_wind_recomputation_test Platform_velocity_unrealistic Value_exceeds_threshold Discontinuity Erroneous_value Suspect_value_(visual) Value_located_over_land Instrument_malfunction Pre-flagged_as_suspect Spike_in_data_(visual) Time_duplicate Suspect_value_(statistical) Step_in_data_(statistical) Spike_in_data_(statistical) Value_passed_all_tests"
+    },
+    "WX_quality_control": {
+      "type": "string",
+      "long_name": "quality flags for present weather",
+      "quality_control_conventions": "IMOS Reference Table F",
+      "quality_control_set": 3,
+      "quality_control_flag_values": "B, C, D, E, F, G, H, J, K, L, M, Q, S, T, U, V, X, Z",
+      "quality_control_flag_meanings": "Value_out_of_bounds Time_not_sequential Failed_T_Tw_Td_test Failed_true_wind_recomputation_test Platform_velocity_unrealistic Value_exceeds_threshold Discontinuity Erroneous_value Suspect_value_(visual) Value_located_over_land Instrument_malfunction Pre-flagged_as_suspect Spike_in_data_(visual) Time_duplicate Suspect_value_(statistical) Step_in_data_(statistical) Spike_in_data_(statistical) Value_passed_all_tests"
+    },
+    "TCA_quality_control": {
+      "type": "string",
+      "standard_name": " status_flag",
+      "long_name": "quality flags for",
+      "quality_control_conventions": "IMOS Reference Table F",
+      "quality_control_set": 3,
+      "quality_control_flag_values": "B, C, D, E, F, G, H, J, K, L, M, Q, S, T, U, V, X, Z",
+      "quality_control_flag_meanings": "Value_out_of_bounds Time_not_sequential Failed_T_Tw_Td_test Failed_true_wind_recomputation_test Platform_velocity_unrealistic Value_exceeds_threshold Discontinuity Erroneous_value Suspect_value_(visual) Value_located_over_land Instrument_malfunction Pre-flagged_as_suspect Spike_in_data_(visual) Time_duplicate Suspect_value_(statistical) Step_in_data_(statistical) Spike_in_data_(statistical) Value_passed_all_tests"
+    },
+    "LMCA_quality_control": {
+      "type": "string",
+      "standard_name": " status_flag",
+      "long_name": "quality flags for",
+      "quality_control_conventions": "IMOS Reference Table F",
+      "quality_control_set": 3,
+      "quality_control_flag_values": "B, C, D, E, F, G, H, J, K, L, M, Q, S, T, U, V, X, Z",
+      "quality_control_flag_meanings": "Value_out_of_bounds Time_not_sequential Failed_T_Tw_Td_test Failed_true_wind_recomputation_test Platform_velocity_unrealistic Value_exceeds_threshold Discontinuity Erroneous_value Suspect_value_(visual) Value_located_over_land Instrument_malfunction Pre-flagged_as_suspect Spike_in_data_(visual) Time_duplicate Suspect_value_(statistical) Step_in_data_(statistical) Spike_in_data_(statistical) Value_passed_all_tests"
+    },
+    "ZCL_quality_control": {
+      "type": "string",
+      "standard_name": " status_flag",
+      "long_name": "quality flags for",
+      "quality_control_conventions": "IMOS Reference Table F",
+      "quality_control_set": 3,
+      "quality_control_flag_values": "B, C, D, E, F, G, H, J, K, L, M, Q, S, T, U, V, X, Z",
+      "quality_control_flag_meanings": "Value_out_of_bounds Time_not_sequential Failed_T_Tw_Td_test Failed_true_wind_recomputation_test Platform_velocity_unrealistic Value_exceeds_threshold Discontinuity Erroneous_value Suspect_value_(visual) Value_located_over_land Instrument_malfunction Pre-flagged_as_suspect Spike_in_data_(visual) Time_duplicate Suspect_value_(statistical) Step_in_data_(statistical) Spike_in_data_(statistical) Value_passed_all_tests"
+    },
     "DEWT": {
       "type": "float",
       "long_name": "dew-point temperature",
