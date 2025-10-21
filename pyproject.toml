@@ -42,11 +42,11 @@ rechunker = ">=0.5.2"
 s3fs = ">=2025.5.1"
 fsspec = "==2025.5.1"
 shapely = ">=2.0.4"
-# xarray = { git = "https://github.com/pydata/xarray.git", rev = "177db16", extras = [
-# "complete",
-# ] } # https://github.com/pydata/xarray/issues/10501
-# Versions post 2025.6.1 are broken because of https://github.com/pydata/xarray/issues/10712, Don't install !
-xarray = { version = "==2025.9.1", extras = ["complete"] }
+# Versions post 2025.6.1 are broken because of https://github.com/pydata/xarray/issues/10712, Don't install ! Forced to create a custom fork with the changes from Joseph (see issue 10501).
+xarray = { git = "https://github.com/lbesnard/xarray.git", tag = "2025.06.01.dev2", extras = [
+"complete",
+] } # https://github.com/pydata/xarray/issues/10501 and https://github.com/pydata/xarray/issues/10807
+# xarray = { version = "==2025.6.1", extras = ["complete"] }
 cftime = ">=1.6.3"
 zarr = "==2.18.7"
 geopandas = ">=0.14.4"
