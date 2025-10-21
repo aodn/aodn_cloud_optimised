@@ -19,20 +19,20 @@
     "clear_existing_data": true,
     "coiled_cluster_options": {
       "n_workers": [
-        1,
-        20
+        5,
+        9
       ],
-      "scheduler_vm_types": "m7i.2xlarge",
-      "worker_vm_types": "m7i.xlarge",
+      "scheduler_vm_types": "m7i.xlarge",
+      "worker_vm_types": "m7i.2xlarge",
       "allow_ingress_from": "me",
       "compute_purchase_option": "spot_with_fallback",
       "worker_options": {
         "nthreads": 4,
-        "memory_limit": "16GB"
+        "memory_limit": "160GB"
       }
     },
-    "_comment": "2025-07-01: running this dataset with a batch size of more than 1 results in some silent data corruption with dask v2. It is unclear why. Maybe similar to xarray/issues/8882. Spent too much time on this. Maybe race conditions. But proof that xarray/zarr... is not reliable",
-    "batch_size": 1,
+    "_comment": "2025-07-01: running this dataset with a batch size of more than 1 results in some silent data corruption with dask v2. It is unclear why. Maybe similar to xarray/issues/8882. Spent too much time on this. Maybe race conditions. But proof that xarray/zarr... is not reliable. See https://github.com/pydata/xarray/issues/10501",
+    "batch_size": 25,
     "raise_error": false
   },
   "metadata_uuid": "28f8bfed-ca6a-472a-84e4-42563ce4df3f",

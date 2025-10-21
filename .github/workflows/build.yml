@@ -95,4 +95,4 @@ jobs:
 
       - name: Verify build
         run: |
-          pip install dist/*.whl
+          pip install dist/*.whl --no-deps

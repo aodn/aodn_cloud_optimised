@@ -1876,15 +1876,6 @@ class ZarrDataSource(DataSource):
             ValueError: If a suitable time variable cannot be found for sorting.
         """
         try:
-            # storage_opts = self.s3_fs_opts.get("storage_options", {})
-            # anon_flag = self.s3_fs_opts.get("anon", True)
-            # ds = xr.open_zarr(
-            #     fsspec.get_mapper(self.dname, anon=anon_flag, **storage_opts),
-            #     chunks=None,
-            #     consolidated=True,
-            # )
-            # mapper = fsspec.get_mapper(self.dname, storage_options={"fs": self.s3})
-
             mapper = self.s3.get_mapper(self.dname)
             ds = xr.open_zarr(mapper, chunks=None, consolidated=True)
 
