@@ -273,29 +273,36 @@
     "Citation": "IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access]"
   },
   "run_settings": {
-    "_COMMENT": "2025-07-01: running this dataset with a batch size of more than 1 results in some silent data corruption with dask v2. It is unclear why. Maybe similar to xarray/issues/8882. Spent too much time on this. Maybe race conditions. But proof that xarray/zarr... is not reliable",
+    "_COMMENT": "2025-10-21: running this dataset with a batch size of more than 1 will use more than 32GB of memory on the host machine running coiled. It doesn't make sence, but this is an on-going issue with ffspec, or maybe xarray/engine",
     "coiled_cluster_options": {
       "n_workers": [
-        5,
+        1,
         20
       ],
-      "scheduler_vm_types": "m7i.xlarge",
-      "worker_vm_types": "m7i.2xlarge",
+      "scheduler_vm_types": "m7i.large",
+      "worker_vm_types": "m7i.8xlarge",
       "allow_ingress_from": "me",
       "compute_purchase_option": "spot_with_fallback",
       "worker_options": {
-        "nthreads": 4,
-        "memory_limit": "16GB"
+        "nthreads": 32,
+        "memory_limit": "128GB"
       }
     },
-    "batch_size": 2,
+    "batch_size": 1,
     "cluster": {
       "mode": "coiled",
-      "restart_every_path": false
+      "restart_every_path": true
     },
     "paths": [
       {
-        "s3_uri": "s3://imos-data/IMOS/SRS/OC/radiometer/",
+        "s3_uri": "s3://imos-data/IMOS/SRS/OC/radiometer/VMQ9273_Solander",
+        "filter": [
+          ".*FV01.*\\.nc"
+        ],
+        "year_range": []
+      },
+      {
+        "s3_uri": "s3://imos-data/IMOS/SRS/OC/radiometer/VLHJ_Southern-Surveyor",
         "filter": [
           ".*FV01.*\\.nc"
         ],
@@ -362,14 +369,6 @@
           "type": "object",
           "units": "1",
           "long_name": "Filename of the source file",
-          "dimensions": "TIME"
-        }
-      },
-      "quality_control_version": {
-        "source": "@global_attribute:file_version",
-        "schema": {
-          "type": "<U49",
-          "units": "1",
           "dimensions": "TIME"
         }
       },
