@@ -1,0 +1,1046 @@
+{
+  "dataset_name": "vessel_underway_csiro",
+  "logger_name": "vessel_underway_csiro",
+  "cloud_optimised_format": "parquet",
+  "run_settings": {
+    "paths": [
+      {
+        "s3_uri": "s3://imos-data/IMOS_UDW",
+        "filter": [
+          ".*\\.nc"
+        ],
+        "year_range": []
+      }
+    ],
+    "cluster": {
+      "mode": "local",
+      "restart_every_path": false
+    },
+    "clear_existing_data": true,
+    "raise_error": false,
+    "coiled_cluster_options": {
+      "n_workers": [
+        1,
+        20
+      ],
+      "scheduler_vm_types": "m7i-flex.large",
+      "worker_vm_types": "m7i-flex.large",
+      "allow_ingress_from": "me",
+      "compute_purchase_option": "spot_with_fallback",
+      "worker_options": {
+        "nthreads": 4,
+        "memory_limit": "8GB"
+      }
+    },
+    "batch_size": 5,
+    "s3_bucket_opts": {
+      "input_data": {
+        "bucket": "imos-data",
+        "s3_fs_opts": {
+          "key": "minioadmin",
+          "secret": "minioadmin",
+          "client_kwargs": {
+            "endpoint_url": "http://localhost:9000"
+          }
+        }
+      },
+      "output_data": {
+        "bucket": "aodn-cloud-optimised",
+        "s3_fs_opts": {
+          "key": "minioadmin",
+          "secret": "minioadmin",
+          "client_kwargs": {
+            "endpoint_url": "http://localhost:9000"
+          }
+        }
+      }
+    },
+    "force_previous_parquet_deletion": false
+  },
+  "metadata_uuid": null,
+  "schema": {
+    "history": {
+      "type": "string",
+      "long_name": "History entry"
+    },
+    "historyIdent": {
+      "type": "string",
+      "long_name": "Person making history entry"
+    },
+    "historyDate": {
+      "type": "double",
+      "long_name": "Date of history entry",
+      "units": "yyyymmdd UTC"
+    },
+    "rawLatitude": {
+      "type": "double",
+      "long_name": "Raw Latitude",
+      "units": "degree_north"
+    },
+    "latitude": {
+      "type": "double",
+      "long_name": "Latitude",
+      "units": "degree_north"
+    },
+    "latitudeQC": {
+      "type": "float"
+    },
+    "rawLongitude": {
+      "type": "double",
+      "long_name": "Raw Longitude",
+      "units": "degree_east"
+    },
+    "longitude": {
+      "type": "double",
+      "long_name": "Longitude",
+      "units": "degree_east"
+    },
+    "longitudeQC": {
+      "type": "float"
+    },
+    "rawAlt": {
+      "type": "double",
+      "long_name": "Raw Altitude",
+      "units": "m"
+    },
+    "alt": {
+      "type": "double",
+      "long_name": "Altitude",
+      "units": "m"
+    },
+    "altQC": {
+      "type": "float"
+    },
+    "rawSpeedOG": {
+      "type": "double",
+      "long_name": "Raw Speed Over Ground",
+      "units": "knot"
+    },
+    "speedOG": {
+      "type": "double",
+      "long_name": "Speed Over Ground",
+      "units": "knot"
+    },
+    "speedOGQC": {
+      "type": "float"
+    },
+    "rawCourseOG": {
+      "type": "double",
+      "long_name": "Raw Course Over Ground",
+      "units": "degree"
+    },
+    "courseOG": {
+      "type": "double",
+      "long_name": "Course Over Ground",
+      "units": "degree"
+    },
+    "courseOGQC": {
+      "type": "float"
+    },
+    "rawShipHeading": {
+      "type": "double",
+      "long_name": "Raw Ship Heading",
+      "units": "degree"
+    },
+    "shipHeading": {
+      "type": "double",
+      "long_name": "Ship Heading",
+      "units": "degree"
+    },
+    "shipHeadingQC": {
+      "type": "float"
+    },
+    "rawDepth": {
+      "type": "double",
+      "long_name": "Raw Depth",
+      "units": "m"
+    },
+    "depth": {
+      "type": "double",
+      "long_name": "Depth",
+      "units": "m"
+    },
+    "depthQC": {
+      "type": "float"
+    },
+    "longitudinalWaterSpeed": {
+      "type": "double",
+      "long_name": "Longitudinal Water Speed",
+      "units": "knot"
+    },
+    "longitudinalWaterSpeedQC": {
+      "type": "float"
+    },
+    "transverseWaterSpeed": {
+      "type": "double",
+      "long_name": "Transverse Water Speed",
+      "units": "knot"
+    },
+    "transverseWaterSpeedQC": {
+      "type": "float"
+    },
+    "longitudinalGroundSpeed": {
+      "type": "double",
+      "long_name": "Longitudinal Ground Speed",
+      "units": "knot"
+    },
+    "longitudinalGroundSpeedQC": {
+      "type": "float"
+    },
+    "transverseGroundSpeed": {
+      "type": "double",
+      "long_name": "Transverse Ground Speed",
+      "units": "knot"
+    },
+    "transverseGroundSpeedQC": {
+      "type": "float"
+    },
+    "lockOnWater": {
+      "type": "float"
+    },
+    "lockonGround": {
+      "type": "float"
+    },
+    "rawPortAirTemp": {
+      "type": "double",
+      "long_name": "Raw Port Air Temperature",
+      "units": "degC"
+    },
+    "portAirTemp": {
+      "type": "double",
+      "long_name": "Port Air Temperature",
+      "units": "degC"
+    },
+    "portAirTempQC": {
+      "type": "float"
+    },
+    "rawPortHumidity": {
+      "type": "double",
+      "long_name": "Raw Port Humidity",
+      "units": "%"
+    },
+    "portHumidity": {
+      "type": "double",
+      "long_name": "Port Humidity",
+      "units": "%"
+    },
+    "portHumidityQC": {
+      "type": "float"
+    },
+    "rawStbdAirTemp": {
+      "type": "double",
+      "long_name": "Raw Starboard Air Temperature",
+      "units": "degC"
+    },
+    "stbdAirTemp": {
+      "type": "double",
+      "long_name": "Starboard Air Temperature",
+      "units": "degC"
+    },
+    "stbdAirTempQC": {
+      "type": "float"
+    },
+    "rawStbdHumidity": {
+      "type": "double",
+      "long_name": "Raw Starboard Humidity",
+      "units": "%"
+    },
+    "stbdHumidity": {
+      "type": "double",
+      "long_name": "Starboard Humidity",
+      "units": "%"
+    },
+    "stbdHumidityQC": {
+      "type": "float"
+    },
+    "rawMaxWindGust": {
+      "type": "double",
+      "long_name": "Raw Maximum Wind Gust",
+      "units": "knot"
+    },
+    "maxWindGust": {
+      "type": "double",
+      "long_name": "Maximum Wind Gust",
+      "units": "knot"
+    },
+    "maxWindGustQC": {
+      "type": "float"
+    },
+    "rawPortRelWindDir": {
+      "type": "double",
+      "long_name": "Raw Port Relative Wind Direction",
+      "units": "degree"
+    },
+    "portRelWindDir": {
+      "type": "double",
+      "long_name": "Port Relative Wind Direction",
+      "units": "degree"
+    },
+    "portRelWindDirQC": {
+      "type": "float"
+    },
+    "rawPortRelWindSpeed": {
+      "type": "double",
+      "long_name": "Raw Port Relative Wind Speed",
+      "units": "knot"
+    },
+    "portRelWindSpeed": {
+      "type": "double",
+      "long_name": "Port Relative Wind Speed",
+      "units": "knot"
+    },
+    "portRelWindSpeedQC": {
+      "type": "float"
+    },
+    "rawPortTrueWindDir": {
+      "type": "double",
+      "long_name": "Raw Port True Wind Direction",
+      "units": "degree"
+    },
+    "portTrueWindDir": {
+      "type": "double",
+      "long_name": "Port True Wind Direction",
+      "units": "degree"
+    },
+    "portTrueWindDirQC": {
+      "type": "float"
+    },
+    "rawPortTrueWindSpeed": {
+      "type": "double",
+      "long_name": "Raw Port True Wind Speed",
+      "units": "knot"
+    },
+    "portTrueWindSpeed": {
+      "type": "double",
+      "long_name": "Port True Wind Speed",
+      "units": "knot"
+    },
+    "portTrueWindSpeedQC": {
+      "type": "float"
+    },
+    "rawStbdRelWindDir": {
+      "type": "double",
+      "long_name": "Raw Starboard Relative Wind Direction",
+      "units": "degree"
+    },
+    "stbdRelWindDir": {
+      "type": "double",
+      "long_name": "Starboard Relative Wind Direction",
+      "units": "degree"
+    },
+    "stbdRelWindDirQC": {
+      "type": "float"
+    },
+    "rawStbdRelWindSpeed": {
+      "type": "double",
+      "long_name": "Raw Starboard Relative Wind Speed",
+      "units": "knot"
+    },
+    "stbdRelWindSpeed": {
+      "type": "double",
+      "long_name": "Starboard Relative Wind Speed",
+      "units": "knot"
+    },
+    "stbdRelWindSpeedQC": {
+      "type": "float"
+    },
+    "rawStbdTrueWindDir": {
+      "type": "double",
+      "long_name": "Raw Starboard True Wind Direction",
+      "units": "degree"
+    },
+    "stbdTrueWindDir": {
+      "type": "double",
+      "long_name": "Starboard True Wind Direction",
+      "units": "degree"
+    },
+    "stbdTrueWindDirQC": {
+      "type": "float"
+    },
+    "rawStbdTrueWindSpeed": {
+      "type": "double",
+      "long_name": "Raw Starboard True Wind Speed",
+      "units": "knot"
+    },
+    "stbdTrueWindSpeed": {
+      "type": "double",
+      "long_name": "Starboard True Wind Speed",
+      "units": "knot"
+    },
+    "stbdTrueWindSpeedQC": {
+      "type": "float"
+    },
+    "rawAtmPressure": {
+      "type": "double",
+      "long_name": "Raw Atmospheric Pressure",
+      "units": "mbar"
+    },
+    "atmPressure": {
+      "type": "double",
+      "long_name": "Atmospheric Pressure",
+      "units": "mbar"
+    },
+    "atmPressureQC": {
+      "type": "float"
+    },
+    "rawUltrasonicRelWindSpeed": {
+      "type": "double",
+      "long_name": "Raw Ultrasonic Relative Wind Speed",
+      "units": "knot"
+    },
+    "ultrasonicRelWindSpeed": {
+      "type": "double",
+      "long_name": "Ultrasonic Relative Wind Speed",
+      "units": "knot"
+    },
+    "ultrasonicRelWindSpeedQC": {
+      "type": "float"
+    },
+    "rawUltrasonicRelWindDir": {
+      "type": "double",
+      "long_name": "Raw Ultrasonic Relative Wind Direction",
+      "units": "degree"
+    },
+    "ultrasonicRelWindDir": {
+      "type": "double",
+      "long_name": "Ultrasonic Relative Wind Direction",
+      "units": "degree"
+    },
+    "ultrasonicRelWindDirQC": {
+      "type": "float"
+    },
+    "rawUltrasonicTrueWindSpeed": {
+      "type": "double",
+      "long_name": "Raw Ultrasonic True Wind Speed",
+      "units": "knot"
+    },
+    "ultrasonicTrueWindSpeed": {
+      "type": "double",
+      "long_name": "Ultrasonic True Wind Speed",
+      "units": "knot"
+    },
+    "ultrasonicTrueWindSpeedQC": {
+      "type": "float"
+    },
+    "rawUltrasonicTrueWindDir": {
+      "type": "double",
+      "long_name": "Raw Ultrasonic True Wind Direction",
+      "units": "degree"
+    },
+    "ultrasonicTrueWindDir": {
+      "type": "double",
+      "long_name": "Ultrasonic True Wind Direction",
+      "units": "degree"
+    },
+    "ultrasonicTrueWindDirQC": {
+      "type": "float"
+    },
+    "rawRain": {
+      "type": "double",
+      "long_name": "Raw Accumulated Hourly Rain",
+      "units": "mm"
+    },
+    "rain": {
+      "type": "double",
+      "long_name": "Accumulated Hourly Rain",
+      "units": "mm"
+    },
+    "rainQC": {
+      "type": "float"
+    },
+    "rawPortRadiometer": {
+      "type": "double",
+      "long_name": "Raw Port Radiometer",
+      "units": "W/m^2"
+    },
+    "portRadiometer": {
+      "type": "double",
+      "long_name": "Port Radiometer",
+      "units": "W/m^2"
+    },
+    "portRadiometerQC": {
+      "type": "float"
+    },
+    "rawStbdRadiometer": {
+      "type": "double",
+      "long_name": "Raw Starboard Radiometer",
+      "units": "W/m^2"
+    },
+    "stbdRadiometer": {
+      "type": "double",
+      "long_name": "Starboard Radiometer",
+      "units": "W/m^2"
+    },
+    "stbdRadiometerQC": {
+      "type": "float"
+    },
+    "rawPortPyranometer": {
+      "type": "double",
+      "long_name": "Raw Port Pyranometer",
+      "units": "W/m^2"
+    },
+    "portPyranometer": {
+      "type": "double",
+      "long_name": "Port Pyranometer",
+      "units": "W/m^2"
+    },
+    "portPyranometerQC": {
+      "type": "float"
+    },
+    "rawStbdPyranometer": {
+      "type": "double",
+      "long_name": "Raw Starboard Pyranometer",
+      "units": "W/m^2"
+    },
+    "stbdPyranometer": {
+      "type": "double",
+      "long_name": "Starboard Pyranometer",
+      "units": "W/m^2"
+    },
+    "stbdPyranometerQC": {
+      "type": "float"
+    },
+    "rawPortPAR": {
+      "type": "double",
+      "long_name": "Raw Port PAR",
+      "units": "uE/m^2/s"
+    },
+    "portPAR": {
+      "type": "double",
+      "long_name": "Port PAR",
+      "units": "uE/m^2/s"
+    },
+    "portPARQC": {
+      "type": "float"
+    },
+    "rawStbdPAR": {
+      "type": "double",
+      "long_name": "Raw Starboard PAR",
+      "units": "uE/m^2/s"
+    },
+    "stbdPAR": {
+      "type": "double",
+      "long_name": "Starboard PAR",
+      "units": "uE/m^2/s"
+    },
+    "stbdPARQC": {
+      "type": "float"
+    },
+    "rawGyroHeading": {
+      "type": "double",
+      "long_name": "Raw Gyro Heading",
+      "units": "degree"
+    },
+    "gyroHeading": {
+      "type": "double",
+      "long_name": "Gyro Heading",
+      "units": "degree"
+    },
+    "gyroHeadingQC": {
+      "type": "float"
+    },
+    "equTemp": {
+      "type": "double",
+      "long_name": "Equilibrator Water Temperature",
+      "units": "degC"
+    },
+    "equTempQC": {
+      "type": "float"
+    },
+    "XCO2": {
+      "type": "double",
+      "long_name": "XCO2",
+      "units": "ppm"
+    },
+    "XCO2QC": {
+      "type": "float"
+    },
+    "waterVapour": {
+      "type": "double",
+      "long_name": "Water Vapour",
+      "units": "mmol/mole"
+    },
+    "waterVapourQC": {
+      "type": "float"
+    },
+    "licorPressure": {
+      "type": "double",
+      "long_name": "Licor Pressure",
+      "units": "hPa"
+    },
+    "licorPressureQC": {
+      "type": "float"
+    },
+    "equPressure": {
+      "type": "double",
+      "long_name": "Equilibrator  Pressure",
+      "units": "hPa"
+    },
+    "equPressureQC": {
+      "type": "float"
+    },
+    "waterFlow": {
+      "type": "double",
+      "long_name": "Water Flow",
+      "units": "l/min"
+    },
+    "waterFlowQC": {
+      "type": "float"
+    },
+    "licorFlow": {
+      "type": "double",
+      "long_name": "Licor flow",
+      "units": "ml/min"
+    },
+    "licorFlowQC": {
+      "type": "float"
+    },
+    "ventFlow": {
+      "type": "double",
+      "long_name": "Vent Flow",
+      "units": "ml/min"
+    },
+    "ventFlowQC": {
+      "type": "float"
+    },
+    "condTemp": {
+      "type": "double",
+      "long_name": "Condenser Temperature",
+      "units": "degC"
+    },
+    "condTempQC": {
+      "type": "float"
+    },
+    "pumpSpeed": {
+      "type": "double",
+      "long_name": "CO2 Pump Speed",
+      "units": "l/min"
+    },
+    "pumpSpeedQC": {
+      "type": "float"
+    },
+    "rawIsarWaterTemp": {
+      "type": "double",
+      "long_name": "Raw ISAR Water Temperature",
+      "units": "degC"
+    },
+    "isarWaterTemp": {
+      "type": "double",
+      "long_name": "ISAR Water Temperature",
+      "units": "degC"
+    },
+    "isarWaterTempQC": {
+      "type": "float"
+    },
+    "portKeelExtension": {
+      "type": "double",
+      "long_name": "Port Drop Keel Extension",
+      "units": "m"
+    },
+    "portKeelExtensionQC": {
+      "type": "float"
+    },
+    "starboardKeelExtension": {
+      "type": "double",
+      "long_name": "Starboard Drop Keel Extension",
+      "units": "m"
+    },
+    "starboardKeelExtensionQC": {
+      "type": "float"
+    },
+    "blackCarbonConc": {
+      "type": "double",
+      "long_name": "Concentration of Black Carbon",
+      "units": "ug/m^3"
+    },
+    "blackCarbonConcQC": {
+      "type": "float"
+    },
+    "airFlow": {
+      "type": "double",
+      "long_name": "Air Flow Rate",
+      "units": "L/h"
+    },
+    "airFlowQC": {
+      "type": "float"
+    },
+    "absorptionPhotometerStatus": {
+      "type": "float"
+    },
+    "o3Ozone1": {
+      "type": "double",
+      "long_name": "Ozone1",
+      "units": "ppb"
+    },
+    "o3Ozone1QC": {
+      "type": "float"
+    },
+    "ozone1Meterflags": {
+      "type": "float"
+    },
+    "o3Ozone2": {
+      "type": "double",
+      "long_name": "Ozone2",
+      "units": "ppb"
+    },
+    "o3Ozone2QC": {
+      "type": "float"
+    },
+    "ozone2Meterflags": {
+      "type": "float"
+    },
+    "co2Dry": {
+      "type": "double",
+      "long_name": "CO2 Dry Concentration",
+      "units": "ppm"
+    },
+    "co2DryQC": {
+      "type": "float"
+    },
+    "ch4Dry": {
+      "type": "double",
+      "long_name": "CH4 Dry Concentration",
+      "units": "ppm"
+    },
+    "ch4DryQC": {
+      "type": "float"
+    },
+    "h2O": {
+      "type": "double",
+      "long_name": "Water Concentration Percentage",
+      "units": "dimensionless"
+    },
+    "h2OQC": {
+      "type": "float"
+    },
+    "inletBearing": {
+      "type": "double",
+      "long_name": "Air Sampling Inlet Bearing",
+      "units": "degree"
+    },
+    "inletBearingQC": {
+      "type": "float"
+    },
+    "trackingBearing": {
+      "type": "double",
+      "long_name": "Tracking Target Bearing",
+      "units": "degree"
+    },
+    "trackingBearingQC": {
+      "type": "float"
+    },
+    "trackingMode": {
+      "type": "float"
+    },
+    "rawWaterTemp": {
+      "type": "double",
+      "long_name": "Raw Water Temperature",
+      "units": "degC"
+    },
+    "waterTemp": {
+      "type": "double",
+      "long_name": "Water Temperature",
+      "units": "degC"
+    },
+    "waterTempQC": {
+      "type": "float"
+    },
+    "rawTsgSensorTemp": {
+      "type": "double",
+      "long_name": "Raw TSG Sensor Temperature",
+      "units": "degC"
+    },
+    "tsgSensorTemp": {
+      "type": "double",
+      "long_name": "TSG Sensor Temperature",
+      "units": "degC"
+    },
+    "tsgSensorTempQC": {
+      "type": "float"
+    },
+    "rawSalinity": {
+      "type": "double",
+      "long_name": "Raw Salinity",
+      "units": "PSU"
+    },
+    "salinity": {
+      "type": "double",
+      "long_name": "Salinity",
+      "units": "PSU"
+    },
+    "salinityQC": {
+      "type": "float"
+    },
+    "rawTsgFlow": {
+      "type": "double",
+      "long_name": "Raw TSG Flow Rate",
+      "units": "l/min"
+    },
+    "tsgFlow": {
+      "type": "double",
+      "long_name": "TSG Flow Rate",
+      "units": "l/min"
+    },
+    "tsgFlowQC": {
+      "type": "float"
+    },
+    "rawFluorescence": {
+      "type": "double",
+      "long_name": "Raw Fluorescence",
+      "units": "dimensionless"
+    },
+    "fluorescence": {
+      "type": "double",
+      "long_name": "Fluorescence",
+      "units": "dimensionless"
+    },
+    "fluorescenceQC": {
+      "type": "float"
+    },
+    "rawLabMainFlow": {
+      "type": "double",
+      "long_name": "Raw UWY Lab Main Flow",
+      "units": "l/min"
+    },
+    "labMainFlow": {
+      "type": "double",
+      "long_name": "UWY Lab Main Flow",
+      "units": "l/min"
+    },
+    "labMainFlowQC": {
+      "type": "float"
+    },
+    "rawLabBranchFlow": {
+      "type": "double",
+      "long_name": "Raw UWY Lab Branch Flow",
+      "units": "l/min"
+    },
+    "labBranchFlow": {
+      "type": "double",
+      "long_name": "UWY Lab Branch Flow",
+      "units": "l/min"
+    },
+    "labBranchFlowQC": {
+      "type": "float"
+    },
+    "rawDo": {
+      "type": "double",
+      "long_name": "Raw Oxygen at the Optode",
+      "units": "uM/L"
+    },
+    "do": {
+      "type": "double",
+      "long_name": "Oxygen at the Optode",
+      "units": "uM/L"
+    },
+    "doQC": {
+      "type": "float"
+    },
+    "rawDoSaturation": {
+      "type": "double",
+      "long_name": "Raw Oxygen Saturation at the Optode",
+      "units": "%"
+    },
+    "doSaturation": {
+      "type": "double",
+      "long_name": "Oxygen Saturation at the Optode",
+      "units": "%"
+    },
+    "doSaturationQC": {
+      "type": "float"
+    },
+    "rawOptodeWaterTemp": {
+      "type": "double",
+      "long_name": "Raw Water Temperature at the Optode",
+      "units": "degC"
+    },
+    "optodeWaterTemp": {
+      "type": "double",
+      "long_name": "Water Temperature at the Optode",
+      "units": "degC"
+    },
+    "optodeWaterTempQC": {
+      "type": "float"
+    },
+    "stbdRainQC": {
+      "type": "float"
+    },
+    "rawPortRain": {
+      "type": "float",
+      "long_name": "Raw Port Accumulated Hourly Rain",
+      "units": "mm"
+    },
+    "rawStbdRain": {
+      "type": "float",
+      "long_name": "Raw Starboard Accumulated Hourly Rain",
+      "units": "mm"
+    },
+    "portRain": {
+      "type": "float",
+      "long_name": "Port Accumulated Hourly Rain",
+      "units": "mm"
+    },
+    "rawFluorometerFlow": {
+      "type": "float",
+      "long_name": "Raw Water Flow in Fluorometer Branch",
+      "units": "l/min"
+    },
+    "fluorescenceConcentration": {
+      "type": "float",
+      "long_name": "Fluorescence Concentration",
+      "units": "ug/L"
+    },
+    "fluorescenceConcentrationQC": {
+      "type": "float"
+    },
+    "modeoftheAirSamplingInlet": {
+      "type": "float"
+    },
+    "bPhase": {
+      "type": "float",
+      "long_name": "Optode bPhase",
+      "units": "dimensionless"
+    },
+    "bPhaseQC": {
+      "type": "float"
+    },
+    "portRainQC": {
+      "type": "float"
+    },
+    "TIME": {
+      "type": "timestamp[ns]"
+    }
+  },
+  "aws_opendata_registry": {
+    "Name": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+    "Description": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+    "Documentation": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+    "Contact": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+    "ManagedBy": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+    "UpdateFrequency": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+    "Tags": [
+      "FILL UP MANUALLY - CHECK DOCUMENTATION"
+    ],
+    "License": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+    "Resources": [
+      {
+        "Description": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+        "ARN": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+        "Region": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+        "Type": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+        "Explore": [
+          "FILL UP MANUALLY - CHECK DOCUMENTATION"
+        ]
+      }
+    ],
+    "DataAtWork": {
+      "Tutorials": [
+        {
+          "Title": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+          "URL": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+          "Services": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+          "AuthorName": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+          "AuthorURL": "FILL UP MANUALLY - CHECK DOCUMENTATION"
+        }
+      ],
+      "Tools & Applications": [
+        {
+          "Title": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+          "URL": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+          "AuthorName": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+          "AuthorURL": "FILL UP MANUALLY - CHECK DOCUMENTATION"
+        }
+      ],
+      "Publications": [
+        {
+          "Title": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+          "URL": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+          "AuthorName": "FILL UP MANUALLY - CHECK DOCUMENTATION"
+        }
+      ]
+    }
+  },
+  "schema_transformation": {
+    "drop_variables": [
+      "historyIdent",
+      "historyDate",
+      "history"
+    ],
+    "add_variables": {
+      "filename": {
+        "source": "@filename",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "long_name": "Filename of the source file"
+        }
+      },
+      "voyage": {
+        "source": "@global_attribute:Voyage",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "long_name": "Name of the voyage"
+        }
+      },
+      "ship_name": {
+        "source": "@global_attribute:Ship",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "long_name": "Name of the vessel"
+        }
+      },
+      "timestamp": {
+        "source": "@partitioning:time_extent",
+        "schema": {
+          "type": "int64",
+          "units": "1",
+          "long_name": "Partition timestamp"
+        }
+      },
+      "polygon": {
+        "source": "@partitioning:spatial_extent",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "long_name": "Spatial partition polygon"
+        }
+      }
+    },
+    "partitioning": [
+      {
+        "source_variable": "voyage"
+      },
+      {
+        "source_variable": "timestamp",
+        "type": "time_extent",
+        "time_extent": {
+          "time_varname": "TIME",
+          "partition_period": "Q"
+        }
+      },
+      {
+        "source_variable": "polygon",
+        "type": "spatial_extent",
+        "spatial_extent": {
+          "lat_varname": "latitude",
+          "lon_varname": "longitude",
+          "spatial_resolution": 10
+        }
+      }
+    ],
+    "global_attributes": {
+      "delete": [
+        "geospatial_lat_max",
+        "geospatial_lat_min",
+        "geospatial_lon_max",
+        "geospatial_lon_min",
+        "date_created"
+      ],
+      "set": {
+        "title": "CSIRO Underway"
+      }
+    }
+  }
+}
