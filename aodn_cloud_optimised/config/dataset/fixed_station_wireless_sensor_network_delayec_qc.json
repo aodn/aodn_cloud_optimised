@@ -1,0 +1,224 @@
+{
+  "dataset_name": "fixed_station_wireless_sensor_network_delayec_qc",
+  "logger_name": "fixed_station_wireless_sensor_network_delayec_qc",
+  "cloud_optimised_format": "parquet",
+  "run_settings": {
+    "paths": [
+      {
+        "s3_uri": "s3://imos-data/IMOS/FAIMMS/",
+        "filter": [
+          ".*/QAQC/.*_FV01\\.nc"
+        ],
+        "year_range": []
+      }
+    ],
+    "cluster": {
+      "mode": "local",
+      "restart_every_path": false
+    },
+    "clear_existing_data": true,
+    "raise_error": false,
+    "coiled_cluster_options": {
+      "n_workers": [
+        1,
+        20
+      ],
+      "scheduler_vm_types": "m7i-flex.large",
+      "worker_vm_types": "m7i-flex.large",
+      "allow_ingress_from": "me",
+      "compute_purchase_option": "spot_with_fallback",
+      "worker_options": {
+        "nthreads": 4,
+        "memory_limit": "8GB"
+      }
+    },
+    "batch_size": 50,
+    "force_previous_parquet_deletion": false
+  },
+  "metadata_uuid": "4260aa0a-0d0a-4dd0-9ebc-74d2bf937e21",
+  "schema": {
+    "LATITUDE": {
+      "type": "double",
+      "long_name": "latitude",
+      "standard_name": "latitude",
+      "units": "degrees_north",
+      "axis": "Y",
+      "valid_min": -90.0,
+      "valid_max": 90.0,
+      "reference_datum": "geographical coordinates, WGS84 projection"
+    },
+    "LONGITUDE": {
+      "type": "double",
+      "long_name": "longitude",
+      "standard_name": "longitude",
+      "units": "degrees_east",
+      "axis": "X",
+      "valid_min": -180.0,
+      "valid_max": 180.0,
+      "reference_datum": "geographical coordinates, WGS84 projection"
+    },
+    "NOMINAL_DEPTH": {
+      "type": "double",
+      "long_name": "nominal depth",
+      "standard_name": "depth",
+      "units": "metres",
+      "positive": "down",
+      "axis": "Z",
+      "reference_datum": "sea surface",
+      "valid_min": -10.0,
+      "valid_max": 30.0
+    },
+    "DEPTH": {
+      "type": "double",
+      "long_name": "actual depth",
+      "standard_name": "depth",
+      "units": "metres",
+      "ancillary_variables": "DEPTH_quality_control",
+      "sensor_depth": 5.2,
+      "reference_datum": "sea surface",
+      "positive": "down",
+      "valid_min": -10.0,
+      "valid_max": 30.0
+    },
+    "DEPTH_quality_control": {
+      "type": "double",
+      "long_name": "depth quality control",
+      "standard_name": "depth status_flag",
+      "quality_control_conventions": "IMOS standard set using the IODE flags",
+      "valid_min": 0.0,
+      "valid_max": 9.0,
+      "flag_values": [
+        0.0,
+        1.0,
+        2.0,
+        3.0,
+        4.0,
+        5.0,
+        6.0,
+        7.0,
+        8.0,
+        9.0
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values"
+    },
+    "TIME": {
+      "type": "timestamp[ns]",
+      "long_name": "time",
+      "standard_name": "time",
+      "observation_type": "measured",
+      "axis": "T",
+      "valid_min": 0.0,
+      "valid_max": 9999999999.0
+    }
+  },
+  "aws_opendata_registry": {
+    "Name": "IMOS - Wireless Sensor Networks Facility",
+    "Description": "The IMOS Wireless Sensor Networks Facility (formerly known as Facility for Automated Intelligent Monitoring of Marine Systems (FAIMMS)), is a sensor network established in the Great Barrier Reef off the coast of Queensland, Australia. A 'sensor network' is an array of small, wirelessly interconnected sensors that collectively stream sensor data to a central data aggregation point. Sensor networks can be used to provide spatially dense bio-physical measurements in real-time. In the marine environment they have particular application to the study of benthic ecosystems. Some sensors can be set to sample according to prevailing conditions (e.g. monitoring salinity more frequently after rainfall), but since communications with the sensors can be bi-directional they can also be manipulated by central land-based control systems. The Facilities' sensors collect data related to the interaction of heat and light in coral bleaching, and to help understand the impact of upwelling from the Coral Sea upon the productivity of Great Barrier Reef ecosystems. While sensor networks are a leading edge technology, they are well suited to this application because proven technologies exist for reliable sensing of physical variables (e.g. temperature, salinity, light) critical to the immediate scientific questions, which are: 1. understanding the interaction of heat and light in coral bleaching, and 2. understanding the impact of upwelling from the Coral Sea upon the productivity of GBR ecosystems. The immediate value of the network will be its ability to return spatially dense bio-physical measurements in real-time. As such this represents a large scale trial or \"proof of concept\" of a very important emerging technology for application in the marine environment with particular relevance to benthic ecosystems such as Great Barrier Reef and other benthic environments. \n\nSome sites have been partially or fully decommissioned: Heron Island (2008 - present) - partial; One Tree Island (2008 - present) - partial; Davies Reef (2009 - 2018); Myrmidon Reef (2009 - 2015); Rib Reef (2009 - 2017); Orpheus Island (2009 - present); Lizard Island (2010 - present) - partial. IMOS funding of the Facility ceased in June 2022. In some circumstances the Australian Institute of Marine Science (AIMS), has taken over the operation of the site, or equipment within it (see http://imos.org.au/wirelesssensornetworks.html for more details), and IMOS will continue to pull data from them.",
+    "Documentation": "https://catalogue-imos.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/4260aa0a-0d0a-4dd0-9ebc-74d2bf937e21",
+    "Contact": "info@aodn.org.au",
+    "ManagedBy": "AODN",
+    "UpdateFrequency": "As Needed",
+    "Tags": [
+      "FILL UP MANUALLY - CHECK DOCUMENTATION"
+    ],
+    "License": "http://creativecommons.org/licenses/by/4.0/",
+    "Resources": [
+      {
+        "Description": "Cloud Optimised AODN dataset of IMOS - Wireless Sensor Networks Facility",
+        "ARN": "arn:aws:s3:::aodn-cloud-optimised/fixed_station_wireless_sensor_network_delayec_qc.parquet",
+        "Region": "ap-southeast-2",
+        "Type": "S3 Bucket"
+      }
+    ],
+    "DataAtWork": {
+      "Tutorials": [
+        {
+          "Title": "Accessing IMOS - Wireless Sensor Networks Facility",
+          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/fixed_station_wireless_sensor_network_delayec_qc.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/fixed_station_wireless_sensor_network_delayec_qc.ipynb",
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
+        },
+        {
+          "Title": "Accessing and search for any AODN dataset",
+          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
+        }
+      ]
+    },
+    "Citation": "IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access]"
+  },
+  "schema_transformation": {
+    "drop_variables": [],
+    "add_variables": {
+      "filename": {
+        "source": "@filename",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "long_name": "Filename of the source file"
+        }
+      },
+      "site_code": {
+        "source": "@global_attribute:site_code",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "long_name": "site code"
+        }
+      },
+      "timestamp": {
+        "source": "@partitioning:time_extent",
+        "schema": {
+          "type": "int64",
+          "units": "1",
+          "long_name": "Partition timestamp"
+        }
+      },
+      "polygon": {
+        "source": "@partitioning:spatial_extent",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "long_name": "Spatial partition polygon"
+        }
+      }
+    },
+    "partitioning": [
+      {
+        "source_variable": "site_code"
+      },
+      {
+        "source_variable": "timestamp",
+        "type": "time_extent",
+        "time_extent": {
+          "time_varname": "TIME",
+          "partition_period": "M"
+        }
+      },
+      {
+        "source_variable": "polygon",
+        "type": "spatial_extent",
+        "spatial_extent": {
+          "lat_varname": "LATITUDE",
+          "lon_varname": "LONGITUDE",
+          "spatial_resolution": 2
+        }
+      }
+    ],
+    "global_attributes": {
+      "delete": [
+        "geospatial_lat_max",
+        "geospatial_lat_min",
+        "geospatial_lon_max",
+        "geospatial_lon_min",
+        "date_created"
+      ],
+      "set": {
+        "title": "IMOS - Wireless Sensor Networks Facility"
+      }
+    }
+  }
+}
