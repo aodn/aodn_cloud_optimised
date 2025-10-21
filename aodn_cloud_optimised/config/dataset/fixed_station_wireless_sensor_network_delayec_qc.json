@@ -13,7 +13,7 @@
       }
     ],
     "cluster": {
-      "mode": "local",
+      "mode": "coiled",
       "restart_every_path": false
     },
     "clear_existing_data": true,
@@ -21,18 +21,18 @@
     "coiled_cluster_options": {
       "n_workers": [
         1,
-        20
+        80
       ],
-      "scheduler_vm_types": "m7i-flex.large",
-      "worker_vm_types": "m7i-flex.large",
+      "scheduler_vm_types": "m7i-flex.2xlarge",
+      "worker_vm_types": "m7i-flex.xlarge",
       "allow_ingress_from": "me",
       "compute_purchase_option": "spot_with_fallback",
       "worker_options": {
-        "nthreads": 4,
-        "memory_limit": "8GB"
+        "nthreads": 32,
+        "memory_limit": "128GB"
       }
     },
-    "batch_size": 50,
+    "batch_size": 500,
     "force_previous_parquet_deletion": false
   },
   "metadata_uuid": "4260aa0a-0d0a-4dd0-9ebc-74d2bf937e21",
@@ -109,6 +109,596 @@
       "axis": "T",
       "valid_min": 0.0,
       "valid_max": 9999999999.0
+    },
+    "PRES_REL": {
+      "type": "float",
+      "long_name": "sea_water_pressure",
+      "standard_name": "sea_water_pressure_due_to_sea_water",
+      "units": "decibar",
+      "ancillary_variables": "PRES_REL_quality_control",
+      "sensor_depth": 5.0
+    },
+    "PRES_REL_quality_control": {
+      "type": "float",
+      "long_name": "sea_water_pressure quality control",
+      "standard_name": "sea_water_pressure_due_to_sea_water status_flag",
+      "quality_control_conventions": "IMOS standard set using the IODE flags",
+      "valid_min": 0.0,
+      "valid_max": 9.0,
+      "flag_values": [
+        0.0,
+        1.0,
+        2.0,
+        3.0,
+        4.0,
+        5.0,
+        6.0,
+        7.0,
+        8.0,
+        9.0
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values"
+    },
+    "TEMP": {
+      "type": "float",
+      "long_name": "sea_water_temperature",
+      "standard_name": "sea_water_temperature",
+      "units": "degrees celsius",
+      "ancillary_variables": "TEMP_quality_control",
+      "sensor_depth": 5.0
+    },
+    "TEMP_quality_control": {
+      "type": "float",
+      "long_name": "sea_water_temperature quality control",
+      "standard_name": "sea_water_temperature status_flag",
+      "quality_control_conventions": "IMOS standard set using the IODE flags",
+      "valid_min": 0.0,
+      "valid_max": 9.0,
+      "flag_values": [
+        0.0,
+        1.0,
+        2.0,
+        3.0,
+        4.0,
+        5.0,
+        6.0,
+        7.0,
+        8.0,
+        9.0
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values"
+    },
+    "PSAL": {
+      "type": "float",
+      "long_name": "sea_water_salinity",
+      "standard_name": "sea_water_salinity",
+      "units": "1e-3",
+      "valid_min": 10.0,
+      "valid_max": 36.0,
+      "ancillary_variables": "PSAL_quality_control",
+      "sensor_depth": 5.2
+    },
+    "DOWN_PHOTOSYNTH_FLUX": {
+      "type": "float",
+      "long_name": "surface_downwelling_photosynthetic_radiative_flux_in_air",
+      "standard_name": "surface_downwelling_photosynthetic_radiative_flux_in_air",
+      "units": "W m-2",
+      "ancillary_variables": "DOWN_PHOTOSYNTH_FLUX_quality_control",
+      "sensor_depth": 0.8
+    },
+    "DOWN_PHOTOSYNTH_FLUX_quality_control": {
+      "type": "float",
+      "long_name": "surface_downwelling_photosynthetic_radiative_flux_in_air quality control",
+      "standard_name": "surface_downwelling_photosynthetic_radiative_flux_in_air status_flag",
+      "quality_control_conventions": "IMOS standard set using the IODE flags",
+      "valid_min": 0.0,
+      "valid_max": 9.0,
+      "flag_values": [
+        0.0,
+        1.0,
+        2.0,
+        3.0,
+        4.0,
+        5.0,
+        6.0,
+        7.0,
+        8.0,
+        9.0
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values"
+    },
+    "PSAL_quality_control": {
+      "type": "float",
+      "long_name": "sea_water_salinity quality control",
+      "standard_name": "sea_water_salinity status_flag",
+      "quality_control_conventions": "IMOS standard set using the IODE flags",
+      "valid_min": 0.0,
+      "valid_max": 9.0,
+      "flag_values": [
+        0.0,
+        1.0,
+        2.0,
+        3.0,
+        4.0,
+        5.0,
+        6.0,
+        7.0,
+        8.0,
+        9.0
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values"
+    },
+    "AIRT": {
+      "type": "float",
+      "long_name": "air_temperature",
+      "standard_name": "air_temperature",
+      "units": "degrees celsius",
+      "ancillary_variables": "AIRT_quality_control"
+    },
+    "WDIR_sigma_30min": {
+      "type": "float",
+      "long_name": "standard_deviation_of_wind_direction_30min_sample_campbells_scientific_algorithm",
+      "units": "degree",
+      "ancillary_variables": "WDIR_sigma_30min_quality_control"
+    },
+    "RAIN_DURATION": {
+      "type": "timedelta64[ns]",
+      "long_name": "rainfall duration",
+      "ancillary_variables": "RAIN_DURATION_quality_control"
+    },
+    "ATMP": {
+      "type": "float",
+      "long_name": "air_pressure",
+      "standard_name": "air_pressure",
+      "units": "hPa",
+      "ancillary_variables": "ATMP_quality_control"
+    },
+    "WDIR_sigma_10min": {
+      "type": "float",
+      "long_name": "standard_deviation_of_wind_direction_10min_sample_campbells_scientific_algorithm",
+      "units": "degree",
+      "ancillary_variables": "WDIR_sigma_10min_quality_control"
+    },
+    "RAIN_INTENSITY_10min": {
+      "type": "float",
+      "long_name": "rainfall intensity_10min_sample",
+      "standard_name": "rainfall_rate",
+      "units": "Millimetres per hour1",
+      "ancillary_variables": "RAIN_INTENSITY_10min_quality_control"
+    },
+    "RAIN_AMOUNT": {
+      "type": "float",
+      "long_name": "rainfall_amount_since_9am",
+      "standard_name": "thickness_of_rainfall_amount",
+      "units": "millimetres",
+      "ancillary_variables": "RAIN_AMOUNT_quality_control"
+    },
+    "RELH": {
+      "type": "float",
+      "long_name": "percentage_relative_humidity",
+      "standard_name": "relative_humidity",
+      "units": "percent",
+      "ancillary_variables": "RELH_quality_control"
+    },
+    "WDIR_sigma_30min_quality_control": {
+      "type": "float",
+      "long_name": "standard_deviation_of_wind_direction_30min_sample_campbells_scientific_algorithm quality control",
+      "quality_control_conventions": "IMOS standard set using the IODE flags",
+      "valid_min": 0.0,
+      "valid_max": 9.0,
+      "flag_values": [
+        0.0,
+        1.0,
+        2.0,
+        3.0,
+        4.0,
+        5.0,
+        6.0,
+        7.0,
+        8.0,
+        9.0
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values"
+    },
+    "AIRT_quality_control": {
+      "type": "float",
+      "long_name": "air_temperature quality control",
+      "standard_name": "air_temperature status_flag",
+      "quality_control_conventions": "IMOS standard set using the IODE flags",
+      "valid_min": 0.0,
+      "valid_max": 9.0,
+      "flag_values": [
+        0.0,
+        1.0,
+        2.0,
+        3.0,
+        4.0,
+        5.0,
+        6.0,
+        7.0,
+        8.0,
+        9.0
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values"
+    },
+    "RAIN_DURATION_quality_control": {
+      "type": "float",
+      "long_name": "rainfall duration quality control",
+      "quality_control_conventions": "IMOS standard set using the IODE flags",
+      "valid_min": 0.0,
+      "valid_max": 9.0,
+      "flag_values": [
+        0.0,
+        1.0,
+        2.0,
+        3.0,
+        4.0,
+        5.0,
+        6.0,
+        7.0,
+        8.0,
+        9.0
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values"
+    },
+    "WDIR_sigma_10min_quality_control": {
+      "type": "float",
+      "long_name": "standard_deviation_of_wind_direction_10min_sample_campbells_scientific_algorithm quality control",
+      "quality_control_conventions": "IMOS standard set using the IODE flags",
+      "valid_min": 0.0,
+      "valid_max": 9.0,
+      "flag_values": [
+        0.0,
+        1.0,
+        2.0,
+        3.0,
+        4.0,
+        5.0,
+        6.0,
+        7.0,
+        8.0,
+        9.0
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values"
+    },
+    "ATMP_quality_control": {
+      "type": "float",
+      "long_name": "air_pressure quality control",
+      "standard_name": "air_pressure status_flag",
+      "quality_control_conventions": "IMOS standard set using the IODE flags",
+      "valid_min": 0.0,
+      "valid_max": 9.0,
+      "flag_values": [
+        0.0,
+        1.0,
+        2.0,
+        3.0,
+        4.0,
+        5.0,
+        6.0,
+        7.0,
+        8.0,
+        9.0
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values"
+    },
+    "RAIN_INTENSITY_10min_quality_control": {
+      "type": "float",
+      "long_name": "rainfall intensity_10min_sample quality control",
+      "standard_name": "rainfall_rate status_flag",
+      "quality_control_conventions": "IMOS standard set using the IODE flags",
+      "valid_min": 0.0,
+      "valid_max": 9.0,
+      "flag_values": [
+        0.0,
+        1.0,
+        2.0,
+        3.0,
+        4.0,
+        5.0,
+        6.0,
+        7.0,
+        8.0,
+        9.0
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values"
+    },
+    "RAIN_AMOUNT_quality_control": {
+      "type": "float",
+      "long_name": "rainfall_amount_since_9am quality control",
+      "standard_name": "thickness_of_rainfall_amount status_flag",
+      "quality_control_conventions": "IMOS standard set using the IODE flags",
+      "valid_min": 0.0,
+      "valid_max": 9.0,
+      "flag_values": [
+        0.0,
+        1.0,
+        2.0,
+        3.0,
+        4.0,
+        5.0,
+        6.0,
+        7.0,
+        8.0,
+        9.0
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values"
+    },
+    "RELH_quality_control": {
+      "type": "float",
+      "long_name": "percentage_relative_humidity quality control",
+      "standard_name": "relative_humidity status_flag",
+      "quality_control_conventions": "IMOS standard set using the IODE flags",
+      "valid_min": 0.0,
+      "valid_max": 9.0,
+      "flag_values": [
+        0.0,
+        1.0,
+        2.0,
+        3.0,
+        4.0,
+        5.0,
+        6.0,
+        7.0,
+        8.0,
+        9.0
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values"
+    },
+    "WDIR_10min": {
+      "type": "float",
+      "long_name": "wind_from_direction_10min_sample_epa_guidelines",
+      "standard_name": "wind_from_direction",
+      "units": "degree",
+      "ancillary_variables": "WDIR_10min_quality_control"
+    },
+    "WDIR_30min": {
+      "type": "float",
+      "long_name": "wind_from_direction_30min_sample_campbells_scientific_algorithm",
+      "standard_name": "wind_from_direction",
+      "units": "degree",
+      "ancillary_variables": "WDIR_30min_quality_control"
+    },
+    "WSPD_10min": {
+      "type": "float",
+      "long_name": "wind_speed_10min_sample_epa_guidelines",
+      "standard_name": "wind_speed",
+      "units": "kilometres per hour",
+      "ancillary_variables": "WSPD_10min_quality_control"
+    },
+    "WSPD_30min": {
+      "type": "float",
+      "long_name": "wind_speed_30min_sample_epa_guidelines",
+      "standard_name": "wind_speed",
+      "units": "kilometres per hour",
+      "ancillary_variables": "WSPD_30min_quality_control"
+    },
+    "WSPD_MAX_10min": {
+      "type": "float",
+      "long_name": "wind_speed_max_10min",
+      "standard_name": "wind_speed",
+      "units": "kilometres per hour",
+      "ancillary_variables": "WSPD_MAX_10min_quality_control"
+    },
+    "WSPD_MAX_30min": {
+      "type": "float",
+      "long_name": "wind_speed_max_30min",
+      "standard_name": "wind_speed",
+      "units": "kilometres per hour",
+      "ancillary_variables": "WSPD_MAX_30min_quality_control"
+    },
+    "WSPD_MIN_30min": {
+      "type": "float",
+      "long_name": "wind_speed_min_30min",
+      "standard_name": "wind_speed",
+      "units": "kilometres per hour",
+      "ancillary_variables": "WSPD_MIN_30min_quality_control"
+    },
+    "WSPD_MIN_10min": {
+      "type": "float",
+      "long_name": "wind_speed_min_10min",
+      "standard_name": "wind_speed",
+      "units": "kilometres per hour",
+      "ancillary_variables": "WSPD_MIN_10min_quality_control"
+    },
+    "WDIR_10min_quality_control": {
+      "type": "float",
+      "long_name": "wind_from_direction_10min_sample_epa_guidelines quality control",
+      "standard_name": "wind_from_direction status_flag",
+      "quality_control_conventions": "IMOS standard set using the IODE flags",
+      "valid_min": 0.0,
+      "valid_max": 9.0,
+      "flag_values": [
+        0.0,
+        1.0,
+        2.0,
+        3.0,
+        4.0,
+        5.0,
+        6.0,
+        7.0,
+        8.0,
+        9.0
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values"
+    },
+    "WDIR_30min_quality_control": {
+      "type": "float",
+      "long_name": "wind_from_direction_30min_sample_epa_guidelines quality control",
+      "standard_name": "wind_from_direction status_flag",
+      "quality_control_conventions": "IMOS standard set using the IODE flags",
+      "valid_min": 0.0,
+      "valid_max": 9.0,
+      "flag_values": [
+        0.0,
+        1.0,
+        2.0,
+        3.0,
+        4.0,
+        5.0,
+        6.0,
+        7.0,
+        8.0,
+        9.0
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values"
+    },
+    "WSPD_30min_quality_control": {
+      "type": "float",
+      "long_name": "wind_speed_30min_sample_epa_guidelines quality control",
+      "standard_name": "wind_speed status_flag",
+      "quality_control_conventions": "IMOS standard set using the IODE flags",
+      "valid_min": 0.0,
+      "valid_max": 9.0,
+      "flag_values": [
+        0.0,
+        1.0,
+        2.0,
+        3.0,
+        4.0,
+        5.0,
+        6.0,
+        7.0,
+        8.0,
+        9.0
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values"
+    },
+    "WSPD_10min_quality_control": {
+      "type": "float",
+      "long_name": "wind_speed_10min_sample_epa_guidelines quality control",
+      "standard_name": "wind_speed status_flag",
+      "quality_control_conventions": "IMOS standard set using the IODE flags",
+      "valid_min": 0.0,
+      "valid_max": 9.0,
+      "flag_values": [
+        0.0,
+        1.0,
+        2.0,
+        3.0,
+        4.0,
+        5.0,
+        6.0,
+        7.0,
+        8.0,
+        9.0
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values"
+    },
+    "WSPD_MAX_10min_quality_control": {
+      "type": "float",
+      "long_name": "wind_speed_max_10min quality control",
+      "standard_name": "wind_speed status_flag",
+      "quality_control_conventions": "IMOS standard set using the IODE flags",
+      "valid_min": 0.0,
+      "valid_max": 9.0,
+      "flag_values": [
+        0.0,
+        1.0,
+        2.0,
+        3.0,
+        4.0,
+        5.0,
+        6.0,
+        7.0,
+        8.0,
+        9.0
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values"
+    },
+    "WSPD_MAX_30min_quality_control": {
+      "type": "float",
+      "long_name": "wind_speed_max_30min quality control",
+      "standard_name": "wind_speed status_flag",
+      "quality_control_conventions": "IMOS standard set using the IODE flags",
+      "valid_min": 0.0,
+      "valid_max": 9.0,
+      "flag_values": [
+        0.0,
+        1.0,
+        2.0,
+        3.0,
+        4.0,
+        5.0,
+        6.0,
+        7.0,
+        8.0,
+        9.0
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values"
+    },
+    "WSPD_MIN_30min_quality_control": {
+      "type": "float",
+      "long_name": "wind_speed_min_30min quality control",
+      "standard_name": "wind_speed status_flag",
+      "quality_control_conventions": "IMOS standard set using the IODE flags",
+      "valid_min": 0.0,
+      "valid_max": 9.0,
+      "flag_values": [
+        0.0,
+        1.0,
+        2.0,
+        3.0,
+        4.0,
+        5.0,
+        6.0,
+        7.0,
+        8.0,
+        9.0
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values"
+    },
+    "WSPD_MIN_10min_quality_control": {
+      "type": "float",
+      "long_name": "wind_speed_min_10min quality control",
+      "standard_name": "wind_speed status_flag",
+      "quality_control_conventions": "IMOS standard set using the IODE flags",
+      "valid_min": 0.0,
+      "valid_max": 9.0,
+      "flag_values": [
+        0.0,
+        1.0,
+        2.0,
+        3.0,
+        4.0,
+        5.0,
+        6.0,
+        7.0,
+        8.0,
+        9.0
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values"
+    },
+    "TURB": {
+      "type": "float",
+      "long_name": "sea_water_turbidity",
+      "standard_name": "sea_water_turbidity",
+      "units": "1",
+      "valid_min": 0.0,
+      "valid_max": 1000.0,
+      "ancillary_variables": "TURB_quality_control",
+      "sensor_depth": 3.5
+    },
+    "TURB_quality_control": {
+      "type": "float",
+      "long_name": "sea_water_turbidity quality control",
+      "standard_name": "sea_water_turbidity status_flag",
+      "quality_control_conventions": "IMOS standard set using the IODE flags",
+      "valid_min": 0.0,
+      "valid_max": 9.0,
+      "flag_values": [
+        0.0,
+        1.0,
+        2.0,
+        3.0,
+        4.0,
+        5.0,
+        6.0,
+        7.0,
+        8.0,
+        9.0
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values"
     }
   },
   "aws_opendata_registry": {
