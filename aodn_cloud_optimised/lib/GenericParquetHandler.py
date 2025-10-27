@@ -226,8 +226,46 @@ class GenericHandler(CommonHandler):
                         f"{self.uuid_log}: The NetCDF file does not conform to the pre-defined schema."
                     )
 
+    def preprocess_data_parquet(
+        self, parquet_fp
+    ) -> Generator[Tuple[pd.DataFrame, xr.Dataset], None, None]:
+        """
+        Preprocesses a parquet file using pyarrow and converts it into an xarray Dataset based on the dataset configuration.
+
+        Args:
+            parquet_fp (str or s3fs.core.S3File): File path or s3fs object of the parquet file to be processed.
+
+        Yields:
+            Tuple[pd.DataFrame, xr.Dataset]: A generator yielding a tuple containing the processed pandas DataFrame
+                and its corresponding xarray Dataset.
+
+        This method reads a parquet file(`parquet_fp`) using pyarrow.parquet `read_table` functino.
+
+        The resultin DataFrame (`df`) is then converted into an xarray Dataset using `xr.Dataset.from_dataframe()`.
+        """
+
+        # TODO: Investigate adding pyarrow read options
+
+        table = pq.read_table(parquet_fp)
+        df = table.to_pandas()
+        df = df.drop(columns=self.drop_variables, errors="ignore")
+        ds = xr.Dataset.from_dataframe(df)
+
+        for var in ds.variables:
+            if var not in self.schema:
+                self.logger.error(
+                    f"{self.uuid_log}: Missing variable: {var} from dataset config"
+                )
+            else:
+                ds[var].attrs = self.schema.get(var)
+                del ds[var].attrs[
+                    "type"
+                ]  # remove the type attribute which is not necessary at all
+
+        yield df, ds
+
     def preprocess_data(
-        self, fp
+        self, fp: str
     ) -> Generator[Tuple[pd.DataFrame, xr.Dataset], None, None]:
         """
         Overwrites the preprocess_data method from CommonHandler.
@@ -238,13 +276,23 @@ class GenericHandler(CommonHandler):
         Yields:
             tuple: A tuple containing DataFrame and Dataset.
 
+        Raises:
+            NotImplementedError: Where the file type is not yet implemented
+
         If `fp` ends with ".nc", it delegates to `self.preprocess_data_netcdf(fp)`.
-        If `fp` ends with ".csv", it delegates to `self.preprocess_data_csv(fp)`.
+        Elif `fp` ends with ".csv", it delegates to `self.preprocess_data_csv(fp)`.
+        Elif `fp` ends with ".csv", it delegates to `self.preprocess_data_parquet_csv(fp)`.
+        Else raises a NotImplementedError
         """
-        if fp.path.endswith(".nc"):
-            return self.preprocess_data_netcdf(fp)
-        if fp.path.endswith(".csv"):
-            return self.preprocess_data_csv(fp)
+        match fp:
+            case fp.endswith(".nc"):
+                return self.preprocess_data_netcdf(fp)
+            case fp.endswith(".csv"):
+                return self.preprocess_data_csv(fp)
+            case fp.endswith(".parquet"):
+                return self.preprocess_data_parquet(fp)
+            case _:
+                raise NotImplementedError(f"files with suffix `{fp.split('.')[-1]}` not yet implemented in preprocess_data")
 
     @staticmethod
     def cast_table_by_schema(table, schema) -> pa.Table:
