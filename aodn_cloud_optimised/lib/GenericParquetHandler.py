@@ -239,9 +239,18 @@ class GenericHandler(CommonHandler):
             Tuple[pd.DataFrame, xr.Dataset]: A generator yielding a tuple containing the processed pandas DataFrame
                 and its corresponding xarray Dataset.
 
-        This method reads a parquet file(`parquet_fp`) using pyarrow.parquet `read_table` functino.
+        This method reads a parquet file(`parquet_fp`) using pyarrow.parquet `read_table` function.
 
         The resultin DataFrame (`df`) is then converted into an xarray Dataset using `xr.Dataset.from_dataframe()`.
+
+        # TODO: Document `pq.read_table` options
+
+        The method also uses the 'schema' from the dataset configuration to assign attributes to variables in the
+        xarray Dataset. Each variable's attributes are extracted from the 'schema' and assigned to the Dataset variable's
+        attributes. The 'type' attribute from the `pyarrow_schema` is removed from the Dataset variables' attributes since it
+        is considered unnecessary.
+
+        If a variable in the Dataset is not found in the schema, an error is logged.
         """
 
         # TODO: Investigate adding pyarrow read options
