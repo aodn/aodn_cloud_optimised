@@ -1,6 +1,6 @@
 {
-  "dataset_name": "mooring_sofs_surface_fluxes_realtime_nonqc",
-  "logger_name": "mooring_sofs_surface_fluxes_realtime_nonqc",
+  "dataset_name": "mooring_sofs_surface_fluxes_realtime_qc",
+  "logger_name": "mooring_sofs_surface_fluxes_realtime_qc",
   "cloud_optimised_format": "parquet",
   "run_settings": {
     "paths": [
@@ -335,7 +335,7 @@
     "Resources": [
       {
         "Description": "Cloud Optimised AODN dataset of IMOS - Deep Water Moorings - Southern Ocean Flux Station (SOFS) - Surface fluxes (real-time)",
-        "ARN": "arn:aws:s3:::imos-data-lab-optimised/mooring_sofs_surface_fluxes_realtime_nonqc.parquet",
+        "ARN": "arn:aws:s3:::imos-data-lab-optimised/mooring_sofs_surface_fluxes_realtime_qc.parquet",
         "Region": "ap-southeast-2",
         "Type": "S3 Bucket"
       }
@@ -344,8 +344,8 @@
       "Tutorials": [
         {
           "Title": "Accessing IMOS - Deep Water Moorings - Southern Ocean Flux Station (SOFS) - Surface fluxes (real-time)",
-          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/mooring_sofs_surface_fluxes_realtime_nonqc.ipynb",
-          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/mooring_sofs_surface_fluxes_realtime_nonqc.ipynb",
+          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/mooring_sofs_surface_fluxes_realtime_qc.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/mooring_sofs_surface_fluxes_realtime_qc.ipynb",
           "AuthorName": "Laurent Besnard",
           "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
         },

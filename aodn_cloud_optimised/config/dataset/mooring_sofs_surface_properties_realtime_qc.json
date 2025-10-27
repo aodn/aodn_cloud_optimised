@@ -1,0 +1,743 @@
+{
+  "dataset_name": "mooring_sofs_surface_properties_realtime_qc",
+  "logger_name": "mooring_sofs_surface_properties_realtime_qc",
+  "cloud_optimised_format": "parquet",
+  "run_settings": {
+    "paths": [
+      {
+        "s3_uri": "s3://imos-data/IMOS/DWM/ASFS/SOFS/Surface_properties/Real-time/",
+        "filter": [
+          ".*_FV01_.*\\.nc"
+        ],
+        "year_range": []
+      }
+    ],
+    "cluster": {
+      "mode": "coiled",
+      "restart_every_path": false
+    },
+    "clear_existing_data": true,
+    "raise_error": false,
+    "coiled_cluster_options": {
+      "n_workers": [
+        1,
+        20
+      ],
+      "scheduler_vm_types": "m7i-flex.large",
+      "worker_vm_types": "m7i-flex.large",
+      "allow_ingress_from": "me",
+      "compute_purchase_option": "spot_with_fallback",
+      "worker_options": {
+        "nthreads": 4,
+        "memory_limit": "32GB"
+      }
+    },
+    "batch_size": 50,
+    "force_previous_parquet_deletion": false
+  },
+  "metadata_uuid": "9fdb1eee-bc28-43a9-88c5-972324784837",
+  "schema": {
+    "TIME": {
+      "type": "timestamp[ns]",
+      "standard_name": "time",
+      "long_name": "time",
+      "axis": "T",
+      "valid_min": 0,
+      "valid_max": 90000.0,
+      "comment": "Relative julian days with decimal part as parts of the day",
+      "ancillary_variables": "TIME_quality_control"
+    },
+    "LATITUDE": {
+      "type": "float",
+      "long_name": "latitude",
+      "units": "degrees_north",
+      "instrument": "Iridium Satellite Tracker 9601-DGS-LP",
+      "observation_type": "measured",
+      "standard_name": "latitude",
+      "axis": "Y",
+      "valid_min": -90,
+      "valid_max": 90,
+      "reference_datum": "geographical coordinates, WGS84",
+      "ancillary_variables": "LATITUDE_quality_control"
+    },
+    "LONGITUDE": {
+      "type": "float",
+      "long_name": "longitude",
+      "units": "degrees_east",
+      "instrument": "Iridium Satellite Tracker 9601-DGS-LP",
+      "observation_type": "measured",
+      "standard_name": "longitude",
+      "axis": "X",
+      "valid_min": -180,
+      "valid_max": 180,
+      "reference_datum": "geographical coordinates, WGS84",
+      "ancillary_variables": "LONGITUDE_quality_control"
+    },
+    "UWND": {
+      "type": "float",
+      "long_name": "eastward component of wind speed (5180)",
+      "units": "meter second-1",
+      "instrument": "Gill Instruments Wind Observer II (s/n 213)",
+      "observation_type": "measured",
+      "sensor_height": 3.5199999809265137,
+      "standard_name": "eastward_wind",
+      "ancillary_variables": "UWND_quality_control"
+    },
+    "UWND_2": {
+      "type": "float",
+      "long_name": "eastward component of wind speed (5950)",
+      "units": "meter second-1",
+      "instrument": "Gill Instruments Wind Observer II (s/n 214)",
+      "observation_type": "measured",
+      "sensor_height": 3.5199999809265137,
+      "standard_name": "eastward_wind",
+      "ancillary_variables": "UWND_2_quality_control"
+    },
+    "VWND": {
+      "type": "float",
+      "long_name": "northward component of wind speed (5180)",
+      "units": "meter second-1",
+      "instrument": "Gill Instruments Wind Observer II (s/n 213)",
+      "observation_type": "measured",
+      "sensor_height": 3.5199999809265137,
+      "standard_name": "northward_wind",
+      "ancillary_variables": "VWND_quality_control"
+    },
+    "VWND_2": {
+      "type": "float",
+      "long_name": "northward component of wind speed (5950)",
+      "units": "meter second-1",
+      "instrument": "Gill Instruments Wind Observer II (s/n 214)",
+      "observation_type": "measured",
+      "sensor_height": 3.5199999809265137,
+      "standard_name": "northward_wind",
+      "ancillary_variables": "VWND_2_quality_control"
+    },
+    "WDIR": {
+      "type": "float",
+      "long_name": "earth relative wind direction (5180)",
+      "units": "degrees (clockwise from true north)",
+      "instrument": "calculated from U and V",
+      "observation_type": "calculated",
+      "wind_direction_convention": "oceanographic",
+      "sensor_height": 3.5199999809265137,
+      "standard_name": "wind_to_direction",
+      "ancillary_variables": "WDIR_quality_control"
+    },
+    "WDIR_2": {
+      "type": "float",
+      "long_name": "earth relative wind direction (5950)",
+      "units": "degrees (clockwise from true north)",
+      "instrument": "calculated from U and V",
+      "observation_type": "calculated",
+      "wind_direction_convention": "oceanographic",
+      "sensor_height": 3.5199999809265137,
+      "standard_name": "wind_to_direction",
+      "ancillary_variables": "WDIR_2_quality_control"
+    },
+    "WSPD": {
+      "type": "float",
+      "long_name": "earth relative wind speed (5180)",
+      "units": "meter second-1",
+      "instrument": "calculated from U and V",
+      "observation_type": "calculated",
+      "sensor_height": 3.5199999809265137,
+      "standard_name": "wind_speed",
+      "ancillary_variables": "WSPD_quality_control"
+    },
+    "WSPD_2": {
+      "type": "float",
+      "long_name": "earth relative wind speed (5950)",
+      "units": "meter second-1",
+      "instrument": "calculated from U and V",
+      "observation_type": "calculated",
+      "sensor_height": 3.5199999809265137,
+      "standard_name": "wind_speed",
+      "ancillary_variables": "WSPD_2_quality_control"
+    },
+    "ATMP": {
+      "type": "float",
+      "long_name": "atmospheric pressure (5180)",
+      "units": "millibar",
+      "instrument": "Dresser Instruments Heise DXD (s/n 226)",
+      "mslp_indicator": "at sensor height",
+      "observation_type": "measured",
+      "sensor_height": 3.1700000762939453,
+      "standard_name": "air_pressure",
+      "ancillary_variables": "ATMP_quality_control"
+    },
+    "ATMP_2": {
+      "type": "float",
+      "long_name": "atmospheric pressure (5950)",
+      "units": "millibar",
+      "instrument": "Dresser Instruments Heise DXD (s/n 227)",
+      "mslp_indicator": "at sensor height",
+      "observation_type": "measured",
+      "sensor_height": 3.1700000762939453,
+      "standard_name": "air_pressure",
+      "ancillary_variables": "ATMP_2_quality_control"
+    },
+    "AIRT": {
+      "type": "float",
+      "long_name": "air temperature (5180)",
+      "units": "celsius",
+      "instrument": "Rotronic MP-101A (s/n 243)",
+      "observation_type": "measured",
+      "sensor_height": 3.1700000762939453,
+      "standard_name": "air_temperature",
+      "ancillary_variables": "AIRT_quality_control"
+    },
+    "AIRT_2": {
+      "type": "float",
+      "long_name": "air temperature (5950)",
+      "units": "celsius",
+      "instrument": "Rotronic MP-101A (s/n 242)",
+      "observation_type": "measured",
+      "sensor_height": 3.1700000762939453,
+      "standard_name": "air_temperature",
+      "ancillary_variables": "AIRT_2_quality_control"
+    },
+    "RELH": {
+      "type": "float",
+      "long_name": "relative humidity (5180)",
+      "units": "percent",
+      "instrument": "Rotronic MP-101A (s/n 243)",
+      "observation_type": "measured",
+      "sensor_height": 3.1700000762939453,
+      "standard_name": "relative_humidity",
+      "ancillary_variables": "RELH_quality_control"
+    },
+    "RELH_2": {
+      "type": "float",
+      "long_name": "relative humidity (5950)",
+      "units": "percent",
+      "instrument": "Rotronic MP-101A (s/n 242)",
+      "observation_type": "measured",
+      "sensor_height": 3.1700000762939453,
+      "standard_name": "relative_humidity",
+      "ancillary_variables": "RELH_2_quality_control"
+    },
+    "TEMP": {
+      "type": "float",
+      "long_name": "sea temperature (5180)",
+      "units": "celsius",
+      "instrument": "SBE37 (s/n 1840)",
+      "observation_type": "measured",
+      "sensor_depth": 0.6100000143051147,
+      "standard_name": "sea_surface_temperature",
+      "ancillary_variables": "TEMP_quality_control"
+    },
+    "TEMP_2": {
+      "type": "float",
+      "long_name": "sea temperature (5950)",
+      "units": "celsius",
+      "instrument": "SBE37 (s/n 7409)",
+      "observation_type": "measured",
+      "sensor_depth": 0.6100000143051147,
+      "standard_name": "sea_surface_temperature",
+      "ancillary_variables": "TEMP_2_quality_control"
+    },
+    "CNDC": {
+      "type": "float",
+      "long_name": "sea water electrical conductivity (5180)",
+      "units": "siemens meter-1",
+      "instrument": "SBE37 (s/n 1840)",
+      "observation_type": "measured",
+      "sensor_depth": 0.6100000143051147,
+      "standard_name": "sea_water_electrical_conductivity",
+      "ancillary_variables": "CNDC_quality_control"
+    },
+    "CNDC_2": {
+      "type": "float",
+      "long_name": "sea water electrical conductivity (5950)",
+      "units": "siemens meter-1",
+      "instrument": "SBE37 (s/n 7409)",
+      "observation_type": "measured",
+      "sensor_depth": 0.6100000143051147,
+      "standard_name": "sea_water_electrical_conductivity",
+      "ancillary_variables": "CNDC_2_quality_control"
+    },
+    "PSAL": {
+      "type": "float",
+      "long_name": "sea water salinity (5180)",
+      "units": "1e-3",
+      "instrument": "calculated from conductivity and water temperature",
+      "observation_type": "calculated",
+      "sensor_depth": 0.6100000143051147,
+      "standard_name": "sea_water_salinity",
+      "ancillary_variables": "PSAL_quality_control"
+    },
+    "PSAL_2": {
+      "type": "float",
+      "long_name": "sea water salinity (5950)",
+      "units": "1e-3",
+      "instrument": "calculated from conductivity and water temperature",
+      "observation_type": "calculated",
+      "sensor_depth": 0.6100000143051147,
+      "standard_name": "sea_water_salinity",
+      "ancillary_variables": "PSAL_2_quality_control"
+    },
+    "RAIN_AMOUNT": {
+      "type": "float",
+      "long_name": "precipitation (5180)",
+      "units": "millimeters",
+      "instrument": "RM Young 50202 (s/n 221)",
+      "sensor_height": 3.119999885559082,
+      "observation_type": "measured",
+      "standard_name": "thickness_of_rainfall_amount",
+      "ancillary_variables": "RAIN_AMOUNT_quality_control"
+    },
+    "RAIN_AMOUNT_2": {
+      "type": "float",
+      "long_name": "precipitation (5950)",
+      "units": "millimeters",
+      "instrument": "RM Young 50202 (s/n 222)",
+      "sensor_height": 3.119999885559082,
+      "observation_type": "measured",
+      "standard_name": "thickness_of_rainfall_amount",
+      "ancillary_variables": "RAIN_AMOUNT_2_quality_control"
+    },
+    "SW": {
+      "type": "float",
+      "long_name": "short wave radiation (5180)",
+      "units": "watts meter-2",
+      "instrument": "Eppley Precision Spectral Pyranometer (s/n 235)",
+      "rad_direction": "downwelling",
+      "observation_type": "measured",
+      "sensor_height": 3.069999933242798,
+      "standard_name": "surface_downwelling_shortwave_flux_in_air",
+      "ancillary_variables": "SW_quality_control"
+    },
+    "SW_2": {
+      "type": "float",
+      "long_name": "short wave radiation (5950)",
+      "units": "watts meter-2",
+      "instrument": "Eppley Precision Spectral Pyranometer (s/n 236)",
+      "rad_direction": "downwelling",
+      "observation_type": "measured",
+      "sensor_height": 3.069999933242798,
+      "standard_name": "surface_downwelling_shortwave_flux_in_air",
+      "ancillary_variables": "SW_2_quality_control"
+    },
+    "LW": {
+      "type": "float",
+      "long_name": "long wave radiation (5180)",
+      "units": "watts meter-2",
+      "instrument": "Eppley Precision Infrared Radiometer (s/n 228)",
+      "rad_direction": "downwelling",
+      "observation_type": "measured",
+      "sensor_height": 3.069999933242798,
+      "standard_name": "surface_downwelling_longwave_flux_in_air",
+      "ancillary_variables": "LW_quality_control"
+    },
+    "LW_2": {
+      "type": "float",
+      "long_name": "long wave radiation (5950)",
+      "units": "watts meter-2",
+      "instrument": "Eppley Precision Infrared Radiometer (s/n 227)",
+      "rad_direction": "downwelling",
+      "observation_type": "measured",
+      "sensor_height": 3.069999933242798,
+      "standard_name": "surface_downwelling_longwave_flux_in_air",
+      "ancillary_variables": "LW_2_quality_control"
+    },
+    "PL_CMP": {
+      "type": "float",
+      "long_name": "compass direction (5180)",
+      "units": "degrees_north",
+      "instrument": "",
+      "observation_type": "measured",
+      "ancillary_variables": "PL_CMP_quality_control"
+    },
+    "PL_CMP2": {
+      "type": "float",
+      "long_name": "compass direction (5950)",
+      "units": "degrees (clockwise towards true north)",
+      "instrument": "",
+      "observation_type": "measured",
+      "ancillary_variables": "PL_CMP2_quality_control"
+    },
+    "history": {
+      "type": "string",
+      "long_name": "file history information"
+    },
+    "TIME_quality_control": {
+      "type": "string",
+      "standard_name": "time status_flag",
+      "long_name": "quality flags for time",
+      "quality_control_conventions": "IMOS Reference Table F",
+      "quality_control_set": 3,
+      "quality_control_flag_values": "B, C, D, E, F, G, H, J, K, L, M, Q, S, T, U, V, X, Z",
+      "quality_control_flag_meanings": "Value_out_of_bounds Time_not_sequential Failed_T_Tw_Td_test Failed_true_wind_recomputation_test Platform_velocity_unrealistic Value_exceeds_threshold Discontinuity Erroneous_value Suspect_value_(visual) Value_located_over_land Instrument_malfunction Pre-flagged_as_suspect Spike_in_data_(visual) Time_duplicate Suspect_value_(statistical) Step_in_data_(statistical) Spike_in_data_(statistical) Value_passed_all_tests"
+    },
+    "LATITUDE_quality_control": {
+      "type": "string",
+      "standard_name": "latitude status_flag",
+      "long_name": "quality flags for latitude",
+      "quality_control_conventions": "IMOS Reference Table F",
+      "quality_control_set": 3,
+      "quality_control_flag_values": "B, C, D, E, F, G, H, J, K, L, M, Q, S, T, U, V, X, Z",
+      "quality_control_flag_meanings": "Value_out_of_bounds Time_not_sequential Failed_T_Tw_Td_test Failed_true_wind_recomputation_test Platform_velocity_unrealistic Value_exceeds_threshold Discontinuity Erroneous_value Suspect_value_(visual) Value_located_over_land Instrument_malfunction Pre-flagged_as_suspect Spike_in_data_(visual) Time_duplicate Suspect_value_(statistical) Step_in_data_(statistical) Spike_in_data_(statistical) Value_passed_all_tests"
+    },
+    "LONGITUDE_quality_control": {
+      "type": "string",
+      "standard_name": "longitude status_flag",
+      "long_name": "quality flags for longitude",
+      "quality_control_conventions": "IMOS Reference Table F",
+      "quality_control_set": 3,
+      "quality_control_flag_values": "B, C, D, E, F, G, H, J, K, L, M, Q, S, T, U, V, X, Z",
+      "quality_control_flag_meanings": "Value_out_of_bounds Time_not_sequential Failed_T_Tw_Td_test Failed_true_wind_recomputation_test Platform_velocity_unrealistic Value_exceeds_threshold Discontinuity Erroneous_value Suspect_value_(visual) Value_located_over_land Instrument_malfunction Pre-flagged_as_suspect Spike_in_data_(visual) Time_duplicate Suspect_value_(statistical) Step_in_data_(statistical) Spike_in_data_(statistical) Value_passed_all_tests"
+    },
+    "UWND_quality_control": {
+      "type": "string",
+      "standard_name": "eastward_wind status_flag",
+      "long_name": "quality flags for eastward_wind",
+      "quality_control_conventions": "IMOS Reference Table F",
+      "quality_control_set": 3,
+      "quality_control_flag_values": "B, C, D, E, F, G, H, J, K, L, M, Q, S, T, U, V, X, Z",
+      "quality_control_flag_meanings": "Value_out_of_bounds Time_not_sequential Failed_T_Tw_Td_test Failed_true_wind_recomputation_test Platform_velocity_unrealistic Value_exceeds_threshold Discontinuity Erroneous_value Suspect_value_(visual) Value_located_over_land Instrument_malfunction Pre-flagged_as_suspect Spike_in_data_(visual) Time_duplicate Suspect_value_(statistical) Step_in_data_(statistical) Spike_in_data_(statistical) Value_passed_all_tests"
+    },
+    "UWND_2_quality_control": {
+      "type": "string",
+      "standard_name": "eastward_wind status_flag",
+      "long_name": "quality flags for eastward_wind",
+      "quality_control_conventions": "IMOS Reference Table F",
+      "quality_control_set": 3,
+      "quality_control_flag_values": "B, C, D, E, F, G, H, J, K, L, M, Q, S, T, U, V, X, Z",
+      "quality_control_flag_meanings": "Value_out_of_bounds Time_not_sequential Failed_T_Tw_Td_test Failed_true_wind_recomputation_test Platform_velocity_unrealistic Value_exceeds_threshold Discontinuity Erroneous_value Suspect_value_(visual) Value_located_over_land Instrument_malfunction Pre-flagged_as_suspect Spike_in_data_(visual) Time_duplicate Suspect_value_(statistical) Step_in_data_(statistical) Spike_in_data_(statistical) Value_passed_all_tests"
+    },
+    "VWND_quality_control": {
+      "type": "string",
+      "standard_name": "northward_wind status_flag",
+      "long_name": "quality flags for northward_wind",
+      "quality_control_conventions": "IMOS Reference Table F",
+      "quality_control_set": 3,
+      "quality_control_flag_values": "B, C, D, E, F, G, H, J, K, L, M, Q, S, T, U, V, X, Z",
+      "quality_control_flag_meanings": "Value_out_of_bounds Time_not_sequential Failed_T_Tw_Td_test Failed_true_wind_recomputation_test Platform_velocity_unrealistic Value_exceeds_threshold Discontinuity Erroneous_value Suspect_value_(visual) Value_located_over_land Instrument_malfunction Pre-flagged_as_suspect Spike_in_data_(visual) Time_duplicate Suspect_value_(statistical) Step_in_data_(statistical) Spike_in_data_(statistical) Value_passed_all_tests"
+    },
+    "VWND_2_quality_control": {
+      "type": "string",
+      "standard_name": "northward_wind status_flag",
+      "long_name": "quality flags for northward_wind",
+      "quality_control_conventions": "IMOS Reference Table F",
+      "quality_control_set": 3,
+      "quality_control_flag_values": "B, C, D, E, F, G, H, J, K, L, M, Q, S, T, U, V, X, Z",
+      "quality_control_flag_meanings": "Value_out_of_bounds Time_not_sequential Failed_T_Tw_Td_test Failed_true_wind_recomputation_test Platform_velocity_unrealistic Value_exceeds_threshold Discontinuity Erroneous_value Suspect_value_(visual) Value_located_over_land Instrument_malfunction Pre-flagged_as_suspect Spike_in_data_(visual) Time_duplicate Suspect_value_(statistical) Step_in_data_(statistical) Spike_in_data_(statistical) Value_passed_all_tests"
+    },
+    "WDIR_quality_control": {
+      "type": "string",
+      "standard_name": "wind_to_direction status_flag",
+      "long_name": "quality flags for wind_to_direction",
+      "quality_control_conventions": "IMOS Reference Table F",
+      "quality_control_set": 3,
+      "quality_control_flag_values": "B, C, D, E, F, G, H, J, K, L, M, Q, S, T, U, V, X, Z",
+      "quality_control_flag_meanings": "Value_out_of_bounds Time_not_sequential Failed_T_Tw_Td_test Failed_true_wind_recomputation_test Platform_velocity_unrealistic Value_exceeds_threshold Discontinuity Erroneous_value Suspect_value_(visual) Value_located_over_land Instrument_malfunction Pre-flagged_as_suspect Spike_in_data_(visual) Time_duplicate Suspect_value_(statistical) Step_in_data_(statistical) Spike_in_data_(statistical) Value_passed_all_tests"
+    },
+    "WDIR_2_quality_control": {
+      "type": "string",
+      "standard_name": "wind_to_direction status_flag",
+      "long_name": "quality flags for wind_to_direction",
+      "quality_control_conventions": "IMOS Reference Table F",
+      "quality_control_set": 3,
+      "quality_control_flag_values": "B, C, D, E, F, G, H, J, K, L, M, Q, S, T, U, V, X, Z",
+      "quality_control_flag_meanings": "Value_out_of_bounds Time_not_sequential Failed_T_Tw_Td_test Failed_true_wind_recomputation_test Platform_velocity_unrealistic Value_exceeds_threshold Discontinuity Erroneous_value Suspect_value_(visual) Value_located_over_land Instrument_malfunction Pre-flagged_as_suspect Spike_in_data_(visual) Time_duplicate Suspect_value_(statistical) Step_in_data_(statistical) Spike_in_data_(statistical) Value_passed_all_tests"
+    },
+    "WSPD_quality_control": {
+      "type": "string",
+      "standard_name": "wind_speed status_flag",
+      "long_name": "quality flags for wind_speed",
+      "quality_control_conventions": "IMOS Reference Table F",
+      "quality_control_set": 3,
+      "quality_control_flag_values": "B, C, D, E, F, G, H, J, K, L, M, Q, S, T, U, V, X, Z",
+      "quality_control_flag_meanings": "Value_out_of_bounds Time_not_sequential Failed_T_Tw_Td_test Failed_true_wind_recomputation_test Platform_velocity_unrealistic Value_exceeds_threshold Discontinuity Erroneous_value Suspect_value_(visual) Value_located_over_land Instrument_malfunction Pre-flagged_as_suspect Spike_in_data_(visual) Time_duplicate Suspect_value_(statistical) Step_in_data_(statistical) Spike_in_data_(statistical) Value_passed_all_tests"
+    },
+    "WSPD_2_quality_control": {
+      "type": "string",
+      "standard_name": "wind_speed status_flag",
+      "long_name": "quality flags for wind_speed",
+      "quality_control_conventions": "IMOS Reference Table F",
+      "quality_control_set": 3,
+      "quality_control_flag_values": "B, C, D, E, F, G, H, J, K, L, M, Q, S, T, U, V, X, Z",
+      "quality_control_flag_meanings": "Value_out_of_bounds Time_not_sequential Failed_T_Tw_Td_test Failed_true_wind_recomputation_test Platform_velocity_unrealistic Value_exceeds_threshold Discontinuity Erroneous_value Suspect_value_(visual) Value_located_over_land Instrument_malfunction Pre-flagged_as_suspect Spike_in_data_(visual) Time_duplicate Suspect_value_(statistical) Step_in_data_(statistical) Spike_in_data_(statistical) Value_passed_all_tests"
+    },
+    "ATMP_quality_control": {
+      "type": "string",
+      "standard_name": "air_pressure status_flag",
+      "long_name": "quality flags for air_pressure",
+      "quality_control_conventions": "IMOS Reference Table F",
+      "quality_control_set": 3,
+      "quality_control_flag_values": "B, C, D, E, F, G, H, J, K, L, M, Q, S, T, U, V, X, Z",
+      "quality_control_flag_meanings": "Value_out_of_bounds Time_not_sequential Failed_T_Tw_Td_test Failed_true_wind_recomputation_test Platform_velocity_unrealistic Value_exceeds_threshold Discontinuity Erroneous_value Suspect_value_(visual) Value_located_over_land Instrument_malfunction Pre-flagged_as_suspect Spike_in_data_(visual) Time_duplicate Suspect_value_(statistical) Step_in_data_(statistical) Spike_in_data_(statistical) Value_passed_all_tests"
+    },
+    "ATMP_2_quality_control": {
+      "type": "string",
+      "standard_name": "air_pressure status_flag",
+      "long_name": "quality flags for air_pressure",
+      "quality_control_conventions": "IMOS Reference Table F",
+      "quality_control_set": 3,
+      "quality_control_flag_values": "B, C, D, E, F, G, H, J, K, L, M, Q, S, T, U, V, X, Z",
+      "quality_control_flag_meanings": "Value_out_of_bounds Time_not_sequential Failed_T_Tw_Td_test Failed_true_wind_recomputation_test Platform_velocity_unrealistic Value_exceeds_threshold Discontinuity Erroneous_value Suspect_value_(visual) Value_located_over_land Instrument_malfunction Pre-flagged_as_suspect Spike_in_data_(visual) Time_duplicate Suspect_value_(statistical) Step_in_data_(statistical) Spike_in_data_(statistical) Value_passed_all_tests"
+    },
+    "AIRT_quality_control": {
+      "type": "string",
+      "standard_name": "air_temperature status_flag",
+      "long_name": "quality flags for air_temperature",
+      "quality_control_conventions": "IMOS Reference Table F",
+      "quality_control_set": 3,
+      "quality_control_flag_values": "B, C, D, E, F, G, H, J, K, L, M, Q, S, T, U, V, X, Z",
+      "quality_control_flag_meanings": "Value_out_of_bounds Time_not_sequential Failed_T_Tw_Td_test Failed_true_wind_recomputation_test Platform_velocity_unrealistic Value_exceeds_threshold Discontinuity Erroneous_value Suspect_value_(visual) Value_located_over_land Instrument_malfunction Pre-flagged_as_suspect Spike_in_data_(visual) Time_duplicate Suspect_value_(statistical) Step_in_data_(statistical) Spike_in_data_(statistical) Value_passed_all_tests"
+    },
+    "AIRT_2_quality_control": {
+      "type": "string",
+      "standard_name": "air_temperature status_flag",
+      "long_name": "quality flags for air_temperature",
+      "quality_control_conventions": "IMOS Reference Table F",
+      "quality_control_set": 3,
+      "quality_control_flag_values": "B, C, D, E, F, G, H, J, K, L, M, Q, S, T, U, V, X, Z",
+      "quality_control_flag_meanings": "Value_out_of_bounds Time_not_sequential Failed_T_Tw_Td_test Failed_true_wind_recomputation_test Platform_velocity_unrealistic Value_exceeds_threshold Discontinuity Erroneous_value Suspect_value_(visual) Value_located_over_land Instrument_malfunction Pre-flagged_as_suspect Spike_in_data_(visual) Time_duplicate Suspect_value_(statistical) Step_in_data_(statistical) Spike_in_data_(statistical) Value_passed_all_tests"
+    },
+    "RELH_quality_control": {
+      "type": "string",
+      "standard_name": "relative_humidity status_flag",
+      "long_name": "quality flags for relative_humidity",
+      "quality_control_conventions": "IMOS Reference Table F",
+      "quality_control_set": 3,
+      "quality_control_flag_values": "B, C, D, E, F, G, H, J, K, L, M, Q, S, T, U, V, X, Z",
+      "quality_control_flag_meanings": "Value_out_of_bounds Time_not_sequential Failed_T_Tw_Td_test Failed_true_wind_recomputation_test Platform_velocity_unrealistic Value_exceeds_threshold Discontinuity Erroneous_value Suspect_value_(visual) Value_located_over_land Instrument_malfunction Pre-flagged_as_suspect Spike_in_data_(visual) Time_duplicate Suspect_value_(statistical) Step_in_data_(statistical) Spike_in_data_(statistical) Value_passed_all_tests"
+    },
+    "RELH_2_quality_control": {
+      "type": "string",
+      "standard_name": "relative_humidity status_flag",
+      "long_name": "quality flags for relative_humidity",
+      "quality_control_conventions": "IMOS Reference Table F",
+      "quality_control_set": 3,
+      "quality_control_flag_values": "B, C, D, E, F, G, H, J, K, L, M, Q, S, T, U, V, X, Z",
+      "quality_control_flag_meanings": "Value_out_of_bounds Time_not_sequential Failed_T_Tw_Td_test Failed_true_wind_recomputation_test Platform_velocity_unrealistic Value_exceeds_threshold Discontinuity Erroneous_value Suspect_value_(visual) Value_located_over_land Instrument_malfunction Pre-flagged_as_suspect Spike_in_data_(visual) Time_duplicate Suspect_value_(statistical) Step_in_data_(statistical) Spike_in_data_(statistical) Value_passed_all_tests"
+    },
+    "TEMP_quality_control": {
+      "type": "string",
+      "standard_name": "sea_surface_temperature status_flag",
+      "long_name": "quality flags for sea_surface_temperature",
+      "quality_control_conventions": "IMOS Reference Table F",
+      "quality_control_set": 3,
+      "quality_control_flag_values": "B, C, D, E, F, G, H, J, K, L, M, Q, S, T, U, V, X, Z",
+      "quality_control_flag_meanings": "Value_out_of_bounds Time_not_sequential Failed_T_Tw_Td_test Failed_true_wind_recomputation_test Platform_velocity_unrealistic Value_exceeds_threshold Discontinuity Erroneous_value Suspect_value_(visual) Value_located_over_land Instrument_malfunction Pre-flagged_as_suspect Spike_in_data_(visual) Time_duplicate Suspect_value_(statistical) Step_in_data_(statistical) Spike_in_data_(statistical) Value_passed_all_tests"
+    },
+    "TEMP_2_quality_control": {
+      "type": "string",
+      "standard_name": "sea_surface_temperature status_flag",
+      "long_name": "quality flags for sea_surface_temperature",
+      "quality_control_conventions": "IMOS Reference Table F",
+      "quality_control_set": 3,
+      "quality_control_flag_values": "B, C, D, E, F, G, H, J, K, L, M, Q, S, T, U, V, X, Z",
+      "quality_control_flag_meanings": "Value_out_of_bounds Time_not_sequential Failed_T_Tw_Td_test Failed_true_wind_recomputation_test Platform_velocity_unrealistic Value_exceeds_threshold Discontinuity Erroneous_value Suspect_value_(visual) Value_located_over_land Instrument_malfunction Pre-flagged_as_suspect Spike_in_data_(visual) Time_duplicate Suspect_value_(statistical) Step_in_data_(statistical) Spike_in_data_(statistical) Value_passed_all_tests"
+    },
+    "CNDC_quality_control": {
+      "type": "string",
+      "standard_name": "sea_water_electrical_conductivity status_flag",
+      "long_name": "quality flags for sea_water_electrical_conductivity",
+      "quality_control_conventions": "IMOS Reference Table F",
+      "quality_control_set": 3,
+      "quality_control_flag_values": "B, C, D, E, F, G, H, J, K, L, M, Q, S, T, U, V, X, Z",
+      "quality_control_flag_meanings": "Value_out_of_bounds Time_not_sequential Failed_T_Tw_Td_test Failed_true_wind_recomputation_test Platform_velocity_unrealistic Value_exceeds_threshold Discontinuity Erroneous_value Suspect_value_(visual) Value_located_over_land Instrument_malfunction Pre-flagged_as_suspect Spike_in_data_(visual) Time_duplicate Suspect_value_(statistical) Step_in_data_(statistical) Spike_in_data_(statistical) Value_passed_all_tests"
+    },
+    "CNDC_2_quality_control": {
+      "type": "string",
+      "standard_name": "sea_water_electrical_conductivity status_flag",
+      "long_name": "quality flags for sea_water_electrical_conductivity",
+      "quality_control_conventions": "IMOS Reference Table F",
+      "quality_control_set": 3,
+      "quality_control_flag_values": "B, C, D, E, F, G, H, J, K, L, M, Q, S, T, U, V, X, Z",
+      "quality_control_flag_meanings": "Value_out_of_bounds Time_not_sequential Failed_T_Tw_Td_test Failed_true_wind_recomputation_test Platform_velocity_unrealistic Value_exceeds_threshold Discontinuity Erroneous_value Suspect_value_(visual) Value_located_over_land Instrument_malfunction Pre-flagged_as_suspect Spike_in_data_(visual) Time_duplicate Suspect_value_(statistical) Step_in_data_(statistical) Spike_in_data_(statistical) Value_passed_all_tests"
+    },
+    "PSAL_quality_control": {
+      "type": "string",
+      "standard_name": "sea_water_salinity status_flag",
+      "long_name": "quality flags for sea_water_salinity",
+      "quality_control_conventions": "IMOS Reference Table F",
+      "quality_control_set": 3,
+      "quality_control_flag_values": "B, C, D, E, F, G, H, J, K, L, M, Q, S, T, U, V, X, Z",
+      "quality_control_flag_meanings": "Value_out_of_bounds Time_not_sequential Failed_T_Tw_Td_test Failed_true_wind_recomputation_test Platform_velocity_unrealistic Value_exceeds_threshold Discontinuity Erroneous_value Suspect_value_(visual) Value_located_over_land Instrument_malfunction Pre-flagged_as_suspect Spike_in_data_(visual) Time_duplicate Suspect_value_(statistical) Step_in_data_(statistical) Spike_in_data_(statistical) Value_passed_all_tests"
+    },
+    "PSAL_2_quality_control": {
+      "type": "string",
+      "standard_name": "sea_water_salinity status_flag",
+      "long_name": "quality flags for sea_water_salinity",
+      "quality_control_conventions": "IMOS Reference Table F",
+      "quality_control_set": 3,
+      "quality_control_flag_values": "B, C, D, E, F, G, H, J, K, L, M, Q, S, T, U, V, X, Z",
+      "quality_control_flag_meanings": "Value_out_of_bounds Time_not_sequential Failed_T_Tw_Td_test Failed_true_wind_recomputation_test Platform_velocity_unrealistic Value_exceeds_threshold Discontinuity Erroneous_value Suspect_value_(visual) Value_located_over_land Instrument_malfunction Pre-flagged_as_suspect Spike_in_data_(visual) Time_duplicate Suspect_value_(statistical) Step_in_data_(statistical) Spike_in_data_(statistical) Value_passed_all_tests"
+    },
+    "RAIN_AMOUNT_quality_control": {
+      "type": "string",
+      "standard_name": "thickness_of_rainfall_amount status_flag",
+      "long_name": "quality flags for thickness_of_rainfall_amount",
+      "quality_control_conventions": "IMOS Reference Table F",
+      "quality_control_set": 3,
+      "quality_control_flag_values": "B, C, D, E, F, G, H, J, K, L, M, Q, S, T, U, V, X, Z",
+      "quality_control_flag_meanings": "Value_out_of_bounds Time_not_sequential Failed_T_Tw_Td_test Failed_true_wind_recomputation_test Platform_velocity_unrealistic Value_exceeds_threshold Discontinuity Erroneous_value Suspect_value_(visual) Value_located_over_land Instrument_malfunction Pre-flagged_as_suspect Spike_in_data_(visual) Time_duplicate Suspect_value_(statistical) Step_in_data_(statistical) Spike_in_data_(statistical) Value_passed_all_tests"
+    },
+    "RAIN_AMOUNT_2_quality_control": {
+      "type": "string",
+      "standard_name": "thickness_of_rainfall_amount status_flag",
+      "long_name": "quality flags for thickness_of_rainfall_amount",
+      "quality_control_conventions": "IMOS Reference Table F",
+      "quality_control_set": 3,
+      "quality_control_flag_values": "B, C, D, E, F, G, H, J, K, L, M, Q, S, T, U, V, X, Z",
+      "quality_control_flag_meanings": "Value_out_of_bounds Time_not_sequential Failed_T_Tw_Td_test Failed_true_wind_recomputation_test Platform_velocity_unrealistic Value_exceeds_threshold Discontinuity Erroneous_value Suspect_value_(visual) Value_located_over_land Instrument_malfunction Pre-flagged_as_suspect Spike_in_data_(visual) Time_duplicate Suspect_value_(statistical) Step_in_data_(statistical) Spike_in_data_(statistical) Value_passed_all_tests"
+    },
+    "SW_quality_control": {
+      "type": "string",
+      "standard_name": "surface_downwelling_shortwave_flux_in_air status_flag",
+      "long_name": "quality flags for surface_downwelling_shortwave_flux_in_air",
+      "quality_control_conventions": "IMOS Reference Table F",
+      "quality_control_set": 3,
+      "quality_control_flag_values": "B, C, D, E, F, G, H, J, K, L, M, Q, S, T, U, V, X, Z",
+      "quality_control_flag_meanings": "Value_out_of_bounds Time_not_sequential Failed_T_Tw_Td_test Failed_true_wind_recomputation_test Platform_velocity_unrealistic Value_exceeds_threshold Discontinuity Erroneous_value Suspect_value_(visual) Value_located_over_land Instrument_malfunction Pre-flagged_as_suspect Spike_in_data_(visual) Time_duplicate Suspect_value_(statistical) Step_in_data_(statistical) Spike_in_data_(statistical) Value_passed_all_tests"
+    },
+    "SW_2_quality_control": {
+      "type": "string",
+      "standard_name": "surface_downwelling_shortwave_flux_in_air status_flag",
+      "long_name": "quality flags for surface_downwelling_shortwave_flux_in_air",
+      "quality_control_conventions": "IMOS Reference Table F",
+      "quality_control_set": 3,
+      "quality_control_flag_values": "B, C, D, E, F, G, H, J, K, L, M, Q, S, T, U, V, X, Z",
+      "quality_control_flag_meanings": "Value_out_of_bounds Time_not_sequential Failed_T_Tw_Td_test Failed_true_wind_recomputation_test Platform_velocity_unrealistic Value_exceeds_threshold Discontinuity Erroneous_value Suspect_value_(visual) Value_located_over_land Instrument_malfunction Pre-flagged_as_suspect Spike_in_data_(visual) Time_duplicate Suspect_value_(statistical) Step_in_data_(statistical) Spike_in_data_(statistical) Value_passed_all_tests"
+    },
+    "LW_quality_control": {
+      "type": "string",
+      "standard_name": "surface_downwelling_longwave_flux_in_air status_flag",
+      "long_name": "quality flags for surface_downwelling_longwave_flux_in_air",
+      "quality_control_conventions": "IMOS Reference Table F",
+      "quality_control_set": 3,
+      "quality_control_flag_values": "B, C, D, E, F, G, H, J, K, L, M, Q, S, T, U, V, X, Z",
+      "quality_control_flag_meanings": "Value_out_of_bounds Time_not_sequential Failed_T_Tw_Td_test Failed_true_wind_recomputation_test Platform_velocity_unrealistic Value_exceeds_threshold Discontinuity Erroneous_value Suspect_value_(visual) Value_located_over_land Instrument_malfunction Pre-flagged_as_suspect Spike_in_data_(visual) Time_duplicate Suspect_value_(statistical) Step_in_data_(statistical) Spike_in_data_(statistical) Value_passed_all_tests"
+    },
+    "LW_2_quality_control": {
+      "type": "string",
+      "standard_name": "surface_downwelling_longwave_flux_in_air status_flag",
+      "long_name": "quality flags for surface_downwelling_longwave_flux_in_air",
+      "quality_control_conventions": "IMOS Reference Table F",
+      "quality_control_set": 3,
+      "quality_control_flag_values": "B, C, D, E, F, G, H, J, K, L, M, Q, S, T, U, V, X, Z",
+      "quality_control_flag_meanings": "Value_out_of_bounds Time_not_sequential Failed_T_Tw_Td_test Failed_true_wind_recomputation_test Platform_velocity_unrealistic Value_exceeds_threshold Discontinuity Erroneous_value Suspect_value_(visual) Value_located_over_land Instrument_malfunction Pre-flagged_as_suspect Spike_in_data_(visual) Time_duplicate Suspect_value_(statistical) Step_in_data_(statistical) Spike_in_data_(statistical) Value_passed_all_tests"
+    },
+    "PL_CMP_quality_control": {
+      "type": "string",
+      "long_name": "quality flags for compass direction",
+      "quality_control_conventions": "IMOS Reference Table F",
+      "quality_control_set": 3,
+      "quality_control_flag_values": "B, C, D, E, F, G, H, J, K, L, M, Q, S, T, U, V, X, Z",
+      "quality_control_flag_meanings": "Value_out_of_bounds Time_not_sequential Failed_T_Tw_Td_test Failed_true_wind_recomputation_test Platform_velocity_unrealistic Value_exceeds_threshold Discontinuity Erroneous_value Suspect_value_(visual) Value_located_over_land Instrument_malfunction Pre-flagged_as_suspect Spike_in_data_(visual) Time_duplicate Suspect_value_(statistical) Step_in_data_(statistical) Spike_in_data_(statistical) Value_passed_all_tests"
+    },
+    "PL_CMP2_quality_control": {
+      "type": "string",
+      "standard_name": " status_flag",
+      "long_name": "quality flags for",
+      "quality_control_conventions": "IMOS Reference Table F",
+      "quality_control_set": 3,
+      "quality_control_flag_values": "B, C, D, E, F, G, H, J, K, L, M, Q, S, T, U, V, X, Z",
+      "quality_control_flag_meanings": "Value_out_of_bounds Time_not_sequential Failed_T_Tw_Td_test Failed_true_wind_recomputation_test Platform_velocity_unrealistic Value_exceeds_threshold Discontinuity Erroneous_value Suspect_value_(visual) Value_located_over_land Instrument_malfunction Pre-flagged_as_suspect Spike_in_data_(visual) Time_duplicate Suspect_value_(statistical) Step_in_data_(statistical) Spike_in_data_(statistical) Value_passed_all_tests"
+    }
+  },
+  "aws_opendata_registry": {
+    "Name": "IMOS - Deep Water Moorings - Southern Ocean Flux Station (SOFS) - Surface properties (real-time)",
+    "Description": "This data collection consists of observations at the sea surface made by the Southern Ocean Flux Station (SOFS) mooring, including meteorological parameters, downwelling radiation, and sea water temperature and salinity. Hourly averages of each parameter are delivered in near real-time. SOFS is an observing platform in the Sub-Antarctic Zone, approximately 350 nautical miles south-west of Tasmania. It obtains frequent measurements of the surface and deep ocean properties that control the transfer of heat, moisture, energy and CO2 between the atmosphere and the upper ocean to improve understanding of climate and carbon processes. The mooring was first deployed at (46.7S, 142E) in March 2010.",
+    "Documentation": "https://catalogue-imos.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/9fdb1eee-bc28-43a9-88c5-972324784837",
+    "Contact": "info@aodn.org.au",
+    "ManagedBy": "AODN",
+    "UpdateFrequency": "As Needed",
+    "Tags": [
+      "FILL UP MANUALLY - CHECK DOCUMENTATION"
+    ],
+    "License": "http://creativecommons.org/licenses/by/4.0/",
+    "Resources": [
+      {
+        "Description": "Cloud Optimised AODN dataset of IMOS - Deep Water Moorings - Southern Ocean Flux Station (SOFS) - Surface properties (real-time)",
+        "ARN": "arn:aws:s3:::imos-data-lab-optimised/mooring_sofs_surface_properties_realtime_qc.parquet",
+        "Region": "ap-southeast-2",
+        "Type": "S3 Bucket"
+      }
+    ],
+    "DataAtWork": {
+      "Tutorials": [
+        {
+          "Title": "Accessing IMOS - Deep Water Moorings - Southern Ocean Flux Station (SOFS) - Surface properties (real-time)",
+          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/mooring_sofs_surface_properties_realtime_qc.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/mooring_sofs_surface_properties_realtime_qc.ipynb",
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
+        },
+        {
+          "Title": "Accessing and search for any AODN dataset",
+          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
+        }
+      ]
+    },
+    "Citation": "IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access]"
+  },
+  "schema_transformation": {
+    "drop_variables": [],
+    "add_variables": {
+      "filename": {
+        "source": "@filename",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "long_name": "Filename of the source file"
+        }
+      },
+      "timestamp": {
+        "source": "@partitioning:time_extent",
+        "schema": {
+          "type": "int64",
+          "units": "1",
+          "long_name": "Partition timestamp"
+        }
+      },
+      "polygon": {
+        "source": "@partitioning:spatial_extent",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "long_name": "Spatial partition polygon"
+        }
+      }
+    },
+    "partitioning": [
+      {
+        "source_variable": "timestamp",
+        "type": "time_extent",
+        "time_extent": {
+          "time_varname": "TIME",
+          "partition_period": "Y"
+        }
+      },
+      {
+        "source_variable": "polygon",
+        "type": "spatial_extent",
+        "spatial_extent": {
+          "lat_varname": "LATITUDE",
+          "lon_varname": "LONGITUDE",
+          "spatial_resolution": 2
+        }
+      }
+    ],
+    "global_attributes": {
+      "delete": [
+        "geospatial_lat_max",
+        "geospatial_lat_min",
+        "geospatial_lon_max",
+        "geospatial_lon_min",
+        "date_created"
+      ],
+      "set": {
+        "title": "IMOS - Deep Water Moorings - Southern Ocean Flux Station (SOFS) - Surface properties (real-time)",
+        "site": "Southern Ocean Flux Station"
+      }
+    }
+  }
+}
