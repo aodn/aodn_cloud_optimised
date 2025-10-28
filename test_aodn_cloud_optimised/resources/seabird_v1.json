@@ -5,7 +5,7 @@
   "run_settings": {
     "paths": [
       {
-        "s3_uri": "s3://data-uplift-public/products/seabird",
+        "s3_uri": "s3://imos-data/seabird",
         "filter": [
           "seabird_v1_2025-10-21T02:33:33.parquet"
         ]
@@ -254,7 +254,7 @@
         "source_variable": "timestamp",
         "type": "time_extent",
         "time_extent": {
-          "time_varname": "TIME",
+          "time_varname": "eventDate",
           "partition_period": "M"
         }
       },
