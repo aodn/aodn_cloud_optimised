@@ -1,6 +1,7 @@
 import gc
 import importlib.resources
 import os
+import pathlib
 import re
 import timeit
 import traceback
@@ -15,6 +16,7 @@ import numpy as np
 import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
+import s3fs.core
 import xarray as xr
 from dask.distributed import wait
 from shapely.geometry import Point, Polygon
@@ -274,7 +276,8 @@ class GenericHandler(CommonHandler):
         yield df, ds
 
     def preprocess_data(
-        self, fp: str
+        self,
+        fp: str | s3fs.core.S3File,
     ) -> Generator[Tuple[pd.DataFrame, xr.Dataset], None, None]:
         """
         Overwrites the preprocess_data method from CommonHandler.
@@ -293,15 +296,25 @@ class GenericHandler(CommonHandler):
         Elif `fp` ends with ".csv", it delegates to `self.preprocess_data_parquet_csv(fp)`.
         Else raises a NotImplementedError
         """
-        match fp:
-            case fp.endswith(".nc"):
+
+        # Extract file suffix
+        if isinstance(fp, str):
+            file_suffix = pathlib.Path(fp).suffix
+        elif isinstance(fp, s3fs.core.S3File):
+            file_suffix = pathlib.Path(fp.path).suffix
+
+        # Match preprocess method
+        match file_suffix.lower():
+            case ".nc":
                 return self.preprocess_data_netcdf(fp)
-            case fp.endswith(".csv"):
+            case ".csv":
                 return self.preprocess_data_csv(fp)
-            case fp.endswith(".parquet"):
+            case ".parquet":
                 return self.preprocess_data_parquet(fp)
             case _:
-                raise NotImplementedError(f"files with suffix `{fp.split('.')[-1]}` not yet implemented in preprocess_data")
+                raise NotImplementedError(
+                    f"files with suffix `{file_suffix}` not yet implemented in preprocess_data"
+                )
 
     @staticmethod
     def cast_table_by_schema(table, schema) -> pa.Table:
