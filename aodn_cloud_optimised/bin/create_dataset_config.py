@@ -781,10 +781,7 @@ def main():
                 df = pd.read_csv(f, **csv_opts)
 
             # Update column types for the dataset config
-            dataset_config_schema = {
-                "type": "object",
-                "properties": {},
-            }
+            dataset_config_schema = dict()
             for col, dtype in df.dtypes.items():
                 if pd.api.types.is_integer_dtype(dtype):
                     js_type = "integer"
@@ -801,101 +798,18 @@ def main():
                         f"found dtype that did not fit into configured categories: `{dtype}`"
                     )
 
-                dataset_config_schema["properties"][col] = {"type": js_type}
+                dataset_config_schema[col] = {"type": js_type}
 
         case ".parquet":
 
             with fs.open(fp, "rb") as f:
 
                 table = pq.read_table(f)
-                dataset_config_schema = {
-                    "type": "object",
-                    "properties": {},
-                }
+                dataset_config_schema = dict()
 
                 for field in table.schema:
-                    # The comparison logic is based on the original template structure (comparing to *concrete* type instances).
 
-                    # Concrete integer types
-                    if field.type in (pa.int8(), pa.int16(), pa.int32(), pa.int64()):
-                        js_type = "integer"
-
-                    # Concrete unsigned integer types
-                    elif field.type in (
-                        pa.uint8(),
-                        pa.uint16(),
-                        pa.uint32(),
-                        pa.uint64(),
-                    ):
-                        js_type = "unsigned_integer"
-
-                    # Concrete floating point types
-                    elif field.type in (pa.float16(), pa.float32(), pa.float64()):
-                        js_type = "number"
-
-                    # Concrete boolean type
-                    elif field.type == pa.bool_():
-                        js_type = "boolean"
-
-                    # Concrete string types
-                    elif field.type in (pa.string(), pa.large_string()):
-                        js_type = "string"
-
-                    # Concrete binary types
-                    elif field.type in (pa.binary(), pa.large_binary()):
-                        js_type = "binary"
-
-                    # Concrete timestamp types
-                    elif field.type == pa.timestamp("ms"):
-                        js_type = "timestamp[ms]"
-                    elif field.type == pa.timestamp("s"):
-                        js_type = "timestamp[s]"
-                    elif field.type == pa.timestamp("us"):
-                        js_type = "timestamp[us]"
-                    elif field.type == pa.timestamp("ns"):
-                        js_type = "timestamp[ns]"
-
-                    # Concrete time types
-                    elif field.type == pa.time32("s"):
-                        js_type = "time32[s]"
-                    elif field.type == pa.time32("ms"):
-                        js_type = "time32[ms]"
-                    elif field.type == pa.time64("us"):
-                        js_type = "time64[us]"
-                    elif field.type == pa.time64("ns"):
-                        js_type = "time64[ns]"
-
-                    # Concrete date/time types
-                    elif field.type == pa.date32():
-                        js_type = "date32[day]"
-                    elif field.type == pa.date64():
-                        js_type = "date64[ms]"
-
-                    # Concrete duration types (keep the PyArrow string representation)
-                    elif field.type == pa.duration("s"):
-                        js_type = "duration[s]"
-                    elif field.type == pa.duration("ms"):
-                        js_type = "duration[ms]"
-                    elif field.type == pa.duration("us"):
-                        js_type = "duration[us]"
-                    elif field.type == pa.duration("ns"):
-                        js_type = "duration[ns]"
-
-                    # Concrete interval type
-                    elif field.type == pa.month_day_nano_interval():
-                        js_type = "month_day_nano_interval"
-
-                    # Concrete null type
-                    elif field.type == pa.null():
-                        js_type = "null"
-
-                    # Default
-                    else:
-                        raise NotImplementedError(
-                            f"pyarrow type `{field.type}` not implemented (field: `{field.name}`)"
-                        )
-
-                    dataset_config_schema["properties"][field.name] = {"type": js_type}
+                    dataset_config_schema[field.name] = {"type": str(field.type)}
 
         # Default: Raise NotImplemented
         case _:
