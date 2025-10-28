@@ -803,12 +803,10 @@ def main():
         case ".parquet":
 
             with fs.open(fp, "rb") as f:
-
-                table = pq.read_table(f)
+                schema = pq.read_schema(f)
                 dataset_config_schema = dict()
 
-                for field in table.schema:
-
+                for field in schema:
                     dataset_config_schema[field.name] = {"type": str(field.type)}
 
         # Default: Raise NotImplemented
