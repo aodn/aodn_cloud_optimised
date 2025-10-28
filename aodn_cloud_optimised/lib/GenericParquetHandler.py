@@ -293,7 +293,7 @@ class GenericHandler(CommonHandler):
 
         If `fp` ends with ".nc", it delegates to `self.preprocess_data_netcdf(fp)`.
         Elif `fp` ends with ".csv", it delegates to `self.preprocess_data_csv(fp)`.
-        Elif `fp` ends with ".csv", it delegates to `self.preprocess_data_parquet_csv(fp)`.
+        Elif `fp` ends with ".parquet", it delegates to `self.preprocess_data_parquet(fp)`.
         Else raises a NotImplementedError
         """
 
@@ -515,15 +515,20 @@ class GenericHandler(CommonHandler):
 
         Returns:
             pd.DataFrame: DataFrame with added columns.
+
+        Notes: This needs a refactor to account for that modern config explicitly defines the time partition column: no need to
+        search around for it.
         """
         partitioning_info = self.dataset_config["schema_transformation"]["partitioning"]
         for item in partitioning_info:
             if item.get("time_extent") is not None:
                 timestamp_info = item
 
+        # Extract time partition information
         timestamp_varname = timestamp_info.get("source_variable")
         time_varname = timestamp_info["time_extent"].get("time_varname", "TIME")
         partition_period = timestamp_info["time_extent"].get("partition_period")
+
         # look for the variable or column with datetime64 type
         if isinstance(df.index, pd.MultiIndex) and (time_varname in df.index.names):
             # for example, files with timeSeries and TIME dimensions such as
@@ -542,9 +547,41 @@ class GenericHandler(CommonHandler):
                 if (df[column].dtype == "datetime64[ns]") and column == time_varname:
                     datetime_var = df[column].values
 
+            # If the index is a datetime64 type
             if "datetime_var" not in locals():
                 if pd.api.types.is_datetime64_any_dtype(df.index):
                     datetime_var = df.index
+
+            # Finally attempt to validate the defined time partition column
+            if "datetime_var" not in locals():
+
+                # Else look for the time columns with a different time related dtype
+                time_partition_column = df[time_varname]
+
+                # Validate no missing values
+                if time_partition_column.isnull().any():
+                    raise ValueError(
+                        "time partition column may not contain null values"
+                    )
+
+                # Validate that the time partition column translated via pd.to_datetime
+                try:
+                    pd.to_datetime(time_partition_column)
+                except Exception as e:
+                    raise ValueError(
+                        "time partition column failed to translate to pandas datetime dtype: {e}"
+                    )
+
+                # Because the df does not have a date time index, we have to create and fill the column in separately here
+                datetime_index = pd.DatetimeIndex(pd.to_datetime(time_partition_column))
+                df[timestamp_varname] = (
+                    np.int64(datetime_index.to_period(partition_period).to_timestamp())
+                    / 10**9
+                )
+                return df
+
+        if "datetime_var" not in locals():
+            raise ValueError("could not determine the datetime column/variable")
 
         if not isinstance(df.index, pd.MultiIndex) and (time_varname in df.index.names):
             today = datetime.today()
@@ -593,83 +630,90 @@ class GenericHandler(CommonHandler):
         """
 
         schema_transformation = self.dataset_config["schema_transformation"]
-        if schema_transformation.get("add_variables") is not None:
-            variables_to_add = schema_transformation.get("add_variables")
 
-            for variable_to_add in variables_to_add.items():
-                variable_to_add_name = variable_to_add[0]
-                variable_to_add_info = variable_to_add[1]
-                var_type = variable_to_add_info["schema"].get("type")
-                var_fillvalue = variable_to_add_info["schema"].get("_FillValue", None)
+        # If not variables to add, return un altered df
+        if "add_variables" not in schema_transformation:
+            return df
 
-                if variable_to_add_info["source"].startswith("@filename"):
-                    df[variable_to_add_name] = os.path.basename(f.path)  # always string
-                    self.logger.info(
-                        f"{self.uuid_log}: variable {variable_to_add_name} created with value {f.path}"
+        # Iterate through the variables to add
+        for name, info in schema_transformation["add_variables"].items():
+
+            # Extract the type and fill value
+            var_type = info["schema"].get("type")
+            var_fillvalue = info["schema"].get("_FillValue", None)
+
+            # Attach filename source column
+            if info["source"].startswith("@filename"):
+                df[name] = os.path.basename(f.path)  # always string
+                self.logger.info(
+                    f"{self.uuid_log}: variable {name} created with value {f.path}"
+                )
+
+            # Attach variable attribute as column
+            elif info["source"].startswith("@variable_attribute:"):
+                varname = info["source"].split(":")[1].split(".")[0]
+                attr = info["source"].split(":")[1].split(".")[1]
+                if not hasattr(ds, varname):
+                    self.logger.warning(
+                        f"{self.uuid_log}: cannot create variable {name} from {varname}.{attr} as {varname} does not exist in current file"
                     )
 
-                elif variable_to_add_info["source"].startswith("@variable_attribute:"):
-                    varname = variable_to_add_info["source"].split(":")[1].split(".")[0]
-                    attr = variable_to_add_info["source"].split(":")[1].split(".")[1]
-                    if not hasattr(ds, varname):
+                else:
+                    attr_value = getattr(ds[varname], attr)
+
+                    attr_value = cast_value_to_config_type(
+                        attr_value, var_type, fillvalue=var_fillvalue
+                    )  # convert variable to required type
+                    df[name] = attr_value
+                    self.logger.info(
+                        f"{self.uuid_log}: variable {name} created with value {attr_value}"
+                    )
+
+            # Attach global attribute as column
+            elif info["source"].startswith("@global_attribute:"):
+                gattr = info["source"].split(":")[1]
+
+                if gattr in ds.attrs:
+                    gattr_value = getattr(ds, gattr)
+                    if gattr_value is None:
                         self.logger.warning(
-                            f"{self.uuid_log}: cannot create variable {variable_to_add_name} from {varname}.{attr} as {varname} does not exist in current file"
+                            f"{self.uuid_log}: variable {name} will be created with _Fillvalue as missing from input NetCDF"
                         )
 
-                    else:
-                        attr_value = getattr(ds[varname], attr)
+                    gattr_value = cast_value_to_config_type(
+                        gattr_value, var_type, fillvalue=var_fillvalue
+                    )  # convert variable to required type
 
-                        attr_value = cast_value_to_config_type(
-                            attr_value, var_type, fillvalue=var_fillvalue
-                        )  # convert variable to required type
-                        df[variable_to_add_name] = attr_value
-                        self.logger.info(
-                            f"{self.uuid_log}: variable {variable_to_add_name} created with value {attr_value}"
-                        )
+                    df[name] = gattr_value
+                    self.logger.info(
+                        f"{self.uuid_log}: variable {name} created with value {gattr_value}"
+                    )
+                else:
+                    self.logger.warning(
+                        f"{self.uuid_log}: The global attribute '{gattr}' does not exist in the original NetCDF. The corresponding variable won't be created."
+                    )
 
-                elif variable_to_add_info["source"].startswith("@global_attribute:"):
-                    gattr = variable_to_add_info["source"].split(":")[1]
+            # Attach function generated data as column
+            elif info["source"].startswith("@function:"):
+                extract_function = info["source"].split(":")[1]
+                function_info = schema_transformation["functions"][extract_function]
+                # other extracting method could be created here. but for now we only need to extract info from an object key
+                if "object_key" in function_info["extract_method"]:
+                    extraction_code = function_info["method"].get("extraction_code")
+                    extracted_info = self.get_variables_from_object_key(
+                        f, extraction_code
+                    )
 
-                    if gattr in ds.attrs:
-                        gattr_value = getattr(ds, gattr)
-                        if gattr_value is None:
-                            self.logger.warning(
-                                f"{self.uuid_log}: variable {variable_to_add_name} will be created with _Fillvalue as missing from input NetCDF"
-                            )
+                    self.logger.info(f"{extracted_info}")
+                    self.logger.info(
+                        f"{self.uuid_log}: {f.path}: Adding extracted info from object key as variable {name}: {extracted_info[name]}"
+                    )
+                    info_value = extracted_info[name]
 
-                        gattr_value = cast_value_to_config_type(
-                            gattr_value, var_type, fillvalue=var_fillvalue
-                        )  # convert variable to required type
-
-                        df[variable_to_add_name] = gattr_value
-                        self.logger.info(
-                            f"{self.uuid_log}: variable {variable_to_add_name} created with value {gattr_value}"
-                        )
-                    else:
-                        self.logger.warning(
-                            f"{self.uuid_log}: The global attribute '{gattr}' does not exist in the original NetCDF. The corresponding variable won't be created."
-                        )
-
-                elif variable_to_add_info["source"].startswith("@function:"):
-                    extract_function = variable_to_add_info["source"].split(":")[1]
-                    function_info = schema_transformation["functions"][extract_function]
-                    # other extracting method could be created here. but for now we only need to extract info from an object key
-                    if "object_key" in function_info["extract_method"]:
-                        extraction_code = function_info["method"].get("extraction_code")
-                        extracted_info = self.get_variables_from_object_key(
-                            f, extraction_code
-                        )
-
-                        self.logger.info(f"{extracted_info}")
-                        self.logger.info(
-                            f"{self.uuid_log}: {f.path}: Adding extracted info from object key as variable {variable_to_add_name}: {extracted_info[variable_to_add_name]}"
-                        )
-                        info_value = extracted_info[variable_to_add_name]
-
-                        info_value = cast_value_to_config_type(
-                            info_value, var_type, fillvalue=var_fillvalue
-                        )  # convert variable to required type
-                        df[variable_to_add_name] = info_value
+                    info_value = cast_value_to_config_type(
+                        info_value, var_type, fillvalue=var_fillvalue
+                    )  # convert variable to required type
+                    df[name] = info_value
         return df
 
     def get_variables_from_object_key(self, f, extraction_code) -> dict:
@@ -872,8 +916,10 @@ class GenericHandler(CommonHandler):
             None
         """
         partition_keys = [
-            x["source_variable"]
-            for x in self.dataset_config["schema_transformation"]["partitioning"]
+            partition["source_variable"]
+            for partition in self.dataset_config["schema_transformation"][
+                "partitioning"
+            ]
         ]
         df = self._fix_datetimejulian(df)
         df = self._add_timestamp_df(df, s3_file_handle)
