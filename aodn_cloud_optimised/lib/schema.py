@@ -330,8 +330,6 @@ def create_pyarrow_schema(schema_input, schema_transformation=None):
         for var in drop_variables:
             schema_input.pop(var, None)  # safe removal
 
-    print(schema_input)
-
     if isinstance(schema_input, list):
         return create_pyarrow_schema_from_list(schema_input)
     elif isinstance(schema_input, dict):
