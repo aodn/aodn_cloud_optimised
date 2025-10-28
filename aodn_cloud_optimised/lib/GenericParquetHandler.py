@@ -981,7 +981,7 @@ class GenericHandler(CommonHandler):
                     pdf = pdf.append_column(field.name, null_array)
 
         # Part C: we need to report missing variables from the given pyarrow_schema, as by default, these variables
-        # will not appear (unless a pyarrow_schema is provided) during a query by a use
+        # will not appear (unless a pyarrow_schema is provided) during a query by a user
         if self.pyarrow_schema is not None:
             for column_name in df_columns:
                 if column_name not in pdf.schema.names:
