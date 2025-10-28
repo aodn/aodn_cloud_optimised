@@ -36,170 +36,167 @@
   },
   "metadata_uuid": null,
   "schema": {
-    "type": "object",
-    "properties": {
-      "id": {
-        "type": "string"
-      },
-      "modified": {
-        "type": "timestamp[ms]"
-      },
-      "bibliographicCitation": {
-        "type": "string"
-      },
-      "institutionCode": {
-        "type": "string"
-      },
-      "collectionCode": {
-        "type": "string"
-      },
-      "basisOfRecord": {
-        "type": "string"
-      },
-      "occurrenceID": {
-        "type": "string"
-      },
-      "catalogNumber": {
-        "type": "string"
-      },
-      "recordedBy": {
-        "type": "string"
-      },
-      "individualCount": {
-        "type": "integer"
-      },
-      "organismQuantity": {
-        "type": "string"
-      },
-      "organismQuantityType": {
-        "type": "string"
-      },
-      "sex": {
-        "type": "string"
-      },
-      "lifeStage": {
-        "type": "string"
-      },
-      "occurrenceStatus": {
-        "type": "string"
-      },
-      "occurrenceRemarks": {
-        "type": "string"
-      },
-      "organismID": {
-        "type": "string"
-      },
-      "fieldNumber": {
-        "type": "string"
-      },
-      "eventDate": {
-        "type": "date32[day]"
-      },
-      "country": {
-        "type": "string"
-      },
-      "stateProvince": {
-        "type": "string"
-      },
-      "locality": {
-        "type": "string"
-      },
-      "minimumDepthInMeters": {
-        "type": "integer"
-      },
-      "maximumDepthInMeters": {
-        "type": "integer"
-      },
-      "decimalLatitude": {
-        "type": "number"
-      },
-      "decimalLongitude": {
-        "type": "number"
-      },
-      "coordinateUncertaintyInMeters": {
-        "type": "integer"
-      },
-      "coordinatePrecision": {
-        "type": "number"
-      },
-      "footprintWKT": {
-        "type": "string"
-      },
-      "identifiedBy": {
-        "type": "string"
-      },
-      "scientificNameID": {
-        "type": "string"
-      },
-      "scientificName": {
-        "type": "string"
-      },
-      "valid_authority": {
-        "type": "string"
-      },
-      "kingdom": {
-        "type": "string"
-      },
-      "phylum": {
-        "type": "string"
-      },
-      "class": {
-        "type": "string"
-      },
-      "order": {
-        "type": "string"
-      },
-      "family": {
-        "type": "string"
-      },
-      "genus": {
-        "type": "string"
-      },
-      "specificEpithet": {
-        "type": "string"
-      },
-      "taxonRank": {
-        "type": "string"
-      },
-      "scientificNameAuthorship": {
-        "type": "string"
-      },
-      "vernacularName": {
-        "type": "string"
-      },
-      "survey_type": {
-        "type": "string"
-      },
-      "organisation": {
-        "type": "string"
-      },
-      "dataset_id": {
-        "type": "string"
-      },
-      "Wind Direction": {
-        "type": "number"
-      },
-      "Air Temperature": {
-        "type": "number"
-      },
-      "Wind Speed": {
-        "type": "number"
-      },
-      "Depth": {
-        "type": "number"
-      },
-      "Air Pressure": {
-        "type": "number"
-      },
-      "Sea State": {
-        "type": "string"
-      },
-      "Salinity": {
-        "type": "number"
-      },
-      "Cloud Cover": {
-        "type": "string"
-      }
+    "id": {
+      "type": "string"
+    },
+    "modified": {
+      "type": "timestamp[ms]"
+    },
+    "bibliographicCitation": {
+      "type": "string"
+    },
+    "institutionCode": {
+      "type": "string"
+    },
+    "collectionCode": {
+      "type": "string"
+    },
+    "basisOfRecord": {
+      "type": "string"
+    },
+    "occurrenceID": {
+      "type": "string"
+    },
+    "catalogNumber": {
+      "type": "string"
+    },
+    "recordedBy": {
+      "type": "string"
+    },
+    "individualCount": {
+      "type": "int64"
+    },
+    "organismQuantity": {
+      "type": "string"
+    },
+    "organismQuantityType": {
+      "type": "string"
+    },
+    "sex": {
+      "type": "string"
+    },
+    "lifeStage": {
+      "type": "string"
+    },
+    "occurrenceStatus": {
+      "type": "string"
+    },
+    "occurrenceRemarks": {
+      "type": "string"
+    },
+    "organismID": {
+      "type": "string"
+    },
+    "fieldNumber": {
+      "type": "string"
+    },
+    "eventDate": {
+      "type": "date32[day]"
+    },
+    "country": {
+      "type": "string"
+    },
+    "stateProvince": {
+      "type": "string"
+    },
+    "locality": {
+      "type": "string"
+    },
+    "minimumDepthInMeters": {
+      "type": "int64"
+    },
+    "maximumDepthInMeters": {
+      "type": "int64"
+    },
+    "decimalLatitude": {
+      "type": "double"
+    },
+    "decimalLongitude": {
+      "type": "double"
+    },
+    "coordinateUncertaintyInMeters": {
+      "type": "int64"
+    },
+    "coordinatePrecision": {
+      "type": "double"
+    },
+    "footprintWKT": {
+      "type": "string"
+    },
+    "identifiedBy": {
+      "type": "string"
+    },
+    "scientificNameID": {
+      "type": "string"
+    },
+    "scientificName": {
+      "type": "string"
+    },
+    "valid_authority": {
+      "type": "string"
+    },
+    "kingdom": {
+      "type": "string"
+    },
+    "phylum": {
+      "type": "string"
+    },
+    "class": {
+      "type": "string"
+    },
+    "order": {
+      "type": "string"
+    },
+    "family": {
+      "type": "string"
+    },
+    "genus": {
+      "type": "string"
+    },
+    "specificEpithet": {
+      "type": "string"
+    },
+    "taxonRank": {
+      "type": "string"
+    },
+    "scientificNameAuthorship": {
+      "type": "string"
+    },
+    "vernacularName": {
+      "type": "string"
+    },
+    "survey_type": {
+      "type": "string"
+    },
+    "organisation": {
+      "type": "string"
+    },
+    "dataset_id": {
+      "type": "string"
+    },
+    "Wind Direction": {
+      "type": "double"
+    },
+    "Air Temperature": {
+      "type": "double"
+    },
+    "Wind Speed": {
+      "type": "double"
+    },
+    "Depth": {
+      "type": "double"
+    },
+    "Air Pressure": {
+      "type": "double"
+    },
+    "Sea State": {
+      "type": "string"
+    },
+    "Salinity": {
+      "type": "double"
+    },
+    "Cloud Cover": {
+      "type": "string"
     }
   },
   "aws_opendata_registry": {
