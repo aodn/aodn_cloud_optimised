@@ -21,18 +21,18 @@
     "coiled_cluster_options": {
       "n_workers": [
         1,
-        20
+        40
       ],
       "scheduler_vm_types": "m7i-flex.large",
       "worker_vm_types": "m7i-flex.xlarge",
       "allow_ingress_from": "me",
       "compute_purchase_option": "spot_with_fallback",
       "worker_options": {
-        "nthreads": 4,
+        "nthreads": 16,
         "memory_limit": "32GB"
       }
     },
-    "batch_size": 200,
+    "batch_size": 500,
     "force_previous_parquet_deletion": false
   },
   "metadata_uuid": "4d3d4aca-472e-4616-88a5-df0f5ab401ba",
@@ -103,6 +103,280 @@
       "units": "1e-3",
       "valid_min": 2.0,
       "valid_max": 41.0
+    },
+    "TEMP": {
+      "type": "float",
+      "standard_name": "sea_surface_temperature",
+      "long_name": "sea_surface_temperature",
+      "units": "Celsius",
+      "valid_min": -2.0,
+      "valid_max": 40.0,
+      "sensor": "SBE 16Plus V2 SeaCAT",
+      "ancillary_variables": "TEMP_quality_control"
+    },
+    "PSAL": {
+      "type": "float",
+      "standard_name": "sea_surface_salinity",
+      "long_name": "sea surface salinity",
+      "units": "1e-3",
+      "valid_min": 0.0,
+      "valid_max": 42.0,
+      "sensor": "SBE 16Plus V2 SeaCAT",
+      "ancillary_variables": "PSAL_quality_control"
+    },
+    "Press_ATM": {
+      "type": "float",
+      "standard_name": "air_pressure_at_sea_level",
+      "long_name": "barometric pressure at sea level",
+      "units": "kPa",
+      "valid_min": 80.0,
+      "valid_max": 120.0,
+      "ancillary_variables": "Press_ATM_quality_control"
+    },
+    "xCO2EQ_PPM": {
+      "type": "float",
+      "long_name": "mole fraction of CO2 in the equilibrator head space (dry)",
+      "units": "1/10e6",
+      "valid_min": 0.0,
+      "valid_max": 1000.0,
+      "ancillary_variables": "xCO2EQ_PPM_quality_control",
+      "comment": "the unit 1/10e6 is also called parts per million (ppm)",
+      "sensor_serial_number": "0115",
+      "sensor": "Battelle pCO2 Monitoring System"
+    },
+    "xCO2ATM_PPM": {
+      "type": "float",
+      "long_name": "mole fraction of CO2 in the atmosphere (dry).",
+      "units": "1/10e6",
+      "valid_min": 0.0,
+      "valid_max": 1000.0,
+      "ancillary_variables": "xCO2ATM_PPM_quality_control",
+      "comment": "the unit 1/10e6 is also called parts per million (ppm)",
+      "sensor_serial_number": "0115",
+      "sensor": "Battelle pCO2 Monitoring System"
+    },
+    "fCO2SW_UATM": {
+      "type": "float",
+      "long_name": "fugacity of carbon dioxide at surface water salinity and temperature, 100% humidity",
+      "units": "microatmospheres",
+      "valid_min": 0.0,
+      "valid_max": 1000.0,
+      "ancillary_variables": "fCO2SW_UATM_quality_control",
+      "sensor_serial_number": "0139",
+      "sensor": "Battelle pCO2 Monitoring System"
+    },
+    "DfCO2": {
+      "type": "float",
+      "long_name": "Difference between fCO2SW and fCO2ATM",
+      "units": "microatmospheres",
+      "valid_min": -500.0,
+      "valid_max": 500.0,
+      "ancillary_variables": "DfCO2_quality_control",
+      "sensor_serial_number": "0139",
+      "sensor": "Battelle pCO2 Monitoring System"
+    },
+    "DOX1": {
+      "type": "float",
+      "standard_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water",
+      "long_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water.",
+      "units": "micromol/l",
+      "valid_min": 0.0,
+      "valid_max": 1000.0,
+      "ancillary_variables": "DOX1_quality_control",
+      "sensor": "Aanderaa Optode"
+    },
+    "TPH": {
+      "type": "float",
+      "standard_name": "sea_water_ph_reported_on_total_scale",
+      "long_name": "sea_water_ph_reported_on_total_scale",
+      "units": "1",
+      "valid_min": 5.0,
+      "valid_max": 10.0,
+      "ancillary_variables": "TPH_quality_control",
+      "sensor": "SeapHOx-Scripps Institution of Oceanography"
+    },
+    "TIME_quality_control": {
+      "type": "float",
+      "standard_name": "time status_flag",
+      "long_name": "Quality Control flag for time",
+      "quality_control_conventions": "WOCE quality control procedure",
+      "quality_control_set": 4.0,
+      "valid_min": 2,
+      "valid_max": 4,
+      "flag_values": [
+        2,
+        3,
+        4
+      ],
+      "flag_meanings": "good questionable bad"
+    },
+    "pHt": {
+      "type": "float",
+      "standard_name": "sea_water_ph_reported_on_total_scale",
+      "long_name": "pH_TS_measured(durafet)",
+      "units": "1",
+      "valid_min": 5.0,
+      "valid_max": 10.0,
+      "comment": "sea_water_ph_reported_on_total_scale",
+      "ancillary_variables": "pHt_quality_control",
+      "sensor": "SeapHOx-Scripps Institution of Oceanography"
+    },
+    "TEMP_quality_control": {
+      "type": "float",
+      "standard_name": "sea_surface_temperature status_flag",
+      "long_name": "Quality Control flag for sea_surface_temperature",
+      "quality_control_conventions": "WOCE quality control procedure",
+      "quality_control_set": 4.0,
+      "valid_min": 2,
+      "valid_max": 4,
+      "flag_values": [
+        2,
+        3,
+        4
+      ],
+      "flag_meanings": "good questionable bad"
+    },
+    "NOMINAL_DEPTH": {
+      "type": "float",
+      "standard_name": "depth",
+      "long_name": "nominal depth",
+      "units": "m",
+      "axis": "Z",
+      "reference_datum": "sea surface",
+      "positive": "down",
+      "valid_min": -5.0,
+      "valid_max": 1200.0
+    },
+    "PSAL_quality_control": {
+      "type": "float",
+      "standard_name": "sea_surface_salinity status_flag",
+      "long_name": "Quality Control flag for sea_surface_salinity",
+      "quality_control_conventions": "WOCE quality control procedure",
+      "quality_control_set": 4.0,
+      "valid_min": 2,
+      "valid_max": 4,
+      "flag_values": [
+        2,
+        3,
+        4
+      ],
+      "flag_meanings": "good questionable bad"
+    },
+    "Press_ATM_quality_control": {
+      "type": "float",
+      "standard_name": "air_pressure_at_sea_level status_flag",
+      "long_name": "Quality Control flag for barometric pressure",
+      "quality_control_conventions": "WOCE quality control procedure",
+      "quality_control_set": 4.0,
+      "valid_min": 2,
+      "valid_max": 4,
+      "flag_values": [
+        2,
+        3,
+        4
+      ],
+      "flag_meanings": "good questionable bad"
+    },
+    "xCO2EQ_PPM_quality_control": {
+      "type": "float",
+      "long_name": "Quality Control flag for xCO2EQ_PPM",
+      "quality_control_conventions": "WOCE quality control procedure",
+      "quality_control_set": 4.0,
+      "valid_min": 2,
+      "valid_max": 4,
+      "flag_values": [
+        2,
+        3,
+        4
+      ],
+      "flag_meanings": "good questionable bad"
+    },
+    "xCO2ATM_PPM_quality_control": {
+      "type": "float",
+      "long_name": "Quality Control flag for xCO2ATM_PPM",
+      "quality_control_conventions": "WOCE quality control procedure",
+      "quality_control_set": 4.0,
+      "valid_min": 2,
+      "valid_max": 4,
+      "flag_values": [
+        2,
+        3,
+        4
+      ],
+      "flag_meanings": "good questionable bad"
+    },
+    "fCO2SW_UATM_quality_control": {
+      "type": "float",
+      "long_name": "Quality Control flag for fCO2SW_UATM",
+      "quality_control_conventions": "WOCE quality control procedure",
+      "quality_control_set": 4.0,
+      "valid_min": 2,
+      "valid_max": 4,
+      "flag_values": [
+        2,
+        3,
+        4
+      ],
+      "flag_meanings": "good questionable bad"
+    },
+    "DfCO2_quality_control": {
+      "type": "float",
+      "long_name": "Quality Control flag for DfCO2",
+      "quality_control_conventions": "WOCE quality control procedure",
+      "quality_control_set": 4.0,
+      "valid_min": 2,
+      "valid_max": 4,
+      "flag_values": [
+        2,
+        3,
+        4
+      ],
+      "flag_meanings": "good questionable bad"
+    },
+    "DOX1_quality_control": {
+      "type": "float",
+      "standard_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water status_flag",
+      "long_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water status_flag",
+      "quality_control_conventions": "WOCE quality control procedure",
+      "quality_control_set": 4.0,
+      "valid_min": 2,
+      "valid_max": 4,
+      "flag_values": [
+        2,
+        3,
+        4
+      ],
+      "flag_meanings": "good questionable bad"
+    },
+    "TPH_quality_control": {
+      "type": "float",
+      "standard_name": "sea_water_ph_reported_on_total_scale status_flag",
+      "long_name": "sea_water_ph_reported_on_total_scale status_flag",
+      "quality_control_conventions": "WOCE quality control procedure",
+      "quality_control_set": 4.0,
+      "valid_min": 2,
+      "valid_max": 4,
+      "flag_values": [
+        2,
+        3,
+        4
+      ],
+      "flag_meanings": "good questionable bad"
+    },
+    "pHt_quality_control": {
+      "type": "float",
+      "standard_name": "sea_water_ph_reported_on_total_scale status_flag",
+      "long_name": "pH_TS_measured(durafet) status_flag",
+      "quality_control_conventions": "WOCE quality control procedure",
+      "quality_control_set": 4.0,
+      "valid_min": 2,
+      "valid_max": 4,
+      "flag_values": [
+        2,
+        3,
+        4
+      ],
+      "flag_meanings": "good questionable bad"
     }
   },
   "aws_opendata_registry": {

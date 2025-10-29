@@ -21,7 +21,7 @@
     "coiled_cluster_options": {
       "n_workers": [
         1,
-        20
+        50
       ],
       "scheduler_vm_types": "m7i-flex.large",
       "worker_vm_types": "m7i-flex.xlarge",
