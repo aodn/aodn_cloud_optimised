@@ -611,24 +611,55 @@ class TestGenericHandler(unittest.TestCase):
 
         # Run handler
         self.handler_seabird_v1_file.to_cloud_optimised(seabird_v1_file_ls)
-        # self.handler_seabird_v1_file.to_cloud_optimised(["seabird_v1_2025-10-21T02:33:33.parquet"])
 
         # Read parquet dataset and check data is good!
-        # dataset_config = load_dataset_config(DATASET_CONFIG_PARQUET_SEABIRD_JSON)
-        # dataset_name = dataset_config["dataset_name"]
-        # dname = f"s3://{self.BUCKET_OPTIMISED_NAME}/{self.ROOT_PREFIX_CLOUD_OPTIMISED_PATH}/{dataset_name}.parquet/"
+        dataset_config = load_dataset_config(DATASET_CONFIG_PARQUET_SEABIRD_JSON)
+        dataset_name = dataset_config["dataset_name"]
+        dname = f"s3://{self.BUCKET_OPTIMISED_NAME}/{self.ROOT_PREFIX_CLOUD_OPTIMISED_PATH}/{dataset_name}.parquet/"
 
-        # parquet_dataset = pd.read_parquet(
-        #     dname,
-        #     engine="pyarrow",
-        #     storage_options={
-        #         "client_kwargs": {
-        #             "endpoint_url": f"http://{self.endpoint_ip}:{self.port}"
-        #         }
-        #     },
-        # )
+        # Read the co_table
+        co_df = (
+            pd.read_parquet(
+                dname,
+                engine="pyarrow",
+                storage_options={
+                    "client_kwargs": {
+                        "endpoint_url": f"http://{self.endpoint_ip}:{self.port}"
+                    }
+                },
+            )
+            .drop(
+                # These columns are added by the optimisation process
+                columns=[
+                    "index",
+                    "polygon",
+                    "timestamp",
+                    "filename",
+                ]
+            )
+            .sort_values(
+                by="id",
+            )
+            .reset_index(
+                drop=True,
+            )
+        )
 
-        # self.assertIn("station_name", parquet_dataset.columns)
+        # Read the original table
+        og_df = (
+            pd.read_parquet(
+                TEST_FILE_PARQUET_SEABIRD_V1,
+            )
+            .sort_values(
+                by="id",
+            )
+            .reset_index(
+                drop=True,
+            )
+        )
+
+        # Check values are the same
+        assert co_df.equals(og_df)
 
 
 if __name__ == "__main__":
