@@ -215,7 +215,7 @@
     }
   },
   "aws_opendata_registry": {
-    "Name": "IMOS - National Mooring Network Facility - Near real-time data",
+    "Name": "National Mooring Network - Real time",
     "Description": "The National Mooring Network Facility (formerly known as the Australian National Mooring Network (ANMN)), is a series of national reference stations and regional moorings designed to monitor particular oceanographic phenomena in Australian coastal ocean waters. This collection includes surface and sub-surface observations transmitted in near real-time. The measured properties are water temperature, salinity, pressure and dissolved oxygen.\n\nInitial data are from the Maria Island National Reference Station (NRS), which is one of a series of national reference stations designed to monitor particular oceanographic phenomena in Australian coastal ocean waters. Located off the east coast of Maria Island in Tasmania, the station has provided the longest high quality ocean time series in the Southern Hemisphere, consisting of biogeochemical samples collected since 1944 and high-frequency moored instrument data since 2008.\n\nPreviously near-real time data were collected from several IMOS moorings (the following National Reference Stations: Maria Island, North Stradbroke Island, Darwin and Yongala), and discontinued in 2017. The previous data were not quality controlled and measured by different instrumentation (WQM or SBE16V2+).\n\nAutomated quality control routines are applied to the near real-time data. The delayed mode data will be available at the end of a deployment after applying further processing and quality control checks.",
     "Documentation": "https://catalogue-imos.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/a8f5c736-6eaa-47fb-a9eb-d778beb71701",
     "Contact": "info@aodn.org.au",
@@ -251,7 +251,7 @@
         }
       ]
     },
-    "Citation": "IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access]"
+    "Citation": "The citation in a list of references is: \"IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access].\""
   },
   "schema_transformation": {
     "drop_variables": [],

@@ -400,14 +400,15 @@
     }
   },
   "aws_opendata_registry": {
-    "Name": "IMOS - National Mooring Network - Acidification Moorings (AM) Sub-Facility - delayed mode data",
+    "Name": "National Mooring Network - Acidification - Delayed mode",
     "Description": "The Acidification Moorings sub-facility is responsible for building an ocean carbon and acidification monitoring network for Australian waters. These moorings provide key observations to help us understand and address the problem of increasing ocean acidification. Each mooring is equipped with surface CO2 systems, using proven and robust technology. Three sensors will determine surface CO2, temperature and salinity. The hydrochemistry sampling at the National Reference Stations will also provide total alkalinity data, as will future pH sensors on the moorings, allowing for a complete determination of the carbonate system and pH. \n\nAcidification moorings are co-located at three National Reference Stations: * the Yongala NRS in Queensland (replaced in September 2013 after Tropical Cyclone Yasi, and then decommissioned in August 2014), * the Maria Island NRS in Tasmania, and * the Kangaroo Island NRS in South Australia. There is also one site located adjacent to the Heron Island reef slope in the Wistari channel on the Great Barrier Reef. The Yongala, Wistari and Maria Island acidification moorings are located to characterise changes down the east coast of Australia and the influence of the East Australian Current on CO2 uptake and acidification from the Great Barrier Reef to the Southern Ocean. The Kangaroo Island mooring monitors the deeper waters upwelled on the South Australian shelf which are expected to have higher CO2 and thus could accelerate the exposure of ecosystems to acidification earlier than in other regions.",
     "Documentation": "https://catalogue-imos.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/89b495cc-7382-43c0-abef-d1e66738a924",
     "Contact": "info@aodn.org.au",
     "ManagedBy": "AODN",
     "UpdateFrequency": "As Needed",
     "Tags": [
-      "FILL UP MANUALLY - CHECK DOCUMENTATION"
+      "oceans",
+      "chemistry"
     ],
     "License": "http://creativecommons.org/licenses/by/4.0/",
     "Resources": [
@@ -436,7 +437,7 @@
         }
       ]
     },
-    "Citation": "IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access]"
+    "Citation": "The citation in a list of references is: \"IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access].\""
   },
   "schema_transformation": {
     "drop_variables": [],
