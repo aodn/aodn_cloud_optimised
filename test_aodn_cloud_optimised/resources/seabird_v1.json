@@ -36,6 +36,9 @@
   },
   "metadata_uuid": null,
   "schema": {
+    "index": {
+      "type": "int64"
+    },
     "id": {
       "type": "string"
     },
@@ -255,7 +258,7 @@
         "type": "time_extent",
         "time_extent": {
           "time_varname": "eventDate",
-          "partition_period": "M"
+          "partition_period": "Y"
         }
       },
       {
@@ -264,7 +267,7 @@
         "spatial_extent": {
           "lat_varname": "decimalLatitude",
           "lon_varname": "decimalLongitude",
-          "spatial_resolution": 5
+          "spatial_resolution": 30
         }
       }
     ]
