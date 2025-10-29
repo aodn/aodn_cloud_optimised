@@ -1,11 +1,11 @@
 {
-  "dataset_name": "fixed_station_wireless_sensor_network_delayec_qc",
-  "logger_name": "fixed_station_wireless_sensor_network_delayec_qc",
+  "dataset_name": "station_wireless_sensor_network_delayec_qc",
+  "logger_name": "station_wireless_sensor_network_delayec_qc",
   "cloud_optimised_format": "parquet",
   "run_settings": {
     "paths": [
       {
-        "s3_uri": "s3://imos-data/IMOS/FAIMMS/",
+        "s3_uri": "s3://imos-data/IMOS/FAIMMS//",
         "filter": [
           ".*/QAQC/.*_FV01\\.nc"
         ],
@@ -715,7 +715,7 @@
     "Resources": [
       {
         "Description": "Cloud Optimised AODN dataset of IMOS - Wireless Sensor Networks Facility",
-        "ARN": "arn:aws:s3:::aodn-cloud-optimised/fixed_station_wireless_sensor_network_delayec_qc.parquet",
+        "ARN": "arn:aws:s3:::aodn-cloud-optimised/station_wireless_sensor_network_delayec_qc.parquet",
         "Region": "ap-southeast-2",
         "Type": "S3 Bucket"
       }
@@ -724,8 +724,8 @@
       "Tutorials": [
         {
           "Title": "Accessing IMOS - Wireless Sensor Networks Facility",
-          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/fixed_station_wireless_sensor_network_delayec_qc.ipynb",
-          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/fixed_station_wireless_sensor_network_delayec_qc.ipynb",
+          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/station_wireless_sensor_network_delayec_qc.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/station_wireless_sensor_network_delayec_qc.ipynb",
           "AuthorName": "Laurent Besnard",
           "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
         },
@@ -759,6 +759,14 @@
           "long_name": "site code"
         }
       },
+      "aims_channel_id": {
+        "source": "@global_attribute:aims_channel_id",
+        "schema": {
+          "type": "int32",
+          "units": "1",
+          "long_name": "aims channel id"
+        }
+      },
       "timestamp": {
         "source": "@partitioning:time_extent",
         "schema": {
@@ -781,14 +789,6 @@
         "source_variable": "site_code"
       },
       {
-        "source_variable": "timestamp",
-        "type": "time_extent",
-        "time_extent": {
-          "time_varname": "TIME",
-          "partition_period": "M"
-        }
-      },
-      {
         "source_variable": "polygon",
         "type": "spatial_extent",
         "spatial_extent": {
@@ -796,6 +796,18 @@
           "lon_varname": "LONGITUDE",
           "spatial_resolution": 2
         }
+      },
+      {
+        "source_variable": "timestamp",
+        "type": "time_extent",
+        "time_extent": {
+          "time_varname": "TIME",
+          "partition_period": "Y"
+        }
+      },
+      {
+        "source_variable": "aims_channel_id",
+        "_COMMENT": "Very important partition! Most filenames in this dataset are similar, which would overwritte the parquet files. The filenames in this dataset aren't unique, while they're always are for other dataset. We're creating this partition so that files are stored in different parquet folders. Have to think about changing the main code"
       }
     ],
     "global_attributes": {

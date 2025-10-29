@@ -1,6 +1,6 @@
 {
-  "dataset_name": "mooring_sofs_surface_properties_realtime_qc",
-  "logger_name": "mooring_sofs_surface_properties_realtime_qc",
+  "dataset_name": "mooring_southern_ocean_surface_properties_realtime_qc",
+  "logger_name": "mooring_southern_ocean_surface_properties_realtime_qc",
   "cloud_optimised_format": "parquet",
   "run_settings": {
     "paths": [
@@ -72,6 +72,106 @@
       "valid_max": 180,
       "reference_datum": "geographical coordinates, WGS84",
       "ancillary_variables": "LONGITUDE_quality_control"
+    },
+    "WSPD_3": {
+      "type": "float",
+      "long_name": "earth relative wind speed (6580)",
+      "units": "meter second-1",
+      "instrument": "calculated from scalar average U and V",
+      "observation_type": "calculated",
+      "sensor_height": 3.5199999809265137,
+      "standard_name": "wind_speed",
+      "ancillary_variables": "WSPD_3_quality_control"
+    },
+    "WSPD_4": {
+      "type": "float",
+      "long_name": "earth relative wind speed (8670)",
+      "units": "meter second-1",
+      "instrument": "calculated from scalar average U and V",
+      "observation_type": "calculated",
+      "sensor_height": 3.5199999809265137,
+      "standard_name": "wind_speed",
+      "ancillary_variables": "WSPD_4_quality_control"
+    },
+    "WSPD_3_quality_control": {
+      "type": "string",
+      "standard_name": "wind_speed status_flag",
+      "long_name": "quality flags for wind_speed",
+      "quality_control_conventions": "IMOS Reference Table F",
+      "quality_control_set": 3,
+      "quality_control_flag_values": "B, C, D, E, F, G, H, J, K, L, M, Q, S, T, U, V, X, Z",
+      "quality_control_flag_meanings": "Value_out_of_bounds Time_not_sequential Failed_T_Tw_Td_test Failed_true_wind_recomputation_test Platform_velocity_unrealistic Value_exceeds_threshold Discontinuity Erroneous_value Suspect_value_(visual) Value_located_over_land Instrument_malfunction Pre-flagged_as_suspect Spike_in_data_(visual) Time_duplicate Suspect_value_(statistical) Step_in_data_(statistical) Spike_in_data_(statistical) Value_passed_all_tests"
+    },
+    "WSPD_4_quality_control": {
+      "type": "string",
+      "standard_name": "wind_speed status_flag",
+      "long_name": "quality flags for wind_speed",
+      "quality_control_conventions": "IMOS Reference Table F",
+      "quality_control_set": 3,
+      "quality_control_flag_values": "B, C, D, E, F, G, H, J, K, L, M, Q, S, T, U, V, X, Z",
+      "quality_control_flag_meanings": "Value_out_of_bounds Time_not_sequential Failed_T_Tw_Td_test Failed_true_wind_recomputation_test Platform_velocity_unrealistic Value_exceeds_threshold Discontinuity Erroneous_value Suspect_value_(visual) Value_located_over_land Instrument_malfunction Pre-flagged_as_suspect Spike_in_data_(visual) Time_duplicate Suspect_value_(statistical) Step_in_data_(statistical) Spike_in_data_(statistical) Value_passed_all_tests"
+    },
+    "RAD_SW2": {
+      "type": "float",
+      "actual_range": [
+        0.0,
+        0.0
+      ],
+      "long_name": "short wave radiation (8670)",
+      "units": "watts meter-2",
+      "original_units": "watts meter-2",
+      "instrument": "Eppley Precision Spectral Pyranometer (s/n 236)",
+      "rad_direction": "downwelling",
+      "observation_type": "measured",
+      "height": 2.809999942779541,
+      "average_method": "average",
+      "average_center": "time at end of period",
+      "average_length": 3600,
+      "sampling_rate": 0.016699999570846558,
+      "data_precision": 0.10000000149011612,
+      "special_value": -8888.0,
+      "qcindex": 29
+    },
+    "RAD_LW": {
+      "type": "float",
+      "actual_range": [
+        0.0,
+        0.0
+      ],
+      "long_name": "long wave radiation (1260)",
+      "units": "watts meter-2",
+      "original_units": "watts meter-2",
+      "instrument": "Eppley Precision Infrared Radiometer (s/n 227)",
+      "rad_direction": "downwelling",
+      "observation_type": "measured",
+      "height": 2.809999942779541,
+      "average_method": "average",
+      "average_center": "time at end of period",
+      "average_length": 3600,
+      "sampling_rate": 0.016699999570846558,
+      "data_precision": 0.10000000149011612,
+      "special_value": -8888.0,
+      "qcindex": 30
+    },
+    "RAD_LW2": {
+      "type": "float",
+      "actual_range": [
+        0.0,
+        0.0
+      ],
+      "long_name": "long wave radiation (8670)",
+      "units": "watts meter-2",
+      "original_units": "watts meter-2",
+      "instrument": "Eppley Precision Infrared Radiometer (s/n 228)",
+      "rad_direction": "downwelling",
+      "observation_type": "measured",
+      "height": 2.809999942779541,
+      "average_method": "average",
+      "average_center": "time at end of period",
+      "average_length": 3600,
+      "sampling_rate": 0.016699999570846558,
+      "data_precision": 0.10000000149011612,
+      "qcindex": 31
     },
     "UWND": {
       "type": "float",
@@ -654,7 +754,7 @@
     "Resources": [
       {
         "Description": "Cloud Optimised AODN dataset of IMOS - Deep Water Moorings - Southern Ocean Flux Station (SOFS) - Surface properties (real-time)",
-        "ARN": "arn:aws:s3:::imos-data-lab-optimised/mooring_sofs_surface_properties_realtime_qc.parquet",
+        "ARN": "arn:aws:s3:::imos-data-lab-optimised/mooring_southern_ocean_surface_properties_realtime_qc.parquet",
         "Region": "ap-southeast-2",
         "Type": "S3 Bucket"
       }
@@ -663,8 +763,8 @@
       "Tutorials": [
         {
           "Title": "Accessing IMOS - Deep Water Moorings - Southern Ocean Flux Station (SOFS) - Surface properties (real-time)",
-          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/mooring_sofs_surface_properties_realtime_qc.ipynb",
-          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/mooring_sofs_surface_properties_realtime_qc.ipynb",
+          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/mooring_southern_ocean_surface_properties_realtime_qc.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/mooring_southern_ocean_surface_properties_realtime_qc.ipynb",
           "AuthorName": "Laurent Besnard",
           "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
         },
@@ -698,6 +798,14 @@
           "long_name": "Partition timestamp"
         }
       },
+      "deployment_number": {
+        "source": "@global_attribute:deployment_number",
+        "schema": {
+          "type": "float32",
+          "units": "1",
+          "long_name": "deployment number"
+        }
+      },
       "polygon": {
         "source": "@partitioning:spatial_extent",
         "schema": {
@@ -708,6 +816,9 @@
       }
     },
     "partitioning": [
+      {
+        "source_variable": "deployment_number"
+      },
       {
         "source_variable": "timestamp",
         "type": "time_extent",

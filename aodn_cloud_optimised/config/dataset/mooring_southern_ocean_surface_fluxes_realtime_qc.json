@@ -1,13 +1,13 @@
 {
-  "dataset_name": "mooring_sofs_surface_fluxes_realtime_qc",
-  "logger_name": "mooring_sofs_surface_fluxes_realtime_qc",
+  "dataset_name": "mooring_southern_ocean_surface_fluxes_realtime_qc",
+  "logger_name": "mooring_southern_ocean_surface_fluxes_realtime_qc",
   "cloud_optimised_format": "parquet",
   "run_settings": {
     "paths": [
       {
         "s3_uri": "s3://imos-data/IMOS/DWM/ASFS/SOFS/Surface_fluxes/Real-time/",
         "filter": [
-          ".*FV02\\.nc"
+          ".*_FV02.*\\.nc"
         ],
         "year_range": []
       }
@@ -335,7 +335,7 @@
     "Resources": [
       {
         "Description": "Cloud Optimised AODN dataset of IMOS - Deep Water Moorings - Southern Ocean Flux Station (SOFS) - Surface fluxes (real-time)",
-        "ARN": "arn:aws:s3:::imos-data-lab-optimised/mooring_sofs_surface_fluxes_realtime_qc.parquet",
+        "ARN": "arn:aws:s3:::imos-data-lab-optimised/mooring_southern_ocean_surface_fluxes_realtime_qc.parquet",
         "Region": "ap-southeast-2",
         "Type": "S3 Bucket"
       }
@@ -344,8 +344,8 @@
       "Tutorials": [
         {
           "Title": "Accessing IMOS - Deep Water Moorings - Southern Ocean Flux Station (SOFS) - Surface fluxes (real-time)",
-          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/mooring_sofs_surface_fluxes_realtime_qc.ipynb",
-          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/mooring_sofs_surface_fluxes_realtime_qc.ipynb",
+          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/mooring_southern_ocean_surface_fluxes_realtime_qc.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/mooring_southern_ocean_surface_fluxes_realtime_qc.ipynb",
           "AuthorName": "Laurent Besnard",
           "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
         },
@@ -371,6 +371,14 @@
           "long_name": "Filename of the source file"
         }
       },
+      "deployment_number": {
+        "source": "@global_attribute:deployment_number",
+        "schema": {
+          "type": "float32",
+          "units": "1",
+          "long_name": "deployment number"
+        }
+      },
       "timestamp": {
         "source": "@partitioning:time_extent",
         "schema": {
@@ -389,6 +397,9 @@
       }
     },
     "partitioning": [
+      {
+        "source_variable": "deployment_number"
+      },
       {
         "source_variable": "timestamp",
         "type": "time_extent",
