@@ -253,20 +253,18 @@ class GenericHandler(CommonHandler):
         is considered unnecessary.
 
         If a variable in the Dataset is not found in the schema, an error is logged.
-        """
 
-        # TODO: Investigate adding pyarrow read options
+        Notes:
+            Ensure that the config schema includes a column named "index" of type int64. When the internal conversions
+            occur between xarray, pandas and pyarrow, an "index" column is added to the pyarrow table. Rather than
+            detect when "index" should not have been added, it is easier to add "index" as an expected column that is
+            added by the cloud optimisation process.
+        """
 
         table = pq.read_table(parquet_fp)
         df = table.to_pandas()
         df = df.drop(columns=self.drop_variables, errors="ignore")
         ds = xr.Dataset.from_dataframe(df)
-
-        # When converting from pandas an index is created and added
-        # In the case where the col/var "index" is not specified in the desired schema
-        # we drop the auto generated "index" col/var
-        if "index" not in self.schema:
-            ds = ds.drop_vars("index")
 
         for var in ds.variables:
             if var not in self.schema:
@@ -781,7 +779,8 @@ class GenericHandler(CommonHandler):
         timestamp_varname = timestamp_info.get("source_variable")
         time_varname = timestamp_info["time_extent"].get("time_varname", "TIME")
 
-        if any(df[timestamp_varname] <= 0):
+        # Check any timestamps are before `1900-01-01 00:00:00``
+        if any(df[timestamp_varname] < -2208988800):
             self.logger.warning(
                 f"{self.uuid_log}: {f.path}: Bad values detected in {time_varname} time variable. Trimming corresponding data."
             )
@@ -946,13 +945,15 @@ class GenericHandler(CommonHandler):
         else:
             df_var_list = list(df.columns) + [df.index.name]
 
-        pdf = pa.Table.from_pandas(df)  # Convert pandas DataFrame to PyArrow Table
+        # Convert pandas DataFrame to PyArrow Table
+        pdf = pa.Table.from_pandas(df)
 
         # Part A: casting existing columns to correct type
         # In the following part, we have to create a hugly hack which highlights the immaturity of pyarrow. Basically if some
         # variables are null in a netcdf, the type is not recorded. we have to cast every variable with the appropriate type manually,
         # following a predefined schema. BUT of course nothing work as expected, and if some variables are missing in a file, well
         # we have to create a subset of the original schema ... fun fun fun
+
         # Get the names of columns present in the PyArrow table
         df_columns = pdf.schema.names
 
