@@ -40,7 +40,7 @@ def extract_unique_variable_blocks(log_path):
     return unique_vars
 
 
-if __name__ == "__main__":
+def main():
     import sys
 
     if len(sys.argv) != 2:
@@ -54,3 +54,7 @@ if __name__ == "__main__":
         print("No missing variable definitions found.")
     else:
         print(json.dumps(vars_dict, indent=2, ensure_ascii=False))
+
+
+if __name__ == "__main__":
+    main()
