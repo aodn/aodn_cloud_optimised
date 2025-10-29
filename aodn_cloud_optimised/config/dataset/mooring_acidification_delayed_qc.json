@@ -21,18 +21,18 @@
     "coiled_cluster_options": {
       "n_workers": [
         1,
-        20
+        40
       ],
       "scheduler_vm_types": "m7i-flex.large",
       "worker_vm_types": "m7i-flex.xlarge",
       "allow_ingress_from": "me",
       "compute_purchase_option": "spot_with_fallback",
       "worker_options": {
-        "nthreads": 4,
+        "nthreads": 16,
         "memory_limit": "32GB"
       }
     },
-    "batch_size": 50,
+    "batch_size": 500,
     "force_previous_parquet_deletion": false
   },
   "metadata_uuid": "89b495cc-7382-43c0-abef-d1e66738a924",
