@@ -262,6 +262,12 @@ class GenericHandler(CommonHandler):
         df = df.drop(columns=self.drop_variables, errors="ignore")
         ds = xr.Dataset.from_dataframe(df)
 
+        # When converting from pandas an index is created and added
+        # In the case where the col/var "index" is not specified in the desired schema
+        # we drop the auto generated "index" col/var
+        if "index" not in self.schema:
+            ds = ds.drop_vars("index")
+
         for var in ds.variables:
             if var not in self.schema:
                 self.logger.error(
