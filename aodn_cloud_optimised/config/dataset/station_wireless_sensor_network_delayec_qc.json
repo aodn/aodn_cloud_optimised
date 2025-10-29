@@ -5,7 +5,7 @@
   "run_settings": {
     "paths": [
       {
-        "s3_uri": "s3://imos-data/IMOS/FAIMMS//",
+        "s3_uri": "s3://imos-data/IMOS/FAIMMS/",
         "filter": [
           ".*/QAQC/.*_FV01\\.nc"
         ],
@@ -23,7 +23,7 @@
         1,
         80
       ],
-      "scheduler_vm_types": "m7i-flex.2xlarge",
+      "scheduler_vm_types": "m7i-flex.xlarge",
       "worker_vm_types": "m7i-flex.xlarge",
       "allow_ingress_from": "me",
       "compute_purchase_option": "spot_with_fallback",

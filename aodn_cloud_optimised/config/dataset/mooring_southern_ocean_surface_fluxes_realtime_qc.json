@@ -322,14 +322,17 @@
     }
   },
   "aws_opendata_registry": {
-    "Name": "IMOS - Deep Water Moorings - Southern Ocean Flux Station (SOFS) - Surface fluxes (real-time)",
+    "Name": "Deep Water Moorings - Southern Ocean Time Series -  Surface Fluxes - Real time",
     "Description": "This data collection contains heat and mass fluxes at the sea surface computed from observations at the Southern Ocean Flux Station (SOFS) mooring. The observed meteorology, downwelling radiation, and sea water temperature and salinity at the surface are also included. Hourly averages of each parameter are delivered in near real-time. SOFS is an observing platform in the Sub-Antarctic Zone, approximately 350 nautical miles south-west of Tasmania. It obtains frequent measurements of the surface and deep ocean properties that control the transfer of heat, moisture, energy and CO2 between the atmosphere and the upper ocean to improve understanding of climate and carbon processes. The mooring was first deployed at (46.7S, 142E) in March 2010.",
     "Documentation": "https://catalogue-imos.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/80ffbf9d-9547-41aa-8fa1-cf028c58556a",
     "Contact": "info@aodn.org.au",
     "ManagedBy": "AODN",
     "UpdateFrequency": "As Needed",
     "Tags": [
-      "FILL UP MANUALLY - CHECK DOCUMENTATION"
+      "oceans",
+      "meteorological",
+      "radiation",
+      "precipitation"
     ],
     "License": "http://creativecommons.org/licenses/by/4.0/",
     "Resources": [
@@ -358,7 +361,7 @@
         }
       ]
     },
-    "Citation": "IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access]"
+    "Citation": "The citation in a list of references is: \"IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access].\""
   },
   "schema_transformation": {
     "drop_variables": [],

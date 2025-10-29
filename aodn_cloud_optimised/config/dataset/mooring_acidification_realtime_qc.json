@@ -7,13 +7,13 @@
       {
         "s3_uri": "s3://imos-data/IMOS/ANMN/AM/",
         "filter": [
-          ".*\\/CO2\\/realtime\\/.*_FV0[0-1]_.*\\.nc"
+          ".*\\/CO2\\/real-time\\/.*_FV0[0-1].*\\.nc"
         ],
         "year_range": []
       }
     ],
     "cluster": {
-      "mode": "local",
+      "mode": "coiled",
       "restart_every_path": false
     },
     "clear_existing_data": true,
@@ -24,15 +24,15 @@
         20
       ],
       "scheduler_vm_types": "m7i-flex.large",
-      "worker_vm_types": "m7i-flex.large",
+      "worker_vm_types": "m7i-flex.xlarge",
       "allow_ingress_from": "me",
       "compute_purchase_option": "spot_with_fallback",
       "worker_options": {
         "nthreads": 4,
-        "memory_limit": "8GB"
+        "memory_limit": "32GB"
       }
     },
-    "batch_size": 5,
+    "batch_size": 200,
     "force_previous_parquet_deletion": false
   },
   "metadata_uuid": "4d3d4aca-472e-4616-88a5-df0f5ab401ba",
