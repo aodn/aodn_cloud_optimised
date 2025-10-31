@@ -1,0 +1,1015 @@
+{
+  "dataset_name": "mooring_wave_timeseries_delayed_qc",
+  "logger_name": "mooring_wave_timeseries_delayed_qc",
+  "cloud_optimised_format": "zarr",
+  "run_settings": {
+    "paths": [
+      {
+        "s3_uri": "s3://imos-data/IMOS/ANMN/QLD/DARBGF/Wave",
+        "filter": [
+          ".*_FV01.*\\.nc"
+        ],
+        "year_range": []
+      }
+    ],
+    "cluster": {
+      "mode": "coiled",
+      "restart_every_path": false
+    },
+    "clear_existing_data": true,
+    "raise_error": false,
+    "coiled_cluster_options": {
+      "n_workers": [
+        1,
+        20
+      ],
+      "scheduler_vm_types": "m7i-flex.large",
+      "worker_vm_types": "m7i-flex.large",
+      "allow_ingress_from": "me",
+      "compute_purchase_option": "spot_with_fallback",
+      "worker_options": {
+        "nthreads": 4,
+        "memory_limit": "8GB"
+      }
+    },
+    "batch_size": 1
+  },
+  "metadata_uuid": "aaebf991-b79d-4670-a1c5-a0de9bf649ce",
+  "schema_transformation": {
+    "dimensions": {
+      "time": {
+        "name": "TIME",
+        "chunk": 2000,
+        "rechunk": false,
+        "append_dim": true
+      },
+      "FREQUENCY": {
+        "name": "FREQUENCY",
+        "chunk": 62,
+        "size": 0
+      },
+      "DIR": {
+        "name": "DIR",
+        "chunk": 89,
+        "size": 0
+      }
+    },
+    "var_template_shape": "WSSH",
+    "vars_incompatible_with_region": [
+      "FREQUENCY",
+      "DIR",
+      "TIMESERIES",
+      "LATITUDE",
+      "LONGITUDE",
+      "NOMINAL_DEPTH"
+    ],
+    "global_attributes": {
+      "delete": [],
+      "set": {}
+    }
+  },
+  "schema": {
+    "TIME": {
+      "type": "timestamp[ns]",
+      "axis": "T",
+      "long_name": "time",
+      "standard_name": "time",
+      "valid_max": 90000.0,
+      "valid_min": 0.0
+    },
+    "FREQUENCY": {
+      "type": "float",
+      "long_name": "frequency",
+      "units": "Hz",
+      "valid_max": 900000.0,
+      "valid_min": 0.0
+    },
+    "DIR": {
+      "type": "float",
+      "comment": "A compass correction of 3.32degrees has been applied to the data by a technician using RDI's software (usually to account for magnetic declination).",
+      "compass_correction_applied": 3.3200000000000003,
+      "long_name": "from_direction",
+      "magnetic_declination": 2.9166666666666665,
+      "positive": "clockwise",
+      "reference_datum": "true north",
+      "units": "degree",
+      "valid_max": 360.0,
+      "valid_min": 0.0
+    },
+    "TIMESERIES": {
+      "type": "int32",
+      "dims": [],
+      "cf_role": "timeseries_id",
+      "long_name": "unique_identifier_for_each_timeseries_feature_instance_in_this_file"
+    },
+    "LATITUDE": {
+      "type": "double",
+      "axis": "Y",
+      "long_name": "latitude",
+      "reference_datum": "WGS84 geographic coordinate system",
+      "standard_name": "latitude",
+      "units": "degrees_north",
+      "valid_max": 90.0,
+      "valid_min": -90.0
+    },
+    "LONGITUDE": {
+      "type": "double",
+      "axis": "X",
+      "long_name": "longitude",
+      "reference_datum": "WGS84 geographic coordinate system",
+      "standard_name": "longitude",
+      "units": "degrees_east",
+      "valid_max": 180.0,
+      "valid_min": -180.0
+    },
+    "NOMINAL_DEPTH": {
+      "type": "float",
+      "axis": "Z",
+      "long_name": "nominal depth",
+      "positive": "down",
+      "reference_datum": "sea surface",
+      "standard_name": "depth",
+      "units": "m",
+      "valid_max": 12000.0,
+      "valid_min": -5.0
+    },
+    "WSSH": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "ancillary_variables": "WSSH_quality_control",
+      "long_name": "sea_surface_wave_spectral_significant_height",
+      "units": "m",
+      "valid_max": 100.0,
+      "valid_min": 0.0
+    },
+    "WSSH_quality_control": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "long_name": "quality flag for sea_surface_wave_spectral_significant_height",
+      "quality_control_conventions": "IMOS standard flags",
+      "quality_control_global": " ",
+      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)"
+    },
+    "WPPE": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "ancillary_variables": "WPPE_quality_control",
+      "long_name": "sea_surface_wave_period_at_variance_spectral_density_maximum",
+      "standard_name": "sea_surface_wave_period_at_variance_spectral_density_maximum",
+      "units": "Second",
+      "valid_max": 100.0,
+      "valid_min": 0.0
+    },
+    "WPPE_quality_control": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "long_name": "quality flag for sea_surface_wave_period_at_variance_spectral_density_maximum",
+      "quality_control_conventions": "IMOS standard flags",
+      "quality_control_global": " ",
+      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
+      "standard_name": "sea_surface_wave_period_at_variance_spectral_density_maximum status_flag"
+    },
+    "WPDI": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "ancillary_variables": "WPDI_quality_control",
+      "comment": "A compass correction of 3.32degrees has been applied to the data by a technician using RDI's software (usually to account for magnetic declination).",
+      "compass_correction_applied": 3.3200000000000003,
+      "long_name": "sea_surface_wave_from_direction_at_variance_spectral_density_maximum",
+      "magnetic_declination": 2.9166666666666665,
+      "positive": "clockwise",
+      "reference_datum": "true north",
+      "standard_name": "sea_surface_wave_from_direction_at_variance_spectral_density_maximum",
+      "units": "degree",
+      "valid_max": 360.0,
+      "valid_min": 0.0
+    },
+    "WPDI_quality_control": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "long_name": "quality flag for sea_surface_wave_from_direction_at_variance_spectral_density_maximum",
+      "quality_control_conventions": "IMOS standard flags",
+      "quality_control_global": " ",
+      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
+      "standard_name": "sea_surface_wave_from_direction_at_variance_spectral_density_maximum status_flag"
+    },
+    "WWSH": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "ancillary_variables": "WWSH_quality_control",
+      "long_name": "sea_surface_wind_wave_significant_height",
+      "standard_name": "sea_surface_wind_wave_significant_height",
+      "units": "m",
+      "valid_max": 100.0,
+      "valid_min": 0.0
+    },
+    "WWSH_quality_control": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "long_name": "quality flag for sea_surface_wind_wave_significant_height",
+      "quality_control_conventions": "IMOS standard flags",
+      "quality_control_global": " ",
+      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
+      "standard_name": "sea_surface_wind_wave_significant_height status_flag"
+    },
+    "WWPP": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "ancillary_variables": "WWPP_quality_control",
+      "long_name": "sea_surface_wind_wave_period_at_variance_spectral_density_maximum",
+      "units": "Second",
+      "valid_max": 100.0,
+      "valid_min": 0.0
+    },
+    "WWPP_quality_control": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "long_name": "quality flag for sea_surface_wind_wave_period_at_variance_spectral_density_maximum",
+      "quality_control_conventions": "IMOS standard flags",
+      "quality_control_global": " ",
+      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)"
+    },
+    "WWPD": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "ancillary_variables": "WWPD_quality_control",
+      "comment": "A compass correction of 3.32degrees has been applied to the data by a technician using RDI's software (usually to account for magnetic declination).",
+      "compass_correction_applied": 3.3200000000000003,
+      "long_name": "sea_surface_wind_wave_from_direction_at_variance_spectral_density_maximum",
+      "magnetic_declination": 2.9166666666666665,
+      "positive": "clockwise",
+      "reference_datum": "true north",
+      "units": "degree",
+      "valid_max": 360.0,
+      "valid_min": 0.0
+    },
+    "WWPD_quality_control": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "long_name": "quality flag for sea_surface_wind_wave_from_direction_at_variance_spectral_density_maximum",
+      "quality_control_conventions": "IMOS standard flags",
+      "quality_control_global": " ",
+      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)"
+    },
+    "SWSH": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "ancillary_variables": "SWSH_quality_control",
+      "long_name": "sea_surface_swell_wave_significant_height",
+      "standard_name": "sea_surface_swell_wave_significant_height",
+      "units": "m",
+      "valid_max": 100.0,
+      "valid_min": 0.0
+    },
+    "SWSH_quality_control": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "long_name": "quality flag for sea_surface_swell_wave_significant_height",
+      "quality_control_conventions": "IMOS standard flags",
+      "quality_control_global": " ",
+      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
+      "standard_name": "sea_surface_swell_wave_significant_height status_flag"
+    },
+    "SWPP": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "ancillary_variables": "SWPP_quality_control",
+      "long_name": "sea_surface_swell_wave_period_at_variance_spectral_density_maximum",
+      "units": "Second",
+      "valid_max": 100.0,
+      "valid_min": 0.0
+    },
+    "SWPP_quality_control": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "long_name": "quality flag for sea_surface_swell_wave_period_at_variance_spectral_density_maximum",
+      "quality_control_conventions": "IMOS standard flags",
+      "quality_control_global": " ",
+      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)"
+    },
+    "SWPD": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "ancillary_variables": "SWPD_quality_control",
+      "comment": "A compass correction of 3.32degrees has been applied to the data by a technician using RDI's software (usually to account for magnetic declination).",
+      "compass_correction_applied": 3.3200000000000003,
+      "long_name": "sea_surface_swell_wave_from_direction_at_variance_spectral_density_maximum",
+      "magnetic_declination": 2.9166666666666665,
+      "positive": "clockwise",
+      "reference_datum": "true north",
+      "units": "degree",
+      "valid_max": 360.0,
+      "valid_min": 0.0
+    },
+    "SWPD_quality_control": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "long_name": "quality flag for sea_surface_swell_wave_from_direction_at_variance_spectral_density_maximum",
+      "quality_control_conventions": "IMOS standard flags",
+      "quality_control_global": " ",
+      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)"
+    },
+    "DEPTH": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "ancillary_variables": "DEPTH_quality_control",
+      "long_name": "actual depth",
+      "positive": "down",
+      "reference_datum": "sea surface",
+      "standard_name": "depth",
+      "units": "m",
+      "valid_max": 12000.0,
+      "valid_min": -5.0
+    },
+    "DEPTH_quality_control": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "long_name": "quality flag for depth",
+      "quality_control_conventions": "IMOS standard flags",
+      "quality_control_global": "A",
+      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
+      "standard_name": "depth status_flag"
+    },
+    "WMXH": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "ancillary_variables": "WMXH_quality_control",
+      "long_name": "sea_surface_wave_maximum_height",
+      "standard_name": "sea_surface_wave_maximum_height",
+      "units": "m",
+      "valid_max": 100.0,
+      "valid_min": 0.0
+    },
+    "WMXH_quality_control": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "long_name": "quality flag for sea_surface_wave_maximum_height",
+      "quality_control_conventions": "IMOS standard flags",
+      "quality_control_global": " ",
+      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
+      "standard_name": "sea_surface_wave_maximum_height status_flag"
+    },
+    "WMPP": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "ancillary_variables": "WMPP_quality_control",
+      "long_name": "sea_surface_wave_maximum_period",
+      "standard_name": "sea_surface_wave_maximum_period",
+      "units": "Second",
+      "valid_max": 100.0,
+      "valid_min": 0.0
+    },
+    "WMPP_quality_control": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "long_name": "quality flag for sea_surface_wave_maximum_period",
+      "quality_control_conventions": "IMOS standard flags",
+      "quality_control_global": " ",
+      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
+      "standard_name": "sea_surface_wave_maximum_period status_flag"
+    },
+    "WHTH": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "ancillary_variables": "WHTH_quality_control",
+      "long_name": "sea_surface_wave_significant_height",
+      "standard_name": "sea_surface_wave_significant_height",
+      "units": "m",
+      "valid_max": 100.0,
+      "valid_min": 0.0
+    },
+    "WHTH_quality_control": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "long_name": "quality flag for sea_surface_wave_significant_height",
+      "quality_control_conventions": "IMOS standard flags",
+      "quality_control_global": "F",
+      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
+      "standard_name": "sea_surface_wave_significant_height status_flag"
+    },
+    "WPTH": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "ancillary_variables": "WPTH_quality_control",
+      "long_name": "sea_surface_wave_significant_period",
+      "standard_name": "sea_surface_wave_significant_period",
+      "units": "Second",
+      "valid_max": 100.0,
+      "valid_min": 0.0
+    },
+    "WPTH_quality_control": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "long_name": "quality flag for sea_surface_wave_significant_period",
+      "quality_control_conventions": "IMOS standard flags",
+      "quality_control_global": " ",
+      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
+      "standard_name": "sea_surface_wave_significant_period status_flag"
+    },
+    "WMSH": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "ancillary_variables": "WMSH_quality_control",
+      "long_name": "sea_surface_wave_mean_height",
+      "standard_name": "sea_surface_wave_mean_height",
+      "units": "m",
+      "valid_max": 100.0,
+      "valid_min": 0.0
+    },
+    "WMSH_quality_control": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "long_name": "quality flag for sea_surface_wave_mean_height",
+      "quality_control_conventions": "IMOS standard flags",
+      "quality_control_global": " ",
+      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
+      "standard_name": "sea_surface_wave_mean_height status_flag"
+    },
+    "WPMH": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "ancillary_variables": "WPMH_quality_control",
+      "long_name": "sea_surface_wave_mean_period",
+      "standard_name": "sea_surface_wave_mean_period",
+      "units": "Second",
+      "valid_max": 100.0,
+      "valid_min": 0.0
+    },
+    "WPMH_quality_control": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "long_name": "quality flag for sea_surface_wave_mean_period",
+      "quality_control_conventions": "IMOS standard flags",
+      "quality_control_global": " ",
+      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
+      "standard_name": "sea_surface_wave_mean_period status_flag"
+    },
+    "WHTE": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "ancillary_variables": "WHTE_quality_control",
+      "long_name": "sea_surface_wave_mean_height_of_highest_tenth",
+      "standard_name": "sea_surface_wave_mean_height_of_highest_tenth",
+      "units": "m",
+      "valid_max": 100.0,
+      "valid_min": 0.0
+    },
+    "WHTE_quality_control": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "long_name": "quality flag for sea_surface_wave_mean_height_of_highest_tenth",
+      "quality_control_conventions": "IMOS standard flags",
+      "quality_control_global": "F",
+      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
+      "standard_name": "sea_surface_wave_mean_height_of_highest_tenth status_flag"
+    },
+    "WPTE": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "ancillary_variables": "WPTE_quality_control",
+      "long_name": "sea_surface_wave_mean_period_of_highest_tenth",
+      "standard_name": "sea_surface_wave_mean_period_of_highest_tenth",
+      "units": "Second",
+      "valid_max": 100.0,
+      "valid_min": 0.0
+    },
+    "WPTE_quality_control": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "long_name": "quality flag for sea_surface_wave_mean_period_of_highest_tenth",
+      "quality_control_conventions": "IMOS standard flags",
+      "quality_control_global": " ",
+      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
+      "standard_name": "sea_surface_wave_mean_period_of_highest_tenth status_flag"
+    },
+    "VDIR": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "ancillary_variables": "VDIR_quality_control",
+      "comment": "A compass correction of 3.32degrees has been applied to the data by a technician using RDI's software (usually to account for magnetic declination).",
+      "compass_correction_applied": 3.3200000000000003,
+      "long_name": "sea_surface_wave_from_direction",
+      "magnetic_declination": 2.9166666666666665,
+      "positive": "clockwise",
+      "reference_datum": "true north",
+      "standard_name": "sea_surface_wave_from_direction",
+      "units": "degree",
+      "valid_max": 360.0,
+      "valid_min": 0.0
+    },
+    "VDIR_quality_control": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "long_name": "quality flag for sea_surface_wave_from_direction",
+      "quality_control_conventions": "IMOS standard flags",
+      "quality_control_global": " ",
+      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
+      "standard_name": "sea_surface_wave_from_direction status_flag"
+    },
+    "VDEV": {
+      "type": "float",
+      "dims": [
+        "TIME",
+        "FREQUENCY"
+      ],
+      "ancillary_variables": "VDEV_quality_control",
+      "long_name": "sea_surface_wave_variance_spectral_density_from_velocity",
+      "units": "m2 s"
+    },
+    "VDEV_quality_control": {
+      "type": "float",
+      "dims": [
+        "TIME",
+        "FREQUENCY"
+      ],
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "long_name": "quality flag for sea_surface_wave_variance_spectral_density_from_velocity",
+      "quality_control_conventions": "IMOS standard flags",
+      "quality_control_global": " ",
+      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)"
+    },
+    "VDEP": {
+      "type": "float",
+      "dims": [
+        "TIME",
+        "FREQUENCY"
+      ],
+      "ancillary_variables": "VDEP_quality_control",
+      "long_name": "sea_surface_wave_variance_spectral_density_from_pressure",
+      "units": "m2 s"
+    },
+    "VDEP_quality_control": {
+      "type": "float",
+      "dims": [
+        "TIME",
+        "FREQUENCY"
+      ],
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "long_name": "quality flag for sea_surface_wave_variance_spectral_density_from_pressure",
+      "quality_control_conventions": "IMOS standard flags",
+      "quality_control_global": " ",
+      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)"
+    },
+    "VDES": {
+      "type": "float",
+      "dims": [
+        "TIME",
+        "FREQUENCY"
+      ],
+      "ancillary_variables": "VDES_quality_control",
+      "long_name": "sea_surface_wave_variance_spectral_density_from_range_to_surface",
+      "units": "m2 s"
+    },
+    "VDES_quality_control": {
+      "type": "float",
+      "dims": [
+        "TIME",
+        "FREQUENCY"
+      ],
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "long_name": "quality flag for sea_surface_wave_variance_spectral_density_from_range_to_surface",
+      "quality_control_conventions": "IMOS standard flags",
+      "quality_control_global": " ",
+      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)"
+    },
+    "SSWV": {
+      "type": "float",
+      "dims": [
+        "TIME",
+        "FREQUENCY",
+        "DIR"
+      ],
+      "ancillary_variables": "SSWV_quality_control",
+      "comment": "A compass correction of 3.32degrees has been applied to the data by a technician using RDI's software (usually to account for magnetic declination).",
+      "compass_correction_applied": 3.3200000000000003,
+      "long_name": "sea_surface_wave_directional_variance_spectral_density",
+      "magnetic_declination": 2.9166666666666665,
+      "standard_name": "sea_surface_wave_directional_variance_spectral_density",
+      "units": "m2 s degree-1"
+    },
+    "SSWV_quality_control": {
+      "type": "float",
+      "dims": [
+        "TIME",
+        "FREQUENCY",
+        "DIR"
+      ],
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "long_name": "quality flag for sea_surface_wave_directional_variance_spectral_density",
+      "quality_control_conventions": "IMOS standard flags",
+      "quality_control_global": " ",
+      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
+      "standard_name": "sea_surface_wave_directional_variance_spectral_density status_flag"
+    }
+  },
+  "aws_opendata_registry": {
+    "Name": "IMOS - National Mooring Network - Wave time-series",
+    "Description": "The National Mooring Network Facility (formerly known as the Australian National Mooring Network (ANMN)), is a series of national reference stations and regional moorings designed to monitor particular oceanographic phenomena in Australian coastal ocean waters. This collection contains wavetime-series observations from moorings deployed by the facility at the Darwin and Yongala National Reference Stations and the following regional moorings: Beagle Gulf (DARBGF), Heron Island South (GBRHIS) and One Tree East (GBROTE). The primary parameters are temperature, pressure and depth of the instrument, and many wave related parameters. The observations were made using either an acoustic Doppler current profiler (ADCP) or an AWAC ADCP (Acoustic Wave And Current Profiler).",
+    "Documentation": "https://catalogue-imos.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/aaebf991-b79d-4670-a1c5-a0de9bf649ce",
+    "Contact": "info@aodn.org.au",
+    "ManagedBy": "AODN",
+    "UpdateFrequency": "As Needed",
+    "Tags": [
+      "FILL UP MANUALLY - CHECK DOCUMENTATION"
+    ],
+    "License": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+    "Resources": [
+      {
+        "Description": "Cloud Optimised AODN dataset of IMOS - National Mooring Network - Wave time-series",
+        "ARN": "arn:aws:s3:::aodn-cloud-optimised/mooring_wave_timeseries_delayed_qc.zarr",
+        "Region": "ap-southeast-2",
+        "Type": "S3 Bucket"
+      }
+    ],
+    "DataAtWork": {
+      "Tutorials": [
+        {
+          "Title": "Accessing IMOS - National Mooring Network - Wave time-series",
+          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/mooring_wave_timeseries_delayed_qc.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/mooring_wave_timeseries_delayed_qc.ipynb",
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
+        },
+        {
+          "Title": "Accessing and search for any AODN dataset",
+          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
+        }
+      ]
+    },
+    "Citation": "IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access]"
+  }
+}
