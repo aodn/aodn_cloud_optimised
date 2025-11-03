@@ -479,7 +479,6 @@ class TestGenericHandler(unittest.TestCase):
     def test_parquet_nc_generic_handler_scipy(self):
         # test with the scipy engine
         nc_obj_ls = s3_ls("imos-data", "good_nc_soop_sst")
-        ne
 
         # 1st pass
         self.handler_nc_soop_sst_file.to_cloud_optimised([nc_obj_ls[0]])
