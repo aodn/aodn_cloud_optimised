@@ -1,0 +1,513 @@
+{
+  "dataset_name": "mooring_acidification_delayed_qc",
+  "logger_name": "mooring_acidification_delayed_qc",
+  "cloud_optimised_format": "parquet",
+  "run_settings": {
+    "paths": [
+      {
+        "s3_uri": "s3://imos-data/IMOS/ANMN/AM/",
+        "filter": [
+          ".*\\/CO2\\/delayed\\/.*_FV01_.*\\.nc"
+        ],
+        "year_range": []
+      }
+    ],
+    "cluster": {
+      "mode": "coiled",
+      "restart_every_path": false
+    },
+    "clear_existing_data": true,
+    "raise_error": false,
+    "coiled_cluster_options": {
+      "n_workers": [
+        1,
+        40
+      ],
+      "scheduler_vm_types": "m7i-flex.large",
+      "worker_vm_types": "m7i-flex.xlarge",
+      "allow_ingress_from": "me",
+      "compute_purchase_option": "spot_with_fallback",
+      "worker_options": {
+        "nthreads": 16,
+        "memory_limit": "32GB"
+      }
+    },
+    "batch_size": 500,
+    "force_previous_parquet_deletion": false
+  },
+  "metadata_uuid": "89b495cc-7382-43c0-abef-d1e66738a924",
+  "schema": {
+    "TIME": {
+      "type": "timestamp[ns]",
+      "standard_name": "time",
+      "long_name": "analysis_time",
+      "axis": "T",
+      "valid_min": 0.0,
+      "valid_max": 999999.0,
+      "ancillary_variables": "TIME_quality_control"
+    },
+    "TEMP": {
+      "type": "double",
+      "standard_name": "sea_surface_temperature",
+      "long_name": "sea_surface_temperature",
+      "units": "Celsius",
+      "valid_min": -2.0,
+      "valid_max": 40.0,
+      "sensor_serial_number": "5551",
+      "sensor": "SBE 16Plus V2 SeaCAT",
+      "ancillary_variables": "TEMP_quality_control"
+    },
+    "PSAL": {
+      "type": "double",
+      "standard_name": "sea_surface_salinity",
+      "long_name": "sea surface salinity",
+      "units": "1e-3",
+      "valid_min": 0.0,
+      "valid_max": 42.0,
+      "sensor_serial_number": "5551",
+      "sensor": "SBE 16Plus V2 SeaCAT",
+      "ancillary_variables": "PSAL_quality_control"
+    },
+    "Press_ATM": {
+      "type": "double",
+      "standard_name": "air_pressure_at_sea_level",
+      "long_name": "barometric pressure at sea level",
+      "units": "kPa",
+      "valid_min": 50.0,
+      "valid_max": 150.0,
+      "ancillary_variables": "Press_ATM_quality_control"
+    },
+    "xCO2EQ_PPM": {
+      "type": "double",
+      "long_name": "mole fraction of CO2 in the equilibrator head space (dry)",
+      "units": "1e-6",
+      "valid_min": 0.0,
+      "valid_max": 1000.0,
+      "ancillary_variables": "xCO2EQ_PPM_quality_control",
+      "comment": "the unit 1/10e6 is also called parts per million (ppm)",
+      "sensor_serial_number": "115",
+      "sensor": "Battelle pCO2 Monitoring System"
+    },
+    "xCO2ATM_PPM": {
+      "type": "double",
+      "long_name": "mole fraction of CO2 in the atmosphere (dry).",
+      "units": "1e-6",
+      "valid_min": 0.0,
+      "valid_max": 1000.0,
+      "ancillary_variables": "xCO2ATM_PPM_quality_control",
+      "comment": "the unit 1/10e6 is also called parts per million (ppm)",
+      "sensor_serial_number": "115",
+      "sensor": "Battelle pCO2 Monitoring System"
+    },
+    "fCO2SW_UATM": {
+      "type": "double",
+      "long_name": "fugacity of carbon dioxide at surface water salinity and temperature, 100% humidity",
+      "units": "microatmospheres",
+      "valid_min": 0.0,
+      "valid_max": 1000.0,
+      "ancillary_variables": "fCO2SW_UATM_quality_control",
+      "sensor_serial_number": "115",
+      "sensor": "Battelle pCO2 Monitoring System"
+    },
+    "DfCO2": {
+      "type": "double",
+      "long_name": "Difference between fCO2SW and fCO2ATM",
+      "units": "microatmospheres",
+      "valid_min": -500.0,
+      "valid_max": 500.0,
+      "ancillary_variables": "DfCO2_quality_control",
+      "sensor_serial_number": "115",
+      "sensor": "Battelle pCO2 Monitoring System"
+    },
+    "SUBFLAG": {
+      "type": "double",
+      "long_name": "secondary QC flags",
+      "valid_min": 0,
+      "valid_max": 1677215,
+      "flag_masks": [
+        1,
+        2,
+        4,
+        8,
+        16,
+        32,
+        64,
+        128,
+        256,
+        512,
+        1024,
+        2048,
+        4096,
+        8192,
+        16384,
+        32768,
+        65536,
+        131072,
+        262144,
+        524288,
+        1048576,
+        2097152,
+        4194304,
+        8388608
+      ],
+      "flag_meanings": "Sal_and_Temp_obtained_from_SBE_interpolation_correctly Flash_data_corrected_SD_reduced_to_below_set_level_and_number_of_points_deleted_below_set_limit SBE_Temperature_out_of_range SBE_Salinity_out_of_range XCO2_Span_pump_off_or_post_cal_out_of_range XCO2_Zero_pump_off_or_post_cal_out_of_range Delta_pressure_atmophere_out_of_range Delta_pressure_equil_out_of_range SBE_data_interpolation_failed_or_questionable Flash_data_corrected_too_many_points_deleted_or_standardevation_is_too_high ABOVE_THRESHOLD_MAX_SD_XCO2_EQUIL_PUMP_ON ABOVE_THRESHOLD_MAX_SD_xco2_pco2_fco2 ABOVE_THRESHOLD_MAX_SD_PRESS_LICOR_EQUIL_PUMP_OFF ABOVE_THRESHOLD_MAX_SD_PRESS_LICOR_AIR_PUMP_OFF ABOVE_THRESHOLD_MAX_SD_TEMP_LICOR_air_equil_span ABOVE_THRESHOLD_MAX_SD_RH_AIR_PUMP_OFF ABOVE_THRESHOLD_MAX_SD_RH_EQUIL_PUMP_OFF ABOVE_THRESHOLD_MAX_SD_RH_TEMP_AIR_PUMP_OFF ABOVE_THRESHOLD_MAX_SD_RH_TEMP_EQUIL_PUMP_OFF ABOVE_THRESHOLD_MAX_SD_RH_SPAN_PUMP_OFF ABOVE_THRESHOLD_MAX_SD_RH_TEMP_SPAN_PUMP_OFF Manual_set_to_questionable_data DO_out_of_range_or_interpolation_failed Manual_set_to_bad_data",
+      "comment": "The data on each time stamp is flagged according to the WOCE quality control procedure, where 2=good, 3=questionable and 4=bad (Pierrot et Al 2009). SUBFLAG is a 24 bit number where each bit represents a specific error. Description can be found in: MApCO2 data handling and reducing, Erik van Ooijen, 2012, Erik.Vanooijen@csiro.au"
+    },
+    "LATITUDE": {
+      "type": "double",
+      "standard_name": "latitude",
+      "long_name": "Average mooring location, Latitude",
+      "units": "degrees_north",
+      "valid_min": -90.0,
+      "valid_max": 90.0,
+      "axis": "Y",
+      "reference_datum": "geographical coordinates, WGS84 projection"
+    },
+    "LONGITUDE": {
+      "type": "double",
+      "standard_name": "longitude",
+      "long_name": "Average mooring location, Longitude",
+      "units": "degrees_east",
+      "valid_min": -180.0,
+      "valid_max": 180.0,
+      "axis": "X",
+      "reference_datum": "geographical coordinates, WGS84 projection"
+    },
+    "DOX1": {
+      "type": "double",
+      "standard_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water",
+      "long_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water.",
+      "units": "micromol/l",
+      "valid_min": 0.0,
+      "valid_max": 1000.0,
+      "ancillary_variables": "DOX1_quality_control",
+      "sensor_serial_number": "1453",
+      "sensor": "Aanderaa Optode"
+    },
+    "pHt": {
+      "type": "double",
+      "standard_name": "sea_water_ph_reported_on_total_scale",
+      "long_name": "pH_TS_measured(durafet)",
+      "units": "1",
+      "valid_min": 5.0,
+      "valid_max": 10.0,
+      "ancillary_variables": "pHt_quality_control",
+      "sensor_serial_number": "No pH Sensor",
+      "sensor": "No pH Sensor"
+    },
+    "OMEGA_A": {
+      "type": "double",
+      "long_name": "saturation_state_of_aragonite_in_the_water_body_by_computation",
+      "units": "1",
+      "valid_min": 0.0,
+      "valid_max": 10.0,
+      "ancillary_variables": "OMEGA_A_quality_control"
+    },
+    "DOXS": {
+      "type": "double",
+      "standard_name": "fractional_saturation_of_oxygen_in_sea_water",
+      "long_name": "concentration_of_dissolved_oxygen_expressed_as_a_percentage_of_the_oxygen_concentration_in_water_that_is_in_equilibrium_with_the_atmosphere",
+      "units": "%",
+      "valid_min": 50.0,
+      "valid_max": 150.0,
+      "ancillary_variables": "DOXS_quality_control"
+    },
+    "NOMINAL_DEPTH": {
+      "type": "float",
+      "standard_name": "depth",
+      "long_name": "nominal depth",
+      "units": "m",
+      "axis": "Z",
+      "reference_datum": "sea surface",
+      "positive": "down",
+      "valid_min": -5.0,
+      "valid_max": 1200.0
+    },
+    "TIME_quality_control": {
+      "type": "float",
+      "standard_name": "time status_flag",
+      "long_name": "Quality Control flag for time",
+      "quality_control_conventions": "WOCE quality control procedure",
+      "quality_control_set": 4.0,
+      "valid_min": 2,
+      "valid_max": 4,
+      "flag_values": [
+        2,
+        3,
+        4
+      ],
+      "flag_meanings": "good questionable bad"
+    },
+    "TEMP_quality_control": {
+      "type": "float",
+      "standard_name": "sea_surface_temperature status_flag",
+      "long_name": "Quality Control flag for sea_surface_temperature",
+      "quality_control_conventions": "WOCE quality control procedure",
+      "quality_control_set": 4.0,
+      "valid_min": 2,
+      "valid_max": 4,
+      "flag_values": [
+        2,
+        3,
+        4
+      ],
+      "flag_meanings": "good questionable bad"
+    },
+    "PSAL_quality_control": {
+      "type": "float",
+      "standard_name": "sea_surface_salinity status_flag",
+      "long_name": "Quality Control flag for sea_surface_salinity",
+      "quality_control_conventions": "WOCE quality control procedure",
+      "quality_control_set": 4.0,
+      "valid_min": 2,
+      "valid_max": 4,
+      "flag_values": [
+        2,
+        3,
+        4
+      ],
+      "flag_meanings": "good questionable bad"
+    },
+    "Press_ATM_quality_control": {
+      "type": "float",
+      "standard_name": "air_pressure_at_sea_level status_flag",
+      "long_name": "Quality Control flag for barometric pressure",
+      "quality_control_conventions": "WOCE quality control procedure",
+      "quality_control_set": 4.0,
+      "valid_min": 2,
+      "valid_max": 4,
+      "flag_values": [
+        2,
+        3,
+        4
+      ],
+      "flag_meanings": "good questionable bad"
+    },
+    "xCO2EQ_PPM_quality_control": {
+      "type": "float",
+      "long_name": "Quality Control flag for xCO2EQ_PPM",
+      "quality_control_conventions": "WOCE quality control procedure",
+      "quality_control_set": 4.0,
+      "valid_min": 2,
+      "valid_max": 4,
+      "flag_values": [
+        2,
+        3,
+        4
+      ],
+      "flag_meanings": "good questionable bad"
+    },
+    "xCO2ATM_PPM_quality_control": {
+      "type": "float",
+      "long_name": "Quality Control flag for xCO2ATM_PPM",
+      "quality_control_conventions": "WOCE quality control procedure",
+      "quality_control_set": 4.0,
+      "valid_min": 2,
+      "valid_max": 4,
+      "flag_values": [
+        2,
+        3,
+        4
+      ],
+      "flag_meanings": "good questionable bad"
+    },
+    "fCO2SW_UATM_quality_control": {
+      "type": "float",
+      "long_name": "Quality Control flag for fCO2SW_UATM",
+      "quality_control_conventions": "WOCE quality control procedure",
+      "quality_control_set": 4.0,
+      "valid_min": 2,
+      "valid_max": 4,
+      "flag_values": [
+        2,
+        3,
+        4
+      ],
+      "flag_meanings": "good questionable bad"
+    },
+    "DfCO2_quality_control": {
+      "type": "float",
+      "long_name": "Quality Control flag for DfCO2",
+      "quality_control_conventions": "WOCE quality control procedure",
+      "quality_control_set": 4.0,
+      "valid_min": 2,
+      "valid_max": 4,
+      "flag_values": [
+        2,
+        3,
+        4
+      ],
+      "flag_meanings": "good questionable bad"
+    },
+    "DOX1_quality_control": {
+      "type": "float",
+      "standard_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water status_flag",
+      "long_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water status_flag",
+      "quality_control_conventions": "WOCE quality control procedure",
+      "quality_control_set": 4.0,
+      "valid_min": 2,
+      "valid_max": 4,
+      "flag_values": [
+        2,
+        3,
+        4
+      ],
+      "flag_meanings": "good questionable bad"
+    },
+    "pHt_quality_control": {
+      "type": "float",
+      "standard_name": "sea_water_ph_reported_on_total_scale status_flag",
+      "long_name": "pH_TS_measured(durafet) status_flag",
+      "quality_control_conventions": "WOCE quality control procedure",
+      "quality_control_set": 4.0,
+      "valid_min": 2,
+      "valid_max": 4,
+      "flag_values": [
+        2,
+        3,
+        4
+      ],
+      "flag_meanings": "good questionable bad"
+    },
+    "OMEGA_A_quality_control": {
+      "type": "float",
+      "long_name": "saturation_state_of_aragonite_in_the_water_body_by_computation status_flag",
+      "quality_control_conventions": "WOCE quality control procedure",
+      "quality_control_set": 4.0,
+      "valid_min": 2,
+      "valid_max": 4,
+      "flag_values": [
+        2,
+        3,
+        4
+      ],
+      "flag_meanings": "good questionable bad"
+    },
+    "DOXS_quality_control": {
+      "type": "float",
+      "standard_name": "fractional_saturation_of_oxygen_in_sea_water status_flag",
+      "long_name": "concentration_of_dissolved_oxygen_expressed_as_a_percentage_of_the_oxygen_concentration_in_water_that_is_in_equilibrium_with_the_atmosphere status_flag",
+      "quality_control_conventions": "WOCE quality control procedure",
+      "quality_control_set": 4.0,
+      "valid_min": 2,
+      "valid_max": 4,
+      "flag_values": [
+        2,
+        3,
+        4
+      ],
+      "flag_meanings": "good questionable bad"
+    }
+  },
+  "aws_opendata_registry": {
+    "Name": "National Mooring Network - Acidification - Delayed mode",
+    "Description": "The Acidification Moorings sub-facility is responsible for building an ocean carbon and acidification monitoring network for Australian waters. These moorings provide key observations to help us understand and address the problem of increasing ocean acidification. Each mooring is equipped with surface CO2 systems, using proven and robust technology. Three sensors will determine surface CO2, temperature and salinity. The hydrochemistry sampling at the National Reference Stations will also provide total alkalinity data, as will future pH sensors on the moorings, allowing for a complete determination of the carbonate system and pH. \n\nAcidification moorings are co-located at three National Reference Stations: * the Yongala NRS in Queensland (replaced in September 2013 after Tropical Cyclone Yasi, and then decommissioned in August 2014), * the Maria Island NRS in Tasmania, and * the Kangaroo Island NRS in South Australia. There is also one site located adjacent to the Heron Island reef slope in the Wistari channel on the Great Barrier Reef. The Yongala, Wistari and Maria Island acidification moorings are located to characterise changes down the east coast of Australia and the influence of the East Australian Current on CO2 uptake and acidification from the Great Barrier Reef to the Southern Ocean. The Kangaroo Island mooring monitors the deeper waters upwelled on the South Australian shelf which are expected to have higher CO2 and thus could accelerate the exposure of ecosystems to acidification earlier than in other regions.",
+    "Documentation": "https://catalogue-imos.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/89b495cc-7382-43c0-abef-d1e66738a924",
+    "Contact": "info@aodn.org.au",
+    "ManagedBy": "AODN",
+    "UpdateFrequency": "As Needed",
+    "Tags": [
+      "oceans",
+      "chemistry"
+    ],
+    "License": "http://creativecommons.org/licenses/by/4.0/",
+    "Resources": [
+      {
+        "Description": "Cloud Optimised AODN dataset of IMOS - National Mooring Network - Acidification Moorings (AM) Sub-Facility - delayed mode data",
+        "ARN": "arn:aws:s3:::imos-data-lab-optimised/mooring_acidification_delayed_qc.parquet",
+        "Region": "ap-southeast-2",
+        "Type": "S3 Bucket"
+      }
+    ],
+    "DataAtWork": {
+      "Tutorials": [
+        {
+          "Title": "Accessing IMOS - National Mooring Network - Acidification Moorings (AM) Sub-Facility - delayed mode data",
+          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/mooring_acidification_delayed_qc.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/mooring_acidification_delayed_qc.ipynb",
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
+        },
+        {
+          "Title": "Accessing and search for any AODN dataset",
+          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
+        }
+      ]
+    },
+    "Citation": "The citation in a list of references is: \"IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access].\""
+  },
+  "schema_transformation": {
+    "drop_variables": [],
+    "add_variables": {
+      "filename": {
+        "source": "@filename",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "long_name": "Filename of the source file"
+        }
+      },
+      "site_code": {
+        "source": "@global_attribute:site_code",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "long_name": "site code"
+        }
+      },
+      "timestamp": {
+        "source": "@partitioning:time_extent",
+        "schema": {
+          "type": "int64",
+          "units": "1",
+          "long_name": "Partition timestamp"
+        }
+      },
+      "polygon": {
+        "source": "@partitioning:spatial_extent",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "long_name": "Spatial partition polygon"
+        }
+      }
+    },
+    "partitioning": [
+      {
+        "source_variable": "site_code"
+      },
+      {
+        "source_variable": "timestamp",
+        "type": "time_extent",
+        "time_extent": {
+          "time_varname": "TIME",
+          "partition_period": "Y"
+        }
+      },
+      {
+        "source_variable": "polygon",
+        "type": "spatial_extent",
+        "spatial_extent": {
+          "lat_varname": "LATITUDE",
+          "lon_varname": "LONGITUDE",
+          "spatial_resolution": 2
+        }
+      }
+    ],
+    "global_attributes": {
+      "delete": [
+        "geospatial_lat_max",
+        "geospatial_lat_min",
+        "geospatial_lon_max",
+        "geospatial_lon_min",
+        "date_created"
+      ],
+      "set": {
+        "title": "IMOS - National Mooring Network - Acidification Moorings (AM) Sub-Facility - delayed mode data"
+      }
+    }
+  }
+}

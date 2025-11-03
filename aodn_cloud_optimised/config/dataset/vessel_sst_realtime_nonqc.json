@@ -529,14 +529,17 @@
     }
   },
   "aws_opendata_registry": {
-    "Name": "IMOS - SOOP-Sea Surface Temperature (SST) Sub-facility - Near real-time data",
+    "Name": "Ships of Opportunity - Sea surface temperature - Real time",
     "Description": "The Sea Surface Temperature (SST) sub-facility aims to enable accurate, quality controlled, SST data to be supplied in near real-time (within 24 hours) from SOOPs and research vessels in oceans worldwide. Remotely sensed sea surface temperature (SST) data is an important input to ocean, numerical weather prediction, seasonal and climate models. In order to improve calibration and validation of satellite SST in the Australian region, there is a need for high quality in situ SST observations with greater timeliness, spatial and temporal coverage than is currently available. Regions particularly lacking in moored or drifting buoy observations are the Western Pacific Tropical Warm Pool region (Indonesia), close to the Australian coast (including Bass Strait) and the Southern Ocean. Current ship SST observations from ships of opportunity (SOOP) are either of questionable accuracy or difficult to access in a timely manner. There are five vessels carrying automatic weather stations (AWS) that participate in the Australian Volunteer Observing Fleet (AVOF) program and two vessels equipped with a newly designed system for real-time SST data acquisition. Their routes include the Southern Ocean, coastal Australia (Queensland to South Australia), Bass Strait, Pacific Ocean, South-East Asia and the Tasman Sea. Four AVOF vessels with hull-mounted temperature sensors (Sea Bird SBE 48) and one with a digital oceanographic thermometer (Sea Bird SBE 38, L'Astrolabe) are supplying high-quality bulk SST data hourly. There is also one passenger ferry that is currently taking SST measurements using the high-accuracy SBE 38 sensor (SeaFlyte, Hillarys Harbour-Rottnest Island), and one near real-time SST data stream available from a small research vessel operated by CSIRO near the south-east coast of Western Australia (Linnaeus). All SST data are being quality assured, placed on the Global Telecommunications System (GTS) and fed into the Bureau of Meteorology's near real-time satellite SST data validation system and operational regional and global SST analyses. Additionally, there are historical SST observations from four vessels which are not currently available in real-time: passenger ferry MV Fantasea, Whitsundays area, radiometer and bulk SST (November 2008 to March 2010); two AVOF vessels: MV Iron Yandi (February 2010 to January 2011) and PV Pacific Sun (December 2010 to July 2012); and one Voluntary Observing Ship (VOS), MV Pacific Celebes which has been carrying high-quality scientific equipment (January 2008 to March 2012). The data represented by this record are presented in near real-time.",
     "Documentation": "https://catalogue-imos.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/ca15915b-38c5-4e95-8d25-9cc42c4dd485",
     "Contact": "info@aodn.org.au",
     "ManagedBy": "AODN",
     "UpdateFrequency": "As Needed",
     "Tags": [
-      "FILL UP MANUALLY - CHECK DOCUMENTATION"
+      "oceans",
+      "air temperature",
+      "atmosphere",
+      "meteorological"
     ],
     "License": "http://creativecommons.org/licenses/by/4.0/",
     "Resources": [
@@ -565,7 +568,7 @@
         }
       ]
     },
-    "Citation": "IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access]"
+    "Citation": "The citation in a list of references is: \"IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access].\""
   },
   "schema_transformation": {
     "drop_variables": [],
