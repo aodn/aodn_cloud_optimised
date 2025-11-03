@@ -479,6 +479,7 @@ class TestGenericHandler(unittest.TestCase):
     def test_parquet_nc_generic_handler_scipy(self):
         # test with the scipy engine
         nc_obj_ls = s3_ls("imos-data", "good_nc_soop_sst")
+        ne
 
         # 1st pass
         self.handler_nc_soop_sst_file.to_cloud_optimised([nc_obj_ls[0]])
@@ -509,6 +510,8 @@ class TestGenericHandler(unittest.TestCase):
 
     def test_parquet_nc_generic_handler_bad_time_values(self):
         # test with the scipy engine
+        #
+        # First bad NetCDF has no TIME variable, only TIME dimension
         nc_obj_ls = s3_ls("imos-data", "bad_nc_soop_sst")
 
         # Capture logs
@@ -525,12 +528,14 @@ class TestGenericHandler(unittest.TestCase):
         # Validate logs
         self.assertTrue(
             any(
-                "All values of the time variable were bad" in log
+                "Dimension 'TIME' is defined in schema but missing as a variable in dataset."
+                in log
                 for log in captured_logs
             )
         )
         ####################3
 
+        # Second bad NetCDF has bad TIME values, year 6062 ...
         # Capture logs
         log_stream = StringIO()
         log_handler = logging.StreamHandler(log_stream)

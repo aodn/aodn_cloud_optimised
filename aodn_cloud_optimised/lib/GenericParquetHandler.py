@@ -788,6 +788,31 @@ class GenericHandler(CommonHandler):
         else:
             return True
 
+    def validate_dataset_dimensions(self, ds: xr.Dataset) -> None:
+        """Validate that all dataset dimensions have corresponding variables as defined in the schema.
+
+        For each dimension present in the dataset (TIME, LATITUDE, LONGITUDE), this function checks whether the
+        dimension is declared in ``dataset_config["schema"]``. If it is, it ensures
+        that a variable of the same name exists in the dataset (For example, dimension such as id won't be defined). If a required
+        variable is missing, a ``ValueError`` is raised.
+
+        Args:
+            ds: The xarray Dataset to validate.
+            dataset_config: Configuration dictionary containing a ``"schema"`` key
+                mapping variable names to their definitions.
+
+        Raises:
+            ValueError: If a dimension is defined in the schema but the corresponding
+                variable is missing in the dataset.
+        """
+        schema = self.dataset_config.get("schema", {})
+
+        for dim in ds.dims:
+            if dim in schema and dim not in ds.variables:
+                raise ValueError(
+                    f"{self.uuid_log}: Dimension '{dim}' is defined in schema but missing as a variable in dataset."
+                )
+
     def publish_cloud_optimised(
         self, df: pd.DataFrame, ds: xr.Dataset, s3_file_handle
     ) -> None:
@@ -805,6 +830,7 @@ class GenericHandler(CommonHandler):
             x["source_variable"]
             for x in self.dataset_config["schema_transformation"]["partitioning"]
         ]
+        self.validate_dataset_dimensions(ds)
         df = self._fix_datetimejulian(df)
         df = self._add_timestamp_df(df, s3_file_handle)
         df = self._add_columns_df(df, ds, s3_file_handle)
