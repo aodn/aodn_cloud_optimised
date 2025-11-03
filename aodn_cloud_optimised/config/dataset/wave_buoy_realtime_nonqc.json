@@ -250,48 +250,6 @@
       "units": "Degrees",
       "valid_max": 360.0,
       "valid_min": 0.0
-    },
-    "FREQUENCY": {
-      "type": "float",
-      "units": "Hz",
-      "long_name": "frequency",
-      "valid_min": 0.029999999329447746,
-      "valid_max": 0.800000011920929
-    },
-    "A1": {
-      "type": "float",
-      "long_name": "first term of the Fourier cosine series",
-      "units": "1",
-      "valid_min": -1.0,
-      "valid_max": 1.0
-    },
-    "B1": {
-      "type": "float",
-      "long_name": "first term of the Fourier sine series",
-      "units": "1",
-      "valid_min": -1.0,
-      "valid_max": 1.0
-    },
-    "A2": {
-      "type": "float",
-      "long_name": "second term of the Fourier cosine series",
-      "units": "1",
-      "valid_min": -1.0,
-      "valid_max": 1.0
-    },
-    "B2": {
-      "type": "float",
-      "long_name": "second term of the Fourier sine series",
-      "units": "1",
-      "valid_min": -1.0,
-      "valid_max": 1.0
-    },
-    "ENERGY": {
-      "type": "float",
-      "long_name": "spectral energy density",
-      "units": "m2 Hz",
-      "valid_min": 0.0,
-      "valid_max": 2000000.0
     }
   },
   "aws_opendata_registry": {
