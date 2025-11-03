@@ -45,7 +45,7 @@ from shapely import wkb
 from shapely.geometry import MultiPolygon, Polygon
 from windrose import WindroseAxes
 
-__version__ = "0.2.5"
+__version__ = "0.2.6"
 
 REGION: Final[str] = "ap-southeast-2"
 ENDPOINT_URL = "https://s3.ap-southeast-2.amazonaws.com"
@@ -1708,12 +1708,30 @@ class ParquetDataSource(DataSource):
         # scalar filter
         if scalar_filter is not None:
             expr = None
-            for item in scalar_filter:
-                expr_1 = pc.field(item) == pa.scalar(scalar_filter[item])
-                if not isinstance(expr, pc.Expression):
-                    expr = expr_1
+
+            # Merge dataset and partition schema to cover both sources
+            full_schema = self.dataset.schema
+            if (
+                hasattr(self.dataset, "partitioning")
+                and self.dataset.partitioning is not None
+            ):
+                part_schema = self.dataset.partitioning.schema
+                for field in part_schema:
+                    if field.name not in full_schema.names:
+                        full_schema = full_schema.append(field)
+
+            for key, value in scalar_filter.items():
+                # Default to string for Hive partitioned datasets
+                if key in full_schema.names:
+                    col_type = full_schema.field(key).type
                 else:
-                    expr = expr_1 & expr
+                    col_type = pa.scalar(value).type  # fallback
+
+                # Explicitly cast scalar to the column type
+                scalar_value = pa.scalar(value, type=col_type)
+                expr_1 = pc.field(key) == scalar_value
+
+                expr = expr_1 if expr is None else expr & expr_1
 
         # use isinstance as it support type check for subclasss relationship
         # we want to merge type together, if both are expression then use and to join together

@@ -1,0 +1,962 @@
+{
+  "dataset_name": "vessel_nrs_ctd_profiles_delayed_qc",
+  "logger_name": "vessel_nrs_ctd_profiles_delayed_qc",
+  "cloud_optimised_format": "parquet",
+  "run_settings": {
+    "paths": [
+      {
+        "s3_uri": "s3://imos-data/IMOS/ANMN/NRS/NRSROT/Biogeochem_profiles",
+        "filter": [
+          ".*\\.nc"
+        ],
+        "year_range": []
+      },
+      {
+        "s3_uri": "s3://imos-data/IMOS/ANMN/NRS/NRSESP/Biogeochem_profiles",
+        "filter": [
+          ".*\\.nc"
+        ],
+        "year_range": []
+      },
+      {
+        "s3_uri": "s3://imos-data/IMOS/ANMN/NRS/NRSNIN/Biogeochem_profiles",
+        "filter": [
+          ".*\\.nc"
+        ],
+        "year_range": []
+      }
+    ],
+    "cluster": {
+      "mode": "coiled",
+      "restart_every_path": false
+    },
+    "clear_existing_data": true,
+    "raise_error": false,
+    "coiled_cluster_options": {
+      "n_workers": [
+        1,
+        30
+      ],
+      "scheduler_vm_types": "m7i-flex.large",
+      "worker_vm_types": "m7i-flex.xlarge",
+      "allow_ingress_from": "me",
+      "compute_purchase_option": "spot_with_fallback",
+      "worker_options": {
+        "nthreads": 16,
+        "memory_limit": "32GB"
+      }
+    },
+    "batch_size": 300,
+    "force_previous_parquet_deletion": false
+  },
+  "metadata_uuid": "7b901002-b1dc-46c3-89f2-b4951cedca48",
+  "schema": {
+    "DEPTH": {
+      "type": "float",
+      "name": "DEPTH",
+      "standard_name": "depth",
+      "long_name": "depth",
+      "units": "metres",
+      "axis": "Z",
+      "positive": "down",
+      "reference_datum": "sea surface",
+      "valid_min": -5.0,
+      "valid_max": 12000.0,
+      "ancillary_variables": "DEPTH_quality_control"
+    },
+    "DEPTH_quality_control": {
+      "type": "float",
+      "long_name": "quality flag for depth",
+      "standard_name": "depth status_flag",
+      "valid_min": 0,
+      "valid_max": 9,
+      "quality_control_set": 1.0,
+      "quality_control_conventions": "IMOS standard set using the IODE flags",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
+      "quality_control_global": "A"
+    },
+    "INSTANCE": {
+      "type": "int32",
+      "name": "INSTANCE",
+      "long_name": "instance_of_vertical_profiles_in_data_file"
+    },
+    "TIME": {
+      "type": "timestamp[ns]",
+      "name": "TIME",
+      "comment": "First value over profile measurement",
+      "standard_name": "time",
+      "long_name": "time",
+      "axis": "T",
+      "valid_min": 0.0,
+      "valid_max": 90000.0,
+      "ancillary_variables": "TIME_quality_control"
+    },
+    "TIME_quality_control": {
+      "type": "float",
+      "long_name": "quality flag for time",
+      "standard_name": "time status_flag",
+      "valid_min": 0,
+      "valid_max": 9,
+      "quality_control_set": 1.0,
+      "quality_control_conventions": "IMOS standard set using the IODE flags",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
+      "quality_control_global": "A"
+    },
+    "DIRECTION": {
+      "type": "string",
+      "name": "DIRECTION",
+      "long_name": "direction_of_the_profile",
+      "conventions": "A: Ascending profile, D: descending profile",
+      "ancillary_variables": "DIRECTION_quality_control"
+    },
+    "DIRECTION_quality_control": {
+      "type": "float",
+      "long_name": "quality flag for direction_of_the_profile",
+      "valid_min": 0,
+      "valid_max": 9,
+      "quality_control_set": 1.0,
+      "quality_control_conventions": "IMOS standard set using the IODE flags",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
+      "quality_control_global": " "
+    },
+    "LATITUDE": {
+      "type": "double",
+      "name": "LATITUDE",
+      "standard_name": "latitude",
+      "long_name": "latitude",
+      "units": "degrees_north",
+      "axis": "Y",
+      "reference_datum": "geographical coordinates, WGS84 projection",
+      "valid_min": -90.0,
+      "valid_max": 90.0,
+      "ancillary_variables": "LATITUDE_quality_control"
+    },
+    "LATITUDE_quality_control": {
+      "type": "float",
+      "long_name": "quality flag for latitude",
+      "standard_name": "latitude status_flag",
+      "valid_min": 0,
+      "valid_max": 9,
+      "quality_control_set": 1.0,
+      "quality_control_conventions": "IMOS standard set using the IODE flags",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
+      "quality_control_global": "A"
+    },
+    "LONGITUDE": {
+      "type": "double",
+      "name": "LONGITUDE",
+      "standard_name": "longitude",
+      "long_name": "longitude",
+      "units": "degrees_east",
+      "axis": "X",
+      "reference_datum": "geographical coordinates, WGS84 projection",
+      "valid_min": -180.0,
+      "valid_max": 180.0,
+      "ancillary_variables": "LONGITUDE_quality_control"
+    },
+    "LONGITUDE_quality_control": {
+      "type": "float",
+      "long_name": "quality flag for longitude",
+      "standard_name": "longitude status_flag",
+      "valid_min": 0,
+      "valid_max": 9,
+      "quality_control_set": 1.0,
+      "quality_control_conventions": "IMOS standard set using the IODE flags",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
+      "quality_control_global": "A"
+    },
+    "PROFILE": {
+      "type": "int32",
+      "cf_role": "profile_id",
+      "long_name": "unique_identifier_for_each_profile_feature_instance_in_this_file"
+    },
+    "PRES_REL": {
+      "type": "float",
+      "ancillary_variables": "PRES_REL_quality_control",
+      "applied_offset": -10.135296821594238,
+      "long_name": "sea_water_pressure_due_to_sea_water",
+      "standard_name": "sea_water_pressure_due_to_sea_water",
+      "units": "dbar",
+      "valid_max": 12000.0,
+      "valid_min": -15.0
+    },
+    "PRES_REL_quality_control": {
+      "type": "float",
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "long_name": "quality flag for sea_water_pressure_due_to_sea_water",
+      "quality_control_conventions": "IMOS standard flags",
+      "quality_control_global": "A",
+      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
+      "standard_name": "sea_water_pressure_due_to_sea_water status_flag"
+    },
+    "DESC": {
+      "type": "float",
+      "ancillary_variables": "DESC_quality_control",
+      "long_name": "profiling_descent_rate_of_instrument",
+      "units": "m s-1",
+      "valid_max": 5.0,
+      "valid_min": 0.0
+    },
+    "DESC_quality_control": {
+      "type": "float",
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "long_name": "quality flag for profiling_descent_rate_of_instrument",
+      "quality_control_conventions": "IMOS standard flags",
+      "quality_control_global": " ",
+      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)"
+    },
+    "CHLF": {
+      "type": "float",
+      "name": "CHLF",
+      "comment": "Artificial chlorophyll data computed from bio-optical sensor raw counts measurements using factory calibration coefficient.",
+      "standard_name": "mass_concentration_of_chlorophyll_in_sea_water",
+      "long_name": "mass_concentration_of_chlorophyll_in_sea_water",
+      "units": "mg m-3",
+      "valid_min": 0.0,
+      "valid_max": 100.0,
+      "ancillary_variables": "CHLF_quality_control"
+    },
+    "DENS": {
+      "type": "float",
+      "ancillary_variables": "DENS_quality_control",
+      "long_name": "sea_water_density",
+      "standard_name": "sea_water_density",
+      "units": "kg m-3"
+    },
+    "CHLF_quality_control": {
+      "type": "float",
+      "long_name": "quality flag for mass_concentration_of_chlorophyll_in_sea_water",
+      "standard_name": "mass_concentration_of_chlorophyll_in_sea_water status_flag",
+      "valid_min": 0,
+      "valid_max": 9,
+      "quality_control_set": 1.0,
+      "quality_control_conventions": "IMOS standard set using the IODE flags",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
+      "quality_control_global": "A"
+    },
+    "DENS_quality_control": {
+      "type": "float",
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "long_name": "quality flag for sea_water_density",
+      "quality_control_conventions": "IMOS standard flags",
+      "quality_control_global": " ",
+      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
+      "standard_name": "sea_water_density status_flag"
+    },
+    "PAR": {
+      "type": "float",
+      "ancillary_variables": "PAR_quality_control",
+      "comment": "PAR/Logarithmic/ Satlantic",
+      "long_name": "downwelling_photosynthetic_photon_flux_in_sea_water",
+      "standard_name": "downwelling_photosynthetic_photon_flux_in_sea_water",
+      "units": "umole m-2 s-1"
+    },
+    "PAR_quality_control": {
+      "type": "float",
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "long_name": "quality flag for downwelling_photosynthetic_photon_flux_in_sea_water",
+      "quality_control_conventions": "IMOS standard flags",
+      "quality_control_global": " ",
+      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
+      "standard_name": "downwelling_photosynthetic_photon_flux_in_sea_water status_flag"
+    },
+    "BOT_DEPTH": {
+      "type": "float",
+      "name": "BOT_DEPTH",
+      "standard_name": "sea_floor_depth_below_sea_surface",
+      "long_name": "sea_floor_depth_below_sea_surface",
+      "units": "m",
+      "valid_min": 0.0,
+      "valid_max": 12000.0,
+      "ancillary_variables": "BOT_DEPTH_quality_control"
+    },
+    "BOT_DEPTH_quality_control": {
+      "type": "float",
+      "long_name": "quality flag for sea_floor_depth_below_sea_surface",
+      "standard_name": "sea_floor_depth_below_sea_surface status_flag",
+      "valid_min": 0,
+      "valid_max": 9,
+      "quality_control_set": 1.0,
+      "quality_control_conventions": "IMOS standard set using the IODE flags",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
+      "quality_control_global": " "
+    },
+    "CNDC": {
+      "type": "float",
+      "name": "CNDC",
+      "standard_name": "sea_water_electrical_conductivity",
+      "long_name": "sea_water_electrical_conductivity",
+      "units": "S m-1",
+      "valid_min": 0.0,
+      "valid_max": 50000.0,
+      "ancillary_variables": "CNDC_quality_control"
+    },
+    "CNDC_quality_control": {
+      "type": "float",
+      "long_name": "quality flag for sea_water_electrical_conductivity",
+      "standard_name": "sea_water_electrical_conductivity status_flag",
+      "valid_min": 0,
+      "valid_max": 9,
+      "quality_control_set": 1.0,
+      "quality_control_conventions": "IMOS standard set using the IODE flags",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
+      "quality_control_global": " "
+    },
+    "TEMP": {
+      "type": "float",
+      "name": "TEMP",
+      "standard_name": "sea_water_temperature",
+      "long_name": "sea_water_temperature",
+      "units": "Celsius",
+      "valid_min": -2.5,
+      "valid_max": 40.0,
+      "ancillary_variables": "TEMP_quality_control"
+    },
+    "TEMP_quality_control": {
+      "type": "float",
+      "long_name": "quality flag for sea_water_temperature",
+      "standard_name": "sea_water_temperature status_flag",
+      "valid_min": 0,
+      "valid_max": 9,
+      "quality_control_set": 1.0,
+      "quality_control_conventions": "IMOS standard set using the IODE flags",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
+      "quality_control_global": "A"
+    },
+    "PRES": {
+      "type": "float",
+      "name": "PRES",
+      "standard_name": "sea_water_pressure",
+      "long_name": "sea_water_pressure",
+      "units": "dbar",
+      "valid_min": -5.0,
+      "valid_max": 12000.0,
+      "ancillary_variables": "PRES_quality_control"
+    },
+    "PRES_quality_control": {
+      "type": "float",
+      "long_name": "quality flag for sea_water_pressure",
+      "standard_name": "sea_water_pressure status_flag",
+      "valid_min": 0,
+      "valid_max": 9,
+      "quality_control_set": 1.0,
+      "quality_control_conventions": "IMOS standard set using the IODE flags",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
+      "quality_control_global": "A"
+    },
+    "CPHL": {
+      "type": "float",
+      "name": "CPHL",
+      "comment": "Artificial chlorophyll data computed from fluorometry sensor raw counts measurements. Originally expressed in ug/l, 1l = 0.001m3 was assumed.",
+      "standard_name": "mass_concentration_of_chlorophyll_in_sea_water",
+      "long_name": "mass_concentration_of_chlorophyll_in_sea_water",
+      "units": "mg m-3",
+      "valid_min": 0.0,
+      "valid_max": 100.0,
+      "ancillary_variables": "CPHL_quality_control"
+    },
+    "CPHL_quality_control": {
+      "type": "float",
+      "long_name": "quality flag for mass_concentration_of_chlorophyll_in_sea_water",
+      "standard_name": "mass_concentration_of_chlorophyll_in_sea_water status_flag",
+      "valid_min": 0,
+      "valid_max": 9,
+      "quality_control_set": 1.0,
+      "quality_control_conventions": "IMOS standard set using the IODE flags",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
+      "quality_control_global": "A"
+    },
+    "TURB": {
+      "type": "float",
+      "name": "TURB",
+      "long_name": "turbidity",
+      "units": "NTU",
+      "valid_min": 0.0,
+      "valid_max": 1000.0,
+      "ancillary_variables": "TURB_quality_control"
+    },
+    "TURB_quality_control": {
+      "type": "float",
+      "long_name": "quality flag for turbidity",
+      "valid_min": 0,
+      "valid_max": 9,
+      "quality_control_set": 1.0,
+      "quality_control_conventions": "IMOS standard set using the IODE flags",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
+      "quality_control_global": " "
+    },
+    "DOXS": {
+      "type": "float",
+      "name": "DOXS",
+      "standard_name": "fractional_saturation_of_oxygen_in_sea_water",
+      "long_name": "fractional_saturation_of_oxygen_in_sea_water",
+      "units": "%",
+      "ancillary_variables": "DOXS_quality_control"
+    },
+    "DOXS_quality_control": {
+      "type": "float",
+      "long_name": "quality flag for fractional_saturation_of_oxygen_in_sea_water",
+      "standard_name": "fractional_saturation_of_oxygen_in_sea_water status_flag",
+      "valid_min": 0,
+      "valid_max": 9,
+      "quality_control_set": 1.0,
+      "quality_control_conventions": "IMOS standard set using the IODE flags",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
+      "quality_control_global": " "
+    },
+    "PSAL": {
+      "type": "float",
+      "name": "PSAL",
+      "standard_name": "sea_water_salinity",
+      "long_name": "sea_water_salinity",
+      "units": "psu",
+      "valid_min": 2.0,
+      "valid_max": 41.0,
+      "ancillary_variables": "PSAL_quality_control"
+    },
+    "PSAL_quality_control": {
+      "type": "float",
+      "long_name": "quality flag for sea_water_salinity",
+      "standard_name": "sea_water_salinity status_flag",
+      "valid_min": 0,
+      "valid_max": 9,
+      "quality_control_set": 1.0,
+      "quality_control_conventions": "IMOS standard set using the IODE flags",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
+      "quality_control_global": "A"
+    },
+    "SPEC_CNDC": {
+      "type": "float",
+      "name": "SPEC_CNDC",
+      "long_name": "sea_water_specific_electrical_conductivity",
+      "units": "S m-1",
+      "valid_min": 0.0,
+      "valid_max": 50000.0,
+      "ancillary_variables": "SPEC_CNDC_quality_control"
+    },
+    "SPEC_CNDC_quality_control": {
+      "type": "float",
+      "long_name": "quality flag for sea_water_specific_electrical_conductivity",
+      "valid_min": 0,
+      "valid_max": 9,
+      "quality_control_set": 1.0,
+      "quality_control_conventions": "IMOS standard set using the IODE flags",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
+      "quality_control_global": " "
+    },
+    "SSPD": {
+      "type": "float",
+      "name": "SSPD",
+      "standard_name": "speed_of_sound_in_sea_water",
+      "long_name": "speed_of_sound_in_sea_water",
+      "units": "m s-1",
+      "valid_min": 1400.0,
+      "valid_max": 1600.0,
+      "ancillary_variables": "SSPD_quality_control"
+    },
+    "SSPD_quality_control": {
+      "type": "float",
+      "long_name": "quality flag for speed_of_sound_in_sea_water",
+      "standard_name": "speed_of_sound_in_sea_water status_flag",
+      "valid_min": 0,
+      "valid_max": 9,
+      "quality_control_set": 1.0,
+      "quality_control_conventions": "IMOS standard set using the IODE flags",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
+      "quality_control_global": " "
+    },
+    "DOX1": {
+      "type": "float",
+      "name": "DOX1",
+      "comment": "Originally expressed in mg/l, O2 density = 1.429kg/m3 and 1ml/l = 44.660umol/l were assumed.",
+      "standard_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water",
+      "long_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water",
+      "units": "umol l-1",
+      "valid_min": 0.0,
+      "valid_max": 900000.0,
+      "ancillary_variables": "DOX1_quality_control"
+    },
+    "DOX1_quality_control": {
+      "type": "float",
+      "long_name": "quality flag for mole_concentration_of_dissolved_molecular_oxygen_in_sea_water",
+      "standard_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water status_flag",
+      "valid_min": 0,
+      "valid_max": 9,
+      "quality_control_set": 1.0,
+      "quality_control_conventions": "IMOS standard set using the IODE flags",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
+      "quality_control_global": "A"
+    },
+    "DOX2": {
+      "type": "float",
+      "comment": "Originally expressed in mg/l, assuming O2 density = 1.429kg/m3, 1ml/l = 44.660umol/l and using density computed from Temperature, Salinity and Pressure with the CSIRO SeaWater library (EOS-80) v1.1.",
+      "name": "DOX2",
+      "standard_name": "moles_of_oxygen_per_unit_mass_in_sea_water",
+      "long_name": "moles_of_oxygen_per_unit_mass_in_sea_water",
+      "units": "umol kg-1",
+      "valid_min": 0.0,
+      "valid_max": 880000.0,
+      "ancillary_variables": "DOX2_quality_control"
+    },
+    "DOX2_quality_control": {
+      "type": "float",
+      "long_name": "quality flag for moles_of_oxygen_per_unit_mass_in_sea_water",
+      "standard_name": "moles_of_oxygen_per_unit_mass_in_sea_water status_flag",
+      "valid_min": 0,
+      "valid_max": 9,
+      "quality_control_set": 1.0,
+      "quality_control_conventions": "IMOS standard set using the IODE flags",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
+      "quality_control_global": "A"
+    }
+  },
+  "aws_opendata_registry": {
+    "Name": "IMOS - National Mooring Network - CTD Profiles",
+    "Description": "This collection includes conductivity-temperature-depth (CTD) profiles obtained at the National Reference Stations (NRS) as part of the water sampling program. The instruments used also measure dissolved oxygen, fluorescence, and turbidity. The collection also includes practical salinity, water density and artificial chlorophyll concentration, as computed from the measured properties. The data are processed in delayed mode, with automated quality control applied. The National Reference Station network is designed to provide baseline information, at timescales relevant to human response, that is required to understand how large-scale, long-term change and variability in the global ocean are affecting the ecosystems of Australia's coastal seas. The stations are operated by the National Mooring Network (formerly known as the Australian National Mooring Network (ANMN)), a facility of the Integrated Marine Observing System (IMOS).",
+    "Documentation": "https://catalogue-imos.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/7b901002-b1dc-46c3-89f2-b4951cedca48",
+    "Contact": "info@aodn.org.au",
+    "ManagedBy": "AODN",
+    "UpdateFrequency": "As Needed",
+    "Tags": [
+      "FILL UP MANUALLY - CHECK DOCUMENTATION"
+    ],
+    "License": "http://creativecommons.org/licenses/by/4.0/",
+    "Resources": [
+      {
+        "Description": "Cloud Optimised AODN dataset of IMOS - National Mooring Network - CTD Profiles",
+        "ARN": "arn:aws:s3:::imos-data-lab-optimised/vessel_nrs_ctd_profiles_delayed_qc.parquet",
+        "Region": "ap-southeast-2",
+        "Type": "S3 Bucket"
+      }
+    ],
+    "DataAtWork": {
+      "Tutorials": [
+        {
+          "Title": "Accessing IMOS - National Mooring Network - CTD Profiles",
+          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/vessel_nrs_ctd_profiles_delayed_qc.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/vessel_nrs_ctd_profiles_delayed_qc.ipynb",
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
+        },
+        {
+          "Title": "Accessing and search for any AODN dataset",
+          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
+        }
+      ]
+    },
+    "Citation": "IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access]"
+  },
+  "schema_transformation": {
+    "drop_variables": [],
+    "add_variables": {
+      "filename": {
+        "source": "@filename",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "long_name": "Filename of the source file"
+        }
+      },
+      "timestamp": {
+        "source": "@partitioning:time_extent",
+        "schema": {
+          "type": "int64",
+          "units": "1",
+          "long_name": "Partition timestamp"
+        }
+      },
+      "polygon": {
+        "source": "@partitioning:spatial_extent",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "long_name": "Spatial partition polygon"
+        }
+      },
+      "qc_level": {
+        "source": "@function:qc_level_extract",
+        "schema": {
+          "type": "int32",
+          "units": "1",
+          "long_name": "Quality control level (0=raw, 1=QCed)"
+        }
+      },
+      "site_code": {
+        "source": "@global_attribute:site_code",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "long_name": "site code"
+        }
+      },
+      "instrument_nominal_depth": {
+        "source": "@global_attribute:instrument_nominal_depth",
+        "schema": {
+          "type": "float32",
+          "units": "m",
+          "long_name": "instrument nominal depth"
+        }
+      },
+      "site_nominal_depth": {
+        "source": "@global_attribute:site_nominal_depth",
+        "schema": {
+          "type": "float32",
+          "units": "m",
+          "long_name": "site nominal depth"
+        }
+      },
+      "site_depth_at_station": {
+        "source": "@global_attribute:site_depth_at_station",
+        "schema": {
+          "type": "float32",
+          "units": "m",
+          "long_name": "site depth at station"
+        }
+      },
+      "instrument": {
+        "source": "@global_attribute:instrument",
+        "schema": {
+          "type": "string",
+          "units": "m",
+          "long_name": "instrument"
+        }
+      },
+      "cruise": {
+        "source": "@global_attribute:cruise",
+        "schema": {
+          "type": "string",
+          "units": "m",
+          "long_name": "cruise"
+        }
+      }
+    },
+    "functions": {
+      "qc_level_extract": {
+        "extract_method": "object_key",
+        "method": {
+          "key_pattern": ".*_(FV\\d{2}).*\\.nc$",
+          "extraction_code": "def extract_info_from_key(key):\n    import re\n    match = re.search(r'_FV(\\d{2})_', key)\n    if match:\n        qc_level = int(match.group(1))\n        return {'qc_level': qc_level}\n    return {'qc_level': None}"
+        }
+      }
+    },
+    "partitioning": [
+      {
+        "source_variable": "site_code"
+      },
+      {
+        "source_variable": "timestamp",
+        "type": "time_extent",
+        "time_extent": {
+          "time_varname": "TIME",
+          "partition_period": "Y"
+        }
+      },
+      {
+        "source_variable": "polygon",
+        "type": "spatial_extent",
+        "spatial_extent": {
+          "lat_varname": "LATITUDE",
+          "lon_varname": "LONGITUDE",
+          "spatial_resolution": 2
+        }
+      }
+    ],
+    "global_attributes": {
+      "delete": [
+        "geospatial_lat_max",
+        "geospatial_lat_min",
+        "geospatial_lon_max",
+        "geospatial_lon_min",
+        "date_created"
+      ],
+      "set": {
+        "title": "IMOS - National Mooring Network - CTD Profiles"
+      }
+    }
+  }
+}
