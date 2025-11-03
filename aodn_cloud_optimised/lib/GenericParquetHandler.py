@@ -461,10 +461,18 @@ class GenericHandler(CommonHandler):
                 self.logger.error(
                     f"{self.uuid_log}: The dataframe is now empty after removing out of range latitude/longitude data. Operation Cancelled"
                 )
+
+            # TODO: Address this reset index
+            # `reset_index` is not automatically in place.
+            # This will do nothing as the df isn't reassigned/inplace argument not used e.g.
+            # e.g. `df = df.reset_index()` or `df.reset_index(inplace=True)`
+            # Also take care that reset_index pops the index into the dataframe as column
+            # unless `drop=True` is applied.
             df.reset_index()
 
         # Clean dataset from NaN values of LAT and LON; for ex 'IMOS/Argo/dac/csiro/5905017/5905017_prof.nc'
         for geo_var in [lat_varname, lon_varname]:
+            # TODO: remove double call of `.any` potentially?
             geo_var_has_nan = df[geo_var].isna().any().any()
             if geo_var_has_nan:
                 self.logger.warning(
@@ -493,6 +501,10 @@ class GenericHandler(CommonHandler):
                 "datetime64[ns]",
                 "O",
             ]:
+
+                # TODO: I think we need to reconsider all data transformation of this nature
+                # and/or implement stricter type input criteria and configuration such that
+                # the exact desired behaviour is more consistent and not addressed adhoc
                 # Check if all values are cftime.DatetimeJulian
                 if all(isinstance(x, cftime.DatetimeJulian) for x in df[column]):
                     var = [
@@ -534,6 +546,9 @@ class GenericHandler(CommonHandler):
         partition_period = timestamp_info["time_extent"].get("partition_period")
 
         # look for the variable or column with datetime64 type
+        # TODO: similar to the geospatial ad hoc transforms above, we should
+        # implement a stricter type input criteria and confifiguration such that
+        # the exact desired behaviour is more consistent and not addressed adhoc
         if isinstance(df.index, pd.MultiIndex) and (time_varname in df.index.names):
             # for example, files with timeSeries and TIME dimensions such as
             # Department_of_Transport-Western_Australia/WAVE-BUOYS/REALTIME/WAVE-PARAMETERS/ALBANY/2022/DOT-WA_20221106_ALBANY_RT_WAVE-PARAMETERS_monthly.nc
@@ -779,14 +794,14 @@ class GenericHandler(CommonHandler):
         timestamp_varname = timestamp_info.get("source_variable")
         time_varname = timestamp_info["time_extent"].get("time_varname", "TIME")
 
-        # Check any timestamps are before `1900-01-01 00:00:00``
+        # Check any timestamps are before `1900-01-01 00:00:00`
         if any(df[timestamp_varname] < -2208988800):
             self.logger.warning(
                 f"{self.uuid_log}: {f.path}: Bad values detected in {time_varname} time variable. Trimming corresponding data."
             )
-            df2 = df[df[timestamp_varname] > 0].copy()
+            df2 = df[df[timestamp_varname] >= -2208988800].copy()
             df = df2
-            df = df.reset_index()
+            df = df.reset_index(drop=True)
 
             if df.empty:
                 self.logger.error(

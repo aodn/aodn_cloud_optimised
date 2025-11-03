@@ -556,7 +556,8 @@ class TestGenericHandler(unittest.TestCase):
                 for log in captured_logs
             )
         )
-        ####################3
+
+        ####################
 
         # Capture logs
         log_stream = StringIO()
