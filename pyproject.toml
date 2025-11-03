@@ -58,7 +58,6 @@ colorama = ">=0.4.6"
 s3path = ">=0.5.7"
 python-levenshtein = "^0.25.1"
 numcodecs = "<0.16"               # TODO pinned because of https://github.com/zarr-developers/numcodecs/issues/721
-pydantic = ">=2.12"                                   # TODO pinned because of https://github.com/zarr-developers/numcodecs/issues/721
 
 [tool.poetry.group.dev.dependencies]
 poetry = "==2.2.1"
@@ -157,7 +156,6 @@ cloud_optimised_satellite_net_primary_productivity_gsm_1day_aqua = "aodn_cloud_o
 cloud_optimised_satellite_net_primary_productivity_oc3_1day_aqua = "aodn_cloud_optimised.bin.satellite_net_primary_productivity_oc3_1day_aqua:main"
 cloud_optimised_satellite_optical_water_type_1day_aqua = "aodn_cloud_optimised.bin.satellite_optical_water_type_1day_aqua:main"
 cloud_optimised_satellite_picoplankton_fraction_oc3_1day_aqua = "aodn_cloud_optimised.bin.satellite_picoplankton_fraction_oc3_1day_aqua:main"
-cloud_optimised_seabird_v1 = "aodn_cloud_optimised.bin.seabird_v1:main"
 cloud_optimised_slocum_glider_delayed_qc = "aodn_cloud_optimised.bin.slocum_glider_delayed_qc:main"
 cloud_optimised_station_nrs_wireless_sensor_network_realtime_qc = "aodn_cloud_optimised.bin.station_nrs_wireless_sensor_network_realtime_qc:main"
 cloud_optimised_station_wireless_sensor_network_delayec_qc = "aodn_cloud_optimised.bin.station_wireless_sensor_network_delayec_qc:main"

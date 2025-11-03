@@ -13,7 +13,7 @@ dependencies:
   - scipy
   - pip<24.1
   - virtualenv==20.30.0 # https://github.com/python-poetry/poetry/issues/10378#issuecomment-285540959
-  - udunits2
+  - udunits2=2.2.20
   - pip:
       - poetry==2.2.1
       - -r requirements.txt
