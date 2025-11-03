@@ -462,14 +462,6 @@ class GenericHandler(CommonHandler):
                     f"{self.uuid_log}: The dataframe is now empty after removing out of range latitude/longitude data. Operation Cancelled"
                 )
 
-            # TODO: Address this reset index
-            # `reset_index` is not automatically in place.
-            # This will do nothing as the df isn't reassigned/inplace argument not used e.g.
-            # e.g. `df = df.reset_index()` or `df.reset_index(inplace=True)`
-            # Also take care that reset_index pops the index into the dataframe as column
-            # unless `drop=True` is applied.
-            df.reset_index()
-
         # Clean dataset from NaN values of LAT and LON; for ex 'IMOS/Argo/dac/csiro/5905017/5905017_prof.nc'
         for geo_var in [lat_varname, lon_varname]:
             # TODO: remove double call of `.any` potentially?
