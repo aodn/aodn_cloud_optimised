@@ -56,6 +56,9 @@ TEST_FILE_NC_FISHSOOP = os.path.join(
     "IMOS_SOOP-FishSOOP_TP_20250708T032737Z_FV01_1195.nc",
 )
 
+TEST_FILE_PARQUET_SEABIRD_V1 = os.path.join(
+    ROOT_DIR, "resources", "seabird_v1_2025-10-21T02-33-33.parquet"
+)
 
 DUMMY_FILE = os.path.join(ROOT_DIR, "resources", "DUMMY.nan")
 DUMMY_NC_FILE = os.path.join(ROOT_DIR, "resources", "DUMMY.nc")
@@ -80,6 +83,10 @@ DATASET_CONFIG_NC_SOOP_SST_JSON = os.path.join(
 
 DATASET_CONFIG_NC_FISHSOOP_JSON = os.path.join(
     ROOT_DIR, "resources", "vessel_fishsoop_realtime_qc.json"
+)
+
+DATASET_CONFIG_PARQUET_SEABIRD_JSON = os.path.join(
+    ROOT_DIR, "resources", "seabird_v1.json"
 )
 
 
@@ -195,6 +202,12 @@ class TestGenericHandler(unittest.TestCase):
             TEST_FILE_NC_FISHSOOP,
         )
 
+        self._upload_to_s3(
+            "imos-data",
+            f"seabird/{os.path.basename(TEST_FILE_PARQUET_SEABIRD_V1)}",
+            TEST_FILE_PARQUET_SEABIRD_V1,
+        )
+
         dataset_anmn_netcdf_config = load_dataset_config(DATASET_CONFIG_NC_ANMN_JSON)
         self.handler_nc_anmn_file = GenericHandler(
             optimised_bucket_name=self.BUCKET_OPTIMISED_NAME,
@@ -266,6 +279,20 @@ class TestGenericHandler(unittest.TestCase):
             dataset_config=dataset_fishoop_netcdf_config,
             clear_existing_data=True,
             force_previous_parquet_deletion=True,
+            cluster_mode=None,
+            s3_client_opts_common=self.s3_client_opts_common,
+            s3_fs_common_session=self.s3_fs,
+        )
+
+        dataset_seabird_v1_config = load_dataset_config(
+            DATASET_CONFIG_PARQUET_SEABIRD_JSON
+        )
+        self.handler_seabird_v1_file = GenericHandler(
+            optimised_bucket_name=self.BUCKET_OPTIMISED_NAME,
+            root_prefix_cloud_optimised_path=self.ROOT_PREFIX_CLOUD_OPTIMISED_PATH,
+            dataset_config=dataset_seabird_v1_config,
+            clear_existing_data=True,
+            force_previous_parquet_deletion=False,
             cluster_mode=None,
             s3_client_opts_common=self.s3_client_opts_common,
             s3_fs_common_session=self.s3_fs,
@@ -509,6 +536,8 @@ class TestGenericHandler(unittest.TestCase):
 
     def test_parquet_nc_generic_handler_bad_time_values(self):
         # test with the scipy engine
+        #
+        # First bad NetCDF has no TIME variable, only TIME dimension
         nc_obj_ls = s3_ls("imos-data", "bad_nc_soop_sst")
 
         # Capture logs
@@ -525,12 +554,14 @@ class TestGenericHandler(unittest.TestCase):
         # Validate logs
         self.assertTrue(
             any(
-                "All values of the time variable were bad" in log
+                "Dimension 'TIME' is defined in schema but missing as a variable in dataset."
+                in log
                 for log in captured_logs
             )
         )
         ####################3
 
+        # Second bad NetCDF has bad TIME values, year 6062 ...
         # Capture logs
         log_stream = StringIO()
         log_handler = logging.StreamHandler(log_stream)
@@ -577,6 +608,62 @@ class TestGenericHandler(unittest.TestCase):
         )
 
         self.assertIn("station_name", parquet_dataset.columns)
+
+    def test_parquet_parquet_generic_handler(self):
+
+        seabird_v1_file_ls = s3_ls("imos-data", "seabird", suffix=".parquet")
+
+        # Run handler
+        self.handler_seabird_v1_file.to_cloud_optimised(seabird_v1_file_ls)
+
+        # Read parquet dataset and check data is good!
+        dataset_config = load_dataset_config(DATASET_CONFIG_PARQUET_SEABIRD_JSON)
+        dataset_name = dataset_config["dataset_name"]
+        dname = f"s3://{self.BUCKET_OPTIMISED_NAME}/{self.ROOT_PREFIX_CLOUD_OPTIMISED_PATH}/{dataset_name}.parquet/"
+
+        # Read the co_table
+        co_df = (
+            pd.read_parquet(
+                dname,
+                engine="pyarrow",
+                storage_options={
+                    "client_kwargs": {
+                        "endpoint_url": f"http://{self.endpoint_ip}:{self.port}"
+                    }
+                },
+            )
+            .drop(
+                # These columns are added by the optimisation process
+                columns=[
+                    "index",
+                    "polygon",
+                    "timestamp",
+                    "filename",
+                ]
+            )
+            .sort_values(
+                by="id",
+            )
+            .reset_index(
+                drop=True,
+            )
+        )
+
+        # Read the original table
+        og_df = (
+            pd.read_parquet(
+                TEST_FILE_PARQUET_SEABIRD_V1,
+            )
+            .sort_values(
+                by="id",
+            )
+            .reset_index(
+                drop=True,
+            )
+        )
+
+        # Check values are the same
+        assert co_df.equals(og_df)
 
 
 if __name__ == "__main__":
