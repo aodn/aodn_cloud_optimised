@@ -37,15 +37,12 @@ import importlib.resources
 import importlib.util
 import json
 import os
-import pathlib
 import uuid
 from collections import OrderedDict
 from importlib.resources import files
 
 import nbformat
 import pandas as pd
-import pyarrow as pa
-import pyarrow.parquet as pq
 import s3fs
 from s3path import PureS3Path
 from termcolor import colored
@@ -737,19 +734,21 @@ def main():
 
     # Handle S3 path
     if args.file.startswith("s3://"):
-        fp = args.file
-        s3_path = PureS3Path.from_uri(fp)
-        bucket = s3_path.bucket
-        obj_key = str(s3_path.key)
+        nc_file = args.file
+        p = PureS3Path.from_uri(nc_file)
+        bucket = p.bucket
+        obj_key = str(p.key)
     else:
         obj_key = args.file
         bucket = args.bucket
-        fp = PureS3Path.from_uri(f"s3://{args.bucket}").joinpath(args.file).as_uri()
+        nc_file = (
+            PureS3Path.from_uri(f"s3://{args.bucket}").joinpath(args.file).as_uri()
+        )
 
     # Create an empty NetCDF with NaN variables alongside the JSON files. Acts as the source of truth for restoring missing dimensions.
     # only useful for Zarr to concatenate NetCDF together with missing var/dim in some NetCDF files
     if args.cloud_format == "zarr":
-        nc_nullify_path = nullify_netcdf_variables(fp, args.dataset_name)
+        nc_nullify_path = nullify_netcdf_variables(nc_file, args.dataset_name)
 
     # optionals s3fs options
     if args.s3fs_opts:
@@ -759,61 +758,43 @@ def main():
             anon=False,
         )
 
-    # Route by file type
-    obj_key_suffix = pathlib.Path(obj_key.lower()).suffix
-    match obj_key_suffix:
+    # Generate schema based on input type (NetCDF or CSV)
+    if obj_key.lower().endswith(".csv"):
+        csv_file = nc_file  # TODO: rename
 
-        case ".nc":
+        csv_opts = json.loads(args.csv_opts) if args.csv_opts else {}
+        with fs.open(csv_file, "rb") as f:
+            df = pd.read_csv(f, **csv_opts)
 
-            # Generate JSON schema from the NetCDF file
-            temp_file_path = generate_json_schema_from_s3_netcdf(
-                fp, cloud_format=args.cloud_format, s3_fs=fs
-            )
-            with open(temp_file_path, "r") as file:
-                dataset_config_schema = json.load(file)
-            os.remove(temp_file_path)
+        dataset_config_schema = {"type": "object", "properties": {}}
+        for col, dtype in df.dtypes.items():
+            if pd.api.types.is_integer_dtype(dtype):
+                js_type = "integer"
+            elif pd.api.types.is_float_dtype(dtype):
+                js_type = "number"
+            elif pd.api.types.is_bool_dtype(dtype):
+                js_type = "boolean"
+            elif pd.api.types.is_object_dtype(dtype) | pd.api.types.is_string_dtype(
+                dtype
+            ):
+                js_type = "string"
+            else:
+                raise NotImplementedError(
+                    f"found dtype that did not fit into configured categories: `{dtype}`"
+                )
 
-        case ".csv":
+            dataset_config_schema["properties"][col] = {"type": js_type}
 
-            # Load the csv using options
-            csv_opts = json.loads(args.csv_opts) if args.csv_opts else {}
-            with fs.open(fp, "rb") as f:
-                df = pd.read_csv(f, **csv_opts)
-
-            # Update column types for the dataset config
-            dataset_config_schema = dict()
-            for col, dtype in df.dtypes.items():
-                if pd.api.types.is_integer_dtype(dtype):
-                    js_type = "integer"
-                elif pd.api.types.is_float_dtype(dtype):
-                    js_type = "number"
-                elif pd.api.types.is_bool_dtype(dtype):
-                    js_type = "boolean"
-                elif pd.api.types.is_object_dtype(dtype) | pd.api.types.is_string_dtype(
-                    dtype
-                ):
-                    js_type = "string"
-                else:
-                    raise NotImplementedError(
-                        f"found dtype that did not fit into configured categories: `{dtype}`"
-                    )
-
-                dataset_config_schema[col] = {"type": js_type}
-
-        case ".parquet":
-
-            with fs.open(fp, "rb") as f:
-                schema = pq.read_schema(f)
-                dataset_config_schema = dict()
-
-                for field in schema:
-                    dataset_config_schema[field.name] = {"type": str(field.type)}
-
-        # Default: Raise NotImplemented
-        case _:
-            raise NotImplementedError(
-                f"input file type `{obj_key_suffix}` not implemented"
-            )
+    elif obj_key.lower().endswith(".nc"):
+        # Generate JSON schema from the NetCDF file
+        temp_file_path = generate_json_schema_from_s3_netcdf(
+            nc_file, cloud_format=args.cloud_format, s3_fs=fs
+        )
+        with open(temp_file_path, "r") as file:
+            dataset_config_schema = json.load(file)
+        os.remove(temp_file_path)
+    else:
+        raise NotImplementedError(f"input file type `{obj_key}` not implemented")
 
     dataset_config = {"schema": dataset_config_schema}
     # Define the path to the validation schema file
@@ -854,7 +835,7 @@ def main():
         "mode": f"{TO_REPLACE_PLACEHOLDER}",
         "restart_every_path": False,
     }
-    parent_s3_path = PureS3Path.from_uri(fp).parent.as_uri()
+    parent_s3_path = PureS3Path.from_uri(nc_file).parent.as_uri()
     dataset_config["run_settings"]["paths"] = [
         {"s3_uri": parent_s3_path, "filter": [".*\\.nc"], "year_range": []}
     ]
@@ -960,7 +941,9 @@ def main():
     with open(f"{module_path}/config/dataset/{args.dataset_name}.json", "w") as f:
         json.dump(dataset_config, f, indent=2)
 
-    create_dataset_script(args.dataset_name, f"{args.dataset_name}.json", fp, bucket)
+    create_dataset_script(
+        args.dataset_name, f"{args.dataset_name}.json", nc_file, bucket
+    )
     update_pyproject_toml(args.dataset_name)
 
     # fill up aws registry with GN3 uuid

@@ -58,7 +58,6 @@ colorama = ">=0.4.6"
 s3path = ">=0.5.7"
 python-levenshtein = "^0.25.1"
 numcodecs = "<0.16"               # TODO pinned because of https://github.com/zarr-developers/numcodecs/issues/721
-pydantic = ">=2.12"                                   # TODO pinned because of https://github.com/zarr-developers/numcodecs/issues/721
 
 [tool.poetry.group.dev.dependencies]
 poetry = "==2.2.1"
