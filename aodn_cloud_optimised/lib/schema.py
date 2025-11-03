@@ -239,9 +239,7 @@ def map_config_type_to_pyarrow_type(config_type: str) -> pa.DataType:
         "bool": pa.bool_(),
         "datetime64[ns]": pa.timestamp("ns"),
         "timestamp[ns]": pa.timestamp("ns"),
-        "timestamp[ms]": pa.timestamp("ms"),
         "timedelta64[ns]": pa.duration("ns"),
-        "date32[day]": pa.date32(),
     }
 
     if config_type not in type_map:
@@ -316,19 +314,17 @@ def create_pyarrow_schema(schema_input, schema_transformation=None):
     Returns:
 
     """
-
-    # Apply schema transformations
-    # Only valid for dict type
-    if schema_transformation and isinstance(schema_input, dict):
-
-        # Update new variables
+    if schema_transformation:
         new_variables_schema = extract_new_variables_schema(schema_transformation)
-        schema_input.update(new_variables_schema)
+
+        if isinstance(schema_input, dict):
+            schema_input.update(new_variables_schema)
 
         # Drop unwanted variables
         drop_variables = schema_transformation.get("drop_variables", [])
-        for var in drop_variables:
-            schema_input.pop(var, None)  # safe removal
+        if isinstance(schema_input, dict):
+            for var in drop_variables:
+                schema_input.pop(var, None)  # safe removal
 
     if isinstance(schema_input, list):
         return create_pyarrow_schema_from_list(schema_input)
