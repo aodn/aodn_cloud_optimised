@@ -50,7 +50,7 @@ from aodn_cloud_optimised.lib.exceptions import (
     PolygonNotIntersectingError,
 )
 
-__version__ = "0.2.7"
+__version__ = "0.2.8"
 
 REGION: Final[str] = "ap-southeast-2"
 ENDPOINT_URL = "https://s3.ap-southeast-2.amazonaws.com"
@@ -2049,7 +2049,13 @@ class ZarrDataSource(DataSource):
             lat_is_dim = lat_var_name in ds.dims
 
             if lat_is_dim:
-                selectors[lat_var_name] = slice(lat_min, lat_max)
+                # Check the direction of the latitude values, very important for the slicing
+                lat_values = ds[lat_var_name].values
+                if lat_values[0] > lat_values[-1]:
+                    # latitude is descending (north to south)
+                    selectors[lat_var_name] = slice(lat_max, lat_min)
+                else:
+                    selectors[lat_var_name] = slice(lat_min, lat_max)
             else:
                 if lat_min is not None:
                     mask_conditions.append(ds[lat_var_name] >= lat_min)
