@@ -15,7 +15,6 @@ from datetime import datetime, timezone
 from functools import lru_cache
 from io import StringIO
 from typing import Any, Final, Set
-from aodn_cloud_optimised.lib.exceptions import PolygonNotIntersectingError, DateOutOfRangeError
 
 import boto3
 import cartopy.crs as ccrs  # For coastline plotting
@@ -45,6 +44,11 @@ from s3path import PureS3Path
 from shapely import wkb
 from shapely.geometry import MultiPolygon, Polygon
 from windrose import WindroseAxes
+
+from aodn_cloud_optimised.lib.exceptions import (
+    DateOutOfRangeError,
+    PolygonNotIntersectingError,
+)
 
 __version__ = "0.2.5"
 
@@ -355,7 +359,9 @@ def create_bbox_filter(dataset: ds.Dataset, **kwargs) -> pc.Expression:
     ]
 
     if intersecting_polygons == []:
-        raise PolygonNotIntersectingError("No data for given bounding box. Amend lat/lon values ")
+        raise PolygonNotIntersectingError(
+            "No data for given bounding box. Amend lat/lon values "
+        )
 
     # Convert intersecting polygons to WKB hexadecimal strings
     wkb_list = [polygon.wkb_hex for polygon in intersecting_polygons]
