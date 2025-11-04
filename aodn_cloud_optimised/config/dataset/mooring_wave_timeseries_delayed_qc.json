@@ -10,6 +10,34 @@
           ".*_FV01.*\\.nc"
         ],
         "year_range": []
+      },
+      {
+        "s3_uri": "s3://imos-data/IMOS/ANMN/QLD/GBRHIS/Wave",
+        "filter": [
+          ".*_FV01.*\\.nc"
+        ],
+        "year_range": []
+      },
+      {
+        "s3_uri": "s3://imos-data/IMOS/ANMN/QLD/GBROTE/Wave",
+        "filter": [
+          ".*_FV01.*\\.nc"
+        ],
+        "year_range": []
+      },
+      {
+        "s3_uri": "s3://imos-data/IMOS/ANMN/NRS/NRSDAR/Wave",
+        "filter": [
+          ".*_FV01.*\\.nc"
+        ],
+        "year_range": []
+      },
+      {
+        "s3_uri": "s3://imos-data/IMOS/ANMN/QLD/NRSYON/Wave",
+        "filter": [
+          ".*_FV01.*\\.nc"
+        ],
+        "year_range": []
       }
     ],
     "cluster": {
