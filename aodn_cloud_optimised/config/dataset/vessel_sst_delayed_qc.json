@@ -161,6 +161,26 @@
       "type": "string",
       "long_name": "file history information"
     },
+    "GPS_HEIGHT": {
+      "type": "float",
+      "long_name": "GPS receiver altitude",
+      "units": "meters",
+      "instrument": "Garmin GPS 17x-HVS",
+      "observation_type": "measured",
+      "distance_from_bow": -9999.0,
+      "centerline_offset": -9999.0,
+      "sensor_height": -9999.0,
+      "ancillary_variables": "GPS_HEIGHT_quality_control"
+    },
+    "GPS_HEIGHT_quality_control": {
+      "type": "string",
+      "standard_name": " status_flag",
+      "long_name": "quality flags for",
+      "quality_control_conventions": "IMOS Reference Table F",
+      "quality_control_set": 3,
+      "quality_control_flag_values": "B, C, D, E, F, G, H, J, K, L, M, Q, S, T, U, V, X, Z",
+      "quality_control_flag_meanings": "Value_out_of_bounds Time_not_sequential Failed_T_Tw_Td_test Failed_true_wind_recomputation_test Platform_velocity_unrealistic Value_exceeds_threshold Discontinuity Erroneous_value Suspect_value_(visual) Value_located_over_land Instrument_malfunction Pre-flagged_as_suspect Spike_in_data_(visual) Time_duplicate Suspect_value_(statistical) Step_in_data_(statistical) Spike_in_data_(statistical) Value_passed_all_tests"
+    },
     "TIME_quality_control": {
       "type": "string",
       "standard_name": "time status_flag",
@@ -520,7 +540,7 @@
       {
         "s3_uri": "s3://imos-data/IMOS/SOOP/SOOP-SST/",
         "filter": [
-          ".*\\.nc"
+          ".*_FV01_1-min-avg_C.*\\.nc"
         ],
         "year_range": []
       }

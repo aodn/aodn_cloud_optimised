@@ -6,7 +6,7 @@ import timeit
 import traceback
 import uuid
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import datetime
+from datetime import date, datetime
 from typing import Generator, Tuple
 
 import boto3
@@ -359,8 +359,13 @@ class GenericHandler(CommonHandler):
         spatial_res = spatial_extent_info["spatial_extent"].get("spatial_resolution", 5)
 
         # Check for invalid latitude and longitude values outside of [-180, 180; -90; 90]
-        invalid_lat = ~df[lat_varname].between(-90, 90)
-        invalid_lon = ~df[lon_varname].between(-180, 180)
+        lat_min = self.dataset_config["schema"][lat_varname].get("valid_min", -90)
+        lat_max = self.dataset_config["schema"][lat_varname].get("valid_max", 90)
+        lon_min = self.dataset_config["schema"][lon_varname].get("valid_min", -180)
+        lon_max = self.dataset_config["schema"][lon_varname].get("valid_max", 180)
+
+        invalid_lat = ~df[lat_varname].between(lat_min, lat_max)
+        invalid_lon = ~df[lon_varname].between(lon_min, lon_max)
 
         if invalid_lat.any() or invalid_lon.any():
             # Collect examples of invalid values (up to 5 of each for readability)
@@ -368,16 +373,20 @@ class GenericHandler(CommonHandler):
             bad_lons = df.loc[invalid_lon, lon_varname].head().tolist()
 
             self.logger.warning(
-                f"{self.uuid_log}: Dataset contains latitude or longitude values outside the valid ranges [-90, 90], [-180, 180]. Cleaning data"
+                f"{self.uuid_log}: Dataset contains latitude or longitude values outside the valid ranges [{lat_min}, {lat_max}], [{lon_min}, {lon_max}]. Cleaning data.\n"
                 f"Invalid lat samples={bad_lats}, Invalid lon samples={bad_lons}"
             )
 
             # Clean dataset
             df = df[
-                (df[lat_varname].between(-90, 90))
-                & (df[lon_varname].between(-180, 180))
+                (df[lat_varname].between(lat_min, lat_max))
+                & (df[lon_varname].between(lon_min, lon_max))
             ]
 
+            if df.empty:
+                self.logger.error(
+                    f"{self.uuid_log}: The dataframe is now empty after removing out of range latitude/longitude data. Operation Cancelled"
+                )
             df.reset_index()
 
         # Clean dataset from NaN values of LAT and LON; for ex 'IMOS/Argo/dac/csiro/5905017/5905017_prof.nc'
@@ -802,6 +811,11 @@ class GenericHandler(CommonHandler):
         df = self._rm_bad_timestamp_df(df, s3_file_handle)
         df = self._add_polygon(df)
 
+        if df.empty:
+            raise ValueError(
+                "df is empty after dataframe transformation. Operation aborted"
+            )
+
         filename = os.path.basename(s3_file_handle.path)
 
         # Needs to be specified here as df is here a pandas df, while later on, it is a pyarrow table. some renaming should happen
@@ -875,7 +889,7 @@ class GenericHandler(CommonHandler):
         for partition_key in partition_keys:
             if all(not elem for elem in pdf[partition_key].is_null()):
                 self.logger.error(
-                    f"{self.uuid_log}: The '{partition_key}' variable is filled with NULL values, likely because '{partition_key}' is missing from 'gattrs_to_variables' in the dataset configuration."
+                    f"{self.uuid_log}: The '{partition_key}' variable is filled with NULL values, likely because '{partition_key}' is missing from 'partitioning' in the dataset configuration."
                 )
                 raise ValueError
 

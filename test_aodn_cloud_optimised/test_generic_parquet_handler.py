@@ -50,6 +50,13 @@ TEST_FILE_NC_SOOP_SST_BAD_OUTOFRANGE_TIME = os.path.join(
     "IMOS_SOOP-SST_ST_20131229T235800Z_VMQ9273_FV01_C-20131230T005523Z.nc",
 )
 
+TEST_FILE_NC_FISHSOOP = os.path.join(
+    ROOT_DIR,
+    "resources",
+    "IMOS_SOOP-FishSOOP_TP_20250708T032737Z_FV01_1195.nc",
+)
+
+
 DUMMY_FILE = os.path.join(ROOT_DIR, "resources", "DUMMY.nan")
 DUMMY_NC_FILE = os.path.join(ROOT_DIR, "resources", "DUMMY.nc")
 TEST_CSV_FILE = os.path.join(
@@ -69,6 +76,10 @@ DATASET_CONFIG_NC_ARDC_JSON = os.path.join(
 
 DATASET_CONFIG_NC_SOOP_SST_JSON = os.path.join(
     ROOT_DIR, "resources", "vessel_sst_delayed_qc.json"
+)
+
+DATASET_CONFIG_NC_FISHSOOP_JSON = os.path.join(
+    ROOT_DIR, "resources", "vessel_fishsoop_realtime_qc.json"
 )
 
 
@@ -178,6 +189,12 @@ class TestGenericHandler(unittest.TestCase):
             TEST_FILE_NC_SOOP_SST_BAD_OUTOFRANGE_TIME,
         )
 
+        self._upload_to_s3(
+            "imos-data",
+            f"fishsoop/{os.path.basename(TEST_FILE_NC_FISHSOOP)}",
+            TEST_FILE_NC_FISHSOOP,
+        )
+
         dataset_anmn_netcdf_config = load_dataset_config(DATASET_CONFIG_NC_ANMN_JSON)
         self.handler_nc_anmn_file = GenericHandler(
             optimised_bucket_name=self.BUCKET_OPTIMISED_NAME,
@@ -240,6 +257,20 @@ class TestGenericHandler(unittest.TestCase):
             # cluster_mode="local",  # TEST without the localcluster
         )
 
+        dataset_fishoop_netcdf_config = load_dataset_config(
+            DATASET_CONFIG_NC_FISHSOOP_JSON
+        )
+        self.handler_nc_fishoop_file = GenericHandler(
+            optimised_bucket_name=self.BUCKET_OPTIMISED_NAME,
+            root_prefix_cloud_optimised_path=self.ROOT_PREFIX_CLOUD_OPTIMISED_PATH,
+            dataset_config=dataset_fishoop_netcdf_config,
+            clear_existing_data=True,
+            force_previous_parquet_deletion=True,
+            cluster_mode=None,
+            s3_client_opts_common=self.s3_client_opts_common,
+            s3_fs_common_session=self.s3_fs,
+        )
+
     def _upload_to_s3(self, bucket_name, key, file_path):
         with open(file_path, "rb") as f:
             self.s3.upload_fileobj(f, bucket_name, key)
@@ -255,6 +286,29 @@ class TestGenericHandler(unittest.TestCase):
             self.s3.delete_bucket(Bucket=bucket_name)
 
         self.server.stop()
+
+    def test_parquet_nc_fishsoop(self):
+        nc_obj_ls = s3_ls("imos-data", "fishsoop")
+
+        # Capture logs
+        log_stream = StringIO()
+        log_handler = logging.StreamHandler(log_stream)
+        logger = logging.getLogger()
+        logger.addHandler(log_handler)
+
+        # 1st pass
+        self.handler_nc_fishoop_file.to_cloud_optimised([nc_obj_ls[0]])
+
+        log_handler.flush()
+        captured_logs = log_stream.getvalue().strip().split("\n")
+
+        # Validate logs
+        self.assertTrue(
+            any(
+                "The dataframe is now empty after removing out of range" in log
+                for log in captured_logs
+            )
+        )
 
     def test_parquet_nc_anmn_handler(self):
         nc_obj_ls = s3_ls("imos-data", "good_nc_anmn")

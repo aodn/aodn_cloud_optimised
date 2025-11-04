@@ -160,9 +160,12 @@ class ClusterManager:
             return
 
         try:
+            client.shutdown()  # Graceful cleanup
             client.close()
             self.logger.info("Successfully closed Dask client.")
+
             cluster.close()
             self.logger.info("Successfully closed Dask cluster.")
+
         except Exception as e:
             self.logger.error(f"Error while closing the cluster or client: {e}")

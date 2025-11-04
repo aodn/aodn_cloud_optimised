@@ -42,7 +42,7 @@ jobs:
           virtualenvs-create: true
           virtualenvs-in-project: true
           installer-parallel: true
-          version: 2.1.4
+          version: 2.2.1
 
       #----------------------------------------------
       #       load cached venv if cache exists
@@ -95,4 +95,4 @@ jobs:
 
       - name: Verify build
         run: |
-          pip install dist/*.whl
+          pip install dist/*.whl --no-deps
