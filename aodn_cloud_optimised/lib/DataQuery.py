@@ -45,7 +45,12 @@ from shapely import wkb
 from shapely.geometry import MultiPolygon, Polygon
 from windrose import WindroseAxes
 
-__version__ = "0.2.6"
+from aodn_cloud_optimised.lib.exceptions import (
+    DateOutOfRangeError,
+    PolygonNotIntersectingError,
+)
+
+__version__ = "0.2.7"
 
 REGION: Final[str] = "ap-southeast-2"
 ENDPOINT_URL = "https://s3.ap-southeast-2.amazonaws.com"
@@ -354,7 +359,9 @@ def create_bbox_filter(dataset: ds.Dataset, **kwargs) -> pc.Expression:
     ]
 
     if intersecting_polygons == []:
-        raise ValueError("No data for given bounding box. Amend lat/lon values ")
+        raise PolygonNotIntersectingError(
+            "No data for given bounding box. Amend lat/lon values "
+        )
 
     # Convert intersecting polygons to WKB hexadecimal strings
     wkb_list = [polygon.wkb_hex for polygon in intersecting_polygons]
@@ -428,7 +435,7 @@ def create_time_filter(dataset: ds.Dataset, **kwargs) -> pc.Expression:
     if is_date_start_after_timestamp_end:
         timestamp_end_str = timestamp_end.strftime("%Y-%m-%d %H:%M:%S")
 
-        raise ValueError(
+        raise DateOutOfRangeError(
             f"date_start={date_start} is out of range of dataset. The maximum date_end is {timestamp_end_str}."
         )
     # do the same for the other part of the time boundary check
@@ -441,7 +448,7 @@ def create_time_filter(dataset: ds.Dataset, **kwargs) -> pc.Expression:
     if is_date_end_before_timestamp_start:
         timestamp_start_str = timestamp_start.strftime("%Y-%m-%d %H:%M:%S")
 
-        raise ValueError(
+        raise DateOutOfRangeError(
             f"date_end={date_end} is out of range of dataset. The minimum date_start is {timestamp_start_str}."
         )
 
