@@ -55,7 +55,7 @@
         "filter": [],
         "year_range": [
           2012,
-          2024
+          2025
         ]
       }
     ],
@@ -66,17 +66,17 @@
     "dimensions": {
       "time": {
         "name": "time",
-        "chunk": 50,
+        "chunk": 2,
         "rechunk": false,
         "append_dim": true
       },
       "latitude": {
         "name": "lat",
-        "chunk": 100
+        "chunk": 500
       },
       "longitude": {
         "name": "lon",
-        "chunk": 100
+        "chunk": 500
       }
     }
   }
