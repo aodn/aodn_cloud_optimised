@@ -1,7 +1,7 @@
 FROM python:3.12-slim
 
 # Set environment variables for Poetry
-ENV POETRY_VERSION=1.8.4
+ENV POETRY_VERSION=2.2.1
 ENV POETRY_HOME=/opt/poetry
 ENV POETRY_NO_INTERACTION=1
 ENV POETRY_VIRTUALENVS_IN_PROJECT=1
@@ -13,8 +13,8 @@ ENV PATH="${VIRTUAL_ENV}/bin:$PATH"
 
 # Install Poetry and dependencies
 RUN apt-get update && apt-get install -y curl && \
-    curl -sSL https://install.python-poetry.org | python3 - && \
-    ln -s ${POETRY_HOME}/bin/poetry /usr/local/bin/poetry
+  curl -sSL https://install.python-poetry.org | python3 - && \
+  ln -s ${POETRY_HOME}/bin/poetry /usr/local/bin/poetry
 
 # Set the working directory
 WORKDIR /app
@@ -28,11 +28,11 @@ RUN poetry install --with dev --no-interaction # --no-root
 
 # Enable bash-completion and set bash as the default shell
 RUN echo "alias ll='ls -la'" >> ~/.bashrc && \
-    echo "alias poetry='poetry run'" >> ~/.bashrc
+  echo "alias poetry='poetry run'" >> ~/.bashrc
 ## Run tests and verify the package build
 #RUN poetry run pytest && \
-    #poetry build && \
-    #pip install dist/*.whl
+#poetry build && \
+#pip install dist/*.whl
 
 # Configure the shell to automatically activate the venv
 RUN echo "source ${VIRTUAL_ENV}/bin/activate" >> ~/.bashrc
