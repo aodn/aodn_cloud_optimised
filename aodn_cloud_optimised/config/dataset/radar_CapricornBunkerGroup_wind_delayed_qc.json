@@ -65,7 +65,7 @@
   "schema_transformation": {
     "global_attributes": {
       "set": {
-        "title": "IMOS ACORN Capricorn Bunker Group (CBG), one hour averaged wind and short wave QC data",
+        "title": "IMOS ACORN Capricorn Bunker Group (CBG), one hour averaged wind QC data",
         "site_code": "CBG, Capricorn Bunker Group",
         "ssr_Stations": "Tannum Sands (TAN), Lady Elliott (LEI)",
         "local_time_zone": "10."
