@@ -1,6 +1,7 @@
 import gc
 import importlib.resources
 import os
+import pathlib
 import re
 import timeit
 import traceback
@@ -15,6 +16,7 @@ import numpy as np
 import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
+import s3fs.core
 import xarray as xr
 from dask.distributed import wait
 from shapely.geometry import Point, Polygon
@@ -226,8 +228,60 @@ class GenericHandler(CommonHandler):
                         f"{self.uuid_log}: The NetCDF file does not conform to the pre-defined schema."
                     )
 
+    def preprocess_data_parquet(
+        self, parquet_fp
+    ) -> Generator[Tuple[pd.DataFrame, xr.Dataset], None, None]:
+        """
+        Preprocesses a parquet file using pyarrow and converts it into an xarray Dataset based on the dataset configuration.
+
+        Args:
+            parquet_fp (str or s3fs.core.S3File): File path or s3fs object of the parquet file to be processed.
+
+        Yields:
+            Tuple[pd.DataFrame, xr.Dataset]: A generator yielding a tuple containing the processed pandas DataFrame
+                and its corresponding xarray Dataset.
+
+        This method reads a parquet file(`parquet_fp`) using pyarrow.parquet `read_table` function.
+
+        The resultin DataFrame (`df`) is then converted into an xarray Dataset using `xr.Dataset.from_dataframe()`.
+
+        # TODO: Document `pq.read_table` options
+
+        The method also uses the 'schema' from the dataset configuration to assign attributes to variables in the
+        xarray Dataset. Each variable's attributes are extracted from the 'schema' and assigned to the Dataset variable's
+        attributes. The 'type' attribute from the `pyarrow_schema` is removed from the Dataset variables' attributes since it
+        is considered unnecessary.
+
+        If a variable in the Dataset is not found in the schema, an error is logged.
+
+        Notes:
+            Ensure that the config schema includes a column named "index" of type int64. When the internal conversions
+            occur between xarray, pandas and pyarrow, an "index" column is added to the pyarrow table. Rather than
+            detect when "index" should not have been added, it is easier to add "index" as an expected column that is
+            added by the cloud optimisation process.
+        """
+
+        table = pq.read_table(parquet_fp)
+        df = table.to_pandas()
+        df = df.drop(columns=self.drop_variables, errors="ignore")
+        ds = xr.Dataset.from_dataframe(df)
+
+        for var in ds.variables:
+            if var not in self.schema:
+                self.logger.error(
+                    f"{self.uuid_log}: Missing variable: {var} from dataset config"
+                )
+            else:
+                ds[var].attrs = self.schema.get(var)
+                del ds[var].attrs[
+                    "type"
+                ]  # remove the type attribute which is not necessary at all
+
+        yield df, ds
+
     def preprocess_data(
-        self, fp
+        self,
+        fp: str | s3fs.core.S3File,
     ) -> Generator[Tuple[pd.DataFrame, xr.Dataset], None, None]:
         """
         Overwrites the preprocess_data method from CommonHandler.
@@ -239,12 +293,31 @@ class GenericHandler(CommonHandler):
             tuple: A tuple containing DataFrame and Dataset.
 
         If `fp` ends with ".nc", it delegates to `self.preprocess_data_netcdf(fp)`.
-        If `fp` ends with ".csv", it delegates to `self.preprocess_data_csv(fp)`.
+        Elif `fp` ends with ".csv", it delegates to `self.preprocess_data_csv(fp)`.
+        Elif `fp` ends with ".parquet", it delegates to `self.preprocess_data_parquet(fp)`.
+        Else raises a NotImplementedError
+
+        Raises:
+            NotImplementedError: Where the file type is not yet implemented
         """
-        if fp.path.endswith(".nc"):
-            return self.preprocess_data_netcdf(fp)
-        if fp.path.endswith(".csv"):
-            return self.preprocess_data_csv(fp)
+        # Extract file suffix
+        if isinstance(fp, str):
+            file_suffix = pathlib.Path(fp).suffix
+        elif isinstance(fp, s3fs.core.S3File):
+            file_suffix = pathlib.Path(fp.path).suffix
+
+        # Match preprocess method
+        match file_suffix.lower():
+            case ".nc":
+                return self.preprocess_data_netcdf(fp)
+            case ".csv":
+                return self.preprocess_data_csv(fp)
+            case ".parquet":
+                return self.preprocess_data_parquet(fp)
+            case _:
+                raise NotImplementedError(
+                    f"files with suffix `{file_suffix}` not yet implemented in preprocess_data"
+                )
 
     @staticmethod
     def cast_table_by_schema(table, schema) -> pa.Table:
@@ -451,9 +524,11 @@ class GenericHandler(CommonHandler):
             if item.get("time_extent") is not None:
                 timestamp_info = item
 
+        # Extract time partition information
         timestamp_varname = timestamp_info.get("source_variable")
         time_varname = timestamp_info["time_extent"].get("time_varname", "TIME")
         partition_period = timestamp_info["time_extent"].get("partition_period")
+
         # look for the variable or column with datetime64 type
         if isinstance(df.index, pd.MultiIndex) and (time_varname in df.index.names):
             # for example, files with timeSeries and TIME dimensions such as
@@ -475,6 +550,37 @@ class GenericHandler(CommonHandler):
             if "datetime_var" not in locals():
                 if pd.api.types.is_datetime64_any_dtype(df.index):
                     datetime_var = df.index
+
+            # Finally attempt to validate the defined time partition column
+            if "datetime_var" not in locals():
+
+                # Else look for the time columns with a different time related dtype
+                time_partition_column = df[time_varname]
+
+                # Validate no missing values
+                if time_partition_column.isnull().any():
+                    raise ValueError(
+                        "time partition column may not contain null values"
+                    )
+
+                # Validate that the time partition column translated via pd.to_datetime
+                try:
+                    pd.to_datetime(time_partition_column)
+                except Exception as e:
+                    raise ValueError(
+                        "time partition column failed to translate to pandas datetime dtype: {e}"
+                    )
+
+                # Because the df does not have a date time index, we have to create and fill the column in separately here
+                datetime_index = pd.DatetimeIndex(pd.to_datetime(time_partition_column))
+                df[timestamp_varname] = (
+                    np.int64(datetime_index.to_period(partition_period).to_timestamp())
+                    / 10**9
+                )
+                return df
+
+        if "datetime_var" not in locals():
+            raise ValueError("could not determine the datetime column/variable")
 
         if not isinstance(df.index, pd.MultiIndex) and (time_varname in df.index.names):
             today = datetime.today()
@@ -661,13 +767,14 @@ class GenericHandler(CommonHandler):
         timestamp_varname = timestamp_info.get("source_variable")
         time_varname = timestamp_info["time_extent"].get("time_varname", "TIME")
 
-        if any(df[timestamp_varname] <= 0):
+        # Check any timestamps are before `1900-01-01 00:00:00`
+        if any(df[timestamp_varname] < -2208988800):
             self.logger.warning(
                 f"{self.uuid_log}: {f.path}: Bad values detected in {time_varname} time variable. Trimming corresponding data."
             )
-            df2 = df[df[timestamp_varname] > 0].copy()
+            df2 = df[df[timestamp_varname] >= -2208988800].copy()
             df = df2
-            df = df.reset_index()
+            df = df.reset_index(drop=True)
 
             if df.empty:
                 self.logger.error(
@@ -788,6 +895,28 @@ class GenericHandler(CommonHandler):
         else:
             return True
 
+    def validate_dataset_dimensions(self, ds: xr.Dataset) -> None:
+        """Validate that all dataset dimensions have corresponding variables as defined in the schema.
+        For each dimension present in the dataset (TIME, LATITUDE, LONGITUDE), this function checks whether the
+        dimension is declared in ``dataset_config["schema"]``. If it is, it ensures
+        that a variable of the same name exists in the dataset (For example, dimension such as id won't be defined). If a required
+        variable is missing, a ``ValueError`` is raised.
+        Args:
+            ds: The xarray Dataset to validate.
+            dataset_config: Configuration dictionary containing a ``"schema"`` key
+                mapping variable names to their definitions.
+        Raises:
+            ValueError: If a dimension is defined in the schema but the corresponding
+                variable is missing in the dataset.
+        """
+        schema = self.dataset_config.get("schema", {})
+
+        for dim in ds.dims:
+            if dim in schema and dim not in ds.variables:
+                raise ValueError(
+                    f"{self.uuid_log}: Dimension '{dim}' is defined in schema but missing as a variable in dataset."
+                )
+
     def publish_cloud_optimised(
         self, df: pd.DataFrame, ds: xr.Dataset, s3_file_handle
     ) -> None:
@@ -805,6 +934,7 @@ class GenericHandler(CommonHandler):
             x["source_variable"]
             for x in self.dataset_config["schema_transformation"]["partitioning"]
         ]
+        self.validate_dataset_dimensions(ds)
         df = self._fix_datetimejulian(df)
         df = self._add_timestamp_df(df, s3_file_handle)
         df = self._add_columns_df(df, ds, s3_file_handle)
