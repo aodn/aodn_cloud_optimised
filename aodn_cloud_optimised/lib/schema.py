@@ -239,7 +239,7 @@ def map_config_type_to_pyarrow_type(config_type: str) -> pa.DataType:
         "bool": pa.bool_(),
         "datetime64[ns]": pa.timestamp("ns"),
         "timestamp[ns]": pa.timestamp("ns"),
-        "timestamp[ms]": pa.timestampe("ms"),
+        "timestamp[ms]": pa.timestamp("ms"),
         "timedelta64[ns]": pa.duration("ns"),
         "date32[day]": pa.date32(),
     }
