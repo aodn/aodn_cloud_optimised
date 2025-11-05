@@ -554,6 +554,11 @@ only a short list of optional arguments. Any options from the
 See the official pandas documentation:
 `pandas.read_csv <https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_csv.html>`_.
 
+Parquet Configuration from Parquet file
+-----------------------------------
+In some instances we already have a parquet file, but still need to update it to the cloud optimised format and apply AODN conventions.
+
+There is currently no additional configuration required to create a parquet dataset from a parquet file. Follow the dataset configuration as per explained above for NetCDF.
 
 Zarr Configuration from NetCDF
 ------------------------------
