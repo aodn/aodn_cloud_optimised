@@ -469,9 +469,9 @@ class GenericHandler(CommonHandler):
                 self.logger.warning(
                     f"{self.uuid_log}: The NetCDF contains NaN values of {geo_var}. Removing corresponding data"
                 )
-                df = df.dropna(
-                    subset=[geo_var]
-                ).reset_index()  # .reset_index(drop=True)
+                df = df.dropna(subset=[geo_var]).reset_index(
+                    drop=False
+                )  # For now leaving drop false to ensure no breaking changes
 
         point_geometry = [
             Point(lon, lat) for lon, lat in zip(df[lon_varname], df[lat_varname])
@@ -774,7 +774,9 @@ class GenericHandler(CommonHandler):
             )
             df2 = df[df[timestamp_varname] >= -2208988800].copy()
             df = df2
-            df = df.reset_index(drop=True)
+            df = df.reset_index(
+                drop=False
+            )  # For now leaving drop false to ensure no breaking changes
 
             if df.empty:
                 self.logger.error(
