@@ -297,7 +297,22 @@
   "schema_transformation": {
     "global_attributes": {
       "set": {
-        "title": ""
+        "project": "Integrated Marine Observing System (IMOS)",
+        "Conventions": "CF-1.6,IMOS-1.4",
+        "abstract": "The ACORN facility is producing NetCDF files with wave data for each site every hour.These are obtained using modified software supplied by Seaview Sensing Ltd which applies the method described in Wyatt et al, A relaxation method for integral inversion applied to HF radar measurement of the ocean wave directional spectrum, International Journal of Remote Sensing, 9, 1087-1095, 1990; Green and Wyatt, Row-action inversion of the Barrick-Weber equations, Journal of Atmospheric and Oceanic Technology, 23, 501-510, 2006 . This file contains wave parameters that have been extracted from the measured directional wave spectra. Directions are all towards which the wave is propagating. Each value has a corresponding quality control flag where a value of 1 means that the data have passed all the standard Seaview Sensing QC procedures and an additional threshold value (<0.3) for the inversion residual.",
+        "author": "Cosoli, Simone",
+        "author_email": "simone.cosoli@uwa.edu.au",
+        "institution": "IMOS Ocean Radar Facility",
+        "institution_references": "https://imos.org.au/facility/ocean-radar",
+        "data_centre": "Australian Ocean Data Network (AODN)",
+        "data_centre_email": "info@aodn.org.au",
+        "instrument": "WERA Oceanographic HF Radar/Helzel Messtechnik, GmbH using modified Seaview Sensing Ltd software",
+        "source": "Terrestrial HF radar",
+        "file_version": "Level 1 - Quality Controlled data",
+        "file_version_quality_control": "Data in this file has been through the quality control procedure as described in the document: Quality Control procedures for ACORN radars Manual Version 2.0. Integrated Marine Observing System. DOI: 10.26198/5c89b59a931cb (http://dx.doi.org/10.26198/5c89b59a931cb). Every data point in this file has an associated quality flag.",
+        "citation": "The citation in a list of references is: IMOS, [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access]",
+        "acknowledgement": "Any users of IMOS data are required to clearly acknowledge the source of the material derived from IMOS in the format: 'Data was sourced from the Integrated Marine Observing System (IMOS) - IMOS is a national collaborative research infrastructure, supported by the Australian Government. If relevant, also credit other organisations involved in collection of this particular datastream (as listed in 'credit' in the metadata record).'",
+        "disclaimer": "Data, products and services from IMOS are provided 'as is' without any warranty as to fitness for a particular purpose."
       }
     },
     "var_template_shape": "VDIRT",

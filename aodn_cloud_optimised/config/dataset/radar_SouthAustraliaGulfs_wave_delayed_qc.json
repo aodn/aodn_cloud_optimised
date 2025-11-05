@@ -54,8 +54,8 @@
         "filter": [],
         "_comment": "The data here should start at 2009. See reason here https://github.com/aodn/PO-Backlog/issues/4016",
         "year_range": [
-          2011,
-          2025
+          2009,
+          2020
         ]
       }
     ],
@@ -65,7 +65,10 @@
   "schema_transformation": {
     "global_attributes": {
       "set": {
-        "title": ""
+        "title": "IMOS ACORN South Australian Gulfs (SAG), one hour averaged wave QC data",
+        "site_code": "SAG, South Australian Gulf",
+        "ssr_Stations": "Cape Wiles (CWI), Cape Spencer (CSP)",
+        "local_time_zone": "9.5"
       }
     },
     "dimensions": {

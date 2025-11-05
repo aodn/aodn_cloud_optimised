@@ -53,8 +53,8 @@
         "s3_uri": "s3://imos-data/IMOS/IMOS/ACORN/gridded_1h-avg-wave-site-map_QC/CBG",
         "filter": [],
         "year_range": [
-          2009,
-          2025
+          2007,
+          2020
         ]
       }
     ],
@@ -64,7 +64,10 @@
   "schema_transformation": {
     "global_attributes": {
       "set": {
-        "title": ""
+        "title": "IMOS ACORN Capricorn Bunker Group (CBG), one hour averaged wave QC data",
+        "site_code": "CBG, Capricorn Bunker Group",
+        "ssr_Stations": "Tannum Sands (TAN), Lady Elliot Island(LEI)",
+        "local_time_zone": "10."
       }
     },
     "dimensions": {
