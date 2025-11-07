@@ -326,77 +326,72 @@ def update_pyproject_toml(dataset_name):
             for script in sorted_scripts[1:]:
                 pyproject_file.write(script)
 
+                import os
+
 
 def update_readme(dataset_name):
     """
-    Update the `README.md` file to include a new notebook entry under the "AODN Notebooks" section.
+    Update the `README.md` file to include a new notebook entry under the
+    "AODN Notebooks" section, keeping entries sorted alphabetically.
 
     Args:
         dataset_name (str): The name of the dataset to be used for the new notebook entry.
-
-    Notes:
-        - If the "AODN Notebooks" section is not present in the `README.md`, it will be created.
-        - If the notebook entry already exists, no changes will be made.
-        - The notebook entries will be sorted alphabetically.
     """
-    # Locate the README file
     module_path = get_module_path()
     readme_path = os.path.abspath(
         os.path.join(module_path, os.pardir, "notebooks", "README.md")
     )
-    notebook_url = f"- [{dataset_name}.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/{dataset_name}.ipynb)\n"
-
-    with open(readme_path, "r") as readme_file:
-        lines = readme_file.readlines()
-
-    # Initialize variables
-    notebooks_section = []
-    in_notebooks_section = False
-
-    for line in lines:
-        if line.strip() == "# AODN Notebooks":
-            in_notebooks_section = True
-            notebooks_section.append(line)
-            continue
-        if in_notebooks_section:
-            if line.strip() == "" or line.startswith("#"):
-                in_notebooks_section = False
-            else:
-                notebooks_section.append(line)
-
-    # Check if the notebook entry already exists
-    entry_exists = any(notebook_url.strip() in line for line in notebooks_section)
-    if entry_exists:
-        return
-
-    # Add the new notebook entry
-    notebooks_section.append(notebook_url)
-
-    # Sort the notebook entries alphabetically
-    sorted_notebooks = [notebooks_section[0]] + sorted(
-        notebooks_section[1:], key=lambda x: x.split(".ipynb")[0].strip()
+    notebook_url = (
+        f"- [{dataset_name}.ipynb]"
+        f"(https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/{dataset_name}.ipynb)\n"
     )
 
-    # Write the updated README.md
-    with open(readme_path, "w") as readme_file:
-        in_notebooks_section = False
-        for line in lines:
-            if line.strip() == "# AODN Notebooks":
-                in_notebooks_section = True
-                readme_file.write(line)
-                for notebook in sorted_notebooks[1:]:
-                    readme_file.write(notebook)
-            elif in_notebooks_section and (line.strip() == "" or line.startswith("#")):
-                in_notebooks_section = False
-                readme_file.write(line)
-            elif not in_notebooks_section:
-                readme_file.write(line)
+    with open(readme_path, "r") as f:
+        lines = f.readlines()
 
-        # If the # AODN Notebooks section was not found, add it at the end
-        if not any("# AODN Notebooks" in line for line in lines):
-            readme_file.write("\n# AODN Notebooks\n")
-            for notebook in sorted_notebooks[1:]:
-                readme_file.write(notebook)
+    # Find start and end indices of the AODN Notebooks section
+    start_idx = None
+    end_idx = None
+    for i, line in enumerate(lines):
+        if line.strip().startswith("# AODN Notebooks"):
+            start_idx = i
+            continue
+        if start_idx is not None and line.strip().startswith("#") and i > start_idx:
+            end_idx = i
+            break
+
+    if start_idx is not None:
+        # Extract section content
+        section_lines = (
+            lines[start_idx + 1 : end_idx] if end_idx else lines[start_idx + 1 :]
+        )
+
+        # Extract existing bullet entries
+        bullet_entries = [l for l in section_lines if l.strip().startswith("- [")]
+
+        # Add new entry if missing
+        if notebook_url not in bullet_entries:
+            bullet_entries.append(notebook_url)
+
+        # Sort and deduplicate
+        bullet_entries = sorted(set(bullet_entries), key=lambda s: s.lower())
+
+        # Rebuild section content
+        new_section = [lines[start_idx]] + ["\n"] + bullet_entries + ["\n"]
+
+        # Replace old section
+        lines = lines[:start_idx] + new_section + (lines[end_idx:] if end_idx else [])
+
+    else:
+        # Section not found — add it at the end
+        lines += [
+            "\n# AODN Notebooks directly loadable into Google Colab\n\n",
+            notebook_url,
+        ]
+
+    # Write back to file
+    with open(readme_path, "w") as f:
+        f.writelines(lines)
 
 
 def next_steps(dataset_name):
