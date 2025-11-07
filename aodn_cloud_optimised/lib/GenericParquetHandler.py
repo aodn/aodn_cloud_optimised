@@ -14,6 +14,7 @@ import boto3
 import cftime
 import numpy as np
 import pandas as pd
+import polars as pl
 import pyarrow as pa
 import pyarrow.parquet as pq
 import s3fs.core
@@ -27,6 +28,7 @@ from aodn_cloud_optimised.lib.s3Tools import (
     prefix_exists,
     split_s3_path,
 )
+from aodn_cloud_optimised.lib.schema import convert_pandas_csv_config_to_polars
 
 from .CommonHandler import CommonHandler
 from .schema import (
@@ -136,14 +138,25 @@ class GenericHandler(CommonHandler):
 
         If a variable in the Dataset is not found in the schema, an error is logged.
         """
-        if "pandas_read_csv_config" in self.dataset_config:
-            config_from_json = self.dataset_config["pandas_read_csv_config"]
+        if "pandas_read_csv_config" in self.dataset_config["csv_config"]:
+            config_from_json = self.dataset_config["csv_config"][
+                "pandas_read_csv_config"
+            ]
+            # polargs_opts = convert_pandas_csv_config_to_polars(config_from_json)
+            # df = pl.read_csv(csv_fp, **polars_opts).to_pandas()
             df = pd.read_csv(csv_fp, **config_from_json)
+        elif "polars_read_csv_config" in self.dataset_config["csv_config"]:
+            config_from_json = self.dataset_config["csv_config"][
+                "polars_read_csv_config"
+            ]
+            df = pl.read_csv(csv_fp, **config_from_json).to_pandas()
         else:
-            self.logger.warning(
-                f"{self.uuid_log}: No options provided for processing CSV file with pandas. Using default pandas.read_csv configuration."
+            msg = (
+                f"{self.uuid_log}: No CSV read configuration provided — "
+                "please specify either pandas_read_csv_config or polars_read_csv_config."
             )
-            df = pd.read_csv(csv_fp)
+            self.logger.error(msg)
+            raise ValueError(msg)
 
         df = df.drop(columns=self.drop_variables, errors="ignore")
         ds = xr.Dataset.from_dataframe(df)
@@ -553,7 +566,6 @@ class GenericHandler(CommonHandler):
 
             # Finally attempt to validate the defined time partition column
             if "datetime_var" not in locals():
-
                 # Else look for the time columns with a different time related dtype
                 time_partition_column = df[time_varname]
 
@@ -689,25 +701,113 @@ class GenericHandler(CommonHandler):
                 elif variable_to_add_info["source"].startswith("@function:"):
                     extract_function = variable_to_add_info["source"].split(":")[1]
                     function_info = schema_transformation["functions"][extract_function]
-                    # other extracting method could be created here. but for now we only need to extract info from an object key
-                    if "object_key" in function_info["extract_method"]:
+                    extract_method = function_info["extract_method"]
+
+                    if extract_method == "object_key":
                         extraction_code = function_info["method"].get("extraction_code")
                         extracted_info = self.get_variables_from_object_key(
                             f, extraction_code
                         )
-
+                        var_values = extracted_info[variable_to_add_name]
                         self.logger.info(f"{extracted_info}")
                         self.logger.info(
                             f"{self.uuid_log}: {f.path}: Adding extracted info from object key as variable {variable_to_add_name}: {extracted_info[variable_to_add_name]}"
                         )
-                        info_value = extracted_info[variable_to_add_name]
 
-                        info_value = cast_value_to_config_type(
-                            info_value, var_type, fillvalue=var_fillvalue
-                        )  # convert variable to required type
-                        df[variable_to_add_name] = info_value
+                    elif extract_method == "from_variables":
+                        creation_code = function_info["method"]["creation_code"]
+                        var_values = self.get_variables_from_variables(
+                            df, creation_code, variable_to_add_name
+                        )
+                        # breakpoint()
+                        # info_value = df.apply(
+                        #     lambda row: self.get_variables_from_variables(
+                        #         row, creation_code
+                        #     ),
+                        #     axis=1,
+                        # )
+
+                        self.logger.info(
+                            f"Created variable from input variables with {creation_code}"
+                        )
+                        self.logger.info(
+                            f"{self.uuid_log}: {f.path}: Adding extracted info as variable {variable_to_add_name}: {var_values}"
+                        )
+                    # === cast and assign to dataframe ===
+                    if isinstance(var_values, pd.Series):
+                        df[variable_to_add_name] = var_values  # already vectorized
+                    else:
+                        df[variable_to_add_name] = cast_value_to_config_type(
+                            var_values, var_type, fillvalue=var_fillvalue
+                        )
+                    # # === cast and assign to dataframe ===
+                    # df[variable_to_add_name] = cast_value_to_config_type(
+                    #     var_values, var_type, fillvalue=var_fillvalue
+                    # )
+                    #
+                    # # other extracting method could be created here. but for now we only need to extract info from an object key
+                    # if "object_key" in function_info["extract_method"]:
+                    #     extraction_code = function_info["method"].get("extraction_code")
+                    #     extracted_info = self.get_variables_from_object_key(
+                    #         f, extraction_code
+                    #     )
+                    #
+                    #     self.logger.info(f"{extracted_info}")
+                    #     self.logger.info(
+                    #         f"{self.uuid_log}: {f.path}: Adding extracted info from object key as variable {variable_to_add_name}: {extracted_info[variable_to_add_name]}"
+                    #     )
+                    #     info_value = extracted_info[variable_to_add_name]
+                    #
+                    #     info_value = cast_value_to_config_type(
+                    #         info_value, var_type, fillvalue=var_fillvalue
+                    #     )  # convert variable to required type
+                    #     df[variable_to_add_name] = info_value
+
         return df
 
+    def get_variables_from_variables(
+        self, df: pd.DataFrame, creation_code: str, output_name: str
+    ) -> pd.Series:
+        """
+        Dynamically create a variable from dataframe using provided creation code.
+        This version is vectorized: the creation_code function must accept the full DataFrame (or columns) instead of a single row.
+
+        Args:
+            df (pd.DataFrame): The DataFrame containing input columns.
+            creation_code (str): Function code as string, defining a function
+                                that takes the DataFrame and returns a pd.Series.
+            output_name (str): Name of the output variable (for type conversion).
+
+        Returns:
+            pd.Series: The computed column.
+        """
+        local_scope = {}
+        exec(creation_code, {}, local_scope)
+        func = local_scope[next(iter(local_scope))]  # get first function defined
+        result = func(df)
+
+        # Ensure timestamp[ns] if the function returns datetime objects
+        # breakpoint()
+        # if pd.api.types.is_datetime64_any_dtype(result):
+        #     return result.astype("datetime64[ns]")
+        return result
+
+    # def get_variables_from_variables(self, row, creation_code):
+    #     """
+    #     Dynamically create a variable from dataframe row using provided creation code.
+    #
+    #     Args:
+    #         row (pd.Series or dict): Row containing input columns.
+    #         creation_code (str): Function code as string, defining a function
+    #                             that takes the row and returns the derived value.
+    #
+    #     Returns:
+    #         Any: The computed value from the dynamic function.
+    #     """
+    #     local_scope = {}
+    #     exec(creation_code, {}, local_scope)
+    #     return local_scope[next(iter(local_scope))](row)  # call first function defined
+    #
     def get_variables_from_object_key(self, f, extraction_code) -> dict:
         """
         Extract variables from an object key using a dynamically defined extraction function.
@@ -937,9 +1037,9 @@ class GenericHandler(CommonHandler):
             for x in self.dataset_config["schema_transformation"]["partitioning"]
         ]
         self.validate_dataset_dimensions(ds)
+        df = self._add_columns_df(df, ds, s3_file_handle)
         df = self._fix_datetimejulian(df)
         df = self._add_timestamp_df(df, s3_file_handle)
-        df = self._add_columns_df(df, ds, s3_file_handle)
         df = self._rm_bad_timestamp_df(df, s3_file_handle)
         df = self._add_polygon(df)
 

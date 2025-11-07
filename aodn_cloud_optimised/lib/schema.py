@@ -2,6 +2,7 @@ import importlib.resources
 import json
 import re
 import tempfile
+from typing import Dict
 
 import numpy as np
 import pyarrow as pa
@@ -206,20 +207,11 @@ def extract_serialisable_attrs(attrs):
     return serialisable_attrs
 
 
-def map_config_type_to_pyarrow_type(config_type: str) -> pa.DataType:
+def get_pyarrow_type_map() -> Dict[str, pa.DataType]:
     """
-    Maps a schema config type string to a corresponding PyArrow DataType.
-
-    Args:
-        config_type (str): Type string (e.g. 'int32', 'string', 'timestamp[ns]').
-
-    Returns:
-        pa.DataType: The corresponding PyArrow type.
-
-    Raises:
-        ValueError: If the type is not supported.
+    Returns a dictionary mapping schema config type strings to PyArrow DataTypes.
     """
-    type_map = {
+    return {
         "int8": pa.int8(),
         "int16": pa.int16(),
         "int32": pa.int32(),
@@ -242,11 +234,27 @@ def map_config_type_to_pyarrow_type(config_type: str) -> pa.DataType:
         "timestamp[ms]": pa.timestamp("ms"),
         "timedelta64[ns]": pa.duration("ns"),
         "date32[day]": pa.date32(),
+        "time32[s]": pa.time32("s"),
+        "time64[us]": pa.time64("us"),
     }
 
+
+def map_config_type_to_pyarrow_type(config_type: str) -> pa.DataType:
+    """
+    Maps a schema config type string to a corresponding PyArrow DataType.
+
+    Args:
+        config_type (str): Type string (e.g. 'int32', 'string', 'timestamp[ns]').
+
+    Returns:
+        pa.DataType: The corresponding PyArrow type.
+
+    Raises:
+        ValueError: If the type is not supported.
+    """
+    type_map = get_pyarrow_type_map()
     if config_type not in type_map:
         raise ValueError(f"Unsupported data type: {config_type}")
-
     return type_map[config_type]
 
 
@@ -259,11 +267,40 @@ def create_pyarrow_schema_from_list(schema_strings):
     return pa.schema(fields)
 
 
-def create_pyrarrow_schema_from_dict(schema_dict):
+def create_pyarrow_schema_from_dict(schema_dict):
+    """
+    Create a PyArrow schema from a dict describing column names and types.
+
+    Expected format:
+        {
+            "col1": {"type": "string"},
+            "col2": {"type": "int64"}
+        }
+
+    Args:
+        schema_dict (dict): Mapping of column names to type definitions.
+
+    Returns:
+        pyarrow.Schema: The corresponding PyArrow schema.
+    """
+    if not isinstance(schema_dict, dict):
+        raise TypeError(f"Expected dict, got {type(schema_dict)}")
+
     fields = []
     for name, info in schema_dict.items():
-        dtype = map_config_type_to_pyarrow_type(info["type"].strip())
+        if not isinstance(info, dict):
+            raise TypeError(
+                f"Expected dict for column '{name}', got {type(info)}: {info}"
+            )
+
+        if "type" not in info:
+            raise KeyError(f"Missing 'type' for column '{name}' in schema: {info}")
+
+        dtype_str = info["type"].strip()
+        dtype = map_config_type_to_pyarrow_type(dtype_str)
         fields.append(pa.field(name, dtype))
+        print(f"[DEBUG] Added field: {name}, type: {dtype_str} → {dtype}")
+
     return pa.schema(fields)
 
 
@@ -319,7 +356,6 @@ def create_pyarrow_schema(schema_input, schema_transformation=None):
     # Apply schema transformations
     # Only valid for dict type
     if schema_transformation and isinstance(schema_input, dict):
-
         # Update new variables
         new_variables_schema = extract_new_variables_schema(schema_transformation)
         schema_input.update(new_variables_schema)
@@ -332,7 +368,7 @@ def create_pyarrow_schema(schema_input, schema_transformation=None):
     if isinstance(schema_input, list):
         return create_pyarrow_schema_from_list(schema_input)
     elif isinstance(schema_input, dict):
-        return create_pyrarrow_schema_from_dict(schema_input)
+        return create_pyarrow_schema_from_dict(schema_input)
     else:
         raise ValueError("Unsupported pyarrow_schema input type. Expected str or dict.")
 
@@ -470,3 +506,47 @@ def _write_nullified_dataset(ds, output_path):
             encoding[var] = {"zlib": True, "complevel": 4}
 
     ds_null.to_netcdf(output_path, encoding=encoding, engine="netcdf4")
+
+
+def convert_pandas_csv_config_to_polars(pandas_config: dict) -> dict:
+    """
+    Convert a pandas.read_csv configuration dictionary to a polars.read_csv equivalent.
+
+    Args:
+        pandas_config (dict): Configuration options for pandas.read_csv.
+
+    Returns:
+        dict: Converted configuration suitable for polars.read_csv.
+    """
+    mapping = {
+        "delimiter": "separator",
+        "sep": "separator",
+        "encoding": "encoding",
+        "na_values": "null_values",
+        "header": "has_header",
+        "usecols": "columns",
+    }
+
+    polars_config = {}
+
+    for key, value in pandas_config.items():
+        if key not in mapping:
+            # Skip options not relevant for polars
+            continue
+
+        new_key = mapping[key]
+
+        # --- Handle special cases ---
+        if key == "header":
+            # In pandas, header=0 means first row is header; None means no header
+            polars_config[new_key] = value is not None
+        elif key == "na_values":
+            # Pandas allows list or scalar; Polars expects list[str]
+            if isinstance(value, str):
+                polars_config[new_key] = [value]
+            elif isinstance(value, (list, tuple, set)):
+                polars_config[new_key] = list(value)
+        else:
+            polars_config[new_key] = value
+
+    return polars_config

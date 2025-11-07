@@ -35,6 +35,7 @@ Example:
 import argparse
 import importlib.resources
 import importlib.util
+import io
 import json
 import os
 import pathlib
@@ -44,7 +45,7 @@ from importlib.resources import files
 
 import nbformat
 import pandas as pd
-import pyarrow as pa
+import polars as pl
 import pyarrow.parquet as pq
 import s3fs
 from s3path import PureS3Path
@@ -280,7 +281,7 @@ def update_pyproject_toml(dataset_name):
     section_found = False
 
     for line in lines:
-        if line.strip() == "[tool.poetry.scripts]":
+        if line.strip() == "[project.scripts]":
             in_scripts_section = True
             section_found = True
             scripts_section.append(line)
@@ -763,7 +764,6 @@ def main():
     obj_key_suffix = pathlib.Path(obj_key.lower()).suffix
     match obj_key_suffix:
         case ".nc":
-
             # Generate JSON schema from the NetCDF file
             temp_file_path = generate_json_schema_from_s3_netcdf(
                 fp, cloud_format=args.cloud_format, s3_fs=fs
@@ -773,10 +773,19 @@ def main():
             os.remove(temp_file_path)
 
         case ".csv":
-
             csv_opts = json.loads(args.csv_opts) if args.csv_opts else {}
+
+            # with big csv file, pandas leads to segmentation fault. Using polars instead works
             with fs.open(fp, "rb") as f:
-                df = pd.read_csv(f, **csv_opts)
+                text_stream = io.TextIOWrapper(
+                    f, encoding=csv_opts.pop("encoding", "utf-8")
+                )
+                df = pl.read_csv(
+                    text_stream,
+                    has_header=True,
+                    ignore_errors=True,  # safer: skips malformed rows
+                    **csv_opts,
+                ).to_pandas()
 
             dataset_config_schema = {"type": "object", "properties": {}}
             for col, dtype in df.dtypes.items():
@@ -798,7 +807,6 @@ def main():
                 dataset_config_schema["properties"][col] = {"type": js_type}
 
         case ".parquet":
-
             with fs.open(fp, "rb") as f:
                 schema = pq.read_schema(f)
                 dataset_config_schema = dict()
@@ -880,7 +888,23 @@ def main():
             "na_values": ["N/A", "NaN"],
             "encoding": "utf-8",
         }
-        dataset_config["pandas_read_cvs_config"] = pandas_read_csv_config_default
+        polars_read_csv_config_default = {
+            "separator": ",",
+            "has_header": True,
+            # "schema": {f"{TO_REPLACE_PLACEHOLDER}": f"{TO_REPLACE_PLACEHOLDER}"},
+            "null_values": ["N/A", "NaN"],
+            "try_parse_dates": True,
+            "infer_schema_length": 1000,
+            "encoding": "utf-8",
+        }
+        dataset_config.setdefault("csv_config", {})
+        # Both config will be written, which is not valid with our pydantic model, but this will enforce the user to write the correct config
+        dataset_config["csv_config"][
+            "pandas_read_csv_config"
+        ] = pandas_read_csv_config_default
+        dataset_config["csv_config"][
+            "polars_read_csv_config"
+        ] = polars_read_csv_config_default
 
     if args.cloud_format == "parquet":
         schema_transformation_parquet_str = """
