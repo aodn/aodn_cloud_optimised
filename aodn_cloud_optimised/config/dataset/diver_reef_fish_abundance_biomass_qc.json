@@ -13,7 +13,7 @@
       }
     ],
     "cluster": {
-      "mode": null,
+      "mode": "local",
       "restart_every_path": false
     },
     "clear_existing_data": true,
