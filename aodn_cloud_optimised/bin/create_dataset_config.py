@@ -653,10 +653,10 @@ def main():
     8. Optionally, fills up the AWS registry with Geonetwork metadata if a UUID is provided.
 
     Usage:
-        cloud_optimised_create_dataset_config -f <NetCDF/CSV file object key> -c <cloud optimised format> -d <dataset name> [-b <S3 bucket name>] [-u <Geonetwork Metadata UUID>]
+        cloud_optimised_create_dataset_config -f <NetCDF/CSV/PARQUET file object key> -c <cloud optimised format> -d <dataset name> [-b <S3 bucket name>] [-u <Geonetwork Metadata UUID>]
 
     Arguments:
-        -f, --file: Object key for the NetCDF file (required).
+        -f, --file: Object key for the file (required).
         -b, --bucket: S3 bucket name (optional, defaults to the value from config).
         -c, --cloud-format: Cloud optimised format, either "zarr" or "parquet" (required).
         -u, --uuid: Geonetwork Metadata UUID (optional).
