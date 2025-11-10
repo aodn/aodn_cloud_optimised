@@ -6,6 +6,7 @@ import tempfile
 from typing import Dict
 
 import numpy as np
+import polars as pl
 import pyarrow as pa
 import s3fs
 import xarray as xr
@@ -240,6 +241,40 @@ def get_pyarrow_type_map() -> Dict[str, pa.DataType]:
         "time32[s]": pa.time32("s"),
         "time64[us]": pa.time64("us"),
     }
+
+
+def get_polars_dtypes_from_pyarrow(
+    schema: dict, pyarrow_map: Dict[str, pa.DataType]
+) -> Dict[str, pl.DataType]:
+    """
+    Convert schema using PyArrow map into Polars dtypes.
+    """
+    pa_to_pl = {
+        pa.int8(): pl.Int8,
+        pa.int16(): pl.Int16,
+        pa.int32(): pl.Int32,
+        pa.int64(): pl.Int64,
+        pa.uint8(): pl.UInt8,
+        pa.uint16(): pl.UInt16,
+        pa.uint32(): pl.UInt32,
+        pa.uint64(): pl.UInt64,
+        pa.float32(): pl.Float32,
+        pa.float64(): pl.Float64,
+        pa.string(): pl.Utf8,
+        pa.bool_(): pl.Boolean,
+        pa.timestamp("ns"): pl.Datetime("ns"),
+        pa.timestamp("ms"): pl.Datetime("ms"),
+        pa.date32(): pl.Date,
+        pa.binary(): pl.Binary,
+    }
+    dtypes = {}
+    for col, meta in schema.items():
+        pa_type = pyarrow_map.get(meta["type"])
+        if pa_type is not None:
+            dtypes[col] = pa_to_pl.get(pa_type, pl.Utf8)
+        else:
+            dtypes[col] = pl.Utf8
+    return dtypes
 
 
 def map_config_type_to_pyarrow_type(config_type: str) -> pa.DataType:

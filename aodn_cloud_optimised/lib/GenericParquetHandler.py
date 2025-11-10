@@ -28,13 +28,14 @@ from aodn_cloud_optimised.lib.s3Tools import (
     prefix_exists,
     split_s3_path,
 )
-from aodn_cloud_optimised.lib.schema import convert_pandas_csv_config_to_polars
 
 from .CommonHandler import CommonHandler
 from .schema import (
     cast_value_to_config_type,
     create_pyarrow_schema,
     generate_json_schema_var_from_netcdf,
+    get_polars_dtypes_from_pyarrow,
+    get_pyarrow_type_map,
     map_config_type_to_pyarrow_type,
     merge_schema_dict,
 )
@@ -138,6 +139,9 @@ class GenericHandler(CommonHandler):
 
         If a variable in the Dataset is not found in the schema, an error is logged.
         """
+        schema = self.dataset_config.get("schema", {})
+        pa_type_map = get_pyarrow_type_map()
+
         if "pandas_read_csv_config" in self.dataset_config["csv_config"]:
             config_from_json = self.dataset_config["csv_config"][
                 "pandas_read_csv_config"
@@ -145,11 +149,23 @@ class GenericHandler(CommonHandler):
             # polargs_opts = convert_pandas_csv_config_to_polars(config_from_json)
             # df = pl.read_csv(csv_fp, **polars_opts).to_pandas()
             df = pd.read_csv(csv_fp, **config_from_json)
+
         elif "polars_read_csv_config" in self.dataset_config["csv_config"]:
             config_from_json = self.dataset_config["csv_config"][
                 "polars_read_csv_config"
             ]
-            df = pl.read_csv(csv_fp, **config_from_json).to_pandas()
+            dtype_map = get_polars_dtypes_from_pyarrow(schema, pa_type_map)
+            try:
+                df = pl.read_csv(
+                    csv_fp, dtypes=dtype_map, **config_from_json
+                ).to_pandas()
+            except pl.exceptions.ComputeError as e:
+                msg = (
+                    f"{self.uuid_log}: Failed to parse CSV {csv_fp} with enforced schema. "
+                    f"Column type mismatch likely. Original error: {e}"
+                )
+                self.logger.error(msg)
+                raise
         else:
             msg = (
                 f"{self.uuid_log}: No CSV read configuration provided — "
