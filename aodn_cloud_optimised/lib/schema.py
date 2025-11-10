@@ -1,5 +1,6 @@
 import importlib.resources
 import json
+import logging
 import re
 import tempfile
 from typing import Dict
@@ -8,6 +9,8 @@ import numpy as np
 import pyarrow as pa
 import s3fs
 import xarray as xr
+
+logger = logging.getLogger(__name__)
 
 # Standard NetCDF-style fill values
 FILL_VALUES = {
@@ -271,7 +274,7 @@ def create_pyarrow_schema_from_dict(schema_dict):
     """
     Create a PyArrow schema from a dict describing column names and types.
 
-    Expected format:
+    Expected format example:
         {
             "col1": {"type": "string"},
             "col2": {"type": "int64"}
@@ -282,24 +285,62 @@ def create_pyarrow_schema_from_dict(schema_dict):
 
     Returns:
         pyarrow.Schema: The corresponding PyArrow schema.
+
+    Raises:
+        TypeError: If schema_dict or any column definition is not a dict.
+        KeyError: If any column is missing a "type" key.
     """
+    expected_format = {
+        "example_column": {"type": "string"},
+        "another_column": {"type": "int64"},
+    }
+
+    # --- Validate schema_dict structure ---
     if not isinstance(schema_dict, dict):
-        raise TypeError(f"Expected dict, got {type(schema_dict)}")
+        message = (
+            f"Invalid schema configuration. Expected a dictionary describing columns and types, "
+            f"but got {type(schema_dict).__name__}.\n"
+            f"Expected format:\n{json.dumps(expected_format, indent=4)}\n"
+            "Please fix the schema config."
+        )
+        logger.error(message)
+        raise TypeError(message)
 
     fields = []
     for name, info in schema_dict.items():
         if not isinstance(info, dict):
-            raise TypeError(
-                f"Expected dict for column '{name}', got {type(info)}: {info}"
+            message = (
+                f"Invalid entry for column '{name}'. Expected a dict, got {type(info).__name__}.\n"
+                f"Entry content: {info}\n"
+                f"Expected format:\n{json.dumps(expected_format, indent=4)}\n"
+                "Please fix the schema config."
             )
+            logger.error(message)
+            raise TypeError(message)
 
         if "type" not in info:
-            raise KeyError(f"Missing 'type' for column '{name}' in schema: {info}")
+            message = (
+                f"Missing 'type' key for column '{name}' in schema: {info}\n"
+                f"Expected format:\n{json.dumps(expected_format, indent=4)}\n"
+                "Please fix the schema config."
+            )
+            logger.error(message)
+            raise KeyError(message)
 
         dtype_str = info["type"].strip()
-        dtype = map_config_type_to_pyarrow_type(dtype_str)
+        try:
+            dtype = map_config_type_to_pyarrow_type(dtype_str)
+        except Exception as e:
+            message = (
+                f"Failed to map type '{dtype_str}' for column '{name}': {e}\n"
+                f"Please ensure the schema config matches this format:\n"
+                f"{json.dumps(expected_format, indent=4)}"
+            )
+            logger.error(message)
+            raise
+
+        logger.debug(f"Added field: {name}, type: {dtype_str} → {dtype}")
         fields.append(pa.field(name, dtype))
-        print(f"[DEBUG] Added field: {name}, type: {dtype_str} → {dtype}")
 
     return pa.schema(fields)
 

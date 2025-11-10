@@ -787,14 +787,15 @@ def main():
                     **csv_opts,
                 ).to_pandas()
 
-            dataset_config_schema = {"type": "object", "properties": {}}
+            # dataset_config_schema = {"type": "object", "properties": {}}
+            dataset_config_schema = dict()
             for col, dtype in df.dtypes.items():
                 if pd.api.types.is_integer_dtype(dtype):
-                    js_type = "integer"
+                    js_type = "int32"
                 elif pd.api.types.is_float_dtype(dtype):
-                    js_type = "number"
+                    js_type = "float32"
                 elif pd.api.types.is_bool_dtype(dtype):
-                    js_type = "boolean"
+                    js_type = "bool"
                 elif pd.api.types.is_object_dtype(dtype) | pd.api.types.is_string_dtype(
                     dtype
                 ):
@@ -804,7 +805,8 @@ def main():
                         f"found dtype that did not fit into configured categories: `{dtype}`"
                     )
 
-                dataset_config_schema["properties"][col] = {"type": js_type}
+                # dataset_config_schema["properties"][col] = {"type": js_type}
+                dataset_config_schema[col] = {"type": js_type}
 
         case ".parquet":
             with fs.open(fp, "rb") as f:
@@ -893,7 +895,7 @@ def main():
             "has_header": True,
             # "schema": {f"{TO_REPLACE_PLACEHOLDER}": f"{TO_REPLACE_PLACEHOLDER}"},
             "null_values": ["N/A", "NaN"],
-            "try_parse_dates": True,
+            "try_parse_dates": False,
             "infer_schema_length": 1000,
             "encoding": "utf-8",
         }
