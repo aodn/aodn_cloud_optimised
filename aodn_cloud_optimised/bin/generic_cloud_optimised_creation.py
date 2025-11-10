@@ -1241,14 +1241,21 @@ def main():
         description="Run cloud-optimised creation using config."
     )
     parser.add_argument(
-        "--config", required=False, help="JSON filename in config/dataset/"
+        "-c", "--config", required=False, help="JSON filename in config/dataset/"
     )
     parser.add_argument(
+        "-o",
         "--json-overwrite",
         type=str,
         help='JSON string to override config fields. Example:  \'{"run_settings": {"cluster": {"mode": null}, "raise_error": true}}\' ',
     )
 
+    parser.add_argument(
+        "-t",
+        "--test",
+        action="store_true",
+        help="Use integration testing bucket instead of the default optimised bucket.",
+    )
     args = parser.parse_args()
 
     try:
@@ -1288,6 +1295,15 @@ def main():
         config.run_settings.root_prefix_cloud_optimised_path
         or load_variable_from_config("ROOT_PREFIX_CLOUD_OPTIMISED_PATH")
     )
+
+    # Override for test mode
+    if args.test:
+        bucket_optimised = load_variable_from_config(
+            "BUCKET_INTEGRATION_TESTING_OPTIMISED_DEFAULT"
+        )
+        root_prefix = load_variable_from_config(
+            "ROOT_PREFIX_CLOUD_OPTIMISED_INTEGRATION_TESTING_PATH"
+        )
 
     s3_fs_common_opts = config.run_settings.s3_fs_common_opts
     s3_client_opts = boto3_from_opts_dict(s3_fs_common_opts)
