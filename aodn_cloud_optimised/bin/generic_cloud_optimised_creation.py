@@ -10,6 +10,7 @@ Example usage:
 """
 
 import argparse
+import inspect
 import json
 import logging
 import re
@@ -21,6 +22,8 @@ from typing import Any, Dict, List, Literal, Optional, Union
 from urllib.parse import urlparse
 
 import numpy as np
+import pandas as pd
+import polars as pl
 import s3fs
 from cfunits import Units
 from pydantic import (
@@ -40,6 +43,7 @@ from aodn_cloud_optimised.lib.config import (
     load_variable_from_config,
 )
 from aodn_cloud_optimised.lib.s3Tools import boto3_from_opts_dict, s3_ls
+from aodn_cloud_optimised.lib.schema import get_pyarrow_type_map
 
 logger = logging.getLogger(__name__)
 
@@ -687,7 +691,7 @@ class ParquetSchemaTransformation(BaseModel):
             #         f"Missing or invalid 'type' for variable '{var_name}'."
             #     )
             #
-            valid_types = {"int32", "int64", "float32", "float64", "string", "bool"}
+            valid_types = set(get_pyarrow_type_map().keys())
             if "type" not in schema:
                 raise ValueError(
                     f"'schema' for variable '{var_name}' must contain a 'type' key."
@@ -909,28 +913,82 @@ class ParquetSchemaTransformation(BaseModel):
                     )
 
                 function_def = self.functions[function_name]
+                extract_method = function_def.get("extract_method")
 
-                if function_def.get("extract_method") != "object_key":
-                    raise ValueError(
-                        f"'extract_method' for function '{function_name}' must be 'object_key'."
-                    )
+                if extract_method == "object_key":
+                    method = function_def.get("method", {})
+                    code = method.get("extraction_code", "")
 
-                method = function_def.get("method", {})
-                code = method.get("extraction_code", "")
-                if (
-                    not isinstance(code, str)
-                    or "def " not in code
-                    or "return " not in code
-                ):
-                    raise ValueError(
-                        f"'extraction_code' for function '{function_name}' must contain a function definition and return statement."
-                    )
+                    if (
+                        not isinstance(code, str)
+                        or "def " not in code
+                        or "return " not in code
+                    ):
+                        raise ValueError(
+                            f"'extraction_code' for function '{function_name}' must contain a function definition and return statement."
+                        )
+                    # Optional: enforce `return {` or `return dict(...)`
+                    if (
+                        not re.search(r"return\s+{", code)
+                        and "return dict(" not in code
+                    ):
+                        raise ValueError(
+                            f"'extraction_code' for function '{function_name}' must return a dictionary."
+                        )
 
-                # Optional: enforce `return {` or `return dict(...)` pattern
-                if not re.search(r"return\s+{", code) and "return dict(" not in code:
+                elif extract_method == "from_variables":
+                    method = function_def.get("method", {})
+                    creation_code = method.get("creation_code", "")
+                    if (
+                        not isinstance(creation_code, str)
+                        or "def " not in creation_code
+                        or "return " not in creation_code
+                    ):
+                        raise ValueError(
+                            f"'creation_code' for function '{function_name}' must contain a function definition and return statement."
+                        )
+
+                else:
                     raise ValueError(
-                        f"'extraction_code' for function '{function_name}' must return a dictionary."
+                        f"Unsupported extract_method '{extract_method}' for function '{function_name}'"
                     )
+        return self
+
+
+class CSVConfigModel(BaseModel):
+    pandas_read_csv_config: Optional[Dict[str, Any]] = Field(default=None)
+    polars_read_csv_config: Optional[Dict[str, Any]] = Field(default=None)
+
+    @model_validator(mode="after")
+    def validate_csv_configs(self):
+        """Ensure only one CSV config is set, and its keys are valid for the respective reader."""
+        pandas_cfg = self.pandas_read_csv_config
+        polars_cfg = self.polars_read_csv_config
+
+        # Rule 1: mutual exclusivity
+        if pandas_cfg and polars_cfg:
+            raise ValueError(
+                "Only one of pandas_read_csv_config or polars_read_csv_config can be provided."
+            )
+
+        # Rule 2: validate keys
+        if pandas_cfg:
+            valid_pandas_keys = set(inspect.signature(pd.read_csv).parameters.keys())
+            invalid = [k for k in pandas_cfg if k not in valid_pandas_keys]
+            if invalid:
+                raise ValueError(
+                    f"Invalid pandas_read_csv_config keys: {invalid}. "
+                    f"Valid options: {sorted(valid_pandas_keys)}"
+                )
+
+        if polars_cfg:
+            valid_polars_keys = set(inspect.signature(pl.read_csv).parameters.keys())
+            invalid = [k for k in polars_cfg if k not in valid_polars_keys]
+            if invalid:
+                raise ValueError(
+                    f"Invalid polars_read_csv_config keys: {invalid}. "
+                    f"Valid options: {sorted(valid_polars_keys)}"
+                )
 
         return self
 
@@ -952,6 +1010,15 @@ class DatasetConfig(BaseModel):
     )
     cloud_optimised_format: Literal["zarr", "parquet"]
     metadata_uuid: Optional[str] = Field(default=None)
+    # Nested CSV configuration validator
+    csv_config: Optional["CSVConfigModel"] = Field(
+        default=None,
+        description=(
+            "Configuration for reading CSV files. "
+            "Only one of pandas_read_csv_config or polars_read_csv_config "
+            "can be provided inside this object."
+        ),
+    )
 
     @model_validator(mode="after")
     def validate_schema_transformation_type(self) -> "DatasetConfig":

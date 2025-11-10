@@ -20,18 +20,20 @@
     "batch_size": 20
   },
   "metadata_uuid": "541d4f15-122a-443d-ab4e-2b5feb08d6a0",
-  "pandas_read_csv_config": {
-    "delimiter": ";",
-    "header": 0,
-    "index_col": "detection_timestamp",
-    "parse_dates": [
-      "detection_timestamp"
-    ],
-    "na_values": [
-      "N/A",
-      "NaN"
-    ],
-    "encoding": "utf-8"
+  "csv_config": {
+    "pandas_read_csv_config": {
+      "delimiter": ";",
+      "header": 0,
+      "index_col": "detection_timestamp",
+      "parse_dates": [
+        "detection_timestamp"
+      ],
+      "na_values": [
+        "N/A",
+        "NaN"
+      ],
+      "encoding": "utf-8"
+    }
   },
   "schema_transformation": {
     "drop_variables": [],
