@@ -39,6 +39,7 @@ import io
 import json
 import os
 import pathlib
+import re
 import uuid
 from collections import OrderedDict
 from importlib.resources import files
@@ -281,7 +282,10 @@ def update_pyproject_toml(dataset_name):
     section_found = False
 
     for line in lines:
-        if line.strip() == "[project.scripts]":
+        if re.fullmatch(
+            r"\[(tool\.poetry|project)\.scripts\]",
+            line.lstrip("\ufeff").strip().lower(),
+        ):
             in_scripts_section = True
             section_found = True
             scripts_section.append(line)
@@ -309,7 +313,10 @@ def update_pyproject_toml(dataset_name):
     with open(pyproject_path, "w") as pyproject_file:
         in_scripts_section = False
         for line in lines:
-            if line.strip() == "[tool.poetry.scripts]":
+            if re.fullmatch(
+                r"\[(tool\.poetry|project)\.scripts\]",
+                line.lstrip("\ufeff").strip().lower(),
+            ):
                 in_scripts_section = True
                 pyproject_file.write(line)
                 for script in sorted_scripts[1:]:
@@ -325,8 +332,6 @@ def update_pyproject_toml(dataset_name):
             pyproject_file.write("\n[tool.poetry.scripts]\n")
             for script in sorted_scripts[1:]:
                 pyproject_file.write(script)
-
-                import os
 
 
 def update_readme(dataset_name):
