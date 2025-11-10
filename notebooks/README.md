@@ -61,6 +61,7 @@ More information available [here](https://github.com/conda-forge/miniforge?tab=r
 - [argo.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/argo.ipynb)
 - [autonomous_underwater_vehicle.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/autonomous_underwater_vehicle.ipynb)
 - [diver_benthic_cover_in_situ_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/diver_benthic_cover_in_situ_qc.ipynb)
+- [diver_cryptobenthic_fish_abundance_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/diver_cryptobenthic_fish_abundance_qc.ipynb)
 - [diver_mobile_macroinvertebrate_abundance_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/diver_mobile_macroinvertebrate_abundance_qc.ipynb)
 - [diver_off_transect_species_observations_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/diver_off_transect_species_observations_qc.ipynb)
 - [diver_reef_fish_abundance_biomass_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/diver_reef_fish_abundance_biomass_qc.ipynb)
