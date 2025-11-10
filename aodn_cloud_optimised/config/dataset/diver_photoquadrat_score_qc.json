@@ -1,0 +1,221 @@
+{
+  "dataset_name": "diver_photoquadrat_score_qc",
+  "logger_name": "diver_photoquadrat_score_qc",
+  "cloud_optimised_format": "parquet",
+  "run_settings": {
+    "paths": [
+      {
+        "s3_uri": "s3://data-uplift-public/products/reef_life_survey",
+        "filter": [
+          "public_reef_life_survey_2025-11-04T03:14:37.parquet"
+        ],
+        "year_range": []
+      }
+    ],
+    "cluster": {
+      "mode": "local",
+      "restart_every_path": false
+    },
+    "clear_existing_data": true,
+    "raise_error": false,
+    "coiled_cluster_options": {
+      "n_workers": [
+        1,
+        20
+      ],
+      "scheduler_vm_types": "m7i-flex.large",
+      "worker_vm_types": "m7i-flex.large",
+      "allow_ingress_from": "me",
+      "compute_purchase_option": "spot_with_fallback",
+      "worker_options": {
+        "nthreads": 4,
+        "memory_limit": "8GB"
+      }
+    },
+    "batch_size": 5,
+    "force_previous_parquet_deletion": false
+  },
+  "metadata_uuid": null,
+  "schema": {
+    "index": {
+      "type": "int64"
+    },
+    "dataset_id": {
+      "type": "string"
+    },
+    "database": {
+      "type": "string"
+    },
+    "program": {
+      "type": "string"
+    },
+    "country": {
+      "type": "string"
+    },
+    "area": {
+      "type": "string"
+    },
+    "location": {
+      "type": "string"
+    },
+    "site_code": {
+      "type": "string"
+    },
+    "site_name": {
+      "type": "string"
+    },
+    "latitude": {
+      "type": "double"
+    },
+    "longitude": {
+      "type": "double"
+    },
+    "date": {
+      "type": "date32[day]"
+    },
+    "hour": {
+      "type": "string"
+    },
+    "depth": {
+      "type": "double"
+    },
+    "visibility": {
+      "type": "double"
+    },
+    "label_scheme": {
+      "type": "string"
+    },
+    "rls_label": {
+      "type": "string"
+    },
+    "rls_lineage": {
+      "type": "string"
+    },
+    "catami_label": {
+      "type": "string"
+    },
+    "catami_lineage": {
+      "type": "string"
+    },
+    "tags": {
+      "type": "list<element: string>"
+    },
+    "label_count": {
+      "type": "double"
+    },
+    "dataset_total_label_count": {
+      "type": "double"
+    },
+    "percent_cover": {
+      "type": "double"
+    },
+    "sq_annotation_set_id": {
+      "type": "double"
+    },
+    "method": {
+      "type": "string"
+    }
+  },
+  "aws_opendata_registry": {
+    "Name": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+    "Description": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+    "Documentation": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+    "Contact": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+    "ManagedBy": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+    "UpdateFrequency": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+    "Tags": [
+      "FILL UP MANUALLY - CHECK DOCUMENTATION"
+    ],
+    "License": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+    "Resources": [
+      {
+        "Description": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+        "ARN": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+        "Region": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+        "Type": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+        "Explore": [
+          "FILL UP MANUALLY - CHECK DOCUMENTATION"
+        ]
+      }
+    ],
+    "DataAtWork": {
+      "Tutorials": [
+        {
+          "Title": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+          "URL": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+          "Services": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+          "AuthorName": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+          "AuthorURL": "FILL UP MANUALLY - CHECK DOCUMENTATION"
+        }
+      ],
+      "Tools & Applications": [
+        {
+          "Title": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+          "URL": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+          "AuthorName": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+          "AuthorURL": "FILL UP MANUALLY - CHECK DOCUMENTATION"
+        }
+      ],
+      "Publications": [
+        {
+          "Title": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+          "URL": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+          "AuthorName": "FILL UP MANUALLY - CHECK DOCUMENTATION"
+        }
+      ]
+    }
+  },
+  "schema_transformation": {
+    "drop_variables": [],
+    "add_variables": {
+      "filename": {
+        "source": "@filename",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "long_name": "Filename of the source file"
+        }
+      },
+      "timestamp": {
+        "source": "@partitioning:time_extent",
+        "schema": {
+          "type": "int64",
+          "units": "1",
+          "long_name": "Partition timestamp"
+        }
+      },
+      "polygon": {
+        "source": "@partitioning:spatial_extent",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "long_name": "Spatial partition polygon"
+        }
+      }
+    },
+    "partitioning": [
+      {
+        "source_variable": "timestamp",
+        "type": "time_extent",
+        "time_extent": {
+          "time_varname": "date",
+          "partition_period": "Y"
+        }
+      },
+      {
+        "source_variable": "polygon",
+        "type": "spatial_extent",
+        "spatial_extent": {
+          "lat_varname": "latitude",
+          "lon_varname": "longitude",
+          "spatial_resolution": 90
+        }
+      }
+    ],
+    "global_attributes": {
+      "set": {
+        "title": "NRMN m13 method Diver Annotations"
+      }
+    }
+  }
+}
