@@ -362,6 +362,41 @@ And the function definition:
 
 You may define multiple functions this way. They are applied to every input path at runtime.
 
+**@function:<function_name>** to create a new variable from input variables
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Custom logic can be applied to derive new variables from existing dataframe columns using the `@function:<name>` syntax in `add_variables`. These require a corresponding function definition in the `functions` block.
+
+This is useful when the desired variable is not directly present in the dataset but can be computed from one or more columns.
+
+**Example:**
+
+.. code-block:: json
+
+   "TIME": {
+     "source": "@function:time_creation",
+     "schema": {
+       "type": "timestamp[ns]",
+       "units": "days since 1970-01-01T00:00:00Z",
+       "_FillValue": "",
+       "long_name": "Derived timestamp"
+     }
+   }
+
+And the function definition:
+
+.. code-block:: json
+
+   "functions": {
+     "time_creation": {
+       "extract_method": "from_variables",
+       "method": {
+         "creation_code": "def time_creation_from_variables(df):\n    import pandas as pd\n    date_col = df.get('survey_date')\n    hour_col = df.get('hour')\n\n    # Fill missing hour with 00:00:00\n    if hour_col is None:\n        hour_col = pd.Series(['00:00:00']*len(df), index=df.index)\n    else:\n        hour_col = hour_col.fillna('00:00:00')\n\n    # Combine date and hour strings\n    dt_str = date_col.astype(str) + ' ' + hour_col.astype(str)\n    result = pd.to_datetime(dt_str, errors='coerce', format='%Y-%m-%d %H:%M:%S')\n\n    # Fallback to just date if conversion failed\n    mask = result.isna()\n    if mask.any():\n        result.loc[mask] = pd.to_datetime(date_col[mask], errors='coerce')\n\n    return result"
+       }
+     }
+   }
+
+You may define multiple functions this way. They are applied to the dataframe at runtime, deriving new columns as specified in the configuration.
 
 Global Attributes
 """"""""""""""""""
@@ -523,36 +558,57 @@ In this example, the order of partitions will be ``timestamp`` -> ``polygon`` ->
 Parquet Configuration from CSV file
 -----------------------------------
 
-To create a parquet dataset from CSV files, all of the above is
-relevant. However, there are some special config to deal with various
-CSV formats.
 
-As an example, we will use the
-``aodn_cloud_optimised.config.aatams_acoustic_tagging.json`` config
-file.
+To create a Parquet dataset from CSV files, all of the previous configuration options still apply. However, there are some special configuration options to deal with various CSV formats.
 
-The config is based on the ``pandas.read_csv`` documentation. Below is
-only a short list of optional arguments. Any options from the
-``pandas.read_csv`` could be used
+We will use the example configuration file:
+``aodn_cloud_optimised.config.aatams_acoustic_tagging.json``
+
+The CSV-specific options are now grouped under the nested key `csv_config`. You can specify options for either **Pandas** or **Polars** CSV readers. Only one needs to be provided depending on which library you choose to read the CSV files.
+
+Example using Pandas:
+
 
 .. code:: json
 
-     "pandas_read_csv_config": {
-       "delimiter": ";",
-       "header": 0,
-       "index_col": "detection_timestamp",
-       "parse_dates": [
-         "detection_timestamp"
-       ],
-       "na_values": [
-         "N/A",
-         "NaN"
-       ],
-       "encoding": "utf-8"
-     },
+    "csv_config": {
+      "pandas_read_csv_config": {
+        "delimiter": ";",
+        "header": 0,
+        "index_col": "detection_timestamp",
+        "parse_dates": [
+          "detection_timestamp"
+        ],
+        "na_values": [
+          "N/A",
+          "NaN"
+        ],
+        "encoding": "utf-8"
+      }
+    }
 
-See the official pandas documentation:
-`pandas.read_csv <https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_csv.html>`_.
+Example using Polars:
+
+.. code:: json
+
+    "csv_config": {
+      "polars_read_csv_config": {
+        "separator": ";",
+        "has_header": true,
+        "parse_dates": ["detection_timestamp"],
+        "null_values": ["N/A", "NaN"],
+        "encoding": "utf-8"
+      }
+    }
+
+* `pandas_read_csv_config`: Options are passed directly to `pandas.read_csv()`.
+* `polars_read_csv_config`: Options are passed directly to `polars.read_csv()`.
+
+You can use any valid arguments for the corresponding CSV reader. See the official documentation for reference:
+
+* [`pandas.read_csv`](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_csv.html)
+* [`polars.read_csv`](https://pola-rs.github.io/polars/py-polars/html/reference/api/polars.read_csv.html)
+
 
 Parquet Configuration from Parquet file
 -----------------------------------

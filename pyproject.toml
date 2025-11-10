@@ -21,6 +21,7 @@ dependencies = [
   # only visible when opening with xarray some NetCDF. but not visible with dask although empty data NaN is created
   "numpy<2.0.0",
 
+  "polars>=1.35.1",
   "pandas>=2.2.3",
   "python-dateutil>=2.9.0",
   "jsonschema>=4.22.0",
@@ -89,6 +90,7 @@ gsw = ">=3.6.19"
 seaborn = ">=0.13.2"
 windrose = ">=1.9.2"
 tabulate = ">=0.9.0"
+folium = ">=0.20.0"
 
 [project.scripts]
 #cloud_optimised_srs_oc_ljco_to_parquet = "aodn_cloud_optimised.bin.srs_oc_ljco_to_parquet:main"
@@ -98,6 +100,9 @@ cloud_optimised_argo = "aodn_cloud_optimised.bin.argo:main"
 cloud_optimised_autonomous_underwater_vehicle = "aodn_cloud_optimised.bin.autonomous_underwater_vehicle:main"
 cloud_optimised_create_aws_registry_dataset = "aodn_cloud_optimised.bin.create_aws_registry_dataset:main"
 cloud_optimised_create_dataset_config = "aodn_cloud_optimised.bin.create_dataset_config:main"
+cloud_optimised_diver_benthic_cover_in_situ_qc = "aodn_cloud_optimised.bin.diver_benthic_cover_in_situ_qc:main"
+cloud_optimised_diver_mobile_macroinvertebrate_abundance_qc = "aodn_cloud_optimised.bin.diver_mobile_macroinvertebrate_abundance_qc:main"
+cloud_optimised_diver_reef_fish_abundance_biomass_qc = "aodn_cloud_optimised.bin.diver_reef_fish_abundance_biomass_qc:main"
 cloud_optimised_extract_missing_var_from_log = "aodn_cloud_optimised.bin.extract_missing_var_from_log:main"
 cloud_optimised_model_sea_level_anomaly_gridded_realtime = "aodn_cloud_optimised.bin.model_sea_level_anomaly_gridded_realtime:main"
 cloud_optimised_mooring_acidification_delayed_qc = "aodn_cloud_optimised.bin.mooring_acidification_delayed_qc:main"
@@ -178,9 +183,6 @@ cloud_optimised_wave_buoy_realtime_nonqc = "aodn_cloud_optimised.bin.wave_buoy_r
 cloud_optimised_diver_photoquadrat_score_qc = "aodn_cloud_optimised.bin.diver_photoquadrat_score_qc:main"
 generic_cloud_optimised_creation = "aodn_cloud_optimised.bin.generic_cloud_optimised_creation:main"
 pydantic_precommit_hook = "aodn_cloud_optimised.bin.pydantic_precommit_hook:main"
-
-#[tool.poetry.include]
-#data = ["aodn_cloud_optimised/config/*.json", "aodn_cloud_optimised/config/dataset/*.json"]
 
 
 [tool.pre_commit]

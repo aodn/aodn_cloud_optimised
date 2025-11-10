@@ -36,6 +36,7 @@ import seaborn as sns
 import xarray as xr
 from botocore import UNSIGNED
 from botocore.client import Config
+from dateutil import parser
 from dateutil.parser import parse
 from fuzzywuzzy import fuzz
 from IPython.display import FileLink
@@ -213,6 +214,7 @@ def get_temporal_extent_v1(dataset: ds.Dataset) -> tuple[datetime, datetime]:
 
 def get_temporal_extent(
     dataset: ds.Dataset,
+    time_varname=None,
 ) -> tuple[pd.Timestamp, pd.Timestamp]:
     """Calculates the precise temporal extent by reading min/max time variable values.
 
@@ -234,14 +236,15 @@ def get_temporal_extent(
 
     # Detect the time variable name in the schema
     names = dataset.schema.names
-    for candidate in ("TIME", "JULD", "detection_timestamp"):
-        if candidate in names:
-            time_varname = candidate
-            break
-    else:
-        raise ValueError(
-            "No known time variable ('TIME', 'JULD', 'detection_timestamp') found in dataset schema"
-        )
+    if not time_varname:
+        for candidate in ("TIME", "JULD", "detection_timestamp"):
+            if candidate in names:
+                time_varname = candidate
+                break
+        else:
+            raise ValueError(
+                "No known time variable ('TIME', 'JULD', 'detection_timestamp') found in dataset schema"
+            )
 
     expr = pc.field("timestamp") == np.int64(unique_timestamps.max())
     table = dataset.to_table(filter=expr, columns=[time_varname])
@@ -384,11 +387,39 @@ def create_bbox_filter(dataset: ds.Dataset, **kwargs) -> pc.Expression:
     return expression
 
 
+# def ensure_utc_aware(dt):
+#     """Convert naive datetime to UTC-aware. Leave aware datetimes unchanged."""
+#     if dt.tzinfo is None:
+#         return dt.replace(tzinfo=timezone.utc)
+#     return dt
+#
+
+
 def ensure_utc_aware(dt):
-    """Convert naive datetime to UTC-aware. Leave aware datetimes unchanged."""
+    """
+    Ensure a datetime (or datetime string) is timezone-aware in UTC.
+
+    Args:
+        dt (datetime | str): Datetime object or ISO 8601 string.
+
+    Returns:
+        datetime: UTC-aware datetime.
+    """
+    if isinstance(dt, str):
+        try:
+            dt = parser.isoparse(dt)
+        except Exception as e:
+            raise ValueError(f"Cannot parse datetime string: {dt!r}") from e
+
+    if not isinstance(dt, datetime):
+        raise TypeError(f"Expected datetime or str, got {type(dt)}: {dt!r}")
+
+    # If tzinfo is None, assume UTC
     if dt.tzinfo is None:
         return dt.replace(tzinfo=timezone.utc)
-    return dt
+
+    # Convert to UTC if another timezone is present
+    return dt.astimezone(timezone.utc)
 
 
 def create_time_filter(dataset: ds.Dataset, **kwargs) -> pc.Expression:
