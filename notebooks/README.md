@@ -60,6 +60,7 @@ More information available [here](https://github.com/conda-forge/miniforge?tab=r
 - [animal_ctd_satellite_relay_tagging_delayed_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/animal_ctd_satellite_relay_tagging_delayed_qc.ipynb)
 - [argo.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/argo.ipynb)
 - [autonomous_underwater_vehicle.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/autonomous_underwater_vehicle.ipynb)
+- [diver_benthic_cover_in_situ_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/diver_benthic_cover_in_situ_qc.ipynb)
 - [diver_reef_fish_abundance_biomass_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/diver_reef_fish_abundance_biomass_qc.ipynb)
 - [model_sea_level_anomaly_gridded_realtime.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/model_sea_level_anomaly_gridded_realtime.ipynb)
 - [mooring_acidification_delayed_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/mooring_acidification_delayed_qc.ipynb)
