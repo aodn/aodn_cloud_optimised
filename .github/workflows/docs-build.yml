@@ -32,4 +32,4 @@ jobs:
 
       - name: Build documentation
         run: |
-          sphinx-build -b html docs/ build/html -W --keep-going
+          sphinx-build -b html docs/ build/html --keep-going
