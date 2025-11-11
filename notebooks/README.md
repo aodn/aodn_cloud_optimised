@@ -65,6 +65,7 @@ More information available [here](https://github.com/conda-forge/miniforge?tab=r
 - [diver_mobile_macroinvertebrate_abundance_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/diver_mobile_macroinvertebrate_abundance_qc.ipynb)
 - [diver_off_transect_species_observations_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/diver_off_transect_species_observations_qc.ipynb)
 - [diver_reef_fish_abundance_biomass_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/diver_reef_fish_abundance_biomass_qc.ipynb)
+- [diver_site_information_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/diver_site_information_qc.ipynb)
 - [diver_survey_metadata_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/diver_survey_metadata_qc.ipynb)
 - [model_sea_level_anomaly_gridded_realtime.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/model_sea_level_anomaly_gridded_realtime.ipynb)
 - [mooring_acidification_delayed_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/mooring_acidification_delayed_qc.ipynb)
