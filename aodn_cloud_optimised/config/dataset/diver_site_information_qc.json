@@ -1,0 +1,180 @@
+{
+  "dataset_name": "diver_site_information_qc",
+  "logger_name": "diver_site_information_qc",
+  "cloud_optimised_format": "parquet",
+  "run_settings": {
+    "paths": [
+      {
+        "s3_uri": "s3://imos-data/IMOS/NRMN",
+        "filter": [
+          "ep_site_list_public_data\\.csv"
+        ],
+        "year_range": []
+      }
+    ],
+    "cluster": {
+      "mode": "local",
+      "restart_every_path": false
+    },
+    "clear_existing_data": true,
+    "raise_error": false,
+    "coiled_cluster_options": {
+      "n_workers": [
+        1,
+        20
+      ],
+      "scheduler_vm_types": "m7i-flex.large",
+      "worker_vm_types": "m7i-flex.large",
+      "allow_ingress_from": "me",
+      "compute_purchase_option": "spot_with_fallback",
+      "worker_options": {
+        "nthreads": 4,
+        "memory_limit": "8GB"
+      }
+    },
+    "batch_size": 1,
+    "force_previous_parquet_deletion": false
+  },
+  "metadata_uuid": "e41efa35-03f0-4dea-be98-2a69e46b510b",
+  "schema": {
+    "country": {
+      "type": "string"
+    },
+    "area": {
+      "type": "string"
+    },
+    "location": {
+      "type": "string"
+    },
+    "site_code": {
+      "type": "string"
+    },
+    "site_name": {
+      "type": "string"
+    },
+    "old_site_codes": {
+      "type": "string"
+    },
+    "latitude": {
+      "type": "float32"
+    },
+    "longitude": {
+      "type": "float32"
+    },
+    "realm": {
+      "type": "string"
+    },
+    "province": {
+      "type": "string"
+    },
+    "ecoregion": {
+      "type": "string"
+    },
+    "lat_zone": {
+      "type": "string"
+    },
+    "programs": {
+      "type": "string"
+    },
+    "geom": {
+      "type": "string"
+    }
+  },
+  "aws_opendata_registry": {
+    "Name": "IMOS - National Reef Monitoring Network Sub-Facility - Site information",
+    "Description": "The National Reef Monitoring Network brings together shallow reef surveys conducted around Australia into a centralised database. The IMOS National Reef Monitoring Network sub-Facility collates, cleans, stores and makes this data rapidly available from contributors including: Reef Life Survey, Parks Australia, Department of Biodiversity, Conservation and Attractions (Western Australia), Department of Environment, Water and Natural Resources (South Australia), Department of Primary Industries (New South Wales), Tasmanian Parks and Wildlife Service and Parks Victoria.\n\nThe data provided by the National Reef Monitoring Network contributes to establishing and supporting national marine baselines, and assisting with the management of Commonwealth and State marine reserves. \n\nReef Life Survey (RLS) and the Australian Temperate Reef Network (ATRC) aims to improve biodiversity conservation and the sustainable management of marine resources by coordinating surveys of rocky and coral reefs using scientific methods, with the ultimate goal to improve coastal stewardship. Our activities depend on the skills of marine scientists, experienced and motivated recreational SCUBA divers, partnerships with management agencies and university researchers, and active input from the ATRC partners and RLS Advisory Committee.\n\nRLS and ATRC data are freely available to the public for non-profit purposes, so not only managers, but also groups such as local dive clubs or schools may use these data to look at changes over time in their own local reefs. By making data freely available and through public outputs, RLS and ATRC aims to raise broader community awareness of the status of Australia?s marine biodiversity and associated conservation issues.\n\nThis dataset shows the locations of Reef Life Survey (RLS) and Australian Reef Collaboration Network (ATRC) sites on shallow rocky and coral reefs, worldwide. Multiple transects (surveys) are usually surveyed within sites on any given date. Sites traditionally need a minimum of 200 m separation to be classified as a different site, unless separated by a significant geological feature or reef habitat discontinuity.",
+    "Documentation": "https://catalogue-imos.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/e41efa35-03f0-4dea-be98-2a69e46b510b",
+    "Contact": "info@aodn.org.au",
+    "ManagedBy": "AODN",
+    "UpdateFrequency": "As Needed",
+    "Tags": [
+      "FILL UP MANUALLY - CHECK DOCUMENTATION"
+    ],
+    "License": "http://creativecommons.org/licenses/by/4.0/",
+    "Resources": [
+      {
+        "Description": "Cloud Optimised AODN dataset of IMOS - National Reef Monitoring Network Sub-Facility - Site information",
+        "ARN": "arn:aws:s3:::aodn-cloud-optimised/diver_site_information_qc.parquet",
+        "Region": "ap-southeast-2",
+        "Type": "S3 Bucket"
+      }
+    ],
+    "DataAtWork": {
+      "Tutorials": [
+        {
+          "Title": "Accessing IMOS - National Reef Monitoring Network Sub-Facility - Site information",
+          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/diver_site_information_qc.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/diver_site_information_qc.ipynb",
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
+        },
+        {
+          "Title": "Accessing and search for any AODN dataset",
+          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
+        }
+      ]
+    },
+    "Citation": "IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access]"
+  },
+  "csv_config": {
+    "polars_read_csv_config": {
+      "separator": ",",
+      "has_header": true,
+      "null_values": [
+        "N/A",
+        "NaN"
+      ],
+      "try_parse_dates": false,
+      "infer_schema_length": 1000,
+      "encoding": "utf-8"
+    }
+  },
+  "schema_transformation": {
+    "drop_variables": [],
+    "add_variables": {
+      "filename": {
+        "source": "@filename",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "long_name": "Filename of the source file"
+        }
+      },
+      "polygon": {
+        "source": "@partitioning:spatial_extent",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "long_name": "Spatial partition polygon"
+        }
+      }
+    },
+    "skip_partitioning_validation": true,
+    "partitioning": [
+      {
+        "source_variable": "polygon",
+        "type": "spatial_extent",
+        "spatial_extent": {
+          "lat_varname": "latitude",
+          "lon_varname": "longitude",
+          "spatial_resolution": 10
+        }
+      }
+    ],
+    "global_attributes": {
+      "delete": [
+        "geospatial_lat_max",
+        "geospatial_lat_min",
+        "geospatial_lon_max",
+        "geospatial_lon_min",
+        "date_created"
+      ],
+      "set": {
+        "title": "IMOS - National Reef Monitoring Network Sub-Facility - Site information"
+      }
+    }
+  }
+}

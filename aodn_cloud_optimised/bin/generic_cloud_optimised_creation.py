@@ -643,6 +643,9 @@ class ParquetSchemaTransformation(BaseModel):
         default=None,
         description="Custom functions used to extract metadata from object keys and turn into variables, required if @function: is used in add_variables.",
     )
+    skip_partitioning_validation: bool = Field(
+        False, description="Set to true to skip required partitioning validation."
+    )
 
     @field_validator("add_variables")
     @classmethod
@@ -719,6 +722,9 @@ class ParquetSchemaTransformation(BaseModel):
 
     @model_validator(mode="after")
     def validate_required_patitions(self):
+        if self.skip_partitioning_validation:
+            return self
+
         if not self.partitioning:
             raise ValueError("'partitioning' key missing")
 
@@ -727,7 +733,7 @@ class ParquetSchemaTransformation(BaseModel):
         required_partitioning_keys = ["polygon", "timestamp"]
         if not all(key in partition_keys for key in required_partitioning_keys):
             raise ValueError(
-                f"Required variables {required_partitioning_keys} must be present in the 'partitioning' key. Only {partition_keys} available"
+                f"Required variables {required_partitioning_keys} must be present in the 'partitioning' key. Only {partition_keys} available.\n If you think those partitions shouldn't exist, set '\"skip_partitioning_validation\" : true' in the schema_transformation configuration"
             )
 
         return self
@@ -1241,14 +1247,21 @@ def main():
         description="Run cloud-optimised creation using config."
     )
     parser.add_argument(
-        "--config", required=False, help="JSON filename in config/dataset/"
+        "-c", "--config", required=False, help="JSON filename in config/dataset/"
     )
     parser.add_argument(
+        "-o",
         "--json-overwrite",
         type=str,
         help='JSON string to override config fields. Example:  \'{"run_settings": {"cluster": {"mode": null}, "raise_error": true}}\' ',
     )
 
+    parser.add_argument(
+        "-t",
+        "--test",
+        action="store_true",
+        help="Use integration testing bucket instead of the default optimised bucket.",
+    )
     args = parser.parse_args()
 
     try:
@@ -1288,6 +1301,15 @@ def main():
         config.run_settings.root_prefix_cloud_optimised_path
         or load_variable_from_config("ROOT_PREFIX_CLOUD_OPTIMISED_PATH")
     )
+
+    # Override for test mode
+    if args.test:
+        bucket_optimised = load_variable_from_config(
+            "BUCKET_INTEGRATION_TESTING_OPTIMISED_DEFAULT"
+        )
+        root_prefix = load_variable_from_config(
+            "ROOT_PREFIX_CLOUD_OPTIMISED_INTEGRATION_TESTING_PATH"
+        )
 
     s3_fs_common_opts = config.run_settings.s3_fs_common_opts
     s3_client_opts = boto3_from_opts_dict(s3_fs_common_opts)

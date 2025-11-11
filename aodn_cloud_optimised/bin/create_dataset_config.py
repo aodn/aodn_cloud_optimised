@@ -772,6 +772,8 @@ def main():
                 dataset_config_schema = json.load(file)
             os.remove(temp_file_path)
 
+            regex_filter = [".*\\.nc$"]
+
         case ".csv":
             csv_opts = json.loads(args.csv_opts) if args.csv_opts else {}
 
@@ -808,6 +810,8 @@ def main():
                 # dataset_config_schema["properties"][col] = {"type": js_type}
                 dataset_config_schema[col] = {"type": js_type}
 
+            regex_filter = [".*\\.csv$"]
+
         case ".parquet":
             with fs.open(fp, "rb") as f:
                 schema = pq.read_schema(f)
@@ -815,6 +819,8 @@ def main():
 
                 for field in schema:
                     dataset_config_schema[field.name] = {"type": str(field.type)}
+
+            regex_filter = [".*\\.parquet$"]
 
         # Default: Raise NotImplemented
         case _:
@@ -863,7 +869,7 @@ def main():
     }
     parent_s3_path = PureS3Path.from_uri(fp).parent.as_uri()
     dataset_config["run_settings"]["paths"] = [
-        {"s3_uri": parent_s3_path, "filter": [".*\\.nc"], "year_range": []}
+        {"s3_uri": parent_s3_path, "filter": regex_filter, "year_range": []}
     ]
 
     if args.s3fs_opts:

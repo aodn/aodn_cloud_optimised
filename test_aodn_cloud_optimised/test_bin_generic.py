@@ -152,6 +152,16 @@ class TestGenericCloudOptimisedCreation(unittest.TestCase):
             patch(
                 "aodn_cloud_optimised.lib.s3Tools.boto3.client", new=_mock_boto3_client
             ),
+            patch(
+                "aodn_cloud_optimised.bin.generic_cloud_optimised_creation.load_variable_from_config",
+                new=lambda key: {
+                    "BUCKET_OPTIMISED_DEFAULT": "optimised-bucket",
+                    "BUCKET_INTEGRATION_TESTING_OPTIMISED_DEFAULT": "optimised-bucket",
+                    "BUCKET_RAW_DEFAULT": "imos-data",
+                    "ROOT_PREFIX_CLOUD_OPTIMISED_PATH": "testing",
+                    "ROOT_PREFIX_CLOUD_OPTIMISED_INTEGRATION_TESTING_PATH": "testing",
+                }[key],
+            ),
         ):
             mock_parse_args.return_value = MagicMock(
                 # config="radar_TurquoiseCoast_velocity_hourly_averaged_delayed_qc",
