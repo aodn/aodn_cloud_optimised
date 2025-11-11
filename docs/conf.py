@@ -12,7 +12,7 @@ import toml
 # Load version from pyproject.toml
 with open("../pyproject.toml", "r") as toml_file:
     toml_data = toml.load(toml_file)
-    version = toml_data["tool"]["poetry"]["version"]
+    version = toml_data["project"]["version"]
 
 project = "AODN Cloud Optimised"
 copyright = "2024, Besnard, Laurent (AODN)"
