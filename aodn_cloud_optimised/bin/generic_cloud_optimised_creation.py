@@ -643,6 +643,9 @@ class ParquetSchemaTransformation(BaseModel):
         default=None,
         description="Custom functions used to extract metadata from object keys and turn into variables, required if @function: is used in add_variables.",
     )
+    skip_partitioning_validation: bool = Field(
+        False, description="Set to true to skip required partitioning validation."
+    )
 
     @field_validator("add_variables")
     @classmethod
@@ -719,6 +722,9 @@ class ParquetSchemaTransformation(BaseModel):
 
     @model_validator(mode="after")
     def validate_required_patitions(self):
+        if self.skip_partitioning_validation:
+            return self
+
         if not self.partitioning:
             raise ValueError("'partitioning' key missing")
 
@@ -727,7 +733,7 @@ class ParquetSchemaTransformation(BaseModel):
         required_partitioning_keys = ["polygon", "timestamp"]
         if not all(key in partition_keys for key in required_partitioning_keys):
             raise ValueError(
-                f"Required variables {required_partitioning_keys} must be present in the 'partitioning' key. Only {partition_keys} available"
+                f"Required variables {required_partitioning_keys} must be present in the 'partitioning' key. Only {partition_keys} available.\n If you think those partitions shouldn't exist, set '\"skip_partitioning_validation\" : true' in the schema_transformation configuration"
             )
 
         return self

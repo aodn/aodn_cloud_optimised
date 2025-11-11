@@ -447,9 +447,16 @@ class GenericHandler(CommonHandler):
             longitude and latitude coordinates respectively.
         """
         partitioning_info = self.dataset_config["schema_transformation"]["partitioning"]
+        spatial_extent_info = None
         for item in partitioning_info:
             if item.get("spatial_extent") is not None:
                 spatial_extent_info = item
+
+        if spatial_extent_info is None:
+            self.logger.warning(
+                f"{self.uuid_log}: No variable defined to create a polygon partition key. The parquet dataset will be created without. Check this is as intended"
+            )
+            return df
 
         spatial_extent_varname = spatial_extent_info.get("source_variable")
         lat_varname = spatial_extent_info["spatial_extent"].get(
@@ -549,9 +556,16 @@ class GenericHandler(CommonHandler):
             pd.DataFrame: DataFrame with added columns.
         """
         partitioning_info = self.dataset_config["schema_transformation"]["partitioning"]
+        timestamp_info = None
         for item in partitioning_info:
             if item.get("time_extent") is not None:
                 timestamp_info = item
+
+        if timestamp_info is None:
+            self.logger.warning(
+                f"{self.uuid_log}: No variable defined to create a timestamp partition key. The parquet dataset will be created without. Check this is as intended"
+            )
+            return df
 
         # Extract time partition information
         timestamp_varname = timestamp_info.get("source_variable")
@@ -876,9 +890,16 @@ class GenericHandler(CommonHandler):
             df = df.reset_index()
 
         partitioning_info = self.dataset_config["schema_transformation"]["partitioning"]
+        timestamp_info = None
         for item in partitioning_info:
             if item.get("time_extent") is not None:
                 timestamp_info = item
+
+        if timestamp_info is None:
+            self.logger.warning(
+                f"{self.uuid_log}: No timestamp partition defined. Check config this is as intended"
+            )
+            return df
 
         timestamp_varname = timestamp_info.get("source_variable")
         time_varname = timestamp_info["time_extent"].get("time_varname", "TIME")
