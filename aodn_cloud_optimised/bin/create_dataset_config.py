@@ -818,7 +818,21 @@ def main():
                 dataset_config_schema = dict()
 
                 for field in schema:
-                    dataset_config_schema[field.name] = {"type": str(field.type)}
+
+                    # Extract core schema information
+                    dataset_config_schema[field.name] = {
+                        "type": str(field.type),
+                        "nullable": str(field.nullable),
+                    }
+
+                    # Extract additional metadata if it exists
+                    if isinstance(field.metadata, dict):
+                        dataset_config_schema[field.name].update(
+                            {
+                                key.decode(): value.decode()
+                                for key, value in field.metadata.items()
+                            }
+                        )
 
             regex_filter = [".*\\.parquet$"]
 

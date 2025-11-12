@@ -24,79 +24,174 @@
   "metadata_uuid": "0a65be6d-1c76-49ac-a151-80acf123612c",
   "schema": {
     "dataset_id": {
-      "type": "string"
+      "type": "string",
+      "nullable": "False",
+      "long_name": "Dataset Identifier",
+      "col_tags": "id"
     },
     "database": {
-      "type": "string"
+      "type": "string",
+      "nullable": "False",
+      "long_name": "Data Source",
+      "description": "The database that the data was extracted from",
+      "col_tags": "id"
     },
     "program": {
-      "type": "string"
+      "type": "string",
+      "nullable": "False",
+      "long_name": "Program Name",
+      "standard_name": "program",
+      "col_tags": "survey metadata"
     },
     "country": {
-      "type": "string"
+      "type": "string",
+      "nullable": "True",
+      "long_name": "Country of the survey",
+      "standard_name": "country",
+      "col_tags": "locale"
     },
     "area": {
-      "type": "string"
+      "type": "string",
+      "nullable": "True",
+      "long_name": "Survey Area Description",
+      "standard_name": "area",
+      "col_tags": "locale"
     },
     "location": {
-      "type": "string"
+      "type": "string",
+      "nullable": "True",
+      "long_name": "Location Description",
+      "standard_name": "location",
+      "col_tags": "locale"
     },
     "site_code": {
-      "type": "string"
+      "type": "string",
+      "nullable": "True",
+      "long_name": "Site Code Identifier",
+      "standard_name": "site_code",
+      "col_tags": "locale"
     },
     "site_name": {
-      "type": "string"
+      "type": "string",
+      "nullable": "True",
+      "long_name": "Site Name Description",
+      "standard_name": "site_name",
+      "col_tags": "locale"
     },
     "latitude": {
-      "type": "double"
+      "type": "double",
+      "nullable": "False",
+      "cf_name": "latitude",
+      "description": "Latitude is positive northward; its units of degree_north (or equivalent) indicate this explicitly. In a latitude-longitude system defined with respect to a rotated North Pole, the standard name of grid_latitude should be used instead of latitude. Grid latitude is positive in the grid-northward direction, but its units should be plain degree.",
+      "standard_name": "latitude",
+      "units": "degree_north",
+      "col_tags": "spatial"
     },
     "longitude": {
-      "type": "double"
+      "type": "double",
+      "nullable": "False",
+      "cf_name": "longitude",
+      "description": "Longitude is positive eastward; its units of degree_east (or equivalent) indicate this explicitly. In a latitude-longitude system defined with respect to a rotated North Pole, the standard name of grid_longitude should be used instead of longitude. Grid longitude is positive in the grid-eastward direction, but its units should be plain degree.",
+      "units": "degree_east",
+      "col_tags": "spatial"
     },
     "date": {
-      "type": "date32[day]"
+      "type": "date32[day]",
+      "nullable": "False",
+      "long_name": "Survey Date",
+      "standard_name": "date",
+      "col_tags": "temporal"
     },
     "hour": {
-      "type": "string"
+      "type": "string",
+      "nullable": "True",
+      "long_name": "Survey Date",
+      "standard_name": "date",
+      "col_tags": "temporal"
     },
     "depth": {
-      "type": "double"
+      "type": "double",
+      "nullable": "False",
+      "cf_name": "depth",
+      "description": "Depth is the vertical distance below the surface.",
+      "units": "m",
+      "col_tags": "survey metadata"
     },
     "visibility": {
-      "type": "double"
+      "type": "double",
+      "nullable": "True",
+      "description": "The visibility is the distance at which something can be seen.",
+      "units": "m",
+      "col_tags": "survey metadata"
     },
     "label_scheme": {
-      "type": "string"
+      "type": "string",
+      "nullable": "False",
+      "long_name": "Original Labeling Scheme",
+      "col_tags": "annotation|scheme|label"
     },
     "rls_label": {
-      "type": "string"
+      "type": "string",
+      "nullable": "False",
+      "long_name": "RLS Label",
+      "col_tags": "annotation|label"
     },
     "rls_lineage": {
-      "type": "string"
+      "type": "string",
+      "nullable": "True",
+      "long_name": "RLS Lineage",
+      "col_tags": "annotation|label"
     },
     "catami_label": {
-      "type": "string"
+      "type": "string",
+      "nullable": "False",
+      "Long Name": "CATAMI Label",
+      "col_tags": "annotation|label"
     },
     "catami_lineage": {
-      "type": "string"
+      "type": "string",
+      "nullable": "False",
+      "long_name": "CATAMI Lineage",
+      "col_tags": "annotation|label"
     },
     "tags": {
-      "type": "list<element: string>"
+      "type": "list<element: string>",
+      "nullable": "True",
+      "long_name": "Tags",
+      "col_tags": "annotation|label|tag"
     },
     "label_count": {
-      "type": "double"
+      "type": "double",
+      "nullable": "True",
+      "long_name": "Count of organisms",
+      "standard_name": "count",
+      "col_tags": "annotation|coverage"
     },
     "dataset_total_label_count": {
-      "type": "double"
+      "type": "double",
+      "nullable": "True",
+      "long_name": "Label Count",
+      "col_tags": "annotation|coverage"
     },
     "percent_cover": {
-      "type": "double"
+      "type": "double",
+      "nullable": "False",
+      "long_name": "Coverage Percentage",
+      "standard_name": "coverage",
+      "units": "%",
+      "col_tags": "annotation|coverage"
     },
     "sq_annotation_set_id": {
-      "type": "double"
+      "type": "double",
+      "nullable": "True",
+      "long_name": "SQ Annotation Set Identifier",
+      "col_tags": "squidle|survey metadata"
     },
     "method": {
-      "type": "string"
+      "type": "string",
+      "nullable": "True",
+      "long_name": "Annotation Method",
+      "col_tags": "annotation"
     }
   },
   "aws_opendata_registry": {
