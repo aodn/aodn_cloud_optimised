@@ -240,6 +240,7 @@ def get_pyarrow_type_map() -> Dict[str, pa.DataType]:
         "date32[day]": pa.date32(),
         "time32[s]": pa.time32("s"),
         "time64[us]": pa.time64("us"),
+        "list<element: string>": pa.list_(pa.string()),
     }
 
 
