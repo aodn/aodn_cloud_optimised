@@ -71,3 +71,8 @@ repos:
         types: [json]
         pass_filenames: false
         always_run: true
+      - id: check-data-query-version-bump
+        name: Check version bump in DataQuery.py
+        entry: .pre-commit-hooks/check_version_bump.sh
+        language: system
+        pass_filenames: false
