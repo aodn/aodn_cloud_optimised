@@ -11,7 +11,7 @@ import posixpath
 import re
 import zipfile
 from abc import ABC, abstractmethod
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from functools import lru_cache
 from io import StringIO
 from typing import Any, Final, Set
@@ -56,8 +56,8 @@ __version__ = "0.2.8"
 REGION: Final[str] = "ap-southeast-2"
 ENDPOINT_URL = "https://s3.ap-southeast-2.amazonaws.com"
 # ENDPOINT_URL = "http://127.0.0.1:9000"  # for local MinIo buckets
-# BUCKET_OPTIMISED_DEFAULT = "imos-data-lab-optimised"
-BUCKET_OPTIMISED_DEFAULT = "aodn-cloud-optimised"
+BUCKET_OPTIMISED_DEFAULT = "imos-data-lab-optimised"
+# BUCKET_OPTIMISED_DEFAULT = "aodn-cloud-optimised"
 ROOT_PREFIX_CLOUD_OPTIMISED_PATH = ""
 DEFAULT_TIME = datetime(1900, 1, 1)
 
@@ -405,21 +405,39 @@ def ensure_utc_aware(dt):
     Returns:
         datetime: UTC-aware datetime.
     """
-    if isinstance(dt, str):
-        try:
-            dt = parser.isoparse(dt)
-        except Exception as e:
-            raise ValueError(f"Cannot parse datetime string: {dt!r}") from e
 
-    if not isinstance(dt, datetime):
-        raise TypeError(f"Expected datetime or str, got {type(dt)}: {dt!r}")
+    # Catch allowed types
+    match dt:
 
-    # If tzinfo is None, assume UTC
-    if dt.tzinfo is None:
-        return dt.replace(tzinfo=timezone.utc)
+        # Attempt to parse a string datetime
+        case str():
+            try:
+                dt = parser.isoparse(dt)
+            except Exception as e:
+                raise ValueError(f"Cannot parse datetime string: {dt!r}") from e
 
-    # Convert to UTC if another timezone is present
-    return dt.astimezone(timezone.utc)
+        # Datetime is fine
+        case datetime():
+            pass
+
+        # Parse date as datetime
+        case date():
+            dt = datetime(year=dt.year, month=dt.month, day=dt.day)
+
+        # Default, not implemented
+        case _:
+            raise NotImplementedError(f"datetime of type `{type(dt)}` not implemented")
+
+    # Update datetime
+    if isinstance(dt, datetime):
+
+        # If tzinfo is None, assume UTC
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        else:
+            dt = dt.astimezone(timezone.utc)
+
+    return dt
 
 
 def create_time_filter(dataset: ds.Dataset, **kwargs) -> pc.Expression:
@@ -452,7 +470,9 @@ def create_time_filter(dataset: ds.Dataset, **kwargs) -> pc.Expression:
         raise ValueError("Start and end dates must be provided.")
 
     # timestamp_start, timestamp_end = get_temporal_extent_v1(dataset)
-    timestamp_start, timestamp_end = get_temporal_extent(dataset)
+    timestamp_start, timestamp_end = get_temporal_extent(
+        dataset, time_varname=time_varname
+    )
     timestamp_start = ensure_utc_aware(timestamp_start)
     timestamp_end = ensure_utc_aware(timestamp_end)
 
@@ -1649,7 +1669,9 @@ class ParquetDataSource(DataSource):
         """
         return plot_spatial_extent(self.dataset)
 
-    def get_temporal_extent(self) -> tuple[pd.Timestamp, pd.Timestamp]:
+    def get_temporal_extent(
+        self, time_varname=None
+    ) -> tuple[pd.Timestamp, pd.Timestamp]:
         """Returns the precise temporal extent by reading min/max time values.
 
         Uses the global `get_temporal_extent` function.
@@ -1657,7 +1679,7 @@ class ParquetDataSource(DataSource):
         Returns:
             A tuple containing the minimum and maximum pandas Timestamp objects.
         """
-        return get_temporal_extent(self.dataset)
+        return get_temporal_extent(self.dataset, time_varname=time_varname)
 
     def get_temporal_extent_from_timestamp_partition(
         self,
