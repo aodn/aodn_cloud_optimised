@@ -1,6 +1,6 @@
 # Ignore the version file, it's created on install
 aodn_cloud_optimised/_version.py
-
+notebooks/*.zip
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
