@@ -16,6 +16,7 @@ import numpy as np
 import pandas as pd
 import polars as pl
 import pyarrow as pa
+import pyarrow.compute as pc
 import pyarrow.parquet as pq
 import s3fs.core
 import xarray as xr
@@ -749,7 +750,6 @@ class GenericHandler(CommonHandler):
                         var_values = self.get_variables_from_variables(
                             df, creation_code, variable_to_add_name
                         )
-                        # breakpoint()
                         # info_value = df.apply(
                         #     lambda row: self.get_variables_from_variables(
                         #         row, creation_code
@@ -817,7 +817,6 @@ class GenericHandler(CommonHandler):
         result = func(df)
 
         # Ensure timestamp[ns] if the function returns datetime objects
-        # breakpoint()
         # if pd.api.types.is_datetime64_any_dtype(result):
         #     return result.astype("datetime64[ns]")
         return result
@@ -1156,7 +1155,8 @@ class GenericHandler(CommonHandler):
                         )
 
         for partition_key in partition_keys:
-            if all(not elem for elem in pdf[partition_key].is_null()):
+            is_null_mask = pc.is_null(pdf[partition_key])
+            if pc.all(is_null_mask).as_py():
                 self.logger.error(
                     f"{self.uuid_log}: The '{partition_key}' variable is filled with NULL values, likely because '{partition_key}' is missing from 'partitioning' in the dataset configuration."
                 )
