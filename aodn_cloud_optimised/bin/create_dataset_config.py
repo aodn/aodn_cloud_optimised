@@ -43,10 +43,12 @@ import re
 import uuid
 from collections import OrderedDict
 from importlib.resources import files
+from urllib.parse import urlparse
 
 import nbformat
 import pandas as pd
 import polars as pl
+import pyarrow.dataset as ds
 import pyarrow.parquet as pq
 import s3fs
 from s3path import PureS3Path
@@ -813,28 +815,41 @@ def main():
             regex_filter = [".*\\.csv$"]
 
         case ".parquet":
-            with fs.open(fp, "rb") as f:
-                schema = pq.read_schema(f)
-                dataset_config_schema = dict()
+            dataset_config_schema = dict()
 
-                for field in schema:
+            try:
+                # Try reading as a single Parquet file
+                with fs.open(fp, "rb") as f:
+                    schema = pq.read_schema(f)
+            except Exception:
+                # If that fails, assume it's a Hive-partitioned dataset
 
-                    # Extract core schema information
-                    dataset_config_schema[field.name] = {
-                        "type": str(field.type),
-                        "nullable": str(field.nullable),
-                    }
+                # Strip "s3://" if present, since s3fs expects only the key
+                parsed = urlparse(fp)
+                # TODO: this works but seems very ugly. Need to improve
+                dataset_path = (
+                    f"{parsed.netloc}{parsed.path}"  # ✅ keep the leading slash
+                )
+                dataset = ds.dataset(
+                    dataset_path, format="parquet", partitioning="hive", filesystem=fs
+                )
+                schema = dataset.schema
 
-                    # Extract additional metadata if it exists
-                    if isinstance(field.metadata, dict):
-                        dataset_config_schema[field.name].update(
-                            {
-                                key.decode(): value.decode()
-                                for key, value in field.metadata.items()
-                            }
-                        )
+            for field in schema:
+                # Extract core schema information
+                dataset_config_schema[field.name] = {
+                    "type": str(field.type),
+                    "nullable": str(field.nullable),
+                }
 
-            regex_filter = [".*\\.parquet$"]
+                # Extract additional metadata if it exists
+                if isinstance(field.metadata, dict):
+                    dataset_config_schema[field.name].update(
+                        {
+                            key.decode(): value.decode()
+                            for key, value in field.metadata.items()
+                        }
+                    )
 
         # Default: Raise NotImplemented
         case _:
@@ -921,12 +936,12 @@ def main():
         }
         dataset_config.setdefault("csv_config", {})
         # Both config will be written, which is not valid with our pydantic model, but this will enforce the user to write the correct config
-        dataset_config["csv_config"][
-            "pandas_read_csv_config"
-        ] = pandas_read_csv_config_default
-        dataset_config["csv_config"][
-            "polars_read_csv_config"
-        ] = polars_read_csv_config_default
+        dataset_config["csv_config"]["pandas_read_csv_config"] = (
+            pandas_read_csv_config_default
+        )
+        dataset_config["csv_config"]["polars_read_csv_config"] = (
+            polars_read_csv_config_default
+        )
 
     if args.cloud_format == "parquet":
         schema_transformation_parquet_str = """

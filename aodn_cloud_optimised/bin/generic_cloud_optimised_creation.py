@@ -125,10 +125,11 @@ class PathConfig(BaseModel):
             parsed = urlparse(v)
             if not parsed.netloc:
                 raise ValueError("s3_uri must include a bucket name after 's3://'")
-            if not parsed.path or parsed.path == "/":
-                raise ValueError(
-                    "s3_uri must include a valid key path after the bucket"
-                )
+            # TODO: remove the commented lines below. This used to be a good test, but now dataset could be a parquet hive partitioned at the root of the bucket.
+            # if not parsed.path or parsed.path == "/":
+            #     raise ValueError(
+            #         "s3_uri must include a valid key path after the bucket"
+            #     )
             try:
                 PurePosixPath(parsed.path.lstrip("/"))
             except Exception as e:
@@ -1181,6 +1182,27 @@ def collect_files(
         prefix = s3_uri
 
     prefix = str(PurePosixPath(prefix))  # normalise path
+
+    # handle case when collecting files for a parquet hive partition
+    for f in path_cfg.filter:
+        s3_uri = path_cfg.s3_uri.rstrip("/") + "/"
+        pattern_simplified = f.rstrip("$")
+
+        # Only handle .parquet ending
+        if pattern_simplified.endswith(".parquet") or pattern_simplified.endswith(
+            ".parquet/"
+        ):
+            filename_candidate = pattern_simplified.split("/")[-1]
+
+            # Check for unsupported regex characters
+            if re.search(r"[\*\[\]\(\)\+\?]", filename_candidate):
+                raise ValueError(
+                    f"In the case of a parquet dataset input, the filter value should match a dataset name without complex regex patterns. Filter '{f}' is too complex to convert to a filename. Please modify config"
+                )
+
+            # Remove escaped characters like \.
+            filename = re.sub(r"\\(.)", r"\1", filename_candidate)
+            return [s3_uri + filename]
 
     # matching_files = s3_ls(bucket, prefix, suffix=suffix, exclude=exclude)
     matching_files = s3_ls(

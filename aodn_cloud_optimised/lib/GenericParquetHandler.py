@@ -1,5 +1,6 @@
 import gc
 import importlib.resources
+import math
 import os
 import pathlib
 import re
@@ -17,6 +18,7 @@ import pandas as pd
 import polars as pl
 import pyarrow as pa
 import pyarrow.compute as pc
+import pyarrow.dataset as pds
 import pyarrow.parquet as pq
 import s3fs.core
 import xarray as xr
@@ -291,7 +293,20 @@ class GenericHandler(CommonHandler):
             added by the cloud optimisation process.
         """
 
-        table = pq.read_table(parquet_fp)
+        # Try reading as a single Parquet file
+        try:
+            table = pq.read_table(parquet_fp)
+        except (pa.ArrowInvalid, OSError):
+            # Treat as Hive-partitioned dataset
+            # parquet_fp is a file-like object: extract the key prefix
+            key_prefix = parquet_fp.path  # S3File objects have `.path` attribute
+            table = pds.dataset(
+                key_prefix,
+                format="parquet",
+                partitioning="hive",
+                filesystem=self.s3_fs_output,
+            ).to_table()
+
         df = table.to_pandas()
         df = df.drop(columns=self.drop_variables, errors="ignore")
         ds = xr.Dataset.from_dataframe(df)
@@ -1497,7 +1512,7 @@ class GenericHandler(CommonHandler):
 
         # Do it in batches. maybe more efficient
         ii = 0
-        total_batches = len(s3_file_uri_list) // batch_size + 1
+        total_batches = math.ceil(len(s3_file_uri_list) / batch_size)
 
         for i in range(0, len(s3_file_uri_list), batch_size):
             self.uuid_log = str(uuid.uuid4())  # value per batch
@@ -1535,6 +1550,8 @@ class GenericHandler(CommonHandler):
                             future.result()
                         except Exception as e:
                             self.logger.error(f"Error processing task: {e}")
+
+            self.logger.info(f"{self.uuid_log}: batch {ii + 1} processing completed.")
             ii += 1
 
             # Cleanup memory
@@ -1546,5 +1563,6 @@ class GenericHandler(CommonHandler):
             if client:
                 client.run_on_scheduler(gc.collect)  # GC!
 
+        self.logger.info("All batches processed.")
         self.cluster_manager.close_cluster(client, cluster)
         self.logger.handlers.clear()
