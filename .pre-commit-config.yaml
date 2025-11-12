@@ -76,3 +76,8 @@ repos:
         entry: .pre-commit-hooks/check_version_bump.sh
         language: system
         pass_filenames: false
+      - id: check-protected-env-vars
+        name: Ensure protected env vars unchanged in DataQuery.py
+        entry: .pre-commit-hooks/check_protected_env_vars.sh
+        language: system
+        pass_filenames: false
