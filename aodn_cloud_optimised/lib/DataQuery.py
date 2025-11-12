@@ -51,7 +51,7 @@ from aodn_cloud_optimised.lib.exceptions import (
     PolygonNotIntersectingError,
 )
 
-__version__ = "0.2.8"
+__version__ = "0.2.9"
 
 REGION: Final[str] = "ap-southeast-2"
 ENDPOINT_URL = "https://s3.ap-southeast-2.amazonaws.com"
