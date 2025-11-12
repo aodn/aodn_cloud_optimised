@@ -126,14 +126,18 @@
     }
   },
   "aws_opendata_registry": {
-    "Name": "IMOS - National Reef Monitoring Network Sub-Facility - Global mobile macroinvertebrate abundance",
+    "Name": "National Reef Monitoring Network - Global mobile macroinvertebrate abundance",
     "Description": "The National Reef Monitoring Network brings together shallow reef surveys conducted around Australia into a centralised database. The IMOS National Reef Monitoring Network sub-Facility collates, cleans, stores and makes this data rapidly available from contributors including: Reef Life Survey, Parks Australia, Department of Biodiversity, Conservation and Attractions (Western Australia), Department of Environment, Water and Natural Resources (South Australia), Department of Primary Industries (New South Wales), Tasmanian Parks and Wildlife Service and Parks Victoria.\n\nThe data provided by the National Reef Monitoring Network contributes to establishing and supporting national marine baselines, and assisting with the management of Commonwealth and State marine reserves. \n\nReef Life Survey (RLS) and the Australian Temperate Reef Network (ATRC) aims to improve biodiversity conservation and the sustainable management of marine resources by coordinating surveys of rocky and coral reefs using scientific methods, with the ultimate goal to improve coastal stewardship. Our activities depend on the skills of marine scientists, experienced and motivated recreational SCUBA divers, partnerships with management agencies and university researchers, and active input from the ATRC partners and RLS Advisory Committee.\n\nRLS and ATRC data are freely available to the public for non-profit purposes, so not only managers, but also groups such as local dive clubs or schools may use these data to look at changes over time in their own local reefs. By making data freely available and through public outputs, RLS and ATRC aims to raise broader community awareness of the status of Australia?s marine biodiversity and associated conservation issues.\n\nThis dataset contains records of mobile macroinvertebrates collected by Reef Life Survey (RLS) and Australian Temperate Reef Collaboration (ATRC) divers and partners along 50m transects on shallow rocky and coral reefs using standard methods. Abundance information is available for all species recorded within quantitative survey limits (50 x 1 m swathes either side of the transect line, each distinguished as a 'Block'), with divers searching the reef surface (including cracks) carefully for hidden invertebrates such as sea stars, urchins, gastropods, lobsters, crabs etc. These observations are recorded concurrently with the cryptobenthic fish observations and together make up the 'Method 2' component of the surveys. For this method, typically one 'Block' is completed per 50 m transect for the program ATRC and 2 blocks are completed for RLS ? although exceptions to this rule exist.\n\nThis dataset supersedes the RLS specific \"Reef Life Survey (RLS): Invertebrates\" collection that was available at https://catalogue-rls.imas.utas.edu.au/geonetwork/srv/en/metadata.show?uuid=60978150-1641-11dd-a326-00188b4c0af8 (provision of data was stopped in June 2021).",
     "Documentation": "https://catalogue-imos.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/48cf3cb9-caa9-4633-9baa-8bba3c4d904a",
     "Contact": "info@aodn.org.au",
     "ManagedBy": "AODN",
     "UpdateFrequency": "As Needed",
     "Tags": [
-      "FILL UP MANUALLY - CHECK DOCUMENTATION"
+      "oceans",
+      "biology",
+      "coral reef",
+      "ecosystems",
+      "geospatial"
     ],
     "License": "http://creativecommons.org/licenses/by/4.0/",
     "Resources": [
@@ -162,7 +166,7 @@
         }
       ]
     },
-    "Citation": "IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access]"
+    "Citation": "The citation in a list of references is: \"Reef Life Survey (RLS); Institute for Marine and Antarctic Studies (IMAS); Parks Victoria; Department of Primary Industries (DPI), New South Wales Government; Parks and Wildlife Tasmania; Department for Environment and Water (DEWNR), South Australia, Integrated Marine Observing System (IMOS), [year-of-data-download], IMOS - National Reef Monitoring Network - Global mobile macroinvertebrate abundance, [data-access-URL], accessed [date-of-access].\""
   },
   "csv_config": {
     "polars_read_csv_config": {
