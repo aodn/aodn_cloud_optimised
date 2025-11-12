@@ -587,7 +587,7 @@ class TestGenericHandler(unittest.TestCase):
 
         # with mock_aws(aws_credentials):
         # 1st pass, could have some errors distributed.worker - ERROR - Failed to communicate with scheduler during heartbeat.
-        # Solution is the rerun the unittest
+        # Solution is to rerun the unittest
         self.handler_csv_file.to_cloud_optimised([csv_obj_ls[0]])
 
         # 2nd pass
@@ -611,7 +611,6 @@ class TestGenericHandler(unittest.TestCase):
         self.assertIn("station_name", parquet_dataset.columns)
 
     def test_parquet_parquet_generic_handler(self):
-
         seabird_v1_file_ls = s3_ls("imos-data", "seabird", suffix=".parquet")
 
         # Run handler
