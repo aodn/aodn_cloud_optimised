@@ -56,8 +56,8 @@ __version__ = "0.2.8"
 REGION: Final[str] = "ap-southeast-2"
 ENDPOINT_URL = "https://s3.ap-southeast-2.amazonaws.com"
 # ENDPOINT_URL = "http://127.0.0.1:9000"  # for local MinIo buckets
-BUCKET_OPTIMISED_DEFAULT = "imos-data-lab-optimised"
-# BUCKET_OPTIMISED_DEFAULT = "aodn-cloud-optimised"
+# BUCKET_OPTIMISED_DEFAULT = "imos-data-lab-optimised"
+BUCKET_OPTIMISED_DEFAULT = "aodn-cloud-optimised"
 ROOT_PREFIX_CLOUD_OPTIMISED_PATH = ""
 DEFAULT_TIME = datetime(1900, 1, 1)
 
