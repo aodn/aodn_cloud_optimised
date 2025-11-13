@@ -972,12 +972,12 @@ def main():
         }
         dataset_config.setdefault("csv_config", {})
         # Both config will be written, which is not valid with our pydantic model, but this will enforce the user to write the correct config
-        dataset_config["csv_config"]["pandas_read_csv_config"] = (
-            pandas_read_csv_config_default
-        )
-        dataset_config["csv_config"]["polars_read_csv_config"] = (
-            polars_read_csv_config_default
-        )
+        dataset_config["csv_config"][
+            "pandas_read_csv_config"
+        ] = pandas_read_csv_config_default
+        dataset_config["csv_config"][
+            "polars_read_csv_config"
+        ] = polars_read_csv_config_default
 
     if args.cloud_format == "parquet":
         schema_transformation_parquet_str = """
