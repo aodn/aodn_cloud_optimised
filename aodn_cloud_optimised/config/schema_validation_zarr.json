@@ -173,7 +173,17 @@
           }
         },
         "var_template_shape": {
-          "type": "string"
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          ]
         },
         "vars_incompatible_with_region": {
           "type": "array",
