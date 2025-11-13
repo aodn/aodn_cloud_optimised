@@ -293,19 +293,39 @@ class GenericHandler(CommonHandler):
             added by the cloud optimisation process.
         """
 
-        # Try reading as a single Parquet file
-        try:
-            table = pq.read_table(parquet_fp)
-        except (pa.ArrowInvalid, OSError):
-            # Treat as Hive-partitioned dataset
-            # parquet_fp is a file-like object: extract the key prefix
-            key_prefix = parquet_fp.path  # S3File objects have `.path` attribute
-            table = pds.dataset(
-                key_prefix,
-                format="parquet",
-                partitioning="hive",
-                filesystem=self.s3_fs_output,
-            ).to_table()
+        key_path = getattr(parquet_fp, "path", None)
+        full_path = key_path if key_path.startswith("s3://") else f"s3://{key_path}"
+
+        # matching the parquet file with the correct config in the paths array
+        matched_cfg = None
+        for path_cfg in self.dataset_config["run_settings"]["paths"]:
+            s3_uri = path_cfg.get("s3_uri", "").rstrip("/")
+            if full_path.startswith(s3_uri):
+                matched_cfg = path_cfg
+                break
+
+        if matched_cfg is None:
+            raise ValueError(f"No matching path configuration found for {full_path}")
+
+        partitioning = matched_cfg.get("partitioning", None)
+
+        match partitioning:
+            case None:
+                # reading as a single Parquet file
+                table = pq.read_table(parquet_fp)
+
+            case "hive":
+                key_prefix = parquet_fp.path  # S3File objects have `.path` attribute
+                table = pds.dataset(
+                    key_prefix,
+                    format="parquet",
+                    partitioning=partitioning,
+                    filesystem=self.s3_fs_output,
+                ).to_table()
+            case _:
+                raise ValueError(
+                    f"Partitioning value {partitioning} is not yet supported"
+                )
 
         df = table.to_pandas()
         df = df.drop(columns=self.drop_variables, errors="ignore")

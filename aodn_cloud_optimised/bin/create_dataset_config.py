@@ -817,10 +817,13 @@ def main():
         case ".parquet":
             dataset_config_schema = dict()
 
+            # TODO: at this stage, we don't know yet if it's a hive or single parquet file. Could add another option in the create_dataset_config script for parquet only.
             try:
                 # Try reading as a single Parquet file
                 with fs.open(fp, "rb") as f:
                     schema = pq.read_schema(f)
+
+                parquet_partitioning = None
             except Exception:
                 # If that fails, assume it's a Hive-partitioned dataset
 
@@ -834,6 +837,7 @@ def main():
                     dataset_path, format="parquet", partitioning="hive", filesystem=fs
                 )
                 schema = dataset.schema
+                parquet_partitioning = "hive"
 
             for field in schema:
                 # Extract core schema information
@@ -850,6 +854,12 @@ def main():
                             for key, value in field.metadata.items()
                         }
                     )
+        case ".zarr":
+            # TODO: implement a zarr reader
+
+            raise NotImplementedError(
+                f"input file type `{obj_key_suffix}` not yet implemented"
+            )
 
         # Default: Raise NotImplemented
         case _:
@@ -896,10 +906,36 @@ def main():
         "mode": f"{TO_REPLACE_PLACEHOLDER}",
         "restart_every_path": False,
     }
-    parent_s3_path = PureS3Path.from_uri(fp).parent.as_uri()
-    dataset_config["run_settings"]["paths"] = [
-        {"s3_uri": parent_s3_path, "filter": regex_filter, "year_range": []}
-    ]
+
+    match obj_key_suffix:
+        case ".nc" | ".csv":
+            parent_s3_path = PureS3Path.from_uri(fp).parent.as_uri()
+            dataset_config["run_settings"]["paths"] = [
+                {
+                    "type": "files",
+                    "s3_uri": parent_s3_path,
+                    "filter": regex_filter,
+                    "year_range": [],
+                }
+            ]
+        case ".zarr":
+            # TODO: partially implemented
+            parent_s3_path = PureS3Path.from_uri(fp).as_uri()
+            dataset_config["run_settings"]["paths"] = [
+                {
+                    "type": "zarr",
+                    "s3_uri": parent_s3_path,
+                }
+            ]
+        case ".parquet":
+            parent_s3_path = PureS3Path.from_uri(fp).as_uri()
+            dataset_config["run_settings"]["paths"] = [
+                {
+                    "type": "parquet",
+                    "partitioning": parquet_partitioning,
+                    "s3_uri": parent_s3_path,
+                }
+            ]
 
     if args.s3fs_opts:
         dataset_config.setdefault("run_settings", {})["s3_bucket_opts"] = {

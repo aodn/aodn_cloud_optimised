@@ -5,11 +5,8 @@
   "run_settings": {
     "paths": [
       {
-        "s3_uri": "s3://data-uplift-public/products/reef_life_survey",
-        "filter": [
-          "public_reef_life_survey_2025-11-04T03:14:37\\.parquet$"
-        ],
-        "year_range": []
+        "type": "parquet",
+        "s3_uri": "s3://data-uplift-public/products/reef_life_survey/public_reef_life_survey_2025-11-04T03:14:37.parquet"
       }
     ],
     "cluster": {
