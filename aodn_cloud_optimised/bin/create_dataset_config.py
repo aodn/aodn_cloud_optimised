@@ -818,13 +818,13 @@ def main():
             dataset_config_schema = dict()
 
             # TODO: at this stage, we don't know yet if it's a hive or single parquet file. Could add another option in the create_dataset_config script for parquet only.
-            try:
+            if fs.isfile(fp):
                 # Try reading as a single Parquet file
                 with fs.open(fp, "rb") as f:
                     schema = pq.read_schema(f)
 
                 parquet_partitioning = None
-            except Exception:
+            if fs.isdir(fp):
                 # If that fails, assume it's a Hive-partitioned dataset
 
                 # Strip "s3://" if present, since s3fs expects only the key
@@ -833,11 +833,14 @@ def main():
                 dataset_path = (
                     f"{parsed.netloc}{parsed.path}"  # ✅ keep the leading slash
                 )
+                parquet_partitioning = "hive"
                 dataset = ds.dataset(
-                    dataset_path, format="parquet", partitioning="hive", filesystem=fs
+                    dataset_path,
+                    format="parquet",
+                    partitioning=parquet_partitioning,
+                    filesystem=fs,
                 )
                 schema = dataset.schema
-                parquet_partitioning = "hive"
 
             for field in schema:
                 # Extract core schema information
