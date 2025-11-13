@@ -51,7 +51,7 @@ from aodn_cloud_optimised.lib.exceptions import (
     PolygonNotIntersectingError,
 )
 
-__version__ = "0.2.9"
+__version__ = "0.3.0"
 
 REGION: Final[str] = "ap-southeast-2"
 ENDPOINT_URL = "https://s3.ap-southeast-2.amazonaws.com"
@@ -408,7 +408,6 @@ def ensure_utc_aware(dt):
 
     # Catch allowed types
     match dt:
-
         # Attempt to parse a string datetime
         case str():
             try:
@@ -430,7 +429,6 @@ def ensure_utc_aware(dt):
 
     # Update datetime
     if isinstance(dt, datetime):
-
         # If tzinfo is None, assume UTC
         if dt.tzinfo is None:
             dt = dt.replace(tzinfo=timezone.utc)
@@ -2139,7 +2137,7 @@ class ZarrDataSource(DataSource):
             combined_mask = mask_conditions[0]
             for cond in mask_conditions[1:]:
                 combined_mask &= cond
-            ds = ds.where(combined_mask, drop=True)
+            ds = ds.where(combined_mask, drop=False)
 
         # Scalar filters (e.g. {'vessel_name': 'VNCF'})
         if scalar_filter:
