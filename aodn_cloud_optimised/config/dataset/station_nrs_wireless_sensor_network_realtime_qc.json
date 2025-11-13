@@ -1133,6 +1133,90 @@
         9.0
       ],
       "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values"
+    },
+    "WSPD_30min": {
+      "type": "float",
+      "long_name": "wind_speed_30min_sample_campbells_scientific_algorithm",
+      "standard_name": "wind_speed",
+      "units": "kilometres per hour",
+      "ancillary_variables": "WSPD_30min_quality_control"
+    },
+    "WSPD_30min_quality_control": {
+      "type": "float",
+      "long_name": "wind_speed_30min_sample_campbells_scientific_algorithm quality control",
+      "standard_name": "wind_speed status_flag",
+      "quality_control_conventions": "IMOS standard set using the IODE flags",
+      "valid_min": 0.0,
+      "valid_max": 9.0,
+      "flag_values": [
+        0.0,
+        1.0,
+        2.0,
+        3.0,
+        4.0,
+        5.0,
+        6.0,
+        7.0,
+        8.0,
+        9.0
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values"
+    },
+    "WSPD_MAX_30min": {
+      "type": "float",
+      "long_name": "wind_speed_max_30min",
+      "standard_name": "wind_speed",
+      "units": "kilometres per hour",
+      "ancillary_variables": "WSPD_MAX_30min_quality_control"
+    },
+    "WSPD_MAX_30min_quality_control": {
+      "type": "float",
+      "long_name": "wind_speed_max_30min quality control",
+      "standard_name": "wind_speed status_flag",
+      "quality_control_conventions": "IMOS standard set using the IODE flags",
+      "valid_min": 0.0,
+      "valid_max": 9.0,
+      "flag_values": [
+        0.0,
+        1.0,
+        2.0,
+        3.0,
+        4.0,
+        5.0,
+        6.0,
+        7.0,
+        8.0,
+        9.0
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values"
+    },
+    "WSPD_MIN_30min": {
+      "type": "float",
+      "long_name": "wind_speed_min_30min",
+      "standard_name": "wind_speed",
+      "units": "kilometres per hour",
+      "ancillary_variables": "WSPD_MIN_30min_quality_control"
+    },
+    "WSPD_MIN_30min_quality_control": {
+      "type": "float",
+      "long_name": "wind_speed_min_30min quality control",
+      "standard_name": "wind_speed status_flag",
+      "quality_control_conventions": "IMOS standard set using the IODE flags",
+      "valid_min": 0.0,
+      "valid_max": 9.0,
+      "flag_values": [
+        0.0,
+        1.0,
+        2.0,
+        3.0,
+        4.0,
+        5.0,
+        6.0,
+        7.0,
+        8.0,
+        9.0
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values"
     }
   },
   "aws_opendata_registry": {
