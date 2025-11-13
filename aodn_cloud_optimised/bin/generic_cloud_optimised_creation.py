@@ -1247,7 +1247,7 @@ def collect_files(
         matching_files = s3_ls(
             bucket,
             prefix,
-            suffix=suffix,
+            suffix=None,
             exclude=exclude,
             s3_client_opts=s3_client_opts,
         )

@@ -33,7 +33,7 @@
         "year_range": []
       },
       {
-        "s3_uri": "s3://imos-data/IMOS/ANMN/QLD/NRSYON/Wave",
+        "s3_uri": "s3://imos-data/IMOS/ANMN/NRS/NRSYON/Wave",
         "filter": [
           ".*_FV01.*\\.nc"
         ],
@@ -52,12 +52,12 @@
         20
       ],
       "scheduler_vm_types": "m7i-flex.large",
-      "worker_vm_types": "m7i-flex.large",
+      "worker_vm_types": "m7i-flex.xlarge",
       "allow_ingress_from": "me",
       "compute_purchase_option": "spot_with_fallback",
       "worker_options": {
-        "nthreads": 4,
-        "memory_limit": "8GB"
+        "nthreads": 16,
+        "memory_limit": "32GB"
       }
     },
     "batch_size": 1
@@ -82,7 +82,10 @@
         "size": 0
       }
     },
-    "var_template_shape": "WSSH",
+    "var_template_shape": [
+      "WSSH",
+      "WWSH"
+    ],
     "vars_incompatible_with_region": [
       "FREQUENCY",
       "DIR",

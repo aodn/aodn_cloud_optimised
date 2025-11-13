@@ -80,6 +80,19 @@ def check_variable_values_dask(
         return file_path, True
 
 
+def get_var_template_shape(ds, var_template_shape):
+    """Return the first variable name from var_template_shape that exists in ds."""
+    if isinstance(var_template_shape, str):
+        return var_template_shape if var_template_shape in ds.variables else None
+
+    # If it's a list or iterable
+    for var in var_template_shape:
+        if var in ds.variables:
+            return var
+
+    return None
+
+
 def preprocess_xarray(ds, dataset_config):
     """Performs preprocessing steps on an xarray Dataset.
 
@@ -255,6 +268,7 @@ def preprocess_xarray(ds, dataset_config):
     var_template_shape = dataset_config["schema_transformation"].get(
         "var_template_shape"
     )
+    var_template_shape = get_var_template_shape(ds, var_template_shape)
 
     # retrieve filename from ds
     filename_placeholder = "UNKNOWN_FILENAME.nc"
