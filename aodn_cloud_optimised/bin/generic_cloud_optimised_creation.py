@@ -72,11 +72,22 @@ class PathConfig(BaseModel):
 
     Attributes:
         s3_uri: S3 URI as a POSIX path string.
-        filter: List of regex patterns to filter files.
-        year_range: Year filter: None, one year, or a two-year inclusive range, or a list of exclusive years to process.
+        type: Type of dataset. Can be "files", "parquet", or "zarr".
+        partitioning: Optional, used only for Parquet datasets (e.g., "hive").
+        filter: List of regex patterns to filter files (only valid for type="files").
+        year_range: Optional Year filter: None, one year, or a two-year inclusive range, or a list of exclusive years to process. (only valid for type="files")
+
     """
 
     s3_uri: str
+    type: Optional[Literal["files", "parquet", "zarr"]] = Field(
+        default=None,
+        description="Dataset type. One of 'files', 'parquet', or 'zarr'. Defaults to 'files' if not specified.",
+    )
+    partitioning: Optional[str] = Field(
+        default=None,
+        description="Partitioning scheme, only valid when type='parquet'. Currently supports 'hive'.",
+    )
     filter: List[str] = Field(
         default_factory=list,
         description="List of regular expression patterns used to filter matching files.",
@@ -125,10 +136,11 @@ class PathConfig(BaseModel):
             parsed = urlparse(v)
             if not parsed.netloc:
                 raise ValueError("s3_uri must include a bucket name after 's3://'")
-            if not parsed.path or parsed.path == "/":
-                raise ValueError(
-                    "s3_uri must include a valid key path after the bucket"
-                )
+            # TODO: remove the commented lines below. This used to be a good test, but now dataset could be a parquet hive partitioned at the root of the bucket.
+            # if not parsed.path or parsed.path == "/":
+            #     raise ValueError(
+            #         "s3_uri must include a valid key path after the bucket"
+            #     )
             try:
                 PurePosixPath(parsed.path.lstrip("/"))
             except Exception as e:
@@ -150,6 +162,55 @@ class PathConfig(BaseModel):
             except re.error as e:
                 raise ValueError(f"Invalid regex: {pattern} ({e})")
         return v
+
+    @model_validator(mode="after")
+    def validate_cross_fields(cls, values):
+        dataset_type = values.type or "files"
+        if values.type is None:
+            warnings.warn(
+                "No 'type' specified in PathConfig. Assuming 'files' as default.",
+                UserWarning,
+                stacklevel=2,
+            )
+            values.type = "files"
+            if (
+                any(".parquet" in f for f in values.filter)
+                or ".parquet" in values.s3_uri
+            ):
+                raise ValueError(
+                    "type must be defined as 'parquet' in run_settings.paths config if ingesting a parquet dataset."
+                )
+            elif any(".zarr" in f for f in values.filter) or ".zarr" in values.s3_uri:
+                raise ValueError(
+                    "type must be defined as 'zarr' in run_settings.paths config if ingesting a zarr dataset."
+                )
+
+        if dataset_type == "parquet":
+            if values.filter:
+                raise ValueError("filter must not be defined when type='parquet'")
+            if values.year_range:
+                raise ValueError("year_range must not be defined when type='parquet'")
+            if values.partitioning not in (None, "hive"):
+                raise ValueError(
+                    f"Invalid partitioning='{values.partitioning}' for parquet dataset. Only 'hive' is supported."
+                )
+
+        elif dataset_type == "zarr":
+            if values.filter:
+                raise ValueError("filter must not be defined when type='zarr'")
+            if values.year_range:
+                raise ValueError("year_range must not be defined when type='zarr'")
+            if values.partitioning:
+                raise ValueError("partitioning is not applicable when type='zarr'")
+
+        elif dataset_type == "files":
+            if values.partitioning:
+                raise ValueError("partitioning is not applicable when type='files'")
+
+        else:
+            raise ValueError(f"Unsupported dataset type: {dataset_type}")
+
+        return values
 
 
 class WorkerOptions(BaseModel):
@@ -1138,6 +1199,91 @@ def load_config_and_validate(config_filename: str) -> DatasetConfig:
     return DatasetConfig.model_validate(dataset_config)
 
 
+def collect_files(
+    path_cfg: PathConfig,
+    suffix: Optional[str],
+    exclude: Optional[str],
+    bucket_raw: Optional[str],
+    s3_client_opts: Optional[dict] = None,
+) -> List[str]:
+    """Collect dataset paths from S3 based on dataset type.
+
+    Supports:
+      - 'files': lists and filters regular files (e.g., NetCDF, CSV)
+      - 'parquet': handles both single Parquet files and Hive-partitioned datasets
+      - 'zarr': returns the Zarr store path directly
+
+    Args:
+        path_cfg: Configuration object including type, S3 URI, and optional regex filters.
+        suffix: File suffix to filter by, e.g., '.nc'. Set to None to disable suffix filtering.
+        exclude: Optional regex string to exclude files.
+        bucket_raw: Required if `path_cfg.s3_uri` is not a full S3 URI.
+        s3_client_opts: Optional dict with boto3 S3 client options.
+
+    Returns:
+        List of dataset paths (files or root URIs) as strings.
+    """
+    dataset_type = getattr(path_cfg, "type", "files")  # default value
+    s3_uri = path_cfg.s3_uri.rstrip("/")
+
+    # ---------------------------------------------------------------------
+    # Handle 'file' collection (NetCDF, CSV)
+    # ---------------------------------------------------------------------
+    if dataset_type == "files":
+        if s3_uri.startswith("s3://"):
+            parsed = urlparse(s3_uri)
+            bucket = parsed.netloc
+            prefix = parsed.path.lstrip("/")
+        else:
+            if not bucket_raw:
+                raise ValueError(
+                    "bucket_raw must be provided when s3_uri is not a full S3 URI."
+                )
+            bucket = bucket_raw
+            prefix = s3_uri
+
+        prefix = str(PurePosixPath(prefix))  # normalise path
+
+        matching_files = s3_ls(
+            bucket,
+            prefix,
+            suffix=suffix,
+            exclude=exclude,
+            s3_client_opts=s3_client_opts,
+        )
+
+        for pattern in path_cfg.filter or []:
+            logger.info(f"Filtering files with regex pattern: {pattern}")
+            regex = re.compile(pattern)
+            matching_files = [f for f in matching_files if regex.search(f)]
+            if not matching_files:
+                raise ValueError(
+                    f"No files matching {pattern} under {s3_uri}. Modify regexp filter or path in configuration file. Abort"
+                )
+
+            logger.info(f"Matched {len(matching_files)} files")
+
+        return matching_files
+
+    # ---------------------------------------------------------------------
+    # Handle 'parquet' (single Parquet file or Hive-partitioned dataset)
+    # ---------------------------------------------------------------------
+    elif dataset_type == "parquet":
+        # No filters
+        return [s3_uri]
+
+    # ---------------------------------------------------------------------
+    # Handle 'zarr' (Zarr store)
+    # ---------------------------------------------------------------------
+    elif dataset_type == "zarr":
+        raise ValueError("zarr store as an input dataset is not yet implemented")
+        # return [s3_uri]
+
+    # Unsupported type
+    else:
+        raise ValueError(f"Unsupported dataset type: {dataset_type}")
+
+
 def json_update(base: dict, updates: dict) -> dict:
     """Recursively update nested dictionaries."""
     for k, v in updates.items():
@@ -1146,59 +1292,6 @@ def json_update(base: dict, updates: dict) -> dict:
         else:
             base[k] = v
     return base
-
-
-def collect_files(
-    path_cfg: PathConfig,
-    suffix: str,
-    exclude: Optional[str],
-    bucket_raw: Optional[str],
-    s3_client_opts: Optional[dict] = None,
-) -> List[str]:
-    """Collect files from an S3 bucket using suffix and optional regex filtering.
-
-    Args:
-        path_cfg: Configuration object including the S3 URI and optional regex filters.
-        suffix: File suffix to filter by, e.g., '.nc'. Set to None to disable suffix filtering.
-        exclude: Optional regex string to exclude files.
-        bucket_raw: Required if `path_cfg.s3_uri` is not a full S3 URI.
-
-    Returns:
-        List of matching file keys (paths) as strings.
-    """
-    s3_uri = path_cfg.s3_uri
-
-    if s3_uri.startswith("s3://"):
-        parsed = urlparse(s3_uri)
-        bucket = parsed.netloc
-        prefix = parsed.path.lstrip("/")
-    else:
-        if not bucket_raw:
-            raise ValueError(
-                "bucket_raw must be provided when s3_uri is not a full S3 URI."
-            )
-        bucket = bucket_raw
-        prefix = s3_uri
-
-    prefix = str(PurePosixPath(prefix))  # normalise path
-
-    # matching_files = s3_ls(bucket, prefix, suffix=suffix, exclude=exclude)
-    matching_files = s3_ls(
-        bucket, prefix, suffix=None, exclude=exclude, s3_client_opts=s3_client_opts
-    )
-
-    for pattern in path_cfg.filter or []:
-        logger.info(f"Filtering files with regex pattern: {pattern}")
-        regex = re.compile(pattern)
-        matching_files = [f for f in matching_files if regex.search(f)]
-        if matching_files == []:
-            raise ValueError(
-                f"No files matching {pattern} under {s3_uri}. Modify regexp filter or path in configuration file. Abort"
-            )
-
-        logger.info(f"Matched {len(matching_files)} files")
-
-    return matching_files
 
 
 def join_s3_uri(base_uri: str, *parts: str) -> str:

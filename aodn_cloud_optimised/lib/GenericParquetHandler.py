@@ -1,5 +1,6 @@
 import gc
 import importlib.resources
+import math
 import os
 import pathlib
 import re
@@ -17,6 +18,7 @@ import pandas as pd
 import polars as pl
 import pyarrow as pa
 import pyarrow.compute as pc
+import pyarrow.dataset as pds
 import pyarrow.parquet as pq
 import s3fs.core
 import xarray as xr
@@ -291,7 +293,40 @@ class GenericHandler(CommonHandler):
             added by the cloud optimisation process.
         """
 
-        table = pq.read_table(parquet_fp)
+        key_path = getattr(parquet_fp, "path", None)
+        full_path = key_path if key_path.startswith("s3://") else f"s3://{key_path}"
+
+        # matching the parquet file with the correct config in the paths array
+        matched_cfg = None
+        for path_cfg in self.dataset_config["run_settings"]["paths"]:
+            s3_uri = path_cfg.get("s3_uri", "").rstrip("/")
+            if full_path.startswith(s3_uri):
+                matched_cfg = path_cfg
+                break
+
+        if matched_cfg is None:
+            raise ValueError(f"No matching path configuration found for {full_path}")
+
+        partitioning = matched_cfg.get("partitioning", None)
+
+        match partitioning:
+            case None:
+                # reading as a single Parquet file
+                table = pq.read_table(parquet_fp)
+
+            case "hive":
+                key_prefix = parquet_fp.path  # S3File objects have `.path` attribute
+                table = pds.dataset(
+                    key_prefix,
+                    format="parquet",
+                    partitioning=partitioning,
+                    filesystem=self.s3_fs_output,
+                ).to_table()
+            case _:
+                raise ValueError(
+                    f"Partitioning value {partitioning} is not yet supported"
+                )
+
         df = table.to_pandas()
         df = df.drop(columns=self.drop_variables, errors="ignore")
         ds = xr.Dataset.from_dataframe(df)
@@ -1497,7 +1532,7 @@ class GenericHandler(CommonHandler):
 
         # Do it in batches. maybe more efficient
         ii = 0
-        total_batches = len(s3_file_uri_list) // batch_size + 1
+        total_batches = math.ceil(len(s3_file_uri_list) / batch_size)
 
         for i in range(0, len(s3_file_uri_list), batch_size):
             self.uuid_log = str(uuid.uuid4())  # value per batch
@@ -1535,6 +1570,8 @@ class GenericHandler(CommonHandler):
                             future.result()
                         except Exception as e:
                             self.logger.error(f"Error processing task: {e}")
+
+            self.logger.info(f"{self.uuid_log}: batch {ii + 1} processing completed.")
             ii += 1
 
             # Cleanup memory
@@ -1546,5 +1583,6 @@ class GenericHandler(CommonHandler):
             if client:
                 client.run_on_scheduler(gc.collect)  # GC!
 
+        self.logger.info("All batches processed.")
         self.cluster_manager.close_cluster(client, cluster)
         self.logger.handlers.clear()
