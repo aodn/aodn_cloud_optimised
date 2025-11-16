@@ -12,24 +12,24 @@
           ".*\\.nc$"
         ],
         "year_range": [
-          2012,
+          2016,
           2025
         ]
       }
     ],
     "cluster": {
       "mode": "coiled",
-      "restart_every_path": false
+      "restart_every_path": true
     },
-    "clear_existing_data": true,
+    "clear_existing_data": false,
     "raise_error": false,
     "coiled_cluster_options": {
       "n_workers": [
-        40,
+        20,
         100
       ],
       "scheduler_vm_types": "m7i-flex.2xlarge",
-      "worker_vm_types": "m7i-flex.2xlarge",
+      "worker_vm_types": "m7i-flex.4xlarge",
       "allow_ingress_from": "me",
       "compute_purchase_option": "spot_with_fallback",
       "worker_options": {
@@ -37,7 +37,7 @@
         "memory_limit": "128GB"
       }
     },
-    "batch_size": 80
+    "batch_size": 30
   },
   "metadata_uuid": "52ad55a5-b537-4e10-8a81-22d9317c81f2",
   "aws_opendata_registry": {
