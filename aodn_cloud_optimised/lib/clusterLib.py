@@ -1,5 +1,6 @@
 import importlib
 import logging
+from datetime import datetime
 from enum import Enum
 
 import dask.config
@@ -107,7 +108,9 @@ class ClusterManager:
             )
             coiled_cluster_options = self.coiled_cluster_default_options
 
-        coiled_cluster_options["name"] = f"Processing_{self.dataset_name}"
+        coiled_cluster_options["name"] = (
+            f"Processing_{self.dataset_name}_{datetime.now():%Y%m%d-%H%M}"
+        )
 
         return self._create_client_and_cluster(
             CoiledCluster, options=coiled_cluster_options
