@@ -112,7 +112,11 @@
     "global_attributes": {
       "set": {
         "title": "Temperature logger"
-      }
+      },
+      "delete": [
+        "time_coverage_start",
+        "time_coverage_end"
+      ]
     },
     "var_template_shape": "sea_surface_temperature",
     "vars_incompatible_with_region": [

@@ -47,19 +47,19 @@
   "run_settings": {
     "coiled_cluster_options": {
       "n_workers": [
-        60,
-        180
+        35,
+        120
       ],
-      "scheduler_vm_types": "m7i.2xlarge",
-      "worker_vm_types": "m7i.2xlarge",
+      "scheduler_vm_types": "m7i-flex.large",
+      "worker_vm_types": "m7i-flex.large",
       "allow_ingress_from": "me",
       "compute_purchase_option": "spot_with_fallback",
       "worker_options": {
-        "nthreads": 8,
-        "memory_limit": "32GB"
+        "nthreads": 2,
+        "memory_limit": "100GB"
       }
     },
-    "batch_size": 100,
+    "batch_size": 60,
     "cluster": {
       "mode": "coiled",
       "restart_every_path": true
@@ -70,7 +70,7 @@
         "filter": [],
         "year_range": [
           2012,
-          2024
+          2025
         ]
       }
     ],
