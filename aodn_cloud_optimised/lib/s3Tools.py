@@ -315,10 +315,12 @@ def create_fileset(s3_paths, s3_fs=None):
         list[file-like object]: List of file-like objects representing each object in the fileset.
     """
     if s3_fs is None:
+
         s3_fs = s3fs.S3FileSystem(
             anon=True,
             default_cache_type="readahead",
             default_fill_cache=False,
+            config_kwargs={"max_pool_connections": 30},
         )
 
     if isinstance(s3_paths, str):
