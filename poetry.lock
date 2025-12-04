@@ -313,14 +313,14 @@ files = [
 
 [[package]]
 name = "aws-sam-translator"
-version = "1.103.0"
+version = "1.105.0"
 description = "AWS SAM Translator is a library that transform SAM templates into AWS CloudFormation templates"
 optional = false
 python-versions = "!=4.0,<=4.0,>=3.8"
 groups = ["dev"]
 files = [
-    {file = "aws_sam_translator-1.103.0-py3-none-any.whl", hash = "sha256:d4eb4a1efa62f00b253ee5f8c0084bd4b7687186c6a12338f900ebe07ff74dad"},
-    {file = "aws_sam_translator-1.103.0.tar.gz", hash = "sha256:8317b72ef412db581dc7846932a44dfc1729adea578d9307a3e6ece46a7882ca"},
+    {file = "aws_sam_translator-1.105.0-py3-none-any.whl", hash = "sha256:395930e3caa0a67e2432bf09199fa5a60edb71c2b8f05ab4b03a6f6b3fb758b7"},
+    {file = "aws_sam_translator-1.105.0.tar.gz", hash = "sha256:472829abf114e7c47112d88f9b3c27585e9c9b44f9d090d1ab9bc4d235bc12b7"},
 ]
 
 [package.dependencies]
@@ -782,14 +782,14 @@ files = [
 
 [[package]]
 name = "cfn-lint"
-version = "1.41.0"
+version = "1.42.0"
 description = "Checks CloudFormation templates for practices and behaviour that could potentially be improved"
 optional = false
 python-versions = ">=3.9"
 groups = ["dev"]
 files = [
-    {file = "cfn_lint-1.41.0-py3-none-any.whl", hash = "sha256:cd43f76f59a664b2bad580840827849fac0d56a3b80e9a41315d8ab5ff6b563a"},
-    {file = "cfn_lint-1.41.0.tar.gz", hash = "sha256:6feca1cf57f9ed2833bab68d9b1d38c8033611e571fa792e45ab4a39e2b8ab57"},
+    {file = "cfn_lint-1.42.0-py3-none-any.whl", hash = "sha256:431523d3bc32f2db411451b8010ccaf770556bebfe44d6df75c1a17ecf957496"},
+    {file = "cfn_lint-1.42.0.tar.gz", hash = "sha256:0bd373d34451e396c14a95be03fe4bcba8d2c00b2a4c61697a04deaa79ab67ed"},
 ]
 
 [package.dependencies]
@@ -1040,14 +1040,14 @@ files = [
 
 [[package]]
 name = "coiled"
-version = "1.129.2"
+version = "1.129.3"
 description = "Python client for coiled.io dask clusters"
 optional = false
 python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "coiled-1.129.2-py3-none-any.whl", hash = "sha256:a037b12dd1bc3494205975c6c6bf2f44b13531a0e191c167eb47c01637fd061f"},
-    {file = "coiled-1.129.2.tar.gz", hash = "sha256:9738c97c841b1198eb8dfe060a5920696fabe32977e2ebc2b9d82dec32b863cc"},
+    {file = "coiled-1.129.3-py3-none-any.whl", hash = "sha256:12c0e69d9b41f27fbb069c37afb5bda2d92a763c1dbe72d739c825ae36435d3d"},
+    {file = "coiled-1.129.3.tar.gz", hash = "sha256:af563a49f536b1f1084985a1eeb6805c6c93fe1707a0602cd2817ddae5644f9e"},
 ]
 
 [package.dependencies]
@@ -3719,14 +3719,14 @@ files = [
 
 [[package]]
 name = "narwhals"
-version = "2.12.0"
+version = "2.13.0"
 description = "Extremely lightweight compatibility layer between dataframe libraries"
 optional = false
 python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "narwhals-2.12.0-py3-none-any.whl", hash = "sha256:baeba5d448a30b04c299a696bd9ee5ff73e4742143e06c49ca316b46539a7cbb"},
-    {file = "narwhals-2.12.0.tar.gz", hash = "sha256:075b6d56f3a222613793e025744b129439ecdff9292ea6615dd983af7ba6ea44"},
+    {file = "narwhals-2.13.0-py3-none-any.whl", hash = "sha256:9b795523c179ca78204e3be53726da374168f906e38de2ff174c2363baaaf481"},
+    {file = "narwhals-2.13.0.tar.gz", hash = "sha256:ee94c97f4cf7cfeebbeca8d274784df8b3d7fd3f955ce418af998d405576fdd9"},
 ]
 
 [package.extras]
@@ -4142,14 +4142,14 @@ files = [
 
 [[package]]
 name = "pbs-installer"
-version = "2025.11.20"
+version = "2025.12.2"
 description = "Installer for Python Build Standalone"
 optional = false
 python-versions = ">=3.8"
 groups = ["dev"]
 files = [
-    {file = "pbs_installer-2025.11.20-py3-none-any.whl", hash = "sha256:5588b40a41b03101514c71cadb37ad75a3476dee43ba5fdaeec699e51ec0e94a"},
-    {file = "pbs_installer-2025.11.20.tar.gz", hash = "sha256:6469b854835fa316c24c938df4563a72adae3d14b659eb4b23fa4bb347fd45f3"},
+    {file = "pbs_installer-2025.12.2-py3-none-any.whl", hash = "sha256:906cb5346515a0e92ba1d37f4065d9229d6c0675c329e0a455396e01a796be71"},
+    {file = "pbs_installer-2025.12.2.tar.gz", hash = "sha256:ca26271b5643c6f2d0a378f99e4b410ef43728049f939b339abb042158d90ff8"},
 ]
 
 [package.dependencies]
@@ -6583,6 +6583,28 @@ files = [
 ]
 
 [[package]]
+name = "tqdm"
+version = "4.67.1"
+description = "Fast, Extensible Progress Meter"
+optional = false
+python-versions = ">=3.7"
+groups = ["dev"]
+files = [
+    {file = "tqdm-4.67.1-py3-none-any.whl", hash = "sha256:26445eca388f82e72884e0d580d5464cd801a3ea01e63e5601bdff9ba6a48de2"},
+    {file = "tqdm-4.67.1.tar.gz", hash = "sha256:f8aef9c52c08c13a65f30ea34f4e5aac3fd1a34959879d7e59e63027286627f2"},
+]
+
+[package.dependencies]
+colorama = {version = "*", markers = "platform_system == \"Windows\""}
+
+[package.extras]
+dev = ["nbval", "pytest (>=6)", "pytest-asyncio (>=0.24)", "pytest-cov", "pytest-timeout"]
+discord = ["requests"]
+notebook = ["ipywidgets (>=6)"]
+slack = ["slack-sdk"]
+telegram = ["requests"]
+
+[[package]]
 name = "traitlets"
 version = "5.14.3"
 description = "Traitlets Python configuration system"
@@ -6600,14 +6622,14 @@ test = ["argcomplete (>=3.0.3)", "mypy (>=1.7.0)", "pre-commit", "pytest (>=7.0,
 
 [[package]]
 name = "trove-classifiers"
-version = "2025.11.14.15"
+version = "2025.12.1.14"
 description = "Canonical source for classifiers on PyPI (pypi.org)."
 optional = false
 python-versions = "*"
 groups = ["dev"]
 files = [
-    {file = "trove_classifiers-2025.11.14.15-py3-none-any.whl", hash = "sha256:d1dac259c1e908939862e3331177931c6df0a37af2c1a8debcc603d9115fcdd9"},
-    {file = "trove_classifiers-2025.11.14.15.tar.gz", hash = "sha256:6b60f49d40bbd895bc61d8dc414fc2f2286d70eb72ed23548db8cf94f62804ca"},
+    {file = "trove_classifiers-2025.12.1.14-py3-none-any.whl", hash = "sha256:a8206978ede95937b9959c3aff3eb258bbf7b07dff391ddd4ea7e61f316635ab"},
+    {file = "trove_classifiers-2025.12.1.14.tar.gz", hash = "sha256:a74f0400524fc83620a9be74a07074b5cbe7594fd4d97fd4c2bfde625fdc1633"},
 ]
 
 [[package]]
@@ -7294,4 +7316,4 @@ cffi = ["cffi (>=1.17,<2.0) ; platform_python_implementation != \"PyPy\" and pyt
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<4.0"
-content-hash = "6488c60136c840dcc5b83a99f5a5bc960d86f9d821205d1481b32a1a4c43f774"
+content-hash = "9b5feb0de024dff81a05c3ece667461111716de1c59c87ac131d049e9c2aacc5"
