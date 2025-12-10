@@ -5,7 +5,7 @@ build-backend = "poetry.core.masonry.api"
 [project]
 requires-python = ">=3.11,<4.0"
 name = "aodn-cloud-optimised"
-version = "0.1.61"
+version = "0.1.62"
 description = "Cloud optimised data formats for IMOS NetCDF files and CSVs."
 authors = [
   { name = "Laurent Besnard (AODN)", email = "laurent.besnard@utas.edu.au" },
