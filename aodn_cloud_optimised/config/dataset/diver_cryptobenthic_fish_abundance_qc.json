@@ -38,91 +38,133 @@
   "metadata_uuid": "9efa25cd-4da4-47b5-9385-45e3cbd11705",
   "schema": {
     "survey_id": {
-      "type": "int32"
+      "type": "int32",
+      "long_name": "survey identification number"
     },
     "country": {
-      "type": "string"
+      "type": "string",
+      "long_name": "country where the survey was conducted"
     },
     "area": {
-      "type": "string"
+      "type": "string",
+      "long_name": "state/territory where the survey was conducted"
     },
     "ecoregion": {
-      "type": "string"
+      "type": "string",
+      "long_name": "ecological region where the survey was conducted"
     },
     "realm": {
-      "type": "string"
+      "type": "string",
+      "long_name": "realm where the survey was conducted"
     },
     "location": {
-      "type": "string"
+      "type": "string",
+      "long_name": "city/council where the survey was conducted"
     },
     "site_code": {
-      "type": "string"
+      "type": "string",
+      "long_name": "code for the survey site"
     },
     "site_name": {
-      "type": "string"
+      "type": "string",
+      "long_name": "name of the survey site"
     },
     "latitude": {
-      "type": "float32"
+      "type": "float32",
+      "standard_name": "latitude",
+      "long_name": "latitude of the site",
+      "units": "degrees_north",
+      "reference_datum": "geographical coordinates, WGS84 projection"
     },
     "longitude": {
-      "type": "float32"
+      "type": "float32",
+      "standard_name": "longitude",
+      "long_name": "longitude of the site",
+      "units": "degree_east",
+      "reference_datum": "geographical coordinates, WGS84 projection"
     },
     "survey_date": {
-      "type": "string"
+      "type": "string",
+      "long_name": "local date",
+      "units": "yyyy-mm-dd"
     },
     "depth": {
-      "type": "float32"
+      "type": "float32",
+      "standard_name": "depth",
+      "long_name": "Depth below surface of the water body",
+      "units": "m"
     },
     "program": {
-      "type": "string"
+      "type": "string",
+      "long_name": "acronym identifying the program(s)"
     },
     "visibility": {
-      "type": "float32"
+      "type": "float32",
+      "long_name": "the distance in water at which something can be seen",
+      "units": "m"
     },
     "hour": {
-      "type": "string"
+      "type": "string",
+      "long_name": "local time of sample collection",
+      "units": "hh:mm:ss"
     },
     "survey_latitude": {
-      "type": "float32"
+      "type": "float32",
+      "long_name": "latitude of the survey"
     },
     "survey_longitude": {
-      "type": "float32"
+      "type": "float32",
+      "long_name": "longitude of the survey"
     },
     "method": {
-      "type": "int32"
+      "type": "int32",
+      "long_name": "identifier for method applied to collect the observation"
     },
     "block": {
-      "type": "int32"
+      "type": "int32",
+      "long_name": "number of the block"
     },
     "phylum": {
-      "type": "string"
+      "type": "string",
+      "long_name": "identification of the biotic elements to the scientific classification group"
     },
     "class_": {
-      "type": "string"
+      "type": "string",
+      "long_name": "identification of the biotic elements to the scientific classification group"
     },
     "order": {
-      "type": "string"
+      "type": "string",
+      "long_name": "identification of the biotic elements to the scientific classification group"
     },
     "family": {
-      "type": "string"
+      "type": "string",
+      "long_name": "identification of the biotic elements to the scientific classification group"
     },
     "species_name": {
-      "type": "string"
+      "type": "string",
+      "long_name": "identification of the biotic elements to the scientific classification group"
     },
     "reporting_name": {
-      "type": "string"
+      "type": "string",
+      "long_name": "reporting name for the observed species"
     },
     "size_class": {
-      "type": "float32"
+      "type": "float32",
+      "long_name": "size class",
+      "units": "cm"
     },
     "total": {
-      "type": "int32"
+      "type": "int32",
+      "long_name": "total number of observations"
     },
     "biomass": {
-      "type": "float32"
+      "type": "float32",
+      "long_name": "estimated biomass",
+      "units": "g"
     },
     "geom": {
-      "type": "string"
+      "type": "string",
+      "long_name": "geometry of the observation point"
     }
   },
   "aws_opendata_registry": {
