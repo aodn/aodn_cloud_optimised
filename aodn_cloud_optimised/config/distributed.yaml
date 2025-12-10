@@ -35,6 +35,6 @@ logging:
     allowed-failures: 1 # fail fast
   worker:
     memory:
-      spill: False
-      pause: False
-      terminate: False
+      spill: 0.80
+      pause: 0.85
+      terminate: 0.95

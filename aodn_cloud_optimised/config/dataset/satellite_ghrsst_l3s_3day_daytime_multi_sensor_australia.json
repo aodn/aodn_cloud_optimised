@@ -1,0 +1,83 @@
+{
+  "dataset_name": "satellite_ghrsst_l3s_3day_daytime_multi_sensor_australia",
+  "logger_name": "satellite_ghrsst_l3s_3day_daytime_multi_sensor_australia",
+  "cloud_optimised_format": "zarr",
+  "parent_config": "satellite_ghrsst_main.json",
+  "run_settings": {
+    "paths": [
+      {
+        "type": "files",
+        "s3_uri": "s3://imos-data/IMOS/SRS/SST/ghrsst/L3SM-3d/day/",
+        "filter": [
+          ".*\\.nc$"
+        ],
+        "year_range": [
+          2012,
+          2025
+        ]
+      }
+    ],
+    "cluster": {
+      "mode": "coiled",
+      "restart_every_path": true
+    },
+    "clear_existing_data": true,
+    "raise_error": false,
+    "coiled_cluster_options": {
+      "n_workers": [
+        20,
+        100
+      ],
+      "scheduler_vm_types": "m7i-flex.large",
+      "worker_vm_types": "m7i-flex.large",
+      "allow_ingress_from": "me",
+      "compute_purchase_option": "spot_with_fallback",
+      "worker_options": {
+        "nthreads": 4,
+        "memory_limit": "100GB"
+      }
+    },
+    "batch_size": 40
+  },
+  "metadata_uuid": "08e04227-4da1-479b-bec1-06ee27a69a40",
+  "aws_opendata_registry": {
+    "Name": "Satellite - Sea surface temperature - Level 3 - Multi sensor - 3 day - Day time",
+    "Description": "This is a multi-sensor SSTskin L3S product for three consecutive day-time periods, derived using sea surface temperature retrievals from the VIIRS sensor on the Suomi-NPP satellite and JPSS series of satellites, and AVHRR sensor on the NOAA and Metop series of Polar-orbiting satellites. The sensors and satellite platforms contributing to each file are listed in the sensor and platform global attributes in the file header. The Multi-sensor L3S product is provided as a 0.02deg x 0.02deg cylindrical equidistant projected map over the region 70E to 170W, 20N to 70S. The quality level for each pixel was remapped using the original ACSPO VIIRS and AVHRR L3U quality levels and Sensor Specific Error Statistics (SSES), as described in Griffin et al. (2017) Appendix at http://imos.org.au/facilities/srs/sstproducts/sstdata0/sstdata-references/, before compositing single swaths from the sensors. Each grid cell contains the 3 day average of all the highest available quality SSTs that overlap with that cell, weighted by the area of overlap. Refer to the IMOS SST products web page at http://imos.org.au/sstproducts.html for further information.",
+    "Documentation": "https://catalogue-imos.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/08e04227-4da1-479b-bec1-06ee27a69a40",
+    "Contact": "info@aodn.org.au",
+    "ManagedBy": "AODN",
+    "UpdateFrequency": "As Needed",
+    "Tags": [
+      "oceans",
+      "satellite imagery"
+    ],
+    "License": "http://creativecommons.org/licenses/by/4.0/",
+    "Resources": [
+      {
+        "Description": "Cloud Optimised AODN dataset of IMOS - Satellite Remote Sensing - SST - L3S - Multi Sensor - 3 day - day time - Australia",
+        "ARN": "arn:aws:s3:::aodn-cloud-optimised/satellite_ghrsst_l3s_3day_daytime_multi_sensor_australia.zarr",
+        "Region": "ap-southeast-2",
+        "Type": "S3 Bucket"
+      }
+    ],
+    "DataAtWork": {
+      "Tutorials": [
+        {
+          "Title": "Accessing IMOS - Satellite Remote Sensing - SST - L3S - Multi Sensor - 3 day - day time - Australia",
+          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_ghrsst_l3s_3day_daytime_multi_sensor_australia.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_ghrsst_l3s_3day_daytime_multi_sensor_australia.ipynb",
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
+        },
+        {
+          "Title": "Accessing and search for any AODN dataset",
+          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
+        }
+      ]
+    },
+    "Citation": "The citation in a list of references is: \"IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access].\""
+  }
+}

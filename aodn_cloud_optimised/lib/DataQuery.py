@@ -3,12 +3,14 @@ A currated list of functions used to facilitate reading AODN parquet files. Thes
 Notebooks
 """
 
+import calendar
 import hashlib
 import json
 import logging
 import os
 import posixpath
 import re
+import tempfile
 import zipfile
 from abc import ABC, abstractmethod
 from datetime import date, datetime, timezone
@@ -23,6 +25,7 @@ import cftime
 import fsspec
 import geopandas as gpd
 import gsw  # TEOS-10 library
+import ipywidgets as widgets
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
 import numpy as np
@@ -39,11 +42,12 @@ from botocore.client import Config
 from dateutil import parser
 from dateutil.parser import parse
 from fuzzywuzzy import fuzz
-from IPython.display import FileLink
+from IPython.display import FileLink, clear_output, display
 from matplotlib.colors import LogNorm, Normalize
 from s3path import PureS3Path
 from shapely import wkb
 from shapely.geometry import MultiPolygon, Polygon
+from tqdm.notebook import tqdm
 from windrose import WindroseAxes
 
 from aodn_cloud_optimised.lib.exceptions import (
@@ -51,7 +55,7 @@ from aodn_cloud_optimised.lib.exceptions import (
     PolygonNotIntersectingError,
 )
 
-__version__ = "0.3.0"
+__version__ = "0.3.2"
 
 REGION: Final[str] = "ap-southeast-2"
 ENDPOINT_URL = "https://s3.ap-southeast-2.amazonaws.com"
@@ -1434,18 +1438,75 @@ class TimeSeriesResult:
         self.lon_name = actual_lon_name
         self.time_name = actual_time_name
 
-    def plot_timeseries(self) -> pd.DataFrame:
-        """Plot and return the time series DataFrame."""
-        self.df.plot(x=self.time_name, y=self.var_name)
+    def plot_timeseries(
+        self,
+        resample: str | None = None,
+        show_percentiles: bool = True,
+        figsize: tuple[int, int] = (12, 6),
+    ) -> pd.DataFrame:
+        """Plot the time series with optional resampled mean and 5–95 percentile band."""
+
+        df = self.df.copy()
+        df[self.time_name] = pd.to_datetime(df[self.time_name])
+        df.set_index(self.time_name, inplace=True)
+
+        # Auto-detect resample frequency if none provided
+        if resample is None:
+            median_diff = df.index.to_series().diff().median()
+            if median_diff < pd.Timedelta(hours=1):
+                resample = "H"
+            elif median_diff < pd.Timedelta(days=1):
+                resample = "D"
+            else:
+                resample = "M"
+
+        plt.figure(figsize=figsize)
+
+        # Original timeseries
+        plt.plot(df.index, df[self.var_name], label="Original", alpha=0.6)
+
+        # Resampled mean
+        resampled = df[self.var_name].resample(resample)
+        mean_series = resampled.mean()
+        plt.plot(mean_series.index, mean_series.values, label=f"{resample} mean")
+
+        # Optional 5–95 percentile band
+        if show_percentiles:
+            p05 = resampled.quantile(0.05)
+            p95 = resampled.quantile(0.95)
+
+            plt.plot(
+                p05.index,
+                p05.values,
+                label=f"{resample} 5th percentile",
+                linestyle="--",
+            )
+            plt.plot(
+                p95.index,
+                p95.values,
+                label=f"{resample} 95th percentile",
+                linestyle="--",
+            )
+
+            plt.fill_between(
+                p05.index,
+                p05.values,
+                p95.values,
+                alpha=0.2,
+                label="5–95 percentile range",
+            )
+
         plt.title(
             f"{self.var_name} at ({self.lat}, {self.lon}) from {self.date_start} to {self.date_end}"
         )
         plt.xlabel("Time")
         plt.ylabel(self.var_name)
         plt.grid(True)
+        plt.legend()
         plt.tight_layout()
         plt.show()
-        return self.df  # Optional: return to maintain compatibility
+
+        return df
 
 
 class DataSource(ABC):
@@ -2426,6 +2487,9 @@ class ZarrDataSource(DataSource):
             {actual_lat_name: lat, actual_lon_name: lon}, method="nearest"
         )
 
+        # Force dask to load the actual data chunks now, not doing this could lead to some missing chunks
+        selected_data_point = selected_data_point.load()  # or .compute()
+
         timeseries_df = selected_data_point.to_dataframe().reset_index()
 
         timeseries_df.attrs["actual_time_name"] = actual_time_name
@@ -2806,6 +2870,152 @@ class ZarrDataSource(DataSource):
             rect=[0, 0, 0.85, 0.95]
         )  # Adjust rect to prevent suptitle overlap and leave space for cbar
         plt.show()
+
+    def plot_gridded_variable_viewer_calendar(
+        self,
+        var_name: str,
+        lon_slice: tuple[float, float] | None = None,
+        lat_slice: tuple[float, float] | None = None,
+        n_days: int = 6,
+        coastline_resolution: str | None = "110m",
+        log_scale: bool = False,
+        lat_name_override: str | None = None,
+        lon_name_override: str | None = None,
+        time_name_override: str | None = None,
+    ) -> None:
+        """
+        Interactive calendar-based viewer for a gridded variable.
+
+        Parameters match plot_gridded_variable except date_start/date_end.
+        """
+
+        # --- Get temporal extent from the dataset ---
+        start, end = self.get_temporal_extent()
+
+        # --- Date picker widget ---
+        date_picker = widgets.DatePicker(
+            description="Start date:",
+            disabled=False,
+            value=start.date(),
+            min=start.date(),
+            max=end.date(),
+            layout=widgets.Layout(width="260px"),
+        )
+
+        # --- Output area for plot ---
+        out = widgets.Output()
+
+        # --- Callback triggered when user picks a new date ---
+        def on_date_selected(change):
+            if change["new"] is None:
+                return
+
+            with out:
+                clear_output(wait=True)
+                date0 = pd.Timestamp(change["new"])
+
+                self.plot_gridded_variable(
+                    var_name=var_name,
+                    lon_slice=lon_slice,
+                    lat_slice=lat_slice,
+                    date_start=str(date0.date()),
+                    n_days=n_days,
+                    coastline_resolution=coastline_resolution,
+                    log_scale=log_scale,
+                    lat_name_override=lat_name_override,
+                    lon_name_override=lon_name_override,
+                    time_name_override=time_name_override,
+                )
+
+        # Listen for date widget changes
+        date_picker.observe(on_date_selected, names="value")
+
+        # Display widget + initial plot
+        display(widgets.VBox([date_picker, out]))
+
+        # Draw initial plot
+        with out:
+            clear_output(wait=True)
+            self.plot_gridded_variable(
+                var_name=var_name,
+                lon_slice=lon_slice,
+                lat_slice=lat_slice,
+                date_start=str(start.date()),
+                n_days=n_days,
+                coastline_resolution=coastline_resolution,
+                log_scale=log_scale,
+                lat_name_override=lat_name_override,
+                lon_name_override=lon_name_override,
+                time_name_override=time_name_override,
+            )
+
+    def export_monthly_gridded_pngs(
+        self,
+        var_name: str,
+        lon_slice=None,
+        lat_slice=None,
+        n_days: int = 31,
+        coastline_resolution="50m",
+        log_scale=False,
+        lat_name_override=None,
+        lon_name_override=None,
+        time_name_override=None,
+        output_dir=None,
+    ):
+        """
+        Export monthly PNGs for visual QA of the dataset.
+
+        A PNG is created per month, each containing up to n_days of images.
+        Default output directory is a temporary folder.
+        """
+
+        if output_dir is None:
+            output_dir = tempfile.mkdtemp(prefix=f"{self.dataset_name}_monthly_plots_")
+            print(f"Saving PNGs to: {output_dir}")
+
+        start, end = self.get_temporal_extent()
+
+        # build list of first days of each month
+        months = []
+        cur = pd.Timestamp(start.year, start.month, 1)
+        while cur <= end:
+            months.append(cur)
+            if cur.month == 12:
+                cur = pd.Timestamp(cur.year + 1, 1, 1)
+            else:
+                cur = pd.Timestamp(cur.year, cur.month + 1, 1)
+
+        for month_start in tqdm(months, desc="Exporting monthly plots"):
+            last_day = calendar.monthrange(month_start.year, month_start.month)[1]
+            month_end = pd.Timestamp(month_start.year, month_start.month, last_day)
+            month_end = min(month_end, end)
+
+            fname = f"{var_name}_{month_start.strftime('%Y_%m')}.png"
+            file_path = os.path.join(output_dir, fname)
+
+            plt.close("all")
+            self.plot_gridded_variable(
+                var_name=var_name,
+                lon_slice=lon_slice,
+                lat_slice=lat_slice,
+                date_start=str(month_start.date()),
+                date_end=str(month_end.date()),
+                n_days=n_days,
+                coastline_resolution=coastline_resolution,
+                log_scale=log_scale,
+                lat_name_override=lat_name_override,
+                lon_name_override=lon_name_override,
+                time_name_override=time_name_override,
+            )
+
+            # Save last figure (the one created by plot_gridded_variable)
+            #
+            fig = plt.gcf()
+            fig.canvas.draw_idle()
+            fig.savefig(file_path, dpi=150)
+            plt.close(fig)
+
+        return output_dir
 
     def plot_radar_water_velocity_gridded(self, **kwargs):
         return plot_radar_water_velocity_gridded(self.zarr_store, **kwargs)

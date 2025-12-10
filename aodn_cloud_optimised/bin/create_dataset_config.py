@@ -132,6 +132,15 @@ def generate_template_value(schema):
             - dict: An OrderedDict with keys and template values based on the object properties' schema.
             - None: If the schema type is not recognized.
     """
+    # Handle anyOf / oneOf by picking the first subschema
+    if "anyOf" in schema:
+        return generate_template_value(schema["anyOf"][0])
+    if "oneOf" in schema:
+        return generate_template_value(schema["oneOf"][0])
+    if "allOf" in schema:
+        # merge all subschemas (simplest: just pick the first for now)
+        return generate_template_value(schema["allOf"][0])
+
     schema_type = schema["type"]
 
     if schema_type == "string":

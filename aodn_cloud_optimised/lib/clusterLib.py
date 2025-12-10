@@ -1,5 +1,6 @@
 import importlib
 import logging
+from datetime import datetime
 from enum import Enum
 
 import dask.config
@@ -107,7 +108,9 @@ class ClusterManager:
             )
             coiled_cluster_options = self.coiled_cluster_default_options
 
-        coiled_cluster_options["name"] = f"Processing_{self.dataset_name}"
+        coiled_cluster_options["name"] = (
+            f"Processing_{self.dataset_name}_{datetime.now():%Y%m%d-%H%M}"
+        )
 
         return self._create_client_and_cluster(
             CoiledCluster, options=coiled_cluster_options
@@ -160,12 +163,20 @@ class ClusterManager:
             return
 
         try:
-            client.shutdown()  # Graceful cleanup
+            # --- Graceful Dask shutdown ---
+            client.shutdown()
             client.close()
             self.logger.info("Successfully closed Dask client.")
 
-            cluster.close()
-            self.logger.info("Successfully closed Dask cluster.")
+            # --- Coiled special case ---
+            # Coiled clusters need force_shutdown=True, otherwise
+            # they may remain alive in the Coiled dashboard.
+            if self.cluster_mode == ClusterMode.COILED:
+                cluster.close(force_shutdown=True, reason="manual-shutdown")
+                self.logger.info("Successfully force-closed Coiled cluster.")
+            else:
+                cluster.close()
+                self.logger.info("Successfully closed cluster.")
 
         except Exception as e:
             self.logger.error(f"Error while closing the cluster or client: {e}")

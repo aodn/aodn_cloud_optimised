@@ -176,103 +176,105 @@ class CommonHandler:
         """
         from aodn_cloud_optimised.lib.s3Tools import boto3_s3_from_opts_dict
 
+        DEFAULT_S3FS_OPTS = dict(
+            anon=False,
+            default_cache_type=None,
+            session=None,
+            default_fill_cache=False,
+            config_kwargs={"max_pool_connections": 30},
+        )
         # Validate s3_fs_common_session type
         if s3_fs_common_session is not None and not isinstance(
             s3_fs_common_session, s3fs.S3FileSystem
         ):
             raise TypeError("s3_fs_common_session must be an s3fs.S3FileSystem object")
 
-        # --- S3FileSystem setup ---
-        if s3_fs_common_session is not None:
-            # Use the provided session regardless of s3_fs_common_opts
-            self.s3_fs = s3_fs_common_session
-            self.s3_fs_common_opts = s3_fs_common_opts  # keep options if provided
-        elif s3_fs_common_opts:
-            self.s3_fs_common_opts = s3_fs_common_opts
-            self.s3_fs = s3fs.S3FileSystem(**s3_fs_common_opts)
-        else:
-            self.s3_fs_common_opts = None
-            self.s3_fs = s3fs.S3FileSystem(
-                anon=False, default_cache_type=None, session=None
+        # ------------------------------------------------------------------
+        # Helpers
+        # ------------------------------------------------------------------
+        def get_bucket_opts(bucket_name):
+            """Return the dict of s3_fs_opts for a bucket, or None."""
+            if not s3_bucket_opts:
+                return None
+            bucket_cfg = s3_bucket_opts.get(bucket_name)
+            if not bucket_cfg:
+                return None
+            return bucket_cfg.get("s3_fs_opts")
+
+        def build_s3fs_instance(opts):
+            """Create an S3FileSystem instance with provided opts or defaults."""
+            return s3fs.S3FileSystem(**(opts or DEFAULT_S3FS_OPTS))
+
+        def resolve_s3fs(common_session, common_opts, bucket_opts):
+            """
+            S3FS precedence:
+                1. explicit S3FS session (mocking / tests)
+                2. bucket-level override
+                3. common S3FS options
+                4. internal defaults
+            """
+            if common_session is not None:
+                return common_session
+            if bucket_opts:
+                return build_s3fs_instance(bucket_opts)
+            if common_opts:
+                return build_s3fs_instance(common_opts)
+            return build_s3fs_instance(None)
+
+        def resolve_boto_opts(common_client_opts, common_s3fs_opts, bucket_s3fs_opts):
+            """
+            Boto client precedence:
+                1. explicit boto client options
+                2. bucket s3_fs_opts → boto options
+                3. common s3_fs_opts → boto options
+                4. None
+            """
+            if common_client_opts is not None:
+                return common_client_opts
+            if bucket_s3fs_opts:
+                return boto3_s3_from_opts_dict(bucket_s3fs_opts)
+            if common_s3fs_opts:
+                return boto3_s3_from_opts_dict(common_s3fs_opts)
+            return None
+
+        # ------------------------------------------------------------------
+        # Resolve common S3FS
+        # ------------------------------------------------------------------
+        self.s3_fs_common_opts = s3_fs_common_opts
+        self.s3_fs = resolve_s3fs(s3_fs_common_session, s3_fs_common_opts, None)
+
+        # ------------------------------------------------------------------
+        # Resolve per-bucket S3FS
+        # ------------------------------------------------------------------
+        input_opts = get_bucket_opts("input_data")
+        output_opts = get_bucket_opts("output_data")
+
+        self.s3_fs_input = resolve_s3fs(
+            s3_fs_common_session, s3_fs_common_opts, input_opts
+        )
+        self.s3_fs_output = resolve_s3fs(
+            s3_fs_common_session, s3_fs_common_opts, output_opts
+        )
+
+        # ------------------------------------------------------------------
+        # Resolve boto3 client options
+        # ------------------------------------------------------------------
+        self.s3_client_common_opts = (
+            s3_client_opts_common
+            if s3_client_opts_common is not None
+            else (
+                boto3_s3_from_opts_dict(s3_fs_common_opts)
+                if s3_fs_common_opts
+                else None
             )
+        )
 
-        # --- Input bucket S3FS ---
-        if (
-            s3_bucket_opts
-            and "input_data" in s3_bucket_opts
-            and s3_bucket_opts["input_data"].get("s3_fs_opts")
-        ):
-            # If session is provided, override options
-            if s3_fs_common_session is not None:
-                self.s3_fs_input = s3_fs_common_session
-            else:
-                self.s3_fs_input = s3fs.S3FileSystem(
-                    **s3_bucket_opts["input_data"]["s3_fs_opts"]
-                )
-        elif s3_fs_common_opts or s3_fs_common_session:
-            self.s3_fs_input = self.s3_fs
-        else:
-            self.s3_fs_input = s3fs.S3FileSystem(anon=False, default_cache_type=None)
-
-        # --- Output bucket S3FS ---
-        if (
-            s3_bucket_opts
-            and "output_data" in s3_bucket_opts
-            and s3_bucket_opts["output_data"].get("s3_fs_opts")
-        ):
-            if s3_fs_common_session is not None:
-                self.s3_fs_output = s3_fs_common_session
-            else:
-                self.s3_fs_output = s3fs.S3FileSystem(
-                    **s3_bucket_opts["output_data"]["s3_fs_opts"]
-                )
-        elif s3_fs_common_opts or s3_fs_common_session:
-            self.s3_fs_output = self.s3_fs
-        else:
-            self.s3_fs_output = s3fs.S3FileSystem(anon=False, default_cache_type=None)
-
-        #
-        # --- Boto3 client options setup ---
-        # Common boto3 client options
-
-        if s3_client_opts_common is not None:
-            self.s3_client_opts_common = s3_client_opts_common
-        elif s3_fs_common_opts:
-            self.s3_client_common_opts = boto3_s3_from_opts_dict(s3_fs_common_opts)
-        else:
-            self.s3_client_common_opts = None
-
-        # Input bucket boto3 client options
-        if s3_client_opts_common is not None:
-            self.s3_client_opts_input = s3_client_opts_common
-        elif (
-            s3_bucket_opts
-            and "input_data" in s3_bucket_opts
-            and s3_bucket_opts["input_data"].get("s3_fs_opts")
-        ):
-            self.s3_client_opts_input = boto3_s3_from_opts_dict(
-                s3_bucket_opts["input_data"]["s3_fs_opts"]
-            )
-        elif s3_fs_common_opts:
-            self.s3_client_opts_input = boto3_s3_from_opts_dict(s3_fs_common_opts)
-        else:
-            self.s3_client_opts_input = None
-
-        # Output bucket boto3 client options
-        if s3_client_opts_common is not None:
-            self.s3_client_opts_output = s3_client_opts_common
-        elif (
-            s3_bucket_opts
-            and "output_data" in s3_bucket_opts
-            and s3_bucket_opts["output_data"].get("s3_fs_opts")
-        ):
-            self.s3_client_opts_output = boto3_s3_from_opts_dict(
-                s3_bucket_opts["output_data"]["s3_fs_opts"]
-            )
-        elif s3_fs_common_opts:
-            self.s3_client_opts_output = boto3_s3_from_opts_dict(s3_fs_common_opts)
-        else:
-            self.s3_client_opts_output = None
+        self.s3_client_opts_input = resolve_boto_opts(
+            s3_client_opts_common, s3_fs_common_opts, input_opts
+        )
+        self.s3_client_opts_output = resolve_boto_opts(
+            s3_client_opts_common, s3_fs_common_opts, output_opts
+        )
 
     def __enter__(self):
         # Initialize resources if necessary
@@ -330,6 +332,18 @@ class CommonHandler:
         ) = (
             self.cluster_manager.create_cluster()
         )  # self.cluster_mode is overwritten if necessary
+
+        return client, cluster
+
+    def _reset_cluster(self):
+        self.logger.warning(
+            f"{self.uuid_log}: Resetting Coiled cluster after scheduler failure…"
+        )
+
+        self.cluster_manager.close_cluster(self.client, self.cluster)
+
+        client, cluster = self.create_cluster()
+        self.logger.info(f"{self.uuid_log}: New cluster initialised.")
 
         return client, cluster
 
