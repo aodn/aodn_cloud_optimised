@@ -55,7 +55,7 @@ from aodn_cloud_optimised.lib.exceptions import (
     PolygonNotIntersectingError,
 )
 
-__version__ = "0.3.1"
+__version__ = "0.3.2"
 
 REGION: Final[str] = "ap-southeast-2"
 ENDPOINT_URL = "https://s3.ap-southeast-2.amazonaws.com"
@@ -2486,6 +2486,9 @@ class ZarrDataSource(DataSource):
         selected_data_point = time_sliced_data.sel(
             {actual_lat_name: lat, actual_lon_name: lon}, method="nearest"
         )
+
+        # Force dask to load the actual data chunks now, not doing this could lead to some missing chunks
+        selected_data_point = selected_data_point.load()  # or .compute()
 
         timeseries_df = selected_data_point.to_dataframe().reset_index()
 
