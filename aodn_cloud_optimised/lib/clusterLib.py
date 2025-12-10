@@ -163,12 +163,20 @@ class ClusterManager:
             return
 
         try:
-            client.shutdown()  # Graceful cleanup
+            # --- Graceful Dask shutdown ---
+            client.shutdown()
             client.close()
             self.logger.info("Successfully closed Dask client.")
 
-            cluster.close()
-            self.logger.info("Successfully closed Dask cluster.")
+            # --- Coiled special case ---
+            # Coiled clusters need force_shutdown=True, otherwise
+            # they may remain alive in the Coiled dashboard.
+            if self.cluster_mode == ClusterMode.COILED:
+                cluster.close(force_shutdown=True, reason="manual-shutdown")
+                self.logger.info("Successfully force-closed Coiled cluster.")
+            else:
+                cluster.close()
+                self.logger.info("Successfully closed cluster.")
 
         except Exception as e:
             self.logger.error(f"Error while closing the cluster or client: {e}")
