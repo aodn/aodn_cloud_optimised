@@ -335,6 +335,18 @@ class CommonHandler:
 
         return client, cluster
 
+    def _reset_cluster(self):
+        self.logger.warning(
+            f"{self.uuid_log}: Resetting Coiled cluster after scheduler failure…"
+        )
+
+        self.cluster_manager.close_cluster(self.client, self.cluster)
+
+        client, cluster = self.create_cluster()
+        self.logger.info(f"{self.uuid_log}: New cluster initialised.")
+
+        return client, cluster
+
     def get_batch_size(self, client=None):
         """
         Calculate the optimal batch size for processing files with Dask on a cluster.

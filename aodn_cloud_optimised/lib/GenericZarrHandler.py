@@ -14,6 +14,8 @@ import xarray as xr
 import zarr
 from dask import array as da
 from dask.distributed import Lock
+from distributed.client import FutureCancelledError
+from distributed.shuffle._exceptions import P2PConsistencyError
 from xarray.coding.times import CFDatetimeCoder
 from xarray.structure.merge import MergeError
 
@@ -989,42 +991,129 @@ class GenericHandler(CommonHandler):
 
             partial_preprocess_already_run = False
 
-            try:
-                ds = self.try_open_dataset(
-                    batch_files,
-                    partial_preprocess,
-                    drop_vars_list,
-                )
-                partial_preprocess_already_run = True
+            batch_is_processed = False
 
-                if not partial_preprocess_already_run:
-                    # Likely redundant now, but retained for safety
-                    self.logger.debug(
-                        f"{self.uuid_log}: 'partial_preprocess_already_run' is False. Applying preprocess_xarray."
+            max_retries = 5
+            retry_count = 0
+            while not batch_is_processed:
+                try:
+                    ds = self.try_open_dataset(
+                        batch_files,
+                        partial_preprocess,
+                        drop_vars_list,
                     )
-                    ds = preprocess_xarray(ds, self.dataset_config)
+                    partial_preprocess_already_run = True
 
-                self._write_ds(ds, idx)
-                self.logger.info(
-                    f"{self.uuid_log}: Batch {idx + 1} successfully published to Zarr store: {self.store}"
-                )
+                    if not partial_preprocess_already_run:
+                        # Likely redundant now, but retained for safety
+                        self.logger.debug(
+                            f"{self.uuid_log}: 'partial_preprocess_already_run' is False. Applying preprocess_xarray."
+                        )
+                        ds = preprocess_xarray(ds, self.dataset_config)
 
-            except MergeError as e:
-                self.logger.error(
-                    f"{self.uuid_log}: Failed to merge datasets for batch {idx + 1}: {e}"
-                )
-                if "ds" in locals():
-                    self.postprocess(ds)
+                    self._write_ds(ds, idx)
+                    self.logger.info(
+                        f"{self.uuid_log}: Batch {idx + 1} successfully published to Zarr store: {self.store}"
+                    )
 
-            except Exception as e:
-                self.logger.error(
-                    f"{self.uuid_log}: An unexpected error occurred during batch {idx + 1} processing: {e}.\n {traceback.format_exc()}"
-                )
-                self.fallback_to_individual_processing(
-                    batch_files, partial_preprocess, drop_vars_list, idx
-                )
-                if "ds" in locals():
-                    self.postprocess(ds)
+                    batch_is_processed = True  # Exit loop
+
+                except (FutureCancelledError, P2PConsistencyError, RuntimeError) as e:
+                    error_text = str(e)
+
+                    SHUFFLE_KEYWORDS = [
+                        "P2P",
+                        "failed during transfer phase",
+                        "failed during barrier phase",
+                        "failed during shuffle phase",
+                        "shuffle failure",
+                        "No active shuffle",
+                        "Unexpected error encountered during P2P",
+                    ]
+
+                    CONNECTION_KEYWORDS = [
+                        "Timed out trying to connect",
+                        "CancelledError",
+                        "Too many open files",
+                    ]
+
+                    DESERIALISATION_KEYWORDS = [
+                        "Error during deserialization",
+                        "different environments",
+                    ]
+
+                    # Determine if the error should trigger a retry (cluster reset)
+                    retryable = any(
+                        keyword in error_text
+                        for keyword in (
+                            SHUFFLE_KEYWORDS
+                            + CONNECTION_KEYWORDS
+                            + DESERIALISATION_KEYWORDS
+                        )
+                    )
+
+                    # RuntimeError that is NOT retryable → treat as normal exception
+                    if isinstance(e, RuntimeError) and not retryable:
+                        # Treat as a regular exception: fallback to individual processing
+                        self.logger.error(
+                            f"{self.uuid_log}: Unexpected RuntimeError during batch {idx+1}: {e}.\n"
+                            f"{traceback.format_exc()}"
+                        )
+                        self.fallback_to_individual_processing(
+                            batch_files, partial_preprocess, drop_vars_list, idx
+                        )
+                        if "ds" in locals():
+                            self.postprocess(ds)
+                        batch_is_processed = True  # mark as done
+                    else:
+                        # Retryable: check retry count first
+                        retry_count += 1
+
+                        if retry_count > max_retries:
+                            self.logger.error(
+                                f"{self.uuid_log}: Batch {idx+1} has exceeded retry limit "
+                                f"({max_retries}). Falling back to individual processing."
+                            )
+
+                            self.fallback_to_individual_processing(
+                                batch_files, partial_preprocess, drop_vars_list, idx
+                            )
+                            if "ds" in locals():
+                                self.postprocess(ds)
+
+                            batch_is_processed = True
+
+                        else:
+                            # Scheduler or shuffle failure: reset cluster and retry batch
+                            self.logger.error(
+                                f"{self.uuid_log}: Scheduler/worker/shuffle failure during batch {idx+1}: {e}. "
+                                f"Recreating Dask cluster and retrying batch…\nRetry number for failing batch:{retry_count}/{max_retries}"
+                                f"{traceback.format_exc()}"
+                            )
+                            self._reset_cluster()
+                            batch_is_processed = False
+
+                except MergeError as e:
+                    self.logger.error(
+                        f"{self.uuid_log}: Failed to merge datasets for batch {idx + 1}: {e}"
+                    )
+                    if "ds" in locals():
+                        self.postprocess(ds)
+
+                    # TODO: what do do in this case? could just enter an infinit loop
+                    batch_is_processed = False  # Loop again
+
+                except Exception as e:
+                    self.logger.error(
+                        f"{self.uuid_log}: An unexpected error occurred during batch {idx + 1} processing: {e}.\n {traceback.format_exc()}"
+                    )
+                    self.fallback_to_individual_processing(
+                        batch_files, partial_preprocess, drop_vars_list, idx
+                    )
+                    if "ds" in locals():
+                        self.postprocess(ds)
+
+                    batch_is_processed = True  # Loop again
 
     def try_open_dataset(
         self,
