@@ -2,198 +2,44 @@
   "dataset_name": "satellite_ghrsst_l3s_1day_nighttime_geopolar_multi_sensor_australia",
   "logger_name": "satellite_ghrsst_l3s_1day_nighttime_geopolar_multi_sensor_australia",
   "parent_config": "satellite_ghrsst_main.json",
-  "metadata_uuid": "7d8d046b-6002-4897-b781-04e7324d6af8",
-  "schema": {
-    "lon": {
-      "type": "float",
-      "axis": "X",
-      "comment": "Longitudes for locating data",
-      "long_name": "longitude",
-      "standard_name": "longitude",
-      "units": "degrees_east",
-      "valid_max": 360.0,
-      "valid_min": -180.0
+  "cloud_optimised_format": "zarr",
+  "run_settings": {
+    "paths": [
+      {
+        "type": "files",
+        "s3_uri": "s3://imos-data/IMOS/SRS/SST/ghrsst/L3SGM-1d/ngt/",
+        "filter": [
+          ".*\\.nc$"
+        ],
+        "year_range": [
+          2015,
+          2022
+        ]
+      }
+    ],
+    "cluster": {
+      "mode": "coiled",
+      "restart_every_path": true
     },
-    "lat": {
-      "type": "float",
-      "long_name": "latitude",
-      "units": "degrees_north",
-      "valid_min": -90.0,
-      "valid_max": 90.0,
-      "axis": "Y",
-      "comment": "Latitudes for locating data",
-      "standard_name": "latitude"
-    },
-    "time": {
-      "type": "timestamp[ns]",
-      "long_name": "reference time of sst file",
-      "axis": "T",
-      "comment": "A typical reference time for data",
-      "standard_name": "time"
-    },
-    "sea_surface_temperature": {
-      "type": "double",
-      "long_name": "sea surface skin temperature",
-      "units": "kelvin",
-      "comment": "The skin temperature of the ocean at a depth of approximately 10 microns",
-      "standard_name": "sea_surface_skin_temperature",
-      "valid_min": -32767,
-      "valid_max": 32767
-    },
-    "sst_dtime": {
-      "type": "double",
-      "long_name": "time difference from reference time",
-      "units": "second",
-      "comment": "time plus sst_dtime gives seconds after 00:00:00 UTC January 1, 1981",
-      "valid_min": -2147483645,
-      "valid_max": 2147483645
-    },
-    "dt_analysis": {
-      "type": "double",
-      "long_name": "deviation from last SST analysis",
-      "units": "kelvin",
-      "comment": "The difference between this SST and the previous day's SST",
-      "source": "ABOM-L4LRfnd-GLOB-GAMSSA_28km;various",
-      "valid_min": -127,
-      "valid_max": 127
-    },
-    "wind_speed": {
-      "type": "double",
-      "long_name": "wind speed",
-      "units": "m s-1",
-      "comment": "Typically represent mean surface winds (10 meters above the sea surface)",
-      "standard_name": "wind_speed",
-      "source": "ACCESSG-ABOM-Analysis-WSP;various",
-      "height": "10m",
-      "valid_min": -127,
-      "valid_max": 127
-    },
-    "sea_ice_fraction": {
-      "type": "double",
-      "long_name": "sea ice fraction",
-      "units": "1",
-      "comment": "Fractional sea ice cover (unitless) derived from near real-time UKMO OSTIA Daily 0.05 degree L4, an optimal interpolation of the operational near real-time EUMETSAT OSI-SAF SSMIS daily 10 km Level 3 sea ice concentration fields (Good et al., 2020, Remote Sensing, https://dx.doi.org/10.3390/rs12040720).",
-      "standard_name": "sea_ice_area_fraction",
-      "source": "OSTIA-UKMO-L4-GLOB-v2.0",
-      "valid_min": -127,
-      "valid_max": 127
-    },
-    "sea_ice_fraction_dtime_from_sst": {
-      "type": "double",
-      "long_name": "time difference of sea ice fraction measurement from sst measurement",
-      "units": "hour",
-      "comment": "The time difference in hours is estimated from the SST and sea ice data sets",
-      "source": "OSTIA-UKMO-L4-GLOB-v2.0",
-      "valid_min": -127,
-      "valid_max": 127
-    },
-    "aerosol_dynamic_indicator": {
-      "type": "double",
-      "long_name": "aerosol dynamic indicator",
-      "units": "count",
-      "comment": "aerosol dynamic indicator",
-      "source": "OSDPD-AOD-Analysis-daily;various",
-      "valid_min": -127,
-      "valid_max": 127
-    },
-    "satellite_zenith_angle": {
-      "type": "double",
-      "long_name": "satellite zenith angle",
-      "units": "angular_degree",
-      "comment": "The satellite zenith angle at the time of the SST observations",
-      "valid_min": -127,
-      "valid_max": 127
-    },
-    "l2p_flags": {
-      "type": "float",
-      "long_name": "L2P flags",
-      "valid_min": 0,
-      "valid_max": 32767,
-      "comment": "These flags are important to properly use the data.  Data not flagged as microwave are sourced from an infrared sensor. The lake and river flags are currently not set, but defined in GDS2.0r4. The aerosol flag indicates high aerosol concentration. The analysis flag indicates high difference from analysis temperatures (differences greater than Analysis Limit). The lowwind flag indicates regions of low wind speed (typically less than the low Wind Limit) per NWP model. The highwind flag indicates regions of high wind speed (typically greater than the high Wind Limit) per NWP model. See wind limits in the comment field for the actual values. The edge flag indicates pixel sizes that are larger than Pixel Spread times the size of the pixel in the center of the field of view in either lat or lon direction. The terminator flag indicates that the sun is near the horizon. The reflector flag indicates that the satellite would receive direct reflected sunlight if the earth was a perfect mirror. The swath flag is used in gridded files to indicate if the pixel could have been seen by the satellite. delta_dn indicates that the day.night sst algorithm was different from the standard algorithm. Other flags may be populated and are for internal use and the definitions may change, so should not be relied on. Flags greater than 64 only apply to non-land pixels",
-      "flag_masks": [
-        1,
-        2,
-        4,
-        8,
-        16,
-        32,
-        64,
-        128,
-        256,
-        512,
-        1024,
-        2048,
-        4096,
-        8192,
-        16384
+    "clear_existing_data": true,
+    "raise_error": false,
+    "coiled_cluster_options": {
+      "n_workers": [
+        35,
+        120
       ],
-      "flag_meanings": "microwave land ice lake river reserved aerosol analysis lowwind highwind edge terminator reflector swath delta_dn"
+      "scheduler_vm_types": "m7i-flex.xlarge",
+      "worker_vm_types": "m7i-flex.xlarge",
+      "allow_ingress_from": "me",
+      "compute_purchase_option": "spot_with_fallback",
+      "worker_options": {
+        "nthreads": 1,
+        "memory_limit": "100GB"
+      }
     },
-    "quality_level": {
-      "type": "float",
-      "long_name": "quality level of SST pixel",
-      "valid_min": 0,
-      "valid_max": 5,
-      "comment": "These are the overall quality indicators and are used for all GHRSST SSTs. The quality level in this case is the minimum of the original quality_level assigned by L3U data provider and quality level calculated using Sensor Specific Error Statistics (SSES). The latter is calculated using bias and standard deviation estimates as described in Griffin et al. (2017) Appendix A at http://imos.org.au/facilities/srs/sstproducts/sstdata0/sstdata-references/. For validation applications, please consider quality_level greater than or equal 4 with bias correction. For operational applications, please consider quality_level greater than or equal 3 with bias correction. For qualitative applications, please consider quality_level greater than or equal 2 with or without bias correction.",
-      "flag_values": [
-        0,
-        1,
-        2,
-        3,
-        4,
-        5
-      ],
-      "flag_meanings": "no_data bad_data worst_quality low_quality acceptable_quality best_quality"
-    },
-    "sses_bias": {
-      "type": "double",
-      "long_name": "SSES bias estimate",
-      "units": "kelvin",
-      "comment": "Bias estimate derived from contributing L3C sses_bias values per http://imos.org.au/facilities/srs/sstproducts/sstdata0/sstdata-references/",
-      "valid_min": -127,
-      "valid_max": 127
-    },
-    "sses_standard_deviation": {
-      "type": "double",
-      "long_name": "SSES standard deviation estimate",
-      "units": "kelvin",
-      "comment": "Standard deviation estimate derived from contributing L3C sses_standard_deviation values per http://imos.org.au/facilities/srs/sstproducts/sstdata0/sstdata-references/",
-      "valid_min": -127,
-      "valid_max": 127
-    },
-    "sses_count": {
-      "type": "double",
-      "long_name": "SSES count",
-      "units": "count",
-      "comment": "Weighted representative number of swath pixels. EXPERIMENTAL_FIELD",
-      "valid_min": -127,
-      "valid_max": 127
-    },
-    "sst_count": {
-      "type": "double",
-      "long_name": "Number of SST measurements",
-      "units": "count",
-      "comment": "Unweighted count of number of contributory SST measurements.  EXPERIMENTAL_FIELD",
-      "valid_min": -127,
-      "valid_max": 127
-    },
-    "sst_mean": {
-      "type": "double",
-      "long_name": "Unweighted SST mean",
-      "units": "kelvin",
-      "comment": "Unweighted mean of contributory SST measurements. EXPERIMENTAL_FIELD",
-      "valid_min": -32767,
-      "valid_max": 32767
-    },
-    "sst_standard_deviation": {
-      "type": "double",
-      "long_name": "Unweighted SST standard deviation",
-      "units": "kelvin",
-      "comment": "Standard deviation estimate of contributory SST measurements. EXPERIMENTAL_FIELD",
-      "valid_min": -127,
-      "valid_max": 127
-    }
+    "batch_size": 60
   },
+  "metadata_uuid": "7d8d046b-6002-4897-b781-04e7324d6af8",
   "aws_opendata_registry": {
     "Name": "Satellite - Sea surface temperature - Level 3 - GeoPolar Multi sensor - 1 day - Night time",
     "Description": "This is a GeoPolar Multi-sensor SSTskin L3S product for a single night-time period, derived using sea surface temperature retrievals from the AHI sensor on the Himawari-8, the VIIRS sensor on the Suomi-NPP satellite and JPSS series of satellites, and AVHRR sensor on the NOAA and Metop series of Polar-orbiting satellites. The sensors and satellite platforms contributing to each file are listed in the sensor and platform global attributes in the file header. The GeoPolar Multi-sensor L3S product is provided as a 0.02deg x 0.02deg cylindrical equidistant projected map over the region 70E to 170W, 20N to 70S. The quality level for each pixel was remapped using the original ACSPO VIIRS and AVHRR L3U quality levels and Sensor Specific Error Statistics (SSES), as described in Govekar et al. (2022) https://doi.org/10.3390/rs14153785 and Griffin et al. (2017) Appendix at http://imos.org.au/facilities/srs/sstproducts/sstdata0/sstdata-references/, before compositing single swaths from the sensors. Each grid cell contains the 1 night average of all the highest available quality SSTs that overlap with that cell, weighted by the area of overlap. Refer to the IMOS SST products web page at http://imos.org.au/sstproducts.html for further information.",
@@ -208,7 +54,7 @@
     "License": "http://creativecommons.org/licenses/by/4.0/",
     "Resources": [
       {
-        "Description": "Cloud Optimised AODN dataset of IMOS - SRS - SST - L3S - GeoPolar Multi Sensor - 1 day - night time - Australia",
+        "Description": "Cloud Optimised AODN dataset of IMOS - Satellite Remote Sensing - SST - L3S - GeoPolar Multi Sensor - 1 day - night time - Australia",
         "ARN": "arn:aws:s3:::aodn-cloud-optimised/satellite_ghrsst_l3s_1day_nighttime_geopolar_multi_sensor_australia.zarr",
         "Region": "ap-southeast-2",
         "Type": "S3 Bucket"
@@ -217,7 +63,7 @@
     "DataAtWork": {
       "Tutorials": [
         {
-          "Title": "Accessing IMOS - SRS - SST - L3S - GeoPolar Multi Sensor - 1 day - night time - Australia",
+          "Title": "Accessing IMOS - Satellite Remote Sensing - SST - L3S - GeoPolar Multi Sensor - 1 day - night time - Australia",
           "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_ghrsst_l3s_1day_nighttime_geopolar_multi_sensor_australia.ipynb",
           "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_ghrsst_l3s_1day_nighttime_geopolar_multi_sensor_australia.ipynb",
           "AuthorName": "Laurent Besnard",
@@ -233,45 +79,5 @@
       ]
     },
     "Citation": "The citation in a list of references is: \"IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access].\""
-  },
-  "run_settings": {
-    "coiled_cluster_options": {
-      "n_workers": [
-        30,
-        150
-      ],
-      "scheduler_vm_types": "m7i.xlarge",
-      "worker_vm_types": "m7i.2xlarge",
-      "allow_ingress_from": "me",
-      "compute_purchase_option": "spot_with_fallback",
-      "worker_options": {
-        "nthreads": 16,
-        "memory_limit": "64GB"
-      }
-    },
-    "batch_size": 125,
-    "cluster": {
-      "mode": "coiled",
-      "restart_every_path": true
-    },
-    "paths": [
-      {
-        "s3_uri": "s3://imos-data/IMOS/SRS/SST/ghrsst/L3SGM-1d/ngt",
-        "filter": [],
-        "year_range": [
-          2018,
-          2022
-        ]
-      }
-    ],
-    "clear_existing_data": true,
-    "raise_error": false
-  },
-  "schema_transformation": {
-    "global_attributes": {
-      "set": {
-        "title": ""
-      }
-    }
   }
 }
