@@ -1,4 +1,4 @@
-# AODN Cloud Optimised Conversion
+# AODN (Australian Ocean Data Network) Cloud Optimised library
 
 ![Build Status](https://github.com/aodn/aodn_cloud_optimised/actions/workflows/build.yml/badge.svg)
 ![Test Status](https://github.com/aodn/aodn_cloud_optimised/actions/workflows/test-mamba.yml/badge.svg)
@@ -8,8 +8,7 @@
 [![Google Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/aodn/aodn_cloud_optimised/)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/aodn/aodn_cloud_optimised/main?filepath=notebooks)
 
-
-A tool designed to convert IMOS NetCDF and CSV files into Cloud Optimised formats such as Zarr and Parquet
+AODN Cloud Optimised library allows to convert oceanographic datasets from [IMOS (Integrated Marine Observing System)](https://imos.org.au/) / [AODN (Australian Ocean Data Network)](https://portal.aodn.org.au/) into cloud-optimised formats such as [Zarr](https://zarr.readthedocs.io/) (for gridded multidimensional data) and [Parquet](https://parquet.apache.org/docs/) (for tabular data).
 
 ## Documentation
 
@@ -19,25 +18,47 @@ Visit the documentation on [ReadTheDocs](https://aodn-cloud-optimised.readthedoc
 
 ## Key Features
 
-* Conversion of CSV/NetCDF to Cloud Optimised format (Zarr/Parquet)
-  * YAML configuration approach with parent and child YAML configuration if multiple dataset are very similar (i.e. Radar ACORN, GHRSST, see [config](https://github.com/aodn/aodn_cloud_optimised/tree/main/aodn_cloud_optimised/config/dataset))
-  * Generic handlers for most dataset ([GenericParquetHandler](https://github.com/aodn/aodn_cloud_optimised/blob/main/aodn_cloud_optimised/lib/GenericParquetHandler.py), [GenericZarrHandler](https://github.com/aodn/aodn_cloud_optimised/blob/main/aodn_cloud_optimised/lib/GenericZarrHandler.py)).
-  * Specific handlers can be written and inherits methods from a generic handler ([Argo handler](https://github.com/aodn/aodn_cloud_optimised/blob/main/aodn_cloud_optimised/lib/ArgoHandler.py), [Mooring Timseries Handler](https://github.com/aodn/aodn_cloud_optimised/blob/main/aodn_cloud_optimised/lib/AnmnHourlyTsHandler.py))
-* Clustering capability:
-  * Local dask cluster
-  * Remote Coiled cluster
-  * driven by configuration/can be easily overwritten
-  * Zarr: gridded dataset are done in batch and in parallel with xarray.open_mfdataset
-  * Parquet: tabular files are done in batch and in parallel as independent task, done with future
-* Reprocessing:
-  * Zarr,: reprocessing is achieved by writting to specific regions with slices. Non-contigous regions are handled
-  * Parquet: reprocessing is done via pyarrow internal overwritting function, but can also be forced in case an input file has significantly changed
-* Chunking:
-  * Parquet: to facilitate the query of geospatial data, polygon and timestamp slices are created as partitions
-  * Zarr: done via dataset configuration
-* Metadata:
-  * Parquet: Metadata is created as a sidecar _metadata.parquet file
-* Unittesting of module: Very close to integration testing, local cluster is used to create cloud optimised files
+### Data Conversion
+- Convert **CSV** or **NetCDF** (single or multidimensional) to **Zarr** or **Parquet**.
+- **Dataset configuration:** YAML-based configuration with inheritance, allowing similar datasets to share settings.  
+  Example: [Radar ACORN](https://github.com/aodn/aodn_cloud_optimised/tree/main/aodn_cloud_optimised/config/dataset), [GHRSST](https://www.ghrsst.org/).
+- Semi-automatic creation of dataset configuration: [ReadTheDocs guide](https://aodn-cloud-optimised.readthedocs.io/en/latest/development/dataset-configuration.html#create-dataset-configuration-semi-automatic).
+- Generic handlers for standard datasets:  
+  [GenericParquetHandler](https://github.com/aodn/aodn_cloud_optimised/blob/main/aodn_cloud_optimised/lib/GenericParquetHandler.py),  
+  [GenericZarrHandler](https://github.com/aodn/aodn_cloud_optimised/blob/main/aodn_cloud_optimised/lib/GenericZarrHandler.py)
+- Custom handlers can inherit from generic handlers:  
+  [Argo handler](https://github.com/aodn/aodn_cloud_optimised/blob/main/aodn_cloud_optimised/lib/ArgoHandler.py),  
+  [Mooring Timeseries Handler](https://github.com/aodn/aodn_cloud_optimised/blob/main/aodn_cloud_optimised/lib/AnmnHourlyTsHandler.py)
+
+### Clustering & Parallel Processing
+- Supports local **Dask cluster** and remote clusters:
+  - [Coiled](https://aodn-cloud-optimised.readthedocs.io/en/latest/development/dataset-configuration.html#coiled-cluster-configuration)
+  - [EC2](https://aodn-cloud-optimised.readthedocs.io/en/latest/development/dataset-configuration.html#ec2-cluster-configuration)
+  - Fargate cluster
+- Cluster behaviour is configuration-driven and can be easily overridden.
+- Automatic restart of remote cluster upon Dask failure.
+- **Zarr:** Gridded datasets are processed in batch and in parallel using [`xarray.open_mfdataset`](https://xarray.pydata.org/en/stable/generated/xarray.open_mfdataset.html).
+- **Parquet:** Tabular files are processed in batch and in parallel as independent tasks, implemented with `concurrent.futures.Future`.
+- **S3 / S3-Compatible Storage Support:**  
+  Support for AWS S3 and S3-compatible endpoints (e.g., MinIO, LocalStack) with configurable input/output buckets and authentication via `s3fs` and `boto3`. 
+### Reprocessing
+- **Zarr:** Reprocessing is achieved by writing to specific slices, including non-contiguous regions.
+- **Parquet:** Reprocessing uses PyArrow internal overwriting; can also be forced when input files change significantly.
+
+### Chunking & Partitioning
+- Improves performance for querying and parallel processing.
+- **Parquet:** Partitioned by polygon and timestamp slices. [Issue reference](https://github.com/aodn/aodn_cloud_optimised/issues/240)
+- **Zarr:** Chunking is defined in dataset configuration.
+
+### Dynamic Variable Definition
+See [doc](https://aodn-cloud-optimised.readthedocs.io/en/latest/development/dataset-configuration.html#adding-variables-dynamically)
+- Global Attributes -> variable
+- variable attribute -> variable
+- filename part -> variable
+- ...
+  
+### Metadata
+- **Parquet:** Metadata stored as a sidecar `_metadata.parquet` file for faster queries and schema discovery.
 
 
 # Quick Guide
@@ -45,9 +66,8 @@ Visit the documentation on [ReadTheDocs](https://aodn-cloud-optimised.readthedoc
 
 Requirements:
 * Python >= 3.10.14
-* AWS SSO to push files to S3
-* An account on [Coiled](https://cloud.coiled.io/) for remote clustering (Optional)
-
+* AWS SSO configured for pushing files to S3
+* Optional: [Coiled](https://cloud.coiled.io/) account for remote clustering
 
 ### Automatic installation of the latest wheel release
 ```bash
@@ -62,8 +82,8 @@ See [ReadTheDocs - Dev](https://aodn-cloud-optimised.readthedocs.io/en/latest/de
 ## Usage
 See [ReadTheDocs - Usage](https://aodn-cloud-optimised.readthedocs.io/en/latest/usage.html)
 
-## Notebooks
+## Getting Started - Notebooks
 [![Google Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/aodn/aodn_cloud_optimised/)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/aodn/aodn_cloud_optimised/main?filepath=notebooks)
 
-A curated list of Jupyter [Notebooks](https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/) ready to be loaded in Google Colab and Binder. Click on the badge above
+A curated list of Jupyter [Notebooks](https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/) ready to be loaded in Google Colab and Binder for users to play with IMOS/AODN converted to Cloud Optimised dataset. Click on the badge above
