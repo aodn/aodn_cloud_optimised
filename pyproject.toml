@@ -31,12 +31,12 @@ dependencies = [
   "h5py==3.11.0",
 
   "h5netcdf>=1.3.0",
-  "scipy>=1.15.2",
+  "scipy>=1.16.3",
   "boto3>=1.34.162",
   "pyarrow==22.0.0",
   "rechunker>=0.5.2",
-  "s3fs>=2025.5.1",
-  "fsspec==2025.5.1",
+  "s3fs>=2025.12.0",
+  "fsspec==2025.12.0",
   "shapely>=2.0.4",
 
   # Versions post 2025.6.1 are broken because of https://github.com/pydata/xarray/issues/10712.
@@ -46,11 +46,11 @@ dependencies = [
   # "xarray[complete]==2025.6.1",  # Alternative official release (broken)
 
   "cftime>=1.6.3",
-  "zarr==2.18.7",
+  "zarr==2.18.7",  # pin because of https://github.com/dask/distributed/issues/9163#issuecomment-3663673542
   "geopandas>=0.14.4",
   "coiled>=1.90.4",
-  "dask-cloudprovider>=2024.9.1",
-  "dask>=2025.3.0",
+  "dask-cloudprovider>=2025.9.0",
+  "dask>=2025.12.0",
   "dask-expr>=2.0.0",             # needs to be added for coiled otherwise an old version is used and not updated
   "colorama>=0.4.6",
   "s3path>=0.5.7",
@@ -159,7 +159,10 @@ cloud_optimised_satellite_ghrsst_l3s_1day_daynighttime_single_sensor_southernoce
 cloud_optimised_satellite_ghrsst_l3s_1day_daytime_multi_sensor_australia = "aodn_cloud_optimised.bin.satellite_ghrsst_l3s_1day_daytime_multi_sensor_australia:main"
 cloud_optimised_satellite_ghrsst_l3s_1day_nighttime_geopolar_multi_sensor_australia = "aodn_cloud_optimised.bin.satellite_ghrsst_l3s_1day_nighttime_geopolar_multi_sensor_australia:main"
 cloud_optimised_satellite_ghrsst_l3s_1day_nighttime_multi_sensor_australia = "aodn_cloud_optimised.bin.satellite_ghrsst_l3s_1day_nighttime_multi_sensor_australia:main"
+cloud_optimised_satellite_ghrsst_l3s_1month_daynighttime_multi_sensor_australia = "aodn_cloud_optimised.bin.satellite_ghrsst_l3s_1month_daynighttime_multi_sensor_australia:main"
+cloud_optimised_satellite_ghrsst_l3s_1month_daytime_multi_sensor_australia = "aodn_cloud_optimised.bin.satellite_ghrsst_l3s_1month_daytime_multi_sensor_australia:main"
 cloud_optimised_satellite_ghrsst_l3s_1month_daytime_single_sensor_australia = "aodn_cloud_optimised.bin.satellite_ghrsst_l3s_1month_daytime_single_sensor_australia:main"
+cloud_optimised_satellite_ghrsst_l3s_1month_nighttime_multi_sensor_australia = "aodn_cloud_optimised.bin.satellite_ghrsst_l3s_1month_nighttime_multi_sensor_australia:main"
 cloud_optimised_satellite_ghrsst_l3s_3day_daynighttime_multi_sensor_australia = "aodn_cloud_optimised.bin.satellite_ghrsst_l3s_3day_daynighttime_multi_sensor_australia:main"
 cloud_optimised_satellite_ghrsst_l3s_3day_daynighttime_single_sensor_australia = "aodn_cloud_optimised.bin.satellite_ghrsst_l3s_3day_daynighttime_single_sensor_australia:main"
 cloud_optimised_satellite_ghrsst_l3s_3day_daytime_multi_sensor_australia = "aodn_cloud_optimised.bin.satellite_ghrsst_l3s_3day_daytime_multi_sensor_australia:main"
