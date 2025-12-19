@@ -564,6 +564,8 @@ def _write_nullified_dataset(ds, output_path):
     ds_null = ds.copy()
     encoding = {}
 
+    ds_null.attrs = _clean_netcdf_attrs(ds_null.attrs)
+
     for var in ds_null.data_vars:
         data = ds_null[var].data
         dtype = data.dtype
@@ -583,6 +585,30 @@ def _write_nullified_dataset(ds, output_path):
             encoding[var] = {"zlib": True, "complevel": 4}
 
     ds_null.to_netcdf(output_path, encoding=encoding, engine="netcdf4")
+
+
+def _clean_netcdf_attrs(attrs: dict) -> dict:
+    """Remove or fix attributes that cannot be written by netCDF4."""
+    cleaned = {}
+
+    for k, v in attrs.items():
+        if v is None:
+            continue
+
+        if isinstance(v, bytes):
+            try:
+                cleaned[k] = v.decode("utf-8", errors="replace")
+            except Exception:
+                continue
+
+        elif isinstance(v, str):
+            # Remove UTF-16 surrogate code points explicitly
+            cleaned[k] = v.encode("utf-8", errors="replace").decode("utf-8")
+
+        else:
+            cleaned[k] = v
+
+    return cleaned
 
 
 def convert_pandas_csv_config_to_polars(pandas_config: dict) -> dict:
