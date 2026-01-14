@@ -38,28 +38,42 @@
   "metadata_uuid": "e41efa35-03f0-4dea-be98-2a69e46b510b",
   "schema": {
     "country": {
-      "type": "string"
+      "type": "string",
+      "long_name": "country where the survey was conducted"
     },
     "area": {
-      "type": "string"
+      "type": "string",
+      "long_name": "state/territory where the survey was conducted"
     },
     "location": {
-      "type": "string"
+      "type": "string",
+      "long_name": "city/council where the survey was conducted"
     },
     "site_code": {
-      "type": "string"
+      "type": "string",
+      "long_name": "code for the survey site"
     },
     "site_name": {
-      "type": "string"
+      "type": "string",
+      "long_name": "name of the survey site"
     },
     "old_site_codes": {
-      "type": "string"
+      "type": "string",
+      "long_name": "Previous site codes associated with this site"
     },
     "latitude": {
-      "type": "float32"
+      "type": "float32",
+      "standard_name": "latitude",
+      "long_name": "latitude",
+      "units": "degrees_north",
+      "reference_datum": "geographical coordinates, WGS84 projection"
     },
     "longitude": {
-      "type": "float32"
+      "type": "float32",
+      "standard_name": "longitude",
+      "long_name": "longitude of the site",
+      "units": "degree_east",
+      "reference_datum": "geographical coordinates, WGS84 projection"
     },
     "realm": {
       "type": "string",
@@ -81,7 +95,8 @@
       "long_name": "Monitoring programs surveying this site"
     },
     "geom": {
-      "type": "string"
+      "type": "string",
+      "long_name": "geometry of the observation point"
     }
   },
   "aws_opendata_registry": {
