@@ -62,19 +62,23 @@
       "type": "float32"
     },
     "realm": {
-      "type": "string"
+      "type": "string",
+      "long_name": "Marine Ecoregions of the World (MEOW) Realm"
     },
     "province": {
-      "type": "string"
+      "type": "string",
+      "long_name": "Marine Ecoregions of the World (MEOW) Province"
     },
     "ecoregion": {
-      "type": "string"
+      "type": "string",
+      "long_name": "Marine Ecoregions of the World (MEOW) Ecoregion"
     },
     "lat_zone": {
       "type": "string"
     },
     "programs": {
-      "type": "string"
+      "type": "string",
+      "long_name": "Monitoring programs surveying this site"
     },
     "geom": {
       "type": "string"

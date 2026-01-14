@@ -68,16 +68,21 @@
       "type": "string"
     },
     "latest_surveydate_for_site": {
-      "type": "bool"
+      "type": "bool",
+      "long_name": "Latest survey date for the site",
+      "units": "local date"
     },
     "has_pq_scores_in_db": {
-      "type": "bool"
+      "type": "bool",
+      "long_name": "Survey has photoquadrat scores in database"
     },
     "has_rugosity_scores_in_db": {
-      "type": "bool"
+      "type": "bool",
+      "long_name": "Survey has rugosity scores in database"
     },
     "has_pqs_catalogued_in_db": {
-      "type": "bool"
+      "type": "bool",
+      "long_name": "Survey has photoquadrat catalogued in database"
     },
     "visibility": {
       "type": "float32"
@@ -107,13 +112,16 @@
       "type": "string"
     },
     "pq_zip_url": {
-      "type": "string"
+      "type": "string",
+      "long_name": "URL to download photoquadrat zip file"
     },
     "old_site_codes": {
-      "type": "string"
+      "type": "string",
+      "long_name": "Previous site codes associated with this site"
     },
     "methods": {
-      "type": "string"
+      "type": "string",
+      "long_name": "List of survey methods done during the survey"
     },
     "geom": {
       "type": "string"
