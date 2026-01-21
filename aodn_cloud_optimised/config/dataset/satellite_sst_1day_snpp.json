@@ -1,0 +1,115 @@
+{
+  "dataset_name": "satellite_sst_1day_snpp",
+  "logger_name": "satellite_sst_1day_snpp",
+  "parent_config": "satellite_ocean_colour_1day_aqua_main.json",
+  "cloud_optimised_format": "zarr",
+  "run_settings": {
+    "paths": [
+      {
+        "type": "files",
+        "s3_uri": "s3://imos-data/IMOS/SRS/OC/gridded/snpp/P1D/",
+        "filter": [
+          ".*sst\\.nc$"
+        ],
+        "year_range": [
+          2022,
+          2026
+        ]
+      }
+    ],
+    "cluster": {
+      "mode": "coiled",
+      "restart_every_path": false
+    },
+    "clear_existing_data": true,
+    "raise_error": false,
+    "coiled_cluster_options": {
+      "n_workers": [
+        25,
+        100
+      ],
+      "scheduler_vm_types": "m7i-flex.large",
+      "worker_vm_types": "m7i-flex.large",
+      "allow_ingress_from": "me",
+      "compute_purchase_option": "spot_with_fallback",
+      "worker_options": {
+        "nthreads": 1,
+        "memory_limit": "32GB"
+      }
+    },
+    "batch_size": 60
+  },
+  "metadata_uuid": "8e00907f-716d-4080-b212-534fcd78a602",
+  "schema": {
+    "time": {
+      "type": "timestamp[ns]",
+      "long_name": "time",
+      "standard_name": "time",
+      "axis": "T"
+    },
+    "latitude": {
+      "type": "double",
+      "long_name": "latitude",
+      "standard_name": "latitude",
+      "units": "degrees_north",
+      "axis": "Y"
+    },
+    "longitude": {
+      "type": "double",
+      "long_name": "longitude",
+      "standard_name": "longitude",
+      "units": "degrees_east",
+      "axis": "X"
+    },
+    "sst": {
+      "type": "float",
+      "dims": [
+        "time",
+        "latitude",
+        "longitude"
+      ],
+      "long_name": "Sea Surface Temperature",
+      "flag_applied": "HISATZEN HIGLINT LAND CLDICE NAVFAIL",
+      "units": "Celsius"
+    }
+  },
+  "aws_opendata_registry": {
+    "Name": "IMOS - Satellite Remote Sensing - SNPP - 01 day - Ocean Colour - SST",
+    "Description": "The SNPP/VIIRS Sea Surface Temperature product is derived from VIIRS 11 and 12 micron spectral bands according to the algorithm described at https://oceancolor.gsfc.nasa.gov/atbd/sst/. This is not a GHRSST-quality product, and demanding applications requiring a high standard of accuracy should consider using one of the IMOS GHRSST products in preference. The VIIRS SST is nevertheless useful primarily because it is measured at the same time as the water leaving radiances used to derive the optical properties (eg chl). This means it is both contemporaneous, and has a matching cloud mask, so it is valuable for applications that seek to combine both SST and optical properties (ie Net Primary Productivity variants). The data set provided here matches the Chl_oci product in temporal and spatial extent.\n\nThis SRS dataset covers waters around Australia.",
+    "Documentation": "https://catalogue-imos.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/8e00907f-716d-4080-b212-534fcd78a602",
+    "Contact": "info@aodn.org.au",
+    "ManagedBy": "AODN",
+    "UpdateFrequency": "As Needed",
+    "Tags": [
+      "FILL UP MANUALLY - CHECK DOCUMENTATION"
+    ],
+    "License": "http://creativecommons.org/licenses/by/4.0/",
+    "Resources": [
+      {
+        "Description": "Cloud Optimised AODN dataset of IMOS - Satellite Remote Sensing - SNPP - 01 day - Ocean Colour - SST",
+        "ARN": "arn:aws:s3:::aodn-cloud-optimised/satellite_sst_1day_snpp.zarr",
+        "Region": "ap-southeast-2",
+        "Type": "S3 Bucket"
+      }
+    ],
+    "DataAtWork": {
+      "Tutorials": [
+        {
+          "Title": "Accessing IMOS - Satellite Remote Sensing - SNPP - 01 day - Ocean Colour - SST",
+          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_sst_1day_snpp.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_sst_1day_snpp.ipynb",
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
+        },
+        {
+          "Title": "Accessing and search for any AODN dataset",
+          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
+        }
+      ]
+    },
+    "Citation": "IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access]"
+  }
+}
