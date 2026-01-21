@@ -9,7 +9,7 @@
         "type": "files",
         "s3_uri": "s3://imos-data/IMOS/SRS/OC/gridded/snpp/P1D/",
         "filter": [
-          ".*sst\\.nc$"
+          ".*\\.aust\\.sst\\.nc"
         ],
         "year_range": [
           2022,
@@ -40,6 +40,14 @@
     "batch_size": 60
   },
   "metadata_uuid": "8e00907f-716d-4080-b212-534fcd78a602",
+  "schema_transformation": {
+    "global_attributes": {
+      "set": {
+        "title": ""
+      }
+    },
+    "var_template_shape": "sst"
+  },
   "schema": {
     "time": {
       "type": "timestamp[ns]",

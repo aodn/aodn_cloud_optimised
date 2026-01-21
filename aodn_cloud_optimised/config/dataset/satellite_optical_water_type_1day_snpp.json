@@ -40,6 +40,14 @@
     "batch_size": 60
   },
   "metadata_uuid": "8f44f09a-07a3-4f9b-ba26-2fc4983fef69",
+  "schema_transformation": {
+    "global_attributes": {
+      "set": {
+        "title": ""
+      }
+    },
+    "var_template_shape": "owtd_csiro"
+  },
   "schema": {
     "time": {
       "type": "timestamp[ns]",

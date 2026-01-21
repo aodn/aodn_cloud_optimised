@@ -9,7 +9,7 @@
         "type": "files",
         "s3_uri": "s3://imos-data/IMOS/SRS/OC/gridded/aqua/P1D/",
         "filter": [
-          ".*sst\\.nc$"
+          ".*\\.aust\\.sst\\.nc"
         ],
         "year_range": [
           2002,
@@ -40,6 +40,14 @@
     "batch_size": 60
   },
   "metadata_uuid": "468f550b-bbd8-42b1-91b5-313d5898d9e6",
+  "schema_transformation": {
+    "global_attributes": {
+      "set": {
+        "title": ""
+      }
+    },
+    "var_template_shape": "sst"
+  },
   "schema": {
     "time": {
       "type": "timestamp[ns]",
