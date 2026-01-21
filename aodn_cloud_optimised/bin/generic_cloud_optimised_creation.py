@@ -88,9 +88,9 @@ class PathConfig(BaseModel):
         default=None,
         description="Partitioning scheme, only valid when type='parquet'. Currently supports 'hive'.",
     )
-    filter: List[str] = Field(
+    filter: Union[str, List[str]] = Field(
         default_factory=list,
-        description="List of regular expression patterns used to filter matching files.",
+        description="List of regex pattern used to filter matching files. Must contain None or one pattern only.",
     )
     year_range: Optional[List[int]] = Field(
         default=None,
@@ -154,13 +154,35 @@ class PathConfig(BaseModel):
 
         return v
 
+    @field_validator("filter", mode="before")
+    @classmethod
+    def extract_string_from_filter(cls, v):
+        # 1. Handle List input: check length and extract the string
+        if isinstance(v, list):
+            if len(v) > 1:
+                raise ValueError(
+                    f"Filter list must contain at most one element, got {len(v)}"
+                )
+            return v[0] if v else ""
+
+        # 2. Handle None/Empty
+        if v is None:
+            return ""
+
+        # 3. If it's already a string, just pass it through
+        return v
+
     @field_validator("filter", mode="after")
-    def validate_regex(cls, v):
-        for pattern in v:
-            try:
-                re.compile(pattern)
-            except re.error as e:
-                raise ValueError(f"Invalid regex: {pattern} ({e})")
+    @classmethod
+    def validate_regex(cls, v: str) -> str:
+        # Now 'v' is guaranteed to be a string
+        if not v:
+            return v
+
+        try:
+            re.compile(v)
+        except re.error as e:
+            raise ValueError(f"Invalid regex: {v} ({e})")
         return v
 
     @model_validator(mode="after")
