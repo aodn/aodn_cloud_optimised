@@ -19,7 +19,7 @@
     ],
     "cluster": {
       "mode": "coiled",
-      "restart_every_path": false
+      "restart_every_path": true
     },
     "clear_existing_data": true,
     "raise_error": false,
