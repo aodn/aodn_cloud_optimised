@@ -192,14 +192,18 @@
     }
   },
   "aws_opendata_registry": {
-    "Name": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+    "Name": "National Reef Monitoring Network - Global benthic cover data (photoquadrat image annotations)",
     "Description": "FILL UP MANUALLY - CHECK DOCUMENTATION",
     "Documentation": "FILL UP MANUALLY - CHECK DOCUMENTATION",
     "Contact": "FILL UP MANUALLY - CHECK DOCUMENTATION",
     "ManagedBy": "FILL UP MANUALLY - CHECK DOCUMENTATION",
     "UpdateFrequency": "FILL UP MANUALLY - CHECK DOCUMENTATION",
     "Tags": [
-      "FILL UP MANUALLY - CHECK DOCUMENTATION"
+      "oceans",
+      "biology",
+      "coral reef",
+      "ecosystems",
+      "geospatial"
     ],
     "License": "FILL UP MANUALLY - CHECK DOCUMENTATION",
     "Resources": [
@@ -238,7 +242,8 @@
           "AuthorName": "FILL UP MANUALLY - CHECK DOCUMENTATION"
         }
       ]
-    }
+    },
+    "Citation": "The citation in a list of references is: \"Reef Life Survey (RLS); Integrated Marine Observing System (IMOS), [year-of-data-download], IMOS - National Reef Monitoring Network Sub-Facility - Global benthic cover data (photoquadrat image annotations), [data-access-URL], accessed [date-of-access].\""
   },
   "schema_transformation": {
     "drop_variables": [],
