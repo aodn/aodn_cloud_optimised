@@ -1,0 +1,213 @@
+{
+  "dataset_name": "amsa_vessel_tracking",
+  "logger_name": "amsa_vessel_tracking",
+  "cloud_optimised_format": "parquet",
+  "run_settings": {
+    "paths": [
+      {
+        "type": "parquet",
+        "partitioning": null,
+        "s3_uri": "s3://aodn-dataflow-dev/karishma.khanna/AMSA/Optimised/"
+      }
+    ],
+    "cluster": {
+      "mode": "coiled",
+      "restart_every_path": false
+    },
+    "clear_existing_data": true,
+    "raise_error": false,
+    "coiled_cluster_options": {
+      "n_workers": [
+        1,
+        20
+      ],
+      "scheduler_vm_types": "m7i-flex.large",
+      "worker_vm_types": "m7i-flex.large",
+      "allow_ingress_from": "me",
+      "compute_purchase_option": "spot_with_fallback",
+      "worker_options": {
+        "nthreads": 4,
+        "memory_limit": "32GB"
+      }
+    },
+    "batch_size": 1,
+    "force_previous_parquet_deletion": true
+  },
+  "metadata_uuid": null,
+  "schema": {
+    "CRAFT_ID": {
+      "type": "int64",
+      "nullable": "True",
+      "long_name": "vessel_identifier"
+    },
+    "LAT": {
+      "type": "double",
+      "nullable": "True",
+      "standard_name": "latitude"
+    },
+    "LON": {
+      "type": "double",
+      "nullable": "True",
+      "standard_name": "longitude"
+    },
+    "TIMESTAMP": {
+      "type": "timestamp[ms, tz=UTC]",
+      "nullable": "True",
+      "long_name": "vessel_position_report_time"
+    },
+    "COURSE": {
+      "type": "double",
+      "nullable": "True",
+      "long_name": "vessel_course_over_ground"
+    },
+    "SPEED": {
+      "type": "double",
+      "nullable": "True",
+      "long_name": "vessel_speed_over_ground"
+    },
+    "TYPE": {
+      "type": "large_string",
+      "nullable": "True",
+      "long_name": "vessel_type"
+    },
+    "SUBTYPE": {
+      "type": "large_string",
+      "nullable": "True",
+      "long_name": "vessel_subtype"
+    },
+    "LENGTH": {
+      "type": "int16",
+      "nullable": "True",
+      "long_name": "vessel_length"
+    },
+    "BEAM": {
+      "type": "int16",
+      "nullable": "True",
+      "long_name": "vessel_beam"
+    },
+    "DRAUGHT": {
+      "type": "double",
+      "nullable": "True",
+      "long_name": "vessel_draught"
+    },
+    "H3_INDEX": {
+      "type": "large_string",
+      "nullable": "True",
+      "long_name": "h3_spatial_index"
+    },
+    "SOURCE_FILE_NAME": {
+      "type": "large_string",
+      "nullable": "True",
+      "long_name": "input_file_name"
+    },
+    "PROCESSED_DATE": {
+      "type": "timestamp[ms, tz=UTC]",
+      "nullable": "True",
+      "long_name": "data_processing_date"
+    }
+  },
+  "aws_opendata_registry": {
+    "Name": "AMSA Vessel Tracking Data",
+    "Description": "Vessel tracking data from the Australian Maritime Safety Authority (AMSA). This dataset contains Automatic Identification System (AIS) data showing the location, speed, and course of vessels within the Australian Search and Rescue Region. The data has been cloud-optimised (Parquet) for efficient analysis.",
+    "Documentation": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+    "Contact": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+    "ManagedBy": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+    "UpdateFrequency": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+    "Tags": [
+      "FILL UP MANUALLY - CHECK DOCUMENTATION"
+    ],
+    "License": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+    "Resources": [
+      {
+        "Description": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+        "ARN": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+        "Region": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+        "Type": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+        "Explore": [
+          "FILL UP MANUALLY - CHECK DOCUMENTATION"
+        ]
+      }
+    ],
+    "DataAtWork": {
+      "Tutorials": [
+        {
+          "Title": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+          "URL": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+          "Services": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+          "AuthorName": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+          "AuthorURL": "FILL UP MANUALLY - CHECK DOCUMENTATION"
+        }
+      ],
+      "Tools & Applications": [
+        {
+          "Title": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+          "URL": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+          "AuthorName": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+          "AuthorURL": "FILL UP MANUALLY - CHECK DOCUMENTATION"
+        }
+      ],
+      "Publications": [
+        {
+          "Title": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+          "URL": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+          "AuthorName": "FILL UP MANUALLY - CHECK DOCUMENTATION"
+        }
+      ]
+    }
+  },
+  "schema_transformation": {
+    "drop_variables": [],
+    "add_variables": {
+      "filename": {
+        "source": "@filename",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "long_name": "Filename of the source file"
+        }
+      },
+      "timestamp": {
+        "source": "@partitioning:time_extent",
+        "schema": {
+          "type": "int64",
+          "units": "1",
+          "long_name": "Partition timestamp"
+        }
+      },
+      "polygon": {
+        "source": "@partitioning:spatial_extent",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "long_name": "Spatial partition polygon"
+        }
+      }
+    },
+    "partitioning": [
+      {
+        "source_variable": "timestamp",
+        "type": "time_extent",
+        "time_extent": {
+          "time_varname": "TIMESTAMP",
+          "partition_period": "M"
+        }
+      },
+      {
+        "source_variable": "polygon",
+        "type": "spatial_extent",
+        "spatial_extent": {
+          "lat_varname": "LAT",
+          "lon_varname": "LON",
+          "spatial_resolution": 10
+        }
+      }
+    ],
+    "global_attributes": {
+      "delete": [],
+      "set": {
+        "title": "AMSA Vessel Tracking Data - Cloud Optimised",
+        "principal_investigator": "Australian Maritime Safety Authority (AMSA)"
+      }
+    }
+  }
+}

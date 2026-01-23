@@ -56,6 +56,7 @@ More information available [here](https://github.com/conda-forge/miniforge?tab=r
 
 # AODN Notebooks directly loadable into Google Colab
 
+- [amsa_vessel_tracking.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/amsa_vessel_tracking.ipynb)
 - [animal_acoustic_tracking_delayed_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/animal_acoustic_tracking_delayed_qc.ipynb)
 - [animal_ctd_satellite_relay_tagging_delayed_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/animal_ctd_satellite_relay_tagging_delayed_qc.ipynb)
 - [argo.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/argo.ipynb)
