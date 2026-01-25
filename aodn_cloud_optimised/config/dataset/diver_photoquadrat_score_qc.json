@@ -5,7 +5,7 @@
   "run_settings": {
     "paths": [
       {
-        "s3_uri": "s3://aodn-processing/stored/nrmn/public/ep_m13_pq_scores.parquet",
+        "s3_uri": "s3://data-uplift-public/stored/datauplift/nrmn/public/ep_m13_pq_scores.parquet",
         "type": "parquet",
         "year_range": []
       }
@@ -159,14 +159,14 @@
       "col_tags": "annotation|label|tag"
     },
     "label_count": {
-      "type": "double",
+      "type": "int64",
       "nullable": "True",
       "long_name": "Count of organisms",
       "standard_name": "count",
       "col_tags": "annotation|coverage"
     },
     "dataset_total_label_count": {
-      "type": "double",
+      "type": "int64",
       "nullable": "True",
       "long_name": "Label Count",
       "col_tags": "annotation|coverage"
@@ -180,7 +180,7 @@
       "col_tags": "annotation|coverage"
     },
     "sq_annotation_set_id": {
-      "type": "double",
+      "type": "int64",
       "nullable": "True",
       "long_name": "SQ Annotation Set Identifier",
       "col_tags": "squidle|survey metadata"
