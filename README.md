@@ -20,14 +20,14 @@ Visit the documentation on [ReadTheDocs](https://aodn-cloud-optimised.readthedoc
 
 ### Data Conversion
 - Convert **CSV** or **NetCDF** (single or multidimensional) to **Zarr** or **Parquet**.
-- **Dataset configuration:** YAML-based configuration with inheritance, allowing similar datasets to share settings.  
+- **Dataset configuration:** YAML-based configuration with inheritance, allowing similar datasets to share settings.
   Example: [Radar ACORN](https://github.com/aodn/aodn_cloud_optimised/tree/main/aodn_cloud_optimised/config/dataset), [GHRSST](https://www.ghrsst.org/).
 - Semi-automatic creation of dataset configuration: [ReadTheDocs guide](https://aodn-cloud-optimised.readthedocs.io/en/latest/development/dataset-configuration.html#create-dataset-configuration-semi-automatic).
-- Generic handlers for standard datasets:  
-  [GenericParquetHandler](https://github.com/aodn/aodn_cloud_optimised/blob/main/aodn_cloud_optimised/lib/GenericParquetHandler.py),  
+- Generic handlers for standard datasets:
+  [GenericParquetHandler](https://github.com/aodn/aodn_cloud_optimised/blob/main/aodn_cloud_optimised/lib/GenericParquetHandler.py),
   [GenericZarrHandler](https://github.com/aodn/aodn_cloud_optimised/blob/main/aodn_cloud_optimised/lib/GenericZarrHandler.py)
-- Custom handlers can inherit from generic handlers:  
-  [Argo handler](https://github.com/aodn/aodn_cloud_optimised/blob/main/aodn_cloud_optimised/lib/ArgoHandler.py),  
+- Custom handlers can inherit from generic handlers:
+  [Argo handler](https://github.com/aodn/aodn_cloud_optimised/blob/main/aodn_cloud_optimised/lib/ArgoHandler.py),
   [Mooring Timeseries Handler](https://github.com/aodn/aodn_cloud_optimised/blob/main/aodn_cloud_optimised/lib/AnmnHourlyTsHandler.py)
 
 ### Clustering & Parallel Processing
@@ -39,8 +39,8 @@ Visit the documentation on [ReadTheDocs](https://aodn-cloud-optimised.readthedoc
 - Automatic restart of remote cluster upon Dask failure.
 - **Zarr:** Gridded datasets are processed in batch and in parallel using [`xarray.open_mfdataset`](https://xarray.pydata.org/en/stable/generated/xarray.open_mfdataset.html).
 - **Parquet:** Tabular files are processed in batch and in parallel as independent tasks, implemented with `concurrent.futures.Future`.
-- **S3 / S3-Compatible Storage Support:**  
-  Support for AWS S3 and S3-compatible endpoints (e.g., MinIO, LocalStack) with configurable input/output buckets and authentication via `s3fs` and `boto3`. 
+- **S3 / S3-Compatible Storage Support:**
+  Support for AWS S3 and S3-compatible endpoints (e.g., MinIO, LocalStack) with configurable input/output buckets and authentication via `s3fs` and `boto3`.
 ### Reprocessing
 - **Zarr:** Reprocessing is achieved by writing to specific slices, including non-contiguous regions.
 - **Parquet:** Reprocessing uses PyArrow internal overwriting; can also be forced when input files change significantly.
@@ -56,7 +56,7 @@ See [doc](https://aodn-cloud-optimised.readthedocs.io/en/latest/development/data
 - variable attribute -> variable
 - filename part -> variable
 - ...
-  
+
 ### Metadata
 - **Parquet:** Metadata stored as a sidecar `_metadata.parquet` file for faster queries and schema discovery.
 
