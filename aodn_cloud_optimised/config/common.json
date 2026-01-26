@@ -1,7 +1,7 @@
 {
-  "BUCKET_RAW_DEFAULT": "data-uplift-public",
-  "BUCKET_OPTIMISED_DEFAULT": "data-uplift-public",
-  "ROOT_PREFIX_CLOUD_OPTIMISED_PATH": "cloud_optimised_testing",
+  "BUCKET_RAW_DEFAULT": "imos-data",
+  "BUCKET_OPTIMISED_DEFAULT": "aodn-cloud-optimised",
+  "ROOT_PREFIX_CLOUD_OPTIMISED_PATH": "",
   "BUCKET_INTEGRATION_TESTING_RAW_DEFAULT": "imos-data",
   "BUCKET_INTEGRATION_TESTING_OPTIMISED_DEFAULT": "imos-data-lab-optimised",
   "ROOT_PREFIX_CLOUD_OPTIMISED_INTEGRATION_TESTING_PATH": ""
