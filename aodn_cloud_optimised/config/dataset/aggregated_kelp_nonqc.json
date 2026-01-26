@@ -7,7 +7,7 @@
       {
         "type": "parquet",
         "partitioning": null,
-        "s3_uri": "s3://data-uplift-public/stored/datauplift/kelp/kelp.parquet"
+        "s3_uri": "s3://aodn-processing/stored/datauplift/kelp/kelp.parquet"
       }
     ],
     "cluster": {

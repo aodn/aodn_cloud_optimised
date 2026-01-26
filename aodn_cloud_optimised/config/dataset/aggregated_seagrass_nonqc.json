@@ -7,7 +7,7 @@
       {
         "type": "parquet",
         "partitioning": null,
-        "s3_uri": "s3://data-uplift-public/stored/datauplift/seagrass/seagrass.parquet"
+        "s3_uri": "s3://aodn-processing/stored/datauplift/seagrass/seagrass.parquet"
       }
     ],
     "cluster": {
