@@ -226,6 +226,11 @@
           "spatial_resolution": 90
         }
       }
-    ]
+    ],
+    "global_attributes": {
+      "set": {
+        "title": "IMOS - Aggregated Seagrass Data Product"
+      }
+    }
   }
 }
