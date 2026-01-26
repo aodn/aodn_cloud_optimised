@@ -16,7 +16,7 @@
     },
     "clear_existing_data": true,
     "raise_error": false,
-    "batch_size": 5,
+    "batch_size": 4,
     "force_previous_parquet_deletion": false
   },
   "metadata_uuid": "0a65be6d-1c76-49ac-a151-80acf123612c",
