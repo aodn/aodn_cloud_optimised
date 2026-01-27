@@ -95,6 +95,9 @@ tqdm = ">=4.67.1"
 
 [project.scripts]
 #cloud_optimised_srs_oc_ljco_to_parquet = "aodn_cloud_optimised.bin.srs_oc_ljco_to_parquet:main"
+cloud_optimised_aggregated_kelp_nonqc = "aodn_cloud_optimised.bin.aggregated_kelp_nonqc:main"
+cloud_optimised_aggregated_seabird_nonqc = "aodn_cloud_optimised.bin.aggregated_seabird_nonqc:main"
+cloud_optimised_aggregated_seagrass_nonqc = "aodn_cloud_optimised.bin.aggregated_seagrass_nonqc:main"
 cloud_optimised_amsa_vessel_tracking = "aodn_cloud_optimised.bin.amsa_vessel_tracking:main"
 cloud_optimised_animal_acoustic_tracking_delayed_qc = "aodn_cloud_optimised.bin.animal_acoustic_tracking_delayed_qc:main"
 cloud_optimised_animal_ctd_satellite_relay_tagging_delayed_qc = "aodn_cloud_optimised.bin.animal_ctd_satellite_relay_tagging_delayed_qc:main"

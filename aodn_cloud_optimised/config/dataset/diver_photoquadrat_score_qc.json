@@ -5,8 +5,8 @@
   "run_settings": {
     "paths": [
       {
-        "type": "parquet",
-        "s3_uri": "s3://data-uplift-public/products/reef_life_survey/public_reef_life_survey_2025-11-04T03:14:37.parquet"
+        "s3_uri": "s3://aodn-processing/stored/datauplift/nrmn/public/ep_m13_pq_scores.parquet",
+        "type": "parquet"
       }
     ],
     "cluster": {
@@ -15,7 +15,7 @@
     },
     "clear_existing_data": true,
     "raise_error": false,
-    "batch_size": 5,
+    "batch_size": 4,
     "force_previous_parquet_deletion": false
   },
   "metadata_uuid": "0a65be6d-1c76-49ac-a151-80acf123612c",
@@ -158,14 +158,14 @@
       "col_tags": "annotation|label|tag"
     },
     "label_count": {
-      "type": "double",
+      "type": "int64",
       "nullable": "True",
       "long_name": "Count of organisms",
       "standard_name": "count",
       "col_tags": "annotation|coverage"
     },
     "dataset_total_label_count": {
-      "type": "double",
+      "type": "int64",
       "nullable": "True",
       "long_name": "Label Count",
       "col_tags": "annotation|coverage"
@@ -179,12 +179,12 @@
       "col_tags": "annotation|coverage"
     },
     "sq_annotation_set_id": {
-      "type": "double",
+      "type": "int64",
       "nullable": "True",
       "long_name": "SQ Annotation Set Identifier",
       "col_tags": "squidle|survey metadata"
     },
-    "method": {
+    "annotation_method": {
       "type": "string",
       "nullable": "True",
       "long_name": "Annotation Method",
@@ -274,7 +274,7 @@
         "type": "time_extent",
         "time_extent": {
           "time_varname": "date",
-          "partition_period": "M"
+          "partition_period": "Y"
         }
       },
       {
@@ -283,18 +283,11 @@
         "spatial_extent": {
           "lat_varname": "latitude",
           "lon_varname": "longitude",
-          "spatial_resolution": 5
+          "spatial_resolution": 90
         }
       }
     ],
     "global_attributes": {
-      "delete": [
-        "geospatial_lat_max",
-        "geospatial_lat_min",
-        "geospatial_lon_max",
-        "geospatial_lon_min",
-        "date_created"
-      ],
       "set": {
         "title": "IMOS - National Reef Monitoring Network Sub-Facility - Photo Quadrat Scores"
       }

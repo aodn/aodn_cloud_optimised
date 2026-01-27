@@ -1,0 +1,203 @@
+{
+  "dataset_name": "aggregated_kelp_nonqc",
+  "logger_name": "aggregated_kelp_nonqc",
+  "cloud_optimised_format": "parquet",
+  "run_settings": {
+    "paths": [
+      {
+        "type": "parquet",
+        "partitioning": null,
+        "s3_uri": "s3://aodn-processing/stored/datauplift/kelp/kelp.parquet"
+      }
+    ],
+    "cluster": {
+      "mode": "local",
+      "restart_every_path": false
+    },
+    "clear_existing_data": true,
+    "raise_error": false,
+    "batch_size": 4,
+    "force_previous_parquet_deletion": false
+  },
+  "metadata_uuid": null,
+  "schema": {
+    "occurrenceID": {
+      "type": "string",
+      "nullable": "False"
+    },
+    "eventDate": {
+      "type": "timestamp[ms]",
+      "nullable": "False"
+    },
+    "decimalLatitude": {
+      "type": "double",
+      "nullable": "False"
+    },
+    "decimalLongitude": {
+      "type": "double",
+      "nullable": "False"
+    },
+    "label.id": {
+      "type": "int64",
+      "nullable": "True"
+    },
+    "verbatimIdentification": {
+      "type": "string",
+      "nullable": "False"
+    },
+    "occurrenceStatus": {
+      "type": "string",
+      "nullable": "False"
+    },
+    "basisOfRecord": {
+      "type": "string",
+      "nullable": "False"
+    },
+    "associatedMedia": {
+      "type": "string",
+      "nullable": "False"
+    },
+    "scientificName": {
+      "type": "string",
+      "nullable": "False"
+    },
+    "scientificNameID": {
+      "type": "string",
+      "nullable": "False"
+    },
+    "taxonRank": {
+      "type": "string",
+      "nullable": "False"
+    },
+    "kingdom": {
+      "type": "string",
+      "nullable": "False"
+    },
+    "phylum": {
+      "type": "string",
+      "nullable": "False"
+    },
+    "class": {
+      "type": "string",
+      "nullable": "True"
+    },
+    "order": {
+      "type": "string",
+      "nullable": "True"
+    },
+    "family": {
+      "type": "string",
+      "nullable": "True"
+    },
+    "genus": {
+      "type": "string",
+      "nullable": "True"
+    },
+    "scientificNameAuthorship": {
+      "type": "string",
+      "nullable": "False"
+    }
+  },
+  "aws_opendata_registry": {
+    "Name": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+    "Description": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+    "Documentation": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+    "Contact": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+    "ManagedBy": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+    "UpdateFrequency": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+    "Tags": [
+      "FILL UP MANUALLY - CHECK DOCUMENTATION"
+    ],
+    "License": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+    "Resources": [
+      {
+        "Description": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+        "ARN": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+        "Region": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+        "Type": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+        "Explore": [
+          "FILL UP MANUALLY - CHECK DOCUMENTATION"
+        ]
+      }
+    ],
+    "DataAtWork": {
+      "Tutorials": [
+        {
+          "Title": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+          "URL": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+          "Services": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+          "AuthorName": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+          "AuthorURL": "FILL UP MANUALLY - CHECK DOCUMENTATION"
+        }
+      ],
+      "Tools & Applications": [
+        {
+          "Title": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+          "URL": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+          "AuthorName": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+          "AuthorURL": "FILL UP MANUALLY - CHECK DOCUMENTATION"
+        }
+      ],
+      "Publications": [
+        {
+          "Title": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+          "URL": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+          "AuthorName": "FILL UP MANUALLY - CHECK DOCUMENTATION"
+        }
+      ]
+    }
+  },
+  "schema_transformation": {
+    "drop_variables": [],
+    "add_variables": {
+      "filename": {
+        "source": "@filename",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "long_name": "Filename of the source file"
+        }
+      },
+      "timestamp": {
+        "source": "@partitioning:time_extent",
+        "schema": {
+          "type": "int64",
+          "units": "1",
+          "long_name": "Partition timestamp"
+        }
+      },
+      "polygon": {
+        "source": "@partitioning:spatial_extent",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "long_name": "Spatial partition polygon"
+        }
+      }
+    },
+    "partitioning": [
+      {
+        "source_variable": "timestamp",
+        "type": "time_extent",
+        "time_extent": {
+          "time_varname": "eventDate",
+          "partition_period": "Y"
+        }
+      },
+      {
+        "source_variable": "polygon",
+        "type": "spatial_extent",
+        "spatial_extent": {
+          "lat_varname": "decimalLatitude",
+          "lon_varname": "decimalLongitude",
+          "spatial_resolution": 90
+        }
+      }
+    ],
+    "global_attributes": {
+      "set": {
+        "title": "IMOS - Aggregated Kelp Data Product"
+      }
+    }
+  }
+}

@@ -1,0 +1,501 @@
+{
+  "dataset_name": "aggregated_seabird_nonqc",
+  "logger_name": "aggregated_seabird_nonqc",
+  "cloud_optimised_format": "parquet",
+  "run_settings": {
+    "paths": [
+      {
+        "type": "parquet",
+        "partitioning": null,
+        "s3_uri": "s3://aodn-processing/stored/datauplift/seabird/seabird.parquet"
+      }
+    ],
+    "cluster": {
+      "mode": "local",
+      "restart_every_path": false
+    },
+    "clear_existing_data": true,
+    "raise_error": false,
+    "batch_size": 4,
+    "force_previous_parquet_deletion": false
+  },
+  "metadata_uuid": null,
+  "schema": {
+    "resource_link": {
+      "type": "string",
+      "nullable": "False",
+      "definition": "The resource link for additional metadata context."
+    },
+    "download_link": {
+      "type": "string",
+      "nullable": "False",
+      "definition": "The Darwin Core download link."
+    },
+    "dataset_version": {
+      "type": "string",
+      "nullable": "False",
+      "definition": "The version of the dataset when it was downloaded to create this aggregated data product."
+    },
+    "id": {
+      "type": "string",
+      "nullable": "False",
+      "definition": "Unique identifier of the row of a given dataset"
+    },
+    "modified": {
+      "type": "timestamp[ms]",
+      "nullable": "False",
+      "long_name": "Date Modified",
+      "url": "http://purl.org/dc/terms/modified",
+      "definition": "Date on which the resource was changed."
+    },
+    "bibliographicCitation": {
+      "type": "string",
+      "nullable": "True",
+      "long_name": "Bibliographic Citation",
+      "url": "http://purl.org/dc/terms/bibliographicCitation",
+      "definition": "A bibliographic reference for the resource."
+    },
+    "institutionCode": {
+      "type": "string",
+      "nullable": "True",
+      "long_name": "Institution Code",
+      "url": "http://rs.tdwg.org/dwc/terms/institutionCode",
+      "definition": "The name (or acronym) in use by the institution having custody of the object(s) or information referred to in the record."
+    },
+    "collectionCode": {
+      "type": "string",
+      "nullable": "True",
+      "long_name": "Collection Code",
+      "url": "http://rs.tdwg.org/dwc/terms/collectionCode",
+      "definition": "The name, acronym, coden, or initialism identifying the collection or data set from which the record was derived."
+    },
+    "basisOfRecord": {
+      "type": "string",
+      "nullable": "False",
+      "long_name": "Basis Of Record",
+      "url": "http://rs.tdwg.org/dwc/terms/basisOfRecord",
+      "definition": "The specific nature of the data record."
+    },
+    "occurrenceID": {
+      "type": "string",
+      "nullable": "False",
+      "long_name": "Occurrence ID",
+      "url": "http://rs.tdwg.org/dwc/terms/occurrenceID",
+      "definition": "An identifier for the dwc:Occurrence (as opposed to a particular digital record of the dwc:Occurrence). In the absence of a persistent global unique identifier, construct one from a combination of identifiers in the record that will most closely make the dwc:occurrenceID globally unique."
+    },
+    "catalogNumber": {
+      "type": "string",
+      "nullable": "True",
+      "long_name": "Catalog Number",
+      "url": "http://rs.tdwg.org/dwc/terms/catalogNumber",
+      "definition": "An identifier (preferably unique) for the record within the data set or collection."
+    },
+    "recordedBy": {
+      "type": "string",
+      "nullable": "True",
+      "long_name": "Recorded By",
+      "url": "http://rs.tdwg.org/dwc/terms/recordedBy",
+      "definition": "A list (concatenated and separated) of names of people, groups, or organizations responsible for recording the original dwc:Occurrence. The primary collector or observer, especially one who applies a personal identifier (dwc:recordNumber), should be listed first."
+    },
+    "organismQuantity": {
+      "type": "string",
+      "nullable": "True",
+      "long_name": "Organism Quantity",
+      "url": "http://rs.tdwg.org/dwc/terms/organismQuantity",
+      "definition": "A number or enumeration value for the quantity of dwc:Organisms."
+    },
+    "organismQuantityType": {
+      "type": "string",
+      "nullable": "True",
+      "long_name": "Organism Quantity Type",
+      "url": "http://rs.tdwg.org/dwc/terms/organismQuantityType",
+      "definition": "The type of quantification system used for the quantity of dwc:Organisms."
+    },
+    "sex": {
+      "type": "string",
+      "nullable": "True",
+      "long_name": "Sex",
+      "url": "http://rs.tdwg.org/dwc/terms/sex",
+      "definition": "The sex of the biological individual(s) represented in the dwc:Occurrence."
+    },
+    "lifeStage": {
+      "type": "string",
+      "nullable": "True",
+      "long_name": "Life Stage",
+      "url": "http://rs.tdwg.org/dwc/terms/lifeStage",
+      "definition": "The age class or life stage of the dwc:Organism(s) at the time the dwc:Occurrence was recorded."
+    },
+    "occurrenceStatus": {
+      "type": "string",
+      "nullable": "True",
+      "long_name": "Occurrence Status",
+      "url": "http://rs.tdwg.org/dwc/terms/occurrenceStatus",
+      "definition": "A statement about the presence or absence of a dwc:Taxon at a dcterms:Location."
+    },
+    "occurrenceRemarks": {
+      "type": "string",
+      "nullable": "True",
+      "long_name": "Occurrence Remarks",
+      "url": "http://rs.tdwg.org/dwc/terms/occurrenceRemarks",
+      "definition": "Comments or notes about the dwc:Occurrence."
+    },
+    "organismID": {
+      "type": "string",
+      "nullable": "True",
+      "long_name": "Organism ID",
+      "url": "http://rs.tdwg.org/dwc/terms/organismID",
+      "definition": "An identifier for the dwc:Organism instance (as opposed to a particular digital record of the dwc:Organism). May be a globally unique identifier or an identifier specific to the data set."
+    },
+    "fieldNumber": {
+      "type": "string",
+      "nullable": "True",
+      "long_name": "Field Number",
+      "url": "http://rs.tdwg.org/dwc/terms/fieldNumber",
+      "definition": "An identifier given to the dwc:Event in the field. Often serves as a link between field notes and the dwc:Event."
+    },
+    "eventDate": {
+      "type": "date32[day]",
+      "nullable": "False",
+      "long_name": "Event Date",
+      "url": "http://rs.tdwg.org/dwc/terms/eventDate",
+      "definition": "The date-time or interval during which a dwc:Event occurred. For occurrences, this is the date-time when the dwc:Event was recorded. Not suitable for a time in a geological context."
+    },
+    "country": {
+      "type": "string",
+      "nullable": "True",
+      "long_name": "Country",
+      "url": "http://rs.tdwg.org/dwc/terms/country",
+      "definition": "The name of the country or major administrative unit in which the dcterms:Location occurs."
+    },
+    "stateProvince": {
+      "type": "string",
+      "nullable": "True",
+      "long_name": "First Order Division",
+      "url": "http://rs.tdwg.org/dwc/terms/stateProvince",
+      "definition": "The name of the next smaller administrative region than country (state, province, canton, department, region, etc.) in which the dcterms:Location occurs."
+    },
+    "locality": {
+      "type": "string",
+      "nullable": "True",
+      "long_name": "Locality",
+      "url": "http://rs.tdwg.org/dwc/terms/locality",
+      "definition": "The specific description of the place."
+    },
+    "minimumDepthInMeters": {
+      "type": "int64",
+      "nullable": "True",
+      "long_name": "Minimum Depth In Meters",
+      "url": "http://rs.tdwg.org/dwc/terms/minimumDepthInMeters",
+      "definition": "The lesser depth of a range of depth below the local surface, in meters."
+    },
+    "maximumDepthInMeters": {
+      "type": "int64",
+      "nullable": "True",
+      "long_name": "Maximum Depth In Meters",
+      "url": "http://rs.tdwg.org/dwc/terms/maximumDepthInMeters",
+      "definition": "The greater depth of a range of depth below the local surface, in meters."
+    },
+    "decimalLatitude": {
+      "type": "double",
+      "nullable": "False",
+      "long_name": "Decimal Latitude",
+      "url": "http://rs.tdwg.org/dwc/terms/decimalLatitude",
+      "definition": "The geographic latitude (in decimal degrees, using the spatial reference system given in dwc:geodeticDatum) of the geographic center of a dcterms:Location. Positive values are north of the Equator, negative values are south of it. Legal values lie between -90 and 90, inclusive."
+    },
+    "decimalLongitude": {
+      "type": "double",
+      "nullable": "False",
+      "long_name": "Decimal Longitude",
+      "url": "http://rs.tdwg.org/dwc/terms/decimalLongitude",
+      "definition": "The geographic longitude (in decimal degrees, using the spatial reference system given in dwc:geodeticDatum) of the geographic center of a dcterms:Location. Positive values are east of the Greenwich Meridian, negative values are west of it. Legal values lie between -180 and 180, inclusive."
+    },
+    "coordinateUncertaintyInMeters": {
+      "type": "int64",
+      "nullable": "True",
+      "long_name": "Coordinate Uncertainty In Meters",
+      "url": "http://rs.tdwg.org/dwc/terms/coordinateUncertaintyInMeters",
+      "definition": "The horizontal distance (in meters) from the given dwc:decimalLatitude and dwc:decimalLongitude describing the smallest circle containing the whole of the dcterms:Location. Leave the value empty if the uncertainty is unknown, cannot be estimated, or is not applicable (because there are no coordinates). Zero is not a valid value for this term."
+    },
+    "footprintWKT": {
+      "type": "string",
+      "nullable": "True",
+      "long_name": "Footprint WKT",
+      "url": "http://rs.tdwg.org/dwc/terms/footprintWKT",
+      "definition": "A Well-Known Text (WKT) representation of the shape (footprint, geometry) that defines the dcterms:Location. A dcterms:Location may have both a point-radius representation (see dwc:decimalLatitude) and a footprint representation, and they may differ from each other."
+    },
+    "identifiedBy": {
+      "type": "string",
+      "nullable": "True",
+      "long_name": "Identified By",
+      "url": "http://rs.tdwg.org/dwc/terms/identifiedBy",
+      "definition": "A list (concatenated and separated) of names of people, groups, or organizations who assigned the dwc:Taxon to the subject."
+    },
+    "scientificNameID": {
+      "type": "string",
+      "nullable": "False",
+      "long_name": "Scientific Name ID",
+      "url": "http://rs.tdwg.org/dwc/terms/scientificNameID",
+      "definition": "An identifier for the nomenclatural (not taxonomic) details of a scientific name."
+    },
+    "scientificName": {
+      "type": "string",
+      "nullable": "False",
+      "long_name": "Scientific Name",
+      "url": "http://rs.tdwg.org/dwc/terms/scientificName",
+      "definition": "The full scientific name, with authorship and date information if known. When forming part of a dwc:Identification, this should be the name in lowest level taxonomic rank that can be determined. This term should not contain identification qualifications, which should instead be supplied in the dwc:identificationQualifier term."
+    },
+    "valid_authority": {
+      "type": "string",
+      "nullable": "True"
+    },
+    "kingdom": {
+      "type": "string",
+      "nullable": "True",
+      "long_name": "Kingdom",
+      "url": "http://rs.tdwg.org/dwc/terms/kingdom",
+      "definition": "The full scientific name of the kingdom in which the dwc:Taxon is classified."
+    },
+    "phylum": {
+      "type": "string",
+      "nullable": "True",
+      "long_name": "Phylum",
+      "url": "http://rs.tdwg.org/dwc/terms/phylum",
+      "definition": "The full scientific name of the phylum or division in which the dwc:Taxon is classified."
+    },
+    "class": {
+      "type": "string",
+      "nullable": "True",
+      "long_name": "Class",
+      "url": "http://rs.tdwg.org/dwc/terms/class",
+      "definition": "The full scientific name of the class in which the dwc:Taxon is classified."
+    },
+    "order": {
+      "type": "string",
+      "nullable": "True",
+      "long_name": "Order",
+      "url": "http://rs.tdwg.org/dwc/terms/order",
+      "definition": "The full scientific name of the order in which the dwc:Taxon is classified."
+    },
+    "family": {
+      "type": "string",
+      "nullable": "True",
+      "long_name": "Family",
+      "url": "http://rs.tdwg.org/dwc/terms/family",
+      "definition": "The full scientific name of the family in which the dwc:Taxon is classified."
+    },
+    "genus": {
+      "type": "string",
+      "nullable": "True",
+      "long_name": "Genus",
+      "url": "http://rs.tdwg.org/dwc/terms/genus",
+      "definition": "The full scientific name of the genus in which the dwc:Taxon is classified."
+    },
+    "specificEpithet": {
+      "type": "string",
+      "nullable": "True",
+      "long_name": "Specific Epithet",
+      "url": "http://rs.tdwg.org/dwc/terms/specificEpithet",
+      "definition": "The name of the first or species epithet of the dwc:scientificName."
+    },
+    "taxonRank": {
+      "type": "string",
+      "nullable": "True",
+      "long_name": "Taxon Rank",
+      "url": "http://rs.tdwg.org/dwc/terms/taxonRank",
+      "definition": "The taxonomic rank of the most specific name in the dwc:scientificName."
+    },
+    "scientificNameAuthorship": {
+      "type": "string",
+      "nullable": "True",
+      "long_name": "Scientific Name Authorship",
+      "url": "http://rs.tdwg.org/dwc/terms/scientificNameAuthorship",
+      "definition": "The authorship information for the dwc:scientificName formatted according to the conventions of the applicable dwc:nomenclaturalCode."
+    },
+    "vernacularName": {
+      "type": "string",
+      "nullable": "True",
+      "long_name": "Vernacular Name",
+      "url": "http://rs.tdwg.org/dwc/terms/vernacularName",
+      "definition": "A common or vernacular name."
+    },
+    "survey_type": {
+      "type": "string",
+      "nullable": "False",
+      "long_name": "Survey Type",
+      "definition": "The type of survey, one of `Tracking` or `At-sea observations`"
+    },
+    "Wind Direction": {
+      "type": "double",
+      "nullable": "True",
+      "long_name": "Wind from direction in the atmosphere",
+      "url": "https://vocabs.ardc.edu.au/repository/api/lda/aodn/aodn-discovery-parameter-vocabulary/version-1-7/resource?uri=http%3A%2F%2Fvocab.nerc.ac.uk%2Fcollection%2FP01%2Fcurrent%2FEWDAZZ01",
+      "units": "deg",
+      "units_long_name": "Degrees",
+      "units_url": "https://vocabs.ardc.edu.au/repository/api/lda/aodn/aodn-units-of-measure-vocabulary/version-1-1/resource?uri=http%3A%2F%2Fvocab.nerc.ac.uk%2Fcollection%2FP06%2Fcurrent%2FUAAA"
+    },
+    "Air Temperature": {
+      "type": "double",
+      "nullable": "True",
+      "long_name": "Temperature of the atmosphere",
+      "url": "https://vocabs.ardc.edu.au/repository/api/lda/aodn/aodn-discovery-parameter-vocabulary/version-1-7/resource?uri=http%3A%2F%2Fvocab.nerc.ac.uk%2Fcollection%2FP01%2Fcurrent%2FCTMPZZ01",
+      "units": "degC",
+      "units_long_name": "Degrees Celsius",
+      "units_url": "https://vocabs.ardc.edu.au/repository/api/lda/aodn/aodn-units-of-measure-vocabulary/version-1-1/resource?uri=http%3A%2F%2Fvocab.nerc.ac.uk%2Fcollection%2FP06%2Fcurrent%2FUPAA"
+    },
+    "Wind Speed": {
+      "type": "double",
+      "nullable": "True",
+      "long_name": "Wind speed in the atmosphere",
+      "url": "https://vocabs.ardc.edu.au/repository/api/lda/aodn/aodn-discovery-parameter-vocabulary/version-1-7/resource?uri=http%3A%2F%2Fvocab.nerc.ac.uk%2Fcollection%2FP01%2Fcurrent%2FESSAZZ01",
+      "units": "Knots",
+      "units_long_name": "Knots (nautical miles per hour)",
+      "units_url": "https://vocabs.ardc.edu.au/repository/api/lda/aodn/aodn-units-of-measure-vocabulary/version-1-1/resource?uri=http%3A%2F%2Fvocab.nerc.ac.uk%2Fcollection%2FP06%2Fcurrent%2FUKNT"
+    },
+    "Depth": {
+      "type": "double",
+      "nullable": "True",
+      "long_name": "Sea-floor depth below surface of the water body",
+      "url": "https://vocabs.ardc.edu.au/repository/api/lda/aodn/aodn-discovery-parameter-vocabulary/version-1-7/resource?uri=http%3A%2F%2Fvocab.aodn.org.au%2Fdef%2Fdiscovery_parameter%2Fentity%2F574",
+      "units": "m",
+      "units_long_name": "Metres",
+      "units_url": "https://vocabs.ardc.edu.au/repository/api/lda/aodn/aodn-units-of-measure-vocabulary/version-1-1/resource?uri=http%3A%2F%2Fvocab.nerc.ac.uk%2Fcollection%2FP06%2Fcurrent%2FULAA"
+    },
+    "Air Pressure": {
+      "type": "double",
+      "nullable": "True",
+      "long_name": "Pressure (measured variable) exerted by the atmosphere",
+      "url": "https://vocabs.ardc.edu.au/repository/api/lda/aodn/aodn-discovery-parameter-vocabulary/version-1-7/resource?uri=http%3A%2F%2Fvocab.nerc.ac.uk%2Fcollection%2FP01%2Fcurrent%2FCAPHZZ01",
+      "definition": "Measurement as a phenomenon (as opposed to a co-ordinate) of the force per unit area exerted by the atmosphere determined in-situ at a known altitude.",
+      "units": "hPa",
+      "units_long_name": "Hectopascals",
+      "units_url": "https://vocabs.ardc.edu.au/repository/api/lda/aodn/aodn-units-of-measure-vocabulary/version-1-1/resource?uri=http%3A%2F%2Fvocab.nerc.ac.uk%2Fcollection%2FP06%2Fcurrent%2FHPAX"
+    },
+    "Sea State": {
+      "type": "string",
+      "nullable": "True",
+      "long_name": "Average height of waves on the water body",
+      "url": "https://vocabs.ardc.edu.au/repository/api/lda/aodn/aodn-discovery-parameter-vocabulary/version-1-7/resource?uri=http%3A%2F%2Fvocab.aodn.org.au%2Fdef%2Fdiscovery_parameter%2Fentity%2F412",
+      "units": "m",
+      "units_long_name": "Metres",
+      "units_url": "https://vocabs.ardc.edu.au/repository/api/lda/aodn/aodn-units-of-measure-vocabulary/version-1-1/resource?uri=http%3A%2F%2Fvocab.nerc.ac.uk%2Fcollection%2FP06%2Fcurrent%2FULAA"
+    },
+    "Salinity": {
+      "type": "double",
+      "nullable": "True",
+      "long_name": "Practical salinity of the water body",
+      "url": "https://vocabs.ardc.edu.au/repository/api/lda/aodn/aodn-discovery-parameter-vocabulary/version-1-7/resource?uri=http%3A%2F%2Fvocab.nerc.ac.uk%2Fcollection%2FP01%2Fcurrent%2FPSLTZZ01",
+      "units": "PSU",
+      "units_long_name": "Practical Salinity Unit",
+      "units_url": "https://vocabs.ardc.edu.au/repository/api/lda/aodn/aodn-units-of-measure-vocabulary/version-1-1/resource?uri=http%3A%2F%2Fvocab.aodn.org.au%2Fdef%2Funitsofmeasure%2Fentity%2F481"
+    },
+    "Cloud Cover": {
+      "type": "string",
+      "nullable": "True",
+      "long_name": "Cloud Cover Observation Measurements",
+      "url": "https://vocabs.ardc.edu.au/repository/api/lda/neii/cloud-cover-observation-measurements/version-2-0-agldwg-pid/resource?uri=https%3A%2F%2Flinked.data.gov.au%2Fdef%2Fcloud-cover-observation-measurements",
+      "definition": "Cloud cover observations are measured in oktas (eighths). The sky is visually inspected to produce an estimate of the number of eighths of the dome of the sky covered by cloud. The presence of any trace of cloud in an otherwise blue sky is recorded as 1 okta, and similarly any trace of blue on an otherwise cloudy sky is recorded as 7."
+    }
+  },
+  "aws_opendata_registry": {
+    "Name": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+    "Description": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+    "Documentation": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+    "Contact": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+    "ManagedBy": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+    "UpdateFrequency": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+    "Tags": [
+      "FILL UP MANUALLY - CHECK DOCUMENTATION"
+    ],
+    "License": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+    "Resources": [
+      {
+        "Description": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+        "ARN": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+        "Region": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+        "Type": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+        "Explore": [
+          "FILL UP MANUALLY - CHECK DOCUMENTATION"
+        ]
+      }
+    ],
+    "DataAtWork": {
+      "Tutorials": [
+        {
+          "Title": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+          "URL": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+          "Services": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+          "AuthorName": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+          "AuthorURL": "FILL UP MANUALLY - CHECK DOCUMENTATION"
+        }
+      ],
+      "Tools & Applications": [
+        {
+          "Title": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+          "URL": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+          "AuthorName": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+          "AuthorURL": "FILL UP MANUALLY - CHECK DOCUMENTATION"
+        }
+      ],
+      "Publications": [
+        {
+          "Title": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+          "URL": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+          "AuthorName": "FILL UP MANUALLY - CHECK DOCUMENTATION"
+        }
+      ]
+    }
+  },
+  "schema_transformation": {
+    "drop_variables": [],
+    "add_variables": {
+      "filename": {
+        "source": "@filename",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "long_name": "Filename of the source file"
+        }
+      },
+      "timestamp": {
+        "source": "@partitioning:time_extent",
+        "schema": {
+          "type": "int64",
+          "units": "1",
+          "long_name": "Partition timestamp"
+        }
+      },
+      "polygon": {
+        "source": "@partitioning:spatial_extent",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "long_name": "Spatial partition polygon"
+        }
+      }
+    },
+    "partitioning": [
+      {
+        "source_variable": "timestamp",
+        "type": "time_extent",
+        "time_extent": {
+          "time_varname": "eventDate",
+          "partition_period": "Y"
+        }
+      },
+      {
+        "source_variable": "polygon",
+        "type": "spatial_extent",
+        "spatial_extent": {
+          "lat_varname": "decimalLatitude",
+          "lon_varname": "decimalLongitude",
+          "spatial_resolution": 90
+        }
+      }
+    ],
+    "global_attributes": {
+      "set": {
+        "title": "IMOS - Aggregated Seabird Data Product"
+      }
+    }
+  }
+}
