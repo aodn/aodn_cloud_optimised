@@ -478,6 +478,9 @@ class ZarrSchemaTransformation(BaseModel):
         default_factory=dict,
         description="Global attributes to modify. Supports 'delete' and 'set' keys.",
     )
+    var_template_shape: Union[str, List[str]] = Field(
+        ..., description="Variable name(s) used to define the template shape."
+    )
     dimensions: Optional[dict[str, dict[str, Any]]] = None
     dataset_sort_by: Optional[list[str]] = None
     vars_incompatible_with_region: Optional[list[str]] = None
@@ -659,6 +662,31 @@ class ZarrSchemaTransformation(BaseModel):
                     )
 
         return value
+
+    @model_validator(mode="after")
+    def validate_var_template_shape(self) -> "ZarrSchemaTransformation":
+        # 1. Ensure it's not empty
+        if not self.var_template_shape:
+            raise ValueError("var_template_shape cannot be empty.")
+
+        # 2. Coerce to a list for easier validation logic
+        vars_to_check = (
+            [self.var_template_shape]
+            if isinstance(self.var_template_shape, str)
+            else self.var_template_shape
+        )
+
+        # 3. Check that every variable exists in the dataset_schema
+        schema_keys = self.dataset_schema.keys()
+        missing = [v for v in vars_to_check if v not in schema_keys]
+
+        if missing:
+            raise ValueError(
+                f"var_template_shape variable(s) {missing} not found in 'schema'. "
+                f"Available variables: {list(schema_keys)}"
+            )
+
+        return self
 
     # @model_validator(mode="after")
     # def validate_gattrs_to_variable_dimensions(self) -> "DatasetConfig":
