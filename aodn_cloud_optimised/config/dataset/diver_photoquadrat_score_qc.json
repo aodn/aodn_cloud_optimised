@@ -6,8 +6,7 @@
     "paths": [
       {
         "s3_uri": "s3://aodn-processing/stored/datauplift/nrmn/public/ep_m13_pq_scores.parquet",
-        "type": "parquet",
-        "year_range": []
+        "type": "parquet"
       }
     ],
     "cluster": {
