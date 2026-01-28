@@ -85,10 +85,8 @@
     },
     "survey_date": {
       "type": "string",
-      "standard_name": "time",
-      "long_name": "Survey datetime (UTC)",
-      "units": "s",
-      "comments": "Combined from survey_date and hour columns"
+      "long_name": "local date",
+      "units": "yyyy-mm-dd"
     },
     "depth": {
       "type": "double",
@@ -107,9 +105,8 @@
     },
     "hour": {
       "type": "string",
-      "standard_name": "time_of_day",
-      "long_name": "Time of day",
-      "units": "seconds since midnight"
+      "long_name": "local time of sample collection",
+      "units": "hh:mm:ss"
     },
     "survey_latitude": {
       "type": "double",
