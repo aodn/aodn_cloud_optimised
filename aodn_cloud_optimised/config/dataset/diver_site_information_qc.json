@@ -88,7 +88,8 @@
       "long_name": "Marine Ecoregions of the World (MEOW) Ecoregion"
     },
     "lat_zone": {
-      "type": "string"
+      "type": "string",
+      "long_name": "latitudinal zonation"
     },
     "programs": {
       "type": "string",
