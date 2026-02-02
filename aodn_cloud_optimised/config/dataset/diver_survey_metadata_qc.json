@@ -111,7 +111,7 @@
     "hour": {
       "type": "string",
       "long_name": "local time of sample collection",
-      "units": "hh:mm:ss"
+      "units": "HH:mm:ss"
     },
     "direction": {
       "type": "string"
