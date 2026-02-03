@@ -80,7 +80,7 @@
       "type": "float32",
       "standard_name": "longitude",
       "long_name": "longitude",
-      "units": "degree_east",
+      "units": "degrees_east",
       "reference_datum": "geographical coordinates, WGS84 projection"
     },
     "survey_date": {
