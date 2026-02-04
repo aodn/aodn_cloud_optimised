@@ -38,52 +38,82 @@
   "metadata_uuid": "997c2e15-b345-438f-afac-49a4ac19be38",
   "schema": {
     "survey_id": {
-      "type": "int32"
+      "type": "int32",
+      "long_name": "survey identification number"
     },
     "country": {
-      "type": "string"
+      "type": "string",
+      "long_name": "country where the survey was conducted"
     },
     "area": {
-      "type": "string"
+      "type": "string",
+      "long_name": "state/territory where the survey was conducted"
     },
     "location": {
-      "type": "string"
+      "type": "string",
+      "long_name": "city/council where the survey was conducted"
     },
     "site_code": {
-      "type": "string"
+      "type": "string",
+      "long_name": "code for the survey site"
     },
     "site_name": {
-      "type": "string"
+      "type": "string",
+      "long_name": "name of the survey site"
     },
     "latitude": {
-      "type": "float32"
+      "type": "float32",
+      "standard_name": "latitude",
+      "long_name": "latitude",
+      "units": "degrees_north",
+      "reference_datum": "geographical coordinates, WGS84 projection"
     },
     "longitude": {
-      "type": "float32"
+      "type": "float32",
+      "standard_name": "longitude",
+      "long_name": "longitude of the site",
+      "units": "degrees_east",
+      "reference_datum": "geographical coordinates, WGS84 projection"
     },
     "depth": {
-      "type": "float32"
+      "type": "float32",
+      "standard_name": "depth",
+      "long_name": "Depth below surface of the water body",
+      "units": "m"
     },
     "survey_date": {
-      "type": "string"
+      "type": "string",
+      "long_name": "local date",
+      "time_format": "YYYY-MM-DD",
+      "format_standard": "ISO 8601"
     },
     "latest_surveydate_for_site": {
-      "type": "bool"
+      "type": "bool",
+      "long_name": "Latest survey date for the site",
+      "units": "local date"
     },
     "has_pq_scores_in_db": {
-      "type": "bool"
+      "type": "bool",
+      "long_name": "Survey has photoquadrat scores in database"
     },
     "has_rugosity_scores_in_db": {
-      "type": "bool"
+      "type": "bool",
+      "long_name": "Survey has rugosity scores in database"
     },
     "has_pqs_catalogued_in_db": {
-      "type": "bool"
+      "type": "bool",
+      "long_name": "Survey has photoquadrat catalogued in database"
     },
     "visibility": {
-      "type": "float32"
+      "type": "float32",
+      "long_name": "the distance in water at which something can be seen",
+      "units": "m"
     },
     "hour": {
-      "type": "string"
+      "type": "string",
+      "long_name": "local time of sample collection",
+      "time_format": "HH:mm:ss",
+      "format_standard": "ISO 8601"
     },
     "direction": {
       "type": "string"
@@ -104,16 +134,20 @@
       "type": "string"
     },
     "program": {
-      "type": "string"
+      "type": "string",
+      "long_name": "acronym identifying the program(s)"
     },
     "pq_zip_url": {
-      "type": "string"
+      "type": "string",
+      "long_name": "URL to download photoquadrat zip file"
     },
     "old_site_codes": {
-      "type": "string"
+      "type": "string",
+      "long_name": "Previous site codes associated with this site"
     },
     "methods": {
-      "type": "string"
+      "type": "string",
+      "long_name": "List of survey methods done during the survey"
     },
     "geom": {
       "type": "string"
