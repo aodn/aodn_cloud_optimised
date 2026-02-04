@@ -84,7 +84,8 @@
     "survey_date": {
       "type": "string",
       "long_name": "local date",
-      "units": "yyyy-mm-dd"
+      "time_format": "YYYY-MM-DD",
+      "format_standard": "ISO 8601"
     },
     "latest_surveydate_for_site": {
       "type": "bool",
@@ -111,8 +112,8 @@
     "hour": {
       "type": "string",
       "long_name": "local time of sample collection",
-      "units": "HH:mm:ss",
-      "units_standard": "ISO 8601"
+      "time_format": "HH:mm:ss",
+      "format_standard": "ISO 8601"
     },
     "direction": {
       "type": "string"
