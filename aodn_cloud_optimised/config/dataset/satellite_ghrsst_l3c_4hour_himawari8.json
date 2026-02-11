@@ -33,7 +33,7 @@
       "allow_ingress_from": "me",
       "compute_purchase_option": "spot_with_fallback",
       "worker_options": {
-        "nthreads": 4,
+        "nthreads": 1,
         "memory_limit": "32GB"
       }
     },
