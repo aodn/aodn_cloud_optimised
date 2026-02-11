@@ -8,7 +8,7 @@
         "type": "files",
         "s3_uri": "s3://imos-data/IMOS/SRS/AusTemp/ssta/",
         "filter": [
-          ".*\\.nc$"
+          ".*\\.nc"
         ],
         "year_range": [
           2012,
