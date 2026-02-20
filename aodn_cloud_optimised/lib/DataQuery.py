@@ -50,12 +50,7 @@ from shapely.geometry import MultiPolygon, Polygon
 from tqdm.notebook import tqdm
 from windrose import WindroseAxes
 
-from aodn_cloud_optimised.lib.exceptions import (
-    DateOutOfRangeError,
-    PolygonNotIntersectingError,
-)
-
-__version__ = "0.3.2"
+__version__ = "0.3.3"
 
 REGION: Final[str] = "ap-southeast-2"
 ENDPOINT_URL = "https://s3.ap-southeast-2.amazonaws.com"
@@ -64,6 +59,18 @@ ENDPOINT_URL = "https://s3.ap-southeast-2.amazonaws.com"
 BUCKET_OPTIMISED_DEFAULT = "aodn-cloud-optimised"
 ROOT_PREFIX_CLOUD_OPTIMISED_PATH = ""
 DEFAULT_TIME = datetime(1900, 1, 1)
+
+
+class PolygonNotIntersectingError(ValueError):
+    """For more precise exception handling"""
+
+    pass
+
+
+class DateOutOfRangeError(ValueError):
+    """For more precise exception handling"""
+
+    pass
 
 
 def is_colab():
