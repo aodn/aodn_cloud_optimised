@@ -100,6 +100,7 @@ More information available [here](https://github.com/conda-forge/miniforge?tab=r
 - [radar_SouthAustraliaGulfs_wave_delayed_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/radar_SouthAustraliaGulfs_wave_delayed_qc.ipynb)
 - [radar_SouthAustraliaGulfs_wind_delayed_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/radar_SouthAustraliaGulfs_wind_delayed_qc.ipynb)
 - [radar_TurquoiseCoast_velocity_hourly_averaged_delayed_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/radar_TurquoiseCoast_velocity_hourly_averaged_delayed_qc.ipynb)
+- [satellite_austemp_sst_8day.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_austemp_sst_8day.ipynb)
 - [satellite_chlorophylla_carder_1day_aqua.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_chlorophylla_carder_1day_aqua.ipynb)
 - [satellite_chlorophylla_gsm_1day_aqua.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_chlorophylla_gsm_1day_aqua.ipynb)
 - [satellite_chlorophylla_gsm_1day_noaa20.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_chlorophylla_gsm_1day_noaa20.ipynb)
