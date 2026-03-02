@@ -1,7 +1,7 @@
 import json
 import os
 from collections import OrderedDict
-from importlib.resources import files
+from importlib.resources import as_file, files
 
 import yaml
 
@@ -93,11 +93,9 @@ def load_variable_from_config(variable_name) -> str:
     :raises KeyError: If the variable is not found in the configuration file.
     """
     # Obtain the file path using the context manager
-    with (
-        files("aodn_cloud_optimised")
-        .joinpath("config")
-        .joinpath("common.json") as common_config_path
-    ):
+    with as_file(
+        files("aodn_cloud_optimised").joinpath("config").joinpath("common.json")
+    ) as common_config_path:
         return load_variable_from_file(str(common_config_path), variable_name)
 
 
