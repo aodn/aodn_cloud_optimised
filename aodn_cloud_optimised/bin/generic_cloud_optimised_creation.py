@@ -30,7 +30,7 @@ from aodn_cloud_optimised.lib.config import (
 from aodn_cloud_optimised.lib.s3Tools import boto3_from_opts_dict, s3_ls
 
 logger = logging.getLogger(__name__)
-from aodn_cloud_optimised.bin.config import DatasetConfig, PathConfig
+from aodn_cloud_optimised.bin.config.model import DatasetConfig, PathConfig
 
 
 def load_config_and_validate(config_filename: str) -> DatasetConfig:
