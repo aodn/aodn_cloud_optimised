@@ -327,7 +327,7 @@ class GenericHandler(CommonHandler):
                     bucket_raw=self.dataset_config["run_settings"].get(
                         "bucket_raw_default_name"
                     ),
-                    s3_client_opts=(
+                    s3_fs_opts=(
                         self.s3_fs_output.storage_options
                         if hasattr(self.s3_fs_output, "storage_options")
                         else None

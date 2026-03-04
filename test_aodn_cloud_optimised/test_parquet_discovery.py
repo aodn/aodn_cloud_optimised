@@ -1,11 +1,9 @@
-import copy
 import json
 import os
 import unittest
 
 import boto3
 import pandas as pd
-import pyarrow as pa
 import s3fs
 from moto import mock_aws
 from moto.moto_server.threaded_moto_server import ThreadedMotoServer
@@ -13,7 +11,6 @@ from moto.moto_server.threaded_moto_server import ThreadedMotoServer
 from aodn_cloud_optimised.lib.config import load_dataset_config
 from aodn_cloud_optimised.lib.GenericParquetHandler import GenericHandler
 from aodn_cloud_optimised.lib.s3Tools import (
-    discover_parquet_datasets,
     get_free_local_port,
 )
 
@@ -269,10 +266,10 @@ class TestParquetDiscovery(unittest.TestCase):
 
         # Should have data from all 3 years (2023, 2024, 2025)
         self.assertGreater(len(merged_df), 0)
-        print(f"✅ Merged dataset contains {len(merged_df)} rows from 3 yearly sources")
+        # print(f"✅ Merged dataset contains {len(merged_df)} rows from 3 yearly sources")
 
     def test_discover_parquet_datasets_hive_mode(self):
-        """Test discover_parquet_datasets() function in hive mode"""
+        """Test discover_parquet_datasets compatibility in hive mode"""
 
         # Create multiple hive-partitioned datasets
         parent_folder = f"s3://{self.BUCKET_OPTIMISED_NAME}/test_discovery_hive/"
@@ -303,7 +300,7 @@ class TestParquetDiscovery(unittest.TestCase):
         self.assertEqual(len(result["Contents"]), 3)
 
     def test_discover_parquet_datasets_flat_mode(self):
-        """Test discover_parquet_datasets() function for flat parquet files"""
+        """Test discover_parquet_datasets capability for flat parquet files"""
 
         parent_folder = f"s3://{self.BUCKET_OPTIMISED_NAME}/test_discovery_flat/"
 

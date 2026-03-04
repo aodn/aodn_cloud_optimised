@@ -342,7 +342,7 @@ def discover_parquet_datasets(
     s3_uri: str,
     partitioning: Optional[str],
     bucket_raw: Optional[str],
-    s3_client_opts: Optional[dict] = None,
+    s3_fs_opts: Optional[dict] = None,
 ) -> List[str]:
     """Discover parquet datasets or files in a folder.
 
@@ -350,7 +350,7 @@ def discover_parquet_datasets(
         s3_uri: S3 path to folder containing parquet sources (can be full s3:// URI or relative path)
         partitioning: "hive" for hive-partitioned datasets, None for flat parquet files
         bucket_raw: Required if s3_uri is not a full S3 URI
-        s3_client_opts: Optional dict with boto3 S3 client options
+        s3_fs_opts: Optional dict with s3fs.S3FileSystem initialization options (e.g., anon, client_kwargs)
 
     Returns:
         List of S3 paths to parquet datasets/files (as full s3:// URIs)
@@ -359,7 +359,7 @@ def discover_parquet_datasets(
         ValueError: If no parquet datasets/files found or if path doesn't exist
     """
     # Initialize S3 filesystem
-    s3_fs = s3fs.S3FileSystem(**(s3_client_opts or {}))
+    s3_fs = s3fs.S3FileSystem(**(s3_fs_opts or {}))
 
     # Parse URI to get bucket and prefix
     if s3_uri.startswith("s3://"):
