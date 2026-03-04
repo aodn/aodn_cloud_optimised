@@ -1,12 +1,15 @@
 import logging
 import socket
-from typing import Dict, Optional, Tuple, Union
+from pathlib import PurePosixPath
+from typing import Dict, List, Optional, Tuple, Union
 from urllib.parse import urlparse
 
 import boto3
 import s3fs
 from botocore import UNSIGNED
 from botocore.config import Config
+
+logger = logging.getLogger(__name__)
 
 
 def get_free_local_port():
@@ -333,3 +336,126 @@ def create_fileset(s3_paths, s3_fs=None):
     fileset = [s3_fs.open(file) for file in s3_paths]
 
     return fileset
+
+
+def discover_parquet_datasets(
+    s3_uri: str,
+    partitioning: Optional[str],
+    bucket_raw: Optional[str],
+    s3_client_opts: Optional[dict] = None,
+) -> List[str]:
+    """Discover parquet datasets or files in a folder.
+
+    Args:
+        s3_uri: S3 path to folder containing parquet sources (can be full s3:// URI or relative path)
+        partitioning: "hive" for hive-partitioned datasets, None for flat parquet files
+        bucket_raw: Required if s3_uri is not a full S3 URI
+        s3_client_opts: Optional dict with boto3 S3 client options
+
+    Returns:
+        List of S3 paths to parquet datasets/files (as full s3:// URIs)
+
+    Raises:
+        ValueError: If no parquet datasets/files found or if path doesn't exist
+    """
+    # Initialize S3 filesystem
+    s3_fs = s3fs.S3FileSystem(**(s3_client_opts or {}))
+
+    # Parse URI to get bucket and prefix
+    if s3_uri.startswith("s3://"):
+        parsed = urlparse(s3_uri)
+        bucket = parsed.netloc
+        prefix = parsed.path.lstrip("/")
+    else:
+        if not bucket_raw:
+            raise ValueError(
+                "bucket_raw must be provided when s3_uri is not a full S3 URI."
+            )
+        bucket = bucket_raw
+        prefix = s3_uri
+
+    prefix = str(PurePosixPath(prefix))  # normalize path
+    full_path = f"{bucket}/{prefix}".rstrip("/")
+
+    logger.info(
+        f"Discovering parquet {'datasets' if partitioning == 'hive' else 'files'} in s3://{full_path}"
+    )
+
+    # List contents (first level only)
+    try:
+        entries = s3_fs.ls(full_path, detail=True)
+    except FileNotFoundError:
+        raise ValueError(f"Path not found: s3://{full_path}")
+
+    discovered = []
+
+    if partitioning == "hive":
+        # Find directories ending with .parquet (each is a hive-partitioned dataset)
+        for entry in entries:
+            if entry["type"] == "directory":
+                entry_name = entry["name"].split("/")[-1]
+                if entry_name.endswith(".parquet"):
+                    # Check if this directory contains hive partitions directly
+                    # or if it contains another nested .parquet directory
+                    try:
+                        nested_entries = s3_fs.ls(entry["name"], detail=True)
+                        has_hive_partitions = any(
+                            "=" in e["name"].split("/")[-1]
+                            for e in nested_entries
+                            if e["type"] == "directory"
+                        )
+                        has_nested_parquet = any(
+                            e["name"].split("/")[-1].endswith(".parquet")
+                            for e in nested_entries
+                            if e["type"] == "directory"
+                        )
+
+                        if has_hive_partitions:
+                            # Direct hive partitions - use this path
+                            discovered.append(f"s3://{entry['name']}")
+                            logger.debug(
+                                f"  Discovered hive dataset: s3://{entry['name']}"
+                            )
+                        elif has_nested_parquet:
+                            # Nested .parquet directory - look one level deeper
+                            for nested_entry in nested_entries:
+                                if nested_entry["type"] == "directory" and nested_entry[
+                                    "name"
+                                ].split("/")[-1].endswith(".parquet"):
+                                    discovered.append(f"s3://{nested_entry['name']}")
+                                    logger.debug(
+                                        f"  Discovered nested hive dataset: s3://{nested_entry['name']}"
+                                    )
+                        else:
+                            # No clear structure - still add it
+                            discovered.append(f"s3://{entry['name']}")
+                            logger.debug(
+                                f"  Discovered hive dataset: s3://{entry['name']}"
+                            )
+                    except Exception as e:
+                        # If we can't list, just add the directory
+                        logger.warning(
+                            f"  Could not inspect {entry['name']}: {e}, adding as-is"
+                        )
+                        discovered.append(f"s3://{entry['name']}")
+                        logger.debug(f"  Discovered hive dataset: s3://{entry['name']}")
+    else:
+        # Find files ending with .parquet (flat parquet files)
+        for entry in entries:
+            if entry["type"] == "file":
+                entry_name = entry["name"].split("/")[-1]
+                if entry_name.endswith(".parquet"):
+                    discovered.append(f"s3://{entry['name']}")
+                    logger.debug(f"  Discovered parquet file: s3://{entry['name']}")
+
+    if not discovered:
+        raise ValueError(
+            f"No parquet {'datasets' if partitioning == 'hive' else 'files'} "
+            f"found in s3://{full_path}. Ensure the folder contains "
+            f"{'subdirectories ending with .parquet' if partitioning == 'hive' else 'files ending with .parquet'}"
+        )
+
+    logger.info(
+        f"Discovered {len(discovered)} parquet {'dataset(s)' if partitioning == 'hive' else 'file(s)'}"
+    )
+    return discovered
