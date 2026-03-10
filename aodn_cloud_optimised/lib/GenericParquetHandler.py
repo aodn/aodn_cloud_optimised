@@ -651,10 +651,13 @@ class GenericHandler(CommonHandler):
 
                 # Because the df does not have a date time index, we have to create and fill the column in separately here
                 datetime_index = pd.DatetimeIndex(pd.to_datetime(time_partition_column))
-                df[timestamp_varname] = (
-                    np.int64(datetime_index.to_period(partition_period).to_timestamp())
-                    / 10**9
-                )
+                timestamps_converted = datetime_index.to_period(
+                    partition_period
+                ).to_timestamp()
+                # Convert to ns resolution to ensure consistent behavior across h5py versions
+                timestamps_ns = timestamps_converted.as_unit("ns")
+
+                df[timestamp_varname] = timestamps_ns.asi8 / 10**9
                 return df
 
         if "datetime_var" not in locals():
@@ -678,14 +681,13 @@ class GenericHandler(CommonHandler):
                 df.reset_index()
 
         try:
-            df[timestamp_varname] = (
-                np.int64(
-                    pd.to_datetime(datetime_var)
-                    .to_period(partition_period)
-                    .to_timestamp()
-                )
-                / 10**9
-            )  # for partitions with the date as the 1st of the month
+            timestamps_converted = datetime_index.to_period(
+                partition_period
+            ).to_timestamp()
+            # Convert to ns resolution to ensure consistent behavior across h5py versions
+            timestamps_ns = timestamps_converted.as_unit("ns")
+
+            df[timestamp_varname] = timestamps_ns.asi8 / 10**9
         except Exception as e:
             self.logger.error(
                 f"{self.uuid_log}: {f.path}: time issues with the input file. File not processed. Contact the data provider.{e}"
