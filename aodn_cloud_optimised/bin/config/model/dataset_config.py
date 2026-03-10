@@ -17,6 +17,16 @@ class DatasetConfig(pydantic.BaseModel):
     model_config = pydantic.ConfigDict(validate_by_name=True, validate_by_alias=True)
 
     dataset_name: str
+    logger_name: str | None = pydantic.Field(
+        default=None, description="name of custom logger used in prefect(?)"
+    )
+    handler_class: str | None = pydantic.Field(
+        default=None, description="name of the handler to use for processing"
+    )
+    parent_config: str | None = pydantic.Field(
+        default=None,
+        description="Name of the parent config to load on top of. May be recursive.",
+    )
     run_settings: RunSettings
     schema_transformation: dict | None = pydantic.Field(
         default=None,
@@ -43,6 +53,10 @@ class DatasetConfig(pydantic.BaseModel):
             "Only one of pandas_read_csv_config or polars_read_csv_config "
             "can be provided inside this object."
         ),
+    )
+    # TODO: Implement aws_opendata_registry model for validation
+    aws_opendata_registry: dict | None = pydantic.Field(
+        default=None,
     )
 
     @pydantic.model_validator(mode="after")
@@ -136,23 +150,30 @@ class DatasetConfig(pydantic.BaseModel):
                         )
         return self
 
-    # TODO: if we want to test for the existence of the PLACEHOLDER in the aws_opendata_regristry cloud_optimised_creation
-    # we should add this key in the class definition. However, having this placeholder doesn't cause problem to the dataset
-    # creation
     @pydantic.model_validator(mode="after")
     def validate_no_manual_fill_placeholders(self) -> typing.Self:
         """Validate that no manual fill placeholders remain in the configuration.
 
         Recursively checks all string values in the model to ensure that no
         placeholder text requiring manual completion remains in the configuration.
+        Certain fields can be excluded from validation by adding them to EXCLUDED_PATHS.
 
         :return: The validated model instance
         :rtype: typing.Self
         :raises ValueError: If any placeholder values are found
         """
         PLACEHOLDER = "FILL UP MANUALLY - CHECK DOCUMENTATION"
+        # Paths to exclude from placeholder validation
+        EXCLUDED_PATHS = {
+            "aws_opendata_registry",
+        }
 
         def check_recursive(value, path=""):
+            # Skip validation for excluded paths
+            for excluded_path in EXCLUDED_PATHS:
+                if path.startswith(excluded_path):
+                    return
+
             if isinstance(value, str):
                 if value.strip() == PLACEHOLDER:
                     raise ValueError(
