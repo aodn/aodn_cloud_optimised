@@ -681,13 +681,16 @@ class GenericHandler(CommonHandler):
                 df.reset_index()
 
         try:
-            timestamps_converted = datetime_index.to_period(
+            datetime_converted = pd.to_datetime(datetime_var)
+            timestamps_converted = datetime_converted.to_period(
                 partition_period
             ).to_timestamp()
             # Convert to ns resolution to ensure consistent behavior across h5py versions
             timestamps_ns = timestamps_converted.as_unit("ns")
 
-            df[timestamp_varname] = timestamps_ns.asi8 / 10**9
+            df[timestamp_varname] = (
+                timestamps_ns.asi8 / 10**9
+            )  # for partitions with the date as the 1st of the month
         except Exception as e:
             self.logger.error(
                 f"{self.uuid_log}: {f.path}: time issues with the input file. File not processed. Contact the data provider.{e}"
