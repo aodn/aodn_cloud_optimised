@@ -246,7 +246,7 @@ class DatasetConfig(pydantic.BaseModel):
         return parent
 
     @classmethod
-    def load_from_cloud_optimised_directory(
+    def from_cloud_optimised_directory(
         cls,
         config_file: str,
     ) -> typing.Self:
@@ -288,7 +288,7 @@ class DatasetConfig(pydantic.BaseModel):
         return DatasetConfig.model_validate(dataset_config)
 
     @classmethod
-    def load_from_path(
+    def from_path(
         cls,
         config_file_path: pathlib.Path,
     ) -> typing.Self:
