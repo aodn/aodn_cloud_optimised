@@ -20,7 +20,7 @@ class PathConfig(pydantic.BaseModel):
     """
 
     s3_uri: str
-    type: typing.Literal["files", "parquet", "zarr"] = pydantic.Field(
+    type: typing.Literal["files", "parquet", "zarr"] | None = pydantic.Field(
         default=None,
         description="Dataset type. One of 'files', 'parquet', or 'zarr'. Defaults to 'files' if not specified.",
     )
