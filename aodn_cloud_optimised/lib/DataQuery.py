@@ -50,7 +50,7 @@ from shapely.geometry import MultiPolygon, Polygon
 from tqdm.notebook import tqdm
 from windrose import WindroseAxes
 
-__version__ = "0.3.3"
+__version__ = "0.3.4"
 
 REGION: Final[str] = "ap-southeast-2"
 ENDPOINT_URL = "https://s3.ap-southeast-2.amazonaws.com"
@@ -106,12 +106,47 @@ def _unhashable_to_dict(obj):
     return obj
 
 
+def _drop_none_values(obj):
+    """Recursively drop keys with None values from dictionaries."""
+    if isinstance(obj, dict):
+        return {k: _drop_none_values(v) for k, v in obj.items() if v is not None}
+    if isinstance(obj, list):
+        return [_drop_none_values(x) for x in obj]
+    return obj
+
+
+def _build_effective_s3_fs_opts(s3_fs_opts: dict | None = None) -> dict:
+    """Build effective S3 options with anonymous AODN defaults plus user overrides."""
+    defaults = {
+        "anon": True,
+        "client_kwargs": {"endpoint_url": ENDPOINT_URL, "region_name": REGION},
+    }
+    clean_user_opts = _drop_none_values(s3_fs_opts or {})
+
+    merged_opts = {
+        "anon": defaults["anon"],
+        "client_kwargs": defaults["client_kwargs"].copy(),
+    }
+
+    user_client_kwargs = clean_user_opts.get("client_kwargs")
+    if isinstance(user_client_kwargs, dict):
+        merged_opts["client_kwargs"].update(user_client_kwargs)
+    elif "client_kwargs" in clean_user_opts:
+        merged_opts["client_kwargs"] = user_client_kwargs
+
+    for k, v in clean_user_opts.items():
+        if k != "client_kwargs":
+            merged_opts[k] = v
+
+    return _drop_none_values(merged_opts)
+
+
 @lru_cache(maxsize=1)
 def _get_s3_filesystem_cached(hashable_opts=None):
     """Internal cached function that expects hashable options."""
     if hashable_opts is not None:
         opts_dict = _unhashable_to_dict(hashable_opts)
-        return fs.S3FileSystem(**s3_opts_to_pyarrow(opts_dict))
+        return fs.S3FileSystem(**s3_opts_to_pyarrow(_drop_none_values(opts_dict)))
     else:
         return fs.S3FileSystem(
             region=REGION, endpoint_override=ENDPOINT_URL, anonymous=True
@@ -154,6 +189,7 @@ def s3_opts_to_pyarrow(s3_fs_opts: dict) -> dict:
     }
 
     pa_opts = {}
+    s3_fs_opts = _drop_none_values(s3_fs_opts)
 
     for k, v in s3_fs_opts.items():
         if k in key_map:
@@ -1395,7 +1431,8 @@ def get_zarr_metadata(dname: str, s3_fs_opts=None) -> dict:
 
     if s3_fs_opts:
         # Use provided S3 filesystem
-        s3 = s3fs.S3FileSystem(**s3_fs_opts)
+        clean_opts = _drop_none_values(s3_fs_opts)
+        s3 = s3fs.S3FileSystem(**clean_opts)
         # mapper = fsspec.get_mapper(name, storage_options={"fs": s3})
         mapper = s3.get_mapper(name)
     else:
@@ -1657,7 +1694,7 @@ class ParquetDataSource(DataSource):
         s3_fs_opts: dict | None = None,
     ):
         """Initialises the ParquetDataSource with optional S3 filesystem overrides."""
-        self.s3_fs_opts = s3_fs_opts or {}
+        self.s3_fs_opts = _drop_none_values(s3_fs_opts or {})
         if self.s3_fs_opts:
             self.s3 = fs.S3FileSystem(**s3_opts_to_pyarrow(self.s3_fs_opts))
         else:
@@ -1994,17 +2031,8 @@ class ZarrDataSource(DataSource):
         s3_fs_opts: dict | None = None,
     ):
         """Initialises the ZarrDataSource with optional S3 filesystem overrides."""
-        self.s3_fs_opts = s3_fs_opts or {}
-        if self.s3_fs_opts:
-            self.s3 = s3fs.S3FileSystem(**self.s3_fs_opts)
-        else:
-            # Default anonymous S3 with optional region and endpoint
-            self.s3 = s3fs.S3FileSystem(
-                anon=True,
-                key=None,
-                secret=None,
-                client_kwargs={"endpoint_url": ENDPOINT_URL, "region_name": REGION},
-            )
+        self.s3_fs_opts = _build_effective_s3_fs_opts(s3_fs_opts)
+        self.s3 = s3fs.S3FileSystem(**self.s3_fs_opts)
 
         super().__init__(bucket_name, prefix, dataset_name)
         self.zarr_store = self._open_zarr_store()
@@ -3104,7 +3132,7 @@ class GetAodn:
         """Initialises GetAodn with default S3 bucket, prefix, and s3 filesystem options."""
         self.bucket_name = bucket_name
         self.prefix = prefix
-        self.s3_fs_opts = s3_fs_opts or {}
+        self.s3_fs_opts = _build_effective_s3_fs_opts(s3_fs_opts)
 
         self.logger = logging.getLogger("aodn.GetAodn")
         self.logger.setLevel(logging.INFO)
