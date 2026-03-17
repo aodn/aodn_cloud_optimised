@@ -50,7 +50,7 @@ from shapely.geometry import MultiPolygon, Polygon
 from tqdm.notebook import tqdm
 from windrose import WindroseAxes
 
-__version__ = "0.3.4"
+__version__ = "0.3.5"
 
 REGION: Final[str] = "ap-southeast-2"
 ENDPOINT_URL = "https://s3.ap-southeast-2.amazonaws.com"
@@ -145,8 +145,12 @@ def _build_effective_s3_fs_opts(s3_fs_opts: dict | None = None) -> dict:
 def _get_s3_filesystem_cached(hashable_opts=None):
     """Internal cached function that expects hashable options."""
     if hashable_opts is not None:
-        opts_dict = _unhashable_to_dict(hashable_opts)
-        return fs.S3FileSystem(**s3_opts_to_pyarrow(_drop_none_values(opts_dict)))
+        opts_dict = _drop_none_values(_unhashable_to_dict(hashable_opts))
+        if not opts_dict:
+            return fs.S3FileSystem(
+                region=REGION, endpoint_override=ENDPOINT_URL, anonymous=True
+            )
+        return fs.S3FileSystem(**s3_opts_to_pyarrow(opts_dict))
     else:
         return fs.S3FileSystem(
             region=REGION, endpoint_override=ENDPOINT_URL, anonymous=True
@@ -1429,15 +1433,9 @@ def get_zarr_metadata(dname: str, s3_fs_opts=None) -> dict:
     name = dname.replace("anonymous@", "")
     logger.info(f"Retrieving metadata for {name}")
 
-    if s3_fs_opts:
-        # Use provided S3 filesystem
-        clean_opts = _drop_none_values(s3_fs_opts)
-        s3 = s3fs.S3FileSystem(**clean_opts)
-        # mapper = fsspec.get_mapper(name, storage_options={"fs": s3})
-        mapper = s3.get_mapper(name)
-    else:
-        # Default: anonymous access
-        mapper = fsspec.get_mapper(name, anon=True)
+    effective_opts = _build_effective_s3_fs_opts(s3_fs_opts)
+    s3 = s3fs.S3FileSystem(**effective_opts)
+    mapper = s3.get_mapper(name)
 
     try:
         # Use fsspec mapper for xarray to access S3 anonymously
