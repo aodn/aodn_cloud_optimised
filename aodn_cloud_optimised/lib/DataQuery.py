@@ -51,7 +51,7 @@ from shapely.geometry import MultiPolygon, Polygon
 from tqdm.notebook import tqdm
 from windrose import WindroseAxes
 
-__version__ = "0.3.7"
+__version__ = "0.3.8"
 
 REGION: Final[str] = "ap-southeast-2"
 ENDPOINT_URL = "https://s3.ap-southeast-2.amazonaws.com"
@@ -60,6 +60,14 @@ ENDPOINT_URL = "https://s3.ap-southeast-2.amazonaws.com"
 BUCKET_OPTIMISED_DEFAULT = "aodn-cloud-optimised"
 ROOT_PREFIX_CLOUD_OPTIMISED_PATH = ""
 DEFAULT_TIME = datetime(1900, 1, 1)
+
+# Tune pyarrow's global thread pools for S3-heavy workloads.
+# IO is latency-bound, so more threads than CPU cores is beneficial.
+# pyarrow.fs.S3FileSystem has no connection-pool or concurrency parameters of
+# its own — all parallel S3 read concurrency flows through these pools.
+_IO_THREAD_COUNT = min((os.cpu_count() or 4) * 4, 32)
+pa.set_io_thread_count(_IO_THREAD_COUNT)
+pa.set_cpu_count(os.cpu_count() or 4)
 
 # Module-level cache for partition values, keyed by (id(dataset), partition_name).
 # Avoids redundant fragment iterations when multiple filters query the same partition.
@@ -142,6 +150,11 @@ def _build_effective_s3_fs_opts(s3_fs_opts: dict | None = None) -> dict:
     for k, v in clean_user_opts.items():
         if k != "client_kwargs":
             merged_opts[k] = v
+
+    # If explicit credentials are provided, anonymous access must be removed —
+    # pyarrow (and s3fs) reject anon=True alongside access_key/secret.
+    if any(k in merged_opts for k in ("key", "access_key", "secret", "secret_key")):
+        merged_opts.pop("anon", None)
 
     return _drop_none_values(merged_opts)
 
@@ -233,6 +246,11 @@ def get_s3_filesystem(s3_fs_opts=None):
     """
     Return a cached pyarrow.fs.S3FileSystem instance.
 
+    Note: S3FileSystem has no concurrency or connection-pool parameters.
+    Parallel S3 read throughput is controlled globally via
+    pa.set_io_thread_count() and pa.set_cpu_count(), which are set at
+    module import time based on the host's CPU count.
+
     Args:
         s3_fs_opts (dict, optional): Dictionary of S3 options (s3fs-style).
             Can include keys like 'key', 'secret', 'anon', 'client_kwargs'.
@@ -279,10 +297,13 @@ def s3_opts_to_pyarrow(s3_fs_opts: dict) -> dict:
             # Pass other keys as-is (future-proofing)
             pa_opts[k] = v
 
-    # Ensure anonymous is a boolean if provided
-    if "anonymous" in pa_opts:
-        pa_opts["anonymous"] = bool(pa_opts["anonymous"])
-    else:
+    # Only set anonymous=False as a default when no credentials are provided.
+    # pyarrow raises ValueError if anonymous is passed alongside access_key/secret_key.
+    if (
+        "anonymous" not in pa_opts
+        and "access_key" not in pa_opts
+        and "secret_key" not in pa_opts
+    ):
         pa_opts["anonymous"] = False
 
     return pa_opts
@@ -379,15 +400,21 @@ def get_temporal_extent(
                 "No known time variable ('TIME', 'JULD', 'detection_timestamp') found in dataset schema"
             )
 
-    # Single scan across both boundary partitions — pyarrow's internal thread
-    # pool reads the two partition directories in parallel, avoiding the
-    # serialisation that Python-level ThreadPoolExecutor hits against the
-    # pyarrow.fs.S3FileSystem lock.
+    # Single scan across both boundary partitions with explicit readahead.
+    # fragment_readahead=8 tells pyarrow to prefetch up to 8 Parquet files
+    # concurrently via its IO thread pool, ensuring both partition dirs are
+    # fetched in parallel without needing Python-level threading.
     expr = (pc.field("timestamp") == np.int64(unique_timestamps.min())) | (
         pc.field("timestamp") == np.int64(unique_timestamps.max())
     )
-    table = dataset.to_table(filter=expr, columns=[time_varname])
-    col = table.column(time_varname)
+    scanner = ds.Scanner.from_dataset(
+        dataset,
+        filter=expr,
+        columns=[time_varname],
+        fragment_readahead=8,
+        use_threads=True,
+    )
+    col = scanner.to_table().column(time_varname)
     return pd.Timestamp(pc.min(col).as_py()), pd.Timestamp(pc.max(col).as_py())
 
 
