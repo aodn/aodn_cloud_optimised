@@ -13,6 +13,7 @@ import re
 import tempfile
 import zipfile
 from abc import ABC, abstractmethod
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date, datetime, timezone
 from functools import lru_cache
 from io import StringIO
@@ -50,7 +51,7 @@ from shapely.geometry import MultiPolygon, Polygon
 from tqdm.notebook import tqdm
 from windrose import WindroseAxes
 
-__version__ = "0.3.5"
+__version__ = "0.3.6"
 
 REGION: Final[str] = "ap-southeast-2"
 ENDPOINT_URL = "https://s3.ap-southeast-2.amazonaws.com"
@@ -139,6 +140,73 @@ def _build_effective_s3_fs_opts(s3_fs_opts: dict | None = None) -> dict:
             merged_opts[k] = v
 
     return _drop_none_values(merged_opts)
+
+
+def _get_or_create_logger(
+    logger: logging.Logger | None = None,
+    name: str = "aodn.GetAodn",
+    level: int | None = None,
+) -> logging.Logger:
+    """Return a configured logger with consistent formatting and handler setup."""
+    configured_logger = logger or logging.getLogger(name)
+    if level is not None:
+        configured_logger.setLevel(level)
+    if not configured_logger.handlers:
+        handler = logging.StreamHandler()
+        formatter = logging.Formatter(
+            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        )
+        handler.setFormatter(formatter)
+        configured_logger.addHandler(handler)
+        configured_logger.propagate = False
+    return configured_logger
+
+
+def _build_dataset_s3_uri(bucket_name: str, prefix: str, dataset_path: str) -> str:
+    """Build a normalized S3 URI for dataset folder paths."""
+    return (
+        PureS3Path.from_uri(f"s3://{bucket_name}/{prefix}/")
+        .joinpath(dataset_path)
+        .as_uri()
+    )
+
+
+def _append_metadata_to_dataframe(
+    metadata: dict[str, Any], df: pd.DataFrame
+) -> pd.DataFrame:
+    """Attach global and variable metadata attributes to a dataframe and columns."""
+    global_attrs = metadata.get("global_attributes", {})
+    variable_attrs = {k: v for k, v in metadata.items() if k != "global_attributes"}
+
+    for var_name in df.columns:
+        if not hasattr(df[var_name], "attrs"):
+            df[var_name].attrs = {}
+        if var_name in variable_attrs:
+            df[var_name].attrs.update(variable_attrs[var_name])
+
+    df.attrs.update(global_attrs)
+    return df
+
+
+def _combine_arrow_filters(
+    *filters: pc.Expression | None,
+) -> pc.Expression | None:
+    """Combine optional PyArrow expressions with logical AND."""
+    valid_filters = [f for f in filters if isinstance(f, pc.Expression)]
+    if not valid_filters:
+        return None
+    combined = valid_filters[0]
+    for next_filter in valid_filters[1:]:
+        combined = combined & next_filter
+    return combined
+
+
+def _metadata_fetch_workers(task_count: int) -> int:
+    """Return a bounded worker count for metadata fetching."""
+    if task_count <= 0:
+        return 1
+    cpu_workers = (os.cpu_count() or 4) * 4
+    return max(1, min(task_count, cpu_workers, 32))
 
 
 @lru_cache(maxsize=1)
@@ -1379,7 +1447,7 @@ def get_schema_metadata(dname: str, s3_fs_opts=None) -> dict:
     return decoded_meta
 
 
-def decode_and_load_json(metadata: dict[bytes, bytes]) -> dict[str, any]:
+def decode_and_load_json(metadata: dict[bytes, bytes]) -> dict[str, Any]:
     """Decodes keys and JSON-encoded values from Parquet metadata.
 
     Iterates through a dictionary where keys and values are bytes (as obtained
@@ -1396,7 +1464,7 @@ def decode_and_load_json(metadata: dict[bytes, bytes]) -> dict[str, any]:
         A dictionary with decoded string keys and parsed Python objects as values.
         Keys or values that failed decoding/parsing are omitted.
     """
-    logger = logging.getLogger("aodn.GetAodn")
+    logger = _get_or_create_logger()
     decoded_metadata = {}
     for key, value in metadata.items():
         try:
@@ -1577,15 +1645,7 @@ class DataSource(ABC):
         self.dname = self._build_data_path()
         self.s3_fs_opts = s3_fs_opts
 
-        self.logger = logger or logging.getLogger("aodn.GetAodn")
-        if not self.logger.handlers:
-            handler = logging.StreamHandler()
-            formatter = logging.Formatter(
-                "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-            )
-            handler.setFormatter(formatter)
-            self.logger.addHandler(handler)
-            self.logger.propagate = False
+        self.logger = _get_or_create_logger(logger=logger)
 
         if ".parquet" in self.dname:
             self.s3 = get_s3_filesystem(s3_fs_opts=self.s3_fs_opts)
@@ -1894,52 +1954,16 @@ class ParquetDataSource(DataSource):
 
                 expr = expr_1 if expr is None else expr & expr_1
 
-        # use isinstance as it support type check for subclasss relationship
-        # we want to merge type together, if both are expression then use and to join together
-        if isinstance(filter_geo, pc.Expression) & isinstance(
-            filter_time, pc.Expression
-        ):
-            data_filter = filter_geo & filter_time
-        elif isinstance(filter_time, pc.Expression):
-            data_filter = filter_time
-        elif isinstance(filter_geo, pc.Expression):
-            data_filter = filter_geo
-        else:
-            data_filter = None
+        data_filter = _combine_arrow_filters(filter_geo, filter_time)
 
-        # add scalar filter to data_filter
         if scalar_filter is not None:
-            if data_filter is None:
-                data_filter = expr
-            else:
-                data_filter = data_filter & expr
+            data_filter = _combine_arrow_filters(data_filter, expr)
 
         # Set file system explicitly do not require folder prefix s3://
         table = self.dataset.to_table(filter=data_filter, columns=columns)
         df = table.to_pandas()
 
-        def append_metadata_to_df(metadata, df):
-            global_attrs = metadata.get("global_attributes", {})
-            variable_attrs = {
-                k: v for k, v in metadata.items() if k != "global_attributes"
-            }
-
-            # Attach variable metadata to each column's attrs, if column exists in df
-            # for var, attrs in variable_attrs.items():
-            # if var in df.columns:
-            for var in df.columns:
-                if not hasattr(df[var], "attrs"):
-                    df[var].attrs = {}
-                if var in variable_attrs:
-                    df[var].attrs.update(variable_attrs[var])
-
-            # Attach global metadata to the DataFrame attrs
-            # has to be done here, otherwise, gattrs will be added to all variables for some obscure reason
-            df.attrs.update(global_attrs)
-
-            return df
-
-        df = append_metadata_to_df(self.get_metadata(), df)
+        df = _append_metadata_to_dataframe(self.get_metadata(), df)
 
         return df
 
@@ -3132,17 +3156,7 @@ class GetAodn:
         self.prefix = prefix
         self.s3_fs_opts = _build_effective_s3_fs_opts(s3_fs_opts)
 
-        self.logger = logging.getLogger("aodn.GetAodn")
-        self.logger.setLevel(logging.INFO)
-
-        if not self.logger.handlers:
-            handler = logging.StreamHandler()
-            formatter = logging.Formatter(
-                "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-            )
-            handler.setFormatter(formatter)
-            self.logger.addHandler(handler)
-            self.logger.propagate = False  # Prevent double logging
+        self.logger = _get_or_create_logger(level=logging.INFO)
 
     def get_logger(self) -> logging.Logger:
         return self.logger
@@ -3250,17 +3264,7 @@ class Metadata:
                 datasets reside.
             logger: Optional logger to use. If not provided, a default logger will be created.
         """
-        # super().__init__()
-        # initialise the class by calling the needed methods
-        self.logger = logger or logging.getLogger("aodn.GetAodn")
-        if not self.logger.handlers:
-            handler = logging.StreamHandler()
-            formatter = logging.Formatter(
-                "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-            )
-            handler.setFormatter(formatter)
-            self.logger.addHandler(handler)
-            self.logger.propagate = False
+        self.logger = _get_or_create_logger(logger=logger)
 
         self.bucket_name = bucket_name
         self.prefix = prefix
@@ -3290,55 +3294,53 @@ class Metadata:
         # This method currently only lists Parquet datasets.
         # It will need to be updated to discover Zarr datasets as well.
         catalog = {}
-
-        # Process Parquet datasets
-        folders_with_parquet = self.list_folders_with_data(".parquet/")
-        for (
-            dataset_path
-        ) in folders_with_parquet:  # dataset_path is like 'my_dataset.parquet/'
-            # Construct dname for Parquet metadata
-            dname = (
-                PureS3Path.from_uri(f"s3://anonymous@{self.bucket_name}/{self.prefix}/")
-                .joinpath(dataset_path)  # Use dataset_path directly
-                .as_uri()
-            )
-            dname = dname.replace("s3://anonymous%40", "")
-
-            try:
-                metadata = get_schema_metadata(dname, s3_fs_opts=s3_fs_opts)
-            except Exception as e:
-                self.logger.error(
-                    f"Processing Parquet metadata from {dataset_path}: {e}"
+        extension_to_loader = {
+            ".parquet/": get_schema_metadata,
+            ".zarr/": get_zarr_metadata,
+        }
+        work_items: list[tuple[int, str, str, Any, str]] = []
+        index = 0
+        for extension_filter, loader in extension_to_loader.items():
+            for dataset_path in self.list_folders_with_data(extension_filter):
+                dname = _build_dataset_s3_uri(
+                    self.bucket_name, self.prefix, dataset_path
                 )
-                continue
+                work_items.append(
+                    (index, dataset_path, extension_filter, loader, dname)
+                )
+                index += 1
 
-            # Extract dataset_name from dataset_path (e.g., 'my_dataset' from 'my_dataset.parquet/')
-            dataset_name = dataset_path.rstrip("/")
-            catalog[dataset_name] = metadata
+        if not work_items:
+            return catalog
 
-        # Process Zarr datasets
-        folders_with_zarr = self.list_folders_with_data(".zarr/")
-        for (
-            dataset_path
-        ) in folders_with_zarr:  # dataset_path is like 'my_dataset.zarr/'
-            dname = (
-                PureS3Path.from_uri(f"s3://anonymous@{self.bucket_name}/{self.prefix}/")
-                .joinpath(dataset_path)  # Use dataset_path directly
-                .as_uri()
-            )
-            dname = dname.replace("s3://anonymous%40", "s3://")
+        ordered_results: dict[int, tuple[str, dict]] = {}
+        workers = _metadata_fetch_workers(len(work_items))
+        with ThreadPoolExecutor(max_workers=workers) as executor:
+            future_to_item = {
+                executor.submit(loader, dname, s3_fs_opts=s3_fs_opts): (
+                    item_index,
+                    dataset_path,
+                    extension_filter,
+                )
+                for item_index, dataset_path, extension_filter, loader, dname in work_items
+            }
 
-            try:
-                metadata = get_zarr_metadata(dname, s3_fs_opts=s3_fs_opts)
-            except Exception as e:
-                self.logger.error(f"Processing Zarr metadata from {dataset_path}: {e}")
-                continue
+            for future in as_completed(future_to_item):
+                item_index, dataset_path, extension_filter = future_to_item[future]
+                try:
+                    metadata = future.result()
+                except Exception as e:
+                    self.logger.error(
+                        f"Processing metadata from {dataset_path} ({extension_filter}): {e}"
+                    )
+                    continue
+                ordered_results[item_index] = (dataset_path.rstrip("/"), metadata)
 
-            dataset_name = dataset_path.rstrip("/")
-            # If a dataset with the same name (but different format) exists,
-            # we might want to merge or handle it. For now, Zarr will overwrite if name clashes.
-            # A more robust solution might involve storing format in the catalog key or structure.
-            catalog[dataset_name] = metadata
+        for item_index in range(len(work_items)):
+            if item_index in ordered_results:
+                dataset_name, metadata = ordered_results[item_index]
+                # Preserve pre-existing overwrite semantics (zarr can overwrite parquet).
+                catalog[dataset_name] = metadata
 
         return catalog
 
