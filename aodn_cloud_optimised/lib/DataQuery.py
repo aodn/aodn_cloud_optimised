@@ -51,7 +51,7 @@ from shapely.geometry import MultiPolygon, Polygon
 from tqdm.notebook import tqdm
 from windrose import WindroseAxes
 
-__version__ = "0.3.6"
+__version__ = "0.3.7"
 
 REGION: Final[str] = "ap-southeast-2"
 ENDPOINT_URL = "https://s3.ap-southeast-2.amazonaws.com"
@@ -60,6 +60,10 @@ ENDPOINT_URL = "https://s3.ap-southeast-2.amazonaws.com"
 BUCKET_OPTIMISED_DEFAULT = "aodn-cloud-optimised"
 ROOT_PREFIX_CLOUD_OPTIMISED_PATH = ""
 DEFAULT_TIME = datetime(1900, 1, 1)
+
+# Module-level cache for partition values, keyed by (id(dataset), partition_name).
+# Avoids redundant fragment iterations when multiple filters query the same partition.
+_partition_value_cache: dict[tuple[int, str], Set[str]] = {}
 
 
 class PolygonNotIntersectingError(ValueError):
@@ -291,6 +295,9 @@ def query_unique_value(dataset: ds.Dataset, partition: str) -> Set[str]:
     values associated with the specified partition key from the file paths.
     Assumes Hive partitioning (e.g., ".../partition=value/...").
 
+    Results are cached per dataset instance to avoid redundant fragment
+    iterations when multiple filters query the same partition key.
+
     Args:
         dataset: The pyarrow.dataset.Dataset object.
         partition: The name of the partition key (e.g., "year", "timestamp").
@@ -298,12 +305,19 @@ def query_unique_value(dataset: ds.Dataset, partition: str) -> Set[str]:
     Returns:
         A set containing the unique string values found for the partition key.
     """
+    cache_key = (id(dataset), partition)
+    cached = _partition_value_cache.get(cache_key)
+    if cached is not None:
+        return cached
+
     unique_values = set()
     pattern = re.compile(f".*/{partition}=([^/]*)/")
     for fragment in dataset.get_fragments():
         match = pattern.match(fragment.path)
         if match:
             unique_values.add(match.group(1))
+
+    _partition_value_cache[cache_key] = unique_values
     return unique_values
 
 
@@ -337,13 +351,13 @@ def get_temporal_extent(
 ) -> tuple[pd.Timestamp, pd.Timestamp]:
     """Calculates the precise temporal extent by reading min/max time variable values.
 
-    This method finds the minimum and maximum 'timestamp' partition values, then
-    reads the actual time variable (e.g., 'TIME' or 'JULD') from the corresponding
-    Parquet files to get the precise minimum and maximum timestamps in the dataset.
-    This is more accurate but slower than `get_temporal_extent_v1`.
+    Issues a single scan over both boundary partitions (min and max timestamp)
+    using an OR filter so pyarrow's internal thread pool reads them in parallel.
+    Aggregates with pyarrow compute directly (no pandas conversion overhead).
 
     Args:
         dataset: The pyarrow.dataset.Dataset object.
+        time_varname: Optional explicit name of the time variable.
 
     Returns:
         A tuple containing the minimum and maximum pandas Timestamp objects
@@ -365,17 +379,16 @@ def get_temporal_extent(
                 "No known time variable ('TIME', 'JULD', 'detection_timestamp') found in dataset schema"
             )
 
-    expr = pc.field("timestamp") == np.int64(unique_timestamps.max())
+    # Single scan across both boundary partitions — pyarrow's internal thread
+    # pool reads the two partition directories in parallel, avoiding the
+    # serialisation that Python-level ThreadPoolExecutor hits against the
+    # pyarrow.fs.S3FileSystem lock.
+    expr = (pc.field("timestamp") == np.int64(unique_timestamps.min())) | (
+        pc.field("timestamp") == np.int64(unique_timestamps.max())
+    )
     table = dataset.to_table(filter=expr, columns=[time_varname])
-    df = table.to_pandas()
-    time_max = df[time_varname].max()
-
-    expr = pc.field("timestamp") == np.int64(unique_timestamps.min())
-    table = dataset.to_table(filter=expr, columns=[time_varname])
-    df = table.to_pandas()
-    time_min = df[time_varname].min()
-
-    return time_min, time_max
+    col = table.column(time_varname)
+    return pd.Timestamp(pc.min(col).as_py()), pd.Timestamp(pc.max(col).as_py())
 
 
 def get_timestamps_boundary_values(
@@ -586,10 +599,10 @@ def create_time_filter(dataset: ds.Dataset, **kwargs) -> pc.Expression:
     if None in (date_start, date_end):
         raise ValueError("Start and end dates must be provided.")
 
-    # timestamp_start, timestamp_end = get_temporal_extent_v1(dataset)
-    timestamp_start, timestamp_end = get_temporal_extent(
-        dataset, time_varname=time_varname
-    )
+    # Use partition-only temporal extent for boundary validation.
+    # This avoids two expensive to_table() S3 reads that get_temporal_extent
+    # would perform just to provide a nicer error message.
+    timestamp_start, timestamp_end = get_temporal_extent_v1(dataset)
     timestamp_start = ensure_utc_aware(timestamp_start)
     timestamp_end = ensure_utc_aware(timestamp_end)
 
@@ -1647,10 +1660,6 @@ class DataSource(ABC):
 
         self.logger = _get_or_create_logger(logger=logger)
 
-        if ".parquet" in self.dname:
-            self.s3 = get_s3_filesystem(s3_fs_opts=self.s3_fs_opts)
-            self.dataset = self._create_pyarrow_dataset()
-
     @abstractmethod
     def _build_data_path(self) -> str:
         """Constructs the full S3 path to the data source."""
@@ -1763,9 +1772,23 @@ class ParquetDataSource(DataSource):
             )
 
         super().__init__(bucket_name, prefix, dataset_name, s3_fs_opts=s3_fs_opts)
-        if ".parquet" in self.dname:
-            # override S3 filesystem and re-create dataset with custom options
-            self.dataset = self._create_pyarrow_dataset()
+        self._dataset = None  # lazily created on first access
+
+    @property
+    def dataset(self) -> ds.Dataset:
+        """Lazily creates and caches the PyArrow Dataset on first access.
+
+        The underlying ``ds.dataset()`` call performs a recursive S3 listing
+        of all partition directories, which can be slow for large datasets.
+        Deferring it until actually needed makes ``get_dataset()`` instant.
+        """
+        if self._dataset is None:
+            self._dataset = self._create_pyarrow_dataset()
+        return self._dataset
+
+    @dataset.setter
+    def dataset(self, value: ds.Dataset) -> None:
+        self._dataset = value
 
     def _build_data_path(self) -> str:
         """Constructs the S3 path for the Parquet dataset directory.
@@ -1809,8 +1832,7 @@ class ParquetDataSource(DataSource):
         Returns:
             A pyarrow.Schema object representing the partition keys.
         """
-        dataset = self._create_pyarrow_dataset()
-        partition_keys = dataset.partitioning.schema
+        partition_keys = self.dataset.partitioning.schema
         return partition_keys
 
     def get_spatial_extent(self) -> MultiPolygon:
