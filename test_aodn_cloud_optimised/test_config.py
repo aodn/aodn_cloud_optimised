@@ -4,7 +4,9 @@ import os
 import pathlib
 import shutil
 import tempfile
+import types
 import unittest
+from unittest.mock import patch
 
 import pydantic
 import yaml
@@ -259,7 +261,7 @@ class TestDatasetConfigCustomValidators(unittest.TestCase):
 
 
 class TestDatasetConfigLoadFromPath(unittest.TestCase):
-    """Unit tests for DatasetConfig.load_from_path class method."""
+    """Unit tests for DatasetConfig.from_path class method."""
 
     def setUp(self):
         self.temp_dir = pathlib.Path(tempfile.mkdtemp())
@@ -274,25 +276,25 @@ class TestDatasetConfigLoadFromPath(unittest.TestCase):
 
     def test_load_parquet_config(self):
         path = self._write_json("parquet.json", _MINIMAL_PARQUET_DATA)
-        config = DatasetConfig.load_from_path(path)
+        config = DatasetConfig.from_path(path)
         self.assertEqual(config.dataset_name, "test_parquet_dataset")
         self.assertEqual(config.cloud_optimised_format, "parquet")
 
     def test_load_zarr_config(self):
         path = self._write_json("zarr.json", _MINIMAL_ZARR_DATA)
-        config = DatasetConfig.load_from_path(path)
+        config = DatasetConfig.from_path(path)
         self.assertEqual(config.dataset_name, "test_zarr_dataset")
         self.assertEqual(config.cloud_optimised_format, "zarr")
 
     def test_missing_file_raises_file_not_found(self):
         with self.assertRaises(FileNotFoundError):
-            DatasetConfig.load_from_path(self.temp_dir / "missing.json")
+            DatasetConfig.from_path(self.temp_dir / "missing.json")
 
     def test_non_json_extension_raises_value_error(self):
         path = self.temp_dir / "config.yaml"
         path.write_text(json.dumps(_MINIMAL_PARQUET_DATA))
         with self.assertRaises(ValueError):
-            DatasetConfig.load_from_path(path)
+            DatasetConfig.from_path(path)
 
     def test_invalid_config_raises_validation_error(self):
         invalid_data = {
@@ -302,21 +304,21 @@ class TestDatasetConfigLoadFromPath(unittest.TestCase):
         }
         path = self._write_json("invalid.json", invalid_data)
         with self.assertRaises(pydantic.ValidationError):
-            DatasetConfig.load_from_path(path)
+            DatasetConfig.from_path(path)
 
 
 class TestDatasetConfigLoadFromCloudOptimisedDirectory(unittest.TestCase):
-    """Unit tests for DatasetConfig.load_from_cloud_optimised_directory class method."""
+    """Unit tests for DatasetConfig.from_cloud_optimised_directory class method."""
 
     def test_load_parquet_config(self):
-        config = DatasetConfig.load_from_cloud_optimised_directory(
+        config = DatasetConfig.from_cloud_optimised_directory(
             "vessel_sst_delayed_qc.json"
         )
         self.assertEqual(config.cloud_optimised_format, "parquet")
         self.assertEqual(config.dataset_name, "vessel_sst_delayed_qc")
 
     def test_load_zarr_config(self):
-        config = DatasetConfig.load_from_cloud_optimised_directory(
+        config = DatasetConfig.from_cloud_optimised_directory(
             "model_sea_level_anomaly_gridded_realtime.json"
         )
         self.assertEqual(config.cloud_optimised_format, "zarr")
@@ -326,13 +328,11 @@ class TestDatasetConfigLoadFromCloudOptimisedDirectory(unittest.TestCase):
 
     def test_missing_config_raises_file_not_found(self):
         with self.assertRaises(FileNotFoundError):
-            DatasetConfig.load_from_cloud_optimised_directory(
-                "nonexistent_dataset.json"
-            )
+            DatasetConfig.from_cloud_optimised_directory("nonexistent_dataset.json")
 
     def test_load_config_with_parent_merges_fields(self):
         """A child config with parent_config should inherit fields absent from the child."""
-        config = DatasetConfig.load_from_cloud_optimised_directory(
+        config = DatasetConfig.from_cloud_optimised_directory(
             "radar_TurquoiseCoast_velocity_hourly_averaged_delayed_qc.json"
         )
         # cloud_optimised_format lives in the parent config, not the child
@@ -367,7 +367,7 @@ class TestDatasetConfigBackwardCompatibility(unittest.TestCase):
     """Smoke-tests every production config file in the module's dataset config
     directory.  For each loadable config we verify that:
 
-    1. DatasetConfig.load_from_cloud_optimised_directory succeeds (no
+    1. DatasetConfig.from_cloud_optimised_directory succeeds (no
        regression in validators as the model evolves).
     2. The typed model agrees with the legacy load_dataset_config dict on the
        three fields that define a dataset's identity: dataset_name,
@@ -402,7 +402,7 @@ class TestDatasetConfigBackwardCompatibility(unittest.TestCase):
     def test_all_configs_load_without_error(self):
         for config_path in self._loadable_configs():
             with self.subTest(config=config_path.name):
-                DatasetConfig.load_from_cloud_optimised_directory(config_path.name)
+                DatasetConfig.from_cloud_optimised_directory(config_path.name)
 
     def test_new_loader_agrees_with_legacy_loader(self):
         """dataset_name, cloud_optimised_format, and schema keys must match
@@ -410,7 +410,7 @@ class TestDatasetConfigBackwardCompatibility(unittest.TestCase):
         for config_path in self._loadable_configs():
             with self.subTest(config=config_path.name):
                 legacy = load_dataset_config(str(config_path))
-                new = DatasetConfig.load_from_cloud_optimised_directory(
+                new = DatasetConfig.from_cloud_optimised_directory(
                     config_path.name
                 ).model_dump(by_alias=True)
 
@@ -427,6 +427,72 @@ class TestDatasetConfigBackwardCompatibility(unittest.TestCase):
                     set(new["schema"].keys()),
                     set(legacy["schema"].keys()),
                 )
+
+
+class TestDatasetConfigResolveHandlerClass(unittest.TestCase):
+    """Unit tests for DatasetConfig.resolve_handler_class instance method."""
+
+    def _make_config(self, cloud_optimised_format, handler_class=None):
+        """Return a minimal validated DatasetConfig for the given format."""
+        if cloud_optimised_format == "parquet":
+            data = copy.deepcopy(_MINIMAL_PARQUET_DATA)
+        else:
+            data = copy.deepcopy(_MINIMAL_ZARR_DATA)
+        if handler_class is not None:
+            data["handler_class"] = handler_class
+        return DatasetConfig.model_validate(data)
+
+    # --- fallback cases (handler_class is None) ---
+
+    def test_parquet_without_handler_class_returns_generic_parquet_handler(self):
+        from aodn_cloud_optimised.lib.GenericParquetHandler import GenericHandler
+
+        config = self._make_config("parquet")
+        self.assertIsNone(config.handler_class)
+        self.assertIs(config.resolve_handler_class(), GenericHandler)
+
+    def test_zarr_without_handler_class_returns_generic_zarr_handler(self):
+        from aodn_cloud_optimised.lib.GenericZarrHandler import GenericHandler
+
+        config = self._make_config("zarr")
+        self.assertIsNone(config.handler_class)
+        self.assertIs(config.resolve_handler_class(), GenericHandler)
+
+    # --- explicit handler_class cases ---
+
+    def test_explicit_handler_class_loads_correct_class(self):
+        from aodn_cloud_optimised.lib.ArgoHandler import ArgoHandler
+
+        config = self._make_config("parquet", handler_class="ArgoHandler")
+        resolved = config.resolve_handler_class()
+        self.assertIs(resolved, ArgoHandler)
+
+    def test_explicit_handler_class_is_a_type(self):
+        config = self._make_config("parquet", handler_class="ArgoHandler")
+        resolved = config.resolve_handler_class()
+        self.assertTrue(isinstance(resolved, type))
+
+    # --- error cases ---
+
+    def test_nonexistent_module_raises_import_error(self):
+        config = self._make_config("parquet", handler_class="NoSuchHandler")
+        with self.assertRaises(ImportError) as ctx:
+            config.resolve_handler_class()
+        self.assertIn("NoSuchHandler", str(ctx.exception))
+
+    def test_module_missing_named_class_raises_value_error(self):
+        """A module that exists but doesn't export a class with the given name."""
+        config = self._make_config("parquet")
+        object.__setattr__(config, "handler_class", "FakeHandler")
+        # Return a module that has no attribute named 'FakeHandler'
+        fake_module = types.ModuleType("aodn_cloud_optimised.lib.FakeHandler")
+        with patch(
+            "aodn_cloud_optimised.bin.config.model.dataset_config.importlib.import_module",
+            return_value=fake_module,
+        ):
+            with self.assertRaises(ValueError) as ctx:
+                config.resolve_handler_class()
+        self.assertIn("FakeHandler", str(ctx.exception))
 
 
 if __name__ == "__main__":

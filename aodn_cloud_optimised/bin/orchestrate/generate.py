@@ -1,53 +1,9 @@
 import pathlib
 
-import prefect
-import prefect_aws
-
 from aodn_cloud_optimised.bin.config.model import DatasetConfig, PathConfig
 from aodn_cloud_optimised.bin.orchestrate import FileCollector
 
 
-@prefect.task
-def load_dataset_config(dataset_config_path: pathlib.Path) -> DatasetConfig:
-    """Load dataset configuration from a file path.
-
-    :param dataset_config_path: Path to the dataset configuration file
-    :type dataset_config_path: pathlib.Path
-    :return: Parsed dataset configuration
-    :rtype: DatasetConfig
-    """
-    return DatasetConfig.from_path(dataset_config_path)
-
-
-@prefect.task
-def collect_s3_file_list(file_collector: FileCollector) -> list[str]:
-    """Collect S3 file URIs using the provided file collector.
-
-    :param file_collector: Configured file collector instance
-    :type file_collector: FileCollector
-    :return: List of S3 file URIs
-    :rtype: list[str]
-    """
-    return file_collector.collect()
-
-
-@prefect.task
-def get_handler(
-    handler_class,
-    dataset_config: DatasetConfig,
-    optimised_bucket_block: prefect_aws.S3Bucket,
-) -> object:
-
-    return handler_class(
-        **{
-            "dataset_config": dataset_config.model_dump(by_alias=True),
-            "optimised_bucket_name": optimised_bucket_block.bucket_name,
-            "root_prefix_cloud_optimised_path": optimised_bucket_block.bucket_folder,
-        }
-    )
-
-
-@prefect.task
 def optimise(
     handler,
     s3_file_uri_list: list[str],
@@ -58,35 +14,31 @@ def optimise(
     )
 
 
-@prefect.flow
 def generate(
-    dataset_config_path: pathlib.Path,
+    dataset_config: DatasetConfig,
     file_collector: FileCollector,
-    handler_class,
-    optimised_bucket_block: prefect_aws.S3Bucket = prefect_aws.S3Bucket.load(
-        "optimised-bucket"
-    ),
+    optimised_bucket_name: str,
+    root_prefix_cloud_optimised_path: str | None,
 ) -> None:
     """Orchestrate the cloud-optimisation workflow.
 
     Coordinates the process of loading dataset configuration, initialising the handler,
     collecting S3 files, and converting them to cloud-optimised format.
 
-    :param dataset_config_path: Path to the dataset configuration file
-    :type dataset_config_path: pathlib.Path
+    :param dataset_config: Parsed dataset configuration
+    :type dataset_config: DatasetConfig
     :param file_collector: Configured file collector for retrieving S3 file URIs
     :type file_collector: FileCollector
-    :param optimised_bucket_block: Prefect S3 bucket block for cloud-optimised outputs, defaults to "optimised-bucket"
-    :type optimised_bucket_block: prefect_aws.S3Bucket, optional
+    :param optimised_bucket_name: Name of the S3 bucket to write cloud-optimised output to
+    :type optimised_bucket_name: str
+    :param root_prefix_cloud_optimised_path: Key prefix within the bucket, or None for the bucket root
+    :type root_prefix_cloud_optimised_path: str | None
     :return: None
     :rtype: None
     """
 
-    # Get the dataset_config
-    dataset_config = DatasetConfig.from_path(dataset_config_path)
-
     # Collect the s3 file list
-    s3_file_uri_list = collect_s3_file_list(file_collector=file_collector)
+    s3_file_uri_list = file_collector.collect()
 
     # Update dataset_config paths
     dataset_config.run_settings.paths = [
@@ -97,11 +49,11 @@ def generate(
         for s3_file_uri in s3_file_uri_list
     ]
 
-    # Construct the handler
-    handler = get_handler(
-        handler_class=handler_class,
-        dataset_config=dataset_config,
-        optimised_bucket_block=optimised_bucket_block,
+    # Construct and run the handler
+    handler = dataset_config.resolve_handler_class()(
+        dataset_config=dataset_config.model_dump(by_alias=True),
+        optimised_bucket_name=optimised_bucket_name,
+        root_prefix_cloud_optimised_path=root_prefix_cloud_optimised_path,
     )
 
     optimise(
@@ -111,21 +63,17 @@ def generate(
 
 
 if __name__ == "__main__":
-
-    from aodn_cloud_optimised.lib.GenericParquetHandler import (
-        GenericHandler as GenericParquetHandler,
-    )
-
-    s3_bucket_block = prefect_aws.S3Bucket.load("processing-stored-bucket")
-    file_collector = FileCollector.from_s3_bucket_block(
-        s3_bucket_block=s3_bucket_block,
-        path="seabird",
+    file_collector = FileCollector.from_s3_uri(
+        s3_uri="s3://aodn-dataflow-dev/thomas.galindo/processing/stored/seabird/",
         suffix="seabird_v1_2026-01-01T21:57:17.parquet",
     )
     generate(
-        dataset_config_path=pathlib.Path(
-            "aodn_cloud_optimised/config/dataset/aggregated_seabird_nonqc.json"
+        dataset_config=DatasetConfig.from_path(
+            pathlib.Path(
+                "aodn_cloud_optimised/config/dataset/aggregated_seabird_nonqc.json"
+            )
         ),
         file_collector=file_collector,
-        handler_class=GenericParquetHandler,
+        optimised_bucket_name="aodn-dataflow-dev",
+        root_prefix_cloud_optimised_path="thomas.galindo/processing/stored/seabird",
     )

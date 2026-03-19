@@ -1,3 +1,4 @@
+import importlib
 import json
 import pathlib
 import typing
@@ -308,3 +309,55 @@ class DatasetConfig(pydantic.BaseModel):
             config_file_path=config_file_path,
         )
         return DatasetConfig.model_validate(dataset_config)
+
+    def resolve_handler_class(self) -> type:
+        """Resolve the handler class for this dataset configuration.
+
+        If ``handler_class`` is set, loads the named class from
+        ``aodn_cloud_optimised.lib``. Otherwise falls back to the generic
+        handler for the configured ``cloud_optimised_format``.
+
+        :return: Handler class to use for cloud-optimised creation
+        :rtype: type
+        :raises ImportError: If the named ``handler_class`` module cannot be found
+        :raises ValueError: If the module does not contain a class matching ``handler_class``,
+            or if ``cloud_optimised_format`` is not 'zarr' or 'parquet'
+        """
+        match (self.handler_class, self.cloud_optimised_format):
+
+            # A specific handler_class is named: dynamically import it from aodn_cloud_optimised.lib
+            case (str() as handler_class, _):
+                module_path = f"aodn_cloud_optimised.lib.{handler_class}"
+                try:
+                    module = importlib.import_module(module_path)
+                except ModuleNotFoundError:
+                    raise ImportError(
+                        f"No module '{module_path}' found for handler_class '{handler_class}'"
+                    )
+                handler = getattr(module, handler_class, None)
+                if handler is None:
+                    raise ValueError(
+                        f"Module '{module_path}' does not contain a class named '{handler_class}'"
+                    )
+                return handler
+
+            # No explicit handler; fall back to the generic parquet handler
+            case (None, "parquet"):
+                from aodn_cloud_optimised.lib.GenericParquetHandler import (
+                    GenericHandler,
+                )
+
+                return GenericHandler
+
+            # No explicit handler; fall back to the generic zarr handler
+            case (None, "zarr"):
+                from aodn_cloud_optimised.lib.GenericZarrHandler import GenericHandler
+
+                return GenericHandler
+
+            # cloud_optimised_format is neither 'parquet' nor 'zarr'
+            case _:
+                raise ValueError(
+                    f"Cannot resolve handler class: unsupported cloud_optimised_format "
+                    f"'{self.cloud_optimised_format}'"
+                )

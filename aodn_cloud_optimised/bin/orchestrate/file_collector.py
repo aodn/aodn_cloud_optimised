@@ -2,10 +2,21 @@ import typing
 import urllib.parse
 
 import boto3
-import prefect_aws
 import pydantic
 
 from aodn_cloud_optimised.bin.orchestrate import Content, ListObjectsV2Page
+
+
+class BucketBlock(typing.Protocol):
+    """Structural interface for an S3 bucket configuration block.
+
+    Any object exposing ``bucket_name`` and ``bucket_folder`` satisfies this
+    protocol, including ``prefect_aws.S3Bucket`` blocks as well as plain
+    dataclasses or named tuples used in non-Prefect contexts.
+    """
+
+    bucket_name: str
+    bucket_folder: str | None
 
 
 class FileCollector(pydantic.BaseModel):
@@ -50,7 +61,7 @@ class FileCollector(pydantic.BaseModel):
 
     @staticmethod
     def _parse_s3_block(
-        s3_bucket_block: prefect_aws.S3Bucket,
+        s3_bucket_block: BucketBlock,
         path: str | None,
     ) -> tuple[str, str | None]:
         """Parse S3 block and return bucket and prefix.
@@ -58,8 +69,9 @@ class FileCollector(pydantic.BaseModel):
         Combines bucket_folder from the S3 block with the provided path to
         determine the final prefix for S3 operations.
 
-        :param s3_bucket_block: Prefect S3 bucket block configuration
-        :type s3_bucket_block: prefect_aws.S3Bucket
+        :param s3_bucket_block: S3 bucket block configuration (any object with
+            ``bucket_name`` and ``bucket_folder`` attributes)
+        :type s3_bucket_block: BucketBlock
         :param path: Optional S3 path to append to the bucket folder, defaults to None
         :type path: str | None
         :return: Tuple containing bucket name and combined prefix (or None if neither bucket_folder nor path)
@@ -156,18 +168,20 @@ class FileCollector(pydantic.BaseModel):
     @classmethod
     def from_s3_bucket_block(
         cls,
-        s3_bucket_block: prefect_aws.S3Bucket,
+        s3_bucket_block: BucketBlock,
         path: str | None = None,
         suffix: str | None = None,
     ) -> typing.Self:
-        """Collect S3 object paths from a Prefect S3 bucket block.
+        """Collect S3 object paths from a bucket block.
 
-        :param s3_bucket_block: Prefect S3 bucket block configuration
-        :type s3_bucket_block: prefect_aws.S3Bucket
+        :param s3_bucket_block: S3 bucket block configuration (any object with
+            ``bucket_name`` and ``bucket_folder`` attributes, such as a
+            ``prefect_aws.S3Bucket`` block)
+        :type s3_bucket_block: BucketBlock
         :param path: Optional S3 path to append to the block's bucket folder, defaults to None
         :type path: str | None, optional
-        :return: List of full S3 URIs for all objects found
-        :rtype: list[str]
+        :return: FileCollector configured with the resolved bucket and prefix
+        :rtype: FileCollector
         """
         bucket, prefix = cls._parse_s3_block(s3_bucket_block, path)
         return cls(
