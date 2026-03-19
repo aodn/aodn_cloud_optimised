@@ -1,5 +1,3 @@
-import pathlib
-
 from aodn_cloud_optimised.bin.config.model import DatasetConfig, PathConfig
 from aodn_cloud_optimised.bin.orchestrate import FileCollector
 
