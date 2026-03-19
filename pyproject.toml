@@ -46,7 +46,7 @@ dependencies = [
   # "xarray[complete]==2025.6.1",  # Alternative official release (broken)
 
   "cftime>=1.6.3",
-  "zarr==2.18.7",  # pin because of https://github.com/dask/distributed/issues/9163#issuecomment-3663673542
+  "zarr==2.18.7",                 # pin because of https://github.com/dask/distributed/issues/9163#issuecomment-3663673542
   "geopandas>=0.14.4",
   "coiled>=1.90.4",
   "dask-cloudprovider>=2025.9.0",
@@ -92,6 +92,7 @@ windrose = ">=1.9.2"
 tabulate = ">=0.9.0"
 folium = ">=0.20.0"
 tqdm = ">=4.67.1"
+papermill = ">=2.7.0"
 
 [project.scripts]
 #cloud_optimised_srs_oc_ljco_to_parquet = "aodn_cloud_optimised.bin.srs_oc_ljco_to_parquet:main"
