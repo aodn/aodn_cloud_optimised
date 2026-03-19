@@ -60,20 +60,3 @@ def generate(
         handler=handler,
         s3_file_uri_list=s3_file_uri_list,
     )
-
-
-if __name__ == "__main__":
-    file_collector = FileCollector.from_s3_uri(
-        s3_uri="s3://aodn-dataflow-dev/thomas.galindo/processing/stored/seabird/",
-        suffix="seabird_v1_2026-01-01T21:57:17.parquet",
-    )
-    generate(
-        dataset_config=DatasetConfig.from_path(
-            pathlib.Path(
-                "aodn_cloud_optimised/config/dataset/aggregated_seabird_nonqc.json"
-            )
-        ),
-        file_collector=file_collector,
-        optimised_bucket_name="aodn-dataflow-dev",
-        root_prefix_cloud_optimised_path="thomas.galindo/processing/stored/seabird",
-    )

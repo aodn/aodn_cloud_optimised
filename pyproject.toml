@@ -49,8 +49,6 @@ dependencies = [
   "python-levenshtein>=0.25.1",
   "numcodecs<0.16",
   "pydantic>=2.12.5",
-  "prefect (>=3.6.22,<4.0.0)",
-  "prefect-aws (>=0.7.5,<0.8.0)",
 ]
 
 [project.urls]
