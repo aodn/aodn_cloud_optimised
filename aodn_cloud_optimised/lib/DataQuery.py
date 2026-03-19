@@ -51,7 +51,7 @@ from shapely.geometry import MultiPolygon, Polygon
 from tqdm.notebook import tqdm
 from windrose import WindroseAxes
 
-__version__ = "0.3.8"
+__version__ = "0.3.9"
 
 REGION: Final[str] = "ap-southeast-2"
 ENDPOINT_URL = "https://s3.ap-southeast-2.amazonaws.com"
@@ -342,6 +342,26 @@ def query_unique_value(dataset: ds.Dataset, partition: str) -> Set[str]:
     return unique_values
 
 
+def _timestamp_scalar(value: int, dataset: ds.Dataset) -> pa.Scalar:
+    """Return a pyarrow scalar for a timestamp partition filter value.
+
+    Hive partition columns are inferred by pyarrow from directory names.
+    Older datasets may have their 'timestamp' partition typed as string
+    (e.g. the values happened to be parsed as strings rather than integers),
+    while newer ones use int64 or int32.  Comparing an int64 literal against
+    a string-typed field raises ArrowNotImplementedError, so we cast the
+    scalar to match the actual field type.
+    """
+    try:
+        ts_type = dataset.schema.field("timestamp").type
+    except KeyError:
+        ts_type = pa.int64()
+
+    if pa.types.is_string(ts_type) or pa.types.is_large_string(ts_type):
+        return pa.scalar(str(int(value)), type=ts_type)
+    return pa.scalar(int(value), type=ts_type)
+
+
 def get_temporal_extent_v1(dataset: ds.Dataset) -> tuple[datetime, datetime]:
     """Calculates temporal extent based *only* on 'timestamp' partition values.
 
@@ -404,9 +424,9 @@ def get_temporal_extent(
     # fragment_readahead=8 tells pyarrow to prefetch up to 8 Parquet files
     # concurrently via its IO thread pool, ensuring both partition dirs are
     # fetched in parallel without needing Python-level threading.
-    expr = (pc.field("timestamp") == np.int64(unique_timestamps.min())) | (
-        pc.field("timestamp") == np.int64(unique_timestamps.max())
-    )
+    expr = (
+        pc.field("timestamp") == _timestamp_scalar(unique_timestamps.min(), dataset)
+    ) | (pc.field("timestamp") == _timestamp_scalar(unique_timestamps.max(), dataset))
     scanner = ds.Scanner.from_dataset(
         dataset,
         filter=expr,
@@ -664,8 +684,8 @@ def create_time_filter(dataset: ds.Dataset, **kwargs) -> pc.Expression:
         dataset, date_start, date_end
     )
 
-    expr1 = pc.field("timestamp") >= np.int64(timestamp_start)
-    expr2 = pc.field("timestamp") <= np.int64(timestamp_end)
+    expr1 = pc.field("timestamp") >= _timestamp_scalar(timestamp_start, dataset)
+    expr2 = pc.field("timestamp") <= _timestamp_scalar(timestamp_end, dataset)
 
     # ARGO Specific:
     if "TIME" in dataset.schema.names:
