@@ -2,6 +2,8 @@
 aodn_cloud_optimised/_version.py
 notebooks/*.zip
 
+integration_test_results.md
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
