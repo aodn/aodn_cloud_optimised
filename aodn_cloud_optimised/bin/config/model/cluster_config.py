@@ -11,8 +11,6 @@ class ClusterConfig(pydantic.BaseModel):
         restart_every_path: Restart cluster after processing each path.
     """
 
-    model_config = pydantic.ConfigDict(use_enum_values=True)
-
     mode: aodn_cloud_optimised.lib.clusterLib.ClusterMode | None = pydantic.Field(
         default=None,
         description=f"The mode for the cluster. Must be one of: {[m.value for m in aodn_cloud_optimised.lib.clusterLib.ClusterMode]} or null.",
