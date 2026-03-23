@@ -92,7 +92,13 @@ def install_requirements():
     elif is_nectar():
         run_command(f"uv pip install --system -r {requirements_path}")
     else:
-        run_command("uv venv")
+        # Only create the venv if the .venv directory doesn't exist
+        if not Path(".venv").exists():
+            run_command("uv venv")
+        else:
+            print("✅ Virtual environment already exists, skipping creation.")
+
+        # This will install/update packages in the existing venv
         run_command(f"uv pip install -r {requirements_path}")
 
 
