@@ -132,7 +132,8 @@ class RunSettings(pydantic.BaseModel):
     def validate_cluster_opts(self) -> "RunSettings":
         # Validate_ coiled options if mode is coiled
         if (
-            self.cluster.mode
+            self.cluster.mode is not None
+            and self.cluster.mode.value
             == aodn_cloud_optimised.lib.clusterLib.ClusterMode.COILED.value
             and self.coiled_cluster_options is None
         ):
@@ -140,7 +141,8 @@ class RunSettings(pydantic.BaseModel):
                 "coiled_cluster_options must be provided when cluster.mode is 'coiled'"
             )
         elif (
-            self.cluster.mode
+            self.cluster.mode is not None
+            and self.cluster.mode.value
             == aodn_cloud_optimised.lib.clusterLib.ClusterMode.EC2.value
             and (self.ec2_cluster_options is None or self.ec2_adapt_options is None)
         ):
