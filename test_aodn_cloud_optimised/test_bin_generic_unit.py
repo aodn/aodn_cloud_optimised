@@ -1,8 +1,12 @@
 import unittest
+from unittest.mock import patch
 
 from pydantic import ValidationError
 
-from aodn_cloud_optimised.bin.generic_cloud_optimised_creation import DatasetConfig
+from aodn_cloud_optimised.bin.generic_cloud_optimised_creation import (
+    DatasetConfig,
+    PathConfig,
+)
 
 
 class TestDatasetConfigValidation(unittest.TestCase):
@@ -113,6 +117,91 @@ class TestDatasetConfigValidation(unittest.TestCase):
         with self.assertRaises(ValidationError) as ctx:
             DatasetConfig.model_validate(config)
         # self.assertIn("not defined in schema", str(ctx.exception))
+
+
+class TestPathConfigFilter(unittest.TestCase):
+    """Tests for PathConfig.filter normalisation and collect_files regex behaviour.
+
+    Regression: the pydantic validator normalises filter to a plain string, so
+    the consumer must treat it as a single pattern — not iterate over it character
+    by character (which was the bug).
+    """
+
+    def _make_path_config(self, filter_val):
+        return PathConfig(s3_uri="IMOS/ANMN/", filter=filter_val)
+
+    def test_filter_list_normalised_to_string(self):
+        """A single-element list should be stored as a plain string."""
+        p = self._make_path_config([".*\\.nc"])
+        self.assertEqual(p.filter, ".*\\.nc")
+        self.assertIsInstance(p.filter, str)
+
+    def test_filter_empty_list_normalised_to_empty_string(self):
+        p = self._make_path_config([])
+        self.assertFalse(p.filter)
+
+    def test_filter_none_normalised_to_empty_string(self):
+        p = self._make_path_config(None)
+        self.assertFalse(p.filter)
+
+    def test_filter_string_passthrough(self):
+        p = self._make_path_config(".*\\.nc")
+        self.assertEqual(p.filter, ".*\\.nc")
+
+    def test_filter_list_more_than_one_element_raises(self):
+        with self.assertRaises(ValidationError):
+            self._make_path_config([".*\\.nc", ".*\\.csv"])
+
+    def test_collect_files_applies_filter_as_whole_pattern(self):
+        """Regression: filter must be used as a single regex, not iterated char-by-char.
+
+        Before the fix, '.*\\.nc' was iterated as ['.', '*', '\\', '.', 'n', 'c'],
+        causing re.error: nothing to repeat at position 0 on '*'.
+        """
+        from aodn_cloud_optimised.bin.generic_cloud_optimised_creation import (
+            collect_files,
+        )
+
+        path_cfg = self._make_path_config([".*\\.nc"])
+        all_files = [
+            "IMOS/ANMN/data/file_20230101.nc",
+            "IMOS/ANMN/data/file_20230102.nc",
+            "IMOS/ANMN/data/readme.txt",
+        ]
+        with patch(
+            "aodn_cloud_optimised.bin.generic_cloud_optimised_creation.s3_ls",
+            return_value=all_files,
+        ):
+            result = collect_files(
+                path_cfg,
+                suffix=None,
+                exclude=None,
+                bucket_raw="imos-data",
+                s3_client_opts={},
+            )
+        self.assertEqual(len(result), 2)
+        self.assertTrue(all(f.endswith(".nc") for f in result))
+
+    def test_collect_files_no_filter_returns_all(self):
+        """Without a filter all listed files are returned."""
+        from aodn_cloud_optimised.bin.generic_cloud_optimised_creation import (
+            collect_files,
+        )
+
+        path_cfg = self._make_path_config([])
+        all_files = ["IMOS/ANMN/a.nc", "IMOS/ANMN/b.txt"]
+        with patch(
+            "aodn_cloud_optimised.bin.generic_cloud_optimised_creation.s3_ls",
+            return_value=all_files,
+        ):
+            result = collect_files(
+                path_cfg,
+                suffix=None,
+                exclude=None,
+                bucket_raw="imos-data",
+                s3_client_opts={},
+            )
+        self.assertEqual(result, all_files)
 
 
 if __name__ == "__main__":

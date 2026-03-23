@@ -2,6 +2,8 @@
 aodn_cloud_optimised/_version.py
 notebooks/*.zip
 
+integration_test_results.md
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -36,6 +38,9 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
+
+# IDEs
+.vscode
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
