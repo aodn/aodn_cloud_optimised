@@ -564,7 +564,16 @@ To create a Parquet dataset from CSV files, all of the previous configuration op
 We will use the example configuration file:
 ``aodn_cloud_optimised.config.aatams_acoustic_tagging.json``
 
-The CSV-specific options are now grouped under the nested key `csv_config`. You can specify options for either **Pandas** or **Polars** CSV readers. Only one needs to be provided depending on which library you choose to read the CSV files.
+The CSV-specific options are grouped under the nested key ``csv_config`` and validated by ``CSVConfigModel``. For CSV ingestion, configure exactly one reader:
+
+* ``pandas_read_csv_config`` for ``pandas.read_csv()``
+* ``polars_read_csv_config`` for ``polars.read_csv()``
+
+Validation rules:
+
+* ``pandas_read_csv_config`` and ``polars_read_csv_config`` are mutually exclusive (you cannot provide both).
+* Keys provided under each config are validated against the corresponding reader function signature.
+* If neither config is provided for CSV input, the CSV handler raises an error at runtime.
 
 Example using Pandas:
 
