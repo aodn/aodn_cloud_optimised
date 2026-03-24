@@ -16,3 +16,4 @@ Development
    documentation-build
    notebooks
    update-metadata
+   mcp-testing

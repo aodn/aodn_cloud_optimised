@@ -46,7 +46,7 @@ dependencies = [
   # "xarray[complete]==2025.6.1",  # Alternative official release (broken)
 
   "cftime>=1.6.3",
-  "zarr==2.18.7",  # pin because of https://github.com/dask/distributed/issues/9163#issuecomment-3663673542
+  "zarr==2.18.7",                 # pin because of https://github.com/dask/distributed/issues/9163#issuecomment-3663673542
   "geopandas>=0.14.4",
   "coiled>=1.90.4",
   "dask-cloudprovider>=2025.9.0",
@@ -58,14 +58,23 @@ dependencies = [
   "numcodecs<0.16",
 ]
 
+[project.optional-dependencies]
+mcp = ["mcp>=1.0.0,<2.0.0", "nbformat>=5.0.0", "nbconvert>=7.0.0"]
+
 [project.urls]
 Source = "https://github.com/aodn/aodn_cloud_optimised"
+
+[tool.poetry]
+packages = [{ include = "aodn_cloud_optimised" }]
+include = [{ path = "notebooks", format = ["sdist", "wheel"] }]
 
 [tool.poetry.group.dev.dependencies]
 poetry = "==2.2.1"
 poetry-plugin-freeze = ">=1.2.0"
 virtualenv = "==20.30.0" # TODO: pinned because of https://github.com/python-poetry/poetry/issues/10378
 pytest = "^8.2.1"
+pytest-cov = "^6.0.0"
+pytest-xdist = "^3.5.0"
 ipdb = "^0.13"
 ipython = "^7.5.3"
 coverage = "^7.5.3"
@@ -92,6 +101,7 @@ windrose = ">=1.9.2"
 tabulate = ">=0.9.0"
 folium = ">=0.20.0"
 tqdm = ">=4.67.1"
+mcp = ">=1.26.0"
 
 [project.scripts]
 #cloud_optimised_srs_oc_ljco_to_parquet = "aodn_cloud_optimised.bin.srs_oc_ljco_to_parquet:main"
@@ -216,6 +226,19 @@ cloud_optimised_vessel_trv_realtime_qc = "aodn_cloud_optimised.bin.vessel_trv_re
 cloud_optimised_vessel_xbt_delayed_qc = "aodn_cloud_optimised.bin.vessel_xbt_delayed_qc:main"
 cloud_optimised_vessel_xbt_realtime_nonqc = "aodn_cloud_optimised.bin.vessel_xbt_realtime_nonqc:main"
 cloud_optimised_wave_buoy_realtime_nonqc = "aodn_cloud_optimised.bin.wave_buoy_realtime_nonqc:main"
+aodn-mcp-server = "aodn_cloud_optimised.mcp.server:main"
+# MCP tool CLI wrappers — callable as shell commands by AI assistants (e.g. Copilot CLI)
+# Naming convention: aodn-{tool_name} mirrors the MCP server name prefix used by clients.
+aodn-search_datasets = "aodn_cloud_optimised.mcp.cli:main"
+aodn-list_datasets = "aodn_cloud_optimised.mcp.cli:main"
+aodn-get_dataset_info = "aodn_cloud_optimised.mcp.cli:main"
+aodn-get_dataset_schema = "aodn_cloud_optimised.mcp.cli:main"
+aodn-get_dataset_config = "aodn_cloud_optimised.mcp.cli:main"
+aodn-check_dataset_coverage = "aodn_cloud_optimised.mcp.cli:main"
+aodn-introspect_dataset_live = "aodn_cloud_optimised.mcp.cli:main"
+aodn-get_notebook_template = "aodn_cloud_optimised.mcp.cli:main"
+aodn-get_plot_guide = "aodn_cloud_optimised.mcp.cli:main"
+aodn-get_dataquery_reference = "aodn_cloud_optimised.mcp.cli:main"
 generic_cloud_optimised_creation = "aodn_cloud_optimised.bin.generic_cloud_optimised_creation:main"
 pydantic_precommit_hook = "aodn_cloud_optimised.bin.pydantic_precommit_hook:main"
 
@@ -227,3 +250,11 @@ config = ".pre-commit-config.yaml"
 [tool.pytest.ini_options]
 # Other pytest settings can go here
 addopts = "--ignore=integration_testing"
+markers = [
+    "s3: mark test as requiring live anonymous S3 access (use --run-s3 or --run-all)",
+    "notebooks: mark test as executing full Jupyter notebooks via nbconvert (use --run-notebooks or --run-all)",
+]
+
+[tool.coverage.run]
+source = ["aodn_cloud_optimised"]
+omit = ["*/test_*", "*/tests/*"]

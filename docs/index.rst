@@ -18,6 +18,7 @@ This project is hosted on GitHub. You can find the repository here:
    module-overview
    development/index
    usage
+   mcp_server
 
 Indices and tables
 ==================

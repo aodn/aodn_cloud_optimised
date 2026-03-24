@@ -13,6 +13,7 @@ import re
 import tempfile
 import zipfile
 from abc import ABC, abstractmethod
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date, datetime, timezone
 from functools import lru_cache
 from io import StringIO
@@ -50,7 +51,7 @@ from shapely.geometry import MultiPolygon, Polygon
 from tqdm.notebook import tqdm
 from windrose import WindroseAxes
 
-__version__ = "0.3.3"
+__version__ = "0.3.9"
 
 REGION: Final[str] = "ap-southeast-2"
 ENDPOINT_URL = "https://s3.ap-southeast-2.amazonaws.com"
@@ -59,6 +60,18 @@ ENDPOINT_URL = "https://s3.ap-southeast-2.amazonaws.com"
 BUCKET_OPTIMISED_DEFAULT = "aodn-cloud-optimised"
 ROOT_PREFIX_CLOUD_OPTIMISED_PATH = ""
 DEFAULT_TIME = datetime(1900, 1, 1)
+
+# Tune pyarrow's global thread pools for S3-heavy workloads.
+# IO is latency-bound, so more threads than CPU cores is beneficial.
+# pyarrow.fs.S3FileSystem has no connection-pool or concurrency parameters of
+# its own — all parallel S3 read concurrency flows through these pools.
+_IO_THREAD_COUNT = min((os.cpu_count() or 4) * 4, 32)
+pa.set_io_thread_count(_IO_THREAD_COUNT)
+pa.set_cpu_count(os.cpu_count() or 4)
+
+# Module-level cache for partition values, keyed by (id(dataset), partition_name).
+# Avoids redundant fragment iterations when multiple filters query the same partition.
+_partition_value_cache: dict[tuple[int, str], Set[str]] = {}
 
 
 class PolygonNotIntersectingError(ValueError):
@@ -106,11 +119,122 @@ def _unhashable_to_dict(obj):
     return obj
 
 
+def _drop_none_values(obj):
+    """Recursively drop keys with None values from dictionaries."""
+    if isinstance(obj, dict):
+        return {k: _drop_none_values(v) for k, v in obj.items() if v is not None}
+    if isinstance(obj, list):
+        return [_drop_none_values(x) for x in obj]
+    return obj
+
+
+def _build_effective_s3_fs_opts(s3_fs_opts: dict | None = None) -> dict:
+    """Build effective S3 options with anonymous AODN defaults plus user overrides."""
+    defaults = {
+        "anon": True,
+        "client_kwargs": {"endpoint_url": ENDPOINT_URL, "region_name": REGION},
+    }
+    clean_user_opts = _drop_none_values(s3_fs_opts or {})
+
+    merged_opts = {
+        "anon": defaults["anon"],
+        "client_kwargs": defaults["client_kwargs"].copy(),
+    }
+
+    user_client_kwargs = clean_user_opts.get("client_kwargs")
+    if isinstance(user_client_kwargs, dict):
+        merged_opts["client_kwargs"].update(user_client_kwargs)
+    elif "client_kwargs" in clean_user_opts:
+        merged_opts["client_kwargs"] = user_client_kwargs
+
+    for k, v in clean_user_opts.items():
+        if k != "client_kwargs":
+            merged_opts[k] = v
+
+    # If explicit credentials are provided, anonymous access must be removed —
+    # pyarrow (and s3fs) reject anon=True alongside access_key/secret.
+    if any(k in merged_opts for k in ("key", "access_key", "secret", "secret_key")):
+        merged_opts.pop("anon", None)
+
+    return _drop_none_values(merged_opts)
+
+
+def _get_or_create_logger(
+    logger: logging.Logger | None = None,
+    name: str = "aodn.GetAodn",
+    level: int | None = None,
+) -> logging.Logger:
+    """Return a configured logger with consistent formatting and handler setup."""
+    configured_logger = logger or logging.getLogger(name)
+    if level is not None:
+        configured_logger.setLevel(level)
+    if not configured_logger.handlers:
+        handler = logging.StreamHandler()
+        formatter = logging.Formatter(
+            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        )
+        handler.setFormatter(formatter)
+        configured_logger.addHandler(handler)
+        configured_logger.propagate = False
+    return configured_logger
+
+
+def _build_dataset_s3_uri(bucket_name: str, prefix: str, dataset_path: str) -> str:
+    """Build a normalized S3 URI for dataset folder paths."""
+    return (
+        PureS3Path.from_uri(f"s3://{bucket_name}/{prefix}/")
+        .joinpath(dataset_path)
+        .as_uri()
+    )
+
+
+def _append_metadata_to_dataframe(
+    metadata: dict[str, Any], df: pd.DataFrame
+) -> pd.DataFrame:
+    """Attach global and variable metadata attributes to a dataframe and columns."""
+    global_attrs = metadata.get("global_attributes", {})
+    variable_attrs = {k: v for k, v in metadata.items() if k != "global_attributes"}
+
+    for var_name in df.columns:
+        if not hasattr(df[var_name], "attrs"):
+            df[var_name].attrs = {}
+        if var_name in variable_attrs:
+            df[var_name].attrs.update(variable_attrs[var_name])
+
+    df.attrs.update(global_attrs)
+    return df
+
+
+def _combine_arrow_filters(
+    *filters: pc.Expression | None,
+) -> pc.Expression | None:
+    """Combine optional PyArrow expressions with logical AND."""
+    valid_filters = [f for f in filters if isinstance(f, pc.Expression)]
+    if not valid_filters:
+        return None
+    combined = valid_filters[0]
+    for next_filter in valid_filters[1:]:
+        combined = combined & next_filter
+    return combined
+
+
+def _metadata_fetch_workers(task_count: int) -> int:
+    """Return a bounded worker count for metadata fetching."""
+    if task_count <= 0:
+        return 1
+    cpu_workers = (os.cpu_count() or 4) * 4
+    return max(1, min(task_count, cpu_workers, 32))
+
+
 @lru_cache(maxsize=1)
 def _get_s3_filesystem_cached(hashable_opts=None):
     """Internal cached function that expects hashable options."""
     if hashable_opts is not None:
-        opts_dict = _unhashable_to_dict(hashable_opts)
+        opts_dict = _drop_none_values(_unhashable_to_dict(hashable_opts))
+        if not opts_dict:
+            return fs.S3FileSystem(
+                region=REGION, endpoint_override=ENDPOINT_URL, anonymous=True
+            )
         return fs.S3FileSystem(**s3_opts_to_pyarrow(opts_dict))
     else:
         return fs.S3FileSystem(
@@ -121,6 +245,11 @@ def _get_s3_filesystem_cached(hashable_opts=None):
 def get_s3_filesystem(s3_fs_opts=None):
     """
     Return a cached pyarrow.fs.S3FileSystem instance.
+
+    Note: S3FileSystem has no concurrency or connection-pool parameters.
+    Parallel S3 read throughput is controlled globally via
+    pa.set_io_thread_count() and pa.set_cpu_count(), which are set at
+    module import time based on the host's CPU count.
 
     Args:
         s3_fs_opts (dict, optional): Dictionary of S3 options (s3fs-style).
@@ -154,6 +283,7 @@ def s3_opts_to_pyarrow(s3_fs_opts: dict) -> dict:
     }
 
     pa_opts = {}
+    s3_fs_opts = _drop_none_values(s3_fs_opts)
 
     for k, v in s3_fs_opts.items():
         if k in key_map:
@@ -167,10 +297,13 @@ def s3_opts_to_pyarrow(s3_fs_opts: dict) -> dict:
             # Pass other keys as-is (future-proofing)
             pa_opts[k] = v
 
-    # Ensure anonymous is a boolean if provided
-    if "anonymous" in pa_opts:
-        pa_opts["anonymous"] = bool(pa_opts["anonymous"])
-    else:
+    # Only set anonymous=False as a default when no credentials are provided.
+    # pyarrow raises ValueError if anonymous is passed alongside access_key/secret_key.
+    if (
+        "anonymous" not in pa_opts
+        and "access_key" not in pa_opts
+        and "secret_key" not in pa_opts
+    ):
         pa_opts["anonymous"] = False
 
     return pa_opts
@@ -183,6 +316,9 @@ def query_unique_value(dataset: ds.Dataset, partition: str) -> Set[str]:
     values associated with the specified partition key from the file paths.
     Assumes Hive partitioning (e.g., ".../partition=value/...").
 
+    Results are cached per dataset instance to avoid redundant fragment
+    iterations when multiple filters query the same partition key.
+
     Args:
         dataset: The pyarrow.dataset.Dataset object.
         partition: The name of the partition key (e.g., "year", "timestamp").
@@ -190,13 +326,40 @@ def query_unique_value(dataset: ds.Dataset, partition: str) -> Set[str]:
     Returns:
         A set containing the unique string values found for the partition key.
     """
+    cache_key = (id(dataset), partition)
+    cached = _partition_value_cache.get(cache_key)
+    if cached is not None:
+        return cached
+
     unique_values = set()
     pattern = re.compile(f".*/{partition}=([^/]*)/")
     for fragment in dataset.get_fragments():
         match = pattern.match(fragment.path)
         if match:
             unique_values.add(match.group(1))
+
+    _partition_value_cache[cache_key] = unique_values
     return unique_values
+
+
+def _timestamp_scalar(value: int, dataset: ds.Dataset) -> pa.Scalar:
+    """Return a pyarrow scalar for a timestamp partition filter value.
+
+    Hive partition columns are inferred by pyarrow from directory names.
+    Older datasets may have their 'timestamp' partition typed as string
+    (e.g. the values happened to be parsed as strings rather than integers),
+    while newer ones use int64 or int32.  Comparing an int64 literal against
+    a string-typed field raises ArrowNotImplementedError, so we cast the
+    scalar to match the actual field type.
+    """
+    try:
+        ts_type = dataset.schema.field("timestamp").type
+    except KeyError:
+        ts_type = pa.int64()
+
+    if pa.types.is_string(ts_type) or pa.types.is_large_string(ts_type):
+        return pa.scalar(str(int(value)), type=ts_type)
+    return pa.scalar(int(value), type=ts_type)
 
 
 def get_temporal_extent_v1(dataset: ds.Dataset) -> tuple[datetime, datetime]:
@@ -229,13 +392,13 @@ def get_temporal_extent(
 ) -> tuple[pd.Timestamp, pd.Timestamp]:
     """Calculates the precise temporal extent by reading min/max time variable values.
 
-    This method finds the minimum and maximum 'timestamp' partition values, then
-    reads the actual time variable (e.g., 'TIME' or 'JULD') from the corresponding
-    Parquet files to get the precise minimum and maximum timestamps in the dataset.
-    This is more accurate but slower than `get_temporal_extent_v1`.
+    Issues a single scan over both boundary partitions (min and max timestamp)
+    using an OR filter so pyarrow's internal thread pool reads them in parallel.
+    Aggregates with pyarrow compute directly (no pandas conversion overhead).
 
     Args:
         dataset: The pyarrow.dataset.Dataset object.
+        time_varname: Optional explicit name of the time variable.
 
     Returns:
         A tuple containing the minimum and maximum pandas Timestamp objects
@@ -257,17 +420,22 @@ def get_temporal_extent(
                 "No known time variable ('TIME', 'JULD', 'detection_timestamp') found in dataset schema"
             )
 
-    expr = pc.field("timestamp") == np.int64(unique_timestamps.max())
-    table = dataset.to_table(filter=expr, columns=[time_varname])
-    df = table.to_pandas()
-    time_max = df[time_varname].max()
-
-    expr = pc.field("timestamp") == np.int64(unique_timestamps.min())
-    table = dataset.to_table(filter=expr, columns=[time_varname])
-    df = table.to_pandas()
-    time_min = df[time_varname].min()
-
-    return time_min, time_max
+    # Single scan across both boundary partitions with explicit readahead.
+    # fragment_readahead=8 tells pyarrow to prefetch up to 8 Parquet files
+    # concurrently via its IO thread pool, ensuring both partition dirs are
+    # fetched in parallel without needing Python-level threading.
+    expr = (
+        pc.field("timestamp") == _timestamp_scalar(unique_timestamps.min(), dataset)
+    ) | (pc.field("timestamp") == _timestamp_scalar(unique_timestamps.max(), dataset))
+    scanner = ds.Scanner.from_dataset(
+        dataset,
+        filter=expr,
+        columns=[time_varname],
+        fragment_readahead=8,
+        use_threads=True,
+    )
+    col = scanner.to_table().column(time_varname)
+    return pd.Timestamp(pc.min(col).as_py()), pd.Timestamp(pc.max(col).as_py())
 
 
 def get_timestamps_boundary_values(
@@ -478,10 +646,10 @@ def create_time_filter(dataset: ds.Dataset, **kwargs) -> pc.Expression:
     if None in (date_start, date_end):
         raise ValueError("Start and end dates must be provided.")
 
-    # timestamp_start, timestamp_end = get_temporal_extent_v1(dataset)
-    timestamp_start, timestamp_end = get_temporal_extent(
-        dataset, time_varname=time_varname
-    )
+    # Use partition-only temporal extent for boundary validation.
+    # This avoids two expensive to_table() S3 reads that get_temporal_extent
+    # would perform just to provide a nicer error message.
+    timestamp_start, timestamp_end = get_temporal_extent_v1(dataset)
     timestamp_start = ensure_utc_aware(timestamp_start)
     timestamp_end = ensure_utc_aware(timestamp_end)
 
@@ -516,8 +684,8 @@ def create_time_filter(dataset: ds.Dataset, **kwargs) -> pc.Expression:
         dataset, date_start, date_end
     )
 
-    expr1 = pc.field("timestamp") >= np.int64(timestamp_start)
-    expr2 = pc.field("timestamp") <= np.int64(timestamp_end)
+    expr1 = pc.field("timestamp") >= _timestamp_scalar(timestamp_start, dataset)
+    expr2 = pc.field("timestamp") <= _timestamp_scalar(timestamp_end, dataset)
 
     # ARGO Specific:
     if "TIME" in dataset.schema.names:
@@ -1339,7 +1507,7 @@ def get_schema_metadata(dname: str, s3_fs_opts=None) -> dict:
     return decoded_meta
 
 
-def decode_and_load_json(metadata: dict[bytes, bytes]) -> dict[str, any]:
+def decode_and_load_json(metadata: dict[bytes, bytes]) -> dict[str, Any]:
     """Decodes keys and JSON-encoded values from Parquet metadata.
 
     Iterates through a dictionary where keys and values are bytes (as obtained
@@ -1356,7 +1524,7 @@ def decode_and_load_json(metadata: dict[bytes, bytes]) -> dict[str, any]:
         A dictionary with decoded string keys and parsed Python objects as values.
         Keys or values that failed decoding/parsing are omitted.
     """
-    logger = logging.getLogger("aodn.GetAodn")
+    logger = _get_or_create_logger()
     decoded_metadata = {}
     for key, value in metadata.items():
         try:
@@ -1393,14 +1561,9 @@ def get_zarr_metadata(dname: str, s3_fs_opts=None) -> dict:
     name = dname.replace("anonymous@", "")
     logger.info(f"Retrieving metadata for {name}")
 
-    if s3_fs_opts:
-        # Use provided S3 filesystem
-        s3 = s3fs.S3FileSystem(**s3_fs_opts)
-        # mapper = fsspec.get_mapper(name, storage_options={"fs": s3})
-        mapper = s3.get_mapper(name)
-    else:
-        # Default: anonymous access
-        mapper = fsspec.get_mapper(name, anon=True)
+    effective_opts = _build_effective_s3_fs_opts(s3_fs_opts)
+    s3 = s3fs.S3FileSystem(**effective_opts)
+    mapper = s3.get_mapper(name)
 
     try:
         # Use fsspec mapper for xarray to access S3 anonymously
@@ -1542,19 +1705,7 @@ class DataSource(ABC):
         self.dname = self._build_data_path()
         self.s3_fs_opts = s3_fs_opts
 
-        self.logger = logger or logging.getLogger("aodn.GetAodn")
-        if not self.logger.handlers:
-            handler = logging.StreamHandler()
-            formatter = logging.Formatter(
-                "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-            )
-            handler.setFormatter(formatter)
-            self.logger.addHandler(handler)
-            self.logger.propagate = False
-
-        if ".parquet" in self.dname:
-            self.s3 = get_s3_filesystem(s3_fs_opts=self.s3_fs_opts)
-            self.dataset = self._create_pyarrow_dataset()
+        self.logger = _get_or_create_logger(logger=logger)
 
     @abstractmethod
     def _build_data_path(self) -> str:
@@ -1657,7 +1808,7 @@ class ParquetDataSource(DataSource):
         s3_fs_opts: dict | None = None,
     ):
         """Initialises the ParquetDataSource with optional S3 filesystem overrides."""
-        self.s3_fs_opts = s3_fs_opts or {}
+        self.s3_fs_opts = _drop_none_values(s3_fs_opts or {})
         if self.s3_fs_opts:
             self.s3 = fs.S3FileSystem(**s3_opts_to_pyarrow(self.s3_fs_opts))
         else:
@@ -1668,9 +1819,23 @@ class ParquetDataSource(DataSource):
             )
 
         super().__init__(bucket_name, prefix, dataset_name, s3_fs_opts=s3_fs_opts)
-        if ".parquet" in self.dname:
-            # override S3 filesystem and re-create dataset with custom options
-            self.dataset = self._create_pyarrow_dataset()
+        self._dataset = None  # lazily created on first access
+
+    @property
+    def dataset(self) -> ds.Dataset:
+        """Lazily creates and caches the PyArrow Dataset on first access.
+
+        The underlying ``ds.dataset()`` call performs a recursive S3 listing
+        of all partition directories, which can be slow for large datasets.
+        Deferring it until actually needed makes ``get_dataset()`` instant.
+        """
+        if self._dataset is None:
+            self._dataset = self._create_pyarrow_dataset()
+        return self._dataset
+
+    @dataset.setter
+    def dataset(self, value: ds.Dataset) -> None:
+        self._dataset = value
 
     def _build_data_path(self) -> str:
         """Constructs the S3 path for the Parquet dataset directory.
@@ -1714,8 +1879,7 @@ class ParquetDataSource(DataSource):
         Returns:
             A pyarrow.Schema object representing the partition keys.
         """
-        dataset = self._create_pyarrow_dataset()
-        partition_keys = dataset.partitioning.schema
+        partition_keys = self.dataset.partitioning.schema
         return partition_keys
 
     def get_spatial_extent(self) -> MultiPolygon:
@@ -1859,52 +2023,16 @@ class ParquetDataSource(DataSource):
 
                 expr = expr_1 if expr is None else expr & expr_1
 
-        # use isinstance as it support type check for subclasss relationship
-        # we want to merge type together, if both are expression then use and to join together
-        if isinstance(filter_geo, pc.Expression) & isinstance(
-            filter_time, pc.Expression
-        ):
-            data_filter = filter_geo & filter_time
-        elif isinstance(filter_time, pc.Expression):
-            data_filter = filter_time
-        elif isinstance(filter_geo, pc.Expression):
-            data_filter = filter_geo
-        else:
-            data_filter = None
+        data_filter = _combine_arrow_filters(filter_geo, filter_time)
 
-        # add scalar filter to data_filter
         if scalar_filter is not None:
-            if data_filter is None:
-                data_filter = expr
-            else:
-                data_filter = data_filter & expr
+            data_filter = _combine_arrow_filters(data_filter, expr)
 
         # Set file system explicitly do not require folder prefix s3://
         table = self.dataset.to_table(filter=data_filter, columns=columns)
         df = table.to_pandas()
 
-        def append_metadata_to_df(metadata, df):
-            global_attrs = metadata.get("global_attributes", {})
-            variable_attrs = {
-                k: v for k, v in metadata.items() if k != "global_attributes"
-            }
-
-            # Attach variable metadata to each column's attrs, if column exists in df
-            # for var, attrs in variable_attrs.items():
-            # if var in df.columns:
-            for var in df.columns:
-                if not hasattr(df[var], "attrs"):
-                    df[var].attrs = {}
-                if var in variable_attrs:
-                    df[var].attrs.update(variable_attrs[var])
-
-            # Attach global metadata to the DataFrame attrs
-            # has to be done here, otherwise, gattrs will be added to all variables for some obscure reason
-            df.attrs.update(global_attrs)
-
-            return df
-
-        df = append_metadata_to_df(self.get_metadata(), df)
+        df = _append_metadata_to_dataframe(self.get_metadata(), df)
 
         return df
 
@@ -1917,6 +2045,36 @@ class ParquetDataSource(DataSource):
             A dictionary containing the decoded metadata.
         """
         return get_schema_metadata(self.dname, s3_fs_opts=self.s3_fs_opts)
+
+    def describe(self) -> dict:
+        """Return a structured description of the dataset: column names and dtypes.
+
+        Reads directly from the pyarrow schema embedded in the Parquet metadata
+        file (``_common_metadata``).  No row data is downloaded, so this is fast.
+
+        Returns:
+            A dict with keys:
+            - ``format``: ``"parquet"``
+            - ``dataset_name``: the S3 path
+            - ``n_columns``: number of columns
+            - ``columns``: mapping of column name → ``{"dtype": str}``
+
+        Example::
+
+            ds = GetAodn().get_dataset("argo.parquet")
+            info = ds.describe()
+            # info["columns"]["JULD"] == {"dtype": "timestamp[ns]"}
+        """
+        schema = self.dataset.schema
+        columns: dict[str, dict] = {}
+        for field in schema:
+            columns[field.name] = {"dtype": str(field.type)}
+        return {
+            "format": "parquet",
+            "dataset_name": self.dname,
+            "n_columns": len(columns),
+            "columns": columns,
+        }
 
     def get_timeseries_data(
         self,
@@ -1994,17 +2152,8 @@ class ZarrDataSource(DataSource):
         s3_fs_opts: dict | None = None,
     ):
         """Initialises the ZarrDataSource with optional S3 filesystem overrides."""
-        self.s3_fs_opts = s3_fs_opts or {}
-        if self.s3_fs_opts:
-            self.s3 = s3fs.S3FileSystem(**self.s3_fs_opts)
-        else:
-            # Default anonymous S3 with optional region and endpoint
-            self.s3 = s3fs.S3FileSystem(
-                anon=True,
-                key=None,
-                secret=None,
-                client_kwargs={"endpoint_url": ENDPOINT_URL, "region_name": REGION},
-            )
+        self.s3_fs_opts = _build_effective_s3_fs_opts(s3_fs_opts)
+        self.s3 = s3fs.S3FileSystem(**self.s3_fs_opts)
 
         super().__init__(bucket_name, prefix, dataset_name)
         self.zarr_store = self._open_zarr_store()
@@ -3040,6 +3189,72 @@ class ZarrDataSource(DataSource):
         """
         return get_zarr_metadata(self.dname)
 
+    def describe(self) -> dict:
+        """Return a structured description of the dataset: real data variables and coordinates.
+
+        Opens the Zarr store (cached after first call) and introspects the xarray
+        Dataset object.  This reflects the **actual** contents of the store on S3,
+        which may differ from the JSON config schema.
+
+        Returns:
+            A dict with keys:
+            - ``format``: ``"zarr"``
+            - ``dataset_name``: the S3 path
+            - ``n_data_vars``: number of data variables
+            - ``n_coords``: number of coordinate arrays
+            - ``data_vars``: mapping of variable name →
+              ``{"dims": [...], "shape": [...], "dtype": str, "units": str,
+                 "long_name": str, "standard_name": str}``
+            - ``coords``: mapping of coordinate name →
+              ``{"dims": [...], "shape": [...], "dtype": str, "units": str}``
+            - ``global_attrs``: key string attributes from ``.attrs``
+
+        Example::
+
+            ds = GetAodn().get_dataset("satellite_ghrsst_…australia.zarr")
+            info = ds.describe()
+            # list(info["data_vars"])  → real variable names in the store
+            # info["coords"]           → time, lat, lon with shapes
+        """
+        if self.zarr_store is None:
+            self._open_zarr_store()
+
+        data_vars: dict[str, dict] = {}
+        for name, da in self.zarr_store.data_vars.items():
+            data_vars[name] = {
+                "dims": list(da.dims),
+                "shape": list(da.shape),
+                "dtype": str(da.dtype),
+                "units": da.attrs.get("units", ""),
+                "long_name": da.attrs.get("long_name", ""),
+                "standard_name": da.attrs.get("standard_name", ""),
+            }
+
+        coords: dict[str, dict] = {}
+        for name, coord in self.zarr_store.coords.items():
+            coords[name] = {
+                "dims": list(coord.dims),
+                "shape": list(coord.shape),
+                "dtype": str(coord.dtype),
+                "units": coord.attrs.get("units", ""),
+            }
+
+        global_attrs = {
+            k: str(v)[:300]
+            for k, v in self.zarr_store.attrs.items()
+            if isinstance(v, str)
+        }
+
+        return {
+            "format": "zarr",
+            "dataset_name": self.dname,
+            "n_data_vars": len(data_vars),
+            "n_coords": len(coords),
+            "data_vars": data_vars,
+            "coords": coords,
+            "global_attrs": global_attrs,
+        }
+
 
 def _find_var_name_global(
     ds: xr.Dataset, common_names: list[str], var_description: str
@@ -3104,19 +3319,9 @@ class GetAodn:
         """Initialises GetAodn with default S3 bucket, prefix, and s3 filesystem options."""
         self.bucket_name = bucket_name
         self.prefix = prefix
-        self.s3_fs_opts = s3_fs_opts or {}
+        self.s3_fs_opts = _build_effective_s3_fs_opts(s3_fs_opts)
 
-        self.logger = logging.getLogger("aodn.GetAodn")
-        self.logger.setLevel(logging.INFO)
-
-        if not self.logger.handlers:
-            handler = logging.StreamHandler()
-            formatter = logging.Formatter(
-                "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-            )
-            handler.setFormatter(formatter)
-            self.logger.addHandler(handler)
-            self.logger.propagate = False  # Prevent double logging
+        self.logger = _get_or_create_logger(level=logging.INFO)
 
     def get_logger(self) -> logging.Logger:
         return self.logger
@@ -3224,17 +3429,7 @@ class Metadata:
                 datasets reside.
             logger: Optional logger to use. If not provided, a default logger will be created.
         """
-        # super().__init__()
-        # initialise the class by calling the needed methods
-        self.logger = logger or logging.getLogger("aodn.GetAodn")
-        if not self.logger.handlers:
-            handler = logging.StreamHandler()
-            formatter = logging.Formatter(
-                "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-            )
-            handler.setFormatter(formatter)
-            self.logger.addHandler(handler)
-            self.logger.propagate = False
+        self.logger = _get_or_create_logger(logger=logger)
 
         self.bucket_name = bucket_name
         self.prefix = prefix
@@ -3264,55 +3459,53 @@ class Metadata:
         # This method currently only lists Parquet datasets.
         # It will need to be updated to discover Zarr datasets as well.
         catalog = {}
-
-        # Process Parquet datasets
-        folders_with_parquet = self.list_folders_with_data(".parquet/")
-        for (
-            dataset_path
-        ) in folders_with_parquet:  # dataset_path is like 'my_dataset.parquet/'
-            # Construct dname for Parquet metadata
-            dname = (
-                PureS3Path.from_uri(f"s3://anonymous@{self.bucket_name}/{self.prefix}/")
-                .joinpath(dataset_path)  # Use dataset_path directly
-                .as_uri()
-            )
-            dname = dname.replace("s3://anonymous%40", "")
-
-            try:
-                metadata = get_schema_metadata(dname, s3_fs_opts=s3_fs_opts)
-            except Exception as e:
-                self.logger.error(
-                    f"Processing Parquet metadata from {dataset_path}: {e}"
+        extension_to_loader = {
+            ".parquet/": get_schema_metadata,
+            ".zarr/": get_zarr_metadata,
+        }
+        work_items: list[tuple[int, str, str, Any, str]] = []
+        index = 0
+        for extension_filter, loader in extension_to_loader.items():
+            for dataset_path in self.list_folders_with_data(extension_filter):
+                dname = _build_dataset_s3_uri(
+                    self.bucket_name, self.prefix, dataset_path
                 )
-                continue
+                work_items.append(
+                    (index, dataset_path, extension_filter, loader, dname)
+                )
+                index += 1
 
-            # Extract dataset_name from dataset_path (e.g., 'my_dataset' from 'my_dataset.parquet/')
-            dataset_name = dataset_path.rstrip("/")
-            catalog[dataset_name] = metadata
+        if not work_items:
+            return catalog
 
-        # Process Zarr datasets
-        folders_with_zarr = self.list_folders_with_data(".zarr/")
-        for (
-            dataset_path
-        ) in folders_with_zarr:  # dataset_path is like 'my_dataset.zarr/'
-            dname = (
-                PureS3Path.from_uri(f"s3://anonymous@{self.bucket_name}/{self.prefix}/")
-                .joinpath(dataset_path)  # Use dataset_path directly
-                .as_uri()
-            )
-            dname = dname.replace("s3://anonymous%40", "s3://")
+        ordered_results: dict[int, tuple[str, dict]] = {}
+        workers = _metadata_fetch_workers(len(work_items))
+        with ThreadPoolExecutor(max_workers=workers) as executor:
+            future_to_item = {
+                executor.submit(loader, dname, s3_fs_opts=s3_fs_opts): (
+                    item_index,
+                    dataset_path,
+                    extension_filter,
+                )
+                for item_index, dataset_path, extension_filter, loader, dname in work_items
+            }
 
-            try:
-                metadata = get_zarr_metadata(dname, s3_fs_opts=s3_fs_opts)
-            except Exception as e:
-                self.logger.error(f"Processing Zarr metadata from {dataset_path}: {e}")
-                continue
+            for future in as_completed(future_to_item):
+                item_index, dataset_path, extension_filter = future_to_item[future]
+                try:
+                    metadata = future.result()
+                except Exception as e:
+                    self.logger.error(
+                        f"Processing metadata from {dataset_path} ({extension_filter}): {e}"
+                    )
+                    continue
+                ordered_results[item_index] = (dataset_path.rstrip("/"), metadata)
 
-            dataset_name = dataset_path.rstrip("/")
-            # If a dataset with the same name (but different format) exists,
-            # we might want to merge or handle it. For now, Zarr will overwrite if name clashes.
-            # A more robust solution might involve storing format in the catalog key or structure.
-            catalog[dataset_name] = metadata
+        for item_index in range(len(work_items)):
+            if item_index in ordered_results:
+                dataset_name, metadata = ordered_results[item_index]
+                # Preserve pre-existing overwrite semantics (zarr can overwrite parquet).
+                catalog[dataset_name] = metadata
 
         return catalog
 
