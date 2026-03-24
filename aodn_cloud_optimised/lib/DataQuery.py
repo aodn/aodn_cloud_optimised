@@ -51,7 +51,7 @@ from shapely.geometry import MultiPolygon, Polygon
 from tqdm.notebook import tqdm
 from windrose import WindroseAxes
 
-__version__ = "0.3.9"
+__version__ = "0.3.10"
 
 REGION: Final[str] = "ap-southeast-2"
 ENDPOINT_URL = "https://s3.ap-southeast-2.amazonaws.com"
@@ -1796,6 +1796,150 @@ class DataSource(ABC):
     def plot_radar_water_velocity_rose(self, **kwargs) -> None:
         pass
 
+    def list_variables(self) -> dict[str, dict]:
+        """Return a dictionary of all variables with their metadata.
+
+        Each key is a variable name. Each value is a dict with keys:
+        ``type``, ``role`` (one of ``TIME_AXIS``, ``LAT``, ``LON``,
+        ``DEPTH``, ``DATA``), ``units``, ``long_name``, ``standard_name``.
+
+        Default implementation delegates to :meth:`describe` and infers roles
+        from common naming conventions. Subclasses may override for richer info.
+        """
+        info = self.describe()
+        result: dict[str, dict] = {}
+
+        # Parquet: info["columns"] = {name: dtype_str}
+        columns = info.get("columns", {})
+        # Zarr: info["data_vars"] + info["coords"]
+        data_vars = info.get("data_vars", {})
+        coords = info.get("coords", {})
+
+        all_vars: dict[str, dict] = {}
+        for name, dtype in columns.items():
+            all_vars[name] = {
+                "type": (
+                    str(dtype)
+                    if not isinstance(dtype, dict)
+                    else dtype.get("dtype", "")
+                ),
+                "source": "column",
+            }
+        for name, meta in data_vars.items():
+            all_vars[name] = {
+                "type": meta.get("dtype", ""),
+                "source": "data_var",
+                "units": meta.get("units", ""),
+                "long_name": meta.get("long_name", ""),
+                "standard_name": meta.get("standard_name", ""),
+            }
+        for name, meta in coords.items():
+            all_vars[name] = {
+                "type": meta.get("dtype", ""),
+                "source": "coord",
+                "units": meta.get("units", ""),
+                "long_name": meta.get("long_name", ""),
+                "standard_name": meta.get("standard_name", ""),
+            }
+
+        for name, meta in all_vars.items():
+            low = name.lower()
+            role = "DATA"
+            if low in ("time", "juld", "juld_location", "detection_timestamp"):
+                role = "TIME_AXIS"
+            elif low in ("latitude", "lat"):
+                role = "LAT"
+            elif low in ("longitude", "lon"):
+                role = "LON"
+            elif low in ("depth", "nominal_depth", "pres", "pres_adjusted"):
+                role = "DEPTH"
+            elif meta.get("source") == "coord":
+                # Zarr coordinate not matching above names
+                sn = meta.get("standard_name", "").lower()
+                if sn == "time":
+                    role = "TIME_AXIS"
+                elif sn == "latitude":
+                    role = "LAT"
+                elif sn == "longitude":
+                    role = "LON"
+
+            result[name] = {
+                "type": meta.get("type", ""),
+                "role": role,
+                "units": meta.get("units", ""),
+                "long_name": meta.get("long_name", ""),
+                "standard_name": meta.get("standard_name", ""),
+            }
+
+        return result
+
+    @property
+    def dataset_type(self) -> str:
+        """Classify this dataset's observational type.
+
+        Returns one of: ``timeseries``, ``profiles``, ``gridded``,
+        ``radar_velocity``, ``radar_wave``, ``radar_wind``,
+        ``animal_tracking``, ``tabular``.
+        """
+        name = self.dataset_name.lower()
+        fmt = name.rsplit(".", 1)[-1] if "." in name else ""
+
+        try:
+            variables = self.list_variables()
+        except Exception:
+            variables = {}
+
+        var_names = {v.lower() for v in variables}
+        has_depth = any(variables.get(v, {}).get("role") == "DEPTH" for v in variables)
+
+        if fmt == "zarr" and "radar" in name:
+            if {"ucur", "vcur"} & var_names:
+                return "radar_velocity"
+            if {"vavh", "wppe"} & var_names:
+                return "radar_wave"
+            if "wind" in name:
+                return "radar_wind"
+            return "radar_velocity"
+
+        if any(kw in name for kw in ("animal", "tracking", "biologging", "tagging")):
+            return "animal_tracking"
+
+        if fmt == "zarr":
+            return "gridded"
+
+        if any(
+            kw in name
+            for kw in (
+                "aggregated",
+                "diver",
+                "benthic",
+                "fish",
+                "seabird",
+                "seagrass",
+                "kelp",
+                "survey",
+            )
+        ):
+            return "tabular"
+
+        if has_depth:
+            return "profiles"
+
+        if any(
+            kw in name
+            for kw in (
+                "mooring",
+                "station",
+                "wave_buoy",
+                "timeseries",
+                "hourly",
+                "realtime",
+            )
+        ):
+            return "timeseries"
+
+        return "tabular"
+
 
 class ParquetDataSource(DataSource):
     """DataSource implementation for Parquet datasets."""
@@ -2045,6 +2189,36 @@ class ParquetDataSource(DataSource):
             A dictionary containing the decoded metadata.
         """
         return get_schema_metadata(self.dname, s3_fs_opts=self.s3_fs_opts)
+
+    def describe(self) -> dict:
+        """Return a structured description of the dataset: column names and dtypes.
+
+        Reads directly from the pyarrow schema embedded in the Parquet metadata
+        file (``_common_metadata``).  No row data is downloaded, so this is fast.
+
+        Returns:
+            A dict with keys:
+            - ``format``: ``"parquet"``
+            - ``dataset_name``: the S3 path
+            - ``n_columns``: number of columns
+            - ``columns``: mapping of column name → ``{"dtype": str}``
+
+        Example::
+
+            ds = GetAodn().get_dataset("argo.parquet")
+            info = ds.describe()
+            # info["columns"]["JULD"] == {"dtype": "timestamp[ns]"}
+        """
+        schema = self.dataset.schema
+        columns: dict[str, dict] = {}
+        for field in schema:
+            columns[field.name] = {"dtype": str(field.type)}
+        return {
+            "format": "parquet",
+            "dataset_name": self.dname,
+            "n_columns": len(columns),
+            "columns": columns,
+        }
 
     def get_timeseries_data(
         self,
@@ -2818,9 +2992,9 @@ class ZarrDataSource(DataSource):
         start_date_parsed = pd.to_datetime(date_start)
         end_date_parsed = pd.to_datetime(date_end) if date_end else None
 
-        assert (
-            actual_time_name in ds.dims
-        ), f"Dataset does not have a '{actual_time_name}' dimension"
+        assert actual_time_name in ds.dims, (
+            f"Dataset does not have a '{actual_time_name}' dimension"
+        )
 
         # Find the nearest date in the dataset to start_date_parsed
         try:
@@ -2886,7 +3060,9 @@ class ZarrDataSource(DataSource):
         # First pass: gather all data to find global vmin and vmax for consistent color scaling
         for date_obj in dates_to_plot:
             try:
-                data = ds[var_name].sel(
+                data = ds[
+                    var_name
+                ].sel(
                     {
                         actual_time_name: date_obj,  # Use exact match for already selected dates
                         actual_lon_name: slice(
@@ -3158,6 +3334,72 @@ class ZarrDataSource(DataSource):
             A dictionary containing the Zarr store's metadata.
         """
         return get_zarr_metadata(self.dname)
+
+    def describe(self) -> dict:
+        """Return a structured description of the dataset: real data variables and coordinates.
+
+        Opens the Zarr store (cached after first call) and introspects the xarray
+        Dataset object.  This reflects the **actual** contents of the store on S3,
+        which may differ from the JSON config schema.
+
+        Returns:
+            A dict with keys:
+            - ``format``: ``"zarr"``
+            - ``dataset_name``: the S3 path
+            - ``n_data_vars``: number of data variables
+            - ``n_coords``: number of coordinate arrays
+            - ``data_vars``: mapping of variable name →
+              ``{"dims": [...], "shape": [...], "dtype": str, "units": str,
+                 "long_name": str, "standard_name": str}``
+            - ``coords``: mapping of coordinate name →
+              ``{"dims": [...], "shape": [...], "dtype": str, "units": str}``
+            - ``global_attrs``: key string attributes from ``.attrs``
+
+        Example::
+
+            ds = GetAodn().get_dataset("satellite_ghrsst_…australia.zarr")
+            info = ds.describe()
+            # list(info["data_vars"])  → real variable names in the store
+            # info["coords"]           → time, lat, lon with shapes
+        """
+        if self.zarr_store is None:
+            self._open_zarr_store()
+
+        data_vars: dict[str, dict] = {}
+        for name, da in self.zarr_store.data_vars.items():
+            data_vars[name] = {
+                "dims": list(da.dims),
+                "shape": list(da.shape),
+                "dtype": str(da.dtype),
+                "units": da.attrs.get("units", ""),
+                "long_name": da.attrs.get("long_name", ""),
+                "standard_name": da.attrs.get("standard_name", ""),
+            }
+
+        coords: dict[str, dict] = {}
+        for name, coord in self.zarr_store.coords.items():
+            coords[name] = {
+                "dims": list(coord.dims),
+                "shape": list(coord.shape),
+                "dtype": str(coord.dtype),
+                "units": coord.attrs.get("units", ""),
+            }
+
+        global_attrs = {
+            k: str(v)[:300]
+            for k, v in self.zarr_store.attrs.items()
+            if isinstance(v, str)
+        }
+
+        return {
+            "format": "zarr",
+            "dataset_name": self.dname,
+            "n_data_vars": len(data_vars),
+            "n_coords": len(coords),
+            "data_vars": data_vars,
+            "coords": coords,
+            "global_attrs": global_attrs,
+        }
 
 
 def _find_var_name_global(

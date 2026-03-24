@@ -17,3 +17,4 @@ Development
    notebooks
    update-metadata
    release
+   mcp-testing
