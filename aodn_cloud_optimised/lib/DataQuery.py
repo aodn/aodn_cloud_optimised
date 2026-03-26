@@ -51,7 +51,7 @@ from shapely.geometry import MultiPolygon, Polygon
 from tqdm.notebook import tqdm
 from windrose import WindroseAxes
 
-__version__ = "0.3.9"
+__version__ = "0.3.10"
 
 REGION: Final[str] = "ap-southeast-2"
 ENDPOINT_URL = "https://s3.ap-southeast-2.amazonaws.com"
@@ -1795,6 +1795,150 @@ class DataSource(ABC):
     @abstractmethod
     def plot_radar_water_velocity_rose(self, **kwargs) -> None:
         pass
+
+    def list_variables(self) -> dict[str, dict]:
+        """Return a dictionary of all variables with their metadata.
+
+        Each key is a variable name. Each value is a dict with keys:
+        ``type``, ``role`` (one of ``TIME_AXIS``, ``LAT``, ``LON``,
+        ``DEPTH``, ``DATA``), ``units``, ``long_name``, ``standard_name``.
+
+        Default implementation delegates to :meth:`describe` and infers roles
+        from common naming conventions. Subclasses may override for richer info.
+        """
+        info = self.describe()
+        result: dict[str, dict] = {}
+
+        # Parquet: info["columns"] = {name: dtype_str}
+        columns = info.get("columns", {})
+        # Zarr: info["data_vars"] + info["coords"]
+        data_vars = info.get("data_vars", {})
+        coords = info.get("coords", {})
+
+        all_vars: dict[str, dict] = {}
+        for name, dtype in columns.items():
+            all_vars[name] = {
+                "type": (
+                    str(dtype)
+                    if not isinstance(dtype, dict)
+                    else dtype.get("dtype", "")
+                ),
+                "source": "column",
+            }
+        for name, meta in data_vars.items():
+            all_vars[name] = {
+                "type": meta.get("dtype", ""),
+                "source": "data_var",
+                "units": meta.get("units", ""),
+                "long_name": meta.get("long_name", ""),
+                "standard_name": meta.get("standard_name", ""),
+            }
+        for name, meta in coords.items():
+            all_vars[name] = {
+                "type": meta.get("dtype", ""),
+                "source": "coord",
+                "units": meta.get("units", ""),
+                "long_name": meta.get("long_name", ""),
+                "standard_name": meta.get("standard_name", ""),
+            }
+
+        for name, meta in all_vars.items():
+            low = name.lower()
+            role = "DATA"
+            if low in ("time", "juld", "juld_location", "detection_timestamp"):
+                role = "TIME_AXIS"
+            elif low in ("latitude", "lat"):
+                role = "LAT"
+            elif low in ("longitude", "lon"):
+                role = "LON"
+            elif low in ("depth", "nominal_depth", "pres", "pres_adjusted"):
+                role = "DEPTH"
+            elif meta.get("source") == "coord":
+                # Zarr coordinate not matching above names
+                sn = meta.get("standard_name", "").lower()
+                if sn == "time":
+                    role = "TIME_AXIS"
+                elif sn == "latitude":
+                    role = "LAT"
+                elif sn == "longitude":
+                    role = "LON"
+
+            result[name] = {
+                "type": meta.get("type", ""),
+                "role": role,
+                "units": meta.get("units", ""),
+                "long_name": meta.get("long_name", ""),
+                "standard_name": meta.get("standard_name", ""),
+            }
+
+        return result
+
+    @property
+    def dataset_type(self) -> str:
+        """Classify this dataset's observational type.
+
+        Returns one of: ``timeseries``, ``profiles``, ``gridded``,
+        ``radar_velocity``, ``radar_wave``, ``radar_wind``,
+        ``animal_tracking``, ``tabular``.
+        """
+        name = self.dataset_name.lower()
+        fmt = name.rsplit(".", 1)[-1] if "." in name else ""
+
+        try:
+            variables = self.list_variables()
+        except Exception:
+            variables = {}
+
+        var_names = {v.lower() for v in variables}
+        has_depth = any(variables.get(v, {}).get("role") == "DEPTH" for v in variables)
+
+        if fmt == "zarr" and "radar" in name:
+            if {"ucur", "vcur"} & var_names:
+                return "radar_velocity"
+            if {"vavh", "wppe"} & var_names:
+                return "radar_wave"
+            if "wind" in name:
+                return "radar_wind"
+            return "radar_velocity"
+
+        if any(kw in name for kw in ("animal", "tracking", "biologging", "tagging")):
+            return "animal_tracking"
+
+        if fmt == "zarr":
+            return "gridded"
+
+        if any(
+            kw in name
+            for kw in (
+                "aggregated",
+                "diver",
+                "benthic",
+                "fish",
+                "seabird",
+                "seagrass",
+                "kelp",
+                "survey",
+            )
+        ):
+            return "tabular"
+
+        if has_depth:
+            return "profiles"
+
+        if any(
+            kw in name
+            for kw in (
+                "mooring",
+                "station",
+                "wave_buoy",
+                "timeseries",
+                "hourly",
+                "realtime",
+            )
+        ):
+            return "timeseries"
+
+        return "tabular"
 
 
 class ParquetDataSource(DataSource):

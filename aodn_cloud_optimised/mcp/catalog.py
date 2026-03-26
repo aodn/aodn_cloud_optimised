@@ -45,6 +45,7 @@ class DatasetEntry:
     catalogue_url: str = ""
     s3_arn: str = ""
     variables: list[VariableInfo] = field(default_factory=list)
+    data_type: str = ""
     # Raw config for full detail retrieval
     _raw: dict[str, Any] = field(default_factory=dict, repr=False)
 
@@ -58,6 +59,89 @@ class DatasetEntry:
         if len(self.description) > 120:
             desc += "…"
         return f"[{self.cloud_optimised_format.upper()}] {self.dataset_name} — {desc or self.title}"
+
+
+def _infer_data_type(config: dict[str, Any], variables: list[VariableInfo]) -> str:
+    """Classify a dataset into an observational data type.
+
+    Categories:
+        ``gridded``           — satellite/model rasters (zarr with spatial grid)
+        ``radar_velocity``    — HF radar current velocity (zarr with UCUR/VCUR)
+        ``radar_wave``        — HF radar wave parameters (zarr with VAVH/WPPE)
+        ``radar_wind``        — HF radar wind (zarr with WSPD/WDIR)
+        ``profiles``          — depth-resolved observations (parquet with depth axis)
+        ``animal_tracking``   — biologging/acoustic tracking
+        ``timeseries``        — fixed-point time series (mooring, station, buoy)
+        ``tabular``           — general tabular data (surveys, aggregated bio data)
+    """
+    name = (config.get("dataset_name") or "").lower()
+    fmt = (config.get("cloud_optimised_format") or "").lower()
+    var_names = {v.name.lower() for v in variables}
+    var_snames = {v.standard_name.lower() for v in variables if v.standard_name}
+    has_depth = any(
+        v.axis.upper() == "Z"
+        or v.standard_name.lower() in ("depth", "pressure")
+        or v.name.lower() in ("depth", "nominal_depth", "pres", "pres_adjusted")
+        for v in variables
+    )
+
+    # Radar — zarr with characteristic velocity/wave/wind variables
+    if fmt == "zarr" and "radar" in name:
+        if {"ucur", "vcur"} & var_names:
+            return "radar_velocity"
+        if {"vavh", "wppe"} & var_names:
+            return "radar_wave"
+        if {"wspd_mean", "wdir_mean"} & var_names or "wind" in name:
+            return "radar_wind"
+        return "radar_velocity"  # default for unrecognised radar
+
+    # Animal tracking
+    if any(kw in name for kw in ("animal", "tracking", "biologging", "tagging")):
+        return "animal_tracking"
+
+    # Gridded — zarr without radar markers (satellite, model)
+    if fmt == "zarr":
+        return "gridded"
+
+    # Tabular survey/biology data — check before depth to avoid misclassification
+    if any(
+        kw in name
+        for kw in (
+            "aggregated",
+            "diver",
+            "benthic",
+            "fish",
+            "photoquadrat",
+            "seabird",
+            "seagrass",
+            "kelp",
+            "survey",
+        )
+    ):
+        return "tabular"
+
+    # Parquet with depth → profiles (Argo, XBT, CTD, glider)
+    if fmt == "parquet" and has_depth:
+        return "profiles"
+
+    # Parquet timeseries keywords
+    if any(
+        kw in name
+        for kw in (
+            "mooring",
+            "station",
+            "wave_buoy",
+            "timeseries",
+            "hourly",
+            "nrs",
+            "realtime",
+            "delayed_qc",
+        )
+    ):
+        return "timeseries"
+
+    # Parquet tabular (surveys, aggregated biology, vessel tracks, etc.)
+    return "tabular"
 
 
 def _extract_entry(config: dict[str, Any]) -> DatasetEntry:
@@ -112,6 +196,7 @@ def _extract_entry(config: dict[str, Any]) -> DatasetEntry:
         catalogue_url=catalogue_url,
         s3_arn=s3_arn,
         variables=variables,
+        data_type=_infer_data_type(config, variables),
         _raw=config,
     )
 

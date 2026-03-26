@@ -250,6 +250,128 @@ def _run_get_dataquery_reference() -> None:
     print(get_dataquery_reference())
 
 
+def _run_get_dataset_summary() -> None:
+    """aodn-get_dataset_summary <dataset_name>"""
+    from aodn_cloud_optimised.mcp.server import get_dataset_summary
+
+    parser = argparse.ArgumentParser(
+        prog="aodn-get_dataset_summary",
+        description="Return a comprehensive summary of a dataset.",
+    )
+    parser.add_argument("dataset_name", help="Dataset identifier, e.g. 'argo.parquet'")
+    args = parser.parse_args()
+    print(get_dataset_summary(dataset_name=args.dataset_name))
+
+
+def _run_start_notebook() -> None:
+    """aodn-start_notebook --title TITLE --output PATH"""
+    from aodn_cloud_optimised.mcp.server import start_notebook
+
+    parser = argparse.ArgumentParser(
+        prog="aodn-start_notebook",
+        description="Start building a validated Jupyter notebook.",
+    )
+    parser.add_argument("--title", required=True, help="Notebook title.")
+    parser.add_argument("--output", required=True, help="Output .ipynb path.")
+    parser.add_argument(
+        "--request", default="", help="User's original question/request."
+    )
+    args = parser.parse_args()
+    print(
+        start_notebook(
+            title=args.title, output_path=args.output, user_request=args.request
+        )
+    )
+
+
+def _run_add_notebook_cell() -> None:
+    """aodn-add_notebook_cell --session SESSION_ID --type code|markdown SOURCE"""
+    from aodn_cloud_optimised.mcp.server import add_notebook_cell
+
+    parser = argparse.ArgumentParser(
+        prog="aodn-add_notebook_cell",
+        description="Add a validated cell to a notebook draft.",
+    )
+    parser.add_argument(
+        "--session", required=True, help="Session ID from start_notebook."
+    )
+    parser.add_argument(
+        "--type",
+        dest="cell_type",
+        default="code",
+        choices=["code", "markdown"],
+        help="Cell type (default: code).",
+    )
+    parser.add_argument("source", help="Cell content (Python code or Markdown).")
+    args = parser.parse_args()
+    print(
+        add_notebook_cell(
+            session_id=args.session, source=args.source, cell_type=args.cell_type
+        )
+    )
+
+
+def _run_save_notebook() -> None:
+    """aodn-save_notebook --session SESSION_ID"""
+    from aodn_cloud_optimised.mcp.server import save_notebook
+
+    parser = argparse.ArgumentParser(
+        prog="aodn-save_notebook",
+        description="Save a validated notebook draft to disk.",
+    )
+    parser.add_argument(
+        "--session", required=True, help="Session ID from start_notebook."
+    )
+    args = parser.parse_args()
+    print(save_notebook(session_id=args.session))
+
+
+def _run_replace_notebook_cell() -> None:
+    """aodn-replace_notebook_cell --session SESSION_ID --index N --type code|markdown SOURCE"""
+    from aodn_cloud_optimised.mcp.server import replace_notebook_cell
+
+    parser = argparse.ArgumentParser(
+        prog="aodn-replace_notebook_cell",
+        description="Replace a cell in a notebook draft (validates code cells).",
+    )
+    parser.add_argument(
+        "--session", required=True, help="Session ID from start_notebook."
+    )
+    parser.add_argument(
+        "--index", required=True, type=int, help="Zero-based cell index."
+    )
+    parser.add_argument(
+        "--type",
+        dest="cell_type",
+        default="code",
+        choices=["code", "markdown"],
+        help="Cell type (default: code).",
+    )
+    parser.add_argument("source", help="New cell content (Python code or Markdown).")
+    args = parser.parse_args()
+    print(
+        replace_notebook_cell(
+            session_id=args.session,
+            cell_index=args.index,
+            source=args.source,
+            cell_type=args.cell_type,
+        )
+    )
+
+
+def _run_fix_notebook() -> None:
+    """aodn-fix_notebook NOTEBOOK_PATH"""
+    from aodn_cloud_optimised.mcp.server import fix_notebook
+
+    parser = argparse.ArgumentParser(
+        prog="aodn-fix_notebook",
+        description="Validate an existing notebook; import into builder if broken.",
+    )
+    parser.add_argument("notebook_path", help="Path to the .ipynb file.")
+    args = parser.parse_args()
+    print(fix_notebook(notebook_path=args.notebook_path))
+
+
 # ---------------------------------------------------------------------------
 # Dispatcher (used by all entry points)
 # ---------------------------------------------------------------------------
@@ -265,6 +387,12 @@ _DISPATCH: dict[str, object] = {
     "get_notebook_template": _run_get_notebook_template,
     "get_plot_guide": _run_get_plot_guide,
     "get_dataquery_reference": _run_get_dataquery_reference,
+    "get_dataset_summary": _run_get_dataset_summary,
+    "start_notebook": _run_start_notebook,
+    "add_notebook_cell": _run_add_notebook_cell,
+    "save_notebook": _run_save_notebook,
+    "replace_notebook_cell": _run_replace_notebook_cell,
+    "fix_notebook": _run_fix_notebook,
 }
 
 

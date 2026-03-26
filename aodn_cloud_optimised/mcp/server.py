@@ -17,7 +17,7 @@ Configure in Gemini CLI (``~/.gemini/settings.json``)::
     {
       "mcpServers": {
         "aodn": {
-          "command": "aodn-mcp-server",
+          "command": "/path/to/conda/envs/<env>/bin/aodn-mcp-server",
           "env": {
             "AODN_NOTEBOOKS_PATH": "/path/to/aodn_cloud_optimised/notebooks",
             "AODN_CONFIG_PATH": "/path/to/aodn_cloud_optimised/aodn_cloud_optimised/config/dataset"
@@ -96,158 +96,71 @@ def _load_dataquery() -> Any:
     return module
 
 
+import re as _re
+
+# Known Jupyter magic prefixes to strip — only these, not arbitrary %-lines
+_JUPYTER_MAGIC_RE = _re.compile(
+    r"^\s*(?:"
+    r"%%time\b"  # cell magic: time entire cell
+    r"|%time\b"  # line magic: time one expression
+    r"|%%timeit\b"  # cell magic: timeit
+    r"|%timeit\b"  # line magic: timeit
+    r"|%matplotlib\b"  # backend selection
+    r"|%%capture\b"  # capture output
+    r"|%load_ext\b"  # load IPython extension
+    r"|%%bash\b"  # shell cell magic
+    r"|%%html\b"  # HTML cell magic
+    r"|%%js\b"  # JavaScript cell magic
+    r")"
+)
+
+
+def _strip_jupyter_magics(code: str) -> str:
+    """Remove known Jupyter magic lines from code.
+
+    Only strips recognised IPython/Jupyter magics (``%%time``, ``%matplotlib``,
+    etc.).  Lines that happen to contain ``%`` for Python string formatting or
+    modulo operations are preserved.
+
+    Returns:
+        Cleaned code with magic lines removed.
+    """
+    return "\n".join(
+        line for line in code.splitlines() if not _JUPYTER_MAGIC_RE.match(line)
+    )
+
+
 mcp = FastMCP(
     name="aodn-cloud-optimised",
     instructions=textwrap.dedent(
         """\
-        You have access to the AODN (Australian Ocean Data Network) Cloud Optimised
-        dataset catalog. Use the tools below in this recommended order:
+        You are an AODN oceanographic data expert. You MUST use these MCP tools
+        to create notebooks — NEVER write .ipynb files directly.
 
-        1. **Discover** datasets relevant to a user's request with `search_datasets`.
-        2. **Verify actual coverage** with `check_dataset_coverage`.
-        3. **Get real variable names** — call BOTH `get_dataset_schema` AND
-           `introspect_dataset_live` (especially critical for Zarr).
-        4. **Retrieve** notebook template with `get_notebook_template`.
-        5. **Get plotting code** with `get_plot_guide`.
-        6. **TEST EVERY CELL** with `execute_python_cell` before writing it to the
-           notebook.  Use a consistent `session_id` to share state across cells.
-        7. Write the notebook file only after all cells pass `execute_python_cell`.
-        8. **Validate the finished notebook** with `validate_notebook`.  Fix every
-           ❌ cell and re-validate until clean.  **Never deliver a notebook that
-           has not passed validation.**
+        ## MANDATORY WORKFLOW
 
-        Datasets come in two formats:
-        - **Parquet** — tabular time series (point/mooring/vessel/glider data)
-        - **Zarr** — gridded rasters (satellite imagery, radar, model output)
+        1. `search_datasets` → find datasets
+        2. `get_dataset_summary` → understand variables, data type, code patterns
+        3. `check_dataset_coverage` → confirm data exists in the requested area/time
+        4. `start_notebook(user_request=...)` → begin validated notebook, passing the user's original question
+        5. `add_notebook_cell` → add cells (code cells are executed first; broken = rejected)
+        6. `save_notebook` → writes + re-runs in fresh kernel; FAILS if any cell errors
+        7. `replace_notebook_cell` → fix broken cells, then `save_notebook` again
 
-        ## CRITICAL: Variable names
+        If an existing broken notebook needs fixing, use `fix_notebook` to import
+        it into a builder session.
 
-        **NEVER invent variable names.** Always call `introspect_dataset_live` first.
-        Known surprises:
-        - Argo: time is `JULD` not `TIME`; the column `TIME` does not exist
-        - GHRSST SST: `wind_speed` is in the JSON config but NOT in the Zarr store
-        - Radar zarr coords are `TIME`, `LATITUDE`, `LONGITUDE` (uppercase)
-        - Satellite zarr coords are `time`, `lat`, `lon` (lowercase)
+        ## ABSOLUTE RULES
 
-        ## CRITICAL: xarray pitfalls
+        - **NEVER write .ipynb files directly.** Always use the builder tools above.
+        - **NEVER invent variable names.** Call `get_dataset_summary` first.
+        - **NEVER generate synthetic data** with `np.random`. Search for another dataset.
+        - **NEVER use `%%time` or `%time`** in cells. They are stripped automatically.
+        - **ALWAYS include plots** (timeseries, histogram/summary, spatial map).
+        - **ALWAYS guard for empty data** and dynamic group sizes (never hardcode 12 months).
 
-        **xarray `.sel()` with slice + method='nearest' raises NotImplementedError.**
-        You cannot combine a range slice and a nearest-neighbour lookup in one call.
-        ALWAYS split into two chained `.sel()` calls:
-
-        ```python
-        # WRONG — raises NotImplementedError:
-        ds.sel(time=slice(t0, t1), lat=y, lon=x, method='nearest')
-
-        # CORRECT — slice first, then nearest:
-        ds.sel(time=slice(t0, t1)).sel(lat=y, lon=x, method='nearest')
-        ```
-
-        ## CRITICAL: pandas pitfalls
-
-        **Never rename columns to a name that already exists in the DataFrame.**
-        If `df` has both `TEMP` and `TEMP_ADJUSTED`, renaming `TEMP_ADJUSTED→TEMP`
-        creates duplicate columns, which causes `ValueError` in many pandas operations
-        including `plot_ts_diagram`.  Instead, pass the original column names directly:
-
-        ```python
-        # WRONG — creates duplicate 'TEMP' column:
-        df.rename(columns={'TEMP_ADJUSTED': 'TEMP', ...})
-
-        # CORRECT — pass actual column names:
-        plot_ts_diagram(df, temp_col='TEMP_ADJUSTED', psal_col='PSAL_ADJUSTED', z_col='PRES_ADJUSTED')
-        ```
-
-        ## CRITICAL: pcolormesh / cartopy pitfalls
-
-        When plotting a gridded field with `ax.pcolormesh(lon, lat, data)`:
-        - `data` must be 2-D (shape `[nlat, nlon]`).  Call `.mean(dim='time')` or
-          index a single time step first.
-        - If lat is in **descending** order (common in satellite data), reverse it:
-          `data = data[::-1, :]` and `lat = lat[::-1]`.
-        - Use `shading='auto'` to avoid the "C one smaller than X/Y" TypeError.
-
-        ## CRITICAL: Date arithmetic — never overflow the day-of-month
-
-        **Never construct `np.datetime64(f'{yr}-{m:02d}-{last_day+1:02d}')` as an
-        exclusive upper bound** — `last_day+1` is 31 for April/June/September/November
-        and will raise `ValueError: Day out of range`.
-
-        Always use the safe month-end helper pattern instead:
-
-        ```python
-        # WRONG — raises ValueError for months with 30 days:
-        t1 = np.datetime64(f'{yr}-{ANALYSIS_MONTH:02d}-{calendar.monthrange(yr,ANALYSIS_MONTH)[1]+1:02d}')
-
-        # CORRECT — step to the first day of the next month:
-        def _next_month_start(yr, m):
-            ts = pd.Timestamp(year=yr, month=m, day=1) + pd.DateOffset(months=1)
-            return np.datetime64(ts.strftime('%Y-%m-%d'))
-        t1 = _next_month_start(yr, ANALYSIS_MONTH)
-        ```
-
-        Add `_next_month_start` in the parameters cell at the top of every notebook
-        that loops over months.  Use it everywhere you need an exclusive month-end.
-
-        ## CRITICAL: numpy datetime64 formatting in f-strings
-
-        **Never write `f'{time_array[0]:%Y-%m-%d}'`** — the `%Y-%m-%d` format
-        spec fails with `ValueError: Invalid format specifier` when the value is a
-        `numpy.datetime64` (which is backed by a string internally).
-
-        Always convert through `pd.Timestamp` first:
-
-        ```python
-        # WRONG — raises ValueError for numpy.datetime64:
-        print(f"Range: {time_array[0]:%Y-%m-%d} → {time_array[-1]:%Y-%m-%d}")
-
-        # CORRECT:
-        print(f"Range: {pd.Timestamp(time_array[0]).strftime('%Y-%m-%d')} → "
-              f"{pd.Timestamp(time_array[-1]).strftime('%Y-%m-%d')}")
-        ```
-
-        ## CRITICAL: DataQuery standalone functions vs class methods
-
-        Several functions in DataQuery.py are **module-level functions**, not
-        methods of any dataset class.  Calling them on an object raises
-        `AttributeError`.
-
-        ```python
-        # WRONG — raises AttributeError:
-        ds_argo.plot_ts_diagram(df)
-        ds.plot_timeseries(df)
-
-        # CORRECT — import and call directly:
-        from DataQuery import GetAodn, plot_ts_diagram
-        plot_ts_diagram(df, temp_col='TEMP', psal_col='PSAL', z_col='DEPTH')
-        ```
-
-        The following are standalone functions (not methods):
-        `plot_ts_diagram`, `plot_timeseries`, `plot_surface_map`,
-        `plot_gridded_variable`, `plot_scatter`.
-
-        ## CRITICAL: Default output format
-
-        **When a user asks for data analysis, exploration, or visualisation
-        without specifying a format, always produce a Jupyter notebook** (`.ipynb`).
-        Never return only a code snippet or markdown explanation when a notebook
-        would be more useful.  If the user is continuing a previous analysis,
-        add sections to the existing notebook rather than creating a new one.
-
-        ## CRITICAL: Notebook initialisation
-
-        Every notebook **must** contain an initialisation cell:
-        ```python
-        from DataQuery import GetAodn, plot_ts_diagram
-        aodn = GetAodn()
-        ```
-        Without `aodn = GetAodn()` every `aodn.get_dataset(…)` call raises NameError.
-
-        ## Jupyter magic rules
-
-        - `%%time` must be the **sole content of the first line** of the cell.
-        - `%time expr` times a **single-line** expression only; never multi-line.
-        - Never write any code after `%%time` on the same line.
+        For Python pitfalls, code patterns, and data types, call `get_plot_guide`
+        or `get_dataset_summary` — they include inline reference material.
         """
     ),
 )
@@ -316,7 +229,7 @@ def _format_search_result(entry: DatasetEntry, score: float, rank: int) -> str:
     return "\n".join(
         [
             f"### {rank}. `{entry.dataset_name}` [{entry.cloud_optimised_format.upper()}]",
-            f"**Score:** {score:.2f}",
+            f"**Score:** {score:.2f}  |  **Data type:** {entry.data_type}",
             f"**Title:** {entry.title or '(none)'}",
             f"**Description:** {desc_preview}",
             f"**Key variables:** {variables_preview or '(none listed)'}",
@@ -475,7 +388,9 @@ def list_datasets(
         "",
     ]
     for e in entries:
-        lines.append(f"- **{e.dataset_name}** [{e.cloud_optimised_format.upper()}]")
+        lines.append(
+            f"- **{e.dataset_name}** [{e.cloud_optimised_format.upper()}] _{e.data_type}_"
+        )
         if e.title:
             lines.append(f"  {e.title}")
         elif e.description:
@@ -535,9 +450,9 @@ def search_datasets(
         lines.append("")
 
     lines.append(
-        "---\nUse `get_dataset_schema` for the authoritative variable list, "
-        "`get_dataset_info` for full metadata, "
-        "or `get_notebook_template` to retrieve the matching notebook."
+        "---\n**Next steps:** Call `get_dataset_summary` for full variable details, "
+        "then `start_notebook` to begin building a validated notebook. "
+        "NEVER write .ipynb files directly."
     )
     return "\n".join(lines)
 
@@ -646,8 +561,64 @@ def get_dataset_schema(dataset_name: str) -> str:
         f"# Schema variables: `{stem}`",
         "",
         f"**Format:** {entry.cloud_optimised_format.upper()}",
+        f"**Data type:** {entry.data_type}",
         f"**Total variables:** {len(raw_schema)}",
         "",
+    ]
+
+    # AWS description excerpt — tells the AI what this dataset IS
+    if entry.description:
+        desc = entry.description[:400].rstrip()
+        if len(entry.description) > 400:
+            desc += "…"
+        lines += [f"> {desc}", ""]
+
+    # Recommended DataQuery methods for this format/type
+    lines += ["## Recommended code patterns", ""]
+    fmt = entry.cloud_optimised_format.lower()
+    dtype = entry.data_type
+    lines.append(f"```python")
+    lines.append(f"aodn = GetAodn()")
+    lines.append(f'ds = aodn.get_dataset("{stem}.{fmt}")')
+    if fmt == "parquet":
+        lines.append(
+            f'df = ds.get_data(date_start="...", date_end="...", '
+            f"lat_min=..., lat_max=..., lon_min=..., lon_max=...)"
+        )
+        lines.append(f"ds.get_temporal_extent()  # → (min_date, max_date)")
+        lines.append(f"ds.plot_spatial_extent()   # → cartopy map")
+        lines.append(f"ds.describe()              # → schema dict")
+    else:
+        lines.append(f"ds.get_temporal_extent()  # → (min_date, max_date)")
+        lines.append(
+            f"ds.get_spatial_extent()   # → [lat_min, lon_min, lat_max, lon_max]"
+        )
+        lines.append(
+            f"ds.describe()              # → schema dict with data_vars, coords"
+        )
+        if dtype in ("gridded",):
+            lines.append(
+                f'ds.get_timeseries_data(var_name="...", lat=..., lon=..., '
+                f'date_start="...", date_end="...")'
+            )
+            lines.append(
+                f'ds.plot_gridded_variable(var_name="...", date_start="...", '
+                f"lat_slice=(...,...), lon_slice=(...,...))"
+            )
+        elif dtype.startswith("radar_velocity"):
+            lines.append(f'ds.plot_radar_water_velocity_gridded(date_start="...")')
+            lines.append(
+                f'ds.plot_radar_water_velocity_rose(date_start="...", date_end="...")'
+            )
+        elif dtype.startswith("radar_wave"):
+            lines.append(
+                f'ds.get_timeseries_data(var_name="VAVH", lat=..., lon=..., '
+                f'date_start="...", date_end="...")'
+            )
+    lines.append(f"```")
+    lines.append("")
+
+    lines += [
         "## Coordinate / axis variables",
         "",
         "These are the **exact column names** to use in code for time, position, and depth.",
@@ -1336,19 +1307,12 @@ def execute_python_cell(
         stderr (up to 500 chars), and full traceback on error.
     """
     import io
-    import re
     import sys
     import threading
     import traceback as tb
 
-    # Strip Jupyter magics so exec() doesn't see SyntaxErrors
-    clean_lines = []
-    for line in code.splitlines():
-        stripped = line.lstrip()
-        if stripped.startswith("%%") or stripped.startswith("%"):
-            continue
-        clean_lines.append(line)
-    clean_code = "\n".join(clean_lines).strip()
+    # Strip known Jupyter magics so exec() doesn't see SyntaxErrors
+    clean_code = _strip_jupyter_magics(code).strip()
 
     if not clean_code:
         return "*(empty cell — only contained Jupyter magic lines)*"
@@ -1543,6 +1507,211 @@ def get_notebook_template(dataset_name: str) -> str:
 
 
 @mcp.tool()
+def get_dataset_summary(dataset_name: str) -> str:
+    """
+    Return a comprehensive summary of a dataset — everything needed to use it correctly.
+
+    This is the recommended first tool to call after discovering a dataset via
+    ``search_datasets``.  It returns in a single call:
+
+    - Dataset name, format, and **data type** (timeseries, profiles, gridded,
+      radar_velocity, radar_wave, radar_wind, animal_tracking, or tabular)
+    - Full AWS Open Data Registry description (human-written summary)
+    - Variable table with coordinate roles (TIME_AXIS, LAT, LON, DEPTH, DATA)
+    - Matching notebook path (if one exists)
+    - Recommended DataQuery code pattern for this format and data type
+
+    Args:
+        dataset_name: Dataset identifier, e.g. "argo" or "argo.parquet".
+
+    Returns:
+        Markdown summary with all information needed to generate correct code.
+    """
+    import re
+
+    stem = re.sub(r"\.(parquet|zarr)$", "", dataset_name)
+    catalog = get_catalog()
+    entry = catalog.get(stem)
+
+    if entry is None:
+        close = catalog.search(stem, top_k=3)
+        suggestions = ", ".join(f"`{e.dataset_name}`" for e, _ in close)
+        return (
+            f"Dataset `{stem}` not found.\n\nDid you mean: {suggestions}?\n\n"
+            "Use `search_datasets` to discover available datasets."
+        )
+
+    fmt = entry.cloud_optimised_format
+    dtype = entry.data_type
+    raw_schema = entry._raw.get("schema", {}) or {}
+
+    lines: list[str] = [
+        f"# Dataset summary: `{stem}`",
+        "",
+        f"| Property | Value |",
+        f"|----------|-------|",
+        f"| **Format** | {fmt.upper()} |",
+        f"| **Data type** | {dtype} |",
+        f"| **Variables** | {len(raw_schema)} |",
+        f"| **Catalogue** | {entry.catalogue_url or 'N/A'} |",
+        "",
+    ]
+
+    # AWS Description — full text, the most informative human summary
+    aws = entry._raw.get("aws_opendata_registry", {}) or {}
+    desc = aws.get("Description", "") or entry.description
+    if desc:
+        lines += ["## Description", "", desc, ""]
+
+    # Coordinate variables
+    coord_lines: list[str] = []
+    for var in entry.variables:
+        axis = (var.axis or "").upper()
+        sname = (var.standard_name or "").lower()
+        vlow = var.name.lower()
+        role = ""
+        if axis == "T" or sname == "time" or vlow in ("time", "juld"):
+            role = "TIME_AXIS"
+        elif axis == "Y" or sname == "latitude":
+            role = "LAT"
+        elif axis == "X" or sname == "longitude":
+            role = "LON"
+        elif axis == "Z" or sname in ("depth", "pressure"):
+            role = "DEPTH"
+        if role:
+            coord_lines.append(f"| **{role}** | `{var.name}` | {var.units} |")
+
+    if coord_lines:
+        lines += (
+            [
+                "## Coordinates (exact variable names for code)",
+                "",
+                "| Role | Variable | Units |",
+                "|------|----------|-------|",
+            ]
+            + coord_lines
+            + [""]
+        )
+
+    # Key data variables — exclude coordinates
+    coord_names = set()
+    for v in entry.variables:
+        axis = (v.axis or "").upper()
+        sname = (v.standard_name or "").lower()
+        vlow = v.name.lower()
+        if (
+            axis in ("T", "X", "Y", "Z")
+            or sname in ("time", "latitude", "longitude", "depth", "pressure")
+            or vlow in ("time", "juld", "latitude", "longitude", "lat", "lon")
+        ):
+            coord_names.add(v.name)
+    data_vars = [v for v in entry.variables if v.name not in coord_names]
+    if data_vars:
+        show = data_vars[:15]
+        lines += [
+            "## Data variables",
+            "",
+            "| Variable | Type | Units | Description |",
+            "|----------|------|-------|-------------|",
+        ]
+        for v in show:
+            desc_str = v.long_name or v.standard_name or ""
+            lines.append(f"| `{v.name}` | {v.type} | {v.units} | {desc_str} |")
+        if len(data_vars) > 15:
+            lines.append(f"| … | | | +{len(data_vars) - 15} more variables |")
+        lines.append("")
+
+    # Matching notebook
+    nb_content = get_notebook_content(stem)
+    nb_dir = find_notebooks_dir()
+    if nb_content:
+        lines += [
+            "## Matching notebook",
+            "",
+            f"✅ A canonical notebook exists: `{stem}.ipynb`",
+            f"   Path: `{nb_dir}/{stem}.ipynb`" if nb_dir else "",
+            "   Use `get_notebook_template` to retrieve its full content.",
+            "",
+        ]
+    else:
+        lines += [
+            "## Matching notebook",
+            "",
+            f"⚠ No dataset-specific notebook for `{stem}`.",
+            f"   Use `get_notebook_template` to get the generic `{fmt}` template.",
+            "",
+        ]
+
+    # Recommended code pattern
+    lines += ["## Recommended code", "", "```python"]
+    lines.append("from DataQuery import GetAodn")
+    lines.append("aodn = GetAodn()")
+    lines.append(f'ds = aodn.get_dataset("{stem}.{fmt}")')
+    lines.append("")
+    lines.append("# Check extents")
+    lines.append("print(ds.get_temporal_extent())")
+    if fmt == "parquet":
+        lines.append("ds.plot_spatial_extent()")
+        lines.append("")
+        lines.append("# Query data")
+        lines.append("df = ds.get_data(")
+        lines.append('    date_start="2020-01-01", date_end="2021-01-01",')
+        lines.append("    lat_min=-45, lat_max=-10, lon_min=110, lon_max=160")
+        lines.append(")")
+        if dtype == "profiles":
+            lines.append("")
+            lines.append(
+                "# For profile data — use plot_ts_diagram if TEMP + PSAL available:"
+            )
+            lines.append("# from DataQuery import plot_ts_diagram")
+            lines.append(
+                "# plot_ts_diagram(df, temp_col='TEMP', psal_col='PSAL', z_col='DEPTH')"
+            )
+    elif dtype in ("gridded",):
+        lines.append("")
+        lines.append("# Timeseries at a point")
+        lines.append("ts = ds.get_timeseries_data(")
+        lines.append('    var_name="<VAR>", lat=-40.0, lon=145.0,')
+        lines.append('    date_start="2020-01-01", date_end="2021-01-01"')
+        lines.append(")")
+        lines.append("")
+        lines.append("# Gridded map")
+        lines.append("ds.plot_gridded_variable(")
+        lines.append('    var_name="<VAR>", date_start="2020-06-01",')
+        lines.append("    lat_slice=(-45, -10), lon_slice=(110, 160)")
+        lines.append(")")
+    elif dtype == "radar_velocity":
+        lines.append("")
+        lines.append("# Radar velocity plots")
+        lines.append('ds.plot_radar_water_velocity_gridded(date_start="2020-06-01")')
+        lines.append(
+            'ds.plot_radar_water_velocity_rose(date_start="2020-06-01", date_end="2020-06-30")'
+        )
+    elif dtype == "radar_wave":
+        lines.append("")
+        lines.append("# Radar wave timeseries")
+        lines.append("ts = ds.get_timeseries_data(")
+        lines.append('    var_name="VAVH", lat=..., lon=...,')
+        lines.append('    date_start="2020-01-01", date_end="2020-12-31"')
+        lines.append(")")
+    lines.append("```")
+    lines.append("")
+
+    lines.append(
+        "> **IMPORTANT:** Variable names above (like `<VAR>`) are placeholders. "
+        "Use the exact names from the Coordinates and Data variables tables."
+    )
+    lines.append("")
+    lines.append(
+        "**Next step:** Call `get_plot_guide` for plotting examples, "
+        "then `start_notebook` → `add_notebook_cell` → `save_notebook` "
+        "to build a validated notebook. NEVER write .ipynb files directly."
+    )
+
+    return "\n".join(lines)
+
+
+@mcp.tool()
 def get_plot_guide(dataset_name: str) -> str:
     """
     Return a dataset-specific plotting guide with ready-to-use code examples.
@@ -1724,7 +1893,6 @@ def get_plot_guide(dataset_name: str) -> str:
             "---",
             "## 2. Load data with filters",
             "```python",
-            "%%time",
             "df = aodn_dataset.get_data(",
             '    date_start="2020-01-01",',
             '    date_end="2023-01-01",',
@@ -1747,7 +1915,6 @@ def get_plot_guide(dataset_name: str) -> str:
                 f"Extracts the nearest data to (lat, lon) for `{temp_var}`"
                 " and plots with an optional percentile band.",
                 "```python",
-                "%%time",
                 "ts = aodn_dataset.get_timeseries_data(",
                 f'    var_name="{temp_var}",',
                 "    lat=-32.0,",
@@ -1761,7 +1928,6 @@ def get_plot_guide(dataset_name: str) -> str:
         else:
             lines += [
                 "```python",
-                "%%time",
                 "ts = aodn_dataset.get_timeseries_data(",
                 '    var_name="YOUR_VAR",  # replace with a variable name from the schema',
                 "    lat=-32.0, lon=154.0,",
@@ -1781,7 +1947,6 @@ def get_plot_guide(dataset_name: str) -> str:
                 "Requires a DataFrame with temperature, salinity, and depth columns.",
                 "```python",
                 "from DataQuery import plot_ts_diagram",
-                "%%time",
                 "df_ts = aodn_dataset.get_data(",
                 '    date_start="2020-01-01", date_end="2023-01-01",',
                 f'    columns=["{temp_var}", "{psal_var}", {depth_col}],',
@@ -1875,7 +2040,6 @@ def get_plot_guide(dataset_name: str) -> str:
             "## 2. Time series at a single point",
             f"Extracts `{grid_var}` at the nearest grid cell to (lat, lon) and plots it.",
             "```python",
-            "%%time",
             "aodn_dataset.plot_timeseries(",
             f'    var_name="{grid_var}",',
             "    lat=-35.0,",
@@ -1897,7 +2061,6 @@ def get_plot_guide(dataset_name: str) -> str:
                 "## 3. Multi-day gridded map",
                 f"Plots up to `n_days` consecutive maps of `{grid_var}` with coastlines.",
                 "```python",
-                "%%time",
                 "aodn_dataset.plot_gridded_variable(",
                 f'    var_name="{grid_var}",',
                 '    date_start="2020-01-01",',
@@ -1943,7 +2106,6 @@ def get_plot_guide(dataset_name: str) -> str:
                 "Displays water speed (colour) and velocity vectors (arrows)"
                 " for 6 consecutive hourly snapshots in a 3×2 grid.",
                 "```python",
-                "%%time",
                 "aodn_dataset.plot_radar_water_velocity_gridded(",
                 '    date_start="2020-05-01T00:00:00",',
             ]
@@ -1956,7 +2118,6 @@ def get_plot_guide(dataset_name: str) -> str:
                 "## 4. Radar velocity rose",
                 "Wind-rose style plot of time-averaged current speed and direction.",
                 "```python",
-                "%%time",
                 "aodn_dataset.plot_radar_water_velocity_rose(",
                 '    date_start="2020-01-01T00:00:00",',
                 '    date_end="2021-01-01T00:00:00",',
@@ -2006,10 +2167,37 @@ def get_plot_guide(dataset_name: str) -> str:
     lines += [
         "",
         "---",
-        "> **Reminder — Jupyter magic commands:**",
-        "> - `%time expr` — times a **single-line** expression only.",
-        "> - `%%time` at the **top of a cell** — times the entire cell (use for multi-line calls).",
-        "> - Never put code on the same line as `%%time`.",
+        "> **Do NOT include `%%time` or `%time`** in generated notebook cells.",
+        "> They cause errors when placed incorrectly and are not needed.",
+        "",
+        "---",
+        "## Python pitfalls reference",
+        "",
+        "**xarray `.sel()`**: Never mix slice + `method='nearest'` in one call:",
+        "```python",
+        "# WRONG: ds.sel(time=slice(t0, t1), lat=y, method='nearest')",
+        "# CORRECT:",
+        "ds.sel(time=slice(t0, t1)).sel(lat=y, lon=x, method='nearest')",
+        "```",
+        "",
+        "**Date overflow**: Never construct day 31 for 30-day months. Use:",
+        "```python",
+        "def _next_month_start(yr, m):",
+        "    return (pd.Timestamp(year=yr, month=m, day=1) + pd.DateOffset(months=1)).strftime('%Y-%m-%d')",
+        "```",
+        "",
+        "**numpy datetime64**: Never use `f'{val:%Y-%m-%d}'`. Use `pd.Timestamp(val).strftime('%Y-%m-%d')`.",
+        "",
+        "**Standalone functions**: `plot_ts_diagram` is a module-level function, NOT a dataset method.",
+        "Import: `from DataQuery import plot_ts_diagram`",
+        "",
+        "**Defensive coding** (mandatory):",
+        "- Never hardcode 12 month names. Use `calendar.month_abbr[m] for m in summary.index`",
+        "- Never assume 12 panels. Use `n = df['month'].nunique(); ncols = min(n, 3); nrows = -(-n // ncols)`",
+        "- Always check `if df.empty:` before plotting",
+        "- Use `shading='auto'` in `pcolormesh`",
+        "",
+        "**Next step**: Use `start_notebook` to begin building a validated notebook.",
     ]
 
     return "\n".join(lines)
@@ -2031,6 +2219,422 @@ def get_dataquery_reference() -> str:
         Formatted API reference for DataQuery.py.
     """
     return _DATAQUERY_REFERENCE
+
+
+# ---------------------------------------------------------------------------
+# Notebook builder — validated cell-by-cell notebook construction
+# ---------------------------------------------------------------------------
+
+_NOTEBOOK_DRAFTS: dict[str, dict[str, Any]] = {}
+"""Per-session notebook drafts.  Each entry stores ``cells`` (list of nbformat
+cell dicts) and ``session_id`` (shared with ``execute_python_cell`` REPL)."""
+
+
+@mcp.tool()
+def start_notebook(
+    title: str,
+    output_path: str,
+    user_request: str = "",
+) -> str:
+    """
+    Start building a new Jupyter notebook, cell by cell.
+
+    Initialises a draft notebook in memory and pre-populates it with:
+
+    1. A **title markdown cell** (``# <title>``).
+    2. *(optional)* A **user request cell** — the original question or prompt
+       that motivated this notebook, rendered as an italic blockquote.
+    3. A **setup code cell** that imports DataQuery, creates the ``GetAodn``
+       instance.  This cell is **executed immediately** so the REPL namespace
+       is ready for subsequent ``add_notebook_cell`` calls.
+
+    After calling ``start_notebook``, add cells one at a time with
+    ``add_notebook_cell`` (code cells are validated before being committed),
+    and finally call ``save_notebook`` to write the ``.ipynb`` file.
+
+    Args:
+        title:        Notebook title (becomes an ``<h1>`` markdown cell).
+        output_path:  Where to save the notebook (absolute or relative path).
+                      If it does not end with ``.ipynb``, the extension is appended.
+        user_request: The user's original question or request that led to this
+                      notebook.  If the request was refined over multiple turns,
+                      provide a single reformulated sentence keeping the user's
+                      style.  Rendered as a blockquote below the title.
+
+    Returns:
+        Session ID to use with ``add_notebook_cell`` and ``save_notebook``.
+    """
+    import hashlib
+    import time
+
+    session_id = f"nb_{hashlib.md5(f'{title}{time.time()}'.encode()).hexdigest()[:12]}"
+
+    if not output_path.endswith(".ipynb"):
+        output_path += ".ipynb"
+
+    # Title cell
+    title_cell = _nbformat_cell("markdown", f"# {title}")
+
+    # User request cell (optional)
+    request_cell = None
+    if user_request and user_request.strip():
+        request_cell = _nbformat_cell(
+            "markdown",
+            f"> *{user_request.strip()}*",
+        )
+
+    # Setup cell — the REPL version uses pre-injected GetAodn (no import needed).
+    # The notebook version downloads setup.py from GitHub for full portability.
+
+    setup_code_repl = (
+        "import warnings\n"
+        "warnings.filterwarnings('ignore')\n"
+        "import matplotlib\n"
+        "matplotlib.use('Agg')\n"
+        "import matplotlib.pyplot as plt\n"
+        "import numpy as np\n"
+        "import pandas as pd\n"
+        "\n"
+        "aodn = GetAodn()"
+    )
+    # The cell saved in the notebook downloads setup.py from GitHub so the
+    # notebook is fully portable — works for anyone without cloning the repo.
+    setup_code_notebook = (
+        "import os, requests, importlib.util, warnings\n"
+        "warnings.filterwarnings('ignore')\n"
+        "\n"
+        "open('setup.py', 'w').write(\n"
+        "    requests.get(\n"
+        "        'https://raw.githubusercontent.com/aodn/aodn_cloud_optimised/main/notebooks/setup.py'\n"
+        "    ).text\n"
+        ")\n"
+        "spec = importlib.util.spec_from_file_location('setup', 'setup.py')\n"
+        "setup = importlib.util.module_from_spec(spec)\n"
+        "spec.loader.exec_module(setup)\n"
+        "setup.install_requirements()\n"
+        "setup.load_dataquery()\n"
+        "\n"
+        "import matplotlib.pyplot as plt\n"
+        "import numpy as np\n"
+        "import pandas as pd\n"
+        "from DataQuery import GetAodn, plot_ts_diagram\n"
+        "\n"
+        "aodn = GetAodn()"
+    )
+    setup_cell = _nbformat_cell("code", setup_code_notebook)
+
+    # Execute the REPL-compatible version in the shared namespace
+    exec_result = execute_python_cell(
+        code=setup_code_repl,
+        session_id=session_id,
+        timeout_seconds=60,
+    )
+
+    if "❌" in exec_result:
+        return (
+            f"❌ **Notebook setup failed.** Could not initialise DataQuery.\n\n"
+            f"{exec_result}\n\n"
+            "Check that `DataQuery.py` is accessible and dependencies are installed."
+        )
+
+    initial_cells = [title_cell]
+    if request_cell:
+        initial_cells.append(request_cell)
+    initial_cells.append(setup_cell)
+
+    _NOTEBOOK_DRAFTS[session_id] = {
+        "title": title,
+        "output_path": output_path,
+        "cells": initial_cells,
+    }
+
+    n = len(initial_cells)
+    return (
+        f"✅ Notebook **{title}** initialised.\n\n"
+        f"- **Session ID:** `{session_id}`\n"
+        f"- **Output:** `{output_path}`\n"
+        f"- **Cells so far:** {n} (title{' + request' if request_cell else ''} + setup)\n\n"
+        "Add cells with `add_notebook_cell`, then call `save_notebook` when done."
+    )
+
+
+@mcp.tool()
+def add_notebook_cell(
+    session_id: str,
+    source: str,
+    cell_type: str = "code",
+) -> str:
+    """
+    Add a cell to a notebook draft, validating code cells before committing.
+
+    **Code cells are executed first.** If the code raises an exception, the
+    cell is **NOT** added to the notebook and an error report is returned.
+    Fix the code and call ``add_notebook_cell`` again.
+
+    Markdown cells are added unconditionally.
+
+    This tool shares the same REPL namespace as ``execute_python_cell``,
+    so variables defined in earlier cells are available in later ones.
+
+    Args:
+        session_id: The session ID returned by ``start_notebook``.
+        source:     Cell content (Python code or Markdown text).
+        cell_type:  ``"code"`` (default) or ``"markdown"``.
+
+    Returns:
+        ``✅ Cell N added`` on success, or ``❌ Cell NOT added: <error>``
+        on failure (code cells only).
+    """
+    if session_id not in _NOTEBOOK_DRAFTS:
+        return f"❌ Session `{session_id}` not found. " "Call `start_notebook` first."
+
+    draft = _NOTEBOOK_DRAFTS[session_id]
+    cell_idx = len(draft["cells"])
+
+    if cell_type == "markdown":
+        draft["cells"].append(_nbformat_cell("markdown", source))
+        return f"✅ **Cell {cell_idx} added** (markdown)"
+
+    # Code cell — validate by executing first
+    exec_result = execute_python_cell(
+        code=source,
+        session_id=session_id,
+        timeout_seconds=120,
+    )
+
+    if "❌" in exec_result or "⏱️" in exec_result:
+        return (
+            f"❌ **Cell NOT added** — fix the code and try again.\n\n" f"{exec_result}"
+        )
+
+    draft["cells"].append(_nbformat_cell("code", _strip_jupyter_magics(source)))
+    return f"✅ **Cell {cell_idx} added** (code, validated)"
+
+
+@mcp.tool()
+def replace_notebook_cell(
+    session_id: str,
+    cell_index: int,
+    source: str,
+    cell_type: str = "code",
+) -> str:
+    """
+    Replace an existing cell in a notebook draft.
+
+    Use this to fix cells that failed during ``save_notebook`` validation.
+    Code cells are executed in the REPL before being committed — exactly
+    like ``add_notebook_cell``.
+
+    **Important:** after replacing cells, call ``save_notebook`` again to
+    re-validate the full notebook in a fresh kernel.
+
+    Args:
+        session_id: The session ID returned by ``start_notebook``.
+        cell_index: Zero-based index of the cell to replace (from the
+                    validation report).
+        source:     New cell content (Python code or Markdown text).
+        cell_type:  ``"code"`` (default) or ``"markdown"``.
+
+    Returns:
+        ``✅ Cell N replaced`` on success, or ``❌`` with error on failure.
+    """
+    if session_id not in _NOTEBOOK_DRAFTS:
+        return f"❌ Session `{session_id}` not found. " "Call `start_notebook` first."
+
+    draft = _NOTEBOOK_DRAFTS[session_id]
+    if cell_index < 0 or cell_index >= len(draft["cells"]):
+        return (
+            f"❌ Cell index {cell_index} out of range. "
+            f"Draft has {len(draft['cells'])} cells (0–{len(draft['cells']) - 1})."
+        )
+
+    if cell_type == "markdown":
+        draft["cells"][cell_index] = _nbformat_cell("markdown", source)
+        return f"✅ **Cell {cell_index} replaced** (markdown)"
+
+    # Code cell — validate by executing first
+    exec_result = execute_python_cell(
+        code=source,
+        session_id=session_id,
+        timeout_seconds=120,
+    )
+
+    if "❌" in exec_result or "⏱️" in exec_result:
+        return (
+            f"❌ **Cell NOT replaced** — fix the code and try again.\n\n"
+            f"{exec_result}"
+        )
+
+    draft["cells"][cell_index] = _nbformat_cell("code", _strip_jupyter_magics(source))
+    return f"✅ **Cell {cell_index} replaced** (code, validated)"
+
+
+@mcp.tool()
+def save_notebook(session_id: str) -> str:
+    """
+    Write a validated notebook draft to disk and verify it executes cleanly.
+
+    After writing the ``.ipynb`` file, the notebook is **re-executed in a
+    fresh Jupyter kernel** (via ``validate_notebook``).  If any cell fails,
+    the draft is preserved and an error report is returned — use
+    ``replace_notebook_cell`` to fix the broken cells, then call
+    ``save_notebook`` again.
+
+    Only when every cell passes validation is the draft deleted and the
+    notebook considered final.
+
+    Args:
+        session_id: The session ID returned by ``start_notebook``.
+
+    Returns:
+        ``✅ Notebook saved and validated`` on success, or ``❌`` with the
+        validation error report on failure.
+    """
+    import nbformat
+
+    if session_id not in _NOTEBOOK_DRAFTS:
+        return f"❌ Session `{session_id}` not found. " "Call `start_notebook` first."
+
+    draft = _NOTEBOOK_DRAFTS[session_id]
+    output_path = draft["output_path"]
+
+    nb = nbformat.v4.new_notebook()
+    nb.cells = draft["cells"]
+    nb.metadata.update(
+        {
+            "kernelspec": {
+                "display_name": "Python 3",
+                "language": "python",
+                "name": "python3",
+            },
+            "language_info": {
+                "name": "python",
+                "version": "3.12.0",
+            },
+        }
+    )
+
+    try:
+        with open(output_path, "w", encoding="utf-8") as f:
+            nbformat.write(nb, f)
+    except Exception as exc:
+        return f"❌ **Failed to write notebook:** {exc}"
+
+    cell_count = len(draft["cells"])
+    code_cells = sum(1 for c in draft["cells"] if c.cell_type == "code")
+    md_cells = sum(1 for c in draft["cells"] if c.cell_type == "markdown")
+
+    # ── Full-notebook validation in a fresh kernel ─────────────────────────
+    validation_report = validate_notebook(
+        notebook_path=output_path,
+        cell_timeout=180,
+        stop_on_error=False,
+    )
+
+    if "❌" in validation_report:
+        # Validation failed — keep draft alive so AI can fix cells
+        return (
+            f"❌ **Notebook written to `{output_path}` but validation FAILED.**\n\n"
+            f"The draft is still open (session `{session_id}`).  Fix the broken\n"
+            f"cells with `replace_notebook_cell` and call `save_notebook` again.\n\n"
+            f"---\n\n{validation_report}"
+        )
+
+    # Validation passed — clean up
+    del _NOTEBOOK_DRAFTS[session_id]
+
+    return (
+        f"✅ **Notebook saved and validated:** `{output_path}`\n\n"
+        f"- **Total cells:** {cell_count} ({code_cells} code, {md_cells} markdown)\n"
+        f"- Full-notebook validation passed in a fresh kernel.\n"
+    )
+
+
+@mcp.tool()
+def fix_notebook(notebook_path: str) -> str:
+    """
+    Load an existing .ipynb file, validate it in a fresh kernel, and if any
+    cells fail, import them into a builder session so they can be fixed with
+    ``replace_notebook_cell`` and re-saved with ``save_notebook``.
+
+    Use this tool to rescue notebooks that were written directly (without the
+    builder) or that have developed errors over time.
+
+    Args:
+        notebook_path: Absolute or relative path to an existing ``.ipynb`` file.
+
+    Returns:
+        On success: ``✅ Notebook is valid`` with cell summary.
+        On failure: A new ``session_id`` for the builder session, plus the
+        validation error report.  Use ``replace_notebook_cell`` with the
+        returned session_id to fix broken cells, then ``save_notebook`` to
+        re-validate and save.
+    """
+    import nbformat
+
+    path = Path(notebook_path).expanduser().resolve()
+    if not path.exists():
+        return f"❌ File not found: `{path}`"
+    if path.suffix != ".ipynb":
+        return f"❌ Not a notebook file: `{path}`"
+
+    try:
+        with open(path, encoding="utf-8") as f:
+            nb = nbformat.read(f, as_version=4)
+    except Exception as exc:
+        return f"❌ Failed to read notebook: {exc}"
+
+    # ── Validate ──────────────────────────────────────────────────────────
+    validation_report = validate_notebook(
+        notebook_path=str(path),
+        cell_timeout=180,
+        stop_on_error=False,
+    )
+
+    cell_count = len(nb.cells)
+    code_cells = sum(1 for c in nb.cells if c.cell_type == "code")
+
+    if "❌" not in validation_report:
+        return (
+            f"✅ **Notebook is valid:** `{path}`\n\n"
+            f"- **Cells:** {cell_count} ({code_cells} code)\n"
+            f"- All cells executed successfully in a fresh kernel."
+        )
+
+    # ── Import into builder for fixing ────────────────────────────────────
+    session_id = f"fix-{path.stem}-{id(nb) % 10000:04d}"
+    _NOTEBOOK_DRAFTS[session_id] = {
+        "output_path": str(path),
+        "cells": list(nb.cells),
+    }
+
+    # Build a cell index for the error report
+    cell_index_lines = ["", "### Cell index", ""]
+    for i, cell in enumerate(nb.cells):
+        ctype = cell.cell_type
+        preview = cell.source[:80].replace("\n", " ")
+        if len(cell.source) > 80:
+            preview += "…"
+        cell_index_lines.append(f"- **Cell {i}** ({ctype}): `{preview}`")
+
+    return (
+        f"❌ **Notebook has errors.** Imported into builder session `{session_id}`.\n\n"
+        f"- **Path:** `{path}`\n"
+        f"- **Cells:** {cell_count} ({code_cells} code)\n\n"
+        f'Use `replace_notebook_cell(session_id="{session_id}", cell_index=N, '
+        f'new_source="...")` to fix broken cells, then `save_notebook("{session_id}")` '
+        f"to re-validate.\n\n"
+        f"---\n\n{validation_report}" + "\n".join(cell_index_lines)
+    )
+
+
+def _nbformat_cell(cell_type: str, source: str) -> Any:
+    """Create an nbformat cell object."""
+    import nbformat
+
+    if cell_type == "markdown":
+        return nbformat.v4.new_markdown_cell(source=source)
+    return nbformat.v4.new_code_cell(source=source)
 
 
 # ---------------------------------------------------------------------------

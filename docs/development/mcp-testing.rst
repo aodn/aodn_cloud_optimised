@@ -122,6 +122,18 @@ Test Classes
      - 2
      - ``validate_notebook`` on synthetic ``.ipynb`` files: clean notebook
        returns only ✅ cells; notebook with ``1/0`` returns ❌ + traceback.
+   * - ``TestMcpDatasetSummary``
+     - 10
+     - ``get_dataset_summary`` tool: validates data type classification
+       (parquet/zarr/radar), AWS description inclusion, coordinate variables,
+       data variable tables, matching notebook path, and recommended code
+       patterns for different dataset formats.
+   * - ``TestMcpNotebookBuilder``
+     - 8
+     - ``start_notebook`` / ``add_notebook_cell`` / ``save_notebook`` lifecycle.
+       Tests: session creation, setup cell auto-execution, code cell validation,
+       markdown cells added unconditionally, rejection of broken cells (with
+       traceback), variable persistence across cells, save to valid ``.ipynb``.
    * - ``TestMcpGeneratedNotebook``
      - 2
      - **Scripted-agent notebook generation.** Simulates an AI workflow for

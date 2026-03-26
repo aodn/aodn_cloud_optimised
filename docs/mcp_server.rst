@@ -54,6 +54,19 @@ configuration from ``~/.gemini/settings.json`` (user-wide) or
 ``.gemini/settings.json`` in your project directory (project-specific, takes
 precedence).
 
+.. important::
+
+   **Use the full absolute path to ``aodn-mcp-server``** in your MCP config.
+   AI CLI tools (Copilot CLI, Gemini CLI) spawn MCP servers in a bare
+   environment that does **not** inherit your shell's ``PATH`` or conda
+   activation.  If you use just ``"command": "aodn-mcp-server"``, the client
+   will fail with ``ENOENT`` (file not found).
+
+   Find the correct path with::
+
+       which aodn-mcp-server
+       # e.g. /home/<your-user>/miniforge3/envs/AodnCloudOptimised/bin/aodn-mcp-server
+
 Create or edit ``~/.gemini/settings.json``:
 
 .. code-block:: json
@@ -61,7 +74,7 @@ Create or edit ``~/.gemini/settings.json``:
     {
       "mcpServers": {
         "aodn": {
-          "command": "aodn-mcp-server",
+          "command": "/home/<your-user>/miniforge3/envs/<env>/bin/aodn-mcp-server",
           "env": {
             "AODN_NOTEBOOKS_PATH": "/home/<your-user>/aodn_cloud_optimised/notebooks",
             "AODN_CONFIG_PATH": "/home/<your-user>/aodn_cloud_optimised/aodn_cloud_optimised/config/dataset"
@@ -71,9 +84,9 @@ Create or edit ``~/.gemini/settings.json``:
       }
     }
 
-Replace the path with the absolute path to the ``notebooks/`` directory in your
-cloned repository. The ``trust: true`` flag skips confirmation dialogs for each
-tool call — remove it if you prefer to approve each action.
+Replace ``<your-user>`` and ``<env>`` with your username and conda environment
+name.  The ``trust: true`` flag skips confirmation dialogs for each tool call —
+remove it if you prefer to approve each action.
 
 Once saved, start Gemini CLI and use ``/mcp`` to verify the server is listed and
 connected. You can then prompt it naturally, for example::
@@ -106,8 +119,7 @@ Create or edit ``~/.copilot/mcp-config.json``:
       "mcpServers": {
         "aodn": {
           "type": "stdio",
-          "command": "aodn-mcp-server",
-          "args": [],
+          "command": "/home/<your-user>/miniforge3/envs/<env>/bin/aodn-mcp-server",
           "env": {
             "AODN_NOTEBOOKS_PATH": "/home/<your-user>/aodn_cloud_optimised/notebooks",
             "AODN_CONFIG_PATH": "/home/<your-user>/aodn_cloud_optimised/aodn_cloud_optimised/config/dataset"
@@ -167,7 +179,7 @@ Create ``.vscode/mcp.json`` at the root of your project:
       "servers": {
         "aodn": {
           "type": "stdio",
-          "command": "aodn-mcp-server",
+          "command": "/home/<your-user>/miniforge3/envs/<env>/bin/aodn-mcp-server",
           "env": {
             "AODN_NOTEBOOKS_PATH": "${workspaceFolder}/notebooks",
             "AODN_CONFIG_PATH": "${workspaceFolder}/aodn_cloud_optimised/config/dataset"
@@ -188,7 +200,7 @@ Open VS Code user settings (``Ctrl+,`` → "Open Settings JSON") and add:
     "mcp.servers": {
       "aodn": {
         "type": "stdio",
-        "command": "aodn-mcp-server",
+        "command": "/home/<your-user>/miniforge3/envs/<env>/bin/aodn-mcp-server",
         "env": {
           "AODN_NOTEBOOKS_PATH": "/home/<your-user>/aodn_cloud_optimised/notebooks",
           "AODN_CONFIG_PATH": "/home/<your-user>/aodn_cloud_optimised/aodn_cloud_optimised/config/dataset"
@@ -223,17 +235,17 @@ Edit the Claude Desktop configuration file:
     {
       "mcpServers": {
         "aodn": {
-          "command": "aodn-mcp-server",
+          "command": "/home/<your-user>/miniforge3/envs/<env>/bin/aodn-mcp-server",
           "env": {
-            "AODN_NOTEBOOKS_PATH": "/path/to/aodn_cloud_optimised/notebooks"
+            "AODN_NOTEBOOKS_PATH": "/path/to/aodn_cloud_optimised/notebooks",
+            "AODN_CONFIG_PATH": "/path/to/aodn_cloud_optimised/aodn_cloud_optimised/config/dataset"
           }
         }
       }
     }
 
-Replace ``/path/to/aodn_cloud_optimised/notebooks`` with the absolute path to the
-``notebooks/`` directory in the cloned repository. If you installed from a wheel
-that includes notebooks, you can omit this variable.
+Replace the paths with the absolute paths in your cloned repository. If you
+installed from a wheel that includes notebooks, you can omit the env variables.
 
 Environment Variables
 ---------------------
@@ -282,10 +294,16 @@ Once connected, an AI assistant has access to the following tools:
      - **Authoritative variable listing** — call this before writing any notebook
        code. Returns every schema variable with its exact column name, CF role
        (``TIME_AXIS``, ``LAT``, ``LON``, ``DEPTH``, ``DATA``), type, units,
-       ``standard_name``, and ``long_name``. Coordinate variables are highlighted
-       at the top. Variable names differ per dataset — for example, Argo uses
-       ``JULD`` for the time axis, not ``TIME``. Never assume variable names;
-       always confirm with this tool first.
+       ``standard_name``, and ``long_name``. Also includes the inferred data type
+       (timeseries, profiles, gridded, radar, etc.), an AWS description excerpt,
+       and recommended ``DataQuery`` methods for the dataset's format.
+   * - ``get_dataset_summary``
+     - **Single-call dataset profile** — returns everything an AI needs to USE a
+       dataset: name, format, data type classification, full AWS description,
+       coordinate and data variable tables, matching notebook path, and
+       ready-to-use code patterns.  This replaces calling ``get_dataset_schema`` +
+       ``get_dataset_info`` + ``get_dataset_config`` + ``get_notebook_template``
+       separately.
    * - ``check_dataset_coverage``
      - **Live S3 coverage query** — makes anonymous S3 requests to determine the
        dataset's actual temporal extent (first/last timestamp), spatial bounding
@@ -341,6 +359,30 @@ Once connected, an AI assistant has access to the following tools:
      - Public API reference for ``DataQuery.py`` (classes, method signatures,
        docstrings, including the new ``describe()`` method for live variable
        introspection).  Useful when adapting notebook code.
+   * - ``start_notebook``
+     - **Start building a validated notebook.** Initialises a draft with a title
+       and output path, auto-adds and executes the DataQuery setup cell.
+       Returns a ``session_id`` to use with ``add_notebook_cell`` and
+       ``save_notebook``.
+   * - ``add_notebook_cell``
+     - **Add a validated cell to a notebook draft.** Code cells are executed in
+       the persistent session BEFORE being committed — if execution fails, the
+       cell is rejected with the traceback and the AI must fix and retry.
+       Markdown cells are added unconditionally.
+   * - ``save_notebook``
+     - **Save and validate a notebook.** Writes cells to ``.ipynb``, then
+       **re-executes the entire notebook in a fresh Jupyter kernel**.  If any
+       cell fails, the draft is kept alive and the error report is returned —
+       the AI must fix broken cells with ``replace_notebook_cell`` and call
+       ``save_notebook`` again.  Only succeeds when all cells pass.
+   * - ``replace_notebook_cell``
+     - **Fix a cell in an existing draft.** Replaces a cell by index, with the
+       same execute-then-commit validation as ``add_notebook_cell``.  Use after
+       ``save_notebook`` reports ❌ cells.
+   * - ``fix_notebook``
+     - **Rescue an existing broken notebook.** Validates the ``.ipynb`` in a fresh
+       kernel.  If errors are found, imports all cells into a builder session so
+       the AI can fix them with ``replace_notebook_cell`` → ``save_notebook``.
 
 Available MCP Resources
 ------------------------
@@ -377,6 +419,73 @@ The following prompts work well with an MCP-enabled AI assistant:
 
 * *"Does the SOOP-BA dataset have data in the Bass Strait between 2018 and 2021?"*
   ← directly exercises ``check_dataset_coverage`` with lat/lon and date filters.
+
+
+Notebook Builder Workflow
+-------------------------
+
+The recommended workflow for generating validated Jupyter notebooks uses the
+**builder pattern** — a sequence that guarantees every code cell has
+been executed successfully before the notebook is delivered:
+
+.. code-block:: text
+
+   ┌─────────────────────┐
+   │  1. start_notebook   │──▶ session_id
+   └────────┬────────────┘
+            │
+            ▼  (repeat for each cell)
+   ┌─────────────────────────────┐
+   │  2. add_notebook_cell        │
+   │     code → execute → commit  │
+   │     if fails → ❌ reject     │
+   └────────┬────────────────────┘
+            │
+            ▼
+   ┌──────────────────────────────────────────┐
+   │  3. save_notebook                         │
+   │     write .ipynb → re-execute in fresh    │
+   │     kernel → if ❌ → keep draft open      │
+   └────────┬─────────────────────────────────┘
+            │ (if validation fails)
+            ▼
+   ┌──────────────────────────────────────────┐
+   │  4. replace_notebook_cell(cell_index, …)  │
+   │     fix broken cells → go to step 3       │
+   └──────────────────────────────────────────┘
+
+**Key properties:**
+
+* ``start_notebook`` creates a draft session with a DataQuery setup cell
+  (imports ``GetAodn``, ``plot_ts_diagram``) that is auto-executed on creation.
+  The setup cell adds the notebooks directory to ``sys.path`` so imports work
+  in any kernel.
+* ``add_notebook_cell`` executes code cells in the persistent session **before**
+  committing them.  Variables persist across cells (just like a Jupyter kernel).
+  If a cell raises an exception, it is **rejected** — the AI must fix the code
+  and retry.
+* ``save_notebook`` writes cells to the ``.ipynb`` file, then **re-executes the
+  entire notebook in a fresh Jupyter kernel** (via ``validate_notebook``).  If
+  any cell fails, the draft stays alive and the error report is returned.
+* ``replace_notebook_cell`` replaces a broken cell by index (with the same
+  execute-then-commit validation), then the AI calls ``save_notebook`` again.
+
+This architecture makes it **impossible** to deliver a broken notebook.
+``save_notebook`` will not succeed until every cell passes full-kernel
+validation — including setup imports, data queries, and plots.
+
+**Typical sequence for an oceanographic analysis notebook:**
+
+1. ``search_datasets("wave buoy Tasmania")`` — find relevant datasets.
+2. ``get_dataset_summary("wave_buoys_realtime_nonqc.parquet")`` — understand type,
+   variables, code patterns.
+3. ``check_dataset_coverage("wave_buoys_realtime_nonqc.parquet", ...)`` — confirm
+   data exists in the user's region and time window.
+4. ``start_notebook(title="Wave Buoy Analysis — Tasmania", output_path="wave_buoy_tasmania.ipynb")``
+5. ``add_notebook_cell(session_id, "# Introduction\n\nWave buoy analysis...", cell_type="markdown")``
+6. ``add_notebook_cell(session_id, "ds = GetAodn('wave_buoys_realtime_nonqc.parquet')\ndf = ds.get_data(...)")``
+7. ``add_notebook_cell(session_id, "df.plot(...)")`` — creates a plot cell.
+8. ``save_notebook(session_id)`` — writes the validated notebook.
 
 Known Code Pitfalls Avoided by the Server
 ------------------------------------------
