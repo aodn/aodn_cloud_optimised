@@ -9,12 +9,23 @@ try:
 
     __all__.append("DataQuery")
 except (ImportError, ModuleNotFoundError):
-    # Define a guard function that only raises an error if called
-    def DataQuery(*args, **kwargs):
+    class _DataQueryProxy:
         """
         Placeholder for DataQuery when dev dependencies are missing.
+
+        Any attempt to call this object or access its attributes will raise
+        an ImportError with guidance on how to install the dev dependencies.
         """
-        raise ImportError(
+
+        _ERROR = ImportError(
             "DataQuery is only available when installed with dev dependencies. "
             "Please run: poetry install --with dev"
         )
+
+        def __getattr__(self, name):
+            raise self._ERROR
+
+        def __call__(self, *args, **kwargs):
+            raise self._ERROR
+
+    DataQuery = _DataQueryProxy()
