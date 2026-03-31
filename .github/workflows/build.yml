@@ -117,8 +117,19 @@ jobs:
 
           # 2. Test that DataQuery is now functional by accessing a known attribute
           poetry run python - << 'PYCODE'
-from aodn_cloud_optimised import DataQuery
-# Access a known attribute to ensure we did not fall back to a placeholder
-_ = DataQuery.__version__
-print("Dev Import and attribute access Success")
-PYCODE
+          import types
+          from aodn_cloud_optimised import DataQuery
+
+          # Check if it's the real deal. Our guard was a 'function'.
+          # If DataQuery is a class, it should NOT be a FunctionType.
+          if isinstance(DataQuery, types.FunctionType) and DataQuery.__name__ == "DataQuery":
+              # This checks if it's our specific 'def DataQuery' from the except block
+              import inspect
+              source = inspect.getsource(DataQuery)
+              if "ImportError" in source:
+                  print("Error: Caught the placeholder guard instead of the real DataQuery!")
+                  exit(1)
+
+          print(f"Success: Loaded {type(DataQuery)}")
+          print("Dev Import and validation Success")
+          PYCODE
