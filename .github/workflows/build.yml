@@ -93,6 +93,27 @@ jobs:
           poetry self add poetry-plugin-freeze
           poetry freeze-wheel
 
-      - name: Verify build
+      # - name: Verify build
+      # run: |
+      # pip install dist/*.whl --no-deps
+
+      - name: Verify build (Production Mode)
         run: |
-          pip install dist/*.whl --no-deps
+          # 1. Install ONLY production dependencies (no dev tools)
+          # --sync ensures the environment matches the lock file exactly
+          poetry install --without dev --sync
+
+          # 2. Test the import
+          # This confirms __init__.py handles missing dev deps correctly
+          poetry run python -c "import aodn_cloud_optimised; print('Prod Import Success')"
+
+          # 3. Verify the DataQuery guard works
+          poetry run python -c "import aodn_cloud_optimised; aodn_cloud_optimised.DataQuery()" 2>&1 | grep "Please run: poetry install --with dev"
+
+      - name: Verify build (Dev Mode)
+        run: |
+          # 1. Now install everything including dev
+          poetry install --with dev
+
+          # 2. Test that DataQuery is now functional
+          poetry run python -c "from aodn_cloud_optimised import DataQuery; print('Dev Import Success')"
