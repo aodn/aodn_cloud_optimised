@@ -95,9 +95,12 @@ jobs:
           poetry self add poetry-plugin-freeze
           poetry freeze-wheel
 
-      # - name: Verify build
-      # run: |
-      # pip install dist/*.whl --no-deps
+      - name: Verify Wheel Install (Smoke Test)
+        run: |
+          # Use a temporary venv to ensure the wheel can stand on its own
+          python -m venv wheel_test
+          wheel_test/bin/pip install dist/*.whl
+          wheel_test/bin/python -c "import aodn_cloud_optimised; print('Wheel Install Success')"
 
       - name: Verify build (Production Mode)
         run: |
