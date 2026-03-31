@@ -115,5 +115,10 @@ jobs:
           # 1. Now install everything including dev
           poetry install --with dev
 
-          # 2. Test that DataQuery is now functional
-          poetry run python -c "from aodn_cloud_optimised import DataQuery; print('Dev Import Success')"
+          # 2. Test that DataQuery is now functional by accessing a known attribute
+          poetry run python - << 'PYCODE'
+from aodn_cloud_optimised import DataQuery
+# Access a known attribute to ensure we did not fall back to a placeholder
+_ = DataQuery.__version__
+print("Dev Import and attribute access Success")
+PYCODE
