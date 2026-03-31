@@ -1,3 +1,4 @@
+#! /usr/bin/env python3
 import datetime
 import pathlib
 import re
@@ -32,7 +33,6 @@ def extract_version(content: str) -> str | None:
     for line in content.splitlines():
         match = VERSION_PATTERN.match(line.strip())
         if match:
-
             # Return the captured group (the version string)
             return match.group(1)
 

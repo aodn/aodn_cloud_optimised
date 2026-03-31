@@ -61,6 +61,9 @@ dependencies = [
 [project.urls]
 Source = "https://github.com/aodn/aodn_cloud_optimised"
 
+[tool.poetry.group.dev]
+optional = true
+
 [tool.poetry.group.dev.dependencies]
 poetry = "==2.2.1"
 poetry-plugin-freeze = ">=1.2.0"
