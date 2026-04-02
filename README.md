@@ -19,6 +19,7 @@ Visit the documentation on [ReadTheDocs](https://aodn-cloud-optimised.readthedoc
 ## Key Features
 
 ### Data Conversion
+
 - Convert **CSV** or **NetCDF** (single or multidimensional) to **Zarr** or **Parquet**.
 - **Dataset configuration:** YAML-based configuration with inheritance, allowing similar datasets to share settings.
   Example: [Radar ACORN](https://github.com/aodn/aodn_cloud_optimised/tree/main/aodn_cloud_optimised/config/dataset), [GHRSST](https://www.ghrsst.org/).
@@ -31,6 +32,7 @@ Visit the documentation on [ReadTheDocs](https://aodn-cloud-optimised.readthedoc
   [Mooring Timeseries Handler](https://github.com/aodn/aodn_cloud_optimised/blob/main/aodn_cloud_optimised/lib/AnmnHourlyTsHandler.py)
 
 ### Clustering & Parallel Processing
+
 - Supports local **Dask cluster** and remote clusters:
   - [Coiled](https://aodn-cloud-optimised.readthedocs.io/en/latest/development/dataset-configuration.html#coiled-cluster-configuration)
   - [EC2](https://aodn-cloud-optimised.readthedocs.io/en/latest/development/dataset-configuration.html#ec2-cluster-configuration)
@@ -41,35 +43,54 @@ Visit the documentation on [ReadTheDocs](https://aodn-cloud-optimised.readthedoc
 - **Parquet:** Tabular files are processed in batch and in parallel as independent tasks, implemented with `concurrent.futures.Future`.
 - **S3 / S3-Compatible Storage Support:**
   Support for AWS S3 and S3-compatible endpoints (e.g., MinIO, LocalStack) with configurable input/output buckets and authentication via `s3fs` and `boto3`.
+
 ### Reprocessing
+
 - **Zarr:** Reprocessing is achieved by writing to specific slices, including non-contiguous regions.
 - **Parquet:** Reprocessing uses PyArrow internal overwriting; can also be forced when input files change significantly.
 
 ### Chunking & Partitioning
+
 - Improves performance for querying and parallel processing.
 - **Parquet:** Partitioned by polygon and timestamp slices. [Issue reference](https://github.com/aodn/aodn_cloud_optimised/issues/240)
 - **Zarr:** Chunking is defined in dataset configuration.
 
 ### Dynamic Variable Definition
+
 See [doc](https://aodn-cloud-optimised.readthedocs.io/en/latest/development/dataset-configuration.html#adding-variables-dynamically)
+
 - Global Attributes -> variable
 - variable attribute -> variable
 - filename part -> variable
 - ...
 
 ### Metadata
+
 - **Parquet:** Metadata stored as a sidecar `_metadata.parquet` file for faster queries and schema discovery.
 
+## Quick Guide
 
-# Quick Guide
 ## Installation
 
 Requirements:
-* Python >= 3.10.14
-* AWS SSO configured for pushing files to S3
-* Optional: [Coiled](https://cloud.coiled.io/) account for remote clustering
+
+- Python >= 3.11
+- AWS SSO configured for pushing files to S3
+- Optional: [Coiled](https://cloud.coiled.io/) account for remote clustering
+
+### Core install (data processing only)
+
+To use the library for data processing pipelines (Zarr/Parquet conversion),
+no notebook or test dependencies needed:
+
+```bash
+git clone https://github.com/aodn/aodn_cloud_optimised.git
+cd aodn_cloud_optimised
+make core   # installs core deps via Poetry venv
+```
 
 ### Automatic installation of the latest wheel release
+
 ```bash
 curl -s https://raw.githubusercontent.com/aodn/aodn_cloud_optimised/main/install.sh | bash
 ```
@@ -77,12 +98,25 @@ curl -s https://raw.githubusercontent.com/aodn/aodn_cloud_optimised/main/install
 Otherwise, go to the [release](http://github.com/aodn/aodn_cloud_optimised/releases/latest) page.
 
 ## Development
-See [ReadTheDocs - Dev](https://aodn-cloud-optimised.readthedocs.io/en/latest/development/installation.html)
+
+Full contributor setup (notebooks + tests + docs + tooling):
+
+```bash
+git clone https://github.com/aodn/aodn_cloud_optimised.git
+cd aodn_cloud_optimised
+make dev                         # Poetry venv — recommended
+# or: ./setup_miniforge_venvs.sh dev   # named mamba env alternative
+poetry run pre-commit install
+```
+
+See [ReadTheDocs - Dev](https://aodn-cloud-optimised.readthedocs.io/en/latest/development/installation.html) for full details.
 
 ## Usage
+
 See [ReadTheDocs - Usage](https://aodn-cloud-optimised.readthedocs.io/en/latest/usage.html)
 
 ## Getting Started - Notebooks
+
 [![Google Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/aodn/aodn_cloud_optimised/)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/aodn/aodn_cloud_optimised/main?filepath=notebooks)
 
