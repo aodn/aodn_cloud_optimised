@@ -1,9 +1,11 @@
 [build-system]
-requires = ["poetry-core==2.2.1", "wheel"]
+# SYNC: poetry-core version — update alongside poetry in .poetry-version and all sync points listed there
+requires = ["poetry-core==2.3.2", "wheel"]
 build-backend = "poetry.core.masonry.api"
 
 [project]
-requires-python = ">=3.11,<4.0"
+# Pinning to <3.13 to avoid source builds; stable wheels for h5py and netCDF4 are not yet available for 3.13.
+requires-python = ">=3.11,<3.13"
 name = "aodn-cloud-optimised"
 version = "0.1.67"
 description = "Cloud optimised data formats for IMOS NetCDF files and CSVs."
@@ -54,45 +56,81 @@ dependencies = [
   "dask-expr>=2.0.0",             # needs to be added for coiled otherwise an old version is used and not updated
   "colorama>=0.4.6",
   "s3path>=0.5.7",
-  "python-levenshtein>=0.25.1",
   "numcodecs<0.16",
+  # "requests>=2.33.1",
 ]
 
 [project.urls]
 Source = "https://github.com/aodn/aodn_cloud_optimised"
 
-[tool.poetry.group.dev.dependencies]
-poetry = "==2.2.1"
-poetry-plugin-freeze = ">=1.2.0"
-virtualenv = "==20.30.0" # TODO: pinned because of https://github.com/python-poetry/poetry/issues/10378
-pytest = "^8.2.1"
-ipdb = "^0.13"
-ipython = "^7.5.3"
-coverage = "^7.5.3"
-pre-commit = "^4.0.1"
-sphinxcontrib-asciinema = ">=0.4.2"
-sphinx-rtd-theme = ">=3.0.2"
-moto = { version = "==5.1.1", extras = [
-  "ec2",
-  "s3",
-  "server",
-  "all",
-] } # Add Moto with optional dependencies; TODO: hardpin because of Bug https://github.com/getmoto/moto/issues/8762#issuecomment-2856822832
-fuzzywuzzy = ">=0.18.0"
-sphinx = ">=7.3.7"
-poetry-pre-commit-plugin = ">=0.2.1"
-asciinema = ">=2.4.0" # to record terminal sessions, useful for documentation
-matplotlib = "^3.9.1"
-cartopy = ">=0.23.0"
-termcolor = "^2.4.0"
-nbformat = "^5.10.4"
-gsw = ">=3.6.19"
-seaborn = ">=0.13.2"
-windrose = ">=1.9.2"
-tabulate = ">=0.9.0"
-folium = ">=0.20.0"
-tqdm = ">=4.67.1"
-papermill = ">=2.7.0"
+# ---------------------------------------------------------------------------
+# Optional dependency extras (PEP 621).
+#
+# Each group is declared once. Install what you need:
+#
+#   pip install -e .[notebooks]                    # DataQuery + viz only
+#   pip install -e .[tests]                        # test infra only
+#   pip install -e ".[notebooks,tests]"            # full test suite (CI)
+#   pip install -e ".[notebooks,tests,docs,dev]"   # everything (contributors)
+#
+# Poetry equivalents:
+#   poetry install --extras notebooks
+#   poetry install --extras "notebooks tests"
+#   poetry install --extras "notebooks tests docs dev"
+# ---------------------------------------------------------------------------
+[project.optional-dependencies]
+
+# deps required by DataQuery.py and the Jupyter notebooks
+notebooks = [
+  "notebook>=7.5.5",
+  # moved from core: only used by DataQuery.py
+  "fuzzywuzzy>=0.18.0",
+  "python-levenshtein>=0.25.1",
+  # visualization / DataQuery
+  "ipython>=7.5.3",
+  "matplotlib>=3.9.1",
+  "cartopy>=0.23.0",
+  "nbformat>=5.10.4",
+  "gsw>=3.6.19",
+  "seaborn>=0.13.2",
+  "windrose>=1.9.2",
+  "tabulate>=0.9.0",
+  "folium>=0.20.0",
+  "tqdm>=4.67.1",
+  "papermill>=2.7.0",
+]
+
+# minimal test infrastructure
+# NOTE: DataQuery tests also need the notebooks extra:
+#   pip install -e .[notebooks,tests]
+tests = [
+  "pytest>=8.2.1",
+  "coverage>=7.5.3",
+  "termcolor>=2.4.0",
+  # TODO: hardpin because of Bug https://github.com/getmoto/moto/issues/8762#issuecomment-2856822832
+  "moto[ec2,s3,server,all]==5.1.1",
+]
+
+# documentation build tools
+docs = [
+  "sphinx>=7.3.7",
+  "sphinxcontrib-asciinema>=0.4.2",
+  "sphinx-rtd-theme>=3.0.2",
+  "asciinema>=2.4.0",
+]
+
+# full development install — tooling only.
+# Each dep is declared exactly once in its own extra above.
+# For the complete contributor setup, install all extras together:
+#   pip install -e ".[notebooks,tests,docs,dev]"
+dev = [
+  "poetry==2.3.3",                   # SYNC: see .poetry-version for all locations to update
+  "poetry-plugin-freeze>=1.2.0",
+  "virtualenv==20.30.0",             # TODO: pinned because of https://github.com/python-poetry/poetry/issues/10378
+  "ipdb>=0.13",
+  "pre-commit==4.5.1",
+  "poetry-pre-commit-plugin>=0.2.1",
+]
 
 [project.scripts]
 #cloud_optimised_srs_oc_ljco_to_parquet = "aodn_cloud_optimised.bin.srs_oc_ljco_to_parquet:main"

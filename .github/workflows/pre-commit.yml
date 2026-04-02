@@ -18,10 +18,14 @@ jobs:
       - name: Install system dependencies
         run: sudo apt-get update && sudo apt-get install -y libudunits2-dev
 
-      - name: Install pre-commit
-        run: |
-          pip install pre-commit
-          pip install pydantic
+      # - name: Install pre-commit
+      #   run: |
+      #     pip install pre-commit
+      #     pip install pydantic
+      #
+      - name: Read Poetry version
+        id: poetry-version
+        run: echo "version=$(cat .poetry-version | tail -1)" >> $GITHUB_OUTPUT
 
       - name: Install Poetry
         uses: snok/install-poetry@v1
@@ -29,14 +33,16 @@ jobs:
           virtualenvs-create: true
           virtualenvs-in-project: true
           installer-parallel: true
-          version: 2.2.1
+          version: ${{ steps.poetry-version.outputs.version }}
 
       - name: Clear Poetry Cache
         run: |
           poetry cache clear pypi --all
 
       - name: Install project - needed for custom poetry hook
-        run: poetry install --no-interaction
+        # make tests = poetry sync --extras "tests notebooks"
+        # Includes DataQuery tests (test_aodn_data_queries.py needs notebooks extra)
+        run: make dev
 
       - name: Run pre-commit
         run: poetry run pre-commit run --all-files # uncomment this if needed to debug ||true

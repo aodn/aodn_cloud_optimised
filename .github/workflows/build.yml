@@ -36,51 +36,42 @@ jobs:
       #----------------------------------------------
       #  -----  install & configure poetry  -----
       #----------------------------------------------
+      - name: Read Poetry version
+        id: poetry-version
+        run: echo "version=$(cat .poetry-version | tail -1)" >> $GITHUB_OUTPUT
+
       - name: Install Poetry
         uses: snok/install-poetry@v1
         with:
           virtualenvs-create: true
           virtualenvs-in-project: true
           installer-parallel: true
-          version: 2.2.1
+          version: ${{ steps.poetry-version.outputs.version }}
 
       #----------------------------------------------
-      #       load cached venv if cache exists
+      # install dependencies
       #----------------------------------------------
-      - name: Load cached venv
-        id: cached-poetry-dependencies
-        uses: actions/cache@v3
-        with:
-          path: .venv
-          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
-      #----------------------------------------------
-      # install dependencies if cache does not exist
-      #----------------------------------------------
-      - name: Install dependencies
-        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: poetry install --no-interaction --no-root
-      #----------------------------------------------
-      # install your root project, if required
-      #----------------------------------------------
-      - name: Install project
-        run: poetry install --no-interaction
-      #----------------------------------------------
+      - name: Install Project
+        # make tests = poetry sync --extras "tests notebooks"
+        # Includes DataQuery tests (test_aodn_data_queries.py needs notebooks extra)
+        run: make tests
       #              run test suite
       #----------------------------------------------
-      - name: Install pytest
-        run: poetry add --dev pytest coverage
-
       - name: Run tests
-        run: |
-          source .venv/bin/activate
-          #poetry run pytest
-          poetry add --dev pytest-xdist
-          poetry run coverage run -m pytest # -n 1
-          poetry run coverage report --fail-under=60
-          poetry run coverage xml -o coverage.xml
+        uses: nick-fields/retry@v4
+        # sometimes when having seg faults in the test suite, the runner will just fail without retrying. This ensures we get a chance to retry if that happens.
+        with:
+          timeout_minutes: 10
+          max_attempts: 3
+          command: |
+            poetry run pip install pytest-xdist
+            poetry run coverage run -m pytest
+            poetry run coverage report --fail-under=60
+            poetry run coverage xml -o coverage.xml
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
+        if: ${{ !env.ACT }} # This skips the step only when running via 'act'
         with:
           name: coverage-report-${{ github.job }}-${{ github.run_number }}-${{ matrix.python-version }}
           path: coverage.xml
@@ -93,6 +84,40 @@ jobs:
           poetry self add poetry-plugin-freeze
           poetry freeze-wheel
 
-      - name: Verify build
+      - name: Verify Wheel Install (Smoke Test)
         run: |
-          pip install dist/*.whl --no-deps
+          # Verify the wheel file itself is valid and pip-installable.
+          # --no-deps: avoids resolving the custom xarray git fork from PyPI.
+          # We don't import here — the Poetry venv has no deps in this fresh venv.
+          # Actual import tests are done in the Verify wheel steps below where
+          # all required deps are already present.
+          python -m venv wheel_test
+          wheel_test/bin/pip install dist/*.whl --no-deps
+          wheel_test/bin/pip show aodn-cloud-optimised
+
+      - name: Verify wheel (Production Mode)
+        run: |
+          # 1. Sync venv to core-only deps, then install the WHEEL (not editable source).
+          poetry install
+          poetry run pip install dist/*.whl --no-deps --force-reinstall
+
+          # 2. Confirm the wheel (not source) is importable with core deps only.
+          poetry run python -c "import aodn_cloud_optimised; print('Production wheel OK')"
+
+      - name: Verify wheel (Notebooks Mode)
+        run: |
+          # 1. Add notebooks deps, then swap in the wheel.
+          poetry install --extras notebooks
+          poetry run pip install dist/*.whl --no-deps --force-reinstall
+
+          # 2. Confirm DataQuery is importable from the installed wheel.
+          poetry run python -c "from aodn_cloud_optimised.lib.DataQuery import GetAodn; print('Notebooks wheel OK')"
+
+      - name: Verify wheel (Dev Mode)
+        run: |
+          # 1. Full dev install, then swap in the wheel.
+          poetry install --extras "notebooks tests docs dev"
+          poetry run pip install dist/*.whl --no-deps --force-reinstall
+
+          # 2. Smoke test the wheel with all extras present.
+          poetry run python -c "from aodn_cloud_optimised.lib.DataQuery import GetAodn; print('Dev wheel OK')"

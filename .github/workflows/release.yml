@@ -1,8 +1,20 @@
-name: Automated Release
+name: Release
 
 on:
-  release:
-    types: [created]
+  workflow_dispatch:
+    inputs:
+      bump_type:
+        description: "Version bump type"
+        required: true
+        default: patch
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+
+permissions:
+  contents: write
 
 jobs:
   build-and-release:
@@ -12,9 +24,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
+          fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Python
+        id: setup-python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11.9"
@@ -22,13 +36,17 @@ jobs:
       - name: Install system dependencies
         run: sudo apt-get update && sudo apt-get install -y libudunits2-dev
 
+      - name: Read Poetry version
+        id: poetry-version
+        run: echo "version=$(cat .poetry-version | tail -1)" >> $GITHUB_OUTPUT
+
       - name: Install Poetry
         uses: snok/install-poetry@v1
         with:
           virtualenvs-create: true
           virtualenvs-in-project: true
           installer-parallel: true
-          version: 2.2.1
+          version: ${{ steps.poetry-version.outputs.version }}
 
       #----------------------------------------------
       #       load cached venv if cache exists
@@ -41,105 +59,114 @@ jobs:
           key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
 
       #----------------------------------------------
-      # install dependencies if cache does not exist
+      # install dependencies (make tests = poetry sync --extras "tests notebooks")
+      # includes DataQuery tests (test_aodn_data_queries.py needs notebooks extra)
       #----------------------------------------------
-      - name: Install dependencies
-        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: poetry install --no-interaction --no-root
-      #----------------------------------------------
-      # install your root project, if required
-      #----------------------------------------------
-      - name: Install project
-        run: poetry install --no-interaction
+      - name: Install project with tests
+        run: make tests
+
       #----------------------------------------------
       #              run test suite
       #----------------------------------------------
-      - name: Install pytest
-        run: poetry add --dev pytest coverage
-
       - name: Run tests
-        run: |
-          source .venv/bin/activate
-          poetry run pytest
+        run: poetry run pytest
 
-        # Configure git for committing version bump
-      - name: Configure git for committing version bump
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-
-      # Bump version
+      #----------------------------------------------
+      #        bump version in pyproject.toml
+      #----------------------------------------------
       - name: Bump version
-        id: bump_version
+        id: bump
         run: |
-          git fetch origin main
-          NEW_VERSION=$(poetry version patch | awk '{print $NF}')
-          echo "New version: $NEW_VERSION"
-          echo "new_version=$NEW_VERSION" >> $GITHUB_ENV
-          git add pyproject.toml
-          git commit -m "Bump version to $NEW_VERSION"
+          python - <<'PYEOF'
+          import re, sys
+          bump = "${{ github.event.inputs.bump_type }}"
+          path = "pyproject.toml"
+          content = open(path).read()
+          match = re.search(r'^version\s*=\s*"(\d+)\.(\d+)\.(\d+)"', content, re.MULTILINE)
+          if not match:
+              sys.exit("Could not find version in pyproject.toml")
+          major, minor, patch = int(match.group(1)), int(match.group(2)), int(match.group(3))
+          if bump == "major":
+              major += 1; minor = 0; patch = 0
+          elif bump == "minor":
+              minor += 1; patch = 0
+          else:
+              patch += 1
+          new_version = f"{major}.{minor}.{patch}"
+          new_content = re.sub(
+              r'^(version\s*=\s*)"[\d.]+"',
+              f'\\1"{new_version}"',
+              content,
+              flags=re.MULTILINE,
+          )
+          open(path, "w").write(new_content)
+          print(f"Bumped to {new_version}")
+          PYEOF
+          NEW_VERSION=$(python -c "
+          import re
+          content = open('pyproject.toml').read()
+          m = re.search(r'^version\s*=\s*\"([\d.]+)\"', content, re.MULTILINE)
+          print(m.group(1))
+          ")
+          echo "new_version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
 
-      - name: Push version bump
-        run: |
-          git push origin HEAD:main
-
+      #----------------------------------------------
+      #        build frozen + unfrozen wheels
+      #----------------------------------------------
       - name: Build frozen and unfrozen wheels
         run: |
+          # Build unfrozen wheel + sdist first
           poetry build
 
-          # add freeze step see https://github.com/python-poetry/poetry/issues/2778
+          # Save unfrozen wheel under a distinct name
+          mkdir -p dist-artifacts
+          for f in dist/*.whl; do
+            cp "$f" "dist-artifacts/$(basename "${f%.whl}").unfrozen.whl"
+          done
+          cp dist/*.tar.gz dist-artifacts/
+
+          # Freeze the wheel in-place (pins all deps into wheel metadata)
+          # see https://github.com/python-poetry/poetry/issues/2778
           poetry self add poetry-plugin-freeze
           poetry freeze-wheel
-          mkdir -p dist-frozen
-          mv dist/*.whl dist-frozen/
 
-          # Non-frozen wheel
+          # Copy frozen wheel (standard filename, deps pinned)
+          cp dist/*.whl dist-artifacts/
 
-          poetry build -f wheel
-          for f in dist/*.whl; do
-            new_name="$(echo "$f" | sed -E 's/(.+)-([0-9]+\.[0-9]+\.[0-9]+)-/\1-\2+unfrozen-/')"
-            mv "$f" "$new_name"
-          done
-
-          mkdir -p dist-unfrozen
-          mv dist/*+unfrozen*.whl dist-unfrozen/
-
-      - name: Delete existing tag (if any)
+      #----------------------------------------------
+      #        verify the frozen wheel
+      #----------------------------------------------
+      - name: Verify frozen wheel
         run: |
-          git tag -d v${{ env.new_version }} || true
-          git push origin :refs/tags/v${{ env.new_version }} || true
+          # Install frozen wheel into the Poetry venv (which already has all deps).
+          # --no-deps avoids pip trying to resolve the custom xarray git fork from PyPI.
+          # --force-reinstall replaces the editable source install with the actual wheel.
+          poetry run pip install dist-artifacts/*.whl --no-deps --force-reinstall
+          poetry run python -c "import aodn_cloud_optimised; print('Frozen wheel OK')"
 
-      - name: Create and push new tag
-        run: |
-          git tag -a v${{ env.new_version }}  -m "Release v${{ env.new_version }}"
-          git push origin v${{ env.new_version }}
+      #----------------------------------------------
+      #        commit bump + tag + release
+      #----------------------------------------------
+      - name: Commit version bump and create tag
+        if: ${{ !env.ACT }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Install GitHub CLI
         run: |
-          sudo apt-get install gh
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add pyproject.toml
+          git commit -m "chore: bump version to v${{ steps.bump.outputs.new_version }}"
+          git tag "v${{ steps.bump.outputs.new_version }}"
+          git push origin HEAD
+          git push origin "v${{ steps.bump.outputs.new_version }}"
 
-      - name: Create GitHub release
-        run: |
-          gh release create v${{ env.new_version }} --generate-notes
+      - name: Create GitHub Release and upload artifacts
+        if: ${{ !env.ACT }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload assets to release
         run: |
-          gh release upload v${{ env.new_version }} dist-frozen/*.whl dist-unfrozen/*.whl dist/*.tar.gz
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      # Delete latest draft release
-      - name: Delete latest draft release
-        run: |
-          latest_release=$(gh release list --draft --limit 1 --json name,url | jq -r '.[0] | select(.name | test("^v[0-9]+\\.[0-9]+\\.[0-9]+(-\\w+)?")) | .url')
-          if [ -n "$latest_release" ]; then
-            gh release delete "$latest_release" -y
-          else
-            echo "No draft release found to delete."
-          fi
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          gh release create "v${{ steps.bump.outputs.new_version }}" \
+            --title "v${{ steps.bump.outputs.new_version }}" \
+            --generate-notes \
+            dist-artifacts/*.whl \
+            dist-artifacts/*.tar.gz

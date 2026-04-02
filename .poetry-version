@@ -1,0 +1,17 @@
+# Poetry version used across this project.
+# GitHub Actions workflows (build.yml, pre-commit.yml, release.yml) and the
+# Dockerfile read this file automatically — no manual edit needed there.
+#
+# When bumping poetry, update ALL of the following manually:
+#   1. This file (.poetry-version)                          — the version number below
+#   2. pyproject.toml [build-system].requires               — poetry-core version (keep in sync)
+#   3. pyproject.toml [project.optional-dependencies].dev  — poetry== pin
+#   4. .pre-commit-config.yaml                              — rev: under python-poetry/poetry repo
+#   5. environment.yml                                      — poetry== in pip section
+#
+# Auto-read (no edit needed on bump):
+#   .github/workflows/build.yml
+#   .github/workflows/pre-commit.yml
+#   .github/workflows/release.yml
+#   Dockerfile
+2.3.3
