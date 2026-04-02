@@ -82,6 +82,7 @@ Source = "https://github.com/aodn/aodn_cloud_optimised"
 
 # deps required by DataQuery.py and the Jupyter notebooks
 notebooks = [
+  "notebook>=7.5.5",
   # moved from core: only used by DataQuery.py
   "fuzzywuzzy>=0.18.0",
   "python-levenshtein>=0.25.1",
@@ -123,7 +124,7 @@ docs = [
 # For the complete contributor setup, install all extras together:
 #   pip install -e ".[notebooks,tests,docs,dev]"
 dev = [
-  "poetry==2.3.3",               # SYNC: see .poetry-version for all locations to update
+  "poetry==2.3.3",                   # SYNC: see .poetry-version for all locations to update
   "poetry-plugin-freeze>=1.2.0",
   "virtualenv==20.30.0",             # TODO: pinned because of https://github.com/python-poetry/poetry/issues/10378
   "ipdb>=0.13",
