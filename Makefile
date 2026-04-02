@@ -14,6 +14,7 @@ notebooks: setup-config
 dev: setup-config
 	poetry sync --extras "notebooks tests docs dev"
 	poetry run pre-commit install
+	poetry self add poetry-plugin-export
 
 docs: setup-config
 	poetry sync --extras docs
