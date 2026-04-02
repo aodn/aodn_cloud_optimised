@@ -1,6 +1,5 @@
-#! /usr/bin/env python3
+#! /usr/var/env python3
 import datetime
-import pathlib
 import re
 import subprocess
 
