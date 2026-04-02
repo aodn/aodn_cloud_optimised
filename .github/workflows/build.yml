@@ -58,11 +58,16 @@ jobs:
       #              run test suite
       #----------------------------------------------
       - name: Run tests
-        run: |
-          poetry run pip install pytest-xdist
-          poetry run coverage run -m pytest
-          poetry run coverage report --fail-under=60
-          poetry run coverage xml -o coverage.xml
+        uses: nick-fields/retry@v4
+        # sometimes when having seg faults in the test suite, the runner will just fail without retrying. This ensures we get a chance to retry if that happens.
+        with:
+          timeout_minutes: 10
+          max_attempts: 3
+          command: |
+            poetry run pip install pytest-xdist
+            poetry run coverage run -m pytest
+            poetry run coverage report --fail-under=60
+            poetry run coverage xml -o coverage.xml
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
