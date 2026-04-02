@@ -1,7 +1,6 @@
 FROM python:3.12-slim
 
 # Set environment variables for Poetry
-ENV POETRY_VERSION=2.2.1
 ENV POETRY_HOME=/opt/poetry
 ENV POETRY_NO_INTERACTION=1
 ENV POETRY_VIRTUALENVS_IN_PROJECT=1
@@ -11,9 +10,13 @@ ENV PYTHONUNBUFFERED=1
 ENV VIRTUAL_ENV=/app/.venv
 ENV PATH="${VIRTUAL_ENV}/bin:$PATH"
 
+# Copy poetry version file — used by the installer below (no manual sync needed)
+COPY .poetry-version /tmp/.poetry-version
+
 # Install Poetry and dependencies
 RUN apt-get update && apt-get install -y curl && \
-  curl -sSL https://install.python-poetry.org | python3 - && \
+  POETRY_VERSION=$(tail -1 /tmp/.poetry-version) && \
+  curl -sSL https://install.python-poetry.org | POETRY_VERSION=$POETRY_VERSION python3 - && \
   ln -s ${POETRY_HOME}/bin/poetry /usr/local/bin/poetry
 
 # Set the working directory
@@ -23,7 +26,7 @@ COPY . /app
 #COPY poetry.lock pyproject.toml /app/
 
 # Install dependencies
-RUN poetry install --with dev --no-interaction # --no-root
+RUN poetry install --extras "notebooks tests docs dev" --no-interaction # --no-root
 
 
 # Enable bash-completion and set bash as the default shell
