@@ -423,6 +423,34 @@
           ".*\\.nc"
         ],
         "year_range": []
+      },
+      {
+        "s3_uri": "s3://imos-data/UWA/WAVE-BUOYS/REALTIME/",
+        "filter": [
+          ".*\\.nc"
+        ],
+        "year_range": []
+      },
+      {
+        "s3_uri": "s3://imos-data/IMOS/ANMN/Wave_Buoys/WAVE-BUOYS/REALTIME/",
+        "filter": [
+          ".*\\.nc"
+        ],
+        "year_range": []
+      },
+      {
+        "s3_uri": "s3://imos-data/IMOS/ANMN/Deep_Water_Waves/WAVE-BUOYS/REALTIME/",
+        "filter": [
+          ".*\\.nc"
+        ],
+        "year_range": []
+      },
+      {
+        "s3_uri": "s3://imos-data/Department_for_Environment_and_Water-South_Australia/WAVE-BUOYS/REALTIME/",
+        "filter": [
+          ".*\\.nc"
+        ],
+        "year_range": []
       }
     ],
     "clear_existing_data": true,
