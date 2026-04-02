@@ -1,33 +1,32 @@
-.PHONY: core tests notebooks dev clean setup-config docs
+.PHONY: core tests notebooks dev clean docs
 
-# 1. FIND GLOBAL POETRY (usually ~/.local/bin/poetry)
-# This ignores any poetry found inside your current .venv to ensure we are using the global poetry installation for managing the project dependencies and plugins.
 GLOBAL_POETRY := $(shell which -a poetry | grep -v ".venv" | head -n 1)
-
-# 2. THE SAFE RUNNER
-# This strips the venv from the PATH and unsets the VIRTUAL_ENV variable
-SAFE_RUN := env -u VIRTUAL_ENV PATH="$(shell echo $$PATH | sed -e 's|:[^:]*/.venv/bin||g' -e 's|[^:]*/.venv/bin:||g')"
+SAFE_RUN := env -u VIRTUAL_ENV
 
 # Core sync
-core: setup-config
+core:
 	$(SAFE_RUN) $(GLOBAL_POETRY) sync
 
 # Sync including specific extras
-tests: setup-config
+tests:
 	$(SAFE_RUN) $(GLOBAL_POETRY) sync --extras "tests notebooks"
 
-notebooks: setup-config
+notebooks:
 	$(SAFE_RUN) $(GLOBAL_POETRY) sync --extras notebooks
 
-dev: setup-config
+dev:
 	$(SAFE_RUN) $(GLOBAL_POETRY) sync --extras "notebooks tests docs dev"
 	$(SAFE_RUN) $(GLOBAL_POETRY) run pre-commit install
-	# Plugin management should always be global
+	# Plugin management is global, so it doesn't need SAFE_RUN
 	$(GLOBAL_POETRY) self add poetry-plugin-export
 
-docs: setup-config
+docs:
 	$(SAFE_RUN) $(GLOBAL_POETRY) sync --extras docs
 
 clean:
 	rm -rf .venv
-	$(SAFE_RUN) $(GLOBAL_POETRY) install
+	rm -rf .pytest_cache
+	rm -rf .mypy_cache
+	rm -rf dist
+	rm -rf *.egg-info
+	find . -type d -name "__pycache__" -exec rm -rf {} +
