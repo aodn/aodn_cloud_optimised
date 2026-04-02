@@ -15,28 +15,54 @@ You can also click on the Binder or Colab button above to spin the environment a
 
 # Run locally
 
-Assuming you have [Mamba/Conda](https://github.com/conda-forge/miniforge) already installed on your machine.
+There are two supported ways to set up a local environment for running these notebooks.
+
+---
+
+## Option 1 — Poetry (recommended if you already have the repository)
+
+Requires [Poetry](https://python-poetry.org/) installed (version pinned in `.poetry-version`).
 
 ```bash
-# clone the repository
+# Clone the repository
 git clone https://github.com/aodn/aodn_cloud_optimised.git
-cd aodn_cloud_optimised/notebooks
+cd aodn_cloud_optimised
 
-# create the conda environment from the environment.yml file available in the notebook folder (not the repository root folder)
-mamba env create --file=environment.yml
+# Install the notebooks extra into a Poetry-managed virtual environment
+make notebooks
 ```
 
-Then activate the environment named `AodnCloudOptimisedQuery`:
+Then start Jupyter:
 
 ```bash
-mamba activate AodnCloudOptimisedQuery
+poetry run jupyter notebook --ip=0.0.0.0 --port=8888 notebooks/
 ```
 
-Finally, start Jupyter Notebook accessible on all network interfaces at port 8888:
+---
+
+## Option 2 — Mamba / Conda (recommended for conda users or Windows WSL)
+
+Requires [Mamba/Conda](https://github.com/conda-forge/miniforge) already installed.
 
 ```bash
-jupyter notebook --ip=0.0.0.0 --port=8888
+# Clone the repository
+git clone https://github.com/aodn/aodn_cloud_optimised.git
+cd aodn_cloud_optimised
+
+# Create (or update) the named conda environment with all notebook dependencies
+./setup_miniforge_venvs.sh notebooks
 ```
+
+This creates an environment named `AodnCloudOptimised_notebooks`.  Activate it and start Jupyter:
+
+```bash
+micromamba activate AodnCloudOptimised_notebooks
+# or: conda activate AodnCloudOptimised_notebooks
+
+jupyter notebook --ip=0.0.0.0 --port=8888 notebooks/
+```
+
+---
 
 ### 💡 Windows tip: Use WSL with Mamba
 
