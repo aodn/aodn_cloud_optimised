@@ -75,11 +75,6 @@
       }
     }
   },
-  "spatial_extent": {
-    "lat": "LATITUDE",
-    "lon": "LONGITUDE",
-    "spatial_resolution": 5
-  },
   "schema": {
     "TIME": {
       "type": "timestamp[ns]",

@@ -17,7 +17,7 @@
     "clear_existing_data": true,
     "raise_error": false,
     "batch_size": 4,
-    "force_previous_parquet_deletion": false
+    "force_previous_parquet_deletion": true
   },
   "metadata_uuid": null,
   "schema": {
