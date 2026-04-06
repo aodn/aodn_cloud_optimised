@@ -1,0 +1,186 @@
+{
+  "dataset_name": "wave_buoy_realtime_from_parquet",
+  "logger_name": "wave_buoy_realtime_from_parquet",
+  "cloud_optimised_format": "parquet",
+  "run_settings": {
+    "paths": [
+      {
+        "type": "parquet",
+        "partitioning": "hive",
+        "s3_uri": "s3://imos-data-lab-optimised/testing/wave_buoy_multiple_datasets/",
+        "discover_parquet_datasets": true
+      }
+    ],
+    "batch_size": 1,
+    "force_previous_parquet_deletion": false
+  },
+  "metadata_uuid": "b299cdcd-3dee-48aa-abdd-e0fcdbb9cadc",
+  "schema_transformation": {
+    "drop_variables": [],
+    "add_variables": {},
+    "partitioning": [
+      {
+        "source_variable": "site_name"
+      },
+      {
+        "source_variable": "timestamp"
+      },
+      {
+        "source_variable": "polygon"
+      }
+    ]
+  },
+  "schema": {
+    "index": {
+      "type": "int32"
+    },
+    "timeSeries": {
+      "type": "int32",
+      "long_name": "unique identifier for each feature instance",
+      "cf_role": "timeseries_id"
+    },
+    "TIME": {
+      "type": "timestamp[ns]",
+      "standard_name": "time",
+      "long_name": "time",
+      "axis": "T",
+      "valid_min": 0.0,
+      "valid_max": 90000.0
+    },
+    "LATITUDE": {
+      "type": "double",
+      "standard_name": "latitude",
+      "long_name": "latitude",
+      "units": "degrees_north",
+      "axis": "Y",
+      "valid_min": -90.0,
+      "valid_max": 90.0,
+      "reference_datum": "WGS84 coordinate reference system; EPSG:4326"
+    },
+    "LONGITUDE": {
+      "type": "double",
+      "standard_name": "longitude",
+      "long_name": "longitude",
+      "units": "degrees_east",
+      "axis": "X",
+      "valid_min": -180.0,
+      "valid_max": 180.0,
+      "reference_datum": "WGS84 coordinate reference system; EPSG:4326"
+    },
+    "WPMH": {
+      "type": "double",
+      "standard_name": "sea_surface_wave_mean_period",
+      "long_name": "sea surface wave mean period",
+      "units": "s",
+      "valid_min": 0.0,
+      "valid_max": 50.0
+    },
+    "WMXH": {
+      "type": "double",
+      "standard_name": "sea_surface_wave_maximum_height",
+      "long_name": "sea surface wave maximum height",
+      "units": "m",
+      "valid_min": 0.0,
+      "valid_max": 100.0
+    },
+    "WPPE": {
+      "type": "double",
+      "standard_name": "sea_surface_wave_period_at_variance_spectral_density_maximum",
+      "long_name": "spectral peak wave period",
+      "units": "s",
+      "valid_min": 0.0,
+      "valid_max": 50.0
+    },
+    "WPDI": {
+      "type": "double",
+      "standard_name": "sea_surface_wave_from_direction_at_variance_spectral_density_maximum",
+      "long_name": "direction of the dominant wave",
+      "units": "degree",
+      "reference_datum": "true north",
+      "valid_min": 0.0,
+      "valid_max": 360.0
+    },
+    "WPDS": {
+      "type": "double",
+      "standard_name": "sea_surface_wave_directional_spread_at_variance_spectral_density_maximum",
+      "long_name": "directional spread of the dominant wave",
+      "units": "degree",
+      "reference_datum": "true north",
+      "valid_min": 0.0,
+      "valid_max": 360.0
+    },
+    "WAVE_quality_control": {
+      "type": "float",
+      "long_name": "primary Quality Control flag for wave variables",
+      "valid_min": 1,
+      "valid_max": 9
+    },
+    "WSSH": {
+      "type": "double",
+      "long_name": "sea surface wave spectral significant height",
+      "standard_name": "sea_surface_wave_significant_height",
+      "units": "m",
+      "valid_max": 100.0,
+      "valid_min": 0.0
+    },
+    "WPFM": {
+      "type": "double",
+      "long_name": "sea surface wave spectral mean period",
+      "standard_name": "sea_surface_wave_mean_period_from_variance_spectral_density_first_frequency_moment",
+      "units": "s",
+      "valid_max": 50.0,
+      "valid_min": 0.0
+    },
+    "WMDS": {
+      "type": "double",
+      "long_name": "spectral sea surface wave mean directional spread",
+      "positive": "clockwise",
+      "standard_name": "sea_surface_wave_directional_spread",
+      "units": "Degrees",
+      "valid_max": 360.0,
+      "valid_min": 0.0
+    },
+    "SSWMD": {
+      "type": "double",
+      "long_name": "spectral sea surface wave mean direction",
+      "positive": "clockwise",
+      "reference_datum": "true north",
+      "standard_name": "sea_surface_wave_from_direction",
+      "units": "Degrees",
+      "valid_max": 360.0,
+      "valid_min": 0.0
+    },
+    "filename": {
+      "type": "string",
+      "units": "1",
+      "long_name": "Filename of the source file"
+    },
+    "site_name": {
+      "type": "string",
+      "units": "1",
+      "_FillValue": "",
+      "long_name": "site name"
+    },
+    "wmo_id": {
+      "type": "string",
+      "units": "1",
+      "_FillValue": "",
+      "long_name": "wmo identifier"
+    },
+    "water_depth": {
+      "type": "int64",
+      "units": "meters",
+      "long_name": "water depth"
+    },
+    "timestamp": {
+      "type": "int32",
+      "units": "1",
+      "long_name": "Partition timestamp"
+    },
+    "polygon": {
+      "type": "string",
+      "units": "1",
+      "long_name": "Spatial partition polygon"
+    }
+  }
+}

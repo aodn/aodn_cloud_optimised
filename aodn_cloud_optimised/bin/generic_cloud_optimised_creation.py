@@ -42,7 +42,11 @@ from aodn_cloud_optimised.lib.config import (
     load_dataset_config,
     load_variable_from_config,
 )
-from aodn_cloud_optimised.lib.s3Tools import boto3_from_opts_dict, s3_ls
+from aodn_cloud_optimised.lib.s3Tools import (
+    boto3_from_opts_dict,
+    discover_parquet_datasets,
+    s3_ls,
+)
 from aodn_cloud_optimised.lib.schema import get_pyarrow_type_map
 
 logger = logging.getLogger(__name__)
@@ -76,6 +80,7 @@ class PathConfig(BaseModel):
         partitioning: Optional, used only for Parquet datasets (e.g., "hive").
         filter: List of regex patterns to filter files (only valid for type="files").
         year_range: Optional Year filter: None, one year, or a two-year inclusive range, or a list of exclusive years to process. (only valid for type="files")
+        discover_parquet_datasets: If True, discover and process multiple parquet datasets/files in the s3_uri folder. Only valid when type='parquet'.
 
     """
 
@@ -95,6 +100,16 @@ class PathConfig(BaseModel):
     year_range: Optional[List[int]] = Field(
         default=None,
         description="Must be None (no filtering), a single year [YYYY], a two-year range [YYYY, YYYY], or a list of exclusive years to process [YYYY, YYYY, YYYY]",
+    )
+    discover_parquet_datasets: bool = Field(
+        default=False,
+        description=(
+            "If True, discover and process all parquet datasets/files in the s3_uri folder. "
+            "For hive partitioning: discovers subdirectories ending with .parquet. "
+            "For non-hive: discovers files ending with .parquet at first level. "
+            "All discovered sources are read and concatenated into a single output. "
+            "Only valid when type='parquet'."
+        ),
     )
 
     @field_validator("year_range", mode="after")
@@ -203,6 +218,12 @@ class PathConfig(BaseModel):
                 raise ValueError(
                     "type must be defined as 'zarr' in run_settings.paths config if ingesting a zarr dataset."
                 )
+
+        # Validate discover_parquet_datasets only valid for parquet type
+        if values.discover_parquet_datasets and dataset_type != "parquet":
+            raise ValueError(
+                "discover_parquet_datasets can only be True when type='parquet'"
+            )
 
         if dataset_type == "parquet":
             if values.filter:
@@ -1257,7 +1278,8 @@ def collect_files(
 
     Supports:
       - 'files': lists and filters regular files (e.g., NetCDF, CSV)
-      - 'parquet': handles both single Parquet files and Hive-partitioned datasets
+      - 'parquet': returns the s3_uri path. If discover_parquet_datasets=True,
+        the handler will discover and process multiple parquet sources internally.
       - 'zarr': returns the Zarr store path directly
 
     Args:

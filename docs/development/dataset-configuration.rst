@@ -614,7 +614,103 @@ Parquet Configuration from Parquet file
 -----------------------------------
 In some instances we already have a parquet file, but still need to update it to the cloud optimised format and apply AODN conventions.
 
-There is currently no additional configuration required to create a parquet dataset from a parquet file. Follow the dataset configuration as per explained above for NetCDF.
+Single Parquet Source
+^^^^^^^^^^^^^^^^^^^^^
+
+For a single parquet file or hive-partitioned dataset, follow the dataset configuration as per explained above for NetCDF, with the following configuration in ``run_settings``:
+
+.. code-block:: json
+
+   {
+     "run_settings": {
+       "paths": [
+         {
+           "type": "parquet",
+           "partitioning": "hive",  // or null for flat parquet files
+           "s3_uri": "s3://bucket/dataset.parquet",
+           "filter": [],
+           "year_range": []
+         }
+       ]
+     }
+   }
+
+Multiple Parquet Sources (Discovery Mode)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+When you have multiple parquet datasets or files in a folder that need to be merged into a single cloud-optimized output, use the **discovery mode** feature.
+
+**Use cases:**
+  - Multiple yearly parquet datasets that need consolidation
+  - Monthly parquet extracts to be combined
+  - Historical data split across multiple parquet files
+
+**Configuration:**
+
+.. code-block:: json
+
+   {
+     "run_settings": {
+       "paths": [
+         {
+           "type": "parquet",
+           "partitioning": "hive",
+           "s3_uri": "s3://bucket/historical-data/",
+           "discover_parquet_datasets": true,
+           "filter": [],
+           "year_range": []
+         }
+       ]
+     }
+   }
+
+**Behavior:**
+
+When ``discover_parquet_datasets: true``:
+
+- **Hive mode** (``partitioning="hive"``): Discovers all subdirectories ending with ``.parquet`` at the first level
+- **Flat mode** (``partitioning=null``): Discovers all files ending with ``.parquet`` at the first level
+- All discovered sources are read and **concatenated** into a single output dataset
+- Schemas must be compatible across all sources
+- PyArrow automatically promotes compatible types (e.g., int32→int64, float32→float64)
+- Discovery is **non-recursive** (only examines first level)
+
+**Folder Structure Examples:**
+
+Hive-partitioned datasets::
+
+    s3://bucket/historical-data/
+      ├── wave_2020.parquet/
+      │   ├── site_name=Albany/
+      │   └── site_name=Brighton/
+      ├── wave_2021.parquet/
+      │   ├── site_name=Albany/
+      │   └── site_name=Brighton/
+      └── wave_2022.parquet/
+          ├── site_name=Albany/
+          └── site_name=Brighton/
+
+Result: All three yearly datasets merged into one output.
+
+Flat parquet files::
+
+    s3://bucket/monthly-exports/
+      ├── january.parquet
+      ├── february.parquet
+      └── march.parquet
+
+Result: All monthly files merged into one output.
+
+**Requirements:**
+
+- All discovered parquet sources must have compatible schemas
+- If schemas differ but types are promotable, PyArrow will handle conversion
+- If schemas are fundamentally incompatible, an error will be raised with details
+- The output will be a single hive-partitioned dataset following AODN conventions
+
+**Backward Compatibility:**
+
+The ``discover_parquet_datasets`` flag defaults to ``false``. Existing configurations without this flag continue to work exactly as before, processing single parquet sources.
 
 Zarr Configuration from NetCDF
 ------------------------------
