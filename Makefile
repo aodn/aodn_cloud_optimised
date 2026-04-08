@@ -30,14 +30,18 @@ ifeq ($(UNAME_S),Darwin)
 		exit 1)
 endif
 ifeq ($(UNAME_S),Linux)
-	@echo "Checking for udunits2 library..."
-	@ldconfig -p | grep libudunits2 > /dev/null || ( \
+	@echo "Checking for udunits2 development files..."
+	@if (command -v pkg-config > /dev/null 2>&1 && pkg-config --exists udunits2) || \
+		(command -v dpkg > /dev/null 2>&1 && dpkg -s libudunits2-dev > /dev/null 2>&1); then \
+		echo "udunits2 development files found."; \
+	else \
 		echo "----------------------------------------------------------"; \
-		echo "ERROR: libudunits2-dev not found."; \
+		echo "ERROR: libudunits2-dev / udunits2 pkg-config metadata not found."; \
 		echo "If you have sudo, run: sudo apt-get install libudunits2-dev"; \
 		echo "If not, install to ~/.local/ or use a Conda environment."; \
 		echo "----------------------------------------------------------"; \
-		exit 1)
+		exit 1; \
+	fi
 endif
 
 
