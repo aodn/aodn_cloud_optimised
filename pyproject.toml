@@ -38,7 +38,7 @@ dependencies = [
   "pyarrow==22.0.0",
   "rechunker>=0.5.2",
   "s3fs>=2025.12.0",
-  "fsspec==2025.12.0",
+  "fsspec>=2025.12.0",
   "shapely>=2.0.4",
 
   # Versions post 2025.6.1 are broken because of https://github.com/pydata/xarray/issues/10712.
