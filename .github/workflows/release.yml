@@ -186,11 +186,11 @@ jobs:
           git push origin HEAD
           git push origin "v${{ steps.bump.outputs.new_version }}"
 
-          - name: Create GitHub Release and upload artifacts
-            if: ${{ !env.ACT }}
-            env:
+      - name: Create GitHub Release and upload artifacts
+        if: ${{ !env.ACT }}
+        env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-            run: |
+        run: |
           gh release create "v${{ steps.bump.outputs.new_version }}" \
             --title "v${{ steps.bump.outputs.new_version }}" \
             --generate-notes \
