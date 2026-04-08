@@ -12,7 +12,6 @@ jobs:
     strategy:
       matrix:
         python-version:
-          # - "3.10.14"
           - "3.11.9"
           - "3.12.4"
 
@@ -52,7 +51,6 @@ jobs:
       # install dependencies
       #----------------------------------------------
       - name: Install Project
-        # make tests = poetry sync --extras "tests notebooks"
         # Includes DataQuery tests (test_aodn_data_queries.py needs notebooks extra)
         run: make tests
       #              run test suite
@@ -76,48 +74,69 @@ jobs:
           name: coverage-report-${{ github.job }}-${{ github.run_number }}-${{ matrix.python-version }}
           path: coverage.xml
 
-      - name: Build package
+      - name: Build frozen and unfrozen wheels
         run: |
+          # 1. Build standard (unfrozen) wheel + sdist
           poetry build
 
-          # add freeze step see https://github.com/python-poetry/poetry/issues/2778
+          # 2. Save unfrozen wheel under a distinct name BEFORE freezing
+          mkdir -p dist-artifacts
+          for f in dist/*.whl; do
+            cp "$f" "dist-artifacts/$(basename "${f%.whl}").unfrozen.whl"
+          done
+          cp dist/*.tar.gz dist-artifacts/
+
+          # 3. Freeze the wheel in-place (pins all deps into wheel metadata)
           poetry self add poetry-plugin-freeze
           poetry freeze-wheel
 
-      - name: Verify Wheel Install (Smoke Test)
+          # 4. Copy the now-frozen wheel to our artifacts folder
+          cp dist/*.whl dist-artifacts/
+
+      - name: Verify make (Core Mode)
         run: |
-          # Verify the wheel file itself is valid and pip-installable.
-          # --no-deps: avoids resolving the custom xarray git fork from PyPI.
-          # We don't import here — the Poetry venv has no deps in this fresh venv.
-          # Actual import tests are done in the Verify wheel steps below where
-          # all required deps are already present.
-          python -m venv wheel_test
-          wheel_test/bin/pip install dist/*.whl --no-deps
-          wheel_test/bin/pip show aodn-cloud-optimised
+          make core
+          poetry run python -c "import aodn_cloud_optimised; print('Core OK')"
 
-      - name: Verify wheel (Production Mode)
+      - name: Verify make (Notebooks Mode)
         run: |
-          # 1. Sync venv to core-only deps, then install the WHEEL (not editable source).
-          poetry install
-          poetry run pip install dist/*.whl --no-deps --force-reinstall
+          make notebooks
+          poetry run python -c "from aodn_cloud_optimised.lib.DataQuery import GetAodn; print('Notebooks OK')"
 
-          # 2. Confirm the wheel (not source) is importable with core deps only.
-          poetry run python -c "import aodn_cloud_optimised; print('Production wheel OK')"
-
-      - name: Verify wheel (Notebooks Mode)
+      - name: Verify make (Dev Mode)
         run: |
-          # 1. Add notebooks deps, then swap in the wheel.
-          poetry install --extras notebooks
-          poetry run pip install dist/*.whl --no-deps --force-reinstall
+          make dev
+          poetry run python -c "from aodn_cloud_optimised.lib.DataQuery import GetAodn; print('Dev OK')"
 
-          # 2. Confirm DataQuery is importable from the installed wheel.
-          poetry run python -c "from aodn_cloud_optimised.lib.DataQuery import GetAodn; print('Notebooks wheel OK')"
-
-      - name: Verify wheel (Dev Mode)
+      #----------------------------------------------
+      #        verify the wheels (Clean Venv)
+      #----------------------------------------------
+      - name: Verify Unfrozen Wheel
         run: |
-          # 1. Full dev install, then swap in the wheel.
-          poetry install --extras "notebooks tests docs dev"
-          poetry run pip install dist/*.whl --no-deps --force-reinstall
+          python -m venv test_env_unfrozen
+          source test_env_unfrozen/bin/activate
 
-          # 2. Smoke test the wheel with all extras present.
-          poetry run python -c "from aodn_cloud_optimised.lib.DataQuery import GetAodn; print('Dev wheel OK')"
+          # This proves the Unfrozen wheel is self-contained.
+          # It should find the xarray git URL in the metadata and install it automatically.
+          # We use a wildcard because the version in pyproject.toml is our current truth.
+          pip install dist-artifacts/*.unfrozen.whl
+
+          python -c "import aodn_cloud_optimised; print('Unfrozen wheel (URL-based) OK')"
+          deactivate
+          rm -rf test_env_unfrozen
+
+      - name: Verify Frozen Wheel
+        run: |
+          python -m venv test_env_frozen
+          source test_env_frozen/bin/activate
+
+          # Prime the venv with the fork because the 'freeze' middle-man stripped the URL.
+          pip install "xarray @ git+https://github.com/lbesnard/xarray.git@2025.06.01.dev2"
+
+          # Install the frozen wheel (the one without '.unfrozen' in the name).
+          # This verifies the pinned fsspec/s3fs logic from your lockfile.
+          pip install dist-artifacts/aodn_cloud_optimised-$(poetry version -s)-py3-none-any.whl
+
+          python -c "import aodn_cloud_optimised; print('Frozen wheel (Pinned) OK')"
+          deactivate
+          rm -rf test_env_frozen

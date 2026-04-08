@@ -29,8 +29,6 @@ jobs:
       - name: Set up test environment
         # This is exactly what a developer runs locally.
         # Creates AodnCloudOptimised_tests env from environment.yml,
-        # configures Poetry to install into it, then runs:
-        #   poetry install --extras "tests notebooks"
         run: ./setup_miniforge_venvs.sh tests
 
       - name: Run pytest and coverage

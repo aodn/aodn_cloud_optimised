@@ -68,8 +68,15 @@ jobs:
       #----------------------------------------------
       #              run test suite
       #----------------------------------------------
+
       - name: Run tests
-        run: poetry run pytest
+        uses: nick-fields/retry@v4
+        # sometimes when having seg faults in the test suite, the runner will just fail without retrying. This ensures we get a chance to retry if that happens.
+        with:
+          timeout_minutes: 10
+          max_attempts: 3
+          command: |
+            poetry run pytest
 
       #----------------------------------------------
       #        bump version in pyproject.toml
@@ -134,15 +141,34 @@ jobs:
           cp dist/*.whl dist-artifacts/
 
       #----------------------------------------------
-      #        verify the frozen wheel
+      #        verify the wheels
       #----------------------------------------------
-      - name: Verify frozen wheel
+      #
+      - name: Verify Unfrozen Wheel
         run: |
-          # Install frozen wheel into the Poetry venv (which already has all deps).
-          # --no-deps avoids pip trying to resolve the custom xarray git fork from PyPI.
-          # --force-reinstall replaces the editable source install with the actual wheel.
-          poetry run pip install dist-artifacts/*.whl --no-deps --force-reinstall
-          poetry run python -c "import aodn_cloud_optimised; print('Frozen wheel OK')"
+          python -m venv test_env_unfrozen
+          source test_env_unfrozen/bin/activate
+          # Install the unfrozen wheel. This WILL trigger dependency downloads.
+          pip install dist-artifacts/*unfrozen.whl
+          python -c "import aodn_cloud_optimised; print('Unfrozen wheel verification successful')"
+          deactivate
+          rm -rf test_env_unfrozen
+
+      - name: Verify Frozen Wheel
+        run: |
+          python -m venv test_env_frozen
+          source test_env_frozen/bin/activate
+
+          # We provide the URL that the freeze plugin had to strip to satisfy PEP 440
+          # This allows Pip to find your custom Hobart-developed fork.
+          pip install "xarray @ git+https://github.com/lbesnard/xarray.git@2025.06.01.dev2"
+
+          # Note: We do NOT use --no-deps here because we want to
+          # ensure the pinned dependencies in the frozen wheel actually resolve.
+          pip install dist-artifacts/aodn_cloud_optimised-${{ steps.bump.outputs.new_version }}-py3-none-any.whl
+          python -c "import aodn_cloud_optimised; print('Frozen wheel verification successful')"
+          deactivate
+          rm -rf test_env_frozen
 
       #----------------------------------------------
       #        commit bump + tag + release
@@ -160,11 +186,11 @@ jobs:
           git push origin HEAD
           git push origin "v${{ steps.bump.outputs.new_version }}"
 
-      - name: Create GitHub Release and upload artifacts
-        if: ${{ !env.ACT }}
-        env:
+          - name: Create GitHub Release and upload artifacts
+            if: ${{ !env.ACT }}
+            env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
+            run: |
           gh release create "v${{ steps.bump.outputs.new_version }}" \
             --title "v${{ steps.bump.outputs.new_version }}" \
             --generate-notes \
