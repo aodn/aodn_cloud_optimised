@@ -8,8 +8,8 @@ UNAME_S := $(shell uname -s)
 
 # Path definitions for local (no-sudo) installs
 LOCAL_LIB := $(HOME)/.local/lib
-export LD_LIBRARY_PATH := $(LOCAL_LIB):$(LD_LIBRARY_PATH)
-export DYLD_LIBRARY_PATH := $(LOCAL_LIB):$(DYLD_LIBRARY_PATH)
+export LD_LIBRARY_PATH := $(LOCAL_LIB)$(if $(LD_LIBRARY_PATH),:$(LD_LIBRARY_PATH))
+export DYLD_LIBRARY_PATH := $(LOCAL_LIB)$(if $(DYLD_LIBRARY_PATH),:$(DYLD_LIBRARY_PATH))
 
 setup-sys-deps:
 ifeq ($(UNAME_S),Darwin)
