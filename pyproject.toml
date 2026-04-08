@@ -7,7 +7,7 @@ build-backend = "poetry.core.masonry.api"
 # Pinning to <3.13 to avoid source builds; stable wheels for h5py and netCDF4 are not yet available for 3.13.
 requires-python = ">=3.11,<3.13"
 name = "aodn-cloud-optimised"
-version = "0.2.0"
+version = "0.2.1"
 description = "Cloud optimised data formats for IMOS NetCDF files and CSVs."
 authors = [
   { name = "Laurent Besnard (AODN)", email = "laurent.besnard@utas.edu.au" },
@@ -264,7 +264,7 @@ pydantic_precommit_hook = "aodn_cloud_optimised.bin.pydantic_precommit_hook:main
 
 
 [tool.pre_commit]
-version = "0.2.0"
+version = "0.2.1"
 config = ".pre-commit-config.yaml"
 
 [tool.pytest.ini_options]
