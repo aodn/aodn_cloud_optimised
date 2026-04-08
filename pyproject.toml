@@ -132,7 +132,11 @@ dev = [
   "poetry-pre-commit-plugin>=0.2.1",
 ]
 
+mcp = ["mcp>=1.26.0,<2.0.0", "nbformat>=5.0.0", "nbconvert>=7.0.0"]
+
+
 [project.scripts]
+aodn-mcp-server = "aodn_cloud_optimised.mcp.server:main"
 #cloud_optimised_srs_oc_ljco_to_parquet = "aodn_cloud_optimised.bin.srs_oc_ljco_to_parquet:main"
 cloud_optimised_aggregated_kelp_nonqc = "aodn_cloud_optimised.bin.aggregated_kelp_nonqc:main"
 cloud_optimised_aggregated_seabird_nonqc = "aodn_cloud_optimised.bin.aggregated_seabird_nonqc:main"

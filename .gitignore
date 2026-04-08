@@ -3,6 +3,8 @@ aodn_cloud_optimised/_version.py
 notebooks/*.zip
 notebooks/Untitled.ipynb
 
+notebooks/mcp_generated_notebooks/setup.py
+notebooks/mcp_generated_notebooks/DataQuery.py
 
 artifacts/
 integration_test_results.md

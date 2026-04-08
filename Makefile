@@ -1,4 +1,4 @@
-.PHONY: core tests notebooks dev clean docs
+.PHONY: core tests notebooks dev clean docs mcp
 
 GLOBAL_POETRY := $(shell which -a poetry | grep -v ".venv" | head -n 1)
 SAFE_RUN := env -u VIRTUAL_ENV
@@ -11,11 +11,14 @@ core:
 tests:
 	$(SAFE_RUN) $(GLOBAL_POETRY) sync --extras "tests notebooks"
 
+mcp:
+	$(SAFE_RUN) $(GLOBAL_POETRY) sync --extras "notebooks mcp"
+
 notebooks:
 	$(SAFE_RUN) $(GLOBAL_POETRY) sync --extras notebooks
 
 dev:
-	$(SAFE_RUN) $(GLOBAL_POETRY) sync --extras "notebooks tests docs dev"
+	$(SAFE_RUN) $(GLOBAL_POETRY) sync --extras "notebooks tests docs dev mcp"
 	$(SAFE_RUN) $(GLOBAL_POETRY) run pre-commit install
 	# Plugin management is global, so it doesn't need SAFE_RUN
 	$(GLOBAL_POETRY) self add poetry-plugin-export

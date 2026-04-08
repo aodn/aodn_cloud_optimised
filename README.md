@@ -68,6 +68,14 @@ See [doc](https://aodn-cloud-optimised.readthedocs.io/en/latest/development/data
 
 - **Parquet:** Metadata stored as a sidecar `_metadata.parquet` file for faster queries and schema discovery.
 
+## MCP Server (AI Assistant Integration)
+
+This library ships with an [MCP (Model Context Protocol)](https://modelcontextprotocol.io/) server that exposes the AODN dataset catalogue to AI assistants such as **GitHub Copilot CLI**, **Gemini CLI**, and **Claude Desktop**.
+
+It enables an AI to discover datasets, inspect schemas, verify real S3 data coverage, and generate validated Jupyter notebooks for oceanographic analysis.
+
+See [`aodn_cloud_optimised/mcp/README.md`](aodn_cloud_optimised/mcp/README.md) for installation and usage instructions.
+
 ## Quick Guide
 
 ## Installation
