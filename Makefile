@@ -14,7 +14,20 @@ export DYLD_LIBRARY_PATH := $(LOCAL_LIB):$(DYLD_LIBRARY_PATH)
 setup-sys-deps:
 ifeq ($(UNAME_S),Darwin)
 	@echo "Checking for udunits via Homebrew..."
-	@brew install udunits || echo "Homebrew not found or install failed."
+	@command -v brew > /dev/null 2>&1 || ( \
+		echo "----------------------------------------------------------"; \
+		echo "ERROR: Homebrew is required to check for udunits on macOS."; \
+		echo "Install Homebrew from https://brew.sh/, then run:"; \
+		echo "  brew install udunits"; \
+		echo "----------------------------------------------------------"; \
+		exit 1)
+	@brew --prefix udunits > /dev/null 2>&1 || ( \
+		echo "----------------------------------------------------------"; \
+		echo "ERROR: udunits not found via Homebrew."; \
+		echo "Install it with:"; \
+		echo "  brew install udunits"; \
+		echo "----------------------------------------------------------"; \
+		exit 1)
 endif
 ifeq ($(UNAME_S),Linux)
 	@echo "Checking for udunits2 library..."
