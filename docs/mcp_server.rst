@@ -23,7 +23,8 @@ Installation
 
 The MCP server requires the optional ``mcp`` extra::
 
-    pip install aodn-cloud-optimised[mcp]
+    make mcp  # or make dev
+
 
 Or, from the source tree::
 
@@ -32,9 +33,6 @@ Or, from the source tree::
 Starting the Server
 -------------------
 
-Run the entry point directly::
-
-    aodn-mcp-server
 
 The server speaks the MCP protocol over *stdio* and is designed to be launched
 by an MCP client. **Do not run it directly in a terminal** — stdin becomes the
@@ -542,6 +540,6 @@ methods for querying and visualising cloud-optimised data on S3.
 Testing
 -------
 
-A dedicated integration test suite validates all 12 MCP tools, including live
+A dedicated integration test suite validates all MCP tools, including live
 S3 coverage queries, notebook execution, and end-to-end user-prompt scenarios.
 See :ref:`mcp-testing` for full instructions.

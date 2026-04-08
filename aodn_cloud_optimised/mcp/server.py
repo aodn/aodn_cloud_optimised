@@ -1,3 +1,4 @@
+#! /usr/bin/env python3
 """
 AODN Cloud Optimised MCP Server.
 
@@ -2016,7 +2017,7 @@ def get_plot_guide(dataset_name: str) -> str:
             "for yr in YEARS:",
             f"    t0 = np.datetime64(f'{{yr}}-{{MONTH:02d}}-01')",
             "    t1 = _next_month_start(yr, MONTH)          # safe — no overflow",
-            f"    mask = (df[\"{time_var or 'TIME'}\"] >= t0) & (df[\"{time_var or 'TIME'}\"] < t1)",
+            f'    mask = (df["{time_var or "TIME"}"] >= t0) & (df["{time_var or "TIME"}"] < t1)',
             "```",
             "",
             "> ⚠️ **Never format numpy datetime64 with f-string spec `:%Y-%m-%d`**",
@@ -2386,7 +2387,7 @@ def add_notebook_cell(
         on failure (code cells only).
     """
     if session_id not in _NOTEBOOK_DRAFTS:
-        return f"❌ Session `{session_id}` not found. " "Call `start_notebook` first."
+        return f"❌ Session `{session_id}` not found. Call `start_notebook` first."
 
     draft = _NOTEBOOK_DRAFTS[session_id]
     cell_idx = len(draft["cells"])
@@ -2403,9 +2404,7 @@ def add_notebook_cell(
     )
 
     if "❌" in exec_result or "⏱️" in exec_result:
-        return (
-            f"❌ **Cell NOT added** — fix the code and try again.\n\n" f"{exec_result}"
-        )
+        return f"❌ **Cell NOT added** — fix the code and try again.\n\n{exec_result}"
 
     draft["cells"].append(_nbformat_cell("code", _strip_jupyter_magics(source)))
     return f"✅ **Cell {cell_idx} added** (code, validated)"
@@ -2439,7 +2438,7 @@ def replace_notebook_cell(
         ``✅ Cell N replaced`` on success, or ``❌`` with error on failure.
     """
     if session_id not in _NOTEBOOK_DRAFTS:
-        return f"❌ Session `{session_id}` not found. " "Call `start_notebook` first."
+        return f"❌ Session `{session_id}` not found. Call `start_notebook` first."
 
     draft = _NOTEBOOK_DRAFTS[session_id]
     if cell_index < 0 or cell_index >= len(draft["cells"]):
@@ -2461,8 +2460,7 @@ def replace_notebook_cell(
 
     if "❌" in exec_result or "⏱️" in exec_result:
         return (
-            f"❌ **Cell NOT replaced** — fix the code and try again.\n\n"
-            f"{exec_result}"
+            f"❌ **Cell NOT replaced** — fix the code and try again.\n\n{exec_result}"
         )
 
     draft["cells"][cell_index] = _nbformat_cell("code", _strip_jupyter_magics(source))
@@ -2493,7 +2491,7 @@ def save_notebook(session_id: str) -> str:
     import nbformat
 
     if session_id not in _NOTEBOOK_DRAFTS:
-        return f"❌ Session `{session_id}` not found. " "Call `start_notebook` first."
+        return f"❌ Session `{session_id}` not found. Call `start_notebook` first."
 
     draft = _NOTEBOOK_DRAFTS[session_id]
     output_path = draft["output_path"]

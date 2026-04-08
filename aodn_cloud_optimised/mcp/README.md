@@ -14,6 +14,9 @@ oceanographic analysis.
 ## Installation
 
 ```bash
+# preferred method
+make mcp
+
 # From the repo root, install with the mcp extra:
 pip install -e ".[mcp]"
 
@@ -35,7 +38,7 @@ This installs the `aodn-mcp-server` entry point and its dependencies
 export AODN_NOTEBOOKS_PATH=/path/to/aodn_cloud_optimised/notebooks
 
 # Path to the dataset config directory (auto-detected if running from source)
-export AODN_DATASET_CONFIG_PATH=/path/to/aodn_cloud_optimised/aodn_cloud_optimised/config/dataset
+export AODN_CONFIG_PATH=/path/to/aodn_cloud_optimised/aodn_cloud_optimised/config/dataset
 ```
 
 ### Start the server
@@ -56,8 +59,8 @@ compatible with any MCP-aware client.
 Create or edit `~/.copilot/mcp-config.json` (use `/mcp add` inside the CLI or
 edit the file directly):
 
-> **⚠️ Use the full absolute path to `aodn-mcp-server`.**  AI CLI tools spawn
-> MCP servers without your shell's PATH or conda activation.  Find the path
+> **⚠️ Use the full absolute path to `aodn-mcp-server`.** AI CLI tools spawn
+> MCP servers without your shell's PATH or conda activation. Find the path
 > with `which aodn-mcp-server`.
 
 ```json
@@ -79,7 +82,7 @@ edit the file directly):
 
 > **Note — Tool name prefixing:** Copilot CLI (v1.0.x) namespaces MCP tool
 > names with the server key (`aodn`) and calls them as shell commands, e.g.
-> `aodn-search_datasets "mooring temperature"`.  The package registers
+> `aodn-search_datasets "mooring temperature"`. The package registers
 > standalone executables for every tool so these calls succeed:
 >
 > ```bash
@@ -109,7 +112,7 @@ Add to `~/.gemini/settings.json`:
       "args": [],
       "env": {
         "AODN_NOTEBOOKS_PATH": "/path/to/aodn_cloud_optimised/notebooks",
-        "AODN_DATASET_CONFIG_PATH": "/path/to/aodn_cloud_optimised/aodn_cloud_optimised/config/dataset"
+        "AODN_CONFIG_PATH": "/path/to/aodn_cloud_optimised/aodn_cloud_optimised/config/dataset"
       }
     }
   }
@@ -125,7 +128,7 @@ Add to `~/.gemini/settings.json`:
       "command": "/home/<your-user>/miniforge3/envs/<env>/bin/aodn-mcp-server",
       "env": {
         "AODN_NOTEBOOKS_PATH": "/path/to/aodn_cloud_optimised/notebooks",
-        "AODN_DATASET_CONFIG_PATH": "/path/to/aodn_cloud_optimised/aodn_cloud_optimised/config/dataset"
+        "AODN_CONFIG_PATH": "/path/to/aodn_cloud_optimised/aodn_cloud_optimised/config/dataset"
       }
     }
   }
@@ -136,26 +139,26 @@ Add to `~/.gemini/settings.json`:
 
 ## Available Tools
 
-| Tool | Description |
-|------|-------------|
-| `list_datasets` | List all datasets, optionally filtered by format or name prefix |
-| `search_datasets` | Fuzzy keyword search across names, descriptions, and CF attributes — includes data type |
-| `get_dataset_info` | Full metadata: schema variables with CF roles, S3 ARN, catalogue URL |
-| `get_dataset_schema` | **Authoritative variable listing** — exact column names with roles, data type, AWS description, recommended code |
-| `get_dataset_summary` | **Single-call dataset profile** — everything needed to use a dataset: type, description, variables, matching notebook, code pattern |
-| `check_dataset_coverage` | Live S3 query — temporal extent, spatial extent, and overlap with requested bbox/period |
-| `introspect_dataset_live` | Real variable list from the live S3 store (catches config/store divergence) |
-| `validate_notebook` | Execute a notebook cell-by-cell via `nbconvert` and return a per-cell ✅/❌ report |
-| `execute_python_cell` | Persistent Python REPL — test notebook cells before writing them |
-| `start_notebook` | **Start building a validated notebook** — initialises draft with title + DataQuery setup |
-| `add_notebook_cell` | **Add a validated cell** — code cells are executed first; broken cells are rejected |
-| `save_notebook` | **Save and validate notebook** — writes `.ipynb`, then re-executes in a fresh kernel; fails if any cell errors |
-| `replace_notebook_cell` | **Fix a cell in a draft** — replace by index after `save_notebook` reports failures |
-| `fix_notebook` | **Rescue an existing broken notebook** — validates, imports into builder session if errors found |
-| `get_dataset_config` | Full raw JSON config (parent/child merged via `load_dataset_config`) |
-| `get_notebook_template` | Canonical `.ipynb` as readable text; falls back to a generic template |
-| `get_plot_guide` | Ready-to-paste plotting snippets with real variable names |
-| `get_dataquery_reference` | `DataQuery.py` public API reference (classes, signatures, docstrings) |
+| Tool                      | Description                                                                                                                         |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `list_datasets`           | List all datasets, optionally filtered by format or name prefix                                                                     |
+| `search_datasets`         | Fuzzy keyword search across names, descriptions, and CF attributes — includes data type                                             |
+| `get_dataset_info`        | Full metadata: schema variables with CF roles, S3 ARN, catalogue URL                                                                |
+| `get_dataset_schema`      | **Authoritative variable listing** — exact column names with roles, data type, AWS description, recommended code                    |
+| `get_dataset_summary`     | **Single-call dataset profile** — everything needed to use a dataset: type, description, variables, matching notebook, code pattern |
+| `check_dataset_coverage`  | Live S3 query — temporal extent, spatial extent, and overlap with requested bbox/period                                             |
+| `introspect_dataset_live` | Real variable list from the live S3 store (catches config/store divergence)                                                         |
+| `validate_notebook`       | Execute a notebook cell-by-cell via `nbconvert` and return a per-cell ✅/❌ report                                                  |
+| `execute_python_cell`     | Persistent Python REPL — test notebook cells before writing them                                                                    |
+| `start_notebook`          | **Start building a validated notebook** — initialises draft with title + DataQuery setup                                            |
+| `add_notebook_cell`       | **Add a validated cell** — code cells are executed first; broken cells are rejected                                                 |
+| `save_notebook`           | **Save and validate notebook** — writes `.ipynb`, then re-executes in a fresh kernel; fails if any cell errors                      |
+| `replace_notebook_cell`   | **Fix a cell in a draft** — replace by index after `save_notebook` reports failures                                                 |
+| `fix_notebook`            | **Rescue an existing broken notebook** — validates, imports into builder session if errors found                                    |
+| `get_dataset_config`      | Full raw JSON config (parent/child merged via `load_dataset_config`)                                                                |
+| `get_notebook_template`   | Canonical `.ipynb` as readable text; falls back to a generic template                                                               |
+| `get_plot_guide`          | Ready-to-paste plotting snippets with real variable names                                                                           |
+| `get_dataquery_reference` | `DataQuery.py` public API reference (classes, signatures, docstrings)                                                               |
 
 ---
 
@@ -218,13 +221,13 @@ calls `check_dataset_coverage` or `introspect_dataset_live`.
 The server instructions and `get_plot_guide` explicitly warn about these
 common notebook bugs:
 
-| Pattern | Wrong | Correct |
-|---------|-------|---------|
-| Month-end date | `calendar.monthrange(yr, m)[1] + 1` → day 31 overflow | `pd.Timestamp(year=yr, month=m, day=1) + pd.DateOffset(months=1)` |
-| numpy datetime64 f-string | `f'{arr[0]:%Y-%m-%d}'` → `ValueError` | `pd.Timestamp(arr[0]).strftime('%Y-%m-%d')` |
-| DataQuery functions | `ds.plot_ts_diagram(df)` → `AttributeError` | `plot_ts_diagram(df)` (standalone import) |
-| xarray `.sel()` | `.sel(time=slice(...), lat=y, method='nearest')` → `NotImplementedError` | `.sel(time=slice(...)).sel(lat=y, method='nearest')` |
-| pcolormesh | 3-D array passed directly → `TypeError` | `.isel(time=0).values` first |
+| Pattern                   | Wrong                                                                    | Correct                                                           |
+| ------------------------- | ------------------------------------------------------------------------ | ----------------------------------------------------------------- |
+| Month-end date            | `calendar.monthrange(yr, m)[1] + 1` → day 31 overflow                    | `pd.Timestamp(year=yr, month=m, day=1) + pd.DateOffset(months=1)` |
+| numpy datetime64 f-string | `f'{arr[0]:%Y-%m-%d}'` → `ValueError`                                    | `pd.Timestamp(arr[0]).strftime('%Y-%m-%d')`                       |
+| DataQuery functions       | `ds.plot_ts_diagram(df)` → `AttributeError`                              | `plot_ts_diagram(df)` (standalone import)                         |
+| xarray `.sel()`           | `.sel(time=slice(...), lat=y, method='nearest')` → `NotImplementedError` | `.sel(time=slice(...)).sel(lat=y, method='nearest')`              |
+| pcolormesh                | 3-D array passed directly → `TypeError`                                  | `.isel(time=0).values` first                                      |
 
 ---
 
