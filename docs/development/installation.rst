@@ -245,19 +245,3 @@ Ensure ``poetry.lock`` is up-to-date using ``poetry lock``.
 
 For more details refer to
 `pyproject.toml <https://github.com/aodn/aodn_cloud_optimised/blob/main/pyproject.toml>`_.
-
-
-Release
--------
-
-Create a new release from the `releases page <https://github.com/aodn/aodn_cloud_optimised/releases>`_.
-
-Click **Draft a new release** and create a new tag by incrementing the version
-number. A GitHub Actions workflow will automatically build and upload the wheel.
-
-.. note:: Important Note
-   :class: custom-note
-   :name: todo-release
-
-    There is currently a minor issue with the release workflow: a second draft
-    release is created. Delete it manually for now.
