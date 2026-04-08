@@ -18,23 +18,26 @@ jobs:
         with:
           submodules: "true"
 
-      - name: Set up Miniconda
+      - name: Set up micromamba
         uses: mamba-org/setup-micromamba@v2
         with:
-          environment-file: environment.yml
-          generate-run-shell: true
+          # Only install micromamba into PATH — environment creation is handled
+          # by setup_miniforge_venvs.sh. generate-run-shell requires an env
+          # created by this action so it is intentionally omitted.
           init-shell: bash
 
-      - name: Activate Conda environment
-        shell: bash -el {0}
-        run: |
-          poetry install --no-interaction
+      - name: Set up test environment
+        # This is exactly what a developer runs locally.
+        # Creates AodnCloudOptimised_tests env from environment.yml,
+        # configures Poetry to install into it, then runs:
+        #   poetry install --extras "tests notebooks"
+        run: ./setup_miniforge_venvs.sh tests
 
       - name: Run pytest and coverage
         run: |
-          coverage run -m pytest
-          coverage report --fail-under=60
-          coverage xml -o coverage.xml
+          micromamba run -n AodnCloudOptimised_tests coverage run -m pytest
+          micromamba run -n AodnCloudOptimised_tests coverage report --fail-under=60
+          micromamba run -n AodnCloudOptimised_tests coverage xml -o coverage.xml
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v4.0.1
