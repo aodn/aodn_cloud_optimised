@@ -66,18 +66,20 @@
       }
     }
   },
-  "pandas_read_csv_config": {
-    "delimiter": ";",
-    "header": 0,
-    "index_col": "detection_timestamp",
-    "parse_dates": [
-      "detection_timestamp"
-    ],
-    "na_values": [
-      "N/A",
-      "NaN"
-    ],
-    "encoding": "utf-8"
+  "csv_config": {
+    "pandas_read_csv_config": {
+      "delimiter": ";",
+      "header": 0,
+      "index_col": "detection_timestamp",
+      "parse_dates": [
+        "detection_timestamp"
+      ],
+      "na_values": [
+        "N/A",
+        "NaN"
+      ],
+      "encoding": "utf-8"
+    }
   },
   "schema": {
     "detection_timestamp": {
