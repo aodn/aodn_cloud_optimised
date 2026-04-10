@@ -135,14 +135,11 @@ class PathConfig(pydantic.BaseModel):
                 stacklevel=2,
             )
             values.type = "files"
-            if (
-                any(".parquet" in f for f in values.filter)
-                or ".parquet" in values.s3_uri
-            ):
+            if ".parquet" in values.filter or ".parquet" in values.s3_uri:
                 raise ValueError(
                     "type must be defined as 'parquet' in run_settings.paths config if ingesting a parquet dataset."
                 )
-            elif any(".zarr" in f for f in values.filter) or ".zarr" in values.s3_uri:
+            elif ".zarr" in values.filter or ".zarr" in values.s3_uri:
                 raise ValueError(
                     "type must be defined as 'zarr' in run_settings.paths config if ingesting a zarr dataset."
                 )
