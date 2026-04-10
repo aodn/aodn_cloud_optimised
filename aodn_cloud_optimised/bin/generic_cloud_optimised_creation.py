@@ -33,7 +33,6 @@ logger = logging.getLogger(__name__)
 from aodn_cloud_optimised.bin.config.model import DatasetConfig, PathConfig
 
 
-
 def load_config_and_validate(config_filename: str) -> DatasetConfig:
     """Load and validate a dataset configuration.
 
