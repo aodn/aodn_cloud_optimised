@@ -126,47 +126,47 @@ class PathConfig(pydantic.BaseModel):
         return v
 
     @pydantic.model_validator(mode="after")
-    def validate_cross_fields(cls, values):
-        dataset_type = values.type or "files"
-        if values.type is None:
+    def validate_cross_fields(self) -> "PathConfig":
+        dataset_type = self.type or "files"
+        if self.type is None:
             warnings.warn(
                 "No 'type' specified in PathConfig. Assuming 'files' as default.",
                 UserWarning,
                 stacklevel=2,
             )
-            values.type = "files"
-            if ".parquet" in values.filter or ".parquet" in values.s3_uri:
+            self.type = "files"
+            if ".parquet" in self.filter or ".parquet" in self.s3_uri:
                 raise ValueError(
                     "type must be defined as 'parquet' in run_settings.paths config if ingesting a parquet dataset."
                 )
-            elif ".zarr" in values.filter or ".zarr" in values.s3_uri:
+            elif ".zarr" in self.filter or ".zarr" in self.s3_uri:
                 raise ValueError(
                     "type must be defined as 'zarr' in run_settings.paths config if ingesting a zarr dataset."
                 )
 
         if dataset_type == "parquet":
-            if values.filter:
+            if self.filter:
                 raise ValueError("filter must not be defined when type='parquet'")
-            if values.year_range:
+            if self.year_range:
                 raise ValueError("year_range must not be defined when type='parquet'")
-            if values.partitioning not in (None, "hive"):
+            if self.partitioning not in (None, "hive"):
                 raise ValueError(
-                    f"Invalid partitioning='{values.partitioning}' for parquet dataset. Only 'hive' is supported."
+                    f"Invalid partitioning='{self.partitioning}' for parquet dataset. Only 'hive' is supported."
                 )
 
         elif dataset_type == "zarr":
-            if values.filter:
+            if self.filter:
                 raise ValueError("filter must not be defined when type='zarr'")
-            if values.year_range:
+            if self.year_range:
                 raise ValueError("year_range must not be defined when type='zarr'")
-            if values.partitioning:
+            if self.partitioning:
                 raise ValueError("partitioning is not applicable when type='zarr'")
 
         elif dataset_type == "files":
-            if values.partitioning:
+            if self.partitioning:
                 raise ValueError("partitioning is not applicable when type='files'")
 
         else:
             raise ValueError(f"Unsupported dataset type: {dataset_type}")
 
-        return values
+        return self
