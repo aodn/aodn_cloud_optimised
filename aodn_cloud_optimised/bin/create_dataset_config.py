@@ -239,7 +239,7 @@ def main():
 
 def create_dataset_script(dataset_name, dataset_json, nc_file_path, bucket):
     """
-    Create a symlink to generic_launcher.py named after the dataset in the datasets folder.
+    Create a symlink to generic_launcher.py named after the dataset in the bin/datasets folder.
 
     Args:
         dataset_name (str): The name of the dataset to be used in the symlink file name.
