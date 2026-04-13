@@ -5,11 +5,22 @@ Installation
 
 Choose your installation method based on your use case:
 
-- **Data Processing Only** (recommended): ``make core``
-- **Jupyter Notebooks**: ``make notebooks``
-- **Contributing to the Project**: ``make dev``
-- **Building Docs**: ``make docs``
-- **Full Test Suite**: ``make tests``
+**Quick Decision Tree:**
+
+1. **"I just want to process datasets with existing configs"**
+   → Use ``make core`` (fastest, minimal dependencies)
+
+2. **"I want to read and analyze cloud-optimised data with Python/Jupyter"**
+   → Use ``make notebooks`` (adds DataQuery, Jupyter, plotting)
+
+3. **"I want to set up the MCP server for AI assistant integration"**
+   → Use ``make mcp`` (core + MCP server dependencies)
+
+4. **"I want to contribute code, run tests, and build docs"**
+   → Use ``make dev`` (all dependencies + development tools)
+
+5. **"I just want to build the documentation locally"**
+   → Use ``make docs`` (Sphinx + documentation tools only)
 
 Requirements
 ------------
@@ -34,7 +45,7 @@ Then use:
 
 .. code-block:: bash
 
-   generic_cloud_optimised_creation --dataset-config config/dataset/your_dataset.json ...
+   generic_cloud_optimised_creation --config your_dataset.json
 
 See :ref:`quickstart` for an example.
 

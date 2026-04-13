@@ -1202,6 +1202,125 @@ TODO:
 - Explain pyproject.toml
 - individual scripts for full reprocessing
 
+Configuration Validation
+========================
+
+When you run ``generic_cloud_optimised_creation --config <config_file>``, the configuration is automatically validated against the Pydantic data model.
+
+Understanding Validation
+------------------------
+
+All dataset configurations are validated using Python's Pydantic library, which ensures:
+
+- **Required fields** are present
+- **Field types** are correct (string, number, boolean, etc.)
+- **Nested structures** follow the expected schema
+- **Enum values** match allowed options
+
+If validation fails, you'll see a detailed error message showing exactly which field is problematic.
+
+Common Validation Errors
+------------------------
+
+**Error: Field required**
+
+.. code-block:: text
+
+    ValidationError: 1 validation error for DatasetConfig
+    cloud_optimised_format: Field required
+
+**Fix:** Ensure you've set the ``cloud_optimised_format`` field to either ``"parquet"`` or ``"zarr"``:
+
+.. code-block:: json
+
+    {
+      "dataset_name": "my_dataset",
+      "cloud_optimised_format": "parquet",
+      ...
+    }
+
+**Error: Input should be a valid string**
+
+.. code-block:: text
+
+    ValidationError: 1 validation error for DatasetConfig
+    metadata_uuid: Input should be a valid string
+
+**Fix:** Ensure the field value is quoted as a string (not a number or boolean):
+
+.. code-block:: json
+
+    {
+      "metadata_uuid": "a681fdba-c6d9-44ab-90b9-113b0ed03536"
+    }
+
+**Error: Input should be one of**
+
+.. code-block:: text
+
+    ValidationError: 1 validation error for DatasetConfig
+    cloud_optimised_format: Input should be 'zarr' or 'parquet'
+
+**Fix:** Ensure the format is one of the allowed values:
+
+.. code-block:: json
+
+    {
+      "cloud_optimised_format": "parquet"  // or "zarr"
+    }
+
+Required vs Optional Fields
+---------------------------
+
+**Always Required:**
+
+- ``dataset_name`` — Identifier for the dataset
+- ``cloud_optimised_format`` — Either ``"parquet"`` or ``"zarr"``
+- ``metadata_uuid`` — Geonetwork metadata record UUID
+- ``schema`` — Variable definitions (varies by format)
+
+**Often Required (depending on format):**
+
+- For **Parquet**: ``schema_transformation.partitions`` — How to partition the data
+- For **Zarr**: ``schema.chunks`` — Chunking strategy for performance
+
+**Optional:**
+
+- ``run_settings`` — Cluster configuration, S3 buckets (uses defaults if omitted)
+- ``schema_transformation`` — Data processing steps (uses defaults)
+
+Debugging Validation
+--------------------
+
+To debug validation issues before running the full processing:
+
+**1. Check syntax with Python**
+
+.. code-block:: python
+
+    import json
+    with open('my_dataset.json') as f:
+        config = json.load(f)  # Catches JSON syntax errors
+
+**2. Validate against the model**
+
+.. code-block:: python
+
+    from aodn_cloud_optimised.bin.config.model import DatasetConfig
+
+    with open('my_dataset.json') as f:
+        config_dict = json.load(f)
+
+    try:
+        config = DatasetConfig.model_validate(config_dict)
+        print("✓ Config is valid!")
+    except ValidationError as e:
+        print(f"✗ Validation error:\n{e}")
+
+**3. Use the automatic config creation tool**
+
+See :ref:`dataset-config-script` for a semi-automatic tool that generates a valid configuration template.
+
 .. note:: Important Note
    :class: custom-note
    :name: install-after-config

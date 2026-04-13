@@ -1,59 +1,83 @@
 Usage
 =====
 
+The library provides multiple ways to create cloud-optimised datasets:
 
-As a standalone bash script
-----------------------------
+1. **Recommended: Use ``generic_cloud_optimised_creation`` with dataset config**
+2. Alternative: Write Python code using the :ref:`api-reference` directly
+3. For development: Use integration tests and custom handlers
+
+Generic Cloud Optimised Creation Script
+----------------------------------------
+
+The primary way to process datasets is via the ``generic_cloud_optimised_creation`` command with a dataset configuration file.
+
+Basic usage:
+
+.. code-block:: bash
+
+    generic_cloud_optimised_creation --config <dataset_config.json>
+
+Getting help:
 
 .. code-block:: bash
 
     generic_cloud_optimised_creation -h
-    usage: generic_cloud_optimised_creation [-h] --paths PATHS [PATHS ...] [--filters [FILTERS ...]] [--suffix SUFFIX] --dataset-config DATASET_CONFIG
-                                            [--clear-existing-data] [--force-previous-parquet-deletion] [--cluster-mode {local,remote}]
-                                            [--optimised-bucket-name OPTIMISED_BUCKET_NAME] [--root_prefix-cloud-optimised-path ROOT_PREFIX_CLOUD_OPTIMISED_PATH]
-                                            [--bucket-raw BUCKET_RAW]
 
-    Process S3 paths and create cloud-optimized datasets.
+Key arguments
+^^^^^^^^^^^^^
 
-    options:
-      -h, --help            show this help message and exit
-      --paths PATHS [PATHS ...]
-                            List of S3 paths to process. Example: 'IMOS/ANMN/NSW' 'IMOS/ANMN/PA'
-      --filters [FILTERS ...]
-                            Optional filter strings to apply on the S3 paths. Example: '_hourly-timeseries_' 'FV02'
-      --suffix SUFFIX       Optional suffix used by s3_ls to filter S3 objects. Default is .nc. Example: '.nc'
-      --exclude EXCLUDE     Optional string to exclude files listed by s3_ls to filter S3 objects. '_FV01_'
-      --dataset-config DATASET_CONFIG
-                            Path to the dataset config JSON file. Example: 'mooring_hourly_timeseries_delayed_qc.json'
-      --clear-existing-data
-                            Flag to clear existing data. Default is False.
-      --force-previous-parquet-deletion
-                            Flag to force the search of previous equivalent parquet file created. Much slower. Default is False. Only for Parquet processing.
-      --cluster-mode {local,remote}
-                            Cluster mode to use. Options: 'local' or 'remote'. Default is 'local'.
-      --optimised-bucket-name OPTIMISED_BUCKET_NAME
-                            Bucket name where cloud optimised object will be created. Default is 'imos-data-lab-optimised'
-      --root-prefix-cloud-optimised-path ROOT_PREFIX_CLOUD_OPTIMISED_PATH
-                            Prefix value for the root location of the cloud optimised objects, such as s3://optimised-bucket-name/root-prefix-cloud-optimised-path/... Default is 'cloud_optimised/cluster_testing'
-      --bucket-raw BUCKET_RAW
-                            Bucket name where input object files will be searched for. Default is 'imos-data'
-      --raise-error         Flag to exit the code on the first error. Default is False.
+``-c, --config``
+  Path or name of the dataset configuration JSON file. This is the main argument.
+  Examples: ``mooring_hourly_timeseries_delayed_qc.json`` or ``satellite_ghrsst_l3s_1day_daynighttime_single_sensor_australia.json``
 
+``-o, --json-overwrite``
+  Optional JSON string to override config fields at runtime. Useful for testing without modifying the config file.
 
-    Examples:
-      generic_cloud_optimised_creation --paths 'IMOS/ANMN/NSW' 'IMOS/ANMN/PA' --filters '_hourly-timeseries_' 'FV02' --dataset-config 'mooring_hourly_timeseries_delayed_qc.json' --clear-existing-data --cluster-mode 'remote'
-      generic_cloud_optimised_creation --paths 'IMOS/ANMN/NSW' 'IMOS/ANMN/QLD' --dataset-config 'anmn_ctd_ts_fv01.json'
-      generic_cloud_optimised_creation --paths 'IMOS/ACORN/gridded_1h-avg-current-map_QC/TURQ/2024' --dataset-config 'radar_TurquoiseCoast_velocity_hourly_averaged_delayed_qc.json' --clear-existing-data --cluster-mode 'remote'
+  Example: ``'{"run_settings": {"cluster": {"mode": null}, "raise_error": true}}'``
 
+``-t, --test``
+  Use integration testing buckets instead of default buckets (for development and testing).
 
+Advanced options for data retrieval
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. note:: Important Note
-   :class: custom-note
-   :name: cloud-opt-scripts
+When processing input data, you can control what gets fetched:
 
-   Specific dataset scripts are defined in the ``pyproject.toml`` file and can be directly run. They are defined under the following URL:
+``--bucket-raw``
+  S3 bucket containing input files. Default: ``imos-data``
 
-   `https://github.com/aodn/aodn_cloud_optimised/tree/main/aodn_cloud_optimised/bin <https://github.com/aodn/aodn_cloud_optimised/tree/main/aodn_cloud_optimised/bin>`_
+``--optimised-bucket-name``
+  S3 bucket where cloud-optimised output will be written. Default: ``imos-data-lab-optimised``
+
+``--root-prefix-cloud-optimised-path``
+  S3 path prefix for output location. Example: ``cloud_optimised/example_testing``
+
+Examples
+^^^^^^^^
+
+Process a Zarr dataset (gridded data):
+
+.. code-block:: bash
+
+    generic_cloud_optimised_creation --config satellite_ghrsst_l3s_1day_daynighttime_single_sensor_australia
+
+Process a Parquet dataset with testing bucket:
+
+.. code-block:: bash
+
+    generic_cloud_optimised_creation --config mooring_hourly_timeseries_delayed_qc --test
+
+Override cluster configuration at runtime:
+
+.. code-block:: bash
+
+    generic_cloud_optimised_creation --config my_dataset \
+      --json-overwrite '{"run_settings": {"cluster": {"mode": null}}}'
+
+.. note:: Dataset-Specific Commands
+
+   Many pre-configured dataset scripts are available in the library. These call ``generic_cloud_optimised_creation`` with pre-set parameters. See ``aodn_cloud_optimised/bin/`` in the `GitHub repository <https://github.com/aodn/aodn_cloud_optimised/tree/main/aodn_cloud_optimised/bin>`_ for examples.
 
 
 As a python module

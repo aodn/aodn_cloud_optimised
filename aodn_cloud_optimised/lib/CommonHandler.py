@@ -474,24 +474,23 @@ class CommonHandler:
             ValueError: If the dataset configuration fails validation against the pyarrow_schema.
 
         Example:
-            Assuming `self.dataset_config` contains the dataset configuration JSON:
-            ```
-            dataset_validator = DatasetValidator()
-            try:
-                dataset_validator.validate_json()
-            except ValueError as e:
-                print(f"Validation error: {e}")
-            ```
+            Assuming ``self.dataset_config`` contains the dataset configuration JSON::
+
+                dataset_validator = DatasetValidator()
+                try:
+                    dataset_validator.validate_json()
+                except ValueError as e:
+                    print(f"Validation error: {e}")
 
         Schema Loading:
-            The pyarrow_schema is loaded from a JSON file using `importlib.resources.files`.
-            Ensure the pyarrow_schema file (`schema_validation_parquet.json`) is accessible within the
-            `aodn_cloud_optimised.config.dataset` package.
+            The pyarrow_schema is loaded from a JSON file using ``importlib.resources.files``.
+            Ensure the pyarrow_schema file (``schema_validation_parquet.json``) is accessible within the
+            ``aodn_cloud_optimised.config.dataset`` package.
 
         Validation Process:
-            - The method attempts to validate `self.dataset_config` against the loaded pyarrow_schema.
+            - The method attempts to validate ``self.dataset_config`` against the loaded pyarrow_schema.
             - If validation is successful, it logs an info message indicating success.
-            - If validation fails, it raises a `ValueError` with details of the validation error.
+            - If validation fails, it raises a ``ValueError`` with details of the validation error.
         """
         schema = load_dataset_config(json_validation_path)
         try:
