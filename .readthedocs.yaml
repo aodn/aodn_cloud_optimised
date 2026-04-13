@@ -6,7 +6,7 @@ build:
     python: "3.12"
   apt_packages:
     - graphviz
-    - libunits2-dev
+    - libudunits2-dev
 
   jobs:
     post_create_environment:
