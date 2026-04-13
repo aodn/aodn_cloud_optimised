@@ -23,7 +23,7 @@ Visit the documentation on [ReadTheDocs](https://aodn-cloud-optimised.readthedoc
 - Convert **CSV** or **NetCDF** (single or multidimensional) to **Zarr** or **Parquet**.
 - **Dataset configuration:** YAML-based configuration with inheritance, allowing similar datasets to share settings.
   Example: [Radar ACORN](https://github.com/aodn/aodn_cloud_optimised/tree/main/aodn_cloud_optimised/config/dataset), [GHRSST](https://www.ghrsst.org/).
-- Semi-automatic creation of dataset configuration: [ReadTheDocs guide](https://aodn-cloud-optimised.readthedocs.io/en/latest/development/dataset-configuration.html#create-dataset-configuration-semi-automatic).
+- Semi-automatic creation of dataset configuration: [ReadTheDocs guide](https://aodn-cloud-optimised.readthedocs.io/en/latest/how-to/dataset-configuration.html#create-dataset-configuration-semi-automatic).
 - Generic handlers for standard datasets:
   [GenericParquetHandler](https://github.com/aodn/aodn_cloud_optimised/blob/main/aodn_cloud_optimised/lib/GenericParquetHandler.py),
   [GenericZarrHandler](https://github.com/aodn/aodn_cloud_optimised/blob/main/aodn_cloud_optimised/lib/GenericZarrHandler.py)
@@ -34,8 +34,8 @@ Visit the documentation on [ReadTheDocs](https://aodn-cloud-optimised.readthedoc
 ### Clustering & Parallel Processing
 
 - Supports local **Dask cluster** and remote clusters:
-  - [Coiled](https://aodn-cloud-optimised.readthedocs.io/en/latest/development/dataset-configuration.html#coiled-cluster-configuration)
-  - [EC2](https://aodn-cloud-optimised.readthedocs.io/en/latest/development/dataset-configuration.html#ec2-cluster-configuration)
+  - [Coiled](https://aodn-cloud-optimised.readthedocs.io/en/latest/how-to/clustering.html#coiled-aws-hosted)
+  - [EC2](https://aodn-cloud-optimised.readthedocs.io/en/latest/how-to/clustering.html#ec2-aws-managed)
   - Fargate cluster
 - Cluster behaviour is configuration-driven and can be easily overridden.
 - Automatic restart of remote cluster upon Dask failure.
@@ -57,7 +57,7 @@ Visit the documentation on [ReadTheDocs](https://aodn-cloud-optimised.readthedoc
 
 ### Dynamic Variable Definition
 
-See [doc](https://aodn-cloud-optimised.readthedocs.io/en/latest/development/dataset-configuration.html#adding-variables-dynamically)
+See [doc](https://aodn-cloud-optimised.readthedocs.io/en/latest/how-to/dataset-configuration.html#adding-variables-dynamically)
 
 - Global Attributes -> variable
 - variable attribute -> variable
@@ -117,7 +117,7 @@ make dev                         # Poetry venv — recommended
 poetry run pre-commit install
 ```
 
-See [ReadTheDocs - Dev](https://aodn-cloud-optimised.readthedocs.io/en/latest/development/installation.html) for full details.
+See [ReadTheDocs - Dev](https://aodn-cloud-optimised.readthedocs.io/en/latest/development/setup.html) for full details.
 
 ## Usage
 
