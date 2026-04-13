@@ -229,7 +229,8 @@ def main():
 
     module_path = get_module_path()
 
-    script_path = os.path.join(module_path, "bin", f"{dataset_name}.py")
+    script_path = os.path.join(module_path, "bin", "datasets", f"{dataset_name}.py")
+    os.makedirs(os.path.dirname(script_path), exist_ok=True)
     with open(script_path, "w") as script_file:
         script_file.write(script_content)
     os.chmod(script_path, 0o755)  # Make the script executable
@@ -238,7 +239,7 @@ def main():
 
 def create_dataset_script(dataset_name, dataset_json, nc_file_path, bucket):
     """
-    Create a symlink to generic_launcher.py named after the dataset in the bin folder.
+    Create a symlink to generic_launcher.py named after the dataset in the datasets folder.
 
     Args:
         dataset_name (str): The name of the dataset to be used in the symlink file name.
@@ -250,11 +251,11 @@ def create_dataset_script(dataset_name, dataset_json, nc_file_path, bucket):
         str: The file system path to the created symlink.
     """
     module_path = get_module_path()
-    bin_dir = os.path.join(module_path, "bin")
-    os.makedirs(bin_dir, exist_ok=True)
+    datasets_dir = os.path.join(module_path, "bin", "datasets")
+    os.makedirs(datasets_dir, exist_ok=True)
 
-    symlink_path = os.path.join(bin_dir, f"{dataset_name}.py")
-    target_name = "generic_launcher.py"  # relative path within bin directory
+    symlink_path = os.path.join(datasets_dir, f"{dataset_name}.py")
+    target_name = "../generic_launcher.py"  # relative path from datasets/ to bin/
 
     # Remove existing symlink/file if exists
     if os.path.exists(symlink_path) or os.path.islink(symlink_path):
@@ -282,7 +283,7 @@ def update_pyproject_toml(dataset_name):
     pyproject_path = os.path.abspath(
         os.path.join(module_path, os.pardir, "pyproject.toml")
     )
-    script_entry = f'cloud_optimised_{dataset_name} = "aodn_cloud_optimised.bin.{dataset_name}:main"\n'
+    script_entry = f'cloud_optimised_{dataset_name} = "aodn_cloud_optimised.bin.datasets.{dataset_name}:main"\n'
 
     with open(pyproject_path, "r") as pyproject_file:
         lines = pyproject_file.readlines()
