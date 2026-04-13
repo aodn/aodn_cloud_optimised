@@ -241,7 +241,7 @@ The IMOS/AODN processing is very file-oriented. To reprocess data and delete pre
    }
 
 **@partitioning** (required)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Generates time and space partitioning variables (`timestamp`, `polygon`) for optimised cloud access.
 
@@ -363,7 +363,7 @@ And the function definition:
 You may define multiple functions this way. They are applied to every input path at runtime.
 
 **@function:<function_name>** to create a new variable from input variables
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Custom logic can be applied to derive new variables from existing dataframe columns using the `@function:<name>` syntax in `add_variables`. These require a corresponding function definition in the `functions` block.
 
@@ -620,7 +620,7 @@ You can use any valid arguments for the corresponding CSV reader. See the offici
 
 
 Parquet Configuration from Parquet file
------------------------------------
+---------------------------------------
 In some instances we already have a parquet file, but still need to update it to the cloud optimised format and apply AODN conventions.
 
 There is currently no additional configuration required to create a parquet dataset from a parquet file. Follow the dataset configuration as per explained above for NetCDF.
@@ -646,7 +646,7 @@ https://github.com/aodn/aodn_cloud_optimised/blob/main/aodn_cloud_optimised/conf
 .. _the-basics-1:
 
 The Basics
-~~~~~~~~~~
+^^^^^^^^^^
 
 The first section to add is
 
@@ -667,7 +667,7 @@ The first section to add is
    be written in the parquet sidecar file
 
 The chunks
-~~~~~~~~~~
+^^^^^^^^^^
 
 Add the following to the "schema_transformation" section
 
@@ -685,7 +685,7 @@ Add the following to the "schema_transformation" section
        },
 
 Variable Template
-~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^
 
 The name of a variable which will be used as a template to create
 missing variables from the dataset and have similar shape
@@ -695,7 +695,7 @@ missing variables from the dataset and have similar shape
        "var_template_shape": "UCUR",
 
 Variables to drop
-~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^
 
 when setting ``region`` explicitly in to_zarr() method, all variables in
 the dataset to write must have at least one dimension in common with the
@@ -738,13 +738,13 @@ practice to drop them:
 
 
 Creating the Schema
-~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^
 
 See :ref:`creating_the_schema` section above. As for Parquet...
 
 
 Global Attributes to drop and set
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Similar to Parquet. Add the following under the "schema_transformation" section
 
@@ -767,7 +767,7 @@ Similar to Parquet. Add the following under the "schema_transformation" section
 
 
 Global Attributes to variables
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Similar to Parquet. Add the following to the "schema_transformation" section.
 
@@ -809,7 +809,7 @@ Similar to Parquet. Add the following to the "schema_transformation" section.
 
 
 Run Settings Options
----------------
+--------------------
 
 Example
 ^^^^^^^^^
@@ -859,7 +859,7 @@ Example
     * If cluster.mode is set to "ec2", the ec2_cluster_options and ec2_adapt_options need to be set.
     * cluster.mode can be also set to "local" or null
     * force_previous_parquet_deletion forces the search for existing parquet files to delete matching the new one to ingest. This can end up being really slow if there are a lot of objets
-(for example Argo)
+      (for example Argo)
 
 
 
@@ -944,7 +944,7 @@ This allows you to test features such as bucket creation, file uploads, and
 `s3fs` integration without needing real S3 credentials.
 
 Running MinIO with Docker Compose
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+"""""""""""""""""""""""""""""""""
 
 Save the following as ``docker-compose.yml`` in your project root:
 
@@ -977,7 +977,7 @@ Access the MinIO web console at: http://localhost:9001
 (Default login: ``minioadmin / minioadmin``).
 
 Creating a Bucket
-~~~~~~~~~~~~~~~~~
+"""""""""""""""""
 
 Once MinIO is running, create a bucket (for example ``test-bucket``) either via
 the web console or with the ``mc`` (MinIO client) CLI:
@@ -1032,7 +1032,7 @@ These settings control authentication and client configuration used by ``s3fs`` 
   }
 
 **Explanation**
-~~~~~~~~~~~~~~~
+"""""""""""""""
 
 - ``s3_fs_common_opts``
   Defines the **default connection options** shared by both input and output S3 clients (e.g. access keys, endpoint).
@@ -1048,7 +1048,7 @@ These settings control authentication and client configuration used by ``s3fs`` 
   If not specified, the system falls back to default bucket names (``bucket_raw_default_name`` and ``optimised_bucket_name``) or environment variables.
 
 **Precedence Rules**
-~~~~~~~~~~~~~~~~~~~~
+""""""""""""""""""""
 
 1. If ``s3_bucket_opts.<input_data|output_data>.s3_fs_opts`` is defined → it takes priority.
 2. Otherwise, ``s3_fs_common_opts`` is used.
@@ -1202,9 +1202,128 @@ TODO:
 - Explain pyproject.toml
 - individual scripts for full reprocessing
 
+Configuration Validation
+========================
+
+When you run ``generic_cloud_optimised_creation --config <config_file>``, the configuration is automatically validated against the Pydantic data model.
+
+Understanding Validation
+------------------------
+
+All dataset configurations are validated using Python's Pydantic library, which ensures:
+
+- **Required fields** are present
+- **Field types** are correct (string, number, boolean, etc.)
+- **Nested structures** follow the expected schema
+- **Enum values** match allowed options
+
+If validation fails, you'll see a detailed error message showing exactly which field is problematic.
+
+Common Validation Errors
+------------------------
+
+**Error: Field required**
+
+.. code-block:: text
+
+    ValidationError: 1 validation error for DatasetConfig
+    cloud_optimised_format: Field required
+
+**Fix:** Ensure you've set the ``cloud_optimised_format`` field to either ``"parquet"`` or ``"zarr"``:
+
+.. code-block:: json
+
+    {
+      "dataset_name": "my_dataset",
+      "cloud_optimised_format": "parquet",
+      ...
+    }
+
+**Error: Input should be a valid string**
+
+.. code-block:: text
+
+    ValidationError: 1 validation error for DatasetConfig
+    metadata_uuid: Input should be a valid string
+
+**Fix:** Ensure the field value is quoted as a string (not a number or boolean):
+
+.. code-block:: json
+
+    {
+      "metadata_uuid": "a681fdba-c6d9-44ab-90b9-113b0ed03536"
+    }
+
+**Error: Input should be one of**
+
+.. code-block:: text
+
+    ValidationError: 1 validation error for DatasetConfig
+    cloud_optimised_format: Input should be 'zarr' or 'parquet'
+
+**Fix:** Ensure the format is one of the allowed values:
+
+.. code-block:: json
+
+    {
+      "cloud_optimised_format": "parquet"  // or "zarr"
+    }
+
+Required vs Optional Fields
+---------------------------
+
+**Always Required:**
+
+- ``dataset_name`` — Identifier for the dataset
+- ``cloud_optimised_format`` — Either ``"parquet"`` or ``"zarr"``
+- ``metadata_uuid`` — Geonetwork metadata record UUID
+- ``schema`` — Variable definitions (varies by format)
+
+**Often Required (depending on format):**
+
+- For **Parquet**: ``schema_transformation.partitions`` — How to partition the data
+- For **Zarr**: ``schema.chunks`` — Chunking strategy for performance
+
+**Optional:**
+
+- ``run_settings`` — Cluster configuration, S3 buckets (uses defaults if omitted)
+- ``schema_transformation`` — Data processing steps (uses defaults)
+
+Debugging Validation
+--------------------
+
+To debug validation issues before running the full processing:
+
+**1. Check syntax with Python**
+
+.. code-block:: python
+
+    import json
+    with open('my_dataset.json') as f:
+        config = json.load(f)  # Catches JSON syntax errors
+
+**2. Validate against the model**
+
+.. code-block:: python
+
+    from aodn_cloud_optimised.bin.config.model import DatasetConfig
+
+    with open('my_dataset.json') as f:
+        config_dict = json.load(f)
+
+    try:
+        config = DatasetConfig.model_validate(config_dict)
+        print("✓ Config is valid!")
+    except ValidationError as e:
+        print(f"✗ Validation error:\n{e}")
+
+**3. Use the automatic config creation tool**
+
+See :ref:`dataset-config-script` for a semi-automatic tool that generates a valid configuration template.
+
 .. note:: Important Note
    :class: custom-note
-   :name: non-generic-handler
+   :name: install-after-config
 
     In order to test the new configuration, the newly created script needs to be installed in the environment.
 

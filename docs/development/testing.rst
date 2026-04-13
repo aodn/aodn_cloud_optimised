@@ -1,7 +1,14 @@
+.. _testing:
+
+Testing
+=======
+
+The project includes comprehensive tests for both the library and the MCP server.
+
 .. _mcp-testing:
 
 Testing the MCP Server
-======================
+----------------------
 
 The MCP server ships with a dedicated integration test suite in
 ``integration_testing/test_mcp_server.py``.  All tests call the MCP tool

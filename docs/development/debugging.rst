@@ -1,7 +1,7 @@
-.. _debug-doc:
+.. _debugging:
 
-Debugging Dask
-==============
+Debugging
+=========
 
 It can be tricky to debug Dask run, even with the LocalCluster.
 
@@ -9,7 +9,7 @@ As of late 2024, debugging with PyCharm a LocalCluster fails.
 
 
 Debug Unittests
-=========
+===============
 The easiest way is to run for example
 
 .. code-block:: bash
