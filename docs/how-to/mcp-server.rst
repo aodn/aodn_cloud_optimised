@@ -1,3 +1,5 @@
+.. _mcp-server:
+
 MCP Server
 ==========
 

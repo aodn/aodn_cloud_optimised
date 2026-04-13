@@ -1,24 +1,39 @@
-.. AODN Cloud Optimised documentation master file, created by
-   sphinx-quickstart on Thu Jul 11 19:08:37 2024.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+.. AODN Cloud Optimised documentation master file
 
 Welcome to AODN Cloud Optimised's documentation!
 ================================================
 
-This project is hosted on GitHub. You can find the repository here:
-`aodn_cloud_optimised <https://github.com/aodn/aodn_cloud_optimised>`_.
+This project is hosted on GitHub: `aodn_cloud_optimised <https://github.com/aodn/aodn_cloud_optimised>`_.
 
+The **AODN Cloud Optimised** project converts IMOS datasets from source formats (NetCDF, CSV)
+to cloud-optimized formats (Parquet, Zarr) for efficient cloud-based access and analysis.
+It includes an optional MCP server for AI integration.
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: Documentation:
 
-   installation
-   module-overview
+   getting-started/index
+   how-to/index
    development/index
+   module-overview
    usage
-   mcp_server
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Quick Links:
+
+   getting-started/installation
+   getting-started/quickstart
+
+**Choose your path:**
+
+- 👤 **New user?** Start with :ref:`getting-started`
+- 🔧 **Want to process data?** See :ref:`quickstart` or :ref:`dataset-config-doc`
+- 📓 **Write notebooks?** Check :ref:`notebooks`
+- 🚀 **Using MCP server?** Go to :ref:`mcp-server`
+- 👨‍💻 **Contributing?** Visit :ref:`development`
+- 📚 **API reference?** See :doc:`module-overview`
 
 Indices and tables
 ==================

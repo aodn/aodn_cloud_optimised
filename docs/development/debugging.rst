@@ -1,7 +1,7 @@
-.. _debug-doc:
+.. _debugging:
 
-Debugging Dask
-==============
+Debugging
+=========
 
 It can be tricky to debug Dask run, even with the LocalCluster.
 
