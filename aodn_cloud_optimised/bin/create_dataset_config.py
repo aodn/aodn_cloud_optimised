@@ -429,6 +429,7 @@ def next_steps(dataset_name):
     script_path = str(
         importlib.resources.files("aodn_cloud_optimised")
         .joinpath("bin")
+        .joinpath("datasets")
         .joinpath(f"{dataset_name}.py")
     )
 

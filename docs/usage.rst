@@ -77,7 +77,7 @@ Override cluster configuration at runtime:
 
 .. note:: Dataset-Specific Commands
 
-   Many pre-configured dataset scripts are available in the library. These call ``generic_cloud_optimised_creation`` with pre-set parameters. See ``aodn_cloud_optimised/bin/`` in the `GitHub repository <https://github.com/aodn/aodn_cloud_optimised/tree/main/aodn_cloud_optimised/bin>`_ for examples.
+   Many pre-configured dataset scripts are available in the library. These call ``generic_cloud_optimised_creation`` with pre-set parameters. See ``aodn_cloud_optimised/bin/datasets/`` in the `GitHub repository <https://github.com/aodn/aodn_cloud_optimised/tree/main/aodn_cloud_optimised/bin/datasets>`_ for examples.
 
 
 As a python module
