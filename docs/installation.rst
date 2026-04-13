@@ -1,5 +1,3 @@
-.. include:: development
-
 .. _install:
 
 Quick Installation

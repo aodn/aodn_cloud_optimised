@@ -9,7 +9,7 @@ As of late 2024, debugging with PyCharm a LocalCluster fails.
 
 
 Debug Unittests
-=========
+===============
 The easiest way is to run for example
 
 .. code-block:: bash

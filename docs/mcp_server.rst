@@ -18,8 +18,8 @@ All catalog information is built from the local ``config/dataset/*.json`` files
 shipped with the package. **No S3 calls or credentials are required to start the
 server.**
 
-Installation
-------------
+MCP Server Installation
+-----------------------
 
 The MCP server requires the optional ``mcp`` extra::
 
@@ -500,14 +500,14 @@ these recurring Python errors in oceanographic notebooks:
            ts = pd.Timestamp(year=yr, month=m, day=1) + pd.DateOffset(months=1)
            return np.datetime64(ts.strftime('%Y-%m-%d'))
 
-**2. numpy datetime64 f-string format spec (``ValueError: Invalid format
-   specifier '%Y-%m-%d'``).** The format spec ``{arr[0]:%Y-%m-%d}`` fails for
+**2. numpy datetime64 f-string format spec** (``ValueError: Invalid format specifier '%Y-%m-%d'``).
+   The format spec ``{arr[0]:%Y-%m-%d}`` fails for
    ``numpy.datetime64`` values. Always convert first::
 
        pd.Timestamp(arr[0]).strftime('%Y-%m-%d')
 
-**3. DataQuery standalone functions called as class methods
-   (``AttributeError: 'ParquetDataSource' has no attribute 'plot_ts_diagram'``).**
+**3. DataQuery standalone functions called as class methods**
+   (``AttributeError: 'ParquetDataSource' has no attribute 'plot_ts_diagram'``).
    ``plot_ts_diagram``, ``plot_timeseries``, and similar helpers are module-level
    functions, not methods of any dataset class. Import and call them directly::
 

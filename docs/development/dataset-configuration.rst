@@ -241,7 +241,7 @@ The IMOS/AODN processing is very file-oriented. To reprocess data and delete pre
    }
 
 **@partitioning** (required)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Generates time and space partitioning variables (`timestamp`, `polygon`) for optimised cloud access.
 
@@ -363,7 +363,7 @@ And the function definition:
 You may define multiple functions this way. They are applied to every input path at runtime.
 
 **@function:<function_name>** to create a new variable from input variables
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Custom logic can be applied to derive new variables from existing dataframe columns using the `@function:<name>` syntax in `add_variables`. These require a corresponding function definition in the `functions` block.
 
@@ -620,7 +620,7 @@ You can use any valid arguments for the corresponding CSV reader. See the offici
 
 
 Parquet Configuration from Parquet file
------------------------------------
+---------------------------------------
 In some instances we already have a parquet file, but still need to update it to the cloud optimised format and apply AODN conventions.
 
 There is currently no additional configuration required to create a parquet dataset from a parquet file. Follow the dataset configuration as per explained above for NetCDF.
@@ -646,7 +646,7 @@ https://github.com/aodn/aodn_cloud_optimised/blob/main/aodn_cloud_optimised/conf
 .. _the-basics-1:
 
 The Basics
-~~~~~~~~~~
+^^^^^^^^^^
 
 The first section to add is
 
@@ -667,7 +667,7 @@ The first section to add is
    be written in the parquet sidecar file
 
 The chunks
-~~~~~~~~~~
+^^^^^^^^^^
 
 Add the following to the "schema_transformation" section
 
@@ -685,7 +685,7 @@ Add the following to the "schema_transformation" section
        },
 
 Variable Template
-~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^
 
 The name of a variable which will be used as a template to create
 missing variables from the dataset and have similar shape
@@ -695,7 +695,7 @@ missing variables from the dataset and have similar shape
        "var_template_shape": "UCUR",
 
 Variables to drop
-~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^
 
 when setting ``region`` explicitly in to_zarr() method, all variables in
 the dataset to write must have at least one dimension in common with the
@@ -738,13 +738,13 @@ practice to drop them:
 
 
 Creating the Schema
-~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^
 
 See :ref:`creating_the_schema` section above. As for Parquet...
 
 
 Global Attributes to drop and set
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Similar to Parquet. Add the following under the "schema_transformation" section
 
@@ -767,7 +767,7 @@ Similar to Parquet. Add the following under the "schema_transformation" section
 
 
 Global Attributes to variables
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Similar to Parquet. Add the following to the "schema_transformation" section.
 
@@ -809,7 +809,7 @@ Similar to Parquet. Add the following to the "schema_transformation" section.
 
 
 Run Settings Options
----------------
+--------------------
 
 Example
 ^^^^^^^^^
@@ -859,7 +859,7 @@ Example
     * If cluster.mode is set to "ec2", the ec2_cluster_options and ec2_adapt_options need to be set.
     * cluster.mode can be also set to "local" or null
     * force_previous_parquet_deletion forces the search for existing parquet files to delete matching the new one to ingest. This can end up being really slow if there are a lot of objets
-(for example Argo)
+      (for example Argo)
 
 
 
@@ -944,7 +944,7 @@ This allows you to test features such as bucket creation, file uploads, and
 `s3fs` integration without needing real S3 credentials.
 
 Running MinIO with Docker Compose
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+"""""""""""""""""""""""""""""""""
 
 Save the following as ``docker-compose.yml`` in your project root:
 
@@ -977,7 +977,7 @@ Access the MinIO web console at: http://localhost:9001
 (Default login: ``minioadmin / minioadmin``).
 
 Creating a Bucket
-~~~~~~~~~~~~~~~~~
+"""""""""""""""""
 
 Once MinIO is running, create a bucket (for example ``test-bucket``) either via
 the web console or with the ``mc`` (MinIO client) CLI:
@@ -1032,7 +1032,7 @@ These settings control authentication and client configuration used by ``s3fs`` 
   }
 
 **Explanation**
-~~~~~~~~~~~~~~~
+"""""""""""""""
 
 - ``s3_fs_common_opts``
   Defines the **default connection options** shared by both input and output S3 clients (e.g. access keys, endpoint).
@@ -1048,7 +1048,7 @@ These settings control authentication and client configuration used by ``s3fs`` 
   If not specified, the system falls back to default bucket names (``bucket_raw_default_name`` and ``optimised_bucket_name``) or environment variables.
 
 **Precedence Rules**
-~~~~~~~~~~~~~~~~~~~~
+""""""""""""""""""""
 
 1. If ``s3_bucket_opts.<input_data|output_data>.s3_fs_opts`` is defined → it takes priority.
 2. Otherwise, ``s3_fs_common_opts`` is used.
@@ -1204,7 +1204,7 @@ TODO:
 
 .. note:: Important Note
    :class: custom-note
-   :name: non-generic-handler
+   :name: install-after-config
 
     In order to test the new configuration, the newly created script needs to be installed in the environment.
 
