@@ -1170,10 +1170,14 @@ class GenericHandler(CommonHandler):
                     partial_preprocess, drop_vars_list, batch_files, engine=engine
                 )
             except (ValueError, TypeError):
-                # Capture and inspect the traceback; 3 known scenarios
+                # Capture and inspect the traceback; 4 known scenarios
                 tb = traceback.format_exc()
                 match_grid_not_consistent = re.search(
                     r"Coordinate variable (\w+) is neither monotonically increasing nor monotonically decreasing on all datasets",
+                    tb,
+                )
+                match_non_monotonic_combine = re.search(
+                    r"Resulting object does not have monotonic global indexes along dimension (\w+)",
                     tb,
                 )
                 match_not_netcdf4_signature = re.search(
@@ -1185,6 +1189,21 @@ class GenericHandler(CommonHandler):
 
                 if match_grid_not_consistent:
                     variable_name = match_grid_not_consistent.group(1)
+                    return self.handle_coordinate_variable_issue(
+                        batch_files,
+                        variable_name,
+                        partial_preprocess,
+                        drop_vars_list,
+                        engine,
+                    )
+                elif match_non_monotonic_combine:
+                    # Files individually open fine but combine_by_coords fails because
+                    # some files have a different spatial grid (e.g. different LONGITUDE values).
+                    variable_name = match_non_monotonic_combine.group(1)
+                    self.logger.warning(
+                        f"{self.uuid_log}: combine_by_coords failed — dimension '{variable_name}' "
+                        f"is not globally monotonic. Checking for files with inconsistent grids."
+                    )
                     return self.handle_coordinate_variable_issue(
                         batch_files,
                         variable_name,
