@@ -1194,13 +1194,25 @@ class GenericHandler(CommonHandler):
                     )
                 elif engine == primary_engine and match_not_netcdf4_signature:
                     # Indicates a possible format issue; Tried to open a NetCDF3 files with h5netcdf; fallback to the next engine
+                    self.logger.warning(
+                        f"{self.uuid_log}: open_mfdataset with '{engine}' failed — "
+                        f"not a valid NetCDF4 file. Switching to '{fallback_engine}'."
+                    )
                     raise ValueError("Switch to fallback engine")
                 elif engine == fallback_engine and match_not_netcdf3_signature:
                     # Should be a NetCDF3, but didn't work with scipy!
                     # Final failure point for fallback engine
+                    self.logger.error(
+                        f"{self.uuid_log}: open_mfdataset with '{engine}' failed — "
+                        f"not a valid NetCDF3 file either. Both engines exhausted.\n{tb}"
+                    )
                     raise ValueError(f"Invalid NetCDF file format in {batch_files}")
                 else:
-                    # Unknown or unhandled error
+                    # Unknown or unhandled error — log the full traceback
+                    self.logger.error(
+                        f"{self.uuid_log}: open_mfdataset with '{engine}' failed with "
+                        f"an unrecognised error:\n{tb}"
+                    )
                     raise
 
         try:
@@ -1213,8 +1225,12 @@ class GenericHandler(CommonHandler):
                     return handle_engine(fallback_engine)
                 except Exception:
                     # If fallback also fails, handle multi-engine fallback
-                    # Log full traceback before continuing
-                    traceback.print_exc()
+                    self.logger.warning(
+                        f"{self.uuid_log}: Both '{primary_engine}' and '{fallback_engine}' "
+                        f"engines failed to open batch as mfdataset. "
+                        f"Falling back to opening files with mixed engines:\n"
+                        f"{traceback.format_exc()}"
+                    )
                     return self.handle_multi_engine_fallback(
                         batch_files, partial_preprocess, drop_vars_list
                     )
