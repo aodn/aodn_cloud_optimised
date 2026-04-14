@@ -3,7 +3,6 @@ import os
 import re
 import traceback
 import uuid
-import warnings
 from contextlib import nullcontext
 from functools import partial
 
@@ -455,6 +454,37 @@ def preprocess_xarray(ds, dataset_config):
             #         ),
             #     )
             #
+
+            # Expand dimensions for variables missing the append_dim.
+            # Some source NetCDF files have spatial-only variables (e.g. GDOP
+            # with dims (I, J)) that need to be broadcast to include the
+            # append_dim (e.g. TIME) for Zarr compatibility.
+            if append_dim not in ds[variable_name].dims and variable_name != append_dim:
+                expected_dims = var_required[variable_name].get("dims", None)
+                # Only expand if the variable is expected to have the append_dim
+                # (either explicitly via 'dims' in schema, or because it has
+                # spatial dims that belong to the configured dimensions)
+                should_expand = False
+                if expected_dims and append_dim in expected_dims:
+                    should_expand = True
+                elif not expected_dims:
+                    # No explicit dims in schema: expand if the variable has at
+                    # least one configured spatial dimension
+                    configured_dim_names = {
+                        dim_info["name"] for dim_info in dimensions.values()
+                    }
+                    var_dims_set = set(ds[variable_name].dims)
+                    if var_dims_set & configured_dim_names:
+                        should_expand = True
+
+                if should_expand:
+                    logger.warning(
+                        f"Variable '{variable_name}' is missing the append dimension "
+                        f"'{append_dim}' (has dims {ds[variable_name].dims}). "
+                        f"Expanding dimensions to include '{append_dim}'."
+                    )
+                    ds[variable_name] = ds[variable_name].expand_dims(append_dim)
+
             ds[variable_name] = ds[variable_name].astype(datatype)
 
     ds = _update_ds_gattr(ds, dataset_config)
@@ -1056,7 +1086,7 @@ class GenericHandler(CommonHandler):
                     if isinstance(e, RuntimeError) and not retryable:
                         # Treat as a regular exception: fallback to individual processing
                         self.logger.error(
-                            f"{self.uuid_log}: Unexpected RuntimeError during batch {idx+1}: {e}.\n"
+                            f"{self.uuid_log}: Unexpected RuntimeError during batch {idx + 1}: {e}.\n"
                             f"{traceback.format_exc()}"
                         )
                         self.fallback_to_individual_processing(
@@ -1071,7 +1101,7 @@ class GenericHandler(CommonHandler):
 
                         if retry_count > max_retries:
                             self.logger.error(
-                                f"{self.uuid_log}: Batch {idx+1} has exceeded retry limit "
+                                f"{self.uuid_log}: Batch {idx + 1} has exceeded retry limit "
                                 f"({max_retries}). Falling back to individual processing."
                             )
 
@@ -1086,7 +1116,7 @@ class GenericHandler(CommonHandler):
                         else:
                             # Scheduler or shuffle failure: reset cluster and retry batch
                             self.logger.error(
-                                f"{self.uuid_log}: Scheduler/worker/shuffle failure during batch {idx+1}: {e}. "
+                                f"{self.uuid_log}: Scheduler/worker/shuffle failure during batch {idx + 1}: {e}. "
                                 f"Recreating Dask cluster and retrying batch…\nRetry number for failing batch:{retry_count}/{max_retries}"
                                 f"{traceback.format_exc()}"
                             )
@@ -1605,7 +1635,9 @@ class GenericHandler(CommonHandler):
         """Processes files individually as a fallback.
 
         Iterates through `batch_files`, opens each using `_open_file_with_fallback`,
-        and writes it immediately using `_write_ds`.
+        and writes it immediately using `_write_ds`. Files that fail are logged
+        and skipped so that one bad file does not prevent the rest of the batch
+        from being processed.
 
         Args:
             batch_files (list[str]): List of S3 file paths in the batch.
@@ -1613,9 +1645,26 @@ class GenericHandler(CommonHandler):
             drop_vars_list (list[str]): List of variable names to drop.
             idx (int): The index of the current batch (for logging).
         """
+        failed_files: list[tuple[str, str]] = []
         for file in batch_files:
-            ds = self._open_file_with_fallback(file, partial_preprocess, drop_vars_list)
-            self._write_ds(ds, idx)
+            try:
+                ds = self._open_file_with_fallback(
+                    file, partial_preprocess, drop_vars_list
+                )
+                self._write_ds(ds, idx)
+            except Exception as e:
+                self.logger.error(
+                    f"{self.uuid_log}: Failed to process file '{file}' during "
+                    f"individual fallback for batch {idx + 1}: {e}"
+                )
+                failed_files.append((file, str(e)))
+
+        if failed_files:
+            file_list = "\n  ".join(f"{f}: {err}" for f, err in failed_files)
+            self.logger.error(
+                f"{self.uuid_log}: {len(failed_files)}/{len(batch_files)} file(s) "
+                f"failed during individual fallback for batch {idx + 1}:\n  {file_list}"
+            )
 
     def _concatenate_files_different_engines(
         self, batch_files, partial_preprocess, drop_vars_list
@@ -1796,6 +1845,61 @@ class GenericHandler(CommonHandler):
 
         return True
 
+    def _validate_and_fix_dims(self, ds: xr.Dataset, ds_org: xr.Dataset) -> xr.Dataset:
+        """Validate variable dimensions against the existing Zarr store and fix mismatches.
+
+        Compares each variable's dimensions in the new dataset against the
+        existing Zarr store. If a variable is missing a dimension that exists
+        in the store (e.g., append_dim), it is expanded via ``expand_dims``.
+        If dimensions are completely incompatible, a ValueError is raised.
+
+        Args:
+            ds: The new dataset to validate.
+            ds_org: The existing Zarr dataset to compare against.
+
+        Returns:
+            The dataset with any fixable dimension mismatches resolved.
+
+        Raises:
+            ValueError: If a variable has incompatible dimensions that cannot
+                be fixed by expansion.
+        """
+        for var_name in ds.data_vars:
+            if var_name not in ds_org.data_vars:
+                continue
+
+            new_dims = ds[var_name].dims
+            existing_dims = ds_org[var_name].dims
+
+            if new_dims == existing_dims:
+                continue
+
+            # Check if new_dims is a subset of existing_dims (missing dims)
+            missing_dims = set(existing_dims) - set(new_dims)
+            extra_dims = set(new_dims) - set(existing_dims)
+
+            if missing_dims and not extra_dims:
+                self.logger.warning(
+                    f"{self.uuid_log}: Variable '{var_name}' has dims {new_dims} "
+                    f"but existing Zarr store expects {existing_dims}. "
+                    f"Expanding missing dims: {missing_dims}"
+                )
+                # Build a broadcast template with the expected dims from ds
+                template_coords = {d: ds[d] for d in existing_dims if d in ds.coords}
+                template = xr.DataArray(
+                    dims=existing_dims,
+                    coords=template_coords,
+                )
+                ds[var_name] = ds[var_name].broadcast_like(template)
+            elif missing_dims or extra_dims:
+                raise ValueError(
+                    f"Variable '{var_name}' has incompatible dimensions: "
+                    f"new={new_dims}, existing={existing_dims}. "
+                    f"Cannot reconcile (extra={extra_dims}, missing={missing_dims})."
+                )
+
+        return ds
+
     def _write_ds(self, ds, idx):
         """Writes a dataset batch to the Zarr store.
 
@@ -1854,6 +1958,8 @@ class GenericHandler(CommonHandler):
                 self.logger.debug(
                     f"{self.uuid_log}: Existing Zarr dataset has the following chunk definition: {ds_org.chunks.items()}"
                 )
+
+                ds = self._validate_and_fix_dims(ds, ds_org)
 
                 append_dim_values_org = ds_org[self.append_dim_varname].values
                 append_dim_values_new = ds[self.append_dim_varname].values
