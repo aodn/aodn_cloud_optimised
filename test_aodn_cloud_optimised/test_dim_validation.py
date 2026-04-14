@@ -68,22 +68,23 @@ def sample_ds_with_gdop_no_time():
     return ds
 
 
-class TestPreprocessXarrayExpandDims:
-    """Tests for the expand_dims logic in preprocess_xarray."""
+class TestPreprocessXarrayDimHandling:
+    """Tests that preprocess_xarray preserves original dimensions.
 
-    def test_gdop_expanded_to_include_time(
+    Dimension expansion is intentionally NOT done in preprocess_xarray because
+    it can corrupt TIME encoding in Zarr stores. Instead, dimension mismatches
+    are fixed in _validate_and_fix_dims just before writing.
+    """
+
+    def test_gdop_keeps_original_dims(
         self, sample_ds_with_gdop_no_time, dataset_config_with_dims
     ):
-        """GDOP with (I, J) should be expanded to (TIME, I, J)."""
+        """GDOP with (I, J) should stay as (I, J) after preprocessing."""
         ds = preprocess_xarray(sample_ds_with_gdop_no_time, dataset_config_with_dims)
-        assert (
-            "TIME" in ds["GDOP"].dims
-        ), f"Expected TIME in GDOP dims, got {ds['GDOP'].dims}"
-        assert ds["GDOP"].dims == ("TIME", "I", "J") or set(ds["GDOP"].dims) == {
-            "TIME",
+        assert ds["GDOP"].dims == (
             "I",
             "J",
-        }
+        ), f"Expected GDOP to keep (I, J) dims, got {ds['GDOP'].dims}"
 
     def test_ucur_not_modified(
         self, sample_ds_with_gdop_no_time, dataset_config_with_dims
@@ -91,35 +92,6 @@ class TestPreprocessXarrayExpandDims:
         """UCUR already has (TIME, I, J) — should remain unchanged."""
         ds = preprocess_xarray(sample_ds_with_gdop_no_time, dataset_config_with_dims)
         assert ds["UCUR"].dims == ("TIME", "I", "J")
-
-    def test_variable_without_spatial_dims_not_expanded(self, dataset_config_with_dims):
-        """A scalar variable with no configured spatial dims should NOT be expanded."""
-        time = np.array(["2024-01-01T00:00:00"], dtype="datetime64[ns]")
-        i_vals = np.arange(5)
-        j_vals = np.arange(4)
-
-        # Add a variable that explicitly has the append_dim already
-        ds = xr.Dataset(
-            {
-                "UCUR": (
-                    ["TIME", "I", "J"],
-                    np.random.rand(1, 5, 4).astype("float32"),
-                ),
-                "GDOP": (["I", "J"], np.random.rand(5, 4).astype("float32")),
-            },
-            coords={
-                "TIME": time,
-                "I": i_vals,
-                "J": j_vals,
-                "LATITUDE": (["I", "J"], np.random.rand(5, 4)),
-                "LONGITUDE": (["I", "J"], np.random.rand(5, 4)),
-            },
-        )
-        ds["UCUR"].encoding["source"] = "test_file.nc"
-
-        result = preprocess_xarray(ds, dataset_config_with_dims)
-        # UCUR should still have TIME
-        assert "TIME" in result["UCUR"].dims
 
 
 class TestValidateAndFixDims:

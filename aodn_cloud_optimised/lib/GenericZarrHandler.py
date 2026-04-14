@@ -459,31 +459,11 @@ def preprocess_xarray(ds, dataset_config):
             # Some source NetCDF files have spatial-only variables (e.g. GDOP
             # with dims (I, J)) that need to be broadcast to include the
             # append_dim (e.g. TIME) for Zarr compatibility.
-            if append_dim not in ds[variable_name].dims and variable_name != append_dim:
-                expected_dims = var_required[variable_name].get("dims", None)
-                # Only expand if the variable is expected to have the append_dim
-                # (either explicitly via 'dims' in schema, or because it has
-                # spatial dims that belong to the configured dimensions)
-                should_expand = False
-                if expected_dims and append_dim in expected_dims:
-                    should_expand = True
-                elif not expected_dims:
-                    # No explicit dims in schema: expand if the variable has at
-                    # least one configured spatial dimension
-                    configured_dim_names = {
-                        dim_info["name"] for dim_info in dimensions.values()
-                    }
-                    var_dims_set = set(ds[variable_name].dims)
-                    if var_dims_set & configured_dim_names:
-                        should_expand = True
-
-                if should_expand:
-                    logger.warning(
-                        f"Variable '{variable_name}' is missing the append dimension "
-                        f"'{append_dim}' (has dims {ds[variable_name].dims}). "
-                        f"Expanding dimensions to include '{append_dim}'."
-                    )
-                    ds[variable_name] = ds[variable_name].expand_dims(append_dim)
+            # NOTE: This is NOT done here in preprocess_xarray because
+            # expanding dims during open_mfdataset preprocessing can corrupt
+            # TIME encoding in the Zarr store. Instead, dimension mismatches
+            # are resolved defensively in _validate_and_fix_dims() just before
+            # writing to Zarr.
 
             ds[variable_name] = ds[variable_name].astype(datatype)
 
@@ -1034,6 +1014,11 @@ class GenericHandler(CommonHandler):
                     )
                     partial_preprocess_already_run = True
 
+                    if ds is None:
+                        raise RuntimeError(
+                            "try_open_dataset returned None — no dataset could be opened for this batch."
+                        )
+
                     if not partial_preprocess_already_run:
                         # Likely redundant now, but retained for safety
                         self.logger.debug(
@@ -1233,6 +1218,8 @@ class GenericHandler(CommonHandler):
                     return self.handle_multi_engine_fallback(
                         batch_files, partial_preprocess, drop_vars_list
                     )
+            else:
+                raise
 
     def handle_coordinate_variable_issue(
         self, batch_files, variable_name, partial_preprocess, drop_vars_list, engine
