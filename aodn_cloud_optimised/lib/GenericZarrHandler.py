@@ -1226,12 +1226,17 @@ class GenericHandler(CommonHandler):
                         engine,
                     )
                 elif engine == primary_engine and match_not_netcdf4_signature:
-                    # Indicates a possible format issue; Tried to open a NetCDF3 files with h5netcdf; fallback to the next engine
-                    self.logger.warning(
-                        f"{self.uuid_log}: open_mfdataset with '{engine}' failed — "
-                        f"not a valid NetCDF4 file. Switching to '{fallback_engine}'."
+                    # One or more files may be NetCDF3 or corrupt. Try to identify them
+                    # locally, open good files as a batch, and bad files with the fallback
+                    # engine. Falls back to "Switch to fallback engine" if no bad files are
+                    # found locally (cluster-env issue).
+                    return self.handle_invalid_format_in_batch(
+                        batch_files,
+                        primary_engine,
+                        fallback_engine,
+                        partial_preprocess,
+                        drop_vars_list,
                     )
-                    raise ValueError("Switch to fallback engine")
                 elif engine == fallback_engine and match_not_netcdf3_signature:
                     # Should be a NetCDF3, but didn't work with scipy!
                     # Final failure point for fallback engine
@@ -1269,6 +1274,140 @@ class GenericHandler(CommonHandler):
                     )
             else:
                 raise
+
+    def handle_invalid_format_in_batch(
+        self,
+        batch_files,
+        primary_engine,
+        fallback_engine,
+        partial_preprocess,
+        drop_vars_list,
+    ):
+        """Handles a batch where the primary engine fails due to incompatible files.
+
+        When `open_mfdataset` with `primary_engine` fails because one or more
+        files are not in the expected format (e.g. a NetCDF3 file in a NetCDF4
+        batch), this method:
+
+        1. Scans each file individually to find which ones fail the primary engine.
+        2. Opens the compatible files as a single fast batch with the primary engine.
+        3. Opens the incompatible files individually with the fallback engine.
+        4. Concatenates and returns the combined dataset.
+
+        If no incompatible files are found locally, the failure is likely a
+        cluster-environment issue rather than a bad file. In that case, a
+        ``ValueError("Switch to fallback engine")`` is raised to let the caller
+        try the fallback engine on the full batch.
+
+        Args:
+            batch_files (list): List of S3 file-like objects in the batch.
+            primary_engine (str): Engine that failed ('h5netcdf').
+            fallback_engine (str): Engine to try for incompatible files ('scipy').
+            partial_preprocess (callable): The pre-configured preprocessing function.
+            drop_vars_list (list[str]): List of variable names to drop.
+
+        Returns:
+            xr.Dataset: The dataset combining all successfully opened files.
+
+        Raises:
+            ValueError("Switch to fallback engine"): If no incompatible files are
+                found locally (cluster-env issue; let the caller try scipy batch open).
+            RuntimeError: If no files at all could be opened.
+        """
+        self.logger.warning(
+            f"{self.uuid_log}: Scanning {len(batch_files)} files individually to identify "
+            f"those incompatible with '{primary_engine}' engine."
+        )
+
+        good_files = []
+        bad_files = []
+        for file in batch_files:
+            try:
+                # Use a fresh file-like object for scanning so the original is not consumed
+                with self.s3_fs_input.open(file.path) as f_test:
+                    xr.open_dataset(f_test, engine=primary_engine).close()
+                good_files.append(file)
+            except Exception:
+                bad_files.append(file)
+
+        if not bad_files:
+            # All files pass local format check — failure is a cluster-env issue.
+            self.logger.warning(
+                f"{self.uuid_log}: All files opened fine with '{primary_engine}' locally. "
+                f"Batch failure is likely a cluster-environment issue. Switching to '{fallback_engine}'."
+            )
+            raise ValueError("Switch to fallback engine")
+
+        self.logger.error(
+            f"{self.uuid_log}: Contact the data provider. "
+            f"Found {len(bad_files)}/{len(batch_files)} file(s) incompatible with "
+            f"'{primary_engine}' — will try '{fallback_engine}' for those:\n{bad_files}"
+        )
+
+        datasets = []
+
+        # Open each file individually with the known correct engine.
+        # Using _open_ds (not _open_mfds) for all files avoids chunk-structure
+        # mismatches on object-dtype variables (e.g. 'filename') that arise when
+        # mixing a batch-opened (open_mfdataset) dataset with individually-opened
+        # datasets before xr.concat. The performance benefit of batch-opening the
+        # good files is outweighed by the correctness risk.
+        for file in good_files:
+            try:
+                if hasattr(file, "seek"):
+                    file.seek(0)
+                ds = self._open_ds(
+                    file, partial_preprocess, drop_vars_list, engine=primary_engine
+                )
+                datasets.append(ds)
+            except Exception as e:
+                self.logger.error(
+                    f"{self.uuid_log}: Could not open '{file}' with '{primary_engine}': {e}"
+                )
+
+        for file in bad_files:
+            try:
+                if hasattr(file, "seek"):
+                    file.seek(0)
+                ds = self._open_ds(
+                    file, partial_preprocess, drop_vars_list, engine=fallback_engine
+                )
+                datasets.append(ds)
+                self.logger.info(
+                    f"{self.uuid_log}: Opened incompatible file '{file}' with '{fallback_engine}'."
+                )
+            except Exception as e:
+                self.logger.error(
+                    f"{self.uuid_log}: Could not open '{file}' with '{fallback_engine}' either: {e}. Skipping."
+                )
+
+        if not datasets:
+            raise RuntimeError(
+                f"{self.uuid_log}: No files in the batch could be opened with any engine."
+            )
+
+        if len(datasets) == 1:
+            self.logger.info(
+                f"{self.uuid_log}: Successfully concatenated files from batch."
+            )
+            return datasets[0]
+
+        self.logger.info(
+            f"{self.uuid_log}: Concatenating {len(datasets)} dataset(s) from mixed-engine open."
+        )
+        ds = xr.concat(
+            datasets,
+            compat="override",
+            coords="minimal",
+            data_vars="all",
+            dim=self.append_dim_varname,
+        )
+        ds = ds.chunk(chunks=self.chunks)
+        ds = ds.unify_chunks()
+        self.logger.info(
+            f"{self.uuid_log}: Successfully concatenated files from batch."
+        )
+        return ds
 
     def handle_coordinate_variable_issue(
         self, batch_files, variable_name, partial_preprocess, drop_vars_list, engine
