@@ -1711,22 +1711,51 @@ class GenericHandler(CommonHandler):
         file using `_open_file_with_fallback` and then concatenates the list
         of resulting datasets along the append_dim dimension.
 
+        Files that cannot be opened with either engine are skipped and logged
+        as corrupt so the remaining clean files can still be processed.
+
         Args:
             batch_files (list[str]): List of S3 file paths in the batch.
             partial_preprocess (callable): The pre-configured preprocessing function.
             drop_vars_list (list[str]): List of variable names to drop.
 
         Returns:
-            xr.Dataset: The concatenated dataset.
+            xr.Dataset: The concatenated dataset from all successfully opened files.
+
+        Raises:
+            RuntimeError: If no files in the batch could be opened.
         """
         datasets = []
+        failed_files: list[tuple[str, str]] = []
         for file in batch_files:
-            ds = self._open_file_with_fallback(file, partial_preprocess, drop_vars_list)
-            datasets.append(ds)
+            try:
+                ds = self._open_file_with_fallback(
+                    file, partial_preprocess, drop_vars_list
+                )
+                datasets.append(ds)
+            except Exception as e:
+                self.logger.warning(
+                    f"{self.uuid_log}: Skipping file '{file}' — could not be opened "
+                    f"with any engine: {e}"
+                )
+                failed_files.append((file, str(e)))
+
+        if failed_files:
+            file_list = "\n  ".join(f"{f}: {err}" for f, err in failed_files)
+            self.logger.error(
+                f"{self.uuid_log}: Contact the data provider. "
+                f"{len(failed_files)}/{len(batch_files)} file(s) could not be opened "
+                f"and were excluded from the batch:\n  {file_list}"
+            )
+
+        if not datasets:
+            raise RuntimeError(
+                f"No files in the batch could be opened. All {len(batch_files)} file(s) failed."
+            )
 
         # Concatenate the datasets
         self.logger.info(
-            f"{self.uuid_log}: Successfully read all files in the batch with different engines. Concatenating them now."
+            f"{self.uuid_log}: Successfully read {len(datasets)}/{len(batch_files)} file(s) in the batch. Concatenating them now."
         )
 
         ds = xr.concat(
