@@ -3,6 +3,7 @@ import os
 import re
 import traceback
 import uuid
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from contextlib import nullcontext
 from functools import partial
 
@@ -1275,6 +1276,25 @@ class GenericHandler(CommonHandler):
             else:
                 raise
 
+    # Magic-byte signatures used for fast format detection (no file open required).
+    _HDF5_MAGIC = b"\x89HDF\r\n\x1a\n"  # NetCDF4 / HDF5
+    _CDF_MAGIC = (b"CDF\x01", b"CDF\x02")  # NetCDF3 classic and 64-bit offset
+
+    def _is_netcdf4_magic(self, path: str) -> bool:
+        """Return True if the file at *path* starts with the HDF5 magic bytes.
+
+        Reads only the first 8 bytes via an S3 range-GET — very cheap even for
+        thousands of files.
+        """
+        try:
+            with self.s3_fs_input.open(path, "rb") as f:
+                magic = f.read(8)
+            return magic == self._HDF5_MAGIC
+        except Exception:
+            # If we can't read the file at all, treat it as incompatible so it
+            # gets the fallback engine (and a proper error if both fail).
+            return False
+
     def handle_invalid_format_in_batch(
         self,
         batch_files,
@@ -1289,8 +1309,10 @@ class GenericHandler(CommonHandler):
         files are not in the expected format (e.g. a NetCDF3 file in a NetCDF4
         batch), this method:
 
-        1. Scans each file individually to find which ones fail the primary engine.
-        2. Opens the compatible files as a single fast batch with the primary engine.
+        1. Scans each file by reading its first 8 bytes (magic-byte check) to
+           determine whether it is NetCDF4/HDF5 or NetCDF3 — very fast even for
+           thousands of files, and parallelised with threads.
+        2. Opens the compatible files individually with the primary engine.
         3. Opens the incompatible files individually with the fallback engine.
         4. Concatenates and returns the combined dataset.
 
@@ -1315,33 +1337,46 @@ class GenericHandler(CommonHandler):
             RuntimeError: If no files at all could be opened.
         """
         self.logger.warning(
-            f"{self.uuid_log}: Scanning {len(batch_files)} files individually to identify "
-            f"those incompatible with '{primary_engine}' engine."
+            f"{self.uuid_log}: Scanning {len(batch_files)} files via magic-byte check "
+            f"to identify those incompatible with '{primary_engine}' engine."
         )
 
+        # Parallelise the magic-byte reads — each is a tiny S3 range-GET.
+        # 50 threads keep S3 latency well-hidden without overwhelming the scheduler.
         good_files = []
         bad_files = []
-        for file in batch_files:
-            try:
-                # Use a fresh file-like object for scanning so the original is not consumed
-                with self.s3_fs_input.open(file.path) as f_test:
-                    xr.open_dataset(f_test, engine=primary_engine).close()
-                good_files.append(file)
-            except Exception:
-                bad_files.append(file)
+        with ThreadPoolExecutor(max_workers=50) as executor:
+            futures = {
+                executor.submit(self._is_netcdf4_magic, file.path): file
+                for file in batch_files
+            }
+            for future in as_completed(futures):
+                file = futures[future]
+                is_hdf5 = future.result()
+                # h5netcdf needs HDF5 files; scipy handles NetCDF3
+                if primary_engine == "h5netcdf":
+                    (good_files if is_hdf5 else bad_files).append(file)
+                else:
+                    (good_files if not is_hdf5 else bad_files).append(file)
+
+        self.logger.info(
+            f"{self.uuid_log}: Format scan complete — "
+            f"{len(good_files)} file(s) compatible with '{primary_engine}', "
+            f"{len(bad_files)} file(s) need '{fallback_engine}'."
+        )
 
         if not bad_files:
-            # All files pass local format check — failure is a cluster-env issue.
+            # All files are HDF5 locally — failure must be a cluster-env issue.
             self.logger.warning(
-                f"{self.uuid_log}: All files opened fine with '{primary_engine}' locally. "
+                f"{self.uuid_log}: All files appear to be NetCDF4/HDF5. "
                 f"Batch failure is likely a cluster-environment issue. Switching to '{fallback_engine}'."
             )
             raise ValueError("Switch to fallback engine")
 
-        self.logger.error(
+        self.logger.warning(
             f"{self.uuid_log}: Contact the data provider. "
-            f"Found {len(bad_files)}/{len(batch_files)} file(s) incompatible with "
-            f"'{primary_engine}' — will try '{fallback_engine}' for those:\n{bad_files}"
+            f"Found {len(bad_files)}/{len(batch_files)} file(s) with NetCDF3 format "
+            f"incompatible with '{primary_engine}' — will open with '{fallback_engine}':\n{bad_files}"
         )
 
         datasets = []
