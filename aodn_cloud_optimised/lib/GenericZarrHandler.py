@@ -1630,9 +1630,11 @@ class GenericHandler(CommonHandler):
         return None
 
     def _open_file_with_fallback(self, file, partial_preprocess, drop_vars_list):
-        """Opens a single file, trying 'scipy' then 'h5netcdf' engine.
+        """Opens a single file, trying 'h5netcdf' then 'scipy' engine.
 
         Used as part of the fallback strategy when `open_mfdataset` fails.
+        h5netcdf is tried first since most files are NetCDF4. scipy is the
+        fallback for NetCDF3 (classic) files.
 
         Args:
             file (str): The S3 path of the file to open.
@@ -1646,20 +1648,19 @@ class GenericHandler(CommonHandler):
             Exception: If the file cannot be opened with either engine.
         """
         try:
-            engine = "scipy"
-            with self.s3_fs_input.open(file, "rb") as f:  # Open the file-like object
-                ds = self._open_ds(f, partial_preprocess, drop_vars_list, engine=engine)
+            engine = "h5netcdf"
+            ds = self._open_ds(file, partial_preprocess, drop_vars_list, engine=engine)
             self.logger.info(
                 f"{self.uuid_log}: Successfully opened {file} with '{engine}' engine."
             )
             return ds
-        except (ValueError, TypeError) as e:
-            self.logger.info(
-                f"{self.uuid_log}: Error opening {file} with 'scipy' engine: {e}. Defaulting to 'h5netcdf'."
+        except (ValueError, TypeError, OSError) as e:
+            self.logger.debug(
+                f"{self.uuid_log}: Error opening {file} with 'h5netcdf' engine: {e}. Trying 'scipy'."
             )
-            engine = "h5netcdf"
-
-            ds = self._open_ds(file, partial_preprocess, drop_vars_list, engine=engine)
+            engine = "scipy"
+            with self.s3_fs_input.open(file, "rb") as f:
+                ds = self._open_ds(f, partial_preprocess, drop_vars_list, engine=engine)
             self.logger.info(
                 f"{self.uuid_log}: Successfully opened {file} with '{engine}' engine."
             )
