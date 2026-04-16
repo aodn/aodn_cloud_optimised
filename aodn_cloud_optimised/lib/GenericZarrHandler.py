@@ -14,6 +14,7 @@ import zarr
 from dask import array as da
 from dask.distributed import Lock
 from distributed.client import FutureCancelledError
+from distributed.scheduler import KilledWorker
 from distributed.shuffle._exceptions import P2PConsistencyError
 from xarray.coding.times import CFDatetimeCoder
 from xarray.structure.merge import MergeError
@@ -1033,7 +1034,12 @@ class GenericHandler(CommonHandler):
 
                     batch_is_processed = True  # Exit loop
 
-                except (FutureCancelledError, P2PConsistencyError, RuntimeError) as e:
+                except (
+                    FutureCancelledError,
+                    P2PConsistencyError,
+                    KilledWorker,
+                    RuntimeError,
+                ) as e:
                     error_text = str(e)
 
                     SHUFFLE_KEYWORDS = [
@@ -1052,6 +1058,13 @@ class GenericHandler(CommonHandler):
                         "Too many open files",
                     ]
 
+                    WORKER_KILLED_KEYWORDS = [
+                        "workers died",
+                        "all those workers died",
+                        "KilledWorker",
+                        "worker died",
+                    ]
+
                     DESERIALISATION_KEYWORDS = [
                         "Error during deserialization",
                         "different environments",
@@ -1063,9 +1076,10 @@ class GenericHandler(CommonHandler):
                         for keyword in (
                             SHUFFLE_KEYWORDS
                             + CONNECTION_KEYWORDS
+                            + WORKER_KILLED_KEYWORDS
                             + DESERIALISATION_KEYWORDS
                         )
-                    )
+                    ) or isinstance(e, KilledWorker)
 
                     # RuntimeError that is NOT retryable → treat as normal exception
                     if isinstance(e, RuntimeError) and not retryable:
