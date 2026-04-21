@@ -1518,8 +1518,14 @@ class GenericHandler(CommonHandler):
                     partial_preprocess, drop_vars_list, remaining, engine
                 )
             except (ValueError, TypeError) as exc:
-                tb = traceback.format_exc() + "\n" + str(exc)
-                match = self._PREPROCESS_BAD_FILE_RE.search(tb)
+                # Search str(exc) ONLY — not traceback.format_exc() — because on
+                # the second (and later) retries the full traceback includes the
+                # chained context from earlier iterations, which would cause the
+                # regex to match an already-excluded filename and then fail to find
+                # it in `remaining`.  The ValueError raised by open_mfdataset when
+                # preprocess raises is the preprocess exception itself (Dask/xarray
+                # re-raises it directly), so its message always contains the filename.
+                match = self._PREPROCESS_BAD_FILE_RE.search(str(exc))
                 if not match:
                     raise  # unrelated error — propagate to the caller
 

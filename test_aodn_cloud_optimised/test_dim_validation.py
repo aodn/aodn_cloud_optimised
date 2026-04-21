@@ -343,3 +343,54 @@ class TestPreprocessMissingCoordinateIndex:
         assert len(call_args[1]) == 1
         assert "good_file" in call_args[1][0]
         assert result is good_ds
+
+    def test_open_mfds_retrying_excludes_multiple_bad_files(self):
+        """_open_mfds_retrying must handle a batch with MULTIPLE bad files, removing
+        them one at a time without being confused by chained exception context."""
+        from aodn_cloud_optimised.lib.GenericZarrHandler import GenericHandler
+
+        handler = MagicMock()
+        handler.uuid_log = "test-uuid"
+        from aodn_cloud_optimised.lib.logging import get_logger
+
+        handler.logger = get_logger("test_retrying_multi")
+        handler._PREPROCESS_BAD_FILE_RE = GenericHandler._PREPROCESS_BAD_FILE_RE
+
+        good_ds = MagicMock()
+        good_file = MagicMock()
+        good_file.path = "imos-data/good_file.nc"
+        bad_file1 = MagicMock()
+        bad_file1.path = "imos-data/bad_file_1.nc"
+        bad_file2 = MagicMock()
+        bad_file2.path = "imos-data/bad_file_2.nc"
+
+        call_args = []
+
+        def mock_open_mfds(pp, dv, files, engine):
+            call_args.append([f.path for f in files])
+            # Fail on bad_file_1 first, then bad_file_2, then succeed.
+            if any("bad_file_1" in f.path for f in files):
+                raise ValueError(
+                    "File 'bad_file_1.nc' has dimension 'I' "
+                    "with no corresponding 1D coordinate index — file is structurally incomplete."
+                )
+            if any("bad_file_2" in f.path for f in files):
+                raise ValueError(
+                    "File 'bad_file_2.nc' has dimension 'I' "
+                    "with no corresponding 1D coordinate index — file is structurally incomplete."
+                )
+            return good_ds
+
+        handler._open_mfds = mock_open_mfds
+
+        result = GenericHandler._open_mfds_retrying(
+            handler, MagicMock(), [], [good_file, bad_file1, bad_file2], "h5netcdf"
+        )
+
+        # Three calls: [good, bad1, bad2] → [good, bad2] → [good]
+        assert len(call_args) == 3
+        assert len(call_args[0]) == 3
+        assert len(call_args[1]) == 2
+        assert len(call_args[2]) == 1
+        assert "good_file" in call_args[2][0]
+        assert result is good_ds
