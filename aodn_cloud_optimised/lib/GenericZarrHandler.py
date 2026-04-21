@@ -369,6 +369,17 @@ def preprocess_xarray(ds, dataset_config):
     # version to push back as CO in order to "delete". If UNKOWN_FILENAME.nc, either run an error, or have another approach,
     # Maybe the file to delete, would be a filename, OR the physical og NetCDF, which means then that we have all of the info in it, and simply making it NAN
 
+    # Structural validation: every dimension must have a 1D coordinate index so
+    # that xr.open_mfdataset's combine_by_coords can infer concatenation order.
+    # Files that fail this check are structurally incomplete and must be excluded
+    # from the batch (the caller catches this ValueError).
+    for dim_name in list(ds.dims):
+        if dim_name not in ds.indexes:
+            raise ValueError(
+                f"File '{filename}' has dimension '{dim_name}' with no corresponding "
+                f"1D coordinate index — file is structurally incomplete."
+            )
+
     logger.info(f"Applying preprocessing on dataset from {filename}")
     for variable_name in var_required:
         datatype = var_required[variable_name].get("type")
@@ -1201,6 +1212,13 @@ class GenericHandler(CommonHandler):
                 match_not_netcdf3_signature = re.search(
                     r"is not a valid NetCDF 3 file", tb
                 )
+                match_missing_coord_index = re.search(
+                    r"coordinate '(\w+)' has no corresponding index", tb
+                )
+                match_missing_coord_index_preprocess = re.search(
+                    r"has dimension '(\w+)' with no corresponding 1D coordinate index",
+                    tb,
+                )
 
                 if match_grid_not_consistent:
                     variable_name = match_grid_not_consistent.group(1)
@@ -1224,6 +1242,16 @@ class GenericHandler(CommonHandler):
                         variable_name,
                         partial_preprocess,
                         drop_vars_list,
+                        engine,
+                    )
+                elif match_missing_coord_index or match_missing_coord_index_preprocess:
+                    # One or more files has a dimension without a 1D coordinate index.
+                    # preprocess_xarray embeds the filename in its error message; the
+                    # retry helper extracts it from the traceback and removes the file.
+                    return self._open_mfds_retrying(
+                        partial_preprocess,
+                        drop_vars_list,
+                        batch_files,
                         engine,
                     )
                 elif engine == primary_engine and match_not_netcdf4_signature:
@@ -1443,6 +1471,82 @@ class GenericHandler(CommonHandler):
             f"{self.uuid_log}: Successfully concatenated files from batch."
         )
         return ds
+
+    # Pattern used by _open_mfds_retrying to extract a bad filename from the
+    # preprocess_xarray error message embedded in the traceback.
+    _PREPROCESS_BAD_FILE_RE = re.compile(
+        r"File '([^']+)' has dimension '\w+' with no corresponding 1D coordinate index"
+    )
+
+    def _open_mfds_retrying(
+        self, partial_preprocess, drop_vars_list, batch_files, engine
+    ):
+        """Calls ``_open_mfds``, retrying after excluding any file whose preprocessing
+        raises a recognisable "structurally incomplete" error.
+
+        ``preprocess_xarray`` embeds the source filename in its ``ValueError``
+        message when it detects a structural problem (e.g. a dimension with no 1D
+        coordinate index).  When ``open_mfdataset`` propagates that exception back
+        to the main process, this method extracts the filename from the traceback,
+        removes the offending file from the batch, logs it, and retries.  The loop
+        repeats until the batch opens cleanly or every file has been excluded.
+
+        This avoids a separate per-file scan: the bad file identifies itself
+        through the preprocess error, and Dask's normal parallel machinery is used
+        to open the remaining files.
+
+        Args:
+            partial_preprocess (callable): Preprocessing function passed to
+                ``open_mfdataset``.  Must embed the source filename in any
+                ``ValueError`` it raises (as ``preprocess_xarray`` does).
+            drop_vars_list (list[str]): Variables to drop when opening.
+            batch_files (list): S3 file-like objects to open.
+            engine (str): xarray engine to use.
+
+        Returns:
+            xr.Dataset: The dataset opened from the surviving files.
+
+        Raises:
+            RuntimeError: If every file in the batch was excluded.
+        """
+        remaining = list(batch_files)
+        excluded = []
+
+        while remaining:
+            try:
+                return self._open_mfds(
+                    partial_preprocess, drop_vars_list, remaining, engine
+                )
+            except (ValueError, TypeError) as exc:
+                tb = traceback.format_exc() + "\n" + str(exc)
+                match = self._PREPROCESS_BAD_FILE_RE.search(tb)
+                if not match:
+                    raise  # unrelated error — propagate to the caller
+
+                bad_basename = match.group(1)
+                bad_file = next(
+                    (
+                        f
+                        for f in remaining
+                        if os.path.basename(getattr(f, "path", str(f))) == bad_basename
+                    ),
+                    None,
+                )
+                if bad_file is None:
+                    # Filename in error doesn't match any file we know — give up.
+                    raise
+
+                self.logger.error(
+                    f"{self.uuid_log}: Contact the data provider. "
+                    f"Excluding structurally incomplete file from batch: {bad_file}"
+                )
+                excluded.append(bad_file)
+                remaining = [f for f in remaining if f is not bad_file]
+
+        raise RuntimeError(
+            f"{self.uuid_log}: All {len(batch_files)} file(s) in the batch were "
+            f"excluded due to structural issues. Excluded files: {excluded}"
+        )
 
     def handle_coordinate_variable_issue(
         self, batch_files, variable_name, partial_preprocess, drop_vars_list, engine

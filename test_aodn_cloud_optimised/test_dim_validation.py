@@ -4,6 +4,8 @@ Tests cover:
 - preprocess_xarray expanding dims for variables missing the append_dim
 - _validate_and_fix_dims fixing mismatches against an existing Zarr store
 - _process_individual_file_fallback resilience (one bad file doesn't crash batch)
+- preprocess_xarray raising for files missing a 1D coordinate index
+- handle_missing_coordinate_index scanning and excluding such files
 """
 
 from unittest.mock import MagicMock, patch
@@ -222,3 +224,122 @@ class TestProcessIndividualFileFallbackResilience:
         # Both good files should have been written
         assert call_count["write"] == 2
         assert call_count["open"] == 3
+
+
+class TestPreprocessMissingCoordinateIndex:
+    """Tests for preprocess_xarray raising on missing 1D coordinate index."""
+
+    def _make_config(self):
+        return {
+            "logger_name": "test_missing_coord",
+            "dataset_name": "test_radar",
+            "schema_transformation": {
+                "dimensions": {
+                    "time": {"name": "TIME", "chunk": 100, "append_dim": True},
+                    "latitude": {"name": "J", "chunk": 4},
+                    "longitude": {"name": "I", "chunk": 5},
+                },
+                "add_variables": None,
+                "global_attributes": None,
+                "var_template_shape": "UCUR",
+            },
+            "schema": {
+                "TIME": {"type": "datetime64[ns]"},
+                "I": {"type": "int32"},
+                "J": {"type": "int32"},
+                "UCUR": {"type": "float32"},
+            },
+        }
+
+    def _make_good_ds(self):
+        """Dataset with proper 1D coordinate indexes for I and J."""
+        time = np.array(["2024-01-01T00:00:00"], dtype="datetime64[ns]")
+        ds = xr.Dataset(
+            {"UCUR": (["TIME", "I", "J"], np.ones((1, 3, 2), dtype="float32"))},
+            coords={
+                "TIME": time,
+                "I": np.arange(3),
+                "J": np.arange(2),
+            },
+        )
+        ds["UCUR"].encoding["source"] = "good_file.nc"
+        return ds
+
+    def _make_bad_ds(self):
+        """Dataset with dimension 'I' but no coordinate variable for it."""
+        time = np.array(["2024-01-02T00:00:00"], dtype="datetime64[ns]")
+        # Create with coords first, then drop I to simulate missing coordinate
+        ds = xr.Dataset(
+            {"UCUR": (["TIME", "I", "J"], np.ones((1, 3, 2), dtype="float32"))},
+            coords={
+                "TIME": time,
+                "J": np.arange(2),
+                # Note: 'I' is intentionally NOT provided as a coordinate
+            },
+        )
+        ds["UCUR"].encoding["source"] = "bad_file.nc"
+        return ds
+
+    def test_preprocess_raises_for_missing_coordinate_index(self):
+        """preprocess_xarray should raise ValueError for files missing a coordinate index."""
+        config = self._make_config()
+        bad_ds = self._make_bad_ds()
+
+        with pytest.raises(
+            ValueError,
+            match="has dimension 'I' with no corresponding 1D coordinate index",
+        ):
+            preprocess_xarray(bad_ds, config)
+
+    def test_preprocess_succeeds_for_complete_file(self):
+        """preprocess_xarray should succeed when all dimensions have coordinate indexes."""
+        config = self._make_config()
+        good_ds = self._make_good_ds()
+        result = preprocess_xarray(good_ds, config)
+        assert result is not None
+
+    def test_open_mfds_retrying_excludes_bad_file(self):
+        """_open_mfds_retrying should retry without the file whose name appears in the traceback."""
+        from aodn_cloud_optimised.lib.GenericZarrHandler import GenericHandler
+
+        handler = MagicMock()
+        handler.uuid_log = "test-uuid"
+        from aodn_cloud_optimised.lib.logging import get_logger
+
+        handler.logger = get_logger("test_retrying")
+
+        config = self._make_config()
+        good_ds = self._make_good_ds()
+
+        good_file = MagicMock()
+        good_file.path = "imos-data/good_file.nc"
+        bad_file = MagicMock()
+        bad_file.path = "imos-data/IMOS_ACORN_V_20160623T030000Z_bad_file.nc"
+
+        call_args = []
+
+        def mock_open_mfds(pp, dv, files, engine):
+            call_args.append([f.path for f in files])
+            if any("bad_file" in f.path for f in files):
+                # Simulate preprocess failing for the bad file — the filename
+                # must appear in the exception message as preprocess_xarray does.
+                raise ValueError(
+                    f"File 'IMOS_ACORN_V_20160623T030000Z_bad_file.nc' has dimension 'I' "
+                    f"with no corresponding 1D coordinate index — file is structurally incomplete."
+                )
+            return good_ds
+
+        handler._open_mfds = mock_open_mfds
+        # MagicMock replaces class attributes with auto-mocks; restore the real regex.
+        handler._PREPROCESS_BAD_FILE_RE = GenericHandler._PREPROCESS_BAD_FILE_RE
+
+        result = GenericHandler._open_mfds_retrying(
+            handler, MagicMock(), [], [good_file, bad_file], "h5netcdf"
+        )
+
+        # First call includes both files; second call has only the good file.
+        assert len(call_args) == 2
+        assert len(call_args[0]) == 2
+        assert len(call_args[1]) == 1
+        assert "good_file" in call_args[1][0]
+        assert result is good_ds
