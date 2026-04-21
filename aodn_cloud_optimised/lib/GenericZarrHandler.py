@@ -2273,11 +2273,14 @@ class GenericHandler(CommonHandler):
         else:
             ds = ds.chunk(chunks=self.chunks)
 
-        # Reason for the following, see: https://github.com/pydata/xarray/issues/5219  https://github.com/pydata/xarray/issues/5286
+        # Remove inherited chunk encoding to avoid conflicts when rechunking before write.
+        # Only the "chunks" key is problematic (see https://github.com/pydata/xarray/issues/5219
+        # and https://github.com/pydata/xarray/issues/5286). Clearing the full encoding dict is
+        # too aggressive: it also strips the object_codec, _FillValue etc. that are set for
+        # string variables (e.g. 'filename'), which causes xarray to load the dask array into
+        # memory to infer the dtype and emit a SerializationWarning.
         for var in ds.variables:
-            encoding = ds[var].encoding
-            if "chunks" in encoding:
-                encoding.clear()
+            ds[var].encoding.pop("chunks", None)
 
         # Write the dataset to Zarr
         if prefix_exists(
