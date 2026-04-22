@@ -394,3 +394,119 @@ class TestPreprocessMissingCoordinateIndex:
         assert len(call_args[2]) == 1
         assert "good_file" in call_args[2][0]
         assert result is good_ds
+
+
+class TestGridSizeMismatchHandling:
+    """Tests for GridSizeMismatchError detection and rejection in _write_ds."""
+
+    def _make_ds(self, lat_size, lon_size, n_time=2):
+        """Build a minimal dataset with given spatial dimensions."""
+        import pandas as pd
+
+        times = pd.date_range("2024-01-01", periods=n_time, freq="h")
+        return xr.Dataset(
+            {
+                "UCUR": (
+                    ["TIME", "LATITUDE", "LONGITUDE"],
+                    np.ones((n_time, lat_size, lon_size), dtype="float32"),
+                )
+            },
+            coords={
+                "TIME": times,
+                "LATITUDE": np.linspace(-24, -22, lat_size),
+                "LONGITUDE": np.linspace(151, 153, lon_size),
+            },
+        )
+
+    def test_write_ds_raises_grid_size_mismatch(self):
+        """_write_ds raises GridSizeMismatchError when batch spatial dims differ from store."""
+        from aodn_cloud_optimised.lib.GenericZarrHandler import (
+            GenericHandler,
+            GridSizeMismatchError,
+        )
+
+        handler = MagicMock()
+        handler.uuid_log = "test-uuid"
+        handler.append_dim_varname = "TIME"
+        handler.chunks = {"TIME": 100, "LATITUDE": 64, "LONGITUDE": 72}
+        handler.cloud_optimised_output_path = "s3://bucket/test.zarr"
+        handler.s3_client_opts_output = {}
+        from aodn_cloud_optimised.lib.logging import get_logger
+
+        handler.logger = get_logger("test_grid_mismatch")
+        handler._find_duplicated_values = MagicMock()
+
+        # New batch: 80×80 grid
+        ds_new = self._make_ds(lat_size=80, lon_size=80)
+        ds_new = ds_new.chunk({"TIME": 100, "LATITUDE": 80, "LONGITUDE": 80})
+
+        # Existing store: 64×72 grid
+        ds_org = self._make_ds(lat_size=64, lon_size=72, n_time=5)
+
+        with (
+            patch(
+                "aodn_cloud_optimised.lib.GenericZarrHandler.prefix_exists",
+                return_value=True,
+            ),
+            patch(
+                "aodn_cloud_optimised.lib.GenericZarrHandler.xr.open_zarr",
+                return_value=ds_org,
+            ),
+        ):
+            with pytest.raises(
+                GridSizeMismatchError, match="incompatible spatial grid"
+            ):
+                GenericHandler._write_ds(handler, ds_new, idx=1)
+
+    def test_publish_batch_skips_grid_size_mismatch(self):
+        """publish_cloud_optimised_fileset_batch logs and skips a batch with wrong grid."""
+        from unittest.mock import patch
+
+        from aodn_cloud_optimised.lib.GenericZarrHandler import (
+            GenericHandler,
+            GridSizeMismatchError,
+        )
+
+        handler = MagicMock()
+        handler.uuid_log = "test-uuid"
+        handler.cluster_mode = False
+        handler.schema = {}
+        from aodn_cloud_optimised.lib.logging import get_logger
+
+        handler.logger = get_logger("test_grid_skip")
+
+        # _write_ds raises GridSizeMismatchError
+        handler._write_ds = MagicMock(
+            side_effect=GridSizeMismatchError(
+                "Batch has incompatible spatial grid — LATITUDE: batch=80 vs store=64."
+            )
+        )
+        # try_open_dataset returns a valid dataset
+        mock_ds = MagicMock()
+        handler.try_open_dataset = MagicMock(return_value=mock_ds)
+
+        # batch_files as fake file-like objects
+        class FakeFile:
+            def __init__(self, name):
+                self.path = f"bucket/prefix/{name}"
+
+        batch_files = [FakeFile("file_a.nc"), FakeFile("file_b.nc")]
+
+        with (
+            patch.object(
+                GenericHandler,
+                "batch_process_fileset",
+                return_value=iter([["uri_a", "uri_b"]]),
+            ),
+            patch(
+                "aodn_cloud_optimised.lib.GenericZarrHandler.create_fileset",
+                return_value=batch_files,
+            ),
+        ):
+            # Should complete without raising and without calling fallback
+            GenericHandler.publish_cloud_optimised_fileset_batch(
+                handler, ["uri_a", "uri_b"]
+            )
+
+        # fallback_to_individual_processing must NOT have been called
+        handler.fallback_to_individual_processing.assert_not_called()

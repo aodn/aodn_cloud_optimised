@@ -31,6 +31,12 @@ from aodn_cloud_optimised.lib.s3Tools import (
 from aodn_cloud_optimised.lib.schema import merge_schema_dict
 
 
+class GridSizeMismatchError(ValueError):
+    """Raised when a batch has spatial dimensions incompatible with the existing Zarr store."""
+
+    pass
+
+
 def check_variable_values_dask(
     file_path, reference_values, variable_name, dataset_config, uuid_log
 ):
@@ -1143,6 +1149,22 @@ class GenericHandler(CommonHandler):
 
                     # TODO: what do do in this case? could just enter an infinit loop
                     batch_is_processed = False  # Loop again
+
+                except GridSizeMismatchError as e:
+                    # All files in this batch have a spatial grid incompatible with the
+                    # existing Zarr store. Individual processing won't help — every file
+                    # has the same wrong grid. Log the full file list and skip the batch.
+                    file_basenames = [
+                        os.path.basename(getattr(f, "path", str(f)))
+                        for f in batch_files
+                    ]
+                    self.logger.error(
+                        f"{self.uuid_log}: Batch {idx + 1} rejected — {e}\n"
+                        f"The following {len(batch_files)} file(s) have an incompatible "
+                        f"spatial grid and will be skipped:\n"
+                        + "\n".join(f"  - {n}" for n in file_basenames)
+                    )
+                    batch_is_processed = True
 
                 except Exception as e:
                     self.logger.error(
@@ -2311,6 +2333,27 @@ class GenericHandler(CommonHandler):
                 self.logger.debug(
                     f"{self.uuid_log}: Existing Zarr dataset has the following chunk definition: {ds_org.chunks.items()}"
                 )
+
+                # Validate spatial (non-append) dimension sizes before attempting to
+                # append. If the batch has a different spatial grid than the store, all
+                # files in the batch are fundamentally incompatible — bail out early with
+                # a specific error so the caller can log and skip them cleanly.
+                spatial_mismatches = {
+                    dim: (ds.sizes[dim], ds_org.sizes[dim])
+                    for dim in ds_org.dims
+                    if dim != self.append_dim_varname
+                    and dim in ds.dims
+                    and ds.sizes[dim] != ds_org.sizes[dim]
+                }
+                if spatial_mismatches:
+                    mismatch_str = ", ".join(
+                        f"{dim}: batch={actual} vs store={expected}"
+                        for dim, (actual, expected) in spatial_mismatches.items()
+                    )
+                    raise GridSizeMismatchError(
+                        f"Batch has incompatible spatial grid — {mismatch_str}. "
+                        f"Files in this batch cannot be appended to the existing store."
+                    )
 
                 ds = self._validate_and_fix_dims(ds, ds_org)
 
