@@ -7,7 +7,7 @@
       {
         "s3_uri": "s3://imos-data/IMOS/ANMN/AM/",
         "filter": [
-          ".*\\/CO2\\/delayed\\/.*_FV01_.*\\.nc"
+          ".*\\/CO2\\/delayed\\/.*_FV01_.*\\.nc$"
         ],
         "year_range": []
       }

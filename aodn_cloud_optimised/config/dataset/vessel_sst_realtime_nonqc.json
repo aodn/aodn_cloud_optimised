@@ -26,7 +26,7 @@
       {
         "s3_uri": "s3://imos-data/IMOS/SOOP/SOOP-SST/",
         "filter": [
-          ".*_FV01_(?!1-min-avg_)C.*\\.nc"
+          ".*_FV01_(?!1-min-avg_)C.*\\.nc$"
         ],
         "year_range": []
       }

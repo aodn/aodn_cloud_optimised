@@ -7,21 +7,21 @@
       {
         "s3_uri": "s3://imos-data/IMOS/ANMN/NRS/REAL_TIME/DARBGF/",
         "filter": [
-          ".*/QAQC/.*_FV01\\.nc"
+          ".*/QAQC/.*_FV01\\.nc$"
         ],
         "year_range": []
       },
       {
         "s3_uri": "s3://imos-data/IMOS/ANMN/NRS/REAL_TIME/NRSDAR/",
         "filter": [
-          ".*/QAQC/.*_FV01\\.nc"
+          ".*/QAQC/.*_FV01\\.nc$"
         ],
         "year_range": []
       },
       {
         "s3_uri": "s3://imos-data/IMOS/ANMN/NRS/REAL_TIME/NRSYON/",
         "filter": [
-          ".*/QAQC/.*_FV01\\.nc"
+          ".*/QAQC/.*_FV01\\.nc$"
         ],
         "year_range": []
       }

@@ -7,7 +7,7 @@
       {
         "s3_uri": "s3://imos-data/IMOS/FAIMMS/",
         "filter": [
-          ".*/QAQC/.*_FV01\\.nc"
+          ".*/QAQC/.*_FV01\\.nc$"
         ],
         "year_range": []
       }

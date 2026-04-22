@@ -316,7 +316,7 @@
       {
         "s3_uri": "s3://imos-data/IMOS/SOOP/SOOP-FishSOOP/REALTIME/",
         "filter": [
-          ".*\\.nc"
+          ".*\\.nc$"
         ],
         "year_range": []
       }

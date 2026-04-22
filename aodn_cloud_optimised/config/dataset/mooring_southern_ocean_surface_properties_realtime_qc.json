@@ -7,7 +7,7 @@
       {
         "s3_uri": "s3://imos-data/IMOS/DWM/ASFS/SOFS/Surface_properties/Real-time/",
         "filter": [
-          ".*_FV01_.*\\.nc"
+          ".*_FV01_.*\\.nc$"
         ],
         "year_range": []
       }

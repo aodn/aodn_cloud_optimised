@@ -7,21 +7,21 @@
       {
         "s3_uri": "s3://imos-data/IMOS/ANMN/NRS/NRSROT/Biogeochem_profiles",
         "filter": [
-          ".*\\.nc"
+          ".*\\.nc$"
         ],
         "year_range": []
       },
       {
         "s3_uri": "s3://imos-data/IMOS/ANMN/NRS/NRSESP/Biogeochem_profiles",
         "filter": [
-          ".*\\.nc"
+          ".*\\.nc$"
         ],
         "year_range": []
       },
       {
         "s3_uri": "s3://imos-data/IMOS/ANMN/NRS/NRSNIN/Biogeochem_profiles",
         "filter": [
-          ".*\\.nc"
+          ".*\\.nc$"
         ],
         "year_range": []
       }

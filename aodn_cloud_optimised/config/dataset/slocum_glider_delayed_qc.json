@@ -1091,7 +1091,7 @@
       {
         "s3_uri": "s3://imos-data/IMOS/ANFOG/slocum_glider/",
         "filter": [
-          ".*\\.nc"
+          ".*\\.nc$"
         ],
         "year_range": []
       }
