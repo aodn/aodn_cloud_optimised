@@ -3334,7 +3334,12 @@ class ZarrDataSource(DataSource):
         if plot_type == "anomaly":
             cmap = plt.get_cmap("RdBu_r")
             abs_max = max(abs(vmin_all), abs(vmax_all))
-            norm_to_use = TwoSlopeNorm(vcenter=0, vmin=-abs_max, vmax=abs_max)
+            if abs_max == 0:
+                # Avoid invalid TwoSlopeNorm(vcenter=0, vmin=0, vmax=0)
+                # for constant/zero anomaly fields.
+                norm_to_use = Normalize(vmin=-1e-12, vmax=1e-12)
+            else:
+                norm_to_use = TwoSlopeNorm(vcenter=0, vmin=-abs_max, vmax=abs_max)
         elif log_scale:
             cmap = plt.get_cmap("coolwarm")
             norm_to_use = LogNorm(vmin=vmin_all, vmax=vmax_all)
