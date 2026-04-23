@@ -1,3 +1,5 @@
+.. _module-overview:
+
 Module Overview
 ===============
 

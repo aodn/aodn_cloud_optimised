@@ -192,7 +192,15 @@
     "ManagedBy": "AODN",
     "UpdateFrequency": "As Needed",
     "Tags": [
-      "FILL UP MANUALLY - CHECK DOCUMENTATION"
+      "IMOS",
+      "AusTemp",
+      "sea surface temperature",
+      "SST",
+      "satellite",
+      "oceanography",
+      "Australia",
+      "marine heatwaves",
+      "climate"
     ],
     "License": "http://creativecommons.org/licenses/by/4.0/",
     "Resources": [

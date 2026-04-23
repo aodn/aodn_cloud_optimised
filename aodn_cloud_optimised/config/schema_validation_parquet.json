@@ -28,7 +28,10 @@
                 }
               },
               "year_range": {
-                "type": "array",
+                "type": [
+                  "array",
+                  "null"
+                ],
                 "items": {
                   "type": "integer"
                 }
@@ -60,7 +63,10 @@
           "type": "boolean"
         },
         "coiled_cluster_options": {
-          "type": "object",
+          "type": [
+            "object",
+            "null"
+          ],
           "properties": {
             "n_workers": {
               "type": "array",

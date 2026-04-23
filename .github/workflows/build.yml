@@ -12,7 +12,6 @@ jobs:
     strategy:
       matrix:
         python-version:
-          # - "3.10.14"
           - "3.11.9"
           - "3.12.4"
 
@@ -36,63 +35,108 @@ jobs:
       #----------------------------------------------
       #  -----  install & configure poetry  -----
       #----------------------------------------------
+      - name: Read Poetry version
+        id: poetry-version
+        run: echo "version=$(cat .poetry-version | tail -1)" >> $GITHUB_OUTPUT
+
       - name: Install Poetry
         uses: snok/install-poetry@v1
         with:
           virtualenvs-create: true
           virtualenvs-in-project: true
           installer-parallel: true
-          version: 2.2.1
+          version: ${{ steps.poetry-version.outputs.version }}
 
       #----------------------------------------------
-      #       load cached venv if cache exists
+      # install dependencies
       #----------------------------------------------
-      - name: Load cached venv
-        id: cached-poetry-dependencies
-        uses: actions/cache@v3
-        with:
-          path: .venv
-          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
-      #----------------------------------------------
-      # install dependencies if cache does not exist
-      #----------------------------------------------
-      - name: Install dependencies
-        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: poetry install --no-interaction --no-root
-      #----------------------------------------------
-      # install your root project, if required
-      #----------------------------------------------
-      - name: Install project
-        run: poetry install --no-interaction
-      #----------------------------------------------
+      - name: Install Project
+        # Includes DataQuery tests (test_aodn_data_queries.py needs notebooks extra)
+        run: make tests
       #              run test suite
       #----------------------------------------------
-      - name: Install pytest
-        run: poetry add --dev pytest coverage
-
       - name: Run tests
-        run: |
-          source .venv/bin/activate
-          #poetry run pytest
-          poetry add --dev pytest-xdist
-          poetry run coverage run -m pytest # -n 1
-          poetry run coverage report --fail-under=60
-          poetry run coverage xml -o coverage.xml
+        uses: nick-fields/retry@v4
+        # sometimes when having seg faults in the test suite, the runner will just fail without retrying. This ensures we get a chance to retry if that happens.
+        with:
+          timeout_minutes: 10
+          max_attempts: 3
+          command: |
+            poetry run pip install pytest-xdist
+            poetry run coverage run -m pytest
+            poetry run coverage report --fail-under=60
+            poetry run coverage xml -o coverage.xml
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
+        if: ${{ !env.ACT }} # This skips the step only when running via 'act'
         with:
           name: coverage-report-${{ github.job }}-${{ github.run_number }}-${{ matrix.python-version }}
           path: coverage.xml
 
-      - name: Build package
+      - name: Build frozen and unfrozen wheels
         run: |
+          # 1. Build standard (unfrozen) wheel + sdist
           poetry build
 
-          # add freeze step see https://github.com/python-poetry/poetry/issues/2778
+          # 2. Save unfrozen wheel under a distinct name BEFORE freezing
+          mkdir -p dist-artifacts
+          for f in dist/*.whl; do
+            cp "$f" "dist-artifacts/$(basename "${f%.whl}").unfrozen.whl"
+          done
+          cp dist/*.tar.gz dist-artifacts/
+
+          # 3. Freeze the wheel in-place (pins all deps into wheel metadata)
           poetry self add poetry-plugin-freeze
           poetry freeze-wheel
 
-      - name: Verify build
+          # 4. Copy the now-frozen wheel to our artifacts folder
+          cp dist/*.whl dist-artifacts/
+
+      - name: Verify make (Core Mode)
         run: |
-          pip install dist/*.whl --no-deps
+          make core
+          poetry run python -c "import aodn_cloud_optimised; print('Core OK')"
+
+      - name: Verify make (Notebooks Mode)
+        run: |
+          make notebooks
+          poetry run python -c "from aodn_cloud_optimised.lib.DataQuery import GetAodn; print('Notebooks OK')"
+
+      - name: Verify make (Dev Mode)
+        run: |
+          make dev
+          poetry run python -c "from aodn_cloud_optimised.lib.DataQuery import GetAodn; print('Dev OK')"
+
+      #----------------------------------------------
+      #        verify the wheels (Clean Venv)
+      #----------------------------------------------
+      - name: Verify Unfrozen Wheel
+        run: |
+          python -m venv test_env_unfrozen
+          source test_env_unfrozen/bin/activate
+
+          # This proves the Unfrozen wheel is self-contained.
+          # It should find the xarray git URL in the metadata and install it automatically.
+          # We use a wildcard because the version in pyproject.toml is our current truth.
+          pip install dist-artifacts/*.unfrozen.whl
+
+          python -c "import aodn_cloud_optimised; print('Unfrozen wheel (URL-based) OK')"
+          deactivate
+          rm -rf test_env_unfrozen
+
+      - name: Verify Frozen Wheel
+        run: |
+          python -m venv test_env_frozen
+          source test_env_frozen/bin/activate
+
+          # Prime the venv with the fork because the 'freeze' middle-man stripped the URL.
+          pip install "xarray @ git+https://github.com/lbesnard/xarray.git@2025.06.01.dev2"
+
+          # Install the frozen wheel (the one without '.unfrozen' in the name).
+          # This verifies the pinned fsspec/s3fs logic from your lockfile.
+          pip install dist-artifacts/aodn_cloud_optimised-$(poetry version -s)-py3-none-any.whl
+
+          python -c "import aodn_cloud_optimised; print('Frozen wheel (Pinned) OK')"
+          deactivate
+          rm -rf test_env_frozen

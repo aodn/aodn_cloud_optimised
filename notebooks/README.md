@@ -15,28 +15,54 @@ You can also click on the Binder or Colab button above to spin the environment a
 
 # Run locally
 
-Assuming you have [Mamba/Conda](https://github.com/conda-forge/miniforge) already installed on your machine.
+There are two supported ways to set up a local environment for running these notebooks.
+
+---
+
+## Option 1 — Poetry (recommended if you already have the repository)
+
+Requires [Poetry](https://python-poetry.org/) installed (version pinned in `.poetry-version`).
 
 ```bash
-# clone the repository
+# Clone the repository
 git clone https://github.com/aodn/aodn_cloud_optimised.git
-cd aodn_cloud_optimised/notebooks
+cd aodn_cloud_optimised
 
-# create the conda environment from the environment.yml file available in the notebook folder (not the repository root folder)
-mamba env create --file=environment.yml
+# Install the notebooks extra into a Poetry-managed virtual environment
+make notebooks
 ```
 
-Then activate the environment named `AodnCloudOptimisedQuery`:
+Then start Jupyter:
 
 ```bash
-mamba activate AodnCloudOptimisedQuery
+poetry run jupyter notebook --ip=0.0.0.0 --port=8888 notebooks/
 ```
 
-Finally, start Jupyter Notebook accessible on all network interfaces at port 8888:
+---
+
+## Option 2 — Mamba / Conda (recommended for conda users or Windows WSL)
+
+Requires [Mamba/Conda](https://github.com/conda-forge/miniforge) already installed.
 
 ```bash
-jupyter notebook --ip=0.0.0.0 --port=8888
+# Clone the repository
+git clone https://github.com/aodn/aodn_cloud_optimised.git
+cd aodn_cloud_optimised
+
+# Create (or update) the named conda environment with all notebook dependencies
+./setup_miniforge_venvs.sh notebooks
 ```
+
+This creates an environment named `AodnCloudOptimised_notebooks`.  Activate it and start Jupyter:
+
+```bash
+micromamba activate AodnCloudOptimised_notebooks
+# or: conda activate AodnCloudOptimised_notebooks
+
+jupyter notebook --ip=0.0.0.0 --port=8888 notebooks/
+```
+
+---
 
 ### 💡 Windows tip: Use WSL with Mamba
 
@@ -84,22 +110,31 @@ More information available [here](https://github.com/conda-forge/miniforge?tab=r
 - [mooring_timeseries_realtime_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/mooring_timeseries_realtime_qc.ipynb)
 - [mooring_wave_timeseries_delayed_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/mooring_wave_timeseries_delayed_qc.ipynb)
 - [radar_BonneyCoast_velocity_hourly_averaged_delayed_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/radar_BonneyCoast_velocity_hourly_averaged_delayed_qc.ipynb)
+- [radar_BonneyCoast_velocity_hourly_averaged_realtime_nonqc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/radar_BonneyCoast_velocity_hourly_averaged_realtime_nonqc.ipynb)
 - [radar_CapricornBunkerGroup_velocity_hourly_averaged_delayed_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/radar_CapricornBunkerGroup_velocity_hourly_averaged_delayed_qc.ipynb)
+- [radar_CapricornBunkerGroup_velocity_hourly_averaged_realtime_nonqc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/radar_CapricornBunkerGroup_velocity_hourly_averaged_realtime_nonqc.ipynb)
 - [radar_CapricornBunkerGroup_wave_delayed_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/radar_CapricornBunkerGroup_wave_delayed_qc.ipynb)
 - [radar_CapricornBunkerGroup_wind_delayed_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/radar_CapricornBunkerGroup_wind_delayed_qc.ipynb)
 - [radar_CoffsHarbour_velocity_hourly_averaged_delayed_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/radar_CoffsHarbour_velocity_hourly_averaged_delayed_qc.ipynb)
+- [radar_CoffsHarbour_velocity_hourly_averaged_realtime_nonqc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/radar_CoffsHarbour_velocity_hourly_averaged_realtime_nonqc.ipynb)
 - [radar_CoffsHarbour_wave_delayed_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/radar_CoffsHarbour_wave_delayed_qc.ipynb)
 - [radar_CoffsHarbour_wind_delayed_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/radar_CoffsHarbour_wind_delayed_qc.ipynb)
 - [radar_CoralCoast_velocity_hourly_averaged_delayed_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/radar_CoralCoast_velocity_hourly_averaged_delayed_qc.ipynb)
+- [radar_CoralCoast_velocity_hourly_averaged_realtime_nonqc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/radar_CoralCoast_velocity_hourly_averaged_realtime_nonqc.ipynb)
 - [radar_Newcastle_velocity_hourly_averaged_delayed_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/radar_Newcastle_velocity_hourly_averaged_delayed_qc.ipynb)
+- [radar_Newcastle_velocity_hourly_averaged_realtime_nonqc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/radar_Newcastle_velocity_hourly_averaged_realtime_nonqc.ipynb)
 - [radar_NorthWestShelf_velocity_hourly_averaged_delayed_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/radar_NorthWestShelf_velocity_hourly_averaged_delayed_qc.ipynb)
+- [radar_NorthWestShelf_velocity_hourly_averaged_realtime_nonqc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/radar_NorthWestShelf_velocity_hourly_averaged_realtime_nonqc.ipynb)
 - [radar_RottnestShelf_velocity_hourly_averaged_delayed_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/radar_RottnestShelf_velocity_hourly_averaged_delayed_qc.ipynb)
+- [radar_RottnestShelf_velocity_hourly_averaged_realtime_nonqc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/radar_RottnestShelf_velocity_hourly_averaged_realtime_nonqc.ipynb)
 - [radar_RottnestShelf_wave_delayed_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/radar_RottnestShelf_wave_delayed_qc.ipynb)
 - [radar_RottnestShelf_wind_delayed_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/radar_RottnestShelf_wind_delayed_qc.ipynb)
 - [radar_SouthAustraliaGulfs_velocity_hourly_averaged_delayed_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/radar_SouthAustraliaGulfs_velocity_hourly_averaged_delayed_qc.ipynb)
+- [radar_SouthAustraliaGulfs_velocity_hourly_averaged_realtime_nonqc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/radar_SouthAustraliaGulfs_velocity_hourly_averaged_realtime_nonqc.ipynb)
 - [radar_SouthAustraliaGulfs_wave_delayed_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/radar_SouthAustraliaGulfs_wave_delayed_qc.ipynb)
 - [radar_SouthAustraliaGulfs_wind_delayed_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/radar_SouthAustraliaGulfs_wind_delayed_qc.ipynb)
 - [radar_TurquoiseCoast_velocity_hourly_averaged_delayed_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/radar_TurquoiseCoast_velocity_hourly_averaged_delayed_qc.ipynb)
+- [radar_TurquoiseCoast_velocity_hourly_averaged_realtime_nonqc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/radar_TurquoiseCoast_velocity_hourly_averaged_realtime_nonqc.ipynb)
 - [satellite_austemp_sst_8day.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_austemp_sst_8day.ipynb)
 - [satellite_chlorophylla_carder_1day_aqua.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_chlorophylla_carder_1day_aqua.ipynb)
 - [satellite_chlorophylla_gsm_1day_aqua.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_chlorophylla_gsm_1day_aqua.ipynb)

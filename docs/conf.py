@@ -22,7 +22,7 @@ release = version
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
-exclude_patterns = ["aodn_cloud_optimised.bin.anmn_aqualogger_to_parquet"]
+exclude_patterns = ["aodn_cloud_optimised.bin.datasets.anmn_aqualogger_to_parquet"]
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = "sphinx"
 

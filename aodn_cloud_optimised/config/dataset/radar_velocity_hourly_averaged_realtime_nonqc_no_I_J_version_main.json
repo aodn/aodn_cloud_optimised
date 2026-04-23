@@ -1,0 +1,194 @@
+{
+  "dataset_name": "radar_velocity_hourly_averaged_realtime_nonqc_no_I_J_version_main",
+  "logger_name": "radar_velocity_hourly_averaged_realtime_nonqc_no_I_J_version_main",
+  "cloud_optimised_format": "zarr",
+  "schema": {
+    "TIME": {
+      "type": "timestamp[ns]",
+      "standard_name": "time",
+      "long_name": "time",
+      "axis": "T",
+      "valid_min": 0.0,
+      "valid_max": 999999.0,
+      "comment": "Given time lays at the middle of the averaging time period."
+    },
+    "LATITUDE": {
+      "type": "double",
+      "standard_name": "latitude",
+      "long_name": "latitude",
+      "units": "degrees_north",
+      "axis": "Y",
+      "valid_min": -90.0,
+      "valid_max": 90.0,
+      "reference_datum": "geographical coordinates, WGS84 datum"
+    },
+    "LONGITUDE": {
+      "type": "double",
+      "standard_name": "longitude",
+      "long_name": "longitude",
+      "units": "degrees_east",
+      "axis": "X",
+      "valid_min": -180.0,
+      "valid_max": 180.0,
+      "reference_datum": "geographical coordinates, WGS84 datum"
+    },
+    "GDOP": {
+      "type": "float",
+      "long_name": "radar beam intersection angle",
+      "units": "Degrees",
+      "valid_min": 0.0,
+      "valid_max": 180.0,
+      "comment": "This angle is used to assess the impact of Geometric Dilution of Precision. If angle >= 150 or <= 30, then QC flag will not be lower than 4 (see abstract)."
+    },
+    "UCUR": {
+      "type": "float",
+      "standard_name": "eastward_sea_water_velocity",
+      "long_name": "Mean of sea water velocity U component values in 1 hour, after rejection of obvious bad data (see abstract).",
+      "units": "m s-1",
+      "valid_min": -10.0,
+      "valid_max": 10.0,
+      "cell_methods": "TIME: mean",
+      "ancillary_variables": "UCUR_quality_control"
+    },
+    "VCUR": {
+      "type": "float",
+      "standard_name": "northward_sea_water_velocity",
+      "long_name": "Mean of sea water velocity V component values in 1 hour, after rejection of obvious bad data (see abstract).",
+      "units": "m s-1",
+      "valid_min": -10.0,
+      "valid_max": 10.0,
+      "cell_methods": "TIME: mean",
+      "ancillary_variables": "VCUR_quality_control"
+    },
+    "UCUR_sd": {
+      "type": "float",
+      "long_name": "Standard deviation of sea water velocity U component values in 1 hour, after rejection of obvious bad data (see abstract).",
+      "units": "m s-1",
+      "valid_min": -10.0,
+      "valid_max": 10.0,
+      "cell_methods": "TIME: standard_deviation",
+      "ancillary_variables": "UCUR_quality_control"
+    },
+    "VCUR_sd": {
+      "type": "float",
+      "long_name": "Standard deviation of sea water velocity V component values in 1 hour, after rejection of obvious bad data (see abstract).",
+      "units": "m s-1",
+      "valid_min": -10.0,
+      "valid_max": 10.0,
+      "cell_methods": "TIME: standard_deviation",
+      "ancillary_variables": "UCUR_quality_control"
+    },
+    "NOBS1": {
+      "type": "float",
+      "long_name": "Number of observations of sea water velocity in 1 hour from station 1, after rejection of obvious bad data (see abstract).",
+      "units": "1"
+    },
+    "NOBS2": {
+      "type": "float",
+      "long_name": "Number of observations of sea water velocity in 1 hour from station 2, after rejection of obvious bad data (see abstract).",
+      "units": "1"
+    },
+    "UCUR_quality_control": {
+      "type": "float",
+      "standard_name": "eastward_sea_water_velocity status_flag",
+      "long_name": "quality flag for eastward_sea_water_velocity",
+      "quality_control_conventions": "IMOS standard flags",
+      "quality_control_set": 1.0,
+      "valid_min": 0,
+      "valid_max": 9,
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values"
+    },
+    "VCUR_quality_control": {
+      "type": "float",
+      "standard_name": "northward_sea_water_velocity status_flag",
+      "long_name": "quality flag for northward_sea_water_velocity",
+      "quality_control_conventions": "IMOS standard flags",
+      "quality_control_set": 1.0,
+      "valid_min": 0,
+      "valid_max": 9,
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values"
+    }
+  },
+  "run_settings": {
+    "coiled_cluster_options": {
+      "n_workers": [
+        12,
+        140
+      ],
+      "scheduler_vm_types": "m7i.large",
+      "worker_vm_types": "m7i.xlarge",
+      "allow_ingress_from": "me",
+      "compute_purchase_option": "spot_with_fallback",
+      "worker_options": {
+        "nthreads": 1,
+        "memory_limit": "32GB"
+      }
+    },
+    "batch_size": 6000,
+    "cluster": {
+      "mode": "coiled",
+      "restart_every_path": false
+    },
+    "paths": [
+      {
+        "s3_uri": "s3://imos-data/IMOS/",
+        "filter": [],
+        "year_range": []
+      }
+    ],
+    "clear_existing_data": true,
+    "raise_error": false
+  },
+  "schema_transformation": {
+    "global_attributes": {
+      "set": {
+        "project": "Integrated Marine Observing System (IMOS)",
+        "Conventions": "CF-1.6,IMOS-1.4",
+        "abstract": "The IMOS Ocean Radar Facility is producing NetCDF files containing non-quality-controlled vector current maps at 1 hour time interval. They are produced from radial currents, which represent the surface sea water current component along the radial direction from a receiver antenna. Radials are calculated from the shift of the Bragg peaks in a power spectrum. They are mapped onto specific angles through a Direction-Finding algorithm and are converted into current vector components using an unweighted least-squares fit. Radials and vector maps are computed using the standard software provided by the ocean radar manufacturer, WERA Oceanographic HF Radar/Helzel Messtechnik, GmbH. Radials are extracted from the Doppler spectra using the calibrated antenna pattern. Thresholds for radial SNR and velocities are set to 6dB, and 150 cm s-1. Vectors are produced at each grid point using an unweighted least-squares fit. Radial velocities from the two sites falling within a search radius R=20 km around each grid point are used in the computation. At least two radials per site are required in computation of the velocity components. The final product is produced on a regular geographic grid. This is a real-time, non-quality-controlled product (FV00).",
+        "author": "Cosoli, Simone; Hetzel, Yasha",
+        "author_email": "simone.cosoli@uwa.edu.au; yasha.hetzel@uwa.edu.au",
+        "institution": "IMOS Ocean Radar Facility",
+        "institution_references": "https://imos.org.au/facility/ocean-radar",
+        "data_centre": "Australian Ocean Data Network (AODN)",
+        "data_centre_email": "info@aodn.org.au",
+        "instrument": "WERA Oceanographic HF Radar/Helzel Messtechnik, GmbH",
+        "source": "Terrestrial HF radar",
+        "file_version": "Level 0 - Raw Instrument Data",
+        "file_version_quality_control": "Data in this file has not been through a quality control procedure. No quality flags are associated with the data.",
+        "citation": "The citation in a list of references is: IMOS, [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access]",
+        "acknowledgement": "Any users of IMOS data are required to clearly acknowledge the source of the material derived from IMOS in the format: 'Data was sourced from the Integrated Marine Observing System (IMOS) - IMOS is a national collaborative research infrastructure, supported by the Australian Government. If relevant, also credit other organisations involved in collection of this particular datastream (as listed in 'credit' in the metadata record).'",
+        "disclaimer": "Data, products and services from IMOS are provided 'as is' without any warranty as to fitness for a particular purpose."
+      }
+    },
+    "var_template_shape": "UCUR",
+    "vars_incompatible_with_region": [
+      "LATITUDE",
+      "LONGITUDE",
+      "GDOP"
+    ]
+  }
+}

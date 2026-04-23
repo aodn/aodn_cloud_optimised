@@ -1,6 +1,13 @@
 # Ignore the version file, it's created on install
 aodn_cloud_optimised/_version.py
 notebooks/*.zip
+notebooks/Untitled.ipynb
+
+notebooks/mcp_generated_notebooks/setup.py
+notebooks/mcp_generated_notebooks/DataQuery.py
+
+artifacts/
+integration_test_results.md
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -36,6 +43,9 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
+
+# IDEs
+.vscode
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
