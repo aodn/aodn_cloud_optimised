@@ -1443,34 +1443,44 @@ class GenericHandler(CommonHandler):
         # mixing a batch-opened (open_mfdataset) dataset with individually-opened
         # datasets before xr.concat. The performance benefit of batch-opening the
         # good files is outweighed by the correctness risk.
-        for file in good_files:
-            try:
-                if hasattr(file, "seek"):
-                    file.seek(0)
-                ds = self._open_ds(
-                    file, partial_preprocess, drop_vars_list, engine=primary_engine
-                )
-                datasets.append(ds)
-            except Exception as e:
-                self.logger.error(
-                    f"{self.uuid_log}: Could not open '{file}' with '{primary_engine}': {e}"
-                )
+        #
+        # Both groups are opened in parallel via ThreadPoolExecutor — the same
+        # pattern already used above for the magic-byte scan.  Each thread handles
+        # its own seek(0) + open so no seek/read ordering issue can arise.
+        def _open_one(file, engine):
+            if hasattr(file, "seek"):
+                file.seek(0)
+            return self._open_ds(
+                file, partial_preprocess, drop_vars_list, engine=engine
+            )
 
-        for file in bad_files:
-            try:
-                if hasattr(file, "seek"):
-                    file.seek(0)
-                ds = self._open_ds(
-                    file, partial_preprocess, drop_vars_list, engine=fallback_engine
-                )
-                datasets.append(ds)
-                self.logger.info(
-                    f"{self.uuid_log}: Opened incompatible file '{file}' with '{fallback_engine}'."
-                )
-            except Exception as e:
-                self.logger.error(
-                    f"{self.uuid_log}: Could not open '{file}' with '{fallback_engine}' either: {e}. Skipping."
-                )
+        file_engine_pairs = [(f, primary_engine) for f in good_files] + [
+            (f, fallback_engine) for f in bad_files
+        ]
+
+        with ThreadPoolExecutor(max_workers=50) as executor:
+            future_to_file = {
+                executor.submit(_open_one, file, engine): (file, engine)
+                for file, engine in file_engine_pairs
+            }
+            for future in as_completed(future_to_file):
+                file, engine = future_to_file[future]
+                try:
+                    ds = future.result()
+                    datasets.append(ds)
+                    if engine == fallback_engine:
+                        self.logger.info(
+                            f"{self.uuid_log}: Opened incompatible file '{file}' with '{fallback_engine}'."
+                        )
+                except Exception as e:
+                    err_suffix = (
+                        f" either: {e}. Skipping."
+                        if engine == fallback_engine
+                        else f": {e}"
+                    )
+                    self.logger.error(
+                        f"{self.uuid_log}: Could not open '{file}' with '{engine}'{err_suffix}"
+                    )
 
         if not datasets:
             raise RuntimeError(
