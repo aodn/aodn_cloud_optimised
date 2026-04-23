@@ -1302,17 +1302,16 @@ def collect_files(
             s3_client_opts=s3_client_opts,
         )
 
-        pattern: str = path_cfg.filter or ".*"
-        logger.info(f"Filtering files with regex pattern: {pattern}")
-        regex = re.compile(pattern)
-        matching_files = [f for f in matching_files if regex.search(f)]
+        for pattern in path_cfg.filter or []:
+            logger.info(f"Filtering files with regex pattern: {pattern}")
+            regex = re.compile(pattern)
+            matching_files = [f for f in matching_files if regex.search(f)]
+            if not matching_files:
+                raise ValueError(
+                    f"No files matching {pattern} under {s3_uri}. Modify regexp filter or path in configuration file. Abort"
+                )
 
-        if not matching_files:
-            raise ValueError(
-                f"No files matching {pattern} under {s3_uri}. Modify regexp filter or path in configuration file. Abort"
-            )
-
-        logger.info(f"Matched {len(matching_files)} files")
+            logger.info(f"Matched {len(matching_files)} files")
 
         return matching_files
 
