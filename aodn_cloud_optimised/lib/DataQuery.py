@@ -1502,7 +1502,7 @@ def plot_gridded_variable(
         cmap = plt.get_cmap("RdBu_r")
         abs_max = max(abs(vmin), abs(vmax))
         if abs_max == 0:
-            abs_max = np.finfo(float).eps
+            abs_max = 1e-12
         norm = TwoSlopeNorm(vcenter=0, vmin=-abs_max, vmax=abs_max)
         cbar_label = f"{var_long_name} ({var_units})"
     elif log_scale:
@@ -3357,9 +3357,8 @@ class ZarrDataSource(DataSource):
             if abs_max == 0:
                 # Avoid invalid TwoSlopeNorm(vcenter=0, vmin=0, vmax=0)
                 # for constant/zero anomaly fields.
-                norm_to_use = Normalize(vmin=-1e-12, vmax=1e-12)
-            else:
-                norm_to_use = TwoSlopeNorm(vcenter=0, vmin=-abs_max, vmax=abs_max)
+                abs_max = 1e-12
+            norm_to_use = TwoSlopeNorm(vcenter=0, vmin=-abs_max, vmax=abs_max)
         elif log_scale:
             cmap = plt.get_cmap("coolwarm")
             norm_to_use = LogNorm(vmin=vmin_all, vmax=vmax_all)
