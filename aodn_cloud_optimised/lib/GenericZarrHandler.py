@@ -2004,7 +2004,8 @@ class GenericHandler(CommonHandler):
             except Exception as e:
                 self.logger.error(
                     f"{self.uuid_log}: Failed to process file '{file}' during "
-                    f"individual fallback for batch {idx + 1}: {e}"
+                    f"individual fallback for batch {idx + 1}: {e}",
+                    exc_info=True,
                 )
                 failed_files.append((file, str(e)))
 
@@ -2227,9 +2228,15 @@ class GenericHandler(CommonHandler):
         """Validate variable dimensions against the existing Zarr store and fix mismatches.
 
         Compares each variable's dimensions in the new dataset against the
-        existing Zarr store. If a variable is missing a dimension that exists
-        in the store (e.g., append_dim), it is expanded via ``expand_dims``.
-        If dimensions are completely incompatible, a ValueError is raised.
+        existing Zarr store and applies the minimal transformation needed:
+
+        * **Same dims, same order** — no-op.
+        * **Same dims, different order** — ``transpose`` to match the store order.
+        * **Missing dims (subset)** — ``broadcast_like`` a template built from the
+          expected dimension order so that the variable gains the missing axis with
+          the correct size and coordinate values.
+        * **Extra or completely different dims** — raises ``ValueError`` because the
+          mismatch cannot be resolved automatically.
 
         Args:
             ds: The new dataset to validate.
@@ -2240,7 +2247,7 @@ class GenericHandler(CommonHandler):
 
         Raises:
             ValueError: If a variable has incompatible dimensions that cannot
-                be fixed by expansion.
+                be fixed by reordering or broadcast expansion.
         """
         for var_name in ds.data_vars:
             if var_name not in ds_org.data_vars:
@@ -2252,15 +2259,22 @@ class GenericHandler(CommonHandler):
             if new_dims == existing_dims:
                 continue
 
-            # Check if new_dims is a subset of existing_dims (missing dims)
             missing_dims = set(existing_dims) - set(new_dims)
             extra_dims = set(new_dims) - set(existing_dims)
 
-            if missing_dims and not extra_dims:
+            if not missing_dims and not extra_dims:
+                # Same set of dims but in a different order — transpose to match.
                 self.logger.warning(
                     f"{self.uuid_log}: Variable '{var_name}' has dims {new_dims} "
                     f"but existing Zarr store expects {existing_dims}. "
-                    f"Expanding missing dims: {missing_dims}"
+                    f"Transposing to match store order."
+                )
+                ds[var_name] = ds[var_name].transpose(*existing_dims)
+            elif missing_dims and not extra_dims:
+                self.logger.warning(
+                    f"{self.uuid_log}: Variable '{var_name}' has dims {new_dims} "
+                    f"but existing Zarr store expects {existing_dims}. "
+                    f"Broadcasting to add missing dims: {missing_dims}"
                 )
                 # Build a broadcast template with the expected dims from ds
                 template_coords = {d: ds[d] for d in existing_dims if d in ds.coords}
@@ -2269,7 +2283,7 @@ class GenericHandler(CommonHandler):
                     coords=template_coords,
                 )
                 ds[var_name] = ds[var_name].broadcast_like(template)
-            elif missing_dims or extra_dims:
+            else:
                 raise ValueError(
                     f"Variable '{var_name}' has incompatible dimensions: "
                     f"new={new_dims}, existing={existing_dims}. "

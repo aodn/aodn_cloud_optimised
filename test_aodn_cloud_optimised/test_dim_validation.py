@@ -95,6 +95,51 @@ class TestPreprocessXarrayDimHandling:
         ds = preprocess_xarray(sample_ds_with_gdop_no_time, dataset_config_with_dims)
         assert ds["UCUR"].dims == ("TIME", "I", "J")
 
+    def test_scalar_variable_not_expanded(self):
+        """A variable with no spatial dims (e.g. a scalar) must not be touched."""
+        time = np.array(["2024-01-01T00:00:00"], dtype="datetime64[ns]")
+        i_vals = np.arange(5)
+        j_vals = np.arange(4)
+
+        ds = xr.Dataset(
+            {
+                "UCUR": (
+                    ["TIME", "I", "J"],
+                    np.random.rand(1, 5, 4).astype("float32"),
+                ),
+                "SCALAR_FLAG": ([], np.int32(1)),  # scalar — no dims at all
+            },
+            coords={"TIME": time, "I": i_vals, "J": j_vals},
+        )
+        ds["UCUR"].encoding["source"] = "test_file.nc"
+
+        # Use a minimal config without extra variables so that preprocess_xarray
+        # doesn't try to create LATITUDE/LONGITUDE and conflict with the scalar.
+        config = {
+            "logger_name": "test_scalar",
+            "dataset_name": "test_scalar",
+            "schema_transformation": {
+                "dimensions": {
+                    "time": {"name": "TIME", "chunk": 100, "append_dim": True},
+                    "latitude": {"name": "J", "chunk": 4},
+                    "longitude": {"name": "I", "chunk": 5},
+                },
+                "add_variables": None,
+                "global_attributes": None,
+                "var_template_shape": "UCUR",
+            },
+            "schema": {
+                "TIME": {"type": "datetime64[ns]"},
+                "I": {"type": "int32"},
+                "J": {"type": "int32"},
+                "UCUR": {"type": "float32"},
+                "SCALAR_FLAG": {"type": "int32"},
+            },
+        }
+
+        result = preprocess_xarray(ds, config)
+        assert result["SCALAR_FLAG"].dims == (), "Scalar variable should keep zero dims"
+
 
 class TestValidateAndFixDims:
     """Tests for the _validate_and_fix_dims method."""
@@ -164,6 +209,45 @@ class TestValidateAndFixDims:
         handler = self._make_handler()
         result = handler._validate_and_fix_dims(ds_new, ds_org)
         assert "NEW_VAR" in result
+
+    def test_reordered_dims_transposed(self):
+        """Variable with same dims but different order should be transposed to match store."""
+        ds_new = xr.Dataset(
+            {"VAR": (["I", "TIME", "J"], np.zeros((3, 2, 4)))},
+            coords={"TIME": np.arange(2), "I": np.arange(3), "J": np.arange(4)},
+        )
+        ds_org = xr.Dataset(
+            {"VAR": (["TIME", "I", "J"], np.zeros((5, 3, 4)))},
+            coords={"TIME": np.arange(5), "I": np.arange(3), "J": np.arange(4)},
+        )
+
+        handler = self._make_handler()
+        result = handler._validate_and_fix_dims(ds_new, ds_org)
+        assert result["VAR"].dims == ("TIME", "I", "J")
+
+    def test_missing_dim_expanded_multi_time(self):
+        """Variable missing TIME should be broadcast to match ds.sizes['TIME'] (len > 1)."""
+        n_time = 5
+        ds_new = xr.Dataset(
+            {
+                "GDOP": (["I", "J"], np.zeros((3, 4))),
+                "UCUR": (["TIME", "I", "J"], np.zeros((n_time, 3, 4))),
+            },
+            coords={"TIME": np.arange(n_time), "I": np.arange(3), "J": np.arange(4)},
+        )
+        ds_org = xr.Dataset(
+            {
+                "GDOP": (["TIME", "I", "J"], np.zeros((10, 3, 4))),
+                "UCUR": (["TIME", "I", "J"], np.zeros((10, 3, 4))),
+            },
+            coords={"TIME": np.arange(10), "I": np.arange(3), "J": np.arange(4)},
+        )
+
+        handler = self._make_handler()
+        result = handler._validate_and_fix_dims(ds_new, ds_org)
+        assert result["GDOP"].dims == ("TIME", "I", "J")
+        # The expanded TIME axis must match the dataset's TIME size, not 1.
+        assert result["GDOP"].sizes["TIME"] == n_time
 
     @staticmethod
     def _make_handler():
