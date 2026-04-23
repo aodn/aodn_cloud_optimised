@@ -1057,6 +1057,7 @@ class GenericHandler(CommonHandler):
                     P2PConsistencyError,
                     KilledWorker,
                     RuntimeError,
+                    AttributeError,
                 ) as e:
                     error_text = str(e)
 
@@ -1088,6 +1089,10 @@ class GenericHandler(CommonHandler):
                         "different environments",
                     ]
 
+                    BROKEN_CLUSTER_KEYWORDS = [
+                        "'NoneType' object has no attribute 'asyncio_loop'",
+                    ]
+
                     # Determine if the error should trigger a retry (cluster reset)
                     retryable = any(
                         keyword in error_text
@@ -1096,11 +1101,12 @@ class GenericHandler(CommonHandler):
                             + CONNECTION_KEYWORDS
                             + WORKER_KILLED_KEYWORDS
                             + DESERIALISATION_KEYWORDS
+                            + BROKEN_CLUSTER_KEYWORDS
                         )
                     ) or isinstance(e, KilledWorker)
 
-                    # RuntimeError that is NOT retryable → treat as normal exception
-                    if isinstance(e, RuntimeError) and not retryable:
+                    # RuntimeError or AttributeError that is NOT retryable → treat as normal exception
+                    if isinstance(e, (RuntimeError, AttributeError)) and not retryable:
                         # Treat as a regular exception: fallback to individual processing
                         self.logger.error(
                             f"{self.uuid_log}: Unexpected RuntimeError during batch {idx + 1}: {e}.\n"
