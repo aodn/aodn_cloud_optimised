@@ -7,7 +7,7 @@
       {
         "s3_uri": "s3://imos-data/IMOS/ANMN/NRS/NRSMAI/real-time",
         "filter": [
-          ".*\\.nc"
+          ".*\\.nc$"
         ],
         "year_range": []
       }

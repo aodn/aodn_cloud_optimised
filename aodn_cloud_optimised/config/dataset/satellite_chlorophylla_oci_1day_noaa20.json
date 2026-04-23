@@ -122,7 +122,7 @@
       {
         "s3_uri": "s3://imos-data/IMOS/SRS/OC/gridded/noaa20/P1D",
         "filter": [
-          ".*chl_oci\\.nc"
+          ".*chl_oci\\.nc$"
         ],
         "year_range": [
           2023,

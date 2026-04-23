@@ -399,35 +399,35 @@
       {
         "s3_uri": "s3://imos-data/IMOS/ANMN/NSW",
         "filter": [
-          ".*/Temperature/.*_FV01_.*\\.nc"
+          ".*/Temperature/.*_FV01_.*\\.nc$"
         ],
         "year_range": []
       },
       {
         "s3_uri": "s3://imos-data/IMOS/ANMN/PA",
         "filter": [
-          ".*/Temperature/.*_FV01_.*\\.nc"
+          ".*/Temperature/.*_FV01_.*\\.nc$"
         ],
         "year_range": []
       },
       {
         "s3_uri": "s3://imos-data/IMOS/ANMN/QLD",
         "filter": [
-          ".*/Temperature/.*_FV01_.*\\.nc"
+          ".*/Temperature/.*_FV01_.*\\.nc$"
         ],
         "year_range": []
       },
       {
         "s3_uri": "s3://imos-data/IMOS/ANMN/SA",
         "filter": [
-          ".*/Temperature/.*_FV01_.*\\.nc"
+          ".*/Temperature/.*_FV01_.*\\.nc$"
         ],
         "year_range": []
       },
       {
         "s3_uri": "s3://imos-data/IMOS/ANMN/WA",
         "filter": [
-          ".*/Temperature/.*_FV01_.*\\.nc"
+          ".*/Temperature/.*_FV01_.*\\.nc$"
         ],
         "year_range": []
       }

@@ -7,7 +7,7 @@
       {
         "s3_uri": "s3://imos-data/IMOS/ANMN/AM/",
         "filter": [
-          ".*\\/CO2\\/real-time\\/.*_FV0[0-1].*\\.nc"
+          ".*\\/CO2\\/real-time\\/.*_FV0[0-1].*\\.nc$"
         ],
         "year_range": []
       }

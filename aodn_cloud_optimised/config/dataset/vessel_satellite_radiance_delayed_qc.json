@@ -297,14 +297,14 @@
       {
         "s3_uri": "s3://imos-data/IMOS/SRS/OC/radiometer/VMQ9273_Solander",
         "filter": [
-          ".*FV01.*\\.nc"
+          ".*FV01.*\\.nc$"
         ],
         "year_range": []
       },
       {
         "s3_uri": "s3://imos-data/IMOS/SRS/OC/radiometer/VLHJ_Southern-Surveyor",
         "filter": [
-          ".*FV01.*\\.nc"
+          ".*FV01.*\\.nc$"
         ],
         "year_range": []
       }

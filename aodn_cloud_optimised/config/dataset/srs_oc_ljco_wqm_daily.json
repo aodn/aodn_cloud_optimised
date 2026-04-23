@@ -720,7 +720,7 @@
       {
         "s3_uri": "s3://imos-data/IMOS/SRS/OC/LJCO/WQM-daily/",
         "filter": [
-          ".*\\.nc"
+          ".*\\.nc$"
         ],
         "year_range": []
       }

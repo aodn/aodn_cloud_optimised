@@ -357,98 +357,98 @@
       {
         "s3_uri": "s3://imos-data/Department_of_Transport-Western_Australia/WAVE-BUOYS/REALTIME/",
         "filter": [
-          ".*\\.nc"
+          ".*\\.nc$"
         ],
         "year_range": []
       },
       {
         "s3_uri": "s3://imos-data/Bureau_of_Meteorology/WAVE-BUOYS/REALTIME/",
         "filter": [
-          ".*\\.nc"
+          ".*\\.nc$"
         ],
         "year_range": []
       },
       {
         "s3_uri": "s3://imos-data/Deakin_University/WAVE-BUOYS/REALTIME/",
         "filter": [
-          ".*\\.nc"
+          ".*\\.nc$"
         ],
         "year_range": []
       },
       {
         "s3_uri": "s3://imos-data/Department_of_Environment_and_Science-Queensland/WAVE-BUOYS/REALTIME/",
         "filter": [
-          ".*\\.nc"
+          ".*\\.nc$"
         ],
         "year_range": []
       },
       {
         "s3_uri": "s3://imos-data/Department_of_Planning_and_Environment-New_South_Wales/WAVE-BUOYS/REALTIME/",
         "filter": [
-          ".*\\.nc"
+          ".*\\.nc$"
         ],
         "year_range": []
       },
       {
         "s3_uri": "s3://imos-data/Department_of_Planning_and_Environment-New_South_Wales/Manly_Hydraulics_Laboratory/WAVE-BUOYS/REALTIME/",
         "filter": [
-          ".*\\.nc"
+          ".*\\.nc$"
         ],
         "year_range": []
       },
       {
         "s3_uri": "s3://imos-data/Pilbara_Ports_Authority/WAVE-BUOYS/REALTIME/",
         "filter": [
-          ".*\\.nc"
+          ".*\\.nc$"
         ],
         "year_range": []
       },
       {
         "s3_uri": "s3://imos-data/Gippsland-Ports-Victoria/WAVE-BUOYS/REALTIME/",
         "filter": [
-          ".*\\.nc"
+          ".*\\.nc$"
         ],
         "year_range": []
       },
       {
         "s3_uri": "s3://imos-data/Flinders_University/WAVE-BUOYS/REALTIME/",
         "filter": [
-          ".*\\.nc"
+          ".*\\.nc$"
         ],
         "year_range": []
       },
       {
         "s3_uri": "s3://imos-data/IMOS/COASTAL-WAVE-BUOYS/WAVE-BUOYS/REALTIME/",
         "filter": [
-          ".*\\.nc"
+          ".*\\.nc$"
         ],
         "year_range": []
       },
       {
         "s3_uri": "s3://imos-data/UWA/WAVE-BUOYS/REALTIME/",
         "filter": [
-          ".*\\.nc"
+          ".*\\.nc$"
         ],
         "year_range": []
       },
       {
         "s3_uri": "s3://imos-data/IMOS/ANMN/Wave_Buoys/WAVE-BUOYS/REALTIME/",
         "filter": [
-          ".*\\.nc"
+          ".*\\.nc$"
         ],
         "year_range": []
       },
       {
         "s3_uri": "s3://imos-data/IMOS/ANMN/Deep_Water_Waves/WAVE-BUOYS/REALTIME/",
         "filter": [
-          ".*\\.nc"
+          ".*\\.nc$"
         ],
         "year_range": []
       },
       {
         "s3_uri": "s3://imos-data/Department_for_Environment_and_Water-South_Australia/WAVE-BUOYS/REALTIME/",
         "filter": [
-          ".*\\.nc"
+          ".*\\.nc$"
         ],
         "year_range": []
       }

@@ -27,6 +27,7 @@ import fsspec
 import geopandas as gpd
 import gsw  # TEOS-10 library
 import ipywidgets as widgets
+import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
 import numpy as np
@@ -51,7 +52,7 @@ from shapely.geometry import MultiPolygon, Polygon
 from tqdm.notebook import tqdm
 from windrose import WindroseAxes
 
-__version__ = "0.3.11"
+__version__ = "0.3.12"
 
 REGION: Final[str] = "ap-southeast-2"
 ENDPOINT_URL = "https://s3.ap-southeast-2.amazonaws.com"
@@ -646,10 +647,11 @@ def create_time_filter(dataset: ds.Dataset, **kwargs) -> pc.Expression:
     if None in (date_start, date_end):
         raise ValueError("Start and end dates must be provided.")
 
-    # Use partition-only temporal extent for boundary validation.
-    # This avoids two expensive to_table() S3 reads that get_temporal_extent
-    # would perform just to provide a nicer error message.
-    timestamp_start, timestamp_end = get_temporal_extent_v1(dataset)
+    # Use precise temporal extent (actual min/max TIME values) for boundary validation.
+    # get_temporal_extent_v1 returns partition bin start times, not actual data
+    # timestamps, and would cause false DateOutOfRangeError when date_start falls
+    # within the last partition bin but after its bin-start time.
+    timestamp_start, timestamp_end = get_temporal_extent(dataset)
     timestamp_start = ensure_utc_aware(timestamp_start)
     timestamp_end = ensure_utc_aware(timestamp_end)
 
@@ -1145,7 +1147,199 @@ def plot_radar_water_velocity_gridded(
     plt.show()
 
 
-# TODO: check if this can be deprecated
+def plot_radar_water_velocity_timeseries(
+    ds: xr.Dataset,
+    date_start: str,
+    date_end: str,
+    lat: float | None = None,
+    lon: float | None = None,
+    qc_suffix: str = "_quality_control",
+    time_name_override: str = "TIME",
+) -> pd.DataFrame | None:
+    """Extracts and plots U/V current timeseries from a radar Zarr dataset.
+
+    Selects data over the given time range, optionally at the specified
+    geographic point (nearest-neighbour selection). If no point is provided,
+    the grid point with the highest number of valid UCUR observations is used.
+    After applying quality-control flags, the data are resampled to a daily
+    mean and plotted as two stacked time-series panels (eastward / northward).
+
+    Args:
+        ds: xarray Dataset from a radar velocity Zarr store.  Must contain
+            ``UCUR`` and ``VCUR`` data variables together with their QC
+            counterparts (named ``UCUR<qc_suffix>`` and ``VCUR<qc_suffix>``),
+            and coordinate arrays for latitude and longitude.
+        date_start: Start of the time window (ISO-8601 string,
+            e.g. ``"2021-01-01"``).
+        date_end: End of the time window (ISO-8601 string,
+            e.g. ``"2021-03-31"``).
+        lat: Latitude of the point of interest in decimal degrees.  If
+            ``None``, the point with the highest data density is used.
+        lon: Longitude of the point of interest in decimal degrees.  If
+            ``None``, the point with the highest data density is used.
+        qc_suffix: Suffix appended to ``UCUR`` / ``VCUR`` to form the
+            quality-control variable names.  Defaults to
+            ``"_quality_control"``.
+        time_name_override: Name of the time coordinate in ``ds``.
+            Defaults to ``"TIME"``.
+
+    Returns:
+        A :class:`pandas.DataFrame` with columns ``u`` and ``v`` indexed by
+        date (daily mean), or ``None`` if no valid data were found.
+    """
+    subset = ds.sel({time_name_override: slice(date_start, date_end)})
+
+    # Discover lat/lon coordinate names
+    lat_names = ["LATITUDE", "latitude", "LAT", "lat"]
+    lon_names = ["LONGITUDE", "longitude", "LON", "lon"]
+    lat_name = next(
+        (n for n in lat_names if n in subset.coords or n in subset.data_vars), None
+    )
+    lon_name = next(
+        (n for n in lon_names if n in subset.coords or n in subset.data_vars), None
+    )
+    if lat_name is None or lon_name is None:
+        raise ValueError(
+            "Could not find latitude/longitude coordinates in the dataset. "
+            f"Searched for {lat_names} / {lon_names}."
+        )
+
+    lat_da = subset[lat_name]
+    lon_da = subset[lon_name]
+    lat_lon_is_2d = lat_da.ndim == 2  # e.g. LATITUDE(I, J)
+
+    if lat is None or lon is None:
+        valid_count = subset["UCUR"].notnull().sum(dim=time_name_override).compute()
+        if valid_count.max() == 0:
+            print("Warning: No valid UCUR data found in this time range.")
+            return None
+
+        flat_idx = int(valid_count.values.argmax())
+        idx = np.unravel_index(flat_idx, valid_count.shape)
+        if lat_lon_is_2d:
+            actual_lat = float(lat_da.values[idx])
+            actual_lon = float(lon_da.values[idx])
+        else:
+            # 1D: valid_count dims are (lat_dim, lon_dim); idx = (lat_idx, lon_idx)
+            actual_lat = float(lat_da.values[idx[0]])
+            actual_lon = float(lon_da.values[idx[1]])
+        print(f"Using highest-density point: {actual_lat:.3f}°, {actual_lon:.3f}°")
+    else:
+        lat_min = float(lat_da.min().values)
+        lat_max = float(lat_da.max().values)
+        lon_min = float(lon_da.min().values)
+        lon_max = float(lon_da.max().values)
+        if not (lat_min <= lat <= lat_max) or not (lon_min <= lon <= lon_max):
+            raise ValueError(
+                f"Point ({lat}, {lon}) is outside grid boundaries. "
+                f"Lat: [{lat_min:.2f}, {lat_max:.2f}], Lon: [{lon_min:.2f}, {lon_max:.2f}]"
+            )
+        actual_lat, actual_lon = lat, lon
+
+    if lat_lon_is_2d:
+        # LATITUDE(I, J) / LONGITUDE(I, J): find nearest (I, J) cell by distance
+        dist = (lat_da.values - actual_lat) ** 2 + (lon_da.values - actual_lon) ** 2
+        i_dim, j_dim = lat_da.dims
+        i_idx, j_idx = np.unravel_index(int(np.nanargmin(dist)), dist.shape)
+        point_ds = subset.isel({i_dim: i_idx, j_dim: j_idx})
+        actual_lat = float(lat_da.values[i_idx, j_idx])
+        actual_lon = float(lon_da.values[i_idx, j_idx])
+    else:
+        point_ds = subset.sel(
+            {lat_name: actual_lat, lon_name: actual_lon}, method="nearest"
+        )
+
+    ucur_qc_name = f"UCUR{qc_suffix}"
+    vcur_qc_name = f"VCUR{qc_suffix}"
+    if ucur_qc_name in point_ds and vcur_qc_name in point_ds:
+        u_qc = point_ds["UCUR"]  # .where(point_ds[ucur_qc_name] == 1)
+        v_qc = point_ds["VCUR"]  # .where(point_ds[vcur_qc_name] == 1)
+    else:
+        u_qc = point_ds["UCUR"]
+        v_qc = point_ds["VCUR"]
+
+    df_daily = (
+        xr.Dataset({"u": u_qc, "v": v_qc})
+        .to_dataframe()[["u", "v"]]
+        .resample("D")
+        .mean()
+    )
+
+    # Derived speed and direction (oceanographic: direction current flows TO, CW from North)
+    df_daily["speed"] = np.sqrt(df_daily["u"] ** 2 + df_daily["v"] ** 2)
+    df_daily["direction"] = (np.degrees(np.arctan2(df_daily["u"], df_daily["v"]))) % 360
+
+    fig, axes = plt.subplots(3, 1, figsize=(14, 9), sharex=True)
+
+    axes[0].plot(
+        df_daily.index, df_daily["u"], color="steelblue", lw=1.5, marker="o", ms=3
+    )
+    axes[0].axhline(0, color="k", lw=0.5, ls="--")
+    axes[0].set_ylabel("UCUR (m s⁻¹)\n[eastward]")
+    axes[0].set_title(
+        f"HF Radar Daily Mean at ({actual_lat:.2f}°, {actual_lon:.2f}°) "
+        f"— {date_start} to {date_end}",
+        fontsize=11,
+    )
+    axes[0].grid(True, alpha=0.3)
+
+    axes[1].plot(
+        df_daily.index, df_daily["v"], color="darkorange", lw=1.5, marker="o", ms=3
+    )
+    axes[1].axhline(0, color="k", lw=0.5, ls="--")
+    axes[1].set_ylabel("VCUR (m s⁻¹)\n[northward]")
+    axes[1].grid(True, alpha=0.3)
+
+    # Speed on left axis, direction on right axis
+    color_speed = "seagreen"
+    color_dir = "mediumpurple"
+    ax_speed = axes[2]
+    ax_dir = ax_speed.twinx()
+
+    ax_speed.plot(
+        df_daily.index,
+        df_daily["speed"],
+        color=color_speed,
+        lw=1.5,
+        marker="o",
+        ms=3,
+        label="Speed",
+    )
+    ax_speed.set_ylabel("Speed (m s⁻¹)", color=color_speed)
+    ax_speed.tick_params(axis="y", labelcolor=color_speed)
+    ax_speed.set_ylim(bottom=0)
+    ax_speed.grid(True, alpha=0.3)
+
+    ax_dir.scatter(
+        df_daily.index,
+        df_daily["direction"],
+        color=color_dir,
+        s=10,
+        alpha=0.7,
+        label="Direction",
+    )
+    ax_dir.set_ylabel("Direction (°, CW from N)", color=color_dir)
+    ax_dir.tick_params(axis="y", labelcolor=color_dir)
+    ax_dir.set_ylim(0, 360)
+    ax_dir.set_yticks([0, 90, 180, 270, 360])
+    ax_dir.set_yticklabels(["0 (N)", "90 (E)", "180 (S)", "270 (W)", "360 (N)"])
+
+    # Combined legend for subplot 3
+    lines_speed, labels_speed = ax_speed.get_legend_handles_labels()
+    lines_dir, labels_dir = ax_dir.get_legend_handles_labels()
+    ax_speed.legend(
+        lines_speed + lines_dir, labels_speed + labels_dir, loc="upper left", fontsize=8
+    )
+
+    axes[2].xaxis.set_major_formatter(mdates.DateFormatter("%d %b"))
+    axes[2].xaxis.set_major_locator(mdates.AutoDateLocator())
+
+    plt.tight_layout()
+    plt.show()
+
+    return df_daily
+
+
 def plot_gridded_variable(
     ds,
     start_date,
@@ -1796,6 +1990,15 @@ class DataSource(ABC):
     def plot_radar_water_velocity_rose(self, **kwargs) -> None:
         pass
 
+    @abstractmethod
+    def plot_radar_water_velocity_timeseries(self, **kwargs) -> pd.DataFrame | None:
+        """Extracts and plots U/V current timeseries at a grid point.
+
+        Delegates to the top-level :func:`plot_radar_water_velocity_timeseries`
+        function.  Not supported by all data source formats.
+        """
+        pass
+
     def list_variables(self) -> dict[str, dict]:
         """Return a dictionary of all variables with their metadata.
 
@@ -2260,7 +2463,12 @@ class ParquetDataSource(DataSource):
 
     def plot_radar_water_velocity_rose(self, **kwargs) -> None:
         raise NotImplementedError(
-            "plot_radar_water_velocity_gridded is not implemented for ParquetDataSource."
+            "plot_radar_water_velocity_rose is not implemented for ParquetDataSource."
+        )
+
+    def plot_radar_water_velocity_timeseries(self, **kwargs) -> None:
+        raise NotImplementedError(
+            "plot_radar_water_velocity_timeseries is not implemented for ParquetDataSource."
         )
 
 
@@ -3322,6 +3530,9 @@ class ZarrDataSource(DataSource):
 
     def plot_radar_water_velocity_rose(self, **kwargs):
         return plot_radar_water_velocity_rose(self.zarr_store, **kwargs)
+
+    def plot_radar_water_velocity_timeseries(self, **kwargs) -> pd.DataFrame | None:
+        return plot_radar_water_velocity_timeseries(self.zarr_store, **kwargs)
 
     def get_metadata(self) -> dict:
         """Retrieves metadata from the Zarr store.

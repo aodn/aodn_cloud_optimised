@@ -599,7 +599,7 @@
       {
         "s3_uri": "s3://imos-data/IMOS/SOOP/SOOP-CO2/",
         "filter": [
-          ".*_FV01_.*\\.nc"
+          ".*_FV01_.*\\.nc$"
         ],
         "year_range": []
       }

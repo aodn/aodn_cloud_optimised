@@ -51,10 +51,11 @@
       {
         "s3_uri": "s3://imos-data/IMOS/ACORN/gridded_1h-avg-current-map_non-QC/CBG/",
         "filter": [
-          ".*\\.nc"
+          ".*/\\d{4}/\\d{2}/\\d{2}/.*\\.nc$"
         ],
+        "__comment": "folders under CBG/2011 with different grid! and data before 2011/03 on different grid!",
         "year_range": [
-          2007,
+          2012,
           2017
         ]
       }

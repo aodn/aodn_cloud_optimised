@@ -407,7 +407,7 @@
       {
         "s3_uri": "s3://imos-data/IMOS/SRS/ALTIMETRY/calibration_validation/",
         "filter": [
-          ".*\\.nc"
+          ".*\\.nc$"
         ],
         "year_range": []
       }

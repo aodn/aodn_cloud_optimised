@@ -3,7 +3,7 @@ import os
 import re
 import traceback
 import uuid
-import warnings
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from contextlib import nullcontext
 from functools import partial
 
@@ -15,6 +15,7 @@ import zarr
 from dask import array as da
 from dask.distributed import Lock
 from distributed.client import FutureCancelledError
+from distributed.scheduler import KilledWorker
 from distributed.shuffle._exceptions import P2PConsistencyError
 from xarray.coding.times import CFDatetimeCoder
 from xarray.structure.merge import MergeError
@@ -28,6 +29,12 @@ from aodn_cloud_optimised.lib.s3Tools import (
     split_s3_path,
 )
 from aodn_cloud_optimised.lib.schema import merge_schema_dict
+
+
+class GridSizeMismatchError(ValueError):
+    """Raised when a batch has spatial dimensions incompatible with the existing Zarr store."""
+
+    pass
 
 
 def check_variable_values_dask(
@@ -368,6 +375,17 @@ def preprocess_xarray(ds, dataset_config):
     # version to push back as CO in order to "delete". If UNKOWN_FILENAME.nc, either run an error, or have another approach,
     # Maybe the file to delete, would be a filename, OR the physical og NetCDF, which means then that we have all of the info in it, and simply making it NAN
 
+    # Structural validation: every dimension must have a 1D coordinate index so
+    # that xr.open_mfdataset's combine_by_coords can infer concatenation order.
+    # Files that fail this check are structurally incomplete and must be excluded
+    # from the batch (the caller catches this ValueError).
+    for dim_name in list(ds.dims):
+        if dim_name not in ds.indexes:
+            raise ValueError(
+                f"File '{filename}' has dimension '{dim_name}' with no corresponding "
+                f"1D coordinate index — file is structurally incomplete."
+            )
+
     logger.info(f"Applying preprocessing on dataset from {filename}")
     for variable_name in var_required:
         datatype = var_required[variable_name].get("type")
@@ -455,6 +473,17 @@ def preprocess_xarray(ds, dataset_config):
             #         ),
             #     )
             #
+
+            # Expand dimensions for variables missing the append_dim.
+            # Some source NetCDF files have spatial-only variables (e.g. GDOP
+            # with dims (I, J)) that need to be broadcast to include the
+            # append_dim (e.g. TIME) for Zarr compatibility.
+            # NOTE: This is NOT done here in preprocess_xarray because
+            # expanding dims during open_mfdataset preprocessing can corrupt
+            # TIME encoding in the Zarr store. Instead, dimension mismatches
+            # are resolved defensively in _validate_and_fix_dims() just before
+            # writing to Zarr.
+
             ds[variable_name] = ds[variable_name].astype(datatype)
 
     ds = _update_ds_gattr(ds, dataset_config)
@@ -1004,6 +1033,11 @@ class GenericHandler(CommonHandler):
                     )
                     partial_preprocess_already_run = True
 
+                    if ds is None:
+                        raise RuntimeError(
+                            "try_open_dataset returned None — no dataset could be opened for this batch."
+                        )
+
                     if not partial_preprocess_already_run:
                         # Likely redundant now, but retained for safety
                         self.logger.debug(
@@ -1018,7 +1052,13 @@ class GenericHandler(CommonHandler):
 
                     batch_is_processed = True  # Exit loop
 
-                except (FutureCancelledError, P2PConsistencyError, RuntimeError) as e:
+                except (
+                    FutureCancelledError,
+                    P2PConsistencyError,
+                    KilledWorker,
+                    RuntimeError,
+                    AttributeError,
+                ) as e:
                     error_text = str(e)
 
                     SHUFFLE_KEYWORDS = [
@@ -1037,9 +1077,20 @@ class GenericHandler(CommonHandler):
                         "Too many open files",
                     ]
 
+                    WORKER_KILLED_KEYWORDS = [
+                        "workers died",
+                        "all those workers died",
+                        "KilledWorker",
+                        "worker died",
+                    ]
+
                     DESERIALISATION_KEYWORDS = [
                         "Error during deserialization",
                         "different environments",
+                    ]
+
+                    BROKEN_CLUSTER_KEYWORDS = [
+                        "'NoneType' object has no attribute 'asyncio_loop'",
                     ]
 
                     # Determine if the error should trigger a retry (cluster reset)
@@ -1048,15 +1099,17 @@ class GenericHandler(CommonHandler):
                         for keyword in (
                             SHUFFLE_KEYWORDS
                             + CONNECTION_KEYWORDS
+                            + WORKER_KILLED_KEYWORDS
                             + DESERIALISATION_KEYWORDS
+                            + BROKEN_CLUSTER_KEYWORDS
                         )
-                    )
+                    ) or isinstance(e, KilledWorker)
 
-                    # RuntimeError that is NOT retryable → treat as normal exception
-                    if isinstance(e, RuntimeError) and not retryable:
+                    # RuntimeError or AttributeError that is NOT retryable → treat as normal exception
+                    if isinstance(e, (RuntimeError, AttributeError)) and not retryable:
                         # Treat as a regular exception: fallback to individual processing
                         self.logger.error(
-                            f"{self.uuid_log}: Unexpected RuntimeError during batch {idx+1}: {e}.\n"
+                            f"{self.uuid_log}: Unexpected RuntimeError during batch {idx + 1}: {e}.\n"
                             f"{traceback.format_exc()}"
                         )
                         self.fallback_to_individual_processing(
@@ -1071,7 +1124,7 @@ class GenericHandler(CommonHandler):
 
                         if retry_count > max_retries:
                             self.logger.error(
-                                f"{self.uuid_log}: Batch {idx+1} has exceeded retry limit "
+                                f"{self.uuid_log}: Batch {idx + 1} has exceeded retry limit "
                                 f"({max_retries}). Falling back to individual processing."
                             )
 
@@ -1086,7 +1139,7 @@ class GenericHandler(CommonHandler):
                         else:
                             # Scheduler or shuffle failure: reset cluster and retry batch
                             self.logger.error(
-                                f"{self.uuid_log}: Scheduler/worker/shuffle failure during batch {idx+1}: {e}. "
+                                f"{self.uuid_log}: Scheduler/worker/shuffle failure during batch {idx + 1}: {e}. "
                                 f"Recreating Dask cluster and retrying batch…\nRetry number for failing batch:{retry_count}/{max_retries}"
                                 f"{traceback.format_exc()}"
                             )
@@ -1102,6 +1155,22 @@ class GenericHandler(CommonHandler):
 
                     # TODO: what do do in this case? could just enter an infinit loop
                     batch_is_processed = False  # Loop again
+
+                except GridSizeMismatchError as e:
+                    # All files in this batch have a spatial grid incompatible with the
+                    # existing Zarr store. Individual processing won't help — every file
+                    # has the same wrong grid. Log the full file list and skip the batch.
+                    file_basenames = [
+                        os.path.basename(getattr(f, "path", str(f)))
+                        for f in batch_files
+                    ]
+                    self.logger.error(
+                        f"{self.uuid_log}: Batch {idx + 1} rejected — {e}\n"
+                        f"The following {len(batch_files)} file(s) have an incompatible "
+                        f"spatial grid and will be skipped:\n"
+                        + "\n".join(f"  - {n}" for n in file_basenames)
+                    )
+                    batch_is_processed = True
 
                 except Exception as e:
                     self.logger.error(
@@ -1155,10 +1224,14 @@ class GenericHandler(CommonHandler):
                     partial_preprocess, drop_vars_list, batch_files, engine=engine
                 )
             except (ValueError, TypeError):
-                # Capture and inspect the traceback; 3 known scenarios
+                # Capture and inspect the traceback; 4 known scenarios
                 tb = traceback.format_exc()
                 match_grid_not_consistent = re.search(
                     r"Coordinate variable (\w+) is neither monotonically increasing nor monotonically decreasing on all datasets",
+                    tb,
+                )
+                match_non_monotonic_combine = re.search(
+                    r"Resulting object does not have monotonic global indexes along dimension (\w+)",
                     tb,
                 )
                 match_not_netcdf4_signature = re.search(
@@ -1166,6 +1239,13 @@ class GenericHandler(CommonHandler):
                 )
                 match_not_netcdf3_signature = re.search(
                     r"is not a valid NetCDF 3 file", tb
+                )
+                match_missing_coord_index = re.search(
+                    r"coordinate '(\w+)' has no corresponding index", tb
+                )
+                match_missing_coord_index_preprocess = re.search(
+                    r"has dimension '(\w+)' with no corresponding 1D coordinate index",
+                    tb,
                 )
 
                 if match_grid_not_consistent:
@@ -1177,15 +1257,57 @@ class GenericHandler(CommonHandler):
                         drop_vars_list,
                         engine,
                     )
+                elif match_non_monotonic_combine:
+                    # Files individually open fine but combine_by_coords fails because
+                    # some files have a different spatial grid (e.g. different LONGITUDE values).
+                    variable_name = match_non_monotonic_combine.group(1)
+                    self.logger.warning(
+                        f"{self.uuid_log}: combine_by_coords failed — dimension '{variable_name}' "
+                        f"is not globally monotonic. Checking for files with inconsistent grids."
+                    )
+                    return self.handle_coordinate_variable_issue(
+                        batch_files,
+                        variable_name,
+                        partial_preprocess,
+                        drop_vars_list,
+                        engine,
+                    )
+                elif match_missing_coord_index or match_missing_coord_index_preprocess:
+                    # One or more files has a dimension without a 1D coordinate index.
+                    # preprocess_xarray embeds the filename in its error message; the
+                    # retry helper extracts it from the traceback and removes the file.
+                    return self._open_mfds_retrying(
+                        partial_preprocess,
+                        drop_vars_list,
+                        batch_files,
+                        engine,
+                    )
                 elif engine == primary_engine and match_not_netcdf4_signature:
-                    # Indicates a possible format issue; Tried to open a NetCDF3 files with h5netcdf; fallback to the next engine
-                    raise ValueError("Switch to fallback engine")
+                    # One or more files may be NetCDF3 or corrupt. Try to identify them
+                    # locally, open good files as a batch, and bad files with the fallback
+                    # engine. Falls back to "Switch to fallback engine" if no bad files are
+                    # found locally (cluster-env issue).
+                    return self.handle_invalid_format_in_batch(
+                        batch_files,
+                        primary_engine,
+                        fallback_engine,
+                        partial_preprocess,
+                        drop_vars_list,
+                    )
                 elif engine == fallback_engine and match_not_netcdf3_signature:
                     # Should be a NetCDF3, but didn't work with scipy!
                     # Final failure point for fallback engine
+                    self.logger.error(
+                        f"{self.uuid_log}: open_mfdataset with '{engine}' failed — "
+                        f"not a valid NetCDF3 file either. Both engines exhausted.\n{tb}"
+                    )
                     raise ValueError(f"Invalid NetCDF file format in {batch_files}")
                 else:
-                    # Unknown or unhandled error
+                    # Unknown or unhandled error — log the full traceback
+                    self.logger.error(
+                        f"{self.uuid_log}: open_mfdataset with '{engine}' failed with "
+                        f"an unrecognised error:\n{tb}"
+                    )
                     raise
 
         try:
@@ -1198,11 +1320,277 @@ class GenericHandler(CommonHandler):
                     return handle_engine(fallback_engine)
                 except Exception:
                     # If fallback also fails, handle multi-engine fallback
-                    # Log full traceback before continuing
-                    traceback.print_exc()
+                    self.logger.warning(
+                        f"{self.uuid_log}: Both '{primary_engine}' and '{fallback_engine}' "
+                        f"engines failed to open batch as mfdataset. "
+                        f"Falling back to opening files with mixed engines:\n"
+                        f"{traceback.format_exc()}"
+                    )
                     return self.handle_multi_engine_fallback(
                         batch_files, partial_preprocess, drop_vars_list
                     )
+            else:
+                raise
+
+    # Magic-byte signatures used for fast format detection (no file open required).
+    _HDF5_MAGIC = b"\x89HDF\r\n\x1a\n"  # NetCDF4 / HDF5
+    _CDF_MAGIC = (b"CDF\x01", b"CDF\x02")  # NetCDF3 classic and 64-bit offset
+
+    def _is_netcdf4_magic(self, path: str) -> bool:
+        """Return True if the file at *path* starts with the HDF5 magic bytes.
+
+        Reads only the first 8 bytes via an S3 range-GET — very cheap even for
+        thousands of files.
+        """
+        try:
+            with self.s3_fs_input.open(path, "rb") as f:
+                magic = f.read(8)
+            return magic == self._HDF5_MAGIC
+        except Exception:
+            # If we can't read the file at all, treat it as incompatible so it
+            # gets the fallback engine (and a proper error if both fail).
+            return False
+
+    def handle_invalid_format_in_batch(
+        self,
+        batch_files,
+        primary_engine,
+        fallback_engine,
+        partial_preprocess,
+        drop_vars_list,
+    ):
+        """Handles a batch where the primary engine fails due to incompatible files.
+
+        When `open_mfdataset` with `primary_engine` fails because one or more
+        files are not in the expected format (e.g. a NetCDF3 file in a NetCDF4
+        batch), this method:
+
+        1. Scans each file by reading its first 8 bytes (magic-byte check) to
+           determine whether it is NetCDF4/HDF5 or NetCDF3 — very fast even for
+           thousands of files, and parallelised with threads.
+        2. Opens the compatible files individually with the primary engine.
+        3. Opens the incompatible files individually with the fallback engine.
+        4. Concatenates and returns the combined dataset.
+
+        If no incompatible files are found locally, the failure is likely a
+        cluster-environment issue rather than a bad file. In that case, a
+        ``ValueError("Switch to fallback engine")`` is raised to let the caller
+        try the fallback engine on the full batch.
+
+        Args:
+            batch_files (list): List of S3 file-like objects in the batch.
+            primary_engine (str): Engine that failed ('h5netcdf').
+            fallback_engine (str): Engine to try for incompatible files ('scipy').
+            partial_preprocess (callable): The pre-configured preprocessing function.
+            drop_vars_list (list[str]): List of variable names to drop.
+
+        Returns:
+            xr.Dataset: The dataset combining all successfully opened files.
+
+        Raises:
+            ValueError("Switch to fallback engine"): If no incompatible files are
+                found locally (cluster-env issue; let the caller try scipy batch open).
+            RuntimeError: If no files at all could be opened.
+        """
+        self.logger.warning(
+            f"{self.uuid_log}: Scanning {len(batch_files)} files via magic-byte check "
+            f"to identify those incompatible with '{primary_engine}' engine."
+        )
+
+        # Parallelise the magic-byte reads — each is a tiny S3 range-GET.
+        # 50 threads keep S3 latency well-hidden without overwhelming the scheduler.
+        good_files = []
+        bad_files = []
+        with ThreadPoolExecutor(max_workers=50) as executor:
+            futures = {
+                executor.submit(self._is_netcdf4_magic, file.path): file
+                for file in batch_files
+            }
+            for future in as_completed(futures):
+                file = futures[future]
+                is_hdf5 = future.result()
+                # h5netcdf needs HDF5 files; scipy handles NetCDF3
+                if primary_engine == "h5netcdf":
+                    (good_files if is_hdf5 else bad_files).append(file)
+                else:
+                    (good_files if not is_hdf5 else bad_files).append(file)
+
+        self.logger.info(
+            f"{self.uuid_log}: Format scan complete — "
+            f"{len(good_files)} file(s) compatible with '{primary_engine}', "
+            f"{len(bad_files)} file(s) need '{fallback_engine}'."
+        )
+
+        if not bad_files:
+            # All files are HDF5 locally — failure must be a cluster-env issue.
+            self.logger.warning(
+                f"{self.uuid_log}: All files appear to be NetCDF4/HDF5. "
+                f"Batch failure is likely a cluster-environment issue. Switching to '{fallback_engine}'."
+            )
+            raise ValueError("Switch to fallback engine")
+
+        self.logger.warning(
+            f"{self.uuid_log}: Contact the data provider. "
+            f"Found {len(bad_files)}/{len(batch_files)} file(s) with NetCDF3 format "
+            f"incompatible with '{primary_engine}' — will open with '{fallback_engine}':\n{bad_files}"
+        )
+
+        datasets = []
+
+        # Open each file individually with the known correct engine.
+        # Using _open_ds (not _open_mfds) for all files avoids chunk-structure
+        # mismatches on object-dtype variables (e.g. 'filename') that arise when
+        # mixing a batch-opened (open_mfdataset) dataset with individually-opened
+        # datasets before xr.concat. The performance benefit of batch-opening the
+        # good files is outweighed by the correctness risk.
+        #
+        # Both groups are opened in parallel via ThreadPoolExecutor — the same
+        # pattern already used above for the magic-byte scan.  Each thread handles
+        # its own seek(0) + open so no seek/read ordering issue can arise.
+        def _open_one(file, engine):
+            if hasattr(file, "seek"):
+                file.seek(0)
+            return self._open_ds(
+                file, partial_preprocess, drop_vars_list, engine=engine
+            )
+
+        file_engine_pairs = [(f, primary_engine) for f in good_files] + [
+            (f, fallback_engine) for f in bad_files
+        ]
+
+        with ThreadPoolExecutor(max_workers=50) as executor:
+            future_to_file = {
+                executor.submit(_open_one, file, engine): (file, engine)
+                for file, engine in file_engine_pairs
+            }
+            for future in as_completed(future_to_file):
+                file, engine = future_to_file[future]
+                try:
+                    ds = future.result()
+                    datasets.append(ds)
+                    if engine == fallback_engine:
+                        self.logger.info(
+                            f"{self.uuid_log}: Opened incompatible file '{file}' with '{fallback_engine}'."
+                        )
+                except Exception as e:
+                    err_suffix = (
+                        f" either: {e}. Skipping."
+                        if engine == fallback_engine
+                        else f": {e}"
+                    )
+                    self.logger.error(
+                        f"{self.uuid_log}: Could not open '{file}' with '{engine}'{err_suffix}"
+                    )
+
+        if not datasets:
+            raise RuntimeError(
+                f"{self.uuid_log}: No files in the batch could be opened with any engine."
+            )
+
+        if len(datasets) == 1:
+            self.logger.info(
+                f"{self.uuid_log}: Successfully concatenated files from batch."
+            )
+            return datasets[0]
+
+        self.logger.info(
+            f"{self.uuid_log}: Concatenating {len(datasets)} dataset(s) from mixed-engine open."
+        )
+        ds = xr.concat(
+            datasets,
+            compat="override",
+            coords="minimal",
+            data_vars="all",
+            dim=self.append_dim_varname,
+        )
+        ds = ds.chunk(chunks=self.chunks)
+        ds = ds.unify_chunks()
+        self.logger.info(
+            f"{self.uuid_log}: Successfully concatenated files from batch."
+        )
+        return ds
+
+    # Pattern used by _open_mfds_retrying to extract a bad filename from the
+    # preprocess_xarray error message embedded in the traceback.
+    _PREPROCESS_BAD_FILE_RE = re.compile(
+        r"File '([^']+)' has dimension '\w+' with no corresponding 1D coordinate index"
+    )
+
+    def _open_mfds_retrying(
+        self, partial_preprocess, drop_vars_list, batch_files, engine
+    ):
+        """Calls ``_open_mfds``, retrying after excluding any file whose preprocessing
+        raises a recognisable "structurally incomplete" error.
+
+        ``preprocess_xarray`` embeds the source filename in its ``ValueError``
+        message when it detects a structural problem (e.g. a dimension with no 1D
+        coordinate index).  When ``open_mfdataset`` propagates that exception back
+        to the main process, this method extracts the filename from the traceback,
+        removes the offending file from the batch, logs it, and retries.  The loop
+        repeats until the batch opens cleanly or every file has been excluded.
+
+        This avoids a separate per-file scan: the bad file identifies itself
+        through the preprocess error, and Dask's normal parallel machinery is used
+        to open the remaining files.
+
+        Args:
+            partial_preprocess (callable): Preprocessing function passed to
+                ``open_mfdataset``.  Must embed the source filename in any
+                ``ValueError`` it raises (as ``preprocess_xarray`` does).
+            drop_vars_list (list[str]): Variables to drop when opening.
+            batch_files (list): S3 file-like objects to open.
+            engine (str): xarray engine to use.
+
+        Returns:
+            xr.Dataset: The dataset opened from the surviving files.
+
+        Raises:
+            RuntimeError: If every file in the batch was excluded.
+        """
+        remaining = list(batch_files)
+        excluded = []
+
+        while remaining:
+            try:
+                return self._open_mfds(
+                    partial_preprocess, drop_vars_list, remaining, engine
+                )
+            except (ValueError, TypeError) as exc:
+                # Search str(exc) ONLY — not traceback.format_exc() — because on
+                # the second (and later) retries the full traceback includes the
+                # chained context from earlier iterations, which would cause the
+                # regex to match an already-excluded filename and then fail to find
+                # it in `remaining`.  The ValueError raised by open_mfdataset when
+                # preprocess raises is the preprocess exception itself (Dask/xarray
+                # re-raises it directly), so its message always contains the filename.
+                match = self._PREPROCESS_BAD_FILE_RE.search(str(exc))
+                if not match:
+                    raise  # unrelated error — propagate to the caller
+
+                bad_basename = match.group(1)
+                bad_file = next(
+                    (
+                        f
+                        for f in remaining
+                        if os.path.basename(getattr(f, "path", str(f))) == bad_basename
+                    ),
+                    None,
+                )
+                if bad_file is None:
+                    # Filename in error doesn't match any file we know — give up.
+                    raise
+
+                self.logger.error(
+                    f"{self.uuid_log}: Contact the data provider. "
+                    f"Excluding structurally incomplete file from batch: {bad_file}"
+                )
+                excluded.append(bad_file)
+                remaining = [f for f in remaining if f is not bad_file]
+
+        raise RuntimeError(
+            f"{self.uuid_log}: All {len(batch_files)} file(s) in the batch were "
+            f"excluded due to structural issues. Excluded files: {excluded}"
+        )
 
     def handle_coordinate_variable_issue(
         self, batch_files, variable_name, partial_preprocess, drop_vars_list, engine
@@ -1564,9 +1952,11 @@ class GenericHandler(CommonHandler):
         return None
 
     def _open_file_with_fallback(self, file, partial_preprocess, drop_vars_list):
-        """Opens a single file, trying 'scipy' then 'h5netcdf' engine.
+        """Opens a single file, trying 'h5netcdf' then 'scipy' engine.
 
         Used as part of the fallback strategy when `open_mfdataset` fails.
+        h5netcdf is tried first since most files are NetCDF4. scipy is the
+        fallback for NetCDF3 (classic) files.
 
         Args:
             file (str): The S3 path of the file to open.
@@ -1580,20 +1970,19 @@ class GenericHandler(CommonHandler):
             Exception: If the file cannot be opened with either engine.
         """
         try:
-            engine = "scipy"
-            with self.s3_fs_input.open(file, "rb") as f:  # Open the file-like object
-                ds = self._open_ds(f, partial_preprocess, drop_vars_list, engine=engine)
+            engine = "h5netcdf"
+            ds = self._open_ds(file, partial_preprocess, drop_vars_list, engine=engine)
             self.logger.info(
                 f"{self.uuid_log}: Successfully opened {file} with '{engine}' engine."
             )
             return ds
-        except (ValueError, TypeError) as e:
-            self.logger.info(
-                f"{self.uuid_log}: Error opening {file} with 'scipy' engine: {e}. Defaulting to 'h5netcdf'."
+        except (ValueError, TypeError, OSError) as e:
+            self.logger.debug(
+                f"{self.uuid_log}: Error opening {file} with 'h5netcdf' engine: {e}. Trying 'scipy'."
             )
-            engine = "h5netcdf"
-
-            ds = self._open_ds(file, partial_preprocess, drop_vars_list, engine=engine)
+            engine = "scipy"
+            with self.s3_fs_input.open(file, "rb") as f:
+                ds = self._open_ds(f, partial_preprocess, drop_vars_list, engine=engine)
             self.logger.info(
                 f"{self.uuid_log}: Successfully opened {file} with '{engine}' engine."
             )
@@ -1605,7 +1994,9 @@ class GenericHandler(CommonHandler):
         """Processes files individually as a fallback.
 
         Iterates through `batch_files`, opens each using `_open_file_with_fallback`,
-        and writes it immediately using `_write_ds`.
+        and writes it immediately using `_write_ds`. Files that fail are logged
+        and skipped so that one bad file does not prevent the rest of the batch
+        from being processed.
 
         Args:
             batch_files (list[str]): List of S3 file paths in the batch.
@@ -1613,9 +2004,27 @@ class GenericHandler(CommonHandler):
             drop_vars_list (list[str]): List of variable names to drop.
             idx (int): The index of the current batch (for logging).
         """
+        failed_files: list[tuple[str, str]] = []
         for file in batch_files:
-            ds = self._open_file_with_fallback(file, partial_preprocess, drop_vars_list)
-            self._write_ds(ds, idx)
+            try:
+                ds = self._open_file_with_fallback(
+                    file, partial_preprocess, drop_vars_list
+                )
+                self._write_ds(ds, idx)
+            except Exception as e:
+                self.logger.error(
+                    f"{self.uuid_log}: Failed to process file '{file}' during "
+                    f"individual fallback for batch {idx + 1}: {e}",
+                    exc_info=True,
+                )
+                failed_files.append((file, str(e)))
+
+        if failed_files:
+            file_list = "\n  ".join(f"{f}: {err}" for f, err in failed_files)
+            self.logger.error(
+                f"{self.uuid_log}: {len(failed_files)}/{len(batch_files)} file(s) "
+                f"failed during individual fallback for batch {idx + 1}:\n  {file_list}"
+            )
 
     def _concatenate_files_different_engines(
         self, batch_files, partial_preprocess, drop_vars_list
@@ -1626,22 +2035,51 @@ class GenericHandler(CommonHandler):
         file using `_open_file_with_fallback` and then concatenates the list
         of resulting datasets along the append_dim dimension.
 
+        Files that cannot be opened with either engine are skipped and logged
+        as corrupt so the remaining clean files can still be processed.
+
         Args:
             batch_files (list[str]): List of S3 file paths in the batch.
             partial_preprocess (callable): The pre-configured preprocessing function.
             drop_vars_list (list[str]): List of variable names to drop.
 
         Returns:
-            xr.Dataset: The concatenated dataset.
+            xr.Dataset: The concatenated dataset from all successfully opened files.
+
+        Raises:
+            RuntimeError: If no files in the batch could be opened.
         """
         datasets = []
+        failed_files: list[tuple[str, str]] = []
         for file in batch_files:
-            ds = self._open_file_with_fallback(file, partial_preprocess, drop_vars_list)
-            datasets.append(ds)
+            try:
+                ds = self._open_file_with_fallback(
+                    file, partial_preprocess, drop_vars_list
+                )
+                datasets.append(ds)
+            except Exception as e:
+                self.logger.warning(
+                    f"{self.uuid_log}: Skipping file '{file}' — could not be opened "
+                    f"with any engine: {e}"
+                )
+                failed_files.append((file, str(e)))
+
+        if failed_files:
+            file_list = "\n  ".join(f"{f}: {err}" for f, err in failed_files)
+            self.logger.error(
+                f"{self.uuid_log}: Contact the data provider. "
+                f"{len(failed_files)}/{len(batch_files)} file(s) could not be opened "
+                f"and were excluded from the batch:\n  {file_list}"
+            )
+
+        if not datasets:
+            raise RuntimeError(
+                f"No files in the batch could be opened. All {len(batch_files)} file(s) failed."
+            )
 
         # Concatenate the datasets
         self.logger.info(
-            f"{self.uuid_log}: Successfully read all files in the batch with different engines. Concatenating them now."
+            f"{self.uuid_log}: Successfully read {len(datasets)}/{len(batch_files)} file(s) in the batch. Concatenating them now."
         )
 
         ds = xr.concat(
@@ -1796,6 +2234,74 @@ class GenericHandler(CommonHandler):
 
         return True
 
+    def _validate_and_fix_dims(self, ds: xr.Dataset, ds_org: xr.Dataset) -> xr.Dataset:
+        """Validate variable dimensions against the existing Zarr store and fix mismatches.
+
+        Compares each variable's dimensions in the new dataset against the
+        existing Zarr store and applies the minimal transformation needed:
+
+        * **Same dims, same order** — no-op.
+        * **Same dims, different order** — ``transpose`` to match the store order.
+        * **Missing dims (subset)** — ``broadcast_like`` a template built from the
+          expected dimension order so that the variable gains the missing axis with
+          the correct size and coordinate values.
+        * **Extra or completely different dims** — raises ``ValueError`` because the
+          mismatch cannot be resolved automatically.
+
+        Args:
+            ds: The new dataset to validate.
+            ds_org: The existing Zarr dataset to compare against.
+
+        Returns:
+            The dataset with any fixable dimension mismatches resolved.
+
+        Raises:
+            ValueError: If a variable has incompatible dimensions that cannot
+                be fixed by reordering or broadcast expansion.
+        """
+        for var_name in ds.data_vars:
+            if var_name not in ds_org.data_vars:
+                continue
+
+            new_dims = ds[var_name].dims
+            existing_dims = ds_org[var_name].dims
+
+            if new_dims == existing_dims:
+                continue
+
+            missing_dims = set(existing_dims) - set(new_dims)
+            extra_dims = set(new_dims) - set(existing_dims)
+
+            if not missing_dims and not extra_dims:
+                # Same set of dims but in a different order — transpose to match.
+                self.logger.warning(
+                    f"{self.uuid_log}: Variable '{var_name}' has dims {new_dims} "
+                    f"but existing Zarr store expects {existing_dims}. "
+                    f"Transposing to match store order."
+                )
+                ds[var_name] = ds[var_name].transpose(*existing_dims)
+            elif missing_dims and not extra_dims:
+                self.logger.warning(
+                    f"{self.uuid_log}: Variable '{var_name}' has dims {new_dims} "
+                    f"but existing Zarr store expects {existing_dims}. "
+                    f"Broadcasting to add missing dims: {missing_dims}"
+                )
+                # Build a broadcast template with the expected dims from ds
+                template_coords = {d: ds[d] for d in existing_dims if d in ds.coords}
+                template = xr.DataArray(
+                    dims=existing_dims,
+                    coords=template_coords,
+                )
+                ds[var_name] = ds[var_name].broadcast_like(template)
+            else:
+                raise ValueError(
+                    f"Variable '{var_name}' has incompatible dimensions: "
+                    f"new={new_dims}, existing={existing_dims}. "
+                    f"Cannot reconcile (extra={extra_dims}, missing={missing_dims})."
+                )
+
+        return ds
+
     def _write_ds(self, ds, idx):
         """Writes a dataset batch to the Zarr store.
 
@@ -1819,11 +2325,14 @@ class GenericHandler(CommonHandler):
         else:
             ds = ds.chunk(chunks=self.chunks)
 
-        # Reason for the following, see: https://github.com/pydata/xarray/issues/5219  https://github.com/pydata/xarray/issues/5286
+        # Remove inherited chunk encoding to avoid conflicts when rechunking before write.
+        # Only the "chunks" key is problematic (see https://github.com/pydata/xarray/issues/5219
+        # and https://github.com/pydata/xarray/issues/5286). Clearing the full encoding dict is
+        # too aggressive: it also strips the object_codec, _FillValue etc. that are set for
+        # string variables (e.g. 'filename'), which causes xarray to load the dask array into
+        # memory to infer the dtype and emit a SerializationWarning.
         for var in ds.variables:
-            encoding = ds[var].encoding
-            if "chunks" in encoding:
-                encoding.clear()
+            ds[var].encoding.pop("chunks", None)
 
         # Write the dataset to Zarr
         if prefix_exists(
@@ -1854,6 +2363,29 @@ class GenericHandler(CommonHandler):
                 self.logger.debug(
                     f"{self.uuid_log}: Existing Zarr dataset has the following chunk definition: {ds_org.chunks.items()}"
                 )
+
+                # Validate spatial (non-append) dimension sizes before attempting to
+                # append. If the batch has a different spatial grid than the store, all
+                # files in the batch are fundamentally incompatible — bail out early with
+                # a specific error so the caller can log and skip them cleanly.
+                spatial_mismatches = {
+                    dim: (ds.sizes[dim], ds_org.sizes[dim])
+                    for dim in ds_org.dims
+                    if dim != self.append_dim_varname
+                    and dim in ds.dims
+                    and ds.sizes[dim] != ds_org.sizes[dim]
+                }
+                if spatial_mismatches:
+                    mismatch_str = ", ".join(
+                        f"{dim}: batch={actual} vs store={expected}"
+                        for dim, (actual, expected) in spatial_mismatches.items()
+                    )
+                    raise GridSizeMismatchError(
+                        f"Batch has incompatible spatial grid — {mismatch_str}. "
+                        f"Files in this batch cannot be appended to the existing store."
+                    )
+
+                ds = self._validate_and_fix_dims(ds, ds_org)
 
                 append_dim_values_org = ds_org[self.append_dim_varname].values
                 append_dim_values_new = ds[self.append_dim_varname].values

@@ -88,7 +88,7 @@
       {
         "s3_uri": "s3://imos-data/IMOS/SRS/OC/gridded/aqua/P1D",
         "filter": [
-          ".*chl_carder\\.nc"
+          ".*chl_carder\\.nc$"
         ],
         "year_range": [
           2021,
