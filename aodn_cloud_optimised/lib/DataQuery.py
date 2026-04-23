@@ -45,14 +45,14 @@ from dateutil import parser
 from dateutil.parser import parse
 from fuzzywuzzy import fuzz
 from IPython.display import FileLink, clear_output, display
-from matplotlib.colors import LogNorm, Normalize
+from matplotlib.colors import LogNorm, Normalize, TwoSlopeNorm
 from s3path import PureS3Path
 from shapely import wkb
 from shapely.geometry import MultiPolygon, Polygon
 from tqdm.notebook import tqdm
 from windrose import WindroseAxes
 
-__version__ = "0.3.12"
+__version__ = "0.3.13"
 
 REGION: Final[str] = "ap-southeast-2"
 ENDPOINT_URL = "https://s3.ap-southeast-2.amazonaws.com"
@@ -1352,6 +1352,7 @@ def plot_gridded_variable(
     time_name="time",
     coastline_resolution="110m",
     log_scale=False,  # Optional argument to use a logarithmic color scale
+    plot_type="default",  # "default" or "anomaly"
 ):
     """
     Plots a variable (e.g., SST) data for 6 consecutive days starting from start_date with coastlines.
@@ -1364,6 +1365,11 @@ def plot_gridded_variable(
     - var_name: str, variable name to plot (default is 'sea_surface_temperature').
     - coastline_resolution: str, resolution of the coastlines ('110m', '50m', '10m').
     - log_scale: bool, whether to use a logarithmic color scale (default is False).
+      Ignored when plot_type='anomaly'.
+    - plot_type: str, plot style.  'default' uses the coolwarm colormap with a linear
+      (or log) scale.  'anomaly' uses the RdBu_r diverging colormap centred at zero,
+      which is appropriate for anomaly fields (e.g. sea-level anomaly, temperature
+      anomaly).
     """
     logger = logging.getLogger("aodn.GetAodn")
 
@@ -1424,6 +1430,11 @@ def plot_gridded_variable(
     var_long_name = ds[var_name].attrs.get("long_name", var_name)
     logger.info(f"Variable Long Name: {var_long_name}")
 
+    if plot_type == "anomaly" and log_scale:
+        logger.warning(
+            "log_scale=True is ignored when plot_type='anomaly' (anomaly plots use a linear diverging scale)."
+        )
+
     # Create subplots with Cartopy for coastlines
     fig, axes = plt.subplots(
         nrows=int(n_days / 3),
@@ -1432,9 +1443,6 @@ def plot_gridded_variable(
         subplot_kw={"projection": ccrs.PlateCarree()},
     )
     axes = axes.flatten()
-
-    # Set up a variable for the colormap
-    cmap = plt.get_cmap("coolwarm")
 
     # Create a placeholder for the color data range
     vmin, vmax = float("inf"), float("-inf")
@@ -1469,16 +1477,6 @@ def plot_gridded_variable(
             vmin = min(vmin, data.min().values)
             vmax = max(vmax, data.max().values)
 
-            # Set the color scale norm based on whether log_scale is True or False
-            if log_scale:
-                norm = LogNorm(vmin=vmin, vmax=vmax)  # Logarithmic scale
-                cbar_label = f"Log({var_long_name}) ({var_units})"  # Colorbar label for log scale
-            else:
-                norm = Normalize(vmin=vmin, vmax=vmax)  # Linear scale
-                cbar_label = (
-                    f"{var_long_name} ({var_units})"  # Colorbar label for linear scale
-                )
-
         except Exception as err:
             logger.error(f"Error processing date {date.strftime('%Y-%m-%d')}: {err}")
             continue
@@ -1488,6 +1486,25 @@ def plot_gridded_variable(
         raise ValueError(
             "No valid data found in the selected range of dates and coordinates."
         )
+
+    # Build colormap and norm based on plot_type / log_scale
+    var_units = ds[var_name].attrs.get("units", "unknown units")
+    if var_units.lower() == "kelvin":
+        var_units = "°C"
+
+    if plot_type == "anomaly":
+        cmap = plt.get_cmap("RdBu_r")
+        abs_max = max(abs(vmin), abs(vmax))
+        norm = TwoSlopeNorm(vcenter=0, vmin=-abs_max, vmax=abs_max)
+        cbar_label = f"{var_long_name} ({var_units})"
+    elif log_scale:
+        cmap = plt.get_cmap("coolwarm")
+        norm = LogNorm(vmin=vmin, vmax=vmax)
+        cbar_label = f"Log({var_long_name}) ({var_units})"
+    else:
+        cmap = plt.get_cmap("coolwarm")
+        norm = Normalize(vmin=vmin, vmax=vmax)
+        cbar_label = f"{var_long_name} ({var_units})"
 
     # Plot each date after determining vmin and vmax
     for date in dates:
@@ -1541,11 +1558,7 @@ def plot_gridded_variable(
     # Create a single colorbar for all plots
     cbar_ax = fig.add_axes([1, 0.15, 0.02, 0.7])
     cbar = fig.colorbar(img, cax=cbar_ax, orientation="vertical")
-    # Set the colorbar label and title based on the scale type
-    if log_scale:
-        cbar.set_label(f"Log({var_long_name}) ({var_units})")
-    else:
-        cbar.set_label(f"{var_long_name} ({var_units})")
+    cbar.set_label(cbar_label)
 
     cbar.set_ticks([vmin, (vmin + vmax) / 2, vmax])
     cbar.ax.set_yticklabels([f"{vmin:.2f}", f"{(vmin + vmax) / 2:.2f}", f"{vmax:.2f}"])
@@ -3068,6 +3081,7 @@ class ZarrDataSource(DataSource):
         n_days: int = 6,
         coastline_resolution: str | None = "110m",
         log_scale: bool = False,
+        plot_type: str = "default",
         lat_name_override: str | None = None,
         lon_name_override: str | None = None,
         time_name_override: str | None = None,
@@ -3092,6 +3106,12 @@ class ZarrDataSource(DataSource):
             coastline_resolution: The resolution for the Cartopy coastline
                 feature ('110m', '50m', '10m'). Defaults to "110m".
             log_scale: If True, use a logarithmic color scale. Defaults to False.
+                Ignored when plot_type='anomaly'.
+            plot_type: Plot style.  ``'default'`` uses the ``coolwarm`` colormap with a
+                linear (or log) scale.  ``'anomaly'`` uses the ``RdBu_r`` diverging
+                colormap centred at zero via ``TwoSlopeNorm``, which is appropriate for
+                anomaly fields (e.g. sea-level anomaly, temperature anomaly).
+                Defaults to ``'default'``.
             lat_name_override: Optional override for the latitude coordinate name.
             lon_name_override: Optional override for the longitude coordinate name.
             time_name_override: Optional override for the time coordinate name.
@@ -3250,6 +3270,11 @@ class ZarrDataSource(DataSource):
         ncols = 3
         nrows = (num_plots + ncols - 1) // ncols
 
+        if plot_type == "anomaly" and log_scale:
+            self.logger.warning(
+                "log_scale=True is ignored when plot_type='anomaly' (anomaly plots use a linear diverging scale)."
+            )
+
         fig, axes = plt.subplots(
             nrows=nrows,
             ncols=ncols,
@@ -3259,7 +3284,6 @@ class ZarrDataSource(DataSource):
         )
         axes_flat = axes.flatten()
 
-        cmap = plt.get_cmap("coolwarm")
         vmin_all, vmax_all = float("inf"), float("-inf")
 
         # Store data for each plot to avoid re-selecting
@@ -3306,11 +3330,17 @@ class ZarrDataSource(DataSource):
                 plt.close(fig)
             return
 
-        norm_to_use = (
-            LogNorm(vmin=vmin_all, vmax=vmax_all)
-            if log_scale
-            else Normalize(vmin=vmin_all, vmax=vmax_all)
-        )
+        # Build colormap and norm based on plot_type / log_scale
+        if plot_type == "anomaly":
+            cmap = plt.get_cmap("RdBu_r")
+            abs_max = max(abs(vmin_all), abs(vmax_all))
+            norm_to_use = TwoSlopeNorm(vcenter=0, vmin=-abs_max, vmax=abs_max)
+        elif log_scale:
+            cmap = plt.get_cmap("coolwarm")
+            norm_to_use = LogNorm(vmin=vmin_all, vmax=vmax_all)
+        else:
+            cmap = plt.get_cmap("coolwarm")
+            norm_to_use = Normalize(vmin=vmin_all, vmax=vmax_all)
 
         img_for_colorbar = None  # To store one of the plot images for the colorbar
 
@@ -3325,10 +3355,6 @@ class ZarrDataSource(DataSource):
                 ax.set_title(f"No data for {date_obj.strftime('%Y-%m-%d %H:%M:%S')}")
                 ax.axis("off")
                 continue
-
-            var_units_display = ds[var_name].attrs.get("units", "unknown units")
-            if var_units_display.lower() == "kelvin":
-                var_units_display = "°C"
 
             img = data_to_plot.plot(
                 ax=ax,
@@ -3353,8 +3379,11 @@ class ZarrDataSource(DataSource):
             axes_flat[i].set_visible(False)
 
         if img_for_colorbar:  # Only add colorbar if at least one plot was made
+            var_units_display = ds[var_name].attrs.get("units", "unknown units")
+            if var_units_display.lower() == "kelvin":
+                var_units_display = "°C"
             cbar_label_text = f"{var_long_name} ({var_units_display})"
-            if log_scale:
+            if log_scale and plot_type != "anomaly":
                 cbar_label_text = f"Log({cbar_label_text})"
 
             # Adjust colorbar position; [left, bottom, width, height] in figure-relative coords

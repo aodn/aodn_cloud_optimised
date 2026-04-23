@@ -160,7 +160,10 @@
         "filter": [
           ".*\\.nc$"
         ],
-        "year_range": []
+        "year_range": [
+          2020,
+          2026
+        ]
       }
     ],
     "clear_existing_data": true,
