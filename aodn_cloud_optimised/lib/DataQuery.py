@@ -1373,6 +1373,12 @@ def plot_gridded_variable(
     """
     logger = logging.getLogger("aodn.GetAodn")
 
+    valid_plot_types = {"default", "anomaly"}
+    if plot_type not in valid_plot_types:
+        raise ValueError(
+            f"Invalid plot_type '{plot_type}'. Must be one of {valid_plot_types}."
+        )
+
     ds = ds.sortby(time_name)
 
     # Get latitude and longitude extents
@@ -1495,6 +1501,8 @@ def plot_gridded_variable(
     if plot_type == "anomaly":
         cmap = plt.get_cmap("RdBu_r")
         abs_max = max(abs(vmin), abs(vmax))
+        if abs_max == 0:
+            abs_max = np.finfo(float).eps
         norm = TwoSlopeNorm(vcenter=0, vmin=-abs_max, vmax=abs_max)
         cbar_label = f"{var_long_name} ({var_units})"
     elif log_scale:
@@ -1560,8 +1568,14 @@ def plot_gridded_variable(
     cbar = fig.colorbar(img, cax=cbar_ax, orientation="vertical")
     cbar.set_label(cbar_label)
 
-    cbar.set_ticks([vmin, (vmin + vmax) / 2, vmax])
-    cbar.ax.set_yticklabels([f"{vmin:.2f}", f"{(vmin + vmax) / 2:.2f}", f"{vmax:.2f}"])
+    if plot_type == "anomaly":
+        cbar.set_ticks([-abs_max, 0, abs_max])
+        cbar.ax.set_yticklabels([f"{-abs_max:.2f}", "0.00", f"{abs_max:.2f}"])
+    else:
+        cbar.set_ticks([vmin, (vmin + vmax) / 2, vmax])
+        cbar.ax.set_yticklabels(
+            [f"{vmin:.2f}", f"{(vmin + vmax) / 2:.2f}", f"{vmax:.2f}"]
+        )
 
     fig.suptitle(f"{var_long_name} Over Time", fontsize=16, fontweight="bold")
     # Adjust layout to give more space for the colorbar
@@ -3125,6 +3139,12 @@ class ZarrDataSource(DataSource):
         if date_start is None:
             raise ValueError(f"date_start value must be a valid time string, not None")
 
+        valid_plot_types = {"default", "anomaly"}
+        if plot_type not in valid_plot_types:
+            raise ValueError(
+                f"Invalid plot_type '{plot_type}'. Must be one of {valid_plot_types}."
+            )
+
         if self.zarr_store is None:
             self.zarr_store = self._open_zarr_store()
 
@@ -3396,8 +3416,18 @@ class ZarrDataSource(DataSource):
             cbar_ax = fig.add_axes([0.88, 0.15, 0.03, 0.7])  # Position to the right
             cbar = fig.colorbar(img_for_colorbar, cax=cbar_ax, orientation="vertical")
             cbar.set_label(cbar_label_text)
-            # cbar.set_ticks([vmin_all, (vmin_all + vmax_all) / 2, vmax_all])
-            # cbar.ax.set_yticklabels([f"{vmin_all:.2f}", f"{(vmin_all + vmax_all) / 2:.2f}", f"{vmax_all:.2f}"])
+            if plot_type == "anomaly":
+                cbar.set_ticks([-abs_max, 0, abs_max])
+                cbar.ax.set_yticklabels([f"{-abs_max:.2f}", "0.00", f"{abs_max:.2f}"])
+            else:
+                cbar.set_ticks([vmin_all, (vmin_all + vmax_all) / 2, vmax_all])
+                cbar.ax.set_yticklabels(
+                    [
+                        f"{vmin_all:.2f}",
+                        f"{(vmin_all + vmax_all) / 2:.2f}",
+                        f"{vmax_all:.2f}",
+                    ]
+                )
         else:  # No plots made, clean up figure
             plt.close(fig)
             self.logger.warning("No images were plotted, so no colorbar will be shown.")
