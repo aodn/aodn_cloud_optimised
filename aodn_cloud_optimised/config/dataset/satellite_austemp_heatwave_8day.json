@@ -1,0 +1,380 @@
+{
+  "dataset_name": "satellite_austemp_heatwave_8day",
+  "logger_name": "satellite_austemp_heatwave_8day",
+  "cloud_optimised_format": "zarr",
+  "run_settings": {
+    "paths": [
+      {
+        "type": "files",
+        "s3_uri": "s3://imos-data/IMOS/SRS/AusTemp/Marine-Heatwave/",
+        "filter": [
+          ".*\\.nc$"
+        ],
+        "year_range": [
+          2012,
+          2026
+        ]
+      }
+    ],
+    "cluster": {
+      "mode": "coiled",
+      "restart_every_path": true
+    },
+    "clear_existing_data": true,
+    "raise_error": false,
+    "coiled_cluster_options": {
+      "n_workers": [
+        1,
+        50
+      ],
+      "scheduler_vm_types": "m7i-flex.large",
+      "worker_vm_types": "m7i-flex.2xlarge",
+      "allow_ingress_from": "me",
+      "compute_purchase_option": "spot_with_fallback",
+      "worker_options": {
+        "nthreads": 1,
+        "memory_limit": "32GB"
+      }
+    },
+    "batch_size": 30
+  },
+  "metadata_uuid": "2ffccdad-1197-4e41-b412-a9033517cfb2",
+  "schema_transformation": {
+    "dimensions": {
+      "time": {
+        "name": "time",
+        "chunk": 5,
+        "rechunk": false,
+        "append_dim": true
+      },
+      "latitude": {
+        "name": "latitude",
+        "chunk": 1000,
+        "size": 0
+      },
+      "longitude": {
+        "name": "longitude",
+        "chunk": 1300,
+        "size": 0
+      }
+    },
+    "var_template_shape": "sst",
+    "vars_incompatible_with_region": [],
+    "global_attributes": {
+      "delete": [],
+      "set": {}
+    }
+  },
+  "schema": {
+    "time": {
+      "type": "timestamp[ns]",
+      "standard_name": "time",
+      "long_name": "reference time of sst file",
+      "axis": "T"
+    },
+    "lat": {
+      "type": "float",
+      "standard_name": "latitude",
+      "long_name": "latitude",
+      "units": "degrees_north",
+      "axis": "Y",
+      "valid_min": -48.0,
+      "valid_max": -8.0
+    },
+    "lon": {
+      "type": "float",
+      "standard_name": "longitude",
+      "long_name": "longitude",
+      "units": "degrees_east",
+      "axis": "X",
+      "valid_min": 96.0,
+      "valid_max": 174.0
+    },
+    "sst": {
+      "type": "float",
+      "dims": [
+        "time",
+        "lat",
+        "lon"
+      ],
+      "units": "degrees Celsius",
+      "long_name": "Sea Surface Sub-skin Temperature (L3S-01day)",
+      "valid_min": -50.0,
+      "valid_max": 50.0,
+      "comment": "These SST values are adjusted by the SSES bias and an offset of 0.17C is added to obtain the bulk SST.",
+      "source": "20260101152000-ABOM-L3S_GHRSST-SSTskin-MultiSensor-1d_night.nc"
+    },
+    "ssta": {
+      "type": "float",
+      "dims": [
+        "time",
+        "lat",
+        "lon"
+      ],
+      "units": "degrees Celsius",
+      "valid_min": -50.0,
+      "valid_max": 50.0,
+      "long_name": "Sea Surface Sub-skin Temperature Anomaly",
+      "comment": "Deviation from SSTAARS climatology (1992-2016) for the analysis date. The SST values are adjusted by the SSES bias and an offset of 0.17C is added to obtain the bulk SST.",
+      "source": "20260101152000-ABOM-L3S_GHRSST-SSTskin-MultiSensor-1d_night.nc, SSTAARS_daily_fit_001.nc"
+    },
+    "l2p_flags": {
+      "type": "float",
+      "dims": [
+        "time",
+        "lat",
+        "lon"
+      ],
+      "long_name": "L2P Flags (L3S-01day data)",
+      "flag_masks": [
+        1,
+        2,
+        4,
+        8,
+        16,
+        32,
+        64,
+        128,
+        256,
+        512,
+        1024,
+        2048,
+        4096,
+        8192,
+        16384
+      ],
+      "flag_meanings": "microwave land ice lake river reserved aerosol analysis lowwind highwind edge terminator reflector swath delta_dn",
+      "valid_min": 0,
+      "valid_max": 32767,
+      "comment": "These flags are copied from source L3S file and are important to properly use the data.",
+      "source": "20260101152000-ABOM-L3S_GHRSST-SSTskin-MultiSensor-1d_night.nc, SSTAARS_daily_fit_001.nc"
+    },
+    "sst_mosaic": {
+      "type": "float",
+      "dims": [
+        "time",
+        "lat",
+        "lon"
+      ],
+      "units": "degrees Celsius",
+      "long_name": "14-day SST mosaic",
+      "valid_min": -50.0,
+      "valid_max": 50.0,
+      "comment": "These SST values are adjusted by the SSES bias and an offset of 0.17C is added to obtain the bulk SST for the last 14 days.",
+      "source": "20260101152000-ABOM-L3S_GHRSST-SSTskin-MultiSensor-1d_night.nc, SSTAARS_daily_fit_001.nc"
+    },
+    "ssta_mosaic": {
+      "type": "float",
+      "dims": [
+        "time",
+        "lat",
+        "lon"
+      ],
+      "units": "degrees Celsius",
+      "long_name": "14-day SST mosaic anomaly",
+      "valid_min": -50.0,
+      "valid_max": 50.0,
+      "comment": "Deviation from SSTAARS climatology (1992-2016) for the analysis date for the last 14 days. The SST values are adjusted by the SSES bias and an offset of 0.17C is added to obtain the bulk SST.",
+      "source": "20260101152000-ABOM-L3S_GHRSST-SSTskin-MultiSensor-1d_night.nc, SSTAARS_daily_fit_001.nc"
+    },
+    "mosaic_age": {
+      "type": "int32",
+      "dims": [
+        "time",
+        "lat",
+        "lon"
+      ],
+      "long_name": "mosaic age",
+      "valid_min": 0.0,
+      "valid_max": 14.0,
+      "comment": "Age of SST mosaic data at each grid cell",
+      "source": "20260101152000-ABOM-L3S_GHRSST-SSTskin-MultiSensor-1d_night.nc, SSTAARS_daily_fit_001.nc"
+    },
+    "MHW_category": {
+      "type": "float",
+      "dims": [
+        "time",
+        "lat",
+        "lon"
+      ],
+      "least_significant_digit": 3,
+      "long_name": "Marine Heat Wave Category",
+      "valid_min": 0,
+      "valid_max": 4,
+      "comment": "Marine heat wave category defined as per Hobday et al., 2018",
+      "flag_meanings": "none moderate strong severe extreme",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "source": "20260101152000-ABOM-L3S_GHRSST-SSTskin-MultiSensor-1d_night.nc, SSTAARS_daily_fit_001.nc"
+    },
+    "MCS_category": {
+      "type": "float",
+      "dims": [
+        "time",
+        "lat",
+        "lon"
+      ],
+      "long_name": "Marine Cold Spell Category",
+      "valid_min": 0,
+      "valid_max": 4,
+      "comment": "Marine cold spell category defined as per Hobday et al., 2018",
+      "flag_meanings": "none moderate strong severe extreme",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "source": "20260101152000-ABOM-L3S_GHRSST-SSTskin-MultiSensor-1d_night.nc, SSTAARS_daily_fit_001.nc"
+    },
+    "MHW_category_mosaic": {
+      "type": "float",
+      "dims": [
+        "time",
+        "lat",
+        "lon"
+      ],
+      "long_name": "Mosaic Marine Heat Wave Category",
+      "valid_min": 0,
+      "valid_max": 4,
+      "comment": "Marine heat wave category defined as per Hobday et al., 2018 for 14 day SST Mosaic",
+      "flag_meanings": "none moderate strong severe extreme",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "source": "20260101152000-ABOM-L3S_GHRSST-SSTskin-MultiSensor-1d_night.nc, SSTAARS_daily_fit_001.nc"
+    },
+    "MCS_category_mosaic": {
+      "type": "float",
+      "dims": [
+        "time",
+        "lat",
+        "lon"
+      ],
+      "long_name": "Mosaic Marine Cold Spell Category",
+      "valid_min": 0,
+      "valid_max": 4,
+      "comment": "Marine cold spell category defined as per Hobday et al., 2018 for 14 day SST Mosaic",
+      "flag_meanings": "none moderate strong severe extreme",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "source": "20260101152000-ABOM-L3S_GHRSST-SSTskin-MultiSensor-1d_night.nc, SSTAARS_daily_fit_001.nc"
+    },
+    "dhd": {
+      "type": "float",
+      "dims": [
+        "time",
+        "lat",
+        "lon"
+      ],
+      "units": "degrees Celsius days",
+      "valid_min": 0.0,
+      "valid_max": 600.0,
+      "long_name": "Degree-Heating Days",
+      "comment": "Degree Heating Days calculated using SSTAARS climatology calculated for the analysis date",
+      "source": "20260101152000-ABOM-L3S_GHRSST-SSTskin-MultiSensor-1d_night.nc, SSTAARS_daily_fit_001.nc"
+    },
+    "dhdc": {
+      "type": "int32",
+      "dims": [
+        "time",
+        "lat",
+        "lon"
+      ],
+      "valid_min": 0,
+      "valid_max": 600,
+      "long_name": "Degree-Heating Days Counts",
+      "comment": "Number of days that contributed to the calculation of Degree Heating Days",
+      "source": "20260101152000-ABOM-L3S_GHRSST-SSTskin-MultiSensor-1d_night.nc, SSTAARS_daily_fit_001.nc"
+    },
+    "dhd_mosaic": {
+      "type": "float",
+      "dims": [
+        "time",
+        "lat",
+        "lon"
+      ],
+      "units": "degrees Celsius days",
+      "valid_min": 0.0,
+      "valid_max": 600.0,
+      "long_name": "Degree-Heating Days (14-Day SST mosaic, SSTAARS SSTA)",
+      "comment": "Degree Heating Days calculated using 14-Day SST mosaic and SSTAARS climatology calculated for the analysis date",
+      "source": "20260101152000-ABOM-L3S_GHRSST-SSTskin-MultiSensor-1d_night.nc, SSTAARS_daily_fit_001.nc"
+    },
+    "dhdc_mosaic": {
+      "type": "int32",
+      "dims": [
+        "time",
+        "lat",
+        "lon"
+      ],
+      "valid_min": 0,
+      "valid_max": 600,
+      "long_name": "Mosaic Degree-Heating Days Counts (14-Day SST mosaic, SSTAARS SSTA)",
+      "comment": "Number of days that contributed to the calculation of Degree Heating Days Mosaic",
+      "source": "20260101152000-ABOM-L3S_GHRSST-SSTskin-MultiSensor-1d_night.nc, SSTAARS_daily_fit_001.nc"
+    },
+    "crs": {
+      "type": "int32",
+      "dims": [],
+      "long_name": "coordinate reference system",
+      "grid_mapping_name": "latitude_longitude",
+      "epsg_code": "EPSG:4326",
+      "inverse_flattening": "298.257223563"
+    }
+  },
+  "aws_opendata_registry": {
+    "Name": "IMOS - AusTemp - Heat stress and marine heatwave and cold-spell monitoring metrics for the Australian Coast",
+    "Description": "This dataset contains the marine heatwave (MHW) and marine cold spell (MCS) categories from the 1st of January 2012. The SST Atlas of Australian Regional Seas (SSTAARS) daily climatology (Wijffels et al., 2018) is used as the baseline for developing heat-stress monitoring metrics. SSTAARS daily 90th-, 50th-, and 10th-percentile thresholds are applied to classify MHW and MCS according to established Hobday definitions. The dataset also contains the Sea Surface Temperature anomalies (SSTa), calculated by comparing the current SST to a monthly SSTAARS climatology, and the Degree Heating-Days (DHD) metrics, calculated by accumulating the daily positive Sea Surface Temperature anomalies (SSTa). When SST cannot be calculated due to cloud cover, the grid cell is left blank (white in web plots, transparent in Google Earth) to indicate missing data.\n\nThis product follows on from the Bureau of Meteorology's (Bureau) decommissioned ReefTemp Next Generation, a high resolution mapping product that provided information on coral bleaching risk for the Great Barrier Reef region for 2012-2024. In the first stage of operational deployment of AusTemp, the current operational satellite-derived, night-time-only MultiSensor Level 3 Super-collated (MS L3S, Govekar et al 2022) sea surface temperature (SST) product is being used to define heat stress and MHW/MCS monitoring metrics. A new GeoPolar MultiSensor L3S adds geostationary Himawari-8/9 data to the polar-orbiting satellites. It provides significantly improved spatial coverage, due to Himawari's 10 minute sampling period filling in SST gaps caused by fast moving cloud, with an additional 20% data on average over the MS L3S product (Govekar et al 2024).\n\nThe improved spatial and temporal resolution of AusTemp allows for high-detail mapping of MHWs across Australian waters, supporting accurate assessments of local ecological impacts, including coral bleaching and mortality in marine species. These tools are valuable for conservation, reef management, aquaculture, and fisheries, helping stakeholders manage the growing risks associated with marine heatwaves in a warming ocean.",
+    "Documentation": "https://catalogue-imos.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/2ffccdad-1197-4e41-b412-a9033517cfb2",
+    "Contact": "info@aodn.org.au",
+    "ManagedBy": "AODN",
+    "UpdateFrequency": "As Needed",
+    "Tags": [
+      "FILL UP MANUALLY - CHECK DOCUMENTATION"
+    ],
+    "License": "http://creativecommons.org/licenses/by/4.0/",
+    "Resources": [
+      {
+        "Description": "Cloud Optimised AODN dataset of IMOS - AusTemp - Heat stress and marine heatwave and cold-spell monitoring metrics for the Australian Coast",
+        "ARN": "arn:aws:s3:::aodn-cloud-optimised/satellite_austemp_heatwave_8day.zarr",
+        "Region": "ap-southeast-2",
+        "Type": "S3 Bucket"
+      }
+    ],
+    "DataAtWork": {
+      "Tutorials": [
+        {
+          "Title": "Accessing IMOS - AusTemp - Heat stress and marine heatwave and cold-spell monitoring metrics for the Australian Coast",
+          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_austemp_heatwave_8day.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_austemp_heatwave_8day.ipynb",
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
+        },
+        {
+          "Title": "Accessing and search for any AODN dataset",
+          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
+        }
+      ]
+    },
+    "Citation": "IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access]"
+  }
+}
