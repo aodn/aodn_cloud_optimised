@@ -48,12 +48,12 @@
         "append_dim": true
       },
       "latitude": {
-        "name": "latitude",
+        "name": "lat",
         "chunk": 1000,
         "size": 0
       },
       "longitude": {
-        "name": "longitude",
+        "name": "lon",
         "chunk": 1300,
         "size": 0
       }
