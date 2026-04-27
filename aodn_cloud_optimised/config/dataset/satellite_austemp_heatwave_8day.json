@@ -59,7 +59,10 @@
       }
     },
     "var_template_shape": "sst",
-    "vars_incompatible_with_region": [],
+    "vars_incompatible_with_region": [
+      "lat",
+      "lon"
+    ],
     "global_attributes": {
       "delete": [],
       "set": {}
