@@ -570,7 +570,14 @@ def _write_nullified_dataset(ds, output_path):
         data = ds_null[var].data
         dtype = data.dtype
 
-        if np.issubdtype(dtype, np.floating):
+        if dtype.kind in ("M", "m"):
+            # datetime64 ('M') and timedelta64 ('m') must be handled before the
+            # integer check because np.issubdtype(timedelta64, np.integer) is True
+            # in NumPy's type hierarchy, but np.iinfo() does not support these kinds.
+            nat = np.datetime64("NaT") if dtype.kind == "M" else np.timedelta64("NaT")
+            ds_null[var].data = np.full_like(data, nat)
+            encoding[var] = {"zlib": True, "complevel": 4}
+        elif np.issubdtype(dtype, np.floating):
             # Floats can store np.nan directly
             ds_null[var].data = np.full_like(data, np.nan)
             encoding[var] = {"zlib": True, "complevel": 4}
