@@ -107,8 +107,13 @@ class BODBAWHandler(GenericHandler):
         # Guard: negative or corrupted row_size values observed in some files.
         # 91/92 backscattering files have a systematic upstream data issue where the
         # last row_size element is a large negative integer (e.g. -484).  The positive
-        # elements sum to (n_obs_ds - 1) observations, so clipping the negative and
-        # recomputing the last element gives the correct ragged-array mapping.
+        # prefix elements sum to (n_obs_ds - k) observations, so clipping the negative
+        # and recomputing the last element gives the correct ragged-array mapping.
+        #
+        # Two-step correction guarantees row_size.sum() == n_obs_ds for any corruption:
+        #   1. Cap the cumulative prefix so no element can claim more obs than available,
+        #      handling the case where positive prefix elements already exceed n_obs_ds.
+        #   2. Assign all remaining observations to the last profile.
         if (row_size < 0).any() or int(row_size.sum()) != n_obs_ds:
             neg_indices = np.where(row_size < 0)[0]
             neg_values = row_size[neg_indices].tolist()
@@ -116,11 +121,16 @@ class BODBAWHandler(GenericHandler):
                 f"{self.uuid_log}: row_size contains corrupted values "
                 f"(negative at indices {neg_indices.tolist()}: {neg_values}). "
                 f"Positive elements sum to {int(np.clip(row_size, 0, None).sum())} "
-                f"vs obs dimension {n_obs_ds}. Correcting last element."
+                f"vs obs dimension {n_obs_ds}. Correcting."
             )
             row_size = np.clip(row_size, 0, None)
-            remainder = n_obs_ds - int(row_size[:-1].sum())
-            row_size[-1] = max(0, remainder)
+            # Cap prefix cumulative sum so it never exceeds n_obs_ds
+            cumsum = np.minimum(np.cumsum(row_size[:-1]), n_obs_ds)
+            row_size[:-1] = np.diff(np.concatenate([[0], cumsum])).astype(
+                row_size.dtype
+            )
+            # Last profile gets all remaining observations
+            row_size[-1] = n_obs_ds - int(row_size[:-1].sum())
 
         n_obs = int(row_size.sum())
         n_profiles = len(row_size)
