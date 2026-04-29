@@ -54,6 +54,11 @@ class DatasetConfig(pydantic.BaseModel):
             "can be provided inside this object."
         ),
     )
+    # Generic NetCDF read options (used by custom handlers, e.g. BODBAWHandler)
+    netcdf_read_config: dict | None = pydantic.Field(
+        default=None,
+        description="Handler-specific options for reading NetCDF files.",
+    )
     # TODO: Implement aws_opendata_registry model for validation
     aws_opendata_registry: dict | None = pydantic.Field(
         default=None,
