@@ -672,7 +672,9 @@ Example for a spectral dataset (absorption, backscattering):
 .. note::
 
    If you are writing a new custom handler, read ``netcdf_read_config`` from
-   ``self.dataset_config.get("netcdf_read_config", {})`` inside your handler and
+   ``self.dataset_config.get("netcdf_read_config") or {}`` inside your handler so
+   a missing key or a JSON ``null`` value is treated as an empty mapping. If your
+   handler requires a dictionary, also validate the type before using it, and
    document each key you introduce in the handler's class docstring.
 
 
