@@ -619,6 +619,65 @@ You can use any valid arguments for the corresponding CSV reader. See the offici
 * [`polars.read_csv`](https://pola-rs.github.io/polars/py-polars/html/reference/api/polars.read_csv.html)
 
 
+Parquet Configuration with a Custom NetCDF Handler
+---------------------------------------------------
+
+Some NetCDF collections have an unusual structure that the generic handler cannot flatten
+automatically (e.g. CF *indexed ragged array* files where coordinates live on different
+dimensions).  In those cases you can:
+
+1. Set ``"handler_class"`` to the name of a custom Python class that subclasses
+   ``GenericHandler`` and overrides ``preprocess_data()``.
+2. Pass handler-specific options via the top-level ``"netcdf_read_config"`` key.
+
+``netcdf_read_config`` is a free-form JSON object; its keys and meaning are entirely
+defined by the custom handler.  The ``DatasetConfig`` model accepts any dictionary here
+without further validation, so the handler itself is responsible for documenting and
+checking the values it reads.
+
+**Built-in option — ``spectral_flatten``**
+
+The :class:`BODBAWHandler` (used for the IMOS Bio-Optical Database of Australian Waters
+datasets) reads one boolean flag from ``netcdf_read_config``:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 25 15 60
+
+   * - Key
+     - Type
+     - Description
+   * - ``spectral_flatten``
+     - ``bool``
+     - When ``true``, 2-D ``(obs, wavelength)`` variables are *melted* into a
+       long-format table so that every row corresponds to a single
+       ``(time, lat, lon, depth, wavelength)`` observation.  Required for
+       spectral datasets such as absorption and backscattering.
+       Defaults to ``false``.
+
+Example for a non-spectral dataset (pigment, suspended matter):
+
+.. code:: json
+
+    "netcdf_read_config": {}
+
+Example for a spectral dataset (absorption, backscattering):
+
+.. code:: json
+
+    "netcdf_read_config": {
+      "spectral_flatten": true
+    }
+
+.. note::
+
+   If you are writing a new custom handler, read ``netcdf_read_config`` from
+   ``self.dataset_config.get("netcdf_read_config") or {}`` inside your handler so
+   a missing key or a JSON ``null`` value is treated as an empty mapping. If your
+   handler requires a dictionary, also validate the type before using it, and
+   document each key you introduce in the handler's class docstring.
+
+
 Parquet Configuration from Parquet file
 ---------------------------------------
 In some instances we already have a parquet file, but still need to update it to the cloud optimised format and apply AODN conventions.

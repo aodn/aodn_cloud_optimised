@@ -1,0 +1,463 @@
+{
+  "dataset_name": "vessel_bio_optical_pigment_delayed_qc",
+  "logger_name": "vessel_bio_optical_pigment_delayed_qc",
+  "handler_class": "BODBAWHandler",
+  "cloud_optimised_format": "parquet",
+  "metadata_uuid": "97b9fe73-ee44-437f-b2ae-5b8613f81042",
+  "schema_transformation": {
+    "drop_variables": [
+      "__index_level_0__"
+    ],
+    "add_variables": {
+      "filename": {
+        "source": "@filename",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "long_name": "Filename of the source file"
+        }
+      },
+      "timestamp": {
+        "source": "@partitioning:time_extent",
+        "schema": {
+          "type": "int64",
+          "units": "1",
+          "long_name": "Partition timestamp"
+        }
+      },
+      "polygon": {
+        "source": "@partitioning:spatial_extent",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "long_name": "Spatial partition polygon"
+        }
+      }
+    },
+    "partitioning": [
+      {
+        "source_variable": "timestamp",
+        "type": "time_extent",
+        "time_extent": {
+          "time_varname": "TIME",
+          "partition_period": "Y"
+        }
+      },
+      {
+        "source_variable": "polygon",
+        "type": "spatial_extent",
+        "spatial_extent": {
+          "lat_varname": "LATITUDE",
+          "lon_varname": "LONGITUDE",
+          "spatial_resolution": 5
+        }
+      }
+    ],
+    "global_attributes": {
+      "delete": [],
+      "set": {}
+    }
+  },
+  "schema": {
+    "timestamp": {
+      "type": "int64",
+      "units": "1",
+      "long_name": "Partition timestamp"
+    },
+    "polygon": {
+      "type": "string",
+      "units": "1",
+      "long_name": "Spatial partition polygon"
+    },
+    "filename": {
+      "type": "string",
+      "units": "1",
+      "long_name": "Filename of the source file"
+    },
+    "TIME": {
+      "type": "timestamp[ns]",
+      "axis": "T",
+      "long_name": "time",
+      "standard_name": "time"
+    },
+    "LATITUDE": {
+      "type": "float",
+      "axis": "Y",
+      "long_name": "latitude",
+      "reference_datum": "geographical coordinates, WGS84 projection",
+      "standard_name": "latitude",
+      "units": "degrees_north",
+      "valid_max": 90.0,
+      "valid_min": -90.0
+    },
+    "LONGITUDE": {
+      "type": "float",
+      "axis": "X",
+      "long_name": "longitude",
+      "reference_datum": "geographical coordinates, WGS84 projection",
+      "standard_name": "longitude",
+      "units": "degrees_east",
+      "valid_max": 180.0,
+      "valid_min": -180.0
+    },
+    "DEPTH": {
+      "type": "float",
+      "axis": "Z",
+      "long_name": "depth",
+      "positive": "down",
+      "reference_datum": "sea surface",
+      "standard_name": "depth",
+      "units": "m",
+      "valid_max": 12000.0,
+      "valid_min": -5.0
+    },
+    "station_name": {
+      "type": "string",
+      "long_name": "station name",
+      "cf_role": "timeseries_id"
+    },
+    "CPHL_c3": {
+      "type": "double",
+      "long_name": "mass_concentration_of_HPLC_chlorophyll_c3_in_sea_water",
+      "units": "mg m-3"
+    },
+    "Mg_DVP": {
+      "type": "double",
+      "long_name": "mass_concentration_of_HPLC_Mg_2_4_divinyl_pheoporphyrin_a5_monomethyl_ester_in_sea_water",
+      "units": "mg m-3"
+    },
+    "CPHL_c2": {
+      "type": "double",
+      "long_name": "mass_concentration_of_HPLC_chlorophyll_c2_in_sea_water",
+      "units": "mg m-3"
+    },
+    "CPHL_c1": {
+      "type": "double",
+      "long_name": "mass_concentration_of_HPLC_chlorophyll_c1_in_sea_water",
+      "units": "mg m-3"
+    },
+    "CPHL_c1c2": {
+      "type": "double",
+      "long_name": "mass_concentration_of_HPLC_chlorophyll_c1_c2_in_sea_water",
+      "units": "mg m-3"
+    },
+    "CPHLIDE_a": {
+      "type": "double",
+      "long_name": "mass_concentration_of_HPLC_chlorophyllide_a_in_sea_water",
+      "units": "mg m-3"
+    },
+    "Phide_a": {
+      "type": "double",
+      "long_name": "mass_concentration_of_HPLC_Pheophorbide_a_in_sea_water",
+      "units": "mg m-3"
+    },
+    "Perid": {
+      "type": "double",
+      "long_name": "mass_concentration_of_HPLC_Peridinin_in_sea_water",
+      "units": "mg m-3"
+    },
+    "Pyrophide_a": {
+      "type": "double",
+      "long_name": "mass_concentration_of_HPLC_Pyropheophorbide_a_in_sea_water",
+      "units": "mg m-3"
+    },
+    "But_fuco": {
+      "type": "double",
+      "long_name": "mass_concentration_of_HPLC_19-Butanoyloxyfucoxanthin_in_sea_water",
+      "units": "mg m-3"
+    },
+    "Fuco": {
+      "type": "double",
+      "long_name": "mass_concentration_of_HPLC_Fucoxanthin_in_sea_water",
+      "units": "mg m-3"
+    },
+    "Neo": {
+      "type": "double",
+      "long_name": "mass_concentration_of_HPLC_Neoxanthin_in_sea_water",
+      "units": "mg m-3"
+    },
+    "Keto_Hex_fuco": {
+      "type": "double",
+      "long_name": "mass_concentration_of_HPLC_4-keto-19-Hexanoyloxyfucoxanthin_in_sea_water",
+      "units": "mg m-3"
+    },
+    "Pras": {
+      "type": "double",
+      "long_name": "mass_concentration_of_HPLC_Prasinoxanthin_in_sea_water",
+      "units": "mg m-3"
+    },
+    "Viola": {
+      "type": "double",
+      "long_name": "mass_concentration_of_HPLC_Violaxanthin_in_sea_water",
+      "units": "mg m-3"
+    },
+    "Hex_fuco": {
+      "type": "double",
+      "long_name": "mass_concentration_of_HPLC_19-Hexanoyloxyfucoxanthin_in_sea_water",
+      "units": "mg m-3"
+    },
+    "Asta": {
+      "type": "double",
+      "long_name": "mass_concentration_of_HPLC_Astaxanthin_in_sea_water",
+      "units": "mg m-3"
+    },
+    "Diadchr": {
+      "type": "double",
+      "long_name": "mass_concentration_of_HPLC_Diadinochrome_in_sea_water",
+      "units": "mg m-3"
+    },
+    "Diadino": {
+      "type": "double",
+      "long_name": "mass_concentration_of_HPLC_Diadinoxanthin_in_sea_water",
+      "units": "mg m-3"
+    },
+    "Dino": {
+      "type": "double",
+      "long_name": "mass_concentration_of_HPLC_Dinoxanthin_in_sea_water",
+      "units": "mg m-3"
+    },
+    "Anth": {
+      "type": "double",
+      "long_name": "mass_concentration_of_HPLC_Antheraxanthin_in_sea_water",
+      "units": "mg m-3"
+    },
+    "Allo": {
+      "type": "double",
+      "long_name": "mass_concentration_of_HPLC_Alloxanthin_in_sea_water",
+      "units": "mg m-3"
+    },
+    "Diato": {
+      "type": "double",
+      "long_name": "mass_concentration_of_HPLC_Diatoxanthin_in_sea_water",
+      "units": "mg m-3"
+    },
+    "Zea": {
+      "type": "double",
+      "long_name": "mass_concentration_of_HPLC_Zeaxanthin_in_sea_water",
+      "units": "mg m-3"
+    },
+    "Lut": {
+      "type": "double",
+      "long_name": "mass_concentration_of_HPLC_Lutein_in_sea_water",
+      "units": "mg m-3"
+    },
+    "Cantha": {
+      "type": "double",
+      "long_name": "mass_concentration_of_HPLC_canthaxanthin_in_sea_water",
+      "units": "mg m-3"
+    },
+    "Gyro": {
+      "type": "double",
+      "long_name": "mass_concentration_of_HPLC_Gyroxanthin-Diester_in_sea_water",
+      "units": "mg m-3"
+    },
+    "DV_CPHL_b": {
+      "type": "double",
+      "long_name": "mass_concentration_of_HPLC_Divinyl_Chlorophyll_b_in_sea_water",
+      "units": "mg m-3"
+    },
+    "CPHL_b": {
+      "type": "double",
+      "long_name": "mass_concentration_of_HPLC_chlorophyll_b_in_sea_water",
+      "units": "mg m-3"
+    },
+    "DV_CPHL_b_plus_CPHL_b": {
+      "type": "double",
+      "long_name": "mass_concentration_of_HPLC_Divinyl_Chlorophyll_b_plus_chlorophyll_b_in_sea_water",
+      "units": "mg m-3"
+    },
+    "DV_CPHL_a": {
+      "type": "double",
+      "long_name": "mass_concentration_of_HPLC_Divinyl_Chlorophyll_a_in_sea_water",
+      "units": "mg m-3"
+    },
+    "CPHL_a": {
+      "type": "double",
+      "long_name": "mass_concentration_of_chlorophyll_a_in_sea_water",
+      "standard_name": "mass_concentration_of_chlorophyll_a_in_sea_water",
+      "units": "mg m-3"
+    },
+    "DV_CPHL_a_plus_CPHL_a": {
+      "type": "double",
+      "long_name": "mass_concentration_of_HPLC_Divinyl_Chlorophyll_a_plus_chlorophyll_a_in_sea_water",
+      "units": "mg m-3"
+    },
+    "Echin": {
+      "type": "double",
+      "long_name": "mass_concentration_of_HPLC_Echinenone_in_sea_water",
+      "units": "mg m-3"
+    },
+    "Phytin_b": {
+      "type": "double",
+      "long_name": "mass_concentration_of_HPLC_Pheophytin_b_in_sea_water",
+      "units": "mg m-3"
+    },
+    "Phytin_a": {
+      "type": "double",
+      "long_name": "mass_concentration_of_HPLC_Pheophytin_a_in_sea_water",
+      "units": "mg m-3"
+    },
+    "Lyco": {
+      "type": "double",
+      "long_name": "mass_concentration_of_HPLC_Lycopene_in_sea_water",
+      "units": "mg m-3"
+    },
+    "beta_epi_Car": {
+      "type": "double",
+      "long_name": "mass_concentration_of_HPLC_Alpha-Carotene_in_sea_water",
+      "units": "mg m-3"
+    },
+    "beta_beta_Car": {
+      "type": "double",
+      "long_name": "mass_concentration_of_HPLC_Beta-Carotene_in_sea_water",
+      "units": "mg m-3"
+    },
+    "alpha_beta_Car": {
+      "type": "double",
+      "long_name": "mass_concentration_of_HPLC_Alpha_plus_Beta_Carotenes_in_sea_water",
+      "units": "mg m-3"
+    },
+    "Pyrophytin_a": {
+      "type": "double",
+      "long_name": "mass_concentration_of_HPLC_Pyropheophytin_a_in_sea_water",
+      "units": "mg m-3"
+    },
+    "Sample_Number": {
+      "type": "float",
+      "long_name": "Sample Number",
+      "units": "1"
+    },
+    "Tot_CPHL_a": {
+      "type": "float",
+      "long_name": "mass_concentration_of_HPLC_DV_CPHL_a_+_MV_CPHL_a_+_Chlide_a_+_CPHL_a_allom_+_CPHL_a_prime_in_sea_water",
+      "units": "mg m-3",
+      "comments": "Data products computed from pigment concentration data"
+    },
+    "Tot_CPHL_b": {
+      "type": "float",
+      "long_name": "mass_concentration_of_HPLC_DV_CPHL_b_+_MV_CPHL_b_in_sea_water",
+      "units": "mg m-3",
+      "comments": "Data products computed from pigment concentration data"
+    },
+    "Tot_CPHL_c": {
+      "type": "float",
+      "long_name": "mass_concentration_of_HPLC_CPHL_c1_+_CPHL_c2_(CPHL_c1c2)_+_CPHL_c3_in_sea_water",
+      "units": "mg m-3",
+      "comments": "Data products computed from pigment concentration data"
+    },
+    "Tot_CPHL": {
+      "type": "float",
+      "long_name": "mass_concentration_of_Tot_CPHL_a_+_Tot_CPHL_b_+_Tot_CPHL_c_in_sea_water",
+      "units": "mg m-3",
+      "comments": "Data products computed from pigment concentration data"
+    },
+    "PPC": {
+      "type": "float",
+      "long_name": "mass_concentration_of_Photoprotective_carotenoids_(Allo_+_Diadino_+_Diato_+_Zeo_+_alpha-beta-Car)_in_sea_water",
+      "units": "mg m-3",
+      "comments": "Data products computed from pigment concentration data"
+    },
+    "PSC": {
+      "type": "float",
+      "long_name": "mass_concentration_of_Photosynthetic_carotenoids_(But-fuco_+_Fuco_+_Hex-fuco_+_Perid)_in_sea_water",
+      "units": "mg m-3",
+      "comments": "Data products computed from pigment concentration data"
+    },
+    "PSP": {
+      "type": "float",
+      "long_name": "mass_concentration_of_Photosynthetic_pigments_(PSC_+_Tchl)_in_sea_water",
+      "units": "mg m-3",
+      "comments": "Data products computed from pigment concentration data"
+    },
+    "Tacc": {
+      "type": "float",
+      "long_name": "mass_concentration_of_Total_accessory_pigments_(PPC_+_PSC_+_Tot_CPHL_b_+_Tot_CPHL_c)_in_sea_water",
+      "units": "mg m-3",
+      "comments": "Data products computed from pigment concentration data"
+    },
+    "DP": {
+      "type": "float",
+      "long_name": "mass_concentration_of_Total_diagnostic_pigments_(PSC_+_Allo_+_Zea_+_Tot_CPHL_b)_in_sea_water",
+      "units": "mg m-3",
+      "comments": "Data products computed from pigment concentration data"
+    },
+    "Tpg": {
+      "type": "float",
+      "long_name": "mass_concentration_of_total_pigment_in_sea_water",
+      "units": "mg m-3",
+      "comments": "Data products computed from pigment concentration data"
+    }
+  },
+  "aws_opendata_registry": {
+    "Name": "IMOS - SRS - Bio-Optical Database of Australian Waters (BODBAW) - Pigment",
+    "Description": "HPLC pigment concentrations from the Bio-Optical Database of Australian Waters (BODBAW) programme. Data collected at discrete depth profiles across multiple field campaigns around Australia. Variables include chlorophylls, carotenoids, and other HPLC-derived pigments.",
+    "Documentation": "https://catalogue-imos.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/97b9fe73-ee44-437f-b2ae-5b8613f81042",
+    "Contact": "info@aodn.org.au",
+    "ManagedBy": "AODN",
+    "UpdateFrequency": "As Needed",
+    "Tags": [
+      "FILL UP MANUALLY - CHECK DOCUMENTATION"
+    ],
+    "License": "http://creativecommons.org/licenses/by/4.0/",
+    "Resources": [
+      {
+        "Description": "Cloud Optimised AODN dataset of IMOS - SRS - Bio-Optical Database of Australian Waters (BODBAW) - Pigment",
+        "ARN": "arn:aws:s3:::aodn-cloud-optimised/vessel_bio_optical_pigment_delayed_qc.parquet",
+        "Region": "ap-southeast-2",
+        "Type": "S3 Bucket"
+      }
+    ],
+    "DataAtWork": {
+      "Tutorials": [
+        {
+          "Title": "Accessing IMOS - SRS - Bio-Optical Database of Australian Waters (BODBAW) - Pigment",
+          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/vessel_bio_optical_pigment_delayed_qc.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/vessel_bio_optical_pigment_delayed_qc.ipynb",
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
+        },
+        {
+          "Title": "Accessing and search for any AODN dataset",
+          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
+        }
+      ]
+    },
+    "Citation": "IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access]"
+  },
+  "run_settings": {
+    "paths": [
+      {
+        "s3_uri": "s3://imos-data/IMOS/SRS/OC/BODBAW",
+        "filter": [
+          ".*pigment.*\\.nc$"
+        ],
+        "year_range": []
+      }
+    ],
+    "cluster": {
+      "mode": "coiled",
+      "restart_every_path": true
+    },
+    "clear_existing_data": true,
+    "raise_error": false,
+    "force_previous_parquet_deletion": true,
+    "batch_size": 50,
+    "coiled_cluster_options": {
+      "n_workers": [
+        1,
+        20
+      ],
+      "scheduler_vm_types": "m7i-flex.large",
+      "worker_vm_types": "m7i-flex.xlarge",
+      "allow_ingress_from": "me",
+      "compute_purchase_option": "spot_with_fallback",
+      "worker_options": {
+        "nthreads": 4,
+        "memory_limit": "8GB"
+      }
+    }
+  }
+}

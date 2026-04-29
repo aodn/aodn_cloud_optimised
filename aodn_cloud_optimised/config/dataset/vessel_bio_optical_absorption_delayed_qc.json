@@ -1,0 +1,224 @@
+{
+  "dataset_name": "vessel_bio_optical_absorption_delayed_qc",
+  "logger_name": "vessel_bio_optical_absorption_delayed_qc",
+  "handler_class": "BODBAWHandler",
+  "cloud_optimised_format": "parquet",
+  "metadata_uuid": "97b9fe73-ee44-437f-b2ae-5b8613f81042",
+  "netcdf_read_config": {
+    "spectral_flatten": true
+  },
+  "schema_transformation": {
+    "drop_variables": [],
+    "add_variables": {
+      "filename": {
+        "source": "@filename",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "long_name": "Filename of the source file"
+        }
+      },
+      "timestamp": {
+        "source": "@partitioning:time_extent",
+        "schema": {
+          "type": "int64",
+          "units": "1",
+          "long_name": "Partition timestamp"
+        }
+      },
+      "polygon": {
+        "source": "@partitioning:spatial_extent",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "long_name": "Spatial partition polygon"
+        }
+      }
+    },
+    "partitioning": [
+      {
+        "source_variable": "timestamp",
+        "type": "time_extent",
+        "time_extent": {
+          "time_varname": "TIME",
+          "partition_period": "Y"
+        }
+      },
+      {
+        "source_variable": "polygon",
+        "type": "spatial_extent",
+        "spatial_extent": {
+          "lat_varname": "LATITUDE",
+          "lon_varname": "LONGITUDE",
+          "spatial_resolution": 5
+        }
+      }
+    ],
+    "global_attributes": {
+      "delete": [],
+      "set": {}
+    }
+  },
+  "schema": {
+    "timestamp": {
+      "type": "int64",
+      "units": "1",
+      "long_name": "Partition timestamp"
+    },
+    "polygon": {
+      "type": "string",
+      "units": "1",
+      "long_name": "Spatial partition polygon"
+    },
+    "filename": {
+      "type": "string",
+      "units": "1",
+      "long_name": "Filename of the source file"
+    },
+    "TIME": {
+      "type": "timestamp[ns]",
+      "axis": "T",
+      "long_name": "time",
+      "standard_name": "time"
+    },
+    "LATITUDE": {
+      "type": "float",
+      "axis": "Y",
+      "long_name": "latitude",
+      "reference_datum": "geographical coordinates, WGS84 projection",
+      "standard_name": "latitude",
+      "units": "degrees_north",
+      "valid_max": 90.0,
+      "valid_min": -90.0
+    },
+    "LONGITUDE": {
+      "type": "float",
+      "axis": "X",
+      "long_name": "longitude",
+      "reference_datum": "geographical coordinates, WGS84 projection",
+      "standard_name": "longitude",
+      "units": "degrees_east",
+      "valid_max": 180.0,
+      "valid_min": -180.0
+    },
+    "DEPTH": {
+      "type": "float",
+      "axis": "Z",
+      "long_name": "depth",
+      "positive": "down",
+      "reference_datum": "sea surface",
+      "standard_name": "depth",
+      "units": "m",
+      "valid_max": 12000.0,
+      "valid_min": -5.0
+    },
+    "station_name": {
+      "type": "string",
+      "long_name": "station name",
+      "cf_role": "timeseries_id"
+    },
+    "wavelength": {
+      "type": "float",
+      "long_name": "Wavelength of measurement",
+      "standard_name": "radiation_wavelength",
+      "units": "nm"
+    },
+    "ag": {
+      "type": "double",
+      "long_name": "volume_absorption_coefficient_of_Gelbstoff_in_sea_water",
+      "units": "m-1"
+    },
+    "ad": {
+      "type": "double",
+      "long_name": "volume_absorption_coefficient_of_non-algal_detritus_in_sea_water",
+      "units": "m-1"
+    },
+    "aph": {
+      "type": "double",
+      "long_name": "volume_absorption_coefficient_of_phytoplankton_in_sea_water",
+      "units": "m-1"
+    },
+    "ac9_a_corr": {
+      "type": "double",
+      "long_name": "corrected_volume_total_absorption_coefficient_in_sea_water",
+      "units": "m-1"
+    },
+    "ac9_c_corr": {
+      "type": "double",
+      "long_name": "corrected_volume_total_attenuation_coefficient_in_sea_water",
+      "units": "m-1"
+    }
+  },
+  "aws_opendata_registry": {
+    "Name": "IMOS - SRS - Bio-Optical Database of Australian Waters (BODBAW) - Absorption",
+    "Description": "Spectral absorption coefficients from the Bio-Optical Database of Australian Waters (BODBAW) programme. Data collected at discrete depth profiles across multiple field campaigns around Australia. Includes CDOM absorption (ag), non-algal detritus absorption (ad), phytoplankton absorption (aph), and total absorption / attenuation from AC-9 sensors (ac9_a_corr, ac9_c_corr). Data are in long format with one row per (observation, wavelength) combination.",
+    "Documentation": "https://catalogue-imos.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/97b9fe73-ee44-437f-b2ae-5b8613f81042",
+    "Contact": "info@aodn.org.au",
+    "ManagedBy": "AODN",
+    "UpdateFrequency": "As Needed",
+    "Tags": [
+      "FILL UP MANUALLY - CHECK DOCUMENTATION"
+    ],
+    "License": "http://creativecommons.org/licenses/by/4.0/",
+    "Resources": [
+      {
+        "Description": "Cloud Optimised AODN dataset of IMOS - SRS - Bio-Optical Database of Australian Waters (BODBAW) - Absorption",
+        "ARN": "arn:aws:s3:::aodn-cloud-optimised/vessel_bio_optical_absorption_delayed_qc.parquet",
+        "Region": "ap-southeast-2",
+        "Type": "S3 Bucket"
+      }
+    ],
+    "DataAtWork": {
+      "Tutorials": [
+        {
+          "Title": "Accessing IMOS - SRS - Bio-Optical Database of Australian Waters (BODBAW) - Absorption",
+          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/vessel_bio_optical_absorption_delayed_qc.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/vessel_bio_optical_absorption_delayed_qc.ipynb",
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
+        },
+        {
+          "Title": "Accessing and search for any AODN dataset",
+          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
+        }
+      ]
+    },
+    "Citation": "IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access]"
+  },
+  "run_settings": {
+    "paths": [
+      {
+        "s3_uri": "s3://imos-data/IMOS/SRS/OC/BODBAW",
+        "filter": [
+          ".*absorption.*\\.nc$"
+        ],
+        "year_range": []
+      }
+    ],
+    "cluster": {
+      "mode": "coiled",
+      "restart_every_path": true
+    },
+    "clear_existing_data": true,
+    "raise_error": false,
+    "force_previous_parquet_deletion": true,
+    "batch_size": 50,
+    "coiled_cluster_options": {
+      "n_workers": [
+        1,
+        20
+      ],
+      "scheduler_vm_types": "m7i-flex.large",
+      "worker_vm_types": "m7i-flex.xlarge",
+      "allow_ingress_from": "me",
+      "compute_purchase_option": "spot_with_fallback",
+      "worker_options": {
+        "nthreads": 4,
+        "memory_limit": "8GB"
+      }
+    }
+  }
+}
