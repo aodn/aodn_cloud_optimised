@@ -1856,9 +1856,29 @@ class GenericHandler(CommonHandler):
 
         sub_ds_for_region = (
             ds.isel({append_dim: matching_indexes})
-            .drop_vars(self.vars_incompatible_with_region, errors="ignore")
+            .drop_vars(self.vars_incompatible_with_region or [], errors="ignore")
             .pad({append_dim: (0, amount_to_pad)})
         )
+
+        # Safety net: auto-detect any remaining variables/coordinates that have no
+        # dimensions in common with the region. These cannot be written with
+        # to_zarr(region=...) and would cause a ValueError.
+        region_dims = set(region.keys())
+        auto_incompatible = [
+            v
+            for v in list(sub_ds_for_region.data_vars) + list(sub_ds_for_region.coords)
+            if v not in region_dims
+            and not any(d in region_dims for d in sub_ds_for_region[v].dims)
+        ]
+        if auto_incompatible:
+            self.logger.warning(
+                f"{self.uuid_log}: Auto-dropping variables/coordinates with no dimensions "
+                f"in common with region dims {region_dims}: {auto_incompatible}. "
+                f"Consider adding these to 'vars_incompatible_with_region' in the dataset config."
+            )
+            sub_ds_for_region = sub_ds_for_region.drop_vars(
+                auto_incompatible, errors="ignore"
+            )
         ##########################################
 
         for var in sub_ds_for_region:

@@ -28,10 +28,7 @@
         "filter": [
           ".*FV02.*\\.nc$"
         ],
-        "year_range": [
-          2015,
-          2025
-        ]
+        "year_range": []
       }
     ],
     "clear_existing_data": true,

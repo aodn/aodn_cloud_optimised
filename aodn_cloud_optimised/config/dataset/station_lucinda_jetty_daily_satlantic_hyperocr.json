@@ -9,7 +9,7 @@
         20
       ],
       "scheduler_vm_types": "m7i.large",
-      "worker_vm_types": "m7i.8xlarge",
+      "worker_vm_types": "m7i.2xlarge",
       "allow_ingress_from": "me",
       "compute_purchase_option": "spot_with_fallback",
       "worker_options": {
