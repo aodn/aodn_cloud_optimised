@@ -54,7 +54,9 @@
     },
     "var_template_shape": "Ed",
     "vars_incompatible_with_region": [
-      "WAVELENGTH_Ed"
+      "WAVELENGTH_Ed",
+      "LATITUDE",
+      "LONGITUDE"
     ],
     "global_attributes": {
       "delete": [

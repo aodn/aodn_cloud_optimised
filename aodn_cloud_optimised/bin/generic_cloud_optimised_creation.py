@@ -116,9 +116,10 @@ def collect_files(
             regex = re.compile(pattern)
             matching_files = [f for f in matching_files if regex.search(f)]
             if not matching_files:
-                raise ValueError(
-                    f"No files matching {pattern} under {s3_uri}. Modify regexp filter or path in configuration file. Abort"
+                logger.warning(
+                    f"No files matching {pattern} under {s3_uri}. Skipping this path."
                 )
+                return []
             logger.info(f"Matched {len(matching_files)} files")
 
         return matching_files
