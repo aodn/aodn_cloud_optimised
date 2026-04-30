@@ -191,6 +191,47 @@
             "type": "string"
           }
         },
+        "target_wavelength_grids": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "oneOf": [
+              {
+                "required": [
+                  "min",
+                  "max",
+                  "step"
+                ],
+                "properties": {
+                  "min": {
+                    "type": "number"
+                  },
+                  "max": {
+                    "type": "number"
+                  },
+                  "step": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  }
+                }
+              },
+              {
+                "required": [
+                  "values"
+                ],
+                "properties": {
+                  "values": {
+                    "type": "array",
+                    "items": {
+                      "type": "number"
+                    },
+                    "minItems": 1
+                  }
+                }
+              }
+            ]
+          }
+        },
         "global_attributes": {
           "type": "object",
           "properties": {

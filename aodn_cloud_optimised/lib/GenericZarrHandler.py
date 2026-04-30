@@ -161,6 +161,45 @@ def preprocess_xarray(ds, dataset_config):
             "The dataset has no data variables left. Check the dataset configuration."
         )
 
+    # Regrid spectral (or any non-time) dimensions to a standard target grid when
+    # source files have inconsistent coordinate values (e.g. ACS WAVELENGTH_a/c).
+    target_wavelength_grids = dataset_config["schema_transformation"].get(
+        "target_wavelength_grids"
+    )
+    if target_wavelength_grids:
+        for dim_name, grid_spec in target_wavelength_grids.items():
+            if dim_name not in ds.coords:
+                logger.warning(
+                    f"target_wavelength_grids: dimension '{dim_name}' not found in dataset, skipping."
+                )
+                continue
+
+            if "values" in grid_spec:
+                target_coords = np.array(grid_spec["values"], dtype=np.float64)
+            else:
+                target_coords = np.arange(
+                    grid_spec["min"],
+                    grid_spec["max"] + grid_spec["step"] * 0.5,
+                    grid_spec["step"],
+                    dtype=np.float64,
+                )
+
+            current_coords = ds[dim_name].values
+            if not (
+                len(current_coords) == len(target_coords)
+                and np.allclose(current_coords, target_coords, atol=1e-6)
+            ):
+                logger.info(
+                    f"Regridding '{dim_name}' from n={len(current_coords)} "
+                    f"[{current_coords[0]:.2f}–{current_coords[-1]:.2f}] "
+                    f"to n={len(target_coords)} [{target_coords[0]:.2f}–{target_coords[-1]:.2f}]"
+                )
+                ds = ds.interp(
+                    {dim_name: target_coords},
+                    method="linear",
+                    kwargs={"bounds_error": False, "fill_value": None},
+                )
+
     ##########
     var_required = schema.copy()
     for dim_info in dimensions.values():

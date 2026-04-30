@@ -59,6 +59,18 @@
       "WAVELENGTH_a",
       "WAVELENGTH_c"
     ],
+    "target_wavelength_grids": {
+      "WAVELENGTH_a": {
+        "min": 397.0,
+        "max": 750.0,
+        "step": 0.1
+      },
+      "WAVELENGTH_c": {
+        "min": 397.0,
+        "max": 750.0,
+        "step": 0.1
+      }
+    },
     "global_attributes": {
       "delete": [
         "date_created",
