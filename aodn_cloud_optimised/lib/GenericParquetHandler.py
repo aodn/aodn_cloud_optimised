@@ -23,7 +23,15 @@ import pyarrow.parquet as pq
 import s3fs.core
 import xarray as xr
 from dask.distributed import wait
+from distributed.client import FutureCancelledError
 from distributed.comm.core import CommClosedError
+
+try:
+    from distributed.client import (
+        FuturesCancelledError,  # plural form, newer distributed versions
+    )
+except ImportError:
+    FuturesCancelledError = FutureCancelledError  # fall back to singular
 from shapely.geometry import Point, Polygon
 from tornado.iostream import StreamClosedError
 
@@ -1573,7 +1581,16 @@ class GenericHandler(CommonHandler):
                         done, not_done = wait(batch_tasks, return_when="ALL_COMPLETED")
                         batch_done = True
 
-                    except (CommClosedError, StreamClosedError) as e:
+                    except (
+                        FutureCancelledError,
+                        FuturesCancelledError,
+                        CommClosedError,
+                        StreamClosedError,
+                    ) as e:
+                        # FuturesCancelledError is the primary exception: raised by wait() when
+                        # the Dask scheduler dies and _reconnect() cancels all pending futures.
+                        # CommClosedError / StreamClosedError are safety nets for edge cases where
+                        # the connection error surfaces synchronously.
                         retry_count += 1
                         self.logger.error(
                             f"{self.uuid_log}: Scheduler connection lost during batch "
