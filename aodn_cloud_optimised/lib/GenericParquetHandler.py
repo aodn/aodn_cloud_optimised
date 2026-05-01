@@ -1525,7 +1525,11 @@ class GenericHandler(CommonHandler):
                 )
 
         # Capture only the count — NOT the full list — to avoid cloudpickle serializing
-        # 19k+ paths into every Dask task closure (would be ~1 MB × batch_size per round).
+        # the list into every Dask task closure.  The real leak is via `self`: task()
+        # captures `self` because it calls self.to_cloud_optimised_single(), and
+        # cloudpickle serialises the entire handler instance with every client.submit().
+        # self.s3_file_uri_list is set AFTER the batch loop so that self is lean
+        # (~7 KB) rather than carrying the 19k-path list (~694 KB × batch_size).
         total_files = len(s3_file_uri_list)
 
         def task(f, i):
@@ -1536,7 +1540,6 @@ class GenericHandler(CommonHandler):
                     f"Issue {i}/{total_files} with {f}: {type(e).__name__}: {e}"
                 )
 
-        self.s3_file_uri_list = s3_file_uri_list
         client, cluster = self.create_cluster()
 
         if self.cluster_mode:
@@ -1641,4 +1644,7 @@ class GenericHandler(CommonHandler):
 
         self.logger.info("All batches processed.")
         self.cluster_manager.close_cluster(client, cluster)
+        # Set only after all tasks are submitted so self is not carrying the full list
+        # during cloudpickle serialisation of each Dask task closure (saves ~3 GB/batch).
+        self.s3_file_uri_list = s3_file_uri_list
         self.logger.handlers.clear()
