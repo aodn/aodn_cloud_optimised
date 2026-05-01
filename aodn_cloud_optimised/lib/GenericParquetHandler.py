@@ -23,7 +23,9 @@ import pyarrow.parquet as pq
 import s3fs.core
 import xarray as xr
 from dask.distributed import wait
+from distributed.comm.core import CommClosedError
 from shapely.geometry import Point, Polygon
+from tornado.iostream import StreamClosedError
 
 from aodn_cloud_optimised.lib.s3Tools import (
     create_fileset,
@@ -1514,12 +1516,16 @@ class GenericHandler(CommonHandler):
                     bucket_name, prefix, self.s3_client_opts_output
                 )
 
+        # Capture only the count — NOT the full list — to avoid cloudpickle serializing
+        # 19k+ paths into every Dask task closure (would be ~1 MB × batch_size per round).
+        total_files = len(s3_file_uri_list)
+
         def task(f, i):
             try:
                 self.to_cloud_optimised_single(f)
             except Exception as e:
                 self.logger.error(
-                    f"Issue {i}/{len(s3_file_uri_list)} with {f}: {type(e).__name__}: {e}"
+                    f"Issue {i}/{total_files} with {f}: {type(e).__name__}: {e}"
                 )
 
         self.s3_file_uri_list = s3_file_uri_list
@@ -1551,16 +1557,44 @@ class GenericHandler(CommonHandler):
             self.logger.info(f"{self.uuid_log}: Files in batch {ii + 1}:\n {batch}")
 
             if client:
-                # Use Dask client for distributed processing
-                batch_tasks = [
-                    client.submit(task, f, idx + 1, pure=False)
-                    for idx, f in enumerate(
-                        batch
-                    )  # Use pure=False for multiprocessing. More efficient to avoid GIL contention
-                ]
+                max_retries = 3
+                retry_count = 0
+                batch_done = False
 
-                # timeout = batch_size * 120  # Initial timeout
-                done, not_done = wait(batch_tasks, return_when="ALL_COMPLETED")
+                while not batch_done:
+                    try:
+                        # Use Dask client for distributed processing
+                        batch_tasks = [
+                            client.submit(task, f, idx + 1, pure=False)
+                            for idx, f in enumerate(batch)
+                            # pure=False avoids GIL contention in multiprocessing
+                        ]
+
+                        done, not_done = wait(batch_tasks, return_when="ALL_COMPLETED")
+                        batch_done = True
+
+                    except (CommClosedError, StreamClosedError) as e:
+                        retry_count += 1
+                        self.logger.error(
+                            f"{self.uuid_log}: Scheduler connection lost during batch "
+                            f"{ii + 1} (attempt {retry_count}/{max_retries}): {e}. "
+                            f"Recreating Dask cluster and retrying batch..."
+                        )
+                        if retry_count > max_retries:
+                            self.logger.error(
+                                f"{self.uuid_log}: Batch {ii + 1} exceeded retry limit "
+                                f"({max_retries}). Skipping to next batch."
+                            )
+                            batch_done = True
+                        else:
+                            try:
+                                self.cluster_manager.close_cluster(client, cluster)
+                            except Exception:
+                                pass
+                            client, cluster = self.create_cluster()
+                            self.logger.info(
+                                f"{self.uuid_log}: New cluster created. Retrying batch {ii + 1}."
+                            )
             else:
                 # Fall back to local processing with ThreadPoolExecutor
                 self.logger.info(
