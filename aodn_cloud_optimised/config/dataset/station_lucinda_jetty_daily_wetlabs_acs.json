@@ -6,21 +6,21 @@
     "coiled_cluster_options": {
       "n_workers": [
         1,
-        20
+        40
       ],
       "scheduler_vm_types": "m7i.large",
       "worker_vm_types": "m7i.2xlarge",
       "allow_ingress_from": "me",
       "compute_purchase_option": "spot_with_fallback",
       "worker_options": {
-        "nthreads": 1,
-        "memory_limit": "128GB"
+        "nthreads": 2,
+        "memory_limit": "28GB"
       }
     },
-    "batch_size": 50,
+    "batch_size": 5,
     "cluster": {
       "mode": "coiled",
-      "restart_every_path": false
+      "restart_every_path": true
     },
     "paths": [
       {
@@ -28,7 +28,10 @@
         "filter": [
           ".*\\.nc$"
         ],
-        "year_range": []
+        "year_range": [
+          2014,
+          2024
+        ]
       }
     ],
     "clear_existing_data": true,
@@ -45,13 +48,13 @@
       },
       "WAVELENGTH_a": {
         "name": "WAVELENGTH_a",
-        "chunk": 83,
-        "size": 83
+        "chunk": 707,
+        "size": 707
       },
       "WAVELENGTH_c": {
         "name": "WAVELENGTH_c",
-        "chunk": 83,
-        "size": 83
+        "chunk": 707,
+        "size": 707
       }
     },
     "var_template_shape": "cal_data_a",
@@ -63,12 +66,12 @@
       "WAVELENGTH_a": {
         "min": 397.0,
         "max": 750.0,
-        "step": 0.1
+        "step": 0.5
       },
       "WAVELENGTH_c": {
         "min": 397.0,
         "max": 750.0,
-        "step": 0.1
+        "step": 0.5
       }
     },
     "global_attributes": {
