@@ -27,6 +27,7 @@ from aodn_cloud_optimised.lib.config import (
     load_dataset_config,
     load_variable_from_config,
 )
+from aodn_cloud_optimised.lib.logging import print_processing_summary
 from aodn_cloud_optimised.lib.s3Tools import boto3_from_opts_dict, s3_ls
 
 logger = logging.getLogger(__name__)
@@ -418,6 +419,9 @@ def main():
         if not result and config.run_settings.raise_error:
             sys.exit(1)
 
+    logger_name = dataset_config.get("logger_name", args.config or "generic")
+    dataset_name = dataset_config.get("dataset_name", args.config or "")
+    print_processing_summary(logger_name, dataset_name)
     sys.exit(0)
 
 
