@@ -89,6 +89,34 @@ def check_variable_values_dask(
         return file_path, True
 
 
+def check_append_dim_range_dask(file_path, dim_name, dataset_config, uuid_log):
+    """Returns the min and max values of a dimension in a single file.
+
+    Designed to be run in parallel (e.g., with Dask) to identify files whose
+    append-dimension range overlaps with other files in the same batch.
+
+    Args:
+        file_path (str): Path to the NetCDF file.
+        dim_name (str): Name of the append dimension (e.g., "TIME").
+        dataset_config (dict): Dataset configuration dict (used for logger name).
+        uuid_log (str): Unique identifier for log correlation.
+
+    Returns:
+        tuple[str, any, any]: ``(file_path, min_val, max_val)`` on success, or
+            ``(file_path, None, None)`` if the file cannot be opened or the
+            dimension is missing.
+    """
+    logger_name = dataset_config.get("logger_name", "generic")
+    logger = get_logger(logger_name)
+    try:
+        with xr.open_dataset(file_path) as ds:
+            values = ds[dim_name].values
+        return file_path, values.min(), values.max()
+    except Exception as e:
+        logger.error(f"{uuid_log}: Failed to read '{dim_name}' from {file_path}: {e}")
+        return file_path, None, None
+
+
 def get_var_template_shape(ds, var_template_shape):
     """Return the first variable name from var_template_shape that exists in ds."""
     if isinstance(var_template_shape, str):
@@ -1297,20 +1325,39 @@ class GenericHandler(CommonHandler):
                         engine,
                     )
                 elif match_non_monotonic_combine:
-                    # Files individually open fine but combine_by_coords fails because
-                    # some files have a different spatial grid (e.g. different LONGITUDE values).
                     variable_name = match_non_monotonic_combine.group(1)
-                    self.logger.warning(
-                        f"{self.uuid_log}: combine_by_coords failed — dimension '{variable_name}' "
-                        f"is not globally monotonic. Checking for files with inconsistent grids."
-                    )
-                    return self.handle_coordinate_variable_issue(
-                        batch_files,
-                        variable_name,
-                        partial_preprocess,
-                        drop_vars_list,
-                        engine,
-                    )
+                    if variable_name == self.append_dim_varname:
+                        # combine_by_coords failed on the append dimension — this means
+                        # at least one file has TIME values that overlap with another
+                        # file in the batch.  This is a data-provider bug: files should
+                        # have non-overlapping, monotonically increasing append-dim values.
+                        self.logger.warning(
+                            f"{self.uuid_log}: combine_by_coords failed — append dimension "
+                            f"'{variable_name}' is not globally monotonic across the batch. "
+                            f"This indicates overlapping {variable_name} values in the source "
+                            f"files (data bug). Identifying and excluding the problematic files."
+                        )
+                        return self.handle_append_dim_overlap(
+                            batch_files,
+                            variable_name,
+                            partial_preprocess,
+                            drop_vars_list,
+                            engine,
+                        )
+                    else:
+                        # Non-monotonic on a fixed coordinate (e.g. LONGITUDE, WAVELENGTH):
+                        # some files have a different spatial grid — find and exclude them.
+                        self.logger.warning(
+                            f"{self.uuid_log}: combine_by_coords failed — dimension '{variable_name}' "
+                            f"is not globally monotonic. Checking for files with inconsistent grids."
+                        )
+                        return self.handle_coordinate_variable_issue(
+                            batch_files,
+                            variable_name,
+                            partial_preprocess,
+                            drop_vars_list,
+                            engine,
+                        )
                 elif match_missing_coord_index or match_missing_coord_index_preprocess:
                     # One or more files has a dimension without a 1D coordinate index.
                     # preprocess_xarray embeds the filename in its error message; the
@@ -1667,6 +1714,97 @@ class GenericHandler(CommonHandler):
         ]
         self.logger.warning(
             f"{self.uuid_log}: Processing batch without problematic files: {problematic_files}"
+        )
+        self.logger.info(
+            f"{self.uuid_log}: Processing the following clean files:\n{clean_batch_files}"
+        )
+
+        return self._open_mfds(
+            partial_preprocess, drop_vars_list, clean_batch_files, engine
+        )
+
+    def handle_append_dim_overlap(
+        self, batch_files, dim_name, partial_preprocess, drop_vars_list, engine
+    ):
+        """Handles batches where files have overlapping values on the append dimension.
+
+        When ``combine_by_coords`` fails because the append dimension (e.g. TIME)
+        is not globally monotonic, it means at least one file in the batch contains
+        values that overlap with another file.  This is a data quality issue —
+        all files in a correctly formed dataset should have non-overlapping,
+        monotonically increasing values along the append dimension.
+
+        This method opens each file individually to determine the min/max of
+        ``dim_name``, sorts by the minimum value, then identifies any file whose
+        minimum value falls within the range already covered by a preceding file.
+        Those files are logged as data-provider errors, excluded from the batch,
+        and the remaining clean files are re-opened.
+
+        Args:
+            batch_files (list): List of S3 file paths in the current batch.
+            dim_name (str): Name of the append dimension (e.g., ``"TIME"``).
+            partial_preprocess (callable): The pre-configured preprocessing function.
+            drop_vars_list (list[str]): List of variable names to drop.
+            engine (str): The xarray engine to use for opening files.
+
+        Returns:
+            xr.Dataset: The dataset opened from the non-overlapping files.
+
+        Raises:
+            RuntimeError: If no overlapping files can be identified (unexpected
+                failure), or if every file in the batch was excluded.
+        """
+        self.logger.warning(
+            f"{self.uuid_log}: Running {dim_name} range check across files in the batch."
+        )
+
+        if self.cluster_mode:
+            futures = self.client.map(
+                check_append_dim_range_dask,
+                batch_files,
+                dim_name=dim_name,
+                dataset_config=self.dataset_config,
+                uuid_log=self.uuid_log,
+            )
+            ranges = self.client.gather(futures)
+        else:
+            ranges = [
+                check_append_dim_range_dask(
+                    f, dim_name, self.dataset_config, self.uuid_log
+                )
+                for f in batch_files
+            ]
+
+        # Separate files that could not be read
+        bad_open = [f for f, lo, hi in ranges if lo is None]
+        valid = sorted(
+            [(f, lo, hi) for f, lo, hi in ranges if lo is not None],
+            key=lambda x: x[1],
+        )
+
+        problematic_files = list(bad_open)
+        current_max = None
+        for f, lo, hi in valid:
+            if current_max is not None and lo <= current_max:
+                problematic_files.append(f)
+                self.logger.error(
+                    f"{self.uuid_log}: Contact the data provider. File '{f}' has "
+                    f"{dim_name} values that overlap with a preceding file in the batch "
+                    f"(file range: [{lo}, {hi}], previous max: {current_max}). "
+                    f"Excluding it from this batch."
+                )
+            else:
+                current_max = hi
+
+        if not problematic_files:
+            raise RuntimeError(
+                f"{self.uuid_log}: combine_by_coords failed on append dimension "
+                f"'{dim_name}' but no overlapping files were identified. Cannot recover."
+            )
+
+        clean_batch_files = [f for f in batch_files if f not in problematic_files]
+        self.logger.warning(
+            f"{self.uuid_log}: Reprocessing batch without overlapping files: {problematic_files}"
         )
         self.logger.info(
             f"{self.uuid_log}: Processing the following clean files:\n{clean_batch_files}"
