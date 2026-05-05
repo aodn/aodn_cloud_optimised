@@ -1,0 +1,626 @@
+{
+  "dataset_name": "station_lucinda_jetty_daily_wetlabs_bb9",
+  "logger_name": "station_lucinda_jetty_daily_wetlabs_bb9",
+  "cloud_optimised_format": "zarr",
+  "run_settings": {
+    "coiled_cluster_options": {
+      "n_workers": [
+        1,
+        20
+      ],
+      "scheduler_vm_types": "m7i.large",
+      "worker_vm_types": "m7i.2xlarge",
+      "allow_ingress_from": "me",
+      "compute_purchase_option": "spot_with_fallback",
+      "worker_options": {
+        "nthreads": 1,
+        "memory_limit": "128GB"
+      }
+    },
+    "batch_size": 100,
+    "cluster": {
+      "mode": "coiled",
+      "restart_every_path": false
+    },
+    "paths": [
+      {
+        "s3_uri": "s3://imos-data/IMOS/SRS/OC/LJCO/BB9-daily",
+        "filter": [
+          ".*\\.nc$"
+        ],
+        "year_range": [
+          2014,
+          2024
+        ]
+      }
+    ],
+    "clear_existing_data": true,
+    "raise_error": false
+  },
+  "metadata_uuid": "4ac6bf81-cd37-4611-8da8-4d5ae5e2bda3",
+  "schema_transformation": {
+    "dimensions": {
+      "time": {
+        "name": "TIME",
+        "chunk": 1000,
+        "rechunk": false,
+        "append_dim": true
+      },
+      "WAVELENGTH": {
+        "name": "WAVELENGTH",
+        "chunk": 9,
+        "size": 9
+      }
+    },
+    "var_template_shape": "cal_data_beta",
+    "vars_incompatible_with_region": [
+      "WAVELENGTH"
+    ],
+    "global_attributes": {
+      "delete": [
+        "date_created",
+        "time_coverage_start",
+        "time_coverage_end",
+        "geospatial_lat_max",
+        "geospatial_lat_min",
+        "geospatial_lon_max",
+        "geospatial_lon_min",
+        "geospatial_vertical_max",
+        "geospatial_vertical_min",
+        "history",
+        "input_file",
+        "instrument_serial_number",
+        "device_file",
+        "acs_data_set",
+        "acs_file"
+      ],
+      "set": {
+        "title": ""
+      }
+    },
+    "dataset_sort_by": [
+      "WAVELENGTH",
+      "TIME"
+    ],
+    "add_variables": {
+      "filename": {
+        "source": "@filename",
+        "schema": {
+          "type": "object",
+          "units": "1",
+          "long_name": "Filename of the source file",
+          "dimensions": "TIME"
+        }
+      }
+    }
+  },
+  "schema": {
+    "LATITUDE": {
+      "type": "double",
+      "axis": "Y",
+      "long_name": "latitude",
+      "reference_datum": "geographical coordinates, WGS84 projection",
+      "standard_name": "latitude",
+      "units": "degrees_north",
+      "valid_max": 90.0,
+      "valid_min": -90.0
+    },
+    "LONGITUDE": {
+      "type": "double",
+      "axis": "X",
+      "long_name": "longitude",
+      "reference_datum": "geographical coordinates, WGS84 projection",
+      "standard_name": "longitude",
+      "units": "degrees_east",
+      "valid_max": 180.0,
+      "valid_min": -180.0
+    },
+    "HEIGHT_water_sensor": {
+      "type": "double",
+      "axis": "Z",
+      "long_name": "nominal height above sea surface of water sensor",
+      "positive": "up",
+      "reference_datum": "sea surface",
+      "standard_name": "height",
+      "units": "metres",
+      "valid_max": 0.0,
+      "valid_min": -50.0
+    },
+    "TIME": {
+      "type": "timestamp[ns]",
+      "axis": "T",
+      "description": "days since 1950-01-01 (UTC)",
+      "long_name": "time",
+      "standard_name": "time",
+      "valid_max": 90000.0,
+      "valid_min": 0.0
+    },
+    "WAVELENGTH": {
+      "type": "float",
+      "description": "wavelengths",
+      "long_name": "Wavelengths",
+      "units": "nm"
+    },
+    "cal_data_Total_num_obs": {
+      "type": "double",
+      "dims": [
+        "TIME"
+      ],
+      "description": "Total number of observations including invalid data",
+      "long_name": "Total number of observations",
+      "units": "1"
+    },
+    "cal_data_beta": {
+      "type": "float",
+      "dims": [
+        "WAVELENGTH",
+        "TIME"
+      ],
+      "description": "total (particle and water) volume scattering function at 124 deg: mean",
+      "long_name": "total (particle and water) volume scattering function at 124 deg: mean",
+      "cell_methods": "TIME: mean",
+      "units": "1/m-sr"
+    },
+    "cal_data_beta_min": {
+      "type": "float",
+      "dims": [
+        "WAVELENGTH",
+        "TIME"
+      ],
+      "description": "total (particle and water) volume scattering function at 124 deg: minimum",
+      "long_name": "total (particle and water) volume scattering function at 124 deg: minimum",
+      "cell_methods": "TIME: minimum",
+      "units": "1/m-sr"
+    },
+    "cal_data_beta_max": {
+      "type": "float",
+      "dims": [
+        "WAVELENGTH",
+        "TIME"
+      ],
+      "description": "total (particle and water) volume scattering function at 124 deg: maximum",
+      "long_name": "total (particle and water) volume scattering function at 124 deg: maximum",
+      "cell_methods": "TIME: maximum",
+      "units": "1/m-sr"
+    },
+    "cal_data_beta_sd": {
+      "type": "float",
+      "dims": [
+        "WAVELENGTH",
+        "TIME"
+      ],
+      "description": "total (particle and water) volume scattering function at 124 deg: standard deviation",
+      "long_name": "total (particle and water) volume scattering function at 124 deg: standard deviation",
+      "cell_methods": "TIME: standard_deviation",
+      "units": "1/m-sr"
+    },
+    "cal_data_beta_num_obs": {
+      "type": "double",
+      "dims": [
+        "TIME"
+      ],
+      "description": "total (particle and water) volume scattering function at 124 deg: number of valid observations",
+      "long_name": "total (particle and water) volume scattering function at 124 deg: number of valid observations",
+      "units": "1"
+    },
+    "cal_data_beta_p": {
+      "type": "float",
+      "dims": [
+        "WAVELENGTH",
+        "TIME"
+      ],
+      "description": "particle volume scattering function at 124 deg: mean",
+      "long_name": "particle volume scattering function at 124 deg: mean",
+      "cell_methods": "TIME: mean",
+      "units": "1/m-sr"
+    },
+    "cal_data_beta_p_min": {
+      "type": "float",
+      "dims": [
+        "WAVELENGTH",
+        "TIME"
+      ],
+      "description": "particle volume scattering function at 124 deg: minimum",
+      "long_name": "particle volume scattering function at 124 deg: minimum",
+      "cell_methods": "TIME: minimum",
+      "units": "1/m-sr"
+    },
+    "cal_data_beta_p_max": {
+      "type": "float",
+      "dims": [
+        "WAVELENGTH",
+        "TIME"
+      ],
+      "description": "particle volume scattering function at 124 deg: maximum",
+      "long_name": "particle volume scattering function at 124 deg: maximum",
+      "cell_methods": "TIME: maximum",
+      "units": "1/m-sr"
+    },
+    "cal_data_beta_p_sd": {
+      "type": "float",
+      "dims": [
+        "WAVELENGTH",
+        "TIME"
+      ],
+      "description": "particle volume scattering function at 124 deg: standard deviation",
+      "long_name": "particle volume scattering function at 124 deg: standard deviation",
+      "cell_methods": "TIME: standard_deviation",
+      "units": "1/m-sr"
+    },
+    "cal_data_beta_p_num_obs": {
+      "type": "double",
+      "dims": [
+        "TIME"
+      ],
+      "description": "particle volume scattering function at 124 deg: number of valid observations",
+      "long_name": "particle volume scattering function at 124 deg: number of valid observations",
+      "units": "1"
+    },
+    "cal_data_bbp": {
+      "type": "float",
+      "dims": [
+        "WAVELENGTH",
+        "TIME"
+      ],
+      "description": "particle backscattering coefficient: mean",
+      "long_name": "particle backscattering coefficient: mean",
+      "cell_methods": "TIME: mean",
+      "units": "1/m"
+    },
+    "cal_data_bbp_min": {
+      "type": "float",
+      "dims": [
+        "WAVELENGTH",
+        "TIME"
+      ],
+      "description": "particle backscattering coefficient: minimum",
+      "long_name": "particle backscattering coefficient: minimum",
+      "cell_methods": "TIME: minimum",
+      "units": "1/m"
+    },
+    "cal_data_bbp_max": {
+      "type": "float",
+      "dims": [
+        "WAVELENGTH",
+        "TIME"
+      ],
+      "description": "particle backscattering coefficient: maximum",
+      "long_name": "particle backscattering coefficient: maximum",
+      "cell_methods": "TIME: maximum",
+      "units": "1/m"
+    },
+    "cal_data_bbp_sd": {
+      "type": "float",
+      "dims": [
+        "WAVELENGTH",
+        "TIME"
+      ],
+      "description": "particle backscattering coefficient: standard deviation",
+      "long_name": "particle backscattering coefficient: standard deviation",
+      "cell_methods": "TIME: standard_deviation",
+      "units": "1/m"
+    },
+    "cal_data_bbp_num_obs": {
+      "type": "double",
+      "dims": [
+        "TIME"
+      ],
+      "description": "particle backscattering coefficient: number of valid observations",
+      "long_name": "particle backscattering coefficient: number of valid observations",
+      "units": "1"
+    },
+    "cal_data_bb": {
+      "type": "float",
+      "dims": [
+        "WAVELENGTH",
+        "TIME"
+      ],
+      "description": "total backscattering coefficient: mean",
+      "long_name": "total backscattering coefficient: mean",
+      "cell_methods": "TIME: mean",
+      "units": "1/m"
+    },
+    "cal_data_bb_min": {
+      "type": "float",
+      "dims": [
+        "WAVELENGTH",
+        "TIME"
+      ],
+      "description": "total backscattering coefficient: minimum",
+      "long_name": "total backscattering coefficient: minimum",
+      "cell_methods": "TIME: minimum",
+      "units": "1/m"
+    },
+    "cal_data_bb_max": {
+      "type": "float",
+      "dims": [
+        "WAVELENGTH",
+        "TIME"
+      ],
+      "description": "total backscattering coefficient: maximum",
+      "long_name": "total backscattering coefficient: maximum",
+      "cell_methods": "TIME: maximum",
+      "units": "1/m"
+    },
+    "cal_data_bb_sd": {
+      "type": "float",
+      "dims": [
+        "WAVELENGTH",
+        "TIME"
+      ],
+      "description": "total backscattering coefficient: standard deviation",
+      "long_name": "total backscattering coefficient: standard deviation",
+      "cell_methods": "TIME: standard_deviation",
+      "units": "1/m"
+    },
+    "cal_data_bb_num_obs": {
+      "type": "double",
+      "dims": [
+        "TIME"
+      ],
+      "description": "total backscattering coefficient: number of valid observations",
+      "long_name": "total backscattering coefficient: number of valid observations",
+      "units": "1"
+    },
+    "cor_data_Total_num_obs": {
+      "type": "double",
+      "dims": [
+        "TIME"
+      ],
+      "description": "Total number of observations including invalid data",
+      "long_name": "Total number of observations",
+      "units": "1"
+    },
+    "cor_data_beta": {
+      "type": "float",
+      "dims": [
+        "WAVELENGTH",
+        "TIME"
+      ],
+      "description": "total (particle and water) volume scattering function at 124 deg: mean",
+      "long_name": "total (particle and water) volume scattering function at 124 deg: mean",
+      "cell_methods": "TIME: mean",
+      "units": "1/m-sr"
+    },
+    "cor_data_beta_min": {
+      "type": "float",
+      "dims": [
+        "WAVELENGTH",
+        "TIME"
+      ],
+      "description": "total (particle and water) volume scattering function at 124 deg: minimum",
+      "long_name": "total (particle and water) volume scattering function at 124 deg: minimum",
+      "cell_methods": "TIME: minimum",
+      "units": "1/m-sr"
+    },
+    "cor_data_beta_max": {
+      "type": "float",
+      "dims": [
+        "WAVELENGTH",
+        "TIME"
+      ],
+      "description": "total (particle and water) volume scattering function at 124 deg: maximum",
+      "long_name": "total (particle and water) volume scattering function at 124 deg: maximum",
+      "cell_methods": "TIME: maximum",
+      "units": "1/m-sr"
+    },
+    "cor_data_beta_sd": {
+      "type": "float",
+      "dims": [
+        "WAVELENGTH",
+        "TIME"
+      ],
+      "description": "total (particle and water) volume scattering function at 124 deg: standard deviation",
+      "long_name": "total (particle and water) volume scattering function at 124 deg: standard deviation",
+      "cell_methods": "TIME: standard_deviation",
+      "units": "1/m-sr"
+    },
+    "cor_data_beta_num_obs": {
+      "type": "double",
+      "dims": [
+        "TIME"
+      ],
+      "description": "total (particle and water) volume scattering function at 124 deg: number of valid observations",
+      "long_name": "total (particle and water) volume scattering function at 124 deg: number of valid observations",
+      "units": "1"
+    },
+    "cor_data_beta_p": {
+      "type": "float",
+      "dims": [
+        "WAVELENGTH",
+        "TIME"
+      ],
+      "description": "particle volume scattering function at 124 deg: mean",
+      "long_name": "particle volume scattering function at 124 deg: mean",
+      "cell_methods": "TIME: mean",
+      "units": "1/m-sr"
+    },
+    "cor_data_beta_p_min": {
+      "type": "float",
+      "dims": [
+        "WAVELENGTH",
+        "TIME"
+      ],
+      "description": "particle volume scattering function at 124 deg: minimum",
+      "long_name": "particle volume scattering function at 124 deg: minimum",
+      "cell_methods": "TIME: minimum",
+      "units": "1/m-sr"
+    },
+    "cor_data_beta_p_max": {
+      "type": "float",
+      "dims": [
+        "WAVELENGTH",
+        "TIME"
+      ],
+      "description": "particle volume scattering function at 124 deg: maximum",
+      "long_name": "particle volume scattering function at 124 deg: maximum",
+      "cell_methods": "TIME: maximum",
+      "units": "1/m-sr"
+    },
+    "cor_data_beta_p_sd": {
+      "type": "float",
+      "dims": [
+        "WAVELENGTH",
+        "TIME"
+      ],
+      "description": "particle volume scattering function at 124 deg: standard deviation",
+      "long_name": "particle volume scattering function at 124 deg: standard deviation",
+      "cell_methods": "TIME: standard_deviation",
+      "units": "1/m-sr"
+    },
+    "cor_data_beta_p_num_obs": {
+      "type": "double",
+      "dims": [
+        "TIME"
+      ],
+      "description": "particle volume scattering function at 124 deg: number of valid observations",
+      "long_name": "particle volume scattering function at 124 deg: number of valid observations",
+      "units": "1"
+    },
+    "cor_data_bbp": {
+      "type": "float",
+      "dims": [
+        "WAVELENGTH",
+        "TIME"
+      ],
+      "description": "particle backscattering coefficient: mean",
+      "long_name": "particle backscattering coefficient: mean",
+      "cell_methods": "TIME: mean",
+      "units": "1/m"
+    },
+    "cor_data_bbp_min": {
+      "type": "float",
+      "dims": [
+        "WAVELENGTH",
+        "TIME"
+      ],
+      "description": "particle backscattering coefficient: minimum",
+      "long_name": "particle backscattering coefficient: minimum",
+      "cell_methods": "TIME: minimum",
+      "units": "1/m"
+    },
+    "cor_data_bbp_max": {
+      "type": "float",
+      "dims": [
+        "WAVELENGTH",
+        "TIME"
+      ],
+      "description": "particle backscattering coefficient: maximum",
+      "long_name": "particle backscattering coefficient: maximum",
+      "cell_methods": "TIME: maximum",
+      "units": "1/m"
+    },
+    "cor_data_bbp_sd": {
+      "type": "float",
+      "dims": [
+        "WAVELENGTH",
+        "TIME"
+      ],
+      "description": "particle backscattering coefficient: standard deviation",
+      "long_name": "particle backscattering coefficient: standard deviation",
+      "cell_methods": "TIME: standard_deviation",
+      "units": "1/m"
+    },
+    "cor_data_bbp_num_obs": {
+      "type": "double",
+      "dims": [
+        "TIME"
+      ],
+      "description": "particle backscattering coefficient: number of valid observations",
+      "long_name": "particle backscattering coefficient: number of valid observations",
+      "units": "1"
+    },
+    "cor_data_bb": {
+      "type": "float",
+      "dims": [
+        "WAVELENGTH",
+        "TIME"
+      ],
+      "description": "total backscattering coefficient: mean",
+      "long_name": "total backscattering coefficient: mean",
+      "cell_methods": "TIME: mean",
+      "units": "1/m"
+    },
+    "cor_data_bb_min": {
+      "type": "float",
+      "dims": [
+        "WAVELENGTH",
+        "TIME"
+      ],
+      "description": "total backscattering coefficient: minimum",
+      "long_name": "total backscattering coefficient: minimum",
+      "cell_methods": "TIME: minimum",
+      "units": "1/m"
+    },
+    "cor_data_bb_max": {
+      "type": "float",
+      "dims": [
+        "WAVELENGTH",
+        "TIME"
+      ],
+      "description": "total backscattering coefficient: maximum",
+      "long_name": "total backscattering coefficient: maximum",
+      "cell_methods": "TIME: maximum",
+      "units": "1/m"
+    },
+    "cor_data_bb_sd": {
+      "type": "float",
+      "dims": [
+        "WAVELENGTH",
+        "TIME"
+      ],
+      "description": "total backscattering coefficient: standard deviation",
+      "long_name": "total backscattering coefficient: standard deviation",
+      "cell_methods": "TIME: standard_deviation",
+      "units": "1/m"
+    },
+    "cor_data_bb_num_obs": {
+      "type": "double",
+      "dims": [
+        "TIME"
+      ],
+      "description": "total backscattering coefficient: number of valid observations",
+      "long_name": "total backscattering coefficient: number of valid observations",
+      "units": "1"
+    }
+  },
+  "aws_opendata_registry": {
+    "Name": "IMOS - Satellite Remote Sensing - Ocean Colour Sub-Facility - Lucinda Jetty Coastal Observatory (LJCO)",
+    "Description": "The Lucinda Jetty Coastal Observatory (LJCO) is located on the end of the 5.8 km long Lucinda Jetty (18.52 S, 146.39 E) in the coastal waters of the Great Barrier Reef World Heritage Area close to the Herbert River Estuary and the Hinchinbrook Channel in Queensland.\n\nThe observatory acquires continuous above and in-water optical measurements with the objective to support satellite ocean colour validation and algorithm development. Data collection and delivery was interrupted in 2011 with tropical cyclone Yasi.  Currently, LJCO is the only southern-hemisphere ocean colour validation site integrated into NASA\u2019s AERONET-OC global network of ground-based radiometers and one of a few sites globally that combines the acquisition of both atmospheric and in-water optical measurements. \n\nMounted instruments on the LJCO included:\n- Met Station (Vaisala WXT520)\n- Above-water radiometry\n--- CIMEL SeaPRISM\n--- Satlantic HyperOCR\n--- DALEC instrument (added in mid-2016 for continuous hyper-spectral radiometric measurements)\n-Instrument telemetry\n--- Power supply\n--- UPS\n--- NextG Router\n--- WETLabs DAPCS\n--- PC controller\n--- Automated winch\n- Underwater optics\n--- WETLabs WQM\n--- WETLabs Eco Triplet\n--- WETLabs ac-s\n--- WETLabs BB9\n- Campbell Scientific submersible pressure transducer\n\nThe above-water measurements collected at LJCO compromise of multi-spectral water-leaving radiance and atmospheric observations for retrieving aerosol optical properties using an autonomous CIMEL SeaPRISM radiometer, in addition to hyper-spectral down-welling radiance\nmeasurements using the a Satlantic Hyper-OCR. In mid 2016 continuous hyper-spectral radiometric measurements were added using the DALEC instrument.\n\nThe in-water optical measurements consist of conductivity, temperature, pressure, dissolved oxygen, chlorophyll fluorescence and turbidity using a WETLabs WQM, coloured dissolved organic matter (CDOM) fluorescence using a WETLabs EcoTriplet, as well as particulate and dissolved spectral absorption and attenuation coefficients using a WETLabs AC-S. Further, total backscattering coefficients are measured using a WETLabs BB9 radiometer. \n\nAdditional meteorological and sea state measurements are continuously recorded such as barometric pressure, relative humidity, air  emperature, wind speed and direction using a Vaisala WXT520 weather transmitter. Wave height and water temperature are measured with a Campbell Scientific submersible pressure transducer that is used to keep the caged in-water optical instruments at a constant depth.\n\nAll data streams are processed in delayed-mode with automatic quality control applied and made publicly available through the AODN portal; and the data presented here is the daily in-water generated products.",
+    "Documentation": "https://catalogue-imos.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/4ac6bf81-cd37-4611-8da8-4d5ae5e2bda3",
+    "Contact": "info@aodn.org.au",
+    "ManagedBy": "AODN",
+    "UpdateFrequency": "As Needed",
+    "Tags": [
+      "FILL UP MANUALLY - CHECK DOCUMENTATION"
+    ],
+    "License": "http://creativecommons.org/licenses/by/4.0/",
+    "Resources": [
+      {
+        "Description": "Cloud Optimised AODN dataset of IMOS - Satellite Remote Sensing - Ocean Colour Sub-Facility - Lucinda Jetty Coastal Observatory (LJCO)",
+        "ARN": "arn:aws:s3:::aodn-cloud-optimised/station_lucinda_jetty_daily_wetlabs-bb9.zarr",
+        "Region": "ap-southeast-2",
+        "Type": "S3 Bucket"
+      }
+    ],
+    "DataAtWork": {
+      "Tutorials": [
+        {
+          "Title": "Accessing IMOS - Satellite Remote Sensing - Ocean Colour Sub-Facility - Lucinda Jetty Coastal Observatory (LJCO)",
+          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/station_lucinda_jetty_daily_wetlabs-bb9.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/station_lucinda_jetty_daily_wetlabs-bb9.ipynb",
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
+        },
+        {
+          "Title": "Accessing and search for any AODN dataset",
+          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
+        }
+      ]
+    },
+    "Citation": "IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access]"
+  }
+}

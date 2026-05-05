@@ -1,0 +1,943 @@
+{
+  "dataset_name": "station_lucinda_jetty_daily_wetlabs_acs",
+  "logger_name": "station_lucinda_jetty_daily_wetlabs_acs",
+  "cloud_optimised_format": "zarr",
+  "run_settings": {
+    "coiled_cluster_options": {
+      "n_workers": [
+        1,
+        40
+      ],
+      "scheduler_vm_types": "m7i.large",
+      "worker_vm_types": "m7i.2xlarge",
+      "allow_ingress_from": "me",
+      "compute_purchase_option": "spot_with_fallback",
+      "worker_options": {
+        "nthreads": 2,
+        "memory_limit": "28GB"
+      }
+    },
+    "batch_size": 5,
+    "cluster": {
+      "mode": "coiled",
+      "restart_every_path": true
+    },
+    "paths": [
+      {
+        "s3_uri": "s3://imos-data/IMOS/SRS/OC/LJCO/ACS-daily",
+        "filter": [
+          ".*\\.nc$"
+        ],
+        "year_range": [
+          2014,
+          2024
+        ]
+      }
+    ],
+    "clear_existing_data": true,
+    "raise_error": false
+  },
+  "metadata_uuid": "4ac6bf81-cd37-4611-8da8-4d5ae5e2bda3",
+  "schema_transformation": {
+    "dimensions": {
+      "time": {
+        "name": "TIME",
+        "chunk": 1000,
+        "rechunk": false,
+        "append_dim": true
+      },
+      "WAVELENGTH_a": {
+        "name": "WAVELENGTH_a",
+        "chunk": 707,
+        "size": 707
+      },
+      "WAVELENGTH_c": {
+        "name": "WAVELENGTH_c",
+        "chunk": 707,
+        "size": 707
+      }
+    },
+    "var_template_shape": "cal_data_a",
+    "vars_incompatible_with_region": [
+      "WAVELENGTH_a",
+      "WAVELENGTH_c"
+    ],
+    "target_wavelength_grids": {
+      "WAVELENGTH_a": {
+        "min": 397.0,
+        "max": 750.0,
+        "step": 0.5
+      },
+      "WAVELENGTH_c": {
+        "min": 397.0,
+        "max": 750.0,
+        "step": 0.5
+      }
+    },
+    "global_attributes": {
+      "delete": [
+        "date_created",
+        "time_coverage_start",
+        "time_coverage_end",
+        "geospatial_lat_max",
+        "geospatial_lat_min",
+        "geospatial_lon_max",
+        "geospatial_lon_min",
+        "geospatial_vertical_max",
+        "geospatial_vertical_min",
+        "history",
+        "input_file",
+        "instrument_serial_number",
+        "device_file"
+      ],
+      "set": {
+        "title": ""
+      }
+    },
+    "dataset_sort_by": [
+      "WAVELENGTH_a",
+      "WAVELENGTH_c",
+      "TIME"
+    ],
+    "add_variables": {
+      "filename": {
+        "source": "@filename",
+        "schema": {
+          "type": "object",
+          "units": "1",
+          "long_name": "Filename of the source file",
+          "dimensions": "TIME"
+        }
+      }
+    }
+  },
+  "schema": {
+    "LATITUDE": {
+      "type": "double",
+      "axis": "Y",
+      "long_name": "latitude",
+      "reference_datum": "geographical coordinates, WGS84 projection",
+      "standard_name": "latitude",
+      "units": "degrees_north",
+      "valid_max": 90.0,
+      "valid_min": -90.0
+    },
+    "LONGITUDE": {
+      "type": "double",
+      "axis": "X",
+      "long_name": "longitude",
+      "reference_datum": "geographical coordinates, WGS84 projection",
+      "standard_name": "longitude",
+      "units": "degrees_east",
+      "valid_max": 180.0,
+      "valid_min": -180.0
+    },
+    "HEIGHT_water_sensor": {
+      "type": "double",
+      "axis": "Z",
+      "long_name": "nominal height above sea surface of water sensor",
+      "positive": "up",
+      "reference_datum": "sea surface",
+      "standard_name": "height",
+      "units": "metres",
+      "valid_max": 0.0,
+      "valid_min": -50.0
+    },
+    "TIME": {
+      "type": "timestamp[ns]",
+      "axis": "T",
+      "description": "days since 1950-01-01 (UTC)",
+      "long_name": "time",
+      "standard_name": "time",
+      "valid_max": 90000.0,
+      "valid_min": 0.0
+    },
+    "WAVELENGTH_c": {
+      "type": "float",
+      "description": "wavelengths for c",
+      "long_name": "Wavelengths for c",
+      "units": "nm"
+    },
+    "WAVELENGTH_a": {
+      "type": "float",
+      "description": "wavelengths for a",
+      "long_name": "Wavelengths for a",
+      "units": "nm"
+    },
+    "cal_data_Total_num_obs": {
+      "type": "double",
+      "dims": [
+        "TIME"
+      ],
+      "description": "Total number of observations including invalid data",
+      "long_name": "Total number of observations",
+      "units": "1"
+    },
+    "cal_data_instr_tmpr": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "description": "internal temperature: mean",
+      "long_name": "instrument temperature: mean",
+      "cell_methods": "TIME: mean",
+      "units": "degree_Celsius"
+    },
+    "cal_data_instr_tmpr_min": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "description": "internal temperature: minimum",
+      "long_name": "instrument temperature: minimum",
+      "cell_methods": "TIME: minimum",
+      "units": "degree_Celsius"
+    },
+    "cal_data_instr_tmpr_max": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "description": "internal temperature: maximum",
+      "long_name": "instrument temperature: maximum",
+      "cell_methods": "TIME: maximum",
+      "units": "degree_Celsius"
+    },
+    "cal_data_instr_tmpr_sd": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "description": "internal temperature: standard deviation",
+      "long_name": "instrument temperature: standard deviation",
+      "cell_methods": "TIME: standard_deviation",
+      "units": "degree_Celsius"
+    },
+    "cal_data_instr_tmpr_num_obs": {
+      "type": "double",
+      "dims": [
+        "TIME"
+      ],
+      "description": "internal temperature: number of valid observations",
+      "long_name": "instrument temperature: number of valid observations",
+      "units": "1"
+    },
+    "cal_data_cal_tmpr": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "description": "external temperature: mean",
+      "long_name": "calibration temperature:mean",
+      "cell_methods": "TIME: mean",
+      "units": "degree_Celsius"
+    },
+    "cal_data_cal_tmpr_min": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "description": "external temperature: minimum",
+      "long_name": "calibration temperature: minimum",
+      "cell_methods": "TIME: minimum",
+      "units": "degree_Celsius"
+    },
+    "cal_data_cal_tmpr_max": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "description": "external temperature: maximum",
+      "long_name": "calibration temperature: maximum",
+      "cell_methods": "TIME: maximum",
+      "units": "degree_Celsius"
+    },
+    "cal_data_cal_tmpr_sd": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "description": "external temperature: standard deviation",
+      "long_name": "calibration temperature: standard deviation",
+      "cell_methods": "TIME: standard_deviation",
+      "units": "degree_Celsius"
+    },
+    "cal_data_cal_tmpr_num_obs": {
+      "type": "double",
+      "dims": [
+        "TIME"
+      ],
+      "description": "external temperature: number of valid observations",
+      "long_name": "calibration temperature: number of valid observations",
+      "units": "1"
+    },
+    "cal_data_a": {
+      "type": "float",
+      "dims": [
+        "WAVELENGTH_a",
+        "TIME"
+      ],
+      "description": "absorption coefficient: mean",
+      "long_name": "Absorption coefficient:mean",
+      "cell_methods": "TIME: mean",
+      "units": "1/m",
+      "valid_max": 15.0,
+      "valid_min": 0.0
+    },
+    "cal_data_a_min": {
+      "type": "float",
+      "dims": [
+        "WAVELENGTH_a",
+        "TIME"
+      ],
+      "description": "absorption coefficient: minimum",
+      "long_name": "Absorption coefficient: minimum",
+      "cell_methods": "TIME: minimum",
+      "units": "1/m",
+      "valid_max": 15.0,
+      "valid_min": 0.0
+    },
+    "cal_data_a_max": {
+      "type": "float",
+      "dims": [
+        "WAVELENGTH_a",
+        "TIME"
+      ],
+      "description": "absorption coefficient: maximum",
+      "long_name": "Absorption coefficient: maximum",
+      "cell_methods": "TIME: maximum",
+      "units": "1/m",
+      "valid_max": 15.0,
+      "valid_min": 0.0
+    },
+    "cal_data_a_sd": {
+      "type": "float",
+      "dims": [
+        "WAVELENGTH_a",
+        "TIME"
+      ],
+      "description": "absorption coefficient: standard deviation",
+      "long_name": "Absorption coefficient: standard deviation",
+      "cell_methods": "TIME: standard_deviation",
+      "units": "1/m",
+      "valid_max": 15.0,
+      "valid_min": 0.0
+    },
+    "cal_data_a_num_obs": {
+      "type": "double",
+      "dims": [
+        "TIME"
+      ],
+      "description": "absorption coefficient: number of valid observations",
+      "long_name": "Absorption coefficient: number of valid observations",
+      "units": "1"
+    },
+    "cal_data_c": {
+      "type": "float",
+      "dims": [
+        "WAVELENGTH_c",
+        "TIME"
+      ],
+      "description": "extinction coefficient: mean",
+      "long_name": "Extinction coefficient: mean",
+      "cell_methods": "TIME: mean",
+      "units": "1/m",
+      "valid_max": 15.0,
+      "valid_min": 0.0
+    },
+    "cal_data_c_min": {
+      "type": "float",
+      "dims": [
+        "WAVELENGTH_c",
+        "TIME"
+      ],
+      "description": "extinction coefficient: minimum",
+      "long_name": "Extinction coefficient: minimum",
+      "cell_methods": "TIME: minimum",
+      "units": "1/m",
+      "valid_max": 15.0,
+      "valid_min": 0.0
+    },
+    "cal_data_c_max": {
+      "type": "float",
+      "dims": [
+        "WAVELENGTH_c",
+        "TIME"
+      ],
+      "description": "extinction coefficient: maximum",
+      "long_name": "Extinction coefficient: maximum",
+      "cell_methods": "TIME: maximum",
+      "units": "1/m",
+      "valid_max": 15.0,
+      "valid_min": 0.0
+    },
+    "cal_data_c_sd": {
+      "type": "float",
+      "dims": [
+        "WAVELENGTH_c",
+        "TIME"
+      ],
+      "description": "extinction coefficient: standard deviation",
+      "long_name": "Extinction coefficient: standard deviation",
+      "cell_methods": "TIME: standard_deviation",
+      "units": "1/m",
+      "valid_max": 15.0,
+      "valid_min": 0.0
+    },
+    "cal_data_c_num_obs": {
+      "type": "double",
+      "dims": [
+        "TIME"
+      ],
+      "description": "extinction coefficient: number of valid observations",
+      "long_name": "Extinction coefficient: number of valid observations",
+      "units": "1"
+    },
+    "tsc_data_Total_num_obs": {
+      "type": "double",
+      "dims": [
+        "TIME"
+      ],
+      "description": "Total number of observations including invalid data",
+      "long_name": "Total number of observations",
+      "units": "1"
+    },
+    "tsc_data_instr_tmpr": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "description": "internal temperature: mean",
+      "long_name": "instrument temperature: mean",
+      "cell_methods": "TIME: mean",
+      "units": "degree_Celsius"
+    },
+    "tsc_data_instr_tmpr_min": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "description": "internal temperature: minimum",
+      "long_name": "instrument temperature: minimum",
+      "cell_methods": "TIME: minimum",
+      "units": "degree_Celsius"
+    },
+    "tsc_data_instr_tmpr_max": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "description": "internal temperature: maximum",
+      "long_name": "instrument temperature: maximum",
+      "cell_methods": "TIME: maximum",
+      "units": "degree_Celsius"
+    },
+    "tsc_data_instr_tmpr_sd": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "description": "internal temperature: standard deviation",
+      "long_name": "instrument temperature: standard deviation",
+      "cell_methods": "TIME: standard_deviation",
+      "units": "degree_Celsius"
+    },
+    "tsc_data_instr_tmpr_num_obs": {
+      "type": "double",
+      "dims": [
+        "TIME"
+      ],
+      "description": "internal temperature: number of valid observations",
+      "long_name": "instrument temperature: number of valid observations",
+      "units": "1"
+    },
+    "tsc_data_cal_tmpr": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "description": "external temperature: mean",
+      "long_name": "calibration temperature: mean",
+      "cell_methods": "TIME: mean",
+      "units": "degree_Celsius"
+    },
+    "tsc_data_cal_tmpr_min": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "description": "external temperature: minimum",
+      "long_name": "calibration temperature: minimum",
+      "cell_methods": "TIME: minimum",
+      "units": "degree_Celsius"
+    },
+    "tsc_data_cal_tmpr_max": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "description": "external temperature: maximum",
+      "long_name": "calibration temperature: maximum",
+      "cell_methods": "TIME: maximum",
+      "units": "degree_Celsius"
+    },
+    "tsc_data_cal_tmpr_sd": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "description": "external temperature: standard deviation",
+      "long_name": "calibration temperature: standard deviation",
+      "cell_methods": "TIME: standard_deviation",
+      "units": "degree_Celsius"
+    },
+    "tsc_data_cal_tmpr_num_obs": {
+      "type": "double",
+      "dims": [
+        "TIME"
+      ],
+      "description": "external temperature: number of valid observations",
+      "long_name": "calibration temperature: number of valid observations",
+      "units": "1"
+    },
+    "tsc_data_a": {
+      "type": "float",
+      "dims": [
+        "WAVELENGTH_a",
+        "TIME"
+      ],
+      "description": "absorption coefficient: mean",
+      "long_name": "absorption coefficient: mean",
+      "cell_methods": "TIME: mean",
+      "units": "1/m",
+      "valid_max": 15.0,
+      "valid_min": 0.0
+    },
+    "tsc_data_a_min": {
+      "type": "float",
+      "dims": [
+        "WAVELENGTH_a",
+        "TIME"
+      ],
+      "description": "absorption coefficient: minimum",
+      "long_name": "Absorption coefficient: minimum",
+      "cell_methods": "TIME: minimum",
+      "units": "1/m",
+      "valid_max": 15.0,
+      "valid_min": 0.0
+    },
+    "tsc_data_a_max": {
+      "type": "float",
+      "dims": [
+        "WAVELENGTH_a",
+        "TIME"
+      ],
+      "description": "absorption coefficient: maximum",
+      "long_name": "Absorption coefficient: maximum",
+      "cell_methods": "TIME: maximum",
+      "units": "1/m",
+      "valid_max": 15.0,
+      "valid_min": 0.0
+    },
+    "tsc_data_a_sd": {
+      "type": "float",
+      "dims": [
+        "WAVELENGTH_a",
+        "TIME"
+      ],
+      "description": "absorption coefficient: standard deviation",
+      "long_name": "Absorption coefficient: standard deviation",
+      "cell_methods": "TIME: standard_deviation",
+      "units": "1/m",
+      "valid_max": 15.0,
+      "valid_min": 0.0
+    },
+    "tsc_data_a_num_obs": {
+      "type": "double",
+      "dims": [
+        "TIME"
+      ],
+      "description": "absorption coefficient: number of valid observations",
+      "long_name": "Absorption coefficient: number of valid observations",
+      "units": "1"
+    },
+    "tsc_data_c": {
+      "type": "float",
+      "dims": [
+        "WAVELENGTH_c",
+        "TIME"
+      ],
+      "description": "extinction coefficient: mean",
+      "long_name": "extinction coefficient: mean",
+      "cell_methods": "TIME: mean",
+      "units": "1/m",
+      "valid_max": 15.0,
+      "valid_min": 0.0
+    },
+    "tsc_data_c_min": {
+      "type": "float",
+      "dims": [
+        "WAVELENGTH_c",
+        "TIME"
+      ],
+      "description": "extinction coefficient: minimum",
+      "long_name": "Extinction coefficient: minimum",
+      "cell_methods": "TIME: minimum",
+      "units": "1/m",
+      "valid_max": 15.0,
+      "valid_min": 0.0
+    },
+    "tsc_data_c_max": {
+      "type": "float",
+      "dims": [
+        "WAVELENGTH_c",
+        "TIME"
+      ],
+      "description": "extinction coefficient: maximum",
+      "long_name": "Extinction coefficient: maximum",
+      "cell_methods": "TIME: maximum",
+      "units": "1/m",
+      "valid_max": 15.0,
+      "valid_min": 0.0
+    },
+    "tsc_data_c_sd": {
+      "type": "float",
+      "dims": [
+        "WAVELENGTH_c",
+        "TIME"
+      ],
+      "description": "extinction coefficient: standard deviation",
+      "long_name": "Extinction coefficient: standard deviation",
+      "cell_methods": "TIME: standard_deviation",
+      "units": "1/m",
+      "valid_max": 15.0,
+      "valid_min": 0.0
+    },
+    "tsc_data_c_num_obs": {
+      "type": "double",
+      "dims": [
+        "TIME"
+      ],
+      "description": "extinction coefficient: number of valid observations",
+      "long_name": "Extinction coefficient: number of valid observations",
+      "units": "1"
+    },
+    "tsc_data_corr_tmpr": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "description": "temerature used for temperature correction: mean",
+      "long_name": "temperature used for temperature correction: mean",
+      "cell_methods": "TIME: mean",
+      "units": "degree_Celsius"
+    },
+    "tsc_data_corr_tmpr_min": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "description": "temerature used for temperature correction: minimum",
+      "long_name": "temperature used for temperature correction: minimum",
+      "cell_methods": "TIME: minimum",
+      "units": "degree_Celsius"
+    },
+    "tsc_data_corr_tmpr_max": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "description": "temerature used for temperature correction: maximum",
+      "long_name": "temperature used for temperature correction: maximum",
+      "cell_methods": "TIME: maximum",
+      "units": "degree_Celsius"
+    },
+    "tsc_data_corr_tmpr_sd": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "description": "temerature used for temperature correction: standard deviation",
+      "long_name": "temperature used for temperature correction: standard deviation",
+      "cell_methods": "TIME: standard_deviation",
+      "units": "degree_Celsius"
+    },
+    "tsc_data_corr_tmpr_num_obs": {
+      "type": "double",
+      "dims": [
+        "TIME"
+      ],
+      "description": "temerature used for temperature correction: number of valid observations",
+      "long_name": "temperature used for temperature correction: number of valid observations",
+      "units": "1"
+    },
+    "rtc_data_Total_num_obs": {
+      "type": "double",
+      "dims": [
+        "TIME"
+      ],
+      "description": "Total number of observations including invalid data",
+      "long_name": "Total number of observations",
+      "units": "1"
+    },
+    "rtc_data_instr_tmpr": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "description": "internal temperature: mean",
+      "long_name": "instrument temperature: mean",
+      "cell_methods": "TIME: mean",
+      "units": "degree_Celsius"
+    },
+    "rtc_data_instr_tmpr_min": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "description": "internal temperature: minimum",
+      "long_name": "instrument temperature: minimum",
+      "cell_methods": "TIME: minimum",
+      "units": "degree_Celsius"
+    },
+    "rtc_data_instr_tmpr_max": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "description": "internal temperature: maximum",
+      "long_name": "instrument temperature: maximum",
+      "cell_methods": "TIME: maximum",
+      "units": "degree_Celsius"
+    },
+    "rtc_data_instr_tmpr_sd": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "description": "internal temperature: standard deviation",
+      "long_name": "instrument temperature: standard deviation",
+      "cell_methods": "TIME: standard_deviation",
+      "units": "degree_Celsius"
+    },
+    "rtc_data_instr_tmpr_num_obs": {
+      "type": "double",
+      "dims": [
+        "TIME"
+      ],
+      "description": "internal temperature: number of valid observations",
+      "long_name": "instrument temperature: number of valid observations",
+      "units": "1"
+    },
+    "rtc_data_cal_tmpr": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "description": "external temperature: mean",
+      "long_name": "calibration temperature: mean",
+      "cell_methods": "TIME: mean",
+      "units": "degree_Celsius"
+    },
+    "rtc_data_cal_tmpr_min": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "description": "external temperature: minimum",
+      "long_name": "calibration temperature: minimum",
+      "cell_methods": "TIME: minimum",
+      "units": "degree_Celsius"
+    },
+    "rtc_data_cal_tmpr_max": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "description": "external temperature: maximum",
+      "long_name": "calibration temperature: maximum",
+      "cell_methods": "TIME: maximum",
+      "units": "degree_Celsius"
+    },
+    "rtc_data_cal_tmpr_sd": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "description": "external temperature: standard deviation",
+      "long_name": "calibration temperature: standard deviation",
+      "cell_methods": "TIME: standard_deviation",
+      "units": "degree_Celsius"
+    },
+    "rtc_data_cal_tmpr_num_obs": {
+      "type": "double",
+      "dims": [
+        "TIME"
+      ],
+      "description": "external temperature: number of valid observations",
+      "long_name": "calibration temperature: number of valid observations",
+      "units": "1"
+    },
+    "rtc_data_a": {
+      "type": "float",
+      "dims": [
+        "WAVELENGTH_a",
+        "TIME"
+      ],
+      "description": "absorption coefficient: mean",
+      "long_name": "Absorption coefficient: mean",
+      "cell_methods": "TIME: mean",
+      "units": "1/m",
+      "valid_max": 15.0,
+      "valid_min": 0.0
+    },
+    "rtc_data_a_min": {
+      "type": "float",
+      "dims": [
+        "WAVELENGTH_a",
+        "TIME"
+      ],
+      "description": "absorption coefficient: minimum",
+      "long_name": "Absorption coefficient: minimum",
+      "cell_methods": "TIME: minimum",
+      "units": "1/m",
+      "valid_max": 15.0,
+      "valid_min": 0.0
+    },
+    "rtc_data_a_max": {
+      "type": "float",
+      "dims": [
+        "WAVELENGTH_a",
+        "TIME"
+      ],
+      "description": "absorption coefficient: maximum",
+      "long_name": "Absorption coefficient: maximum",
+      "cell_methods": "TIME: maximum",
+      "units": "1/m",
+      "valid_max": 15.0,
+      "valid_min": 0.0
+    },
+    "rtc_data_a_sd": {
+      "type": "float",
+      "dims": [
+        "WAVELENGTH_a",
+        "TIME"
+      ],
+      "description": "absorption coefficient: standard deviation",
+      "long_name": "Absorption coefficient: standard deviation",
+      "cell_methods": "TIME: standard_deviation",
+      "units": "1/m",
+      "valid_max": 15.0,
+      "valid_min": 0.0
+    },
+    "rtc_data_a_num_obs": {
+      "type": "double",
+      "dims": [
+        "TIME"
+      ],
+      "description": "absorption coefficient: number of valid observations",
+      "long_name": "Absorption coefficient: number of valid observations",
+      "units": "1"
+    },
+    "rtc_data_c": {
+      "type": "float",
+      "dims": [
+        "WAVELENGTH_c",
+        "TIME"
+      ],
+      "description": "extinction coefficient: mean",
+      "long_name": "extinction coefficient: mean",
+      "cell_methods": "TIME: mean",
+      "units": "1/m",
+      "valid_max": 15.0,
+      "valid_min": 0.0
+    },
+    "rtc_data_c_min": {
+      "type": "float",
+      "dims": [
+        "WAVELENGTH_c",
+        "TIME"
+      ],
+      "description": "extinction coefficient: minimum",
+      "long_name": "Extinction coefficient: minimum",
+      "cell_methods": "TIME: minimum",
+      "units": "1/m",
+      "valid_max": 15.0,
+      "valid_min": 0.0
+    },
+    "rtc_data_c_max": {
+      "type": "float",
+      "dims": [
+        "WAVELENGTH_c",
+        "TIME"
+      ],
+      "description": "extinction coefficient: maximum",
+      "long_name": "Extinction coefficient: maximum",
+      "cell_methods": "TIME: maximum",
+      "units": "1/m",
+      "valid_max": 15.0,
+      "valid_min": 0.0
+    },
+    "rtc_data_c_sd": {
+      "type": "float",
+      "dims": [
+        "WAVELENGTH_c",
+        "TIME"
+      ],
+      "description": "extinction coefficient: standard deviation",
+      "long_name": "Extinction coefficient: standard deviation",
+      "cell_methods": "TIME: standard_deviation",
+      "units": "1/m",
+      "valid_max": 15.0,
+      "valid_min": 0.0
+    },
+    "rtc_data_c_num_obs": {
+      "type": "double",
+      "dims": [
+        "TIME"
+      ],
+      "description": "extinction coefficient: number of valid observations",
+      "long_name": "Extinction coefficient: number of valid observations",
+      "units": "1"
+    }
+  },
+  "aws_opendata_registry": {
+    "Name": "IMOS - Satellite Remote Sensing - Ocean Colour Sub-Facility - Lucinda Jetty Coastal Observatory (LJCO)",
+    "Description": "The Lucinda Jetty Coastal Observatory (LJCO) is located on the end of the 5.8 km long Lucinda Jetty (18.52 S, 146.39 E) in the coastal waters of the Great Barrier Reef World Heritage Area close to the Herbert River Estuary and the Hinchinbrook Channel in Queensland.\n\nThe observatory acquires continuous above and in-water optical measurements with the objective to support satellite ocean colour validation and algorithm development. Data collection and delivery was interrupted in 2011 with tropical cyclone Yasi.  Currently, LJCO is the only southern-hemisphere ocean colour validation site integrated into NASA\u2019s AERONET-OC global network of ground-based radiometers and one of a few sites globally that combines the acquisition of both atmospheric and in-water optical measurements. \n\nMounted instruments on the LJCO included:\n- Met Station (Vaisala WXT520)\n- Above-water radiometry\n--- CIMEL SeaPRISM\n--- Satlantic HyperOCR\n--- DALEC instrument (added in mid-2016 for continuous hyper-spectral radiometric measurements)\n-Instrument telemetry\n--- Power supply\n--- UPS\n--- NextG Router\n--- WETLabs DAPCS\n--- PC controller\n--- Automated winch\n- Underwater optics\n--- WETLabs WQM\n--- WETLabs Eco Triplet\n--- WETLabs ac-s\n--- WETLabs BB9\n- Campbell Scientific submersible pressure transducer\n\nThe above-water measurements collected at LJCO compromise of multi-spectral water-leaving radiance and atmospheric observations for retrieving aerosol optical properties using an autonomous CIMEL SeaPRISM radiometer, in addition to hyper-spectral down-welling radiance\nmeasurements using the a Satlantic Hyper-OCR. In mid 2016 continuous hyper-spectral radiometric measurements were added using the DALEC instrument.\n\nThe in-water optical measurements consist of conductivity, temperature, pressure, dissolved oxygen, chlorophyll fluorescence and turbidity using a WETLabs WQM, coloured dissolved organic matter (CDOM) fluorescence using a WETLabs EcoTriplet, as well as particulate and dissolved spectral absorption and attenuation coefficients using a WETLabs AC-S. Further, total backscattering coefficients are measured using a WETLabs BB9 radiometer. \n\nAdditional meteorological and sea state measurements are continuously recorded such as barometric pressure, relative humidity, air  emperature, wind speed and direction using a Vaisala WXT520 weather transmitter. Wave height and water temperature are measured with a Campbell Scientific submersible pressure transducer that is used to keep the caged in-water optical instruments at a constant depth.\n\nAll data streams are processed in delayed-mode with automatic quality control applied and made publicly available through the AODN portal; and the data presented here is the daily in-water generated products.",
+    "Documentation": "https://catalogue-imos.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/4ac6bf81-cd37-4611-8da8-4d5ae5e2bda3",
+    "Contact": "info@aodn.org.au",
+    "ManagedBy": "AODN",
+    "UpdateFrequency": "As Needed",
+    "Tags": [
+      "FILL UP MANUALLY - CHECK DOCUMENTATION"
+    ],
+    "License": "http://creativecommons.org/licenses/by/4.0/",
+    "Resources": [
+      {
+        "Description": "Cloud Optimised AODN dataset of IMOS - Satellite Remote Sensing - Ocean Colour Sub-Facility - Lucinda Jetty Coastal Observatory (LJCO)",
+        "ARN": "arn:aws:s3:::aodn-cloud-optimised/station_lucinda_jetty_daily_wetlabs-acs.zarr",
+        "Region": "ap-southeast-2",
+        "Type": "S3 Bucket"
+      }
+    ],
+    "DataAtWork": {
+      "Tutorials": [
+        {
+          "Title": "Accessing IMOS - Satellite Remote Sensing - Ocean Colour Sub-Facility - Lucinda Jetty Coastal Observatory (LJCO)",
+          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/station_lucinda_jetty_daily_wetlabs-acs.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/station_lucinda_jetty_daily_wetlabs-acs.ipynb",
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
+        },
+        {
+          "Title": "Accessing and search for any AODN dataset",
+          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
+        }
+      ]
+    },
+    "Citation": "IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access]"
+  }
+}
