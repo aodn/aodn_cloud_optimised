@@ -10,6 +10,20 @@
           ".*\\.nc$"
         ],
         "year_range": []
+      },
+      {
+        "s3_uri": "s3://imos-data/IMOS/ANMN/NRS/NRSKAI/real-time",
+        "filter": [
+          ".*\\.nc$"
+        ],
+        "year_range": []
+      },
+      {
+        "s3_uri": "s3://imos-data/IMOS/ANMN/NRS/NRSROT/real-time",
+        "filter": [
+          ".*\\.nc$"
+        ],
+        "year_range": []
       }
     ],
     "cluster": {
