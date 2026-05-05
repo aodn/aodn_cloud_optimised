@@ -52,7 +52,7 @@ from shapely.geometry import MultiPolygon, Polygon
 from tqdm.notebook import tqdm
 from windrose import WindroseAxes
 
-__version__ = "0.3.13"
+__version__ = "0.3.14"
 
 REGION: Final[str] = "ap-southeast-2"
 ENDPOINT_URL = "https://s3.ap-southeast-2.amazonaws.com"
@@ -412,13 +412,13 @@ def get_temporal_extent(
     # Detect the time variable name in the schema
     names = dataset.schema.names
     if not time_varname:
-        for candidate in ("TIME", "JULD", "detection_timestamp"):
+        for candidate in ("TIME", "JULD", "detection_timestamp", "eventDate"):
             if candidate in names:
                 time_varname = candidate
                 break
         else:
             raise ValueError(
-                "No known time variable ('TIME', 'JULD', 'detection_timestamp') found in dataset schema"
+                "No known time variable ('TIME', 'JULD', 'detection_timestamp', 'eventDate') found in dataset schema"
             )
 
     # Single scan across both boundary partitions with explicit readahead.
