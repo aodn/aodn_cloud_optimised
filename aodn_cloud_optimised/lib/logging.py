@@ -5,6 +5,7 @@ import re
 import sys
 import tempfile
 from collections import defaultdict
+from dataclasses import dataclass, field
 from datetime import datetime
 
 
@@ -75,6 +76,13 @@ class CustomFormatter(logging.Formatter):
         return formatter.format(record)
 
 
+# ---------------------------------------------------------------------------
+# Module-level registry: survives logger.handlers.clear() calls
+# ---------------------------------------------------------------------------
+
+_summary_handlers: dict[str, "SummaryCaptureHandler"] = {}
+
+
 def get_logger(
     logger_name: str, log_level: int = logging.DEBUG, raise_error: bool = False
 ) -> logging.Logger:
@@ -122,93 +130,270 @@ def get_logger(
         file_handler.setLevel(log_level)
         logger.addHandler(file_handler)
 
-    # Add SummaryCaptureHandler only if it doesn't already exist
-    if SummaryCaptureHandler not in existing_handler_types:
-        logger.addHandler(SummaryCaptureHandler())
+    # SummaryCaptureHandler: use module-level registry so it survives handlers.clear()
+    if logger_name not in _summary_handlers:
+        summary_handler = SummaryCaptureHandler()
+        _summary_handlers[logger_name] = summary_handler
+        logger.addHandler(summary_handler)
+    elif SummaryCaptureHandler not in existing_handler_types:
+        # Handler exists in registry but was cleared from logger — re-attach it
+        logger.addHandler(_summary_handlers[logger_name])
 
     return logger
 
 
 # ---------------------------------------------------------------------------
-# Summary capture handler
+# Summary capture handler — patterns
+# ---------------------------------------------------------------------------
+
+# Noise: suppress entirely from summary
+_NOISE_PATTERNS = [
+    re.compile(r"Option 'clear_existing_data' is True", re.I),
+    re.compile(r"Resetting Coiled cluster after scheduler failure", re.I),
+    re.compile(r"^\s*Dropping variables from the dataset:", re.I),
+]
+
+# Retry attempt messages (ERROR level)
+_ZARR_RETRY_PAT = re.compile(
+    r"Scheduler/worker/shuffle failure during batch (\d+)", re.I
+)
+_PARQUET_RETRY_PAT = re.compile(r"Scheduler connection lost during batch (\d+)", re.I)
+
+# Retry limit exceeded messages (ERROR level)
+_ZARR_RETRY_EXCEEDED_PAT = re.compile(
+    r"Batch (\d+) has exceeded retry limit.*Falling back to individual processing",
+    re.I | re.DOTALL,
+)
+_PARQUET_RETRY_EXCEEDED_PAT = re.compile(
+    r"Batch (\d+) exceeded retry limit.*Skipping to next batch",
+    re.I | re.DOTALL,
+)
+
+# Batch success messages (INFO level — captured only to detect recovery after retries)
+_ZARR_SUCCESS_PAT = re.compile(
+    r"Batch (\d+) successfully published to Zarr store", re.I
+)
+_PARQUET_SUCCESS_PAT = re.compile(r"batch (\d+) processing completed\.", re.I)
+
+# Individual fallback failure summary
+_INDIVIDUAL_FALLBACK_PAT = re.compile(
+    r"(\d+)/(\d+) file\(s\) failed during individual fallback for batch (\d+)", re.I
+)
+
+# Config hint: auto-drop warning
+_CONFIG_HINT_AUTODROP_PAT = re.compile(
+    r"Auto-dropping variables/coordinates with no dimensions in common with region dims "
+    r"\{([^}]+)\}: \[([^\]]+)\]",
+    re.I,
+)
+
+# Grid size mismatch (entire batch rejected)
+_GRID_MISMATCH_PAT = re.compile(r"Batch (\d+) rejected", re.I)
+
+# Bad data: contact the data provider — ordered from most specific to least
+_BAD_DATA_PATTERNS: list[tuple[str, re.Pattern]] = [
+    (
+        "time_overlap",
+        re.compile(r"Contact the data provider.*has.*overlap", re.I | re.DOTALL),
+    ),
+    (
+        "structural",
+        re.compile(r"Contact the data provider.*structurally incomplete", re.I),
+    ),
+    (
+        "grid_inconsistency",
+        re.compile(r"Contact the data provider.*inconsistent grid", re.I | re.DOTALL),
+    ),
+    ("cant_open", re.compile(r"Contact the data provider.*could not be opened", re.I)),
+    (
+        "bad_time",
+        re.compile(r"Contact the data provider.*(?:bad.*time|time issues)", re.I),
+    ),
+    ("other_data", re.compile(r"Contact the data provider", re.I)),
+]
+
+# NC filename extractor (works on S3FileSystem repr, S3 URIs, and plain paths)
+_NC_FILENAME_PAT = re.compile(r"([\w][\w\-\.]*\.nc(?:\.gz)?)")
+
+_BAD_DATA_LABELS = {
+    "time_overlap": "TIME OVERLAP (overlapping TIME values — excluded from batch)",
+    "structural": "STRUCTURALLY INCOMPLETE (excluded from batch)",
+    "grid_inconsistency": "INCONSISTENT GRID (excluded from batch)",
+    "cant_open": "COULD NOT BE OPENED (excluded from batch)",
+    "bad_time": "BAD TIME VALUES (excluded from batch)",
+    "other_data": "OTHER DATA PROVIDER ISSUES",
+}
+
+
+def _extract_nc_basenames(msg: str) -> list[str]:
+    """Extract unique NetCDF basenames from a log message (preserves order)."""
+    seen: set[str] = set()
+    out: list[str] = []
+    for match in _NC_FILENAME_PAT.finditer(msg):
+        b = os.path.basename(match.group(1))
+        if b not in seen:
+            seen.add(b)
+            out.append(b)
+    return out
+
+
+# ---------------------------------------------------------------------------
+# BatchEvent dataclass
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class BatchEvent:
+    """Tracks the retry history and outcome for a single processing batch."""
+
+    batch_num: int
+    retry_count: int = 0
+    outcome: str = "in_progress"  # "success" | "individual_fallback" | "skipped"
+    individual_failed: list = field(default_factory=list)  # (basename, error) tuples
+
+
+# ---------------------------------------------------------------------------
+# SummaryCaptureHandler
 # ---------------------------------------------------------------------------
 
 
 class SummaryCaptureHandler(logging.Handler):
-    """Silently collects WARNING and ERROR records for an end-of-run digest.
+    """Silently collects log records for an end-of-run digest.
 
-    Records are grouped into named categories based on regex patterns applied
-    to the log message.  Call :func:`print_processing_summary` to render the
-    digest after all processing is complete.
+    Tracks per-batch retry sequences and outcomes, bad-data files by category,
+    config hints (deduplicated), and unexpected errors.  Call
+    :func:`print_processing_summary` to render the digest after processing.
     """
 
-    #: Ordered list of ``(category_key, display_label, compiled_pattern)``.
-    #: The first matching category wins; unmatched records go to the catch-all.
-    CATEGORIES = [
-        (
-            "data_quality",
-            "DATA QUALITY  (contact data provider)",
-            re.compile(r"contact the data provider", re.I),
-        ),
-        (
-            "structural",
-            "STRUCTURALLY INCOMPLETE FILES",
-            re.compile(r"structurally incomplete", re.I),
-        ),
-        (
-            "time_overlap",
-            "OVERLAPPING TIME VALUES",
-            re.compile(
-                r"overlap.*TIME|TIME.*overlap|overlapping.*append|append.*overlap"
-                r"|TIME values that overlap|overlapping.*time|time.*overlapping",
-                re.I,
-            ),
-        ),
-        (
-            "grid_inconsistency",
-            "GRID INCONSISTENCIES",
-            re.compile(r"inconsistent grid|not globally monotonic", re.I),
-        ),
-        (
-            "file_open_failure",
-            "FILE OPEN / TIME FAILURES",
-            re.compile(r"failed to open|time issues|bad time values", re.I),
-        ),
-    ]
+    #: Marker used by GenericParquetHandler to preserve this handler during handlers.clear()
+    _is_summary_handler = True
 
     def __init__(self):
-        super().__init__(level=logging.WARNING)
-        # category -> list of (levelno, levelname, message)
-        self._records: dict[str, list] = defaultdict(list)
+        super().__init__(level=logging.DEBUG)  # Filter manually in emit()
+        self._batch_events: dict[int, BatchEvent] = {}
+        self._bad_data: dict[str, list] = defaultdict(
+            list
+        )  # cat -> [(msg, [basenames])]
+        self._config_hints: set = set()  # set of (dims_str, vars_str) tuples
+        self._grid_mismatches: list = []  # [(batch_num, msg)]
+        self._other: list = []  # [(levelno, levelname, msg)]
+
+    def _get_or_create_batch(self, batch_num: int) -> BatchEvent:
+        if batch_num not in self._batch_events:
+            self._batch_events[batch_num] = BatchEvent(batch_num=batch_num)
+        return self._batch_events[batch_num]
 
     def emit(self, record: logging.LogRecord) -> None:
-        if record.levelno < logging.WARNING:
-            return
         msg = record.getMessage()
-        category = "other"
-        for cat_key, _label, pattern in self.CATEGORIES:
-            if pattern.search(msg):
-                category = cat_key
-                break
-        self._records[category].append((record.levelno, record.levelname, msg))
+        lvl = record.levelno
+
+        # --- Noise: suppress entirely ---
+        for pat in _NOISE_PATTERNS:
+            if pat.search(msg):
+                return
+
+        # --- INFO: capture only specific success signals, discard the rest ---
+        if lvl == logging.INFO:
+            m = _ZARR_SUCCESS_PAT.search(msg)
+            if m:
+                self._get_or_create_batch(int(m.group(1))).outcome = "success"
+            else:
+                m = _PARQUET_SUCCESS_PAT.search(msg)
+                if m:
+                    self._get_or_create_batch(int(m.group(1))).outcome = "success"
+            return
+
+        # --- DEBUG: always discard ---
+        if lvl < logging.WARNING:
+            return
+
+        # === WARNING or ERROR from here ===
+
+        # --- Retry attempts ---
+        m = _ZARR_RETRY_PAT.search(msg) or _PARQUET_RETRY_PAT.search(msg)
+        if m:
+            self._get_or_create_batch(int(m.group(1))).retry_count += 1
+            return  # Absorbed — don't show separately
+
+        # --- Retry limit exceeded ---
+        m = _ZARR_RETRY_EXCEEDED_PAT.search(msg)
+        if m:
+            self._get_or_create_batch(int(m.group(1))).outcome = "individual_fallback"
+            return
+        m = _PARQUET_RETRY_EXCEEDED_PAT.search(msg)
+        if m:
+            self._get_or_create_batch(int(m.group(1))).outcome = "skipped"
+            return
+
+        # --- Individual fallback failure summary ---
+        m = _INDIVIDUAL_FALLBACK_PAT.search(msg)
+        if m:
+            batch_num = int(m.group(3))
+            ev = self._get_or_create_batch(batch_num)
+            for line in msg.split("\n")[1:]:
+                line = line.strip()
+                if not line:
+                    continue
+                # Format: "file_repr: error"
+                parts = line.split(": ", 1)
+                raw_path = (
+                    re.sub(r"<File-like object \S+,?\s*", "", parts[0])
+                    .strip()
+                    .rstrip(">")
+                )
+                basename = os.path.basename(raw_path)
+                err = parts[1] if len(parts) > 1 else ""
+                ev.individual_failed.append((basename, err))
+            return
+
+        # --- Config hint: auto-drop ---
+        m = _CONFIG_HINT_AUTODROP_PAT.search(msg)
+        if m:
+            self._config_hints.add((m.group(1), m.group(2)))
+            return
+
+        # --- Grid size mismatch (batch rejected) ---
+        m = _GRID_MISMATCH_PAT.search(msg)
+        if m:
+            self._grid_mismatches.append((int(m.group(1)), msg))
+            return
+
+        # --- Bad data: contact the data provider ---
+        for cat_key, pat in _BAD_DATA_PATTERNS:
+            if pat.search(msg):
+                self._bad_data[cat_key].append((msg, _extract_nc_basenames(msg)))
+                return
+
+        # --- Catch-all: unexpected errors and warnings ---
+        self._other.append((lvl, record.levelname, msg))
+
+    # ------------------------------------------------------------------
+    # Computed properties used by print_processing_summary
+    # ------------------------------------------------------------------
 
     @property
-    def total_errors(self) -> int:
+    def batches_with_retries(self) -> list[BatchEvent]:
+        return [ev for ev in self._batch_events.values() if ev.retry_count > 0]
+
+    @property
+    def n_failed_batches(self) -> int:
         return sum(
             1
-            for entries in self._records.values()
-            for lvl, *_ in entries
-            if lvl >= logging.ERROR
+            for ev in self._batch_events.values()
+            if ev.retry_count > 0 and ev.outcome != "success"
         )
 
     @property
-    def total_warnings(self) -> int:
+    def n_recovered_batches(self) -> int:
         return sum(
             1
-            for entries in self._records.values()
-            for lvl, *_ in entries
-            if lvl == logging.WARNING
+            for ev in self._batch_events.values()
+            if ev.retry_count > 0 and ev.outcome == "success"
         )
+
+    @property
+    def total_data_issues(self) -> int:
+        return sum(len(v) for v in self._bad_data.values()) + len(self._grid_mismatches)
 
     def get_log_file_path(self, logger: logging.Logger) -> str | None:
         """Return the path of the first FileHandler on *logger*, or None."""
@@ -218,12 +403,17 @@ class SummaryCaptureHandler(logging.Handler):
         return None
 
 
+# ---------------------------------------------------------------------------
+# print_processing_summary
+# ---------------------------------------------------------------------------
+
+
 def print_processing_summary(logger_name: str, dataset_name: str = "") -> None:
     """Print a concise end-of-run digest of all WARNING/ERROR log records.
 
-    Retrieves the :class:`SummaryCaptureHandler` attached to the named logger
-    and renders a bordered, colour-highlighted summary to stdout.  The full
-    log file path is shown at the bottom so users can drill into details.
+    Retrieves the :class:`SummaryCaptureHandler` from the module-level registry
+    (so it works even if ``logger.handlers`` was cleared) and renders a
+    bordered, colour-highlighted summary to stdout.
 
     Args:
         logger_name: The logger name used throughout the run (matches the
@@ -231,82 +421,162 @@ def print_processing_summary(logger_name: str, dataset_name: str = "") -> None:
         dataset_name: Human-readable dataset label for the summary header.
             Defaults to ``logger_name`` if empty.
     """
-    logger = logging.getLogger(logger_name)
-    handler: SummaryCaptureHandler | None = next(
-        (h for h in logger.handlers if isinstance(h, SummaryCaptureHandler)), None
-    )
+    # Prefer the module-level registry so the handler survives handlers.clear()
+    handler: SummaryCaptureHandler | None = _summary_handlers.get(logger_name)
+    if handler is None:
+        logger = logging.getLogger(logger_name)
+        handler = next(
+            (h for h in logger.handlers if isinstance(h, SummaryCaptureHandler)), None
+        )
     if handler is None:
         return
 
+    logger = logging.getLogger(logger_name)
+    log_path = handler.get_log_file_path(logger)
+    if log_path is None:
+        # Reconstruct from naming convention as fallback
+        date_str = datetime.now().strftime("%Y-%m-%d")
+        candidate = os.path.join(
+            tempfile.gettempdir(), f"cloud_optimised_{logger_name}_{date_str}.log"
+        )
+        if os.path.exists(candidate):
+            log_path = candidate
+
     label = dataset_name or logger_name
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
-    log_path = handler.get_log_file_path(logger)
 
-    # ANSI colours (match CustomFormatter palette)
     RED = "\033[91m"
     YELLOW = "\033[93m"
     GREEN = "\033[92m"
     CYAN = "\033[96m"
     BOLD = "\033[1m"
+    DIM = "\033[2m"
     RESET = "\033[0m"
 
-    width = 72
+    WIDTH = 72
 
     def hr(char="─"):
-        return char * width
+        return char * WIDTH
 
-    def box_line(text="", fill=" "):
-        """Left-aligned text padded to *width* chars."""
-        return f"  {text}"
-
-    lines = []
+    lines: list[str] = []
     lines.append(f"\n{BOLD}{CYAN}{hr('═')}{RESET}")
     lines.append(f"{BOLD}{CYAN}  PROCESSING SUMMARY — {label} — {timestamp}{RESET}")
     lines.append(f"{BOLD}{CYAN}{hr('═')}{RESET}")
 
-    n_errors = handler.total_errors
-    n_warnings = handler.total_warnings
+    batches_with_retries = handler.batches_with_retries
+    n_failed = handler.n_failed_batches
+    n_recovered = handler.n_recovered_batches
+    n_data_issues = handler.total_data_issues
+    n_config_hints = len(handler._config_hints)
+    n_other = len(handler._other)
 
-    if n_errors == 0 and n_warnings == 0:
-        lines.append(f"{GREEN}  ✅  No warnings or errors.{RESET}")
+    all_clear = not batches_with_retries and n_data_issues == 0 and n_other == 0
+    if all_clear:
+        lines.append(f"{GREEN}  ✅  No issues detected.{RESET}")
     else:
-        parts = []
-        if n_errors:
-            parts.append(
-                f"{RED}❌  {n_errors} error{'s' if n_errors != 1 else ''}{RESET}"
+        if n_failed:
+            lines.append(
+                f"  {RED}❌  {n_failed} batch{'es' if n_failed != 1 else ''} failed permanently{RESET}"
             )
-        if n_warnings:
-            parts.append(
-                f"{YELLOW}⚠   {n_warnings} warning{'s' if n_warnings != 1 else ''}{RESET}"
+        if n_recovered:
+            lines.append(
+                f"  {GREEN}🔄  {n_recovered} batch{'es' if n_recovered != 1 else ''} recovered after retries{RESET}"
             )
-        lines.append("  " + "   ".join(parts))
+        if n_data_issues:
+            lines.append(
+                f"  {YELLOW}⚠   {n_data_issues} data quality issue{'s' if n_data_issues != 1 else ''}{RESET}"
+            )
+        if n_other:
+            lines.append(
+                f"  {RED}❗  {n_other} unexpected error{'s' if n_other != 1 else ''}/warning{'s' if n_other != 1 else ''}{RESET}"
+            )
 
-        # Print each non-empty category
-        for cat_key, cat_label, _pat in SummaryCaptureHandler.CATEGORIES:
-            entries = handler._records.get(cat_key, [])
+    # ── CLUSTER RETRIES ────────────────────────────────────────────────────
+    if batches_with_retries:
+        lines.append(f"\n{BOLD}  {hr('─')}{RESET}")
+        lines.append(f"{BOLD}  CLUSTER RETRIES{RESET}")
+        lines.append(f"{BOLD}  {hr('─')}{RESET}")
+        for ev in sorted(batches_with_retries, key=lambda e: e.batch_num):
+            retries_str = (
+                f"🔄 {ev.retry_count} {'retry' if ev.retry_count == 1 else 'retries'}"
+            )
+            if ev.outcome == "success":
+                outcome_str = f"{GREEN}→ ✅  recovered{RESET}"
+            elif ev.outcome == "individual_fallback":
+                n_ff = len(ev.individual_failed)
+                if n_ff:
+                    outcome_str = (
+                        f"{RED}→ ❌  fell back to individual "
+                        f"({n_ff} file{'s' if n_ff != 1 else ''} failed){RESET}"
+                    )
+                else:
+                    outcome_str = f"{YELLOW}→ ⚠   fell back to individual (all files succeeded){RESET}"
+            elif ev.outcome == "skipped":
+                outcome_str = f"{RED}→ ⏭   skipped (retry limit exceeded){RESET}"
+            else:
+                outcome_str = (
+                    f"{YELLOW}→ ?   outcome unknown (still in progress?){RESET}"
+                )
+
+            lines.append(f"  Batch {ev.batch_num:>4}  │  {retries_str} {outcome_str}")
+            for fname, err in ev.individual_failed:
+                short_err = (err[:80] + "…") if len(err) > 80 else err
+                lines.append(f"{RED}              └─ {fname}: {short_err}{RESET}")
+
+    # ── DATA QUALITY ───────────────────────────────────────────────────────
+    has_bad_data = any(v for v in handler._bad_data.values())
+    if has_bad_data or handler._grid_mismatches:
+        lines.append(f"\n{BOLD}  {hr('─')}{RESET}")
+        lines.append(f"{BOLD}  DATA QUALITY  (contact data provider){RESET}")
+        lines.append(f"{BOLD}  {hr('─')}{RESET}")
+
+        for cat_key, cat_label in _BAD_DATA_LABELS.items():
+            entries = handler._bad_data.get(cat_key, [])
             if not entries:
                 continue
-            lines.append(f"\n{BOLD}  {hr('─')}{RESET}")
-            lines.append(f"{BOLD}  {cat_label}{RESET}")
-            lines.append(f"{BOLD}  {hr('─')}{RESET}")
-            for lvl, lvlname, msg in entries:
-                colour = RED if lvl >= logging.ERROR else YELLOW
-                prefix = f"[{lvlname}]"
-                # Truncate very long messages to keep the summary readable
-                display = msg if len(msg) <= 200 else msg[:197] + "…"
-                lines.append(f"{colour}  {prefix} {display}{RESET}")
+            lines.append(f"\n{YELLOW}  {cat_label}:{RESET}")
+            for _msg, basenames in entries:
+                if basenames:
+                    for b in basenames:
+                        lines.append(f"{DIM}    • {b}{RESET}")
+                else:
+                    trimmed = (_msg[:160] + "…") if len(_msg) > 160 else _msg
+                    lines.append(f"{YELLOW}    {trimmed}{RESET}")
 
-        # Other catch-all
-        other = handler._records.get("other", [])
-        if other:
-            lines.append(f"\n{BOLD}  {hr('─')}{RESET}")
-            lines.append(f"{BOLD}  OTHER WARNINGS / ERRORS{RESET}")
-            lines.append(f"{BOLD}  {hr('─')}{RESET}")
-            for lvl, lvlname, msg in other:
-                colour = RED if lvl >= logging.ERROR else YELLOW
-                display = msg if len(msg) <= 200 else msg[:197] + "…"
-                lines.append(f"{colour}  [{lvlname}] {display}{RESET}")
+        if handler._grid_mismatches:
+            lines.append(
+                f"\n{YELLOW}  INCOMPATIBLE SPATIAL GRID (batch skipped):{RESET}"
+            )
+            for batch_num, msg in handler._grid_mismatches:
+                basenames = _extract_nc_basenames(msg)
+                lines.append(f"  Batch {batch_num}:")
+                for b in basenames:
+                    lines.append(f"{DIM}    • {b}{RESET}")
 
+    # ── CONFIG HINTS ───────────────────────────────────────────────────────
+    if n_config_hints:
+        lines.append(f"\n{BOLD}  {hr('─')}{RESET}")
+        lines.append(f"{BOLD}  CONFIG HINT  (fix in dataset config){RESET}")
+        lines.append(f"{BOLD}  {hr('─')}{RESET}")
+        for dims_str, vars_str in sorted(handler._config_hints):
+            lines.append(
+                f"{YELLOW}  ⚠  Variables auto-dropped (no dims common with {{{dims_str}}}): [{vars_str}]{RESET}"
+            )
+            lines.append(
+                f"{DIM}     → Add to 'vars_incompatible_with_region' in dataset config to suppress{RESET}"
+            )
+
+    # ── OTHER ERRORS / WARNINGS ────────────────────────────────────────────
+    if n_other:
+        lines.append(f"\n{BOLD}  {hr('─')}{RESET}")
+        lines.append(f"{BOLD}  OTHER ERRORS / WARNINGS{RESET}")
+        lines.append(f"{BOLD}  {hr('─')}{RESET}")
+        for lvl, lvlname, msg in handler._other:
+            colour = RED if lvl >= logging.ERROR else YELLOW
+            display = (msg[:300] + "…") if len(msg) > 300 else msg
+            lines.append(f"{colour}  [{lvlname}] {display}{RESET}")
+
+    # ── Footer ────────────────────────────────────────────────────────────
     lines.append(f"\n{BOLD}{CYAN}{hr('─')}{RESET}")
     if log_path:
         lines.append(f"  Full log → {log_path}")

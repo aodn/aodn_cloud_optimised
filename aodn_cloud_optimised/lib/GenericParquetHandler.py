@@ -1647,4 +1647,10 @@ class GenericHandler(CommonHandler):
         # Set only after all tasks are submitted so self is not carrying the full list
         # during cloudpickle serialisation of each Dask task closure (saves ~3 GB/batch).
         self.s3_file_uri_list = s3_file_uri_list
-        self.logger.handlers.clear()
+        # Clear stream/file handlers but preserve SummaryCaptureHandler so the
+        # end-of-run summary (called from generic_cloud_optimised_creation.main())
+        # still has access to all collected events.
+        for h in list(self.logger.handlers):
+            if not getattr(h, "_is_summary_handler", False):
+                h.close()
+                self.logger.removeHandler(h)

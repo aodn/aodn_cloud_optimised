@@ -162,6 +162,17 @@ class ClusterManager:
         if not client or not cluster:
             return
 
+        # Dask workers fire an in-flight heartbeat just as the scheduler begins
+        # shutting down, producing harmless but alarming ERROR/WARNING messages
+        # from the distributed internals.  Suppress them for the duration of the
+        # shutdown sequence and restore the original levels afterwards.
+        _dask_loggers = ["distributed.worker", "distributed.scheduler"]
+        _original_levels = {
+            name: logging.getLogger(name).level for name in _dask_loggers
+        }
+        for name in _dask_loggers:
+            logging.getLogger(name).setLevel(logging.CRITICAL)
+
         try:
             # --- Graceful Dask shutdown ---
             client.shutdown()
@@ -180,3 +191,8 @@ class ClusterManager:
 
         except Exception as e:
             self.logger.error(f"Error while closing the cluster or client: {e}")
+
+        finally:
+            # Always restore the Dask logger levels
+            for name, level in _original_levels.items():
+                logging.getLogger(name).setLevel(level)
