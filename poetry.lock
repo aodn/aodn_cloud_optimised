@@ -5365,18 +5365,18 @@ poetry = ">=1.0.0,<3.0.0"
 
 [[package]]
 name = "polars"
-version = "1.36.1"
+version = "1.40.1"
 description = "Blazingly fast DataFrame library"
 optional = false
-python-versions = ">=3.9"
+python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "polars-1.36.1-py3-none-any.whl", hash = "sha256:853c1bbb237add6a5f6d133c15094a9b727d66dd6a4eb91dbb07cdb056b2b8ef"},
-    {file = "polars-1.36.1.tar.gz", hash = "sha256:12c7616a2305559144711ab73eaa18814f7aa898c522e7645014b68f1432d54c"},
+    {file = "polars-1.40.1-py3-none-any.whl", hash = "sha256:c0f861219d1319cdea45c4ce4d30355a47176b8f98dcedf95ea8269f131b8abd"},
+    {file = "polars-1.40.1.tar.gz", hash = "sha256:ab2694134b137596b5a59bfd7b4c54ebbc9b59f9403127f18e32d363777552e8"},
 ]
 
 [package.dependencies]
-polars-runtime-32 = "1.36.1"
+polars-runtime-32 = "1.40.1"
 
 [package.extras]
 adbc = ["adbc-driver-manager[dbapi]", "adbc-driver-sqlite[dbapi]"]
@@ -5399,8 +5399,8 @@ plot = ["altair (>=5.4.0)"]
 polars-cloud = ["polars_cloud (>=0.4.0)"]
 pyarrow = ["pyarrow (>=7.0.0)"]
 pydantic = ["pydantic"]
-rt64 = ["polars-runtime-64 (==1.36.1)"]
-rtcompat = ["polars-runtime-compat (==1.36.1)"]
+rt64 = ["polars-runtime-64 (==1.40.1)"]
+rtcompat = ["polars-runtime-compat (==1.40.1)"]
 sqlalchemy = ["polars[pandas]", "sqlalchemy"]
 style = ["great-tables (>=0.8.0)"]
 timezone = ["tzdata ; platform_system == \"Windows\""]
@@ -5408,20 +5408,40 @@ xlsx2csv = ["xlsx2csv (>=0.8.0)"]
 xlsxwriter = ["xlsxwriter"]
 
 [[package]]
-name = "polars-runtime-32"
-version = "1.36.1"
-description = "Blazingly fast DataFrame library"
-optional = false
+name = "polars-h3"
+version = "0.6.1"
+description = "H3 bindings for Polars"
+optional = true
 python-versions = ">=3.9"
 groups = ["main"]
+markers = "extra == \"notebooks\""
 files = [
-    {file = "polars_runtime_32-1.36.1-cp39-abi3-macosx_10_12_x86_64.whl", hash = "sha256:327b621ca82594f277751f7e23d4b939ebd1be18d54b4cdf7a2f8406cecc18b2"},
-    {file = "polars_runtime_32-1.36.1-cp39-abi3-macosx_11_0_arm64.whl", hash = "sha256:ab0d1f23084afee2b97de8c37aa3e02ec3569749ae39571bd89e7a8b11ae9e83"},
-    {file = "polars_runtime_32-1.36.1-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:899b9ad2e47ceb31eb157f27a09dbc2047efbf4969a923a6b1ba7f0412c3e64c"},
-    {file = "polars_runtime_32-1.36.1-cp39-abi3-manylinux_2_24_aarch64.whl", hash = "sha256:d9d077bb9df711bc635a86540df48242bb91975b353e53ef261c6fae6cb0948f"},
-    {file = "polars_runtime_32-1.36.1-cp39-abi3-win_amd64.whl", hash = "sha256:cc17101f28c9a169ff8b5b8d4977a3683cd403621841623825525f440b564cf0"},
-    {file = "polars_runtime_32-1.36.1-cp39-abi3-win_arm64.whl", hash = "sha256:809e73857be71250141225ddd5d2b30c97e6340aeaa0d445f930e01bef6888dc"},
-    {file = "polars_runtime_32-1.36.1.tar.gz", hash = "sha256:201c2cfd80ceb5d5cd7b63085b5fd08d6ae6554f922bcb941035e39638528a09"},
+    {file = "polars_h3-0.6.1-cp38-abi3-macosx_10_12_x86_64.whl", hash = "sha256:aed1f8582b38fe260d32889edea26b51bce1d45eb502b40f8e58dc395b9b053d"},
+    {file = "polars_h3-0.6.1-cp38-abi3-macosx_11_0_arm64.whl", hash = "sha256:bf934567e6a348c4f695989b0ec437e3a94c977e2f7f517a71b8f685a0b84ce3"},
+    {file = "polars_h3-0.6.1-cp38-abi3-manylinux_2_12_i686.manylinux2010_i686.whl", hash = "sha256:8dd82314cf1370f5b72ec172f7e7cdfe867e574c0afe13121df95e938ec8e1df"},
+    {file = "polars_h3-0.6.1-cp38-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:f6127576be2a6cff1544ebdb896668111f869c89ad19bb37f31d5f4b043654be"},
+    {file = "polars_h3-0.6.1-cp38-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:f6861cc9dad6b3bdd44a704770cf29aea88b1f7061d6b328e04471df53009db7"},
+    {file = "polars_h3-0.6.1-cp38-abi3-win_amd64.whl", hash = "sha256:0dba767a4249888e3e8518e64f741e20e41c872906518877e13a8b6688b758c5"},
+    {file = "polars_h3-0.6.1.tar.gz", hash = "sha256:40fabd8b3000123a6205b96cd762db6c0c9ae3ea7a9a4d6bcc906712a7982c51"},
+]
+
+[[package]]
+name = "polars-runtime-32"
+version = "1.40.1"
+description = "Blazingly fast DataFrame library"
+optional = false
+python-versions = ">=3.10"
+groups = ["main"]
+files = [
+    {file = "polars_runtime_32-1.40.1-cp310-abi3-macosx_10_12_x86_64.whl", hash = "sha256:b748ef652270cc49e9e69f99a035e0eb4d5f856d42bcd6ac4d9d80a40142aa1e"},
+    {file = "polars_runtime_32-1.40.1-cp310-abi3-macosx_11_0_arm64.whl", hash = "sha256:d249b3743e05986060cec0a7aaa542d020df6c6b876e556023a310efd581f9be"},
+    {file = "polars_runtime_32-1.40.1-cp310-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:5987b30e7aa1059d069498496e8dda35afd592b0ac3d46ed87e3ff8df1ad652c"},
+    {file = "polars_runtime_32-1.40.1-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:8d7f42a8b3f16fc66002cc0f6516f7dd7653396886ae0ed362ab95c0b3408b59"},
+    {file = "polars_runtime_32-1.40.1-cp310-abi3-musllinux_1_2_aarch64.whl", hash = "sha256:e5f7becc237a7ec9d9a10878dc8e54b73bbf4e2d94a2991c37d7a0b38590d8f9"},
+    {file = "polars_runtime_32-1.40.1-cp310-abi3-musllinux_1_2_x86_64.whl", hash = "sha256:992d14cf191dde043d36fbdbc98a65e43fbc7e9a5024cecd45f838ac4988c1ee"},
+    {file = "polars_runtime_32-1.40.1-cp310-abi3-win_amd64.whl", hash = "sha256:f78bb2abd00101cbb23cc0cb068f7e36e081057a15d2ec2dde3dda280709f030"},
+    {file = "polars_runtime_32-1.40.1-cp310-abi3-win_arm64.whl", hash = "sha256:b5cbfaf6b085b420b4bfcbe24e8f665076d1cccfdb80c0484c02a023ce205537"},
+    {file = "polars_runtime_32-1.40.1.tar.gz", hash = "sha256:37f3065615d1bf90d03b5326222df4c5c1f8a5d33e50470aa588e3465e6eb814"},
 ]
 
 [[package]]
@@ -5921,6 +5941,27 @@ azure-key-vault = ["azure-identity (>=1.16.0)", "azure-keyvault-secrets (>=4.8.0
 gcp-secret-manager = ["google-cloud-secret-manager (>=2.23.1)"]
 toml = ["tomli (>=2.0.1)"]
 yaml = ["pyyaml (>=6.0.1)"]
+
+[[package]]
+name = "pydeck"
+version = "0.9.2"
+description = "Widget for deck.gl maps"
+optional = true
+python-versions = ">=3.8"
+groups = ["main"]
+markers = "extra == \"notebooks\""
+files = [
+    {file = "pydeck-0.9.2-py2.py3-none-any.whl", hash = "sha256:8213dfeacc5f6bfe6825f61c8ee34e3850e8a31fc43924379ec98edb34a75b25"},
+    {file = "pydeck-0.9.2.tar.gz", hash = "sha256:c10d9035e81ead6385264cac8d19402471f6866a15ca1f7df1400f52142bcf87"},
+]
+
+[package.dependencies]
+jinja2 = ">=2.10.1"
+numpy = ">=1.16.4"
+
+[package.extras]
+carto = ["pydeck-carto"]
+jupyter = ["ipykernel (>=5.1.2)", "ipywidgets (>=7,<8)", "traitlets (>=4.3.2)"]
 
 [[package]]
 name = "pygments"
@@ -8710,10 +8751,10 @@ cffi = ["cffi (>=1.17,<2.0) ; platform_python_implementation != \"PyPy\" and pyt
 dev = ["ipdb", "poetry", "poetry-plugin-freeze", "poetry-pre-commit-plugin", "pre-commit", "virtualenv"]
 docs = ["asciinema", "sphinx", "sphinx-rtd-theme", "sphinxcontrib-asciinema"]
 mcp = ["mcp", "nbconvert", "nbformat"]
-notebooks = ["cartopy", "folium", "fuzzywuzzy", "gsw", "ipython", "matplotlib", "nbformat", "notebook", "papermill", "python-levenshtein", "seaborn", "tabulate", "tqdm", "windrose"]
+notebooks = ["cartopy", "folium", "fuzzywuzzy", "gsw", "ipython", "matplotlib", "nbformat", "notebook", "papermill", "polars-h3", "pydeck", "python-levenshtein", "seaborn", "tabulate", "tqdm", "windrose"]
 tests = ["coverage", "moto", "pytest", "termcolor"]
 
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<3.13"
-content-hash = "166e86249a32e1f72c452fcb12d776a789707c67f854f7d8e6732efed4b002d4"
+content-hash = "874355a103c0c2335776e9d5c791ffff82a0ff938b20dbde14cd0c907aacb459"

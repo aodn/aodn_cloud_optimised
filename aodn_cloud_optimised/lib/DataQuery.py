@@ -17,7 +17,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date, datetime, timezone
 from functools import lru_cache
 from io import StringIO
-from typing import Any, Final, Set
+from typing import Any, Final, Literal, Set, TypeAlias
 
 import boto3
 import cartopy.crs as ccrs  # For coastline plotting
@@ -32,10 +32,13 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
 import numpy as np
 import pandas as pd
+import polars
+import polars_h3
 import pyarrow as pa
 import pyarrow.compute as pc
 import pyarrow.dataset as ds
 import pyarrow.fs as fs
+import pydeck
 import s3fs
 import seaborn as sns
 import xarray as xr
@@ -52,7 +55,7 @@ from shapely.geometry import MultiPolygon, Polygon
 from tqdm.notebook import tqdm
 from windrose import WindroseAxes
 
-__version__ = "0.3.14"
+__version__ = "0.3.15"
 
 REGION: Final[str] = "ap-southeast-2"
 ENDPOINT_URL = "https://s3.ap-southeast-2.amazonaws.com"
@@ -73,6 +76,20 @@ pa.set_cpu_count(os.cpu_count() or 4)
 # Module-level cache for partition values, keyed by (id(dataset), partition_name).
 # Avoids redundant fragment iterations when multiple filters query the same partition.
 _partition_value_cache: dict[tuple[int, str], Set[str]] = {}
+
+# H3 hexagon map defaults
+_N_QUANTILES: Final[int] = 10
+_COLOR_PALETTE: Final[str] = "plasma"
+_COLOR_PALETTE_LITERAL: TypeAlias = Literal[
+    "viridis", "plasma", "inferno", "magma", "cividis"
+]
+GLOBAL_VIEW_STATE: Final[pydeck.ViewState] = pydeck.ViewState(
+    latitude=0,
+    longitude=0,
+    zoom=0.75,
+    pitch=0,
+    bearing=0,
+)
 
 
 class PolygonNotIntersectingError(ValueError):
@@ -642,7 +659,7 @@ def create_time_filter(dataset: ds.Dataset, **kwargs) -> pc.Expression:
     """
     date_start = kwargs.get("date_start")
     date_end = kwargs.get("date_end")
-    time_varname = kwargs.get("time_varname", "TIME")
+    time_varname = kwargs.get("time_varname", None)
 
     if None in (date_start, date_end):
         raise ValueError("Start and end dates must be provided.")
@@ -651,7 +668,9 @@ def create_time_filter(dataset: ds.Dataset, **kwargs) -> pc.Expression:
     # get_temporal_extent_v1 returns partition bin start times, not actual data
     # timestamps, and would cause false DateOutOfRangeError when date_start falls
     # within the last partition bin but after its bin-start time.
-    timestamp_start, timestamp_end = get_temporal_extent(dataset)
+    timestamp_start, timestamp_end = get_temporal_extent(
+        dataset, time_varname=time_varname
+    )
     timestamp_start = ensure_utc_aware(timestamp_start)
     timestamp_end = ensure_utc_aware(timestamp_end)
 
@@ -689,15 +708,16 @@ def create_time_filter(dataset: ds.Dataset, **kwargs) -> pc.Expression:
     expr1 = pc.field("timestamp") >= _timestamp_scalar(timestamp_start, dataset)
     expr2 = pc.field("timestamp") <= _timestamp_scalar(timestamp_end, dataset)
 
-    # ARGO Specific:
-    if "TIME" in dataset.schema.names:
-        time_varname = "TIME"
-    elif "JULD" in dataset.schema.names:
-        time_varname = "JULD"
-    elif (
-        "detection_timestamp" in dataset.schema.names
-    ):  # animal_acoustic_tracking_delayed_qc specific
-        time_varname = "detection_timestamp"
+    if not time_varname:
+        names = dataset.schema.names
+        for candidate in ("TIME", "JULD", "detection_timestamp", "eventDate"):
+            if candidate in names:
+                time_varname = candidate
+                break
+        else:
+            raise ValueError(
+                "No known time variable ('TIME', 'JULD', 'detection_timestamp', 'eventDate') found in dataset schema"
+            )
 
     expr3 = pc.field(time_varname) >= pd.to_datetime(date_start)
     expr4 = pc.field(time_varname) <= pd.to_datetime(date_end)
@@ -938,6 +958,211 @@ def plot_spatial_extent(
     # ax.legend()
 
     plt.show()
+
+
+def _generate_view_state(
+    df: polars.DataFrame,
+    hexagon_index_column_name: str = "h3Index",
+    view_proportion: float = 1.0,
+) -> pydeck.ViewState:
+    """Compute a pydeck ViewState centred and zoomed to fit the H3 cells.
+
+    Derives cell-centre coordinates directly from the H3 index column using
+    ``polars_h3.cell_to_latlng`` — no separate lat/lon columns are required.
+
+    Args:
+        df: Input polars DataFrame containing an H3 index column.
+        hexagon_index_column_name: Name of the H3 cell index column.
+        view_proportion: Proportion of the bounding box to fill (0.0–1.0).
+
+    Returns:
+        Computed pydeck ViewState object.
+    """
+    coords = df.select(
+        polars_h3.cell_to_latlng(polars.col(hexagon_index_column_name)).alias("coords")
+    ).select(
+        polars.col("coords").list.get(0).alias("lat"),
+        polars.col("coords").list.get(1).alias("lng"),
+    )
+    return pydeck.data_utils.compute_view(
+        points=coords.select("lng", "lat").to_numpy(),
+        view_proportion=view_proportion,
+    )
+
+
+def _generate_color_mapping(
+    n_quantiles: int = _N_QUANTILES,
+    color_palette: _COLOR_PALETTE_LITERAL = _COLOR_PALETTE,
+    alpha: float = 0.8,
+) -> dict[str, list[int]]:
+    """Generate a mapping from quantile indices to RGBA color values.
+
+    Args:
+        n_quantiles: Number of quantiles/colors to generate.
+        color_palette: Name of the matplotlib color palette to use.
+        alpha: Alpha transparency (0.0–1.0).
+
+    Returns:
+        Dictionary mapping quantile index strings to RGBA integer lists.
+    """
+    colors = plt.get_cmap(color_palette)(
+        [i / (n_quantiles - 1) for i in range(n_quantiles)]
+    )
+    return {
+        str(i): [int(r * 255), int(g * 255), int(b * 255), int(alpha * 255)]
+        for i, (r, g, b, _) in enumerate(colors)
+    }
+
+
+def _generate_color_index_series(
+    df: polars.DataFrame,
+    aggregate_column_name: str,
+    color_mapping: dict[str, list[int]],
+) -> polars.Series:
+    """Generate a Series assigning each row to a colour index based on quantiles.
+
+    Args:
+        df: Input polars DataFrame.
+        aggregate_column_name: Name of the column to bin into quantiles.
+        color_mapping: Mapping of colour index strings to RGBA values.
+
+    Returns:
+        Series of colour index strings.
+    """
+    return (
+        df[aggregate_column_name]
+        .qcut(
+            quantiles=len(color_mapping),
+            labels=list(color_mapping.keys()),
+            allow_duplicates=True,
+        )
+        .cast(polars.String)
+    )
+
+
+def _generate_pydeck_hexagon_layers(
+    df: polars.DataFrame,
+    aggregate_column_name: str,
+    hexagon_index_column_name: str = "h3Index",
+    n_quantiles: int = _N_QUANTILES,
+    color_palette: _COLOR_PALETTE_LITERAL = _COLOR_PALETTE,
+) -> list[pydeck.Layer]:
+    """Generate a list of pydeck H3HexagonLayer objects for visualising hexagons.
+
+    Args:
+        df: Input polars DataFrame.
+        aggregate_column_name: Column to aggregate for colouring.
+        hexagon_index_column_name: Column containing H3 hexagon indices.
+        n_quantiles: Number of quantiles/colours.
+        color_palette: Name of the matplotlib colour palette.
+
+    Returns:
+        List of pydeck Layer objects, one per colour bucket.
+    """
+    color_mapping = _generate_color_mapping(
+        n_quantiles=n_quantiles, color_palette=color_palette
+    )
+
+    color_index_col = "__color_index__"
+    df = df.with_columns(
+        _generate_color_index_series(
+            df=df,
+            aggregate_column_name=aggregate_column_name,
+            color_mapping=color_mapping,
+        ).alias(color_index_col),
+    )
+
+    return [
+        pydeck.Layer(
+            "H3HexagonLayer",
+            df.filter(polars.col(color_index_col).eq(color_index)).to_pandas(
+                use_pyarrow_extension_array=True
+            ),
+            get_hexagon=hexagon_index_column_name,
+            auto_highlight=True,
+            extruded=False,
+            get_fill_color=fill_color,
+            get_line_color=fill_color[:3],
+            line_width_min_pixels=2,
+            pickable=True,
+        )
+        for color_index, fill_color in color_mapping.items()
+    ]
+
+
+def create_h3_hexagon_map(
+    df: polars.DataFrame,
+    aggregate_column_name: str = "n_records",
+    hexagon_index_column_name: str = "h3Index",
+    n_quantiles: int = _N_QUANTILES,
+    color_palette: _COLOR_PALETTE_LITERAL = _COLOR_PALETTE,
+    view_proportion: float = 1.0,
+    global_view: bool = False,
+    map_style: str = "light",
+) -> pydeck.Deck:
+    """Create and display an interactive H3 hexagon map coloured by a data column.
+
+    Colours hexagons using quantile-based binning of ``aggregate_column_name``
+    and renders the result inline (Jupyter) via ``display()``. The initial view
+    is computed from H3 cell centres — no separate lat/lon columns are needed.
+
+    Args:
+        df: polars DataFrame containing an H3 index column and the aggregate column.
+        aggregate_column_name: Column whose values drive the colour scale.
+        hexagon_index_column_name: Column containing H3 cell indices. Defaults to
+            ``"h3Index"``.
+        n_quantiles: Number of colour buckets. Defaults to ``10``.
+        color_palette: Matplotlib palette name. One of ``"viridis"``, ``"plasma"``,
+            ``"inferno"``, ``"magma"``, ``"cividis"``. Defaults to ``"plasma"``.
+        view_proportion: Fraction of the bounding box to fill (0.0–1.0). Ignored
+            when ``global_view=True``. Defaults to ``1.0``.
+        global_view: If ``True``, use :data:`GLOBAL_VIEW_STATE` (world view) instead
+            of auto-fitting to the data. Defaults to ``False``.
+        map_style: Pydeck base-map style. Defaults to ``"light"``.
+
+    Returns:
+        The rendered :class:`pydeck.Deck` object.
+
+    Example::
+
+        import polars
+        from DataQuery import GetAodn, create_h3_hexagon_map
+
+        aodn = GetAodn()
+        ds = aodn.get_dataset("aggregated_kelp_nonqc.parquet")
+        df = polars.DataFrame(ds.get_data())
+
+        # Auto-fit view to data
+        deck = create_h3_hexagon_map(df, aggregate_column_name="n_records")
+
+        # World view
+        deck = create_h3_hexagon_map(df, aggregate_column_name="n_records", global_view=True)
+    """
+    layers = _generate_pydeck_hexagon_layers(
+        df=df.group_by(polars.col(hexagon_index_column_name)).agg(
+            polars.len().alias(aggregate_column_name)
+        ),
+        aggregate_column_name=aggregate_column_name,
+        hexagon_index_column_name=hexagon_index_column_name,
+        n_quantiles=n_quantiles,
+        color_palette=color_palette,
+    )
+    view_state = (
+        GLOBAL_VIEW_STATE
+        if global_view
+        else _generate_view_state(
+            df=df,
+            hexagon_index_column_name=hexagon_index_column_name,
+            view_proportion=view_proportion,
+        )
+    )
+    deck = pydeck.Deck(
+        layers=layers,
+        initial_view_state=view_state,
+        map_style=map_style,
+        tooltip={"text": f"{aggregate_column_name}: {{{aggregate_column_name}}}"},
+    )
+    return deck
 
 
 def plot_time_coverage(ds: xr.Dataset, time_var: str = "time") -> None:
@@ -2272,6 +2497,48 @@ class ParquetDataSource(DataSource):
         Uses the global `plot_spatial_extent` function.
         """
         return plot_spatial_extent(self.dataset)
+
+    def plot_h3_hexagon_map(
+        self,
+        aggregate_column_name: str = "n_records",
+        hexagon_index_column_name: str = "h3Index",
+        n_quantiles: int = _N_QUANTILES,
+        color_palette: _COLOR_PALETTE_LITERAL = _COLOR_PALETTE,
+        view_proportion: float = 1.0,
+        global_view: bool = False,
+        map_style: str = "light",
+    ) -> pydeck.Deck:
+        """Create and display an interactive H3 hexagon map for this dataset.
+
+        Delegates to the module-level :func:`create_h3_hexagon_map` function.
+        The initial view is derived from H3 cell centres — no lat/lon columns needed.
+
+        Args:
+            aggregate_column_name: Column whose values drive the colour scale.
+            hexagon_index_column_name: Column containing H3 cell indices.
+            n_quantiles: Number of colour buckets. Defaults to ``10``.
+            color_palette: Matplotlib palette name. Defaults to ``"plasma"``.
+            view_proportion: Fraction of bounding box to fill (0.0–1.0). Ignored
+                when ``global_view=True``.
+            global_view: If ``True``, use :data:`GLOBAL_VIEW_STATE` (world view)
+                instead of auto-fitting to the data. Defaults to ``False``.
+            map_style: Pydeck base-map style. Defaults to ``"light"``.
+
+        Returns:
+            The rendered :class:`pydeck.Deck` object.
+        """
+        df = polars.DataFrame(self.get_data(columns=[hexagon_index_column_name]))
+
+        return create_h3_hexagon_map(
+            df=df,
+            aggregate_column_name=aggregate_column_name,
+            hexagon_index_column_name=hexagon_index_column_name,
+            n_quantiles=n_quantiles,
+            color_palette=color_palette,
+            view_proportion=view_proportion,
+            global_view=global_view,
+            map_style=map_style,
+        )
 
     def get_temporal_extent(
         self, time_varname=None
