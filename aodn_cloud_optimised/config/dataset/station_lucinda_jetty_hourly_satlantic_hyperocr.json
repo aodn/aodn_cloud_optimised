@@ -6,18 +6,18 @@
     "coiled_cluster_options": {
       "n_workers": [
         1,
-        20
+        60
       ],
       "scheduler_vm_types": "m7i.large",
       "worker_vm_types": "m7i.2xlarge",
       "allow_ingress_from": "me",
       "compute_purchase_option": "spot_with_fallback",
       "worker_options": {
-        "nthreads": 1,
-        "memory_limit": "128GB"
+        "nthreads": 2,
+        "memory_limit": "28GB"
       }
     },
-    "batch_size": 100,
+    "batch_size": 300,
     "cluster": {
       "mode": "coiled",
       "restart_every_path": false
@@ -28,7 +28,10 @@
         "filter": [
           ".*FV01.*\\.nc$"
         ],
-        "year_range": []
+        "year_range": [
+          2018,
+          2025
+        ]
       }
     ],
     "clear_existing_data": true,
@@ -39,7 +42,7 @@
     "dimensions": {
       "time": {
         "name": "TIME",
-        "chunk": 1000,
+        "chunk": 5000,
         "rechunk": false,
         "append_dim": true
       },

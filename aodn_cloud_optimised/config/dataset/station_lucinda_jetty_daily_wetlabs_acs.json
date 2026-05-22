@@ -6,7 +6,7 @@
     "coiled_cluster_options": {
       "n_workers": [
         1,
-        40
+        100
       ],
       "scheduler_vm_types": "m7i.large",
       "worker_vm_types": "m7i.2xlarge",
@@ -17,7 +17,7 @@
         "memory_limit": "28GB"
       }
     },
-    "batch_size": 5,
+    "batch_size": 100,
     "cluster": {
       "mode": "coiled",
       "restart_every_path": true
@@ -62,7 +62,7 @@
       "WAVELENGTH_a",
       "WAVELENGTH_c"
     ],
-    "target_wavelength_grids": {
+    "target_dimension_grids": {
       "WAVELENGTH_a": {
         "min": 397.0,
         "max": 750.0,

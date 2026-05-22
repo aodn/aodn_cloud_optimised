@@ -152,7 +152,7 @@
       "compute_purchase_option": "spot_with_fallback",
       "worker_options": {
         "nthreads": 16,
-        "memory_limit": "64GB"
+        "memory_limit": "14GB"
       }
     },
     "batch_size": 3000,

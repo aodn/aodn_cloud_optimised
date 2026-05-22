@@ -62,7 +62,7 @@
       "WAVELENGTH_a",
       "WAVELENGTH_c"
     ],
-    "target_wavelength_grids": {
+    "target_dimension_grids": {
       "WAVELENGTH_a": {
         "min": 397.0,
         "max": 750.0,
