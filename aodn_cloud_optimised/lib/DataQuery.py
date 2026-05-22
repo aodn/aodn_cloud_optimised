@@ -55,7 +55,7 @@ from shapely.geometry import MultiPolygon, Polygon
 from tqdm.notebook import tqdm
 from windrose import WindroseAxes
 
-__version__ = "0.3.15"
+__version__ = "0.3.16"
 
 REGION: Final[str] = "ap-southeast-2"
 ENDPOINT_URL = "https://s3.ap-southeast-2.amazonaws.com"
@@ -92,6 +92,7 @@ GLOBAL_VIEW_STATE: Final[pydeck.ViewState] = pydeck.ViewState(
 )
 
 TIME_VAR_CANDIDATES = ("TIME", "JULD", "detection_timestamp", "eventDate")
+
 
 class PolygonNotIntersectingError(ValueError):
     """For more precise exception handling"""
