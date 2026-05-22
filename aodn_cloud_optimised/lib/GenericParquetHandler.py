@@ -23,7 +23,17 @@ import pyarrow.parquet as pq
 import s3fs.core
 import xarray as xr
 from dask.distributed import wait
+from distributed.client import FutureCancelledError
+from distributed.comm.core import CommClosedError
+
+try:
+    from distributed.client import (
+        FuturesCancelledError,  # plural form, newer distributed versions
+    )
+except ImportError:
+    FuturesCancelledError = FutureCancelledError  # fall back to singular
 from shapely.geometry import Point, Polygon
+from tornado.iostream import StreamClosedError
 
 from aodn_cloud_optimised.lib.s3Tools import (
     create_fileset,
@@ -1514,15 +1524,22 @@ class GenericHandler(CommonHandler):
                     bucket_name, prefix, self.s3_client_opts_output
                 )
 
+        # Capture only the count — NOT the full list — to avoid cloudpickle serializing
+        # the list into every Dask task closure.  The real leak is via `self`: task()
+        # captures `self` because it calls self.to_cloud_optimised_single(), and
+        # cloudpickle serialises the entire handler instance with every client.submit().
+        # self.s3_file_uri_list is set AFTER the batch loop so that self is lean
+        # (~7 KB) rather than carrying the 19k-path list (~694 KB × batch_size).
+        total_files = len(s3_file_uri_list)
+
         def task(f, i):
             try:
                 self.to_cloud_optimised_single(f)
             except Exception as e:
                 self.logger.error(
-                    f"Issue {i}/{len(s3_file_uri_list)} with {f}: {type(e).__name__}: {e}"
+                    f"Issue {i}/{total_files} with {f}: {type(e).__name__}: {e}"
                 )
 
-        self.s3_file_uri_list = s3_file_uri_list
         client, cluster = self.create_cluster()
 
         if self.cluster_mode:
@@ -1551,16 +1568,53 @@ class GenericHandler(CommonHandler):
             self.logger.info(f"{self.uuid_log}: Files in batch {ii + 1}:\n {batch}")
 
             if client:
-                # Use Dask client for distributed processing
-                batch_tasks = [
-                    client.submit(task, f, idx + 1, pure=False)
-                    for idx, f in enumerate(
-                        batch
-                    )  # Use pure=False for multiprocessing. More efficient to avoid GIL contention
-                ]
+                max_retries = 3
+                retry_count = 0
+                batch_done = False
 
-                # timeout = batch_size * 120  # Initial timeout
-                done, not_done = wait(batch_tasks, return_when="ALL_COMPLETED")
+                while not batch_done:
+                    try:
+                        # Use Dask client for distributed processing
+                        batch_tasks = [
+                            client.submit(task, f, idx + 1, pure=False)
+                            for idx, f in enumerate(batch)
+                            # pure=False avoids GIL contention in multiprocessing
+                        ]
+
+                        done, not_done = wait(batch_tasks, return_when="ALL_COMPLETED")
+                        batch_done = True
+
+                    except (
+                        FutureCancelledError,
+                        FuturesCancelledError,
+                        CommClosedError,
+                        StreamClosedError,
+                    ) as e:
+                        # FuturesCancelledError is the primary exception: raised by wait() when
+                        # the Dask scheduler dies and _reconnect() cancels all pending futures.
+                        # CommClosedError / StreamClosedError are safety nets for edge cases where
+                        # the connection error surfaces synchronously.
+                        retry_count += 1
+                        self.logger.error(
+                            f"{self.uuid_log}: Scheduler connection lost during batch "
+                            f"{ii + 1} (attempt {retry_count}/{max_retries}): {e}. "
+                            f"Recreating Dask cluster and retrying batch..."
+                        )
+                        if retry_count > max_retries:
+                            self.logger.error(
+                                f"{self.uuid_log}: Batch {ii + 1} exceeded retry limit "
+                                f"({max_retries}). Skipping to next batch."
+                            )
+                            batch_done = True
+                        else:
+                            try:
+                                self.cluster_manager.close_cluster(client, cluster)
+                            except Exception:
+                                pass
+                            client, cluster = self.create_cluster()
+                            self.logger.info(
+                                f"{self.uuid_log}: New cluster created. Retrying batch {ii + 1}."
+                            )
             else:
                 # Fall back to local processing with ThreadPoolExecutor
                 self.logger.info(
@@ -1590,4 +1644,13 @@ class GenericHandler(CommonHandler):
 
         self.logger.info("All batches processed.")
         self.cluster_manager.close_cluster(client, cluster)
-        self.logger.handlers.clear()
+        # Set only after all tasks are submitted so self is not carrying the full list
+        # during cloudpickle serialisation of each Dask task closure (saves ~3 GB/batch).
+        self.s3_file_uri_list = s3_file_uri_list
+        # Clear stream/file handlers but preserve SummaryCaptureHandler so the
+        # end-of-run summary (called from generic_cloud_optimised_creation.main())
+        # still has access to all collected events.
+        for h in list(self.logger.handlers):
+            if not getattr(h, "_is_summary_handler", False):
+                h.close()
+                self.logger.removeHandler(h)

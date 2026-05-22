@@ -709,7 +709,7 @@
       "compute_purchase_option": "spot_with_fallback",
       "worker_options": {
         "nthreads": 8,
-        "memory_limit": "32GB"
+        "memory_limit": "7GB"
       }
     },
     "cluster": {

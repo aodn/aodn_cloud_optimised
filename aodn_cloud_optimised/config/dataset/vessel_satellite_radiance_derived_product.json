@@ -28,7 +28,7 @@
       "compute_purchase_option": "spot_with_fallback",
       "worker_options": {
         "nthreads": 4,
-        "memory_limit": "160GB"
+        "memory_limit": "28GB"
       }
     },
     "_comment": "2025-07-01: running this dataset with a batch size of more than 1 results in some silent data corruption with dask v2. It is unclear why. Maybe similar to xarray/issues/8882. Spent too much time on this. Maybe race conditions. But proof that xarray/zarr... is not reliable. See https://github.com/pydata/xarray/issues/10501",

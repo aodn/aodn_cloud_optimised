@@ -42,9 +42,6 @@
         }
       },
       {
-        "source_variable": "PLATFORM_NUMBER"
-      },
-      {
         "source_variable": "polygon",
         "type": "spatial_extent",
         "spatial_extent": {
@@ -52,6 +49,9 @@
           "lon_varname": "LONGITUDE",
           "spatial_resolution": 5
         }
+      },
+      {
+        "source_variable": "PLATFORM_NUMBER"
       }
     ],
     "global_attributes": {
@@ -493,10 +493,10 @@
         "memory_limit": "12GB"
       }
     },
-    "batch_size": 300,
+    "batch_size": 5000,
     "cluster": {
       "mode": "coiled",
-      "restart_every_path": true
+      "restart_every_path": false
     },
     "paths": [
       {
@@ -579,6 +579,6 @@
     ],
     "clear_existing_data": true,
     "raise_error": false,
-    "force_previous_parquet_deletion": true
+    "force_previous_parquet_deletion": false
   }
 }

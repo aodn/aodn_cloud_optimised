@@ -1,0 +1,285 @@
+{
+  "dataset_name": "station_lucinda_jetty_dalec_derived_product",
+  "logger_name": "station_lucinda_jetty_dalec_derived_product",
+  "cloud_optimised_format": "zarr",
+  "run_settings": {
+    "coiled_cluster_options": {
+      "n_workers": [
+        1,
+        80
+      ],
+      "scheduler_vm_types": "m7i.large",
+      "worker_vm_types": "m7i.2xlarge",
+      "allow_ingress_from": "me",
+      "compute_purchase_option": "spot_with_fallback",
+      "worker_options": {
+        "nthreads": 2,
+        "memory_limit": "28GB"
+      }
+    },
+    "batch_size": 1,
+    "cluster": {
+      "mode": "coiled",
+      "restart_every_path": true
+    },
+    "paths": [
+      {
+        "s3_uri": "s3://imos-data/IMOS/SRS/OC/LJCO/DALEC",
+        "filter": [
+          ".*FV02.*\\.nc$"
+        ],
+        "year_range": [
+          2016,
+          2018
+        ]
+      }
+    ],
+    "clear_existing_data": true,
+    "raise_error": false
+  },
+  "metadata_uuid": "4ac6bf81-cd37-4611-8da8-4d5ae5e2bda3",
+  "schema_transformation": {
+    "dimensions": {
+      "time": {
+        "name": "TIME",
+        "chunk": 10000,
+        "rechunk": false,
+        "append_dim": true
+      },
+      "WAVELENGTH": {
+        "name": "WAVELENGTH",
+        "chunk": 596,
+        "size": 596
+      }
+    },
+    "var_template_shape": "Rrs",
+    "vars_incompatible_with_region": [
+      "WAVELENGTH"
+    ],
+    "global_attributes": {
+      "delete": [
+        "date_created",
+        "time_coverage_start",
+        "time_coverage_end",
+        "geospatial_lat_max",
+        "geospatial_lat_min",
+        "geospatial_lon_max",
+        "geospatial_lon_min",
+        "geospatial_vertical_max",
+        "geospatial_vertical_min",
+        "history",
+        "id_tag",
+        "NCO"
+      ],
+      "set": {
+        "title": ""
+      }
+    },
+    "dataset_sort_by": [
+      "WAVELENGTH",
+      "TIME"
+    ],
+    "add_variables": {
+      "filename": {
+        "source": "@filename",
+        "schema": {
+          "type": "object",
+          "units": "1",
+          "long_name": "Filename of the source file",
+          "dimensions": "TIME"
+        }
+      }
+    }
+  },
+  "schema": {
+    "LATITUDE": {
+      "type": "double",
+      "long_name": "latitude",
+      "units": "degrees_north",
+      "axis": "Y",
+      "reference_datum": "geographical coordinates, WGS84 projection",
+      "standard_name": "latitude",
+      "valid_min": -90.0,
+      "valid_max": 90.0
+    },
+    "LONGITUDE": {
+      "type": "double",
+      "long_name": "longitude",
+      "units": "degrees_east",
+      "axis": "X",
+      "standard_name": "longitude",
+      "valid_min": -180.0,
+      "valid_max": 180.0,
+      "reference_datum": "geographical coordinates, WGS84 projection"
+    },
+    "Rrs": {
+      "type": "double",
+      "dims": [
+        "WAVELENGTH",
+        "TIME"
+      ],
+      "long_name": "Remote Sensing Reflectance",
+      "varname": "Rrs",
+      "units": "sr^-1",
+      "cell_method": "LATITUDE: LONGITUDE: TIME: point",
+      "slope": 1.0,
+      "intercept": 0.0,
+      "ancillary_variables": "Rrs_xflags relaz sza windspeed"
+    },
+    "Rrs_xflags": {
+      "type": "int32",
+      "dims": [
+        "WAVELENGTH",
+        "TIME"
+      ],
+      "long_name": "Extra Flag for Remote Sensing Reflectance",
+      "varname": "Rrs_xflags",
+      "standard_name": "status_flag",
+      "ancillary_variables": "relaz sza windspeed",
+      "flag_meanings": "sza_below_50 sza_above_50 sza_below_10",
+      "flag_description": "A flag value of 1 indicates that the solar zenith angle exceeds 50 degrees. \nA flag value of 2 indicates that the solar zenith angle is less than 10 degrees and data is likely to be affected by residual sun glint. \nThe Rrs data with Rrs_xflags>0 may be excluded for precision uses.",
+      "flag_values": [
+        0,
+        1,
+        2
+      ]
+    },
+    "TIME": {
+      "type": "timestamp[ns]",
+      "long_name": "UTC time",
+      "axis": "T",
+      "standard_name": "time",
+      "valid_min": 0.0,
+      "valid_max": 10000000000.0
+    },
+    "WAVELENGTH": {
+      "type": "double",
+      "long_name": "wavelength",
+      "standard_name": "radiation_wavelength",
+      "units": "nm",
+      "valid_min": 398.0,
+      "valid_max": 1062.0,
+      "comment": "Wavelengths associated with the Rrs values after the input spectral values were resampled to common spectral bandwidth and abscissa values."
+    },
+    "gearpos": {
+      "type": "double",
+      "dims": [
+        "TIME"
+      ],
+      "long_name": "DALEC gear position",
+      "units": "degrees"
+    },
+    "pitch": {
+      "type": "double",
+      "dims": [
+        "TIME"
+      ],
+      "long_name": "Platform pitch angle",
+      "standard_name": "platform_pitch_angle",
+      "units": "degrees"
+    },
+    "pitchsd": {
+      "type": "double",
+      "dims": [
+        "TIME"
+      ],
+      "long_name": "DALEC pitch standard deviation",
+      "standard_name": "platform_pitch_angle standard_error",
+      "cell_methods": "TIME: standard_deviation",
+      "units": "degrees"
+    },
+    "relaz": {
+      "type": "double",
+      "long_name": "relative solar azimuth",
+      "standard_name": "angle_of_rotation_from_solar_azimuth_to_platform_azimuth",
+      "units": "degrees"
+    },
+    "rho": {
+      "type": "double",
+      "dims": [
+        "WAVELENGTH",
+        "TIME"
+      ],
+      "long_name": "Fractional contribution of reflected sky light",
+      "varname": "rho",
+      "units": "1",
+      "cell_method": "LATITUDE: LONGITUDE: TIME: point",
+      "slope": 1.0,
+      "intercept": 0.0,
+      "ancillary_variables": "relaz sza windspeed"
+    },
+    "roll": {
+      "type": "double",
+      "dims": [
+        "TIME"
+      ],
+      "long_name": "Platform roll angle",
+      "standard_name": "platform_roll_angle",
+      "units": "degrees"
+    },
+    "rollsd": {
+      "type": "double",
+      "dims": [
+        "TIME"
+      ],
+      "long_name": "DALEC roll standard deviation",
+      "standard_name": "platform_roll_angle standard_error",
+      "cell_methods": "TIME: standard_deviation",
+      "units": "degrees"
+    },
+    "sza": {
+      "type": "double",
+      "long_name": "solar zenith angle",
+      "standard_name": "solar_zenith_angle",
+      "units": "degrees"
+    },
+    "windspeed": {
+      "type": "float",
+      "long_name": "Wind speed",
+      "varname": "windspeed",
+      "units": "knots",
+      "slope": 1.0,
+      "intercept": 0.0,
+      "wind_source": "Measured"
+    }
+  },
+  "aws_opendata_registry": {
+    "Name": "IMOS - Satellite Remote Sensing - Ocean Colour Sub-Facility - Lucinda Jetty Coastal Observatory (LJCO)",
+    "Description": "The Lucinda Jetty Coastal Observatory (LJCO) is located on the end of the 5.8 km long Lucinda Jetty (18.52 S, 146.39 E) in the coastal waters of the Great Barrier Reef World Heritage Area close to the Herbert River Estuary and the Hinchinbrook Channel in Queensland.\n\nThe observatory acquires continuous above and in-water optical measurements with the objective to support satellite ocean colour validation and algorithm development. Data collection and delivery was interrupted in 2011 with tropical cyclone Yasi.  Currently, LJCO is the only southern-hemisphere ocean colour validation site integrated into NASA\u2019s AERONET-OC global network of ground-based radiometers and one of a few sites globally that combines the acquisition of both atmospheric and in-water optical measurements. \n\nMounted instruments on the LJCO included:\n- Met Station (Vaisala WXT520)\n- Above-water radiometry\n--- CIMEL SeaPRISM\n--- Satlantic HyperOCR\n--- DALEC instrument (added in mid-2016 for continuous hyper-spectral radiometric measurements)\n-Instrument telemetry\n--- Power supply\n--- UPS\n--- NextG Router\n--- WETLabs DAPCS\n--- PC controller\n--- Automated winch\n- Underwater optics\n--- WETLabs WQM\n--- WETLabs Eco Triplet\n--- WETLabs ac-s\n--- WETLabs BB9\n- Campbell Scientific submersible pressure transducer\n\nThe above-water measurements collected at LJCO compromise of multi-spectral water-leaving radiance and atmospheric observations for retrieving aerosol optical properties using an autonomous CIMEL SeaPRISM radiometer, in addition to hyper-spectral down-welling radiance\nmeasurements using the a Satlantic Hyper-OCR. In mid 2016 continuous hyper-spectral radiometric measurements were added using the DALEC instrument.\n\nThe in-water optical measurements consist of conductivity, temperature, pressure, dissolved oxygen, chlorophyll fluorescence and turbidity using a WETLabs WQM, coloured dissolved organic matter (CDOM) fluorescence using a WETLabs EcoTriplet, as well as particulate and dissolved spectral absorption and attenuation coefficients using a WETLabs AC-S. Further, total backscattering coefficients are measured using a WETLabs BB9 radiometer. \n\nAdditional meteorological and sea state measurements are continuously recorded such as barometric pressure, relative humidity, air  emperature, wind speed and direction using a Vaisala WXT520 weather transmitter. Wave height and water temperature are measured with a Campbell Scientific submersible pressure transducer that is used to keep the caged in-water optical instruments at a constant depth.\n\nAll data streams are processed in delayed-mode with automatic quality control applied and made publicly available through the AODN portal; and the data presented here is the daily in-water generated products.",
+    "Documentation": "https://catalogue-imos.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/4ac6bf81-cd37-4611-8da8-4d5ae5e2bda3",
+    "Contact": "info@aodn.org.au",
+    "ManagedBy": "AODN",
+    "UpdateFrequency": "As Needed",
+    "Tags": [
+      "FILL UP MANUALLY - CHECK DOCUMENTATION"
+    ],
+    "License": "http://creativecommons.org/licenses/by/4.0/",
+    "Resources": [
+      {
+        "Description": "Cloud Optimised AODN dataset of IMOS - Satellite Remote Sensing - Ocean Colour Sub-Facility - Lucinda Jetty Coastal Observatory (LJCO)",
+        "ARN": "arn:aws:s3:::aodn-cloud-optimised/station_lucinda_jetty_dalec_derived_product.zarr",
+        "Region": "ap-southeast-2",
+        "Type": "S3 Bucket"
+      }
+    ],
+    "DataAtWork": {
+      "Tutorials": [
+        {
+          "Title": "Accessing IMOS - Satellite Remote Sensing - Ocean Colour Sub-Facility - Lucinda Jetty Coastal Observatory (LJCO)",
+          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/station_lucinda_jetty_dalec_derived_product.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/station_lucinda_jetty_dalec_derived_product.ipynb",
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
+        },
+        {
+          "Title": "Accessing and search for any AODN dataset",
+          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
+        }
+      ]
+    },
+    "Citation": "IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access]"
+  }
+}

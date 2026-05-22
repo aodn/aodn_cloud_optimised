@@ -55,7 +55,7 @@ from shapely.geometry import MultiPolygon, Polygon
 from tqdm.notebook import tqdm
 from windrose import WindroseAxes
 
-__version__ = "0.3.15"
+__version__ = "0.3.16"
 
 REGION: Final[str] = "ap-southeast-2"
 ENDPOINT_URL = "https://s3.ap-southeast-2.amazonaws.com"
@@ -90,6 +90,8 @@ GLOBAL_VIEW_STATE: Final[pydeck.ViewState] = pydeck.ViewState(
     pitch=0,
     bearing=0,
 )
+
+TIME_VAR_CANDIDATES = ("TIME", "JULD", "detection_timestamp", "eventDate")
 
 
 class PolygonNotIntersectingError(ValueError):
@@ -428,15 +430,13 @@ def get_temporal_extent(
 
     # Detect the time variable name in the schema
     names = dataset.schema.names
+    time_varname = time_varname or next(
+        (c for c in TIME_VAR_CANDIDATES if c in names), None
+    )
     if not time_varname:
-        for candidate in ("TIME", "JULD", "detection_timestamp", "eventDate"):
-            if candidate in names:
-                time_varname = candidate
-                break
-        else:
-            raise ValueError(
-                "No known time variable ('TIME', 'JULD', 'detection_timestamp', 'eventDate') found in dataset schema"
-            )
+        raise ValueError(
+            f"No known time variable found in dataset. Candidates: {list(TIME_VAR_CANDIDATES)}"
+        )
 
     # Single scan across both boundary partitions with explicit readahead.
     # fragment_readahead=8 tells pyarrow to prefetch up to 8 Parquet files
@@ -2169,6 +2169,10 @@ class DataSource(ABC):
         lon_max: float | None = None,
         scalar_filter: dict | None = None,
         columns: list[str] | None = None,
+        lat_varname: str | None = None,
+        lon_varname: str | None = None,
+        time_varname: str | None = None,
+        index_time: bool = False,
     ) -> pd.DataFrame | xr.Dataset:
         """Retrieves data, potentially filtered by arguments."""
         pass
@@ -2577,6 +2581,7 @@ class ParquetDataSource(DataSource):
         lat_varname: str | None = None,
         lon_varname: str | None = None,
         time_varname: str | None = None,
+        index_time: bool = False,
     ) -> pd.DataFrame:
         """Retrieves data from the Parquet dataset, applying filters.
 
@@ -2674,6 +2679,15 @@ class ParquetDataSource(DataSource):
         df = table.to_pandas()
 
         df = _append_metadata_to_dataframe(self.get_metadata(), df)
+
+        time_col = next((c for c in TIME_VAR_CANDIDATES if c in df.columns), None)
+
+        if time_col:
+            df = df.sort_values(by=time_col).reset_index(drop=True)
+            if index_time:
+                df = df.set_index(time_col)
+        else:
+            print("Warning: No recognized time column found in DataFrame.")
 
         return df
 
@@ -2816,7 +2830,10 @@ class ZarrDataSource(DataSource):
         """
         try:
             mapper = self.s3.get_mapper(self.dname)
-            ds = xr.open_zarr(mapper, chunks=None, consolidated=True)
+            # Open with 'auto' chunks so it stays lazy
+            ds = xr.open_zarr(mapper, chunks="auto", consolidated=True)
+            # Fix the inconsistent chunks instantly in-memory
+            ds = ds.unify_chunks()
 
             # Find the time variable name to sort by
             time_names = [
@@ -2914,6 +2931,11 @@ class ZarrDataSource(DataSource):
         lon_min: float | None = None,
         lon_max: float | None = None,
         scalar_filter: dict[str, Any] | None = None,
+        columns: list[str] | None = None,
+        lat_varname: str | None = None,
+        lon_varname: str | None = None,
+        time_varname: str | None = None,
+        index_time: bool = False,
     ) -> xr.Dataset:
         """Retrieves data from the Zarr store, applying scalar and spatio-temporal filters.
 

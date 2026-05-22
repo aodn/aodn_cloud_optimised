@@ -285,11 +285,6 @@ class CommonHandler:
         self.close()
 
     def close(self):
-        # Release resources
-        for name in dir():
-            if not name.startswith("_"):
-                # del globals()[name]
-                self.logger.info(f"{name} has not been deleted")
         import gc
 
         gc.collect()

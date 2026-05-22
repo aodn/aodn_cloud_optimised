@@ -1,0 +1,242 @@
+{
+  "dataset_name": "station_lucinda_jetty_hourly_satlantic_hyperocr",
+  "logger_name": "station_lucinda_jetty_hourly_satlantic_hyperocr",
+  "cloud_optimised_format": "zarr",
+  "run_settings": {
+    "coiled_cluster_options": {
+      "n_workers": [
+        1,
+        60
+      ],
+      "scheduler_vm_types": "m7i.large",
+      "worker_vm_types": "m7i.2xlarge",
+      "allow_ingress_from": "me",
+      "compute_purchase_option": "spot_with_fallback",
+      "worker_options": {
+        "nthreads": 2,
+        "memory_limit": "28GB"
+      }
+    },
+    "batch_size": 300,
+    "cluster": {
+      "mode": "coiled",
+      "restart_every_path": false
+    },
+    "paths": [
+      {
+        "s3_uri": "s3://imos-data/IMOS/SRS/OC/LJCO/HyperOCR-hourly",
+        "filter": [
+          ".*FV01.*\\.nc$"
+        ],
+        "year_range": [
+          2018,
+          2025
+        ]
+      }
+    ],
+    "clear_existing_data": true,
+    "raise_error": false
+  },
+  "metadata_uuid": "4ac6bf81-cd37-4611-8da8-4d5ae5e2bda3",
+  "schema_transformation": {
+    "dimensions": {
+      "time": {
+        "name": "TIME",
+        "chunk": 5000,
+        "rechunk": false,
+        "append_dim": true
+      },
+      "WAVELENGTH_Ed": {
+        "name": "WAVELENGTH_Ed",
+        "chunk": 137,
+        "size": 137
+      }
+    },
+    "var_template_shape": "Ed",
+    "vars_incompatible_with_region": [
+      "WAVELENGTH_Ed"
+    ],
+    "global_attributes": {
+      "delete": [
+        "date_created",
+        "time_coverage_start",
+        "time_coverage_end",
+        "geospatial_lat_max",
+        "geospatial_lat_min",
+        "geospatial_lon_max",
+        "geospatial_lon_min",
+        "geospatial_vertical_max",
+        "geospatial_vertical_min",
+        "history",
+        "input_file",
+        "instrument_serial_number_Ed",
+        "device_files_Ed"
+      ],
+      "set": {
+        "title": ""
+      }
+    },
+    "dataset_sort_by": [
+      "WAVELENGTH_Ed",
+      "TIME"
+    ],
+    "add_variables": {
+      "filename": {
+        "source": "@filename",
+        "schema": {
+          "type": "object",
+          "units": "1",
+          "long_name": "Filename of the source file",
+          "dimensions": "TIME"
+        }
+      }
+    }
+  },
+  "schema": {
+    "LATITUDE": {
+      "type": "double",
+      "axis": "Y",
+      "long_name": "latitude",
+      "reference_datum": "geographical coordinates, WGS84 projection",
+      "standard_name": "latitude",
+      "units": "degrees_north",
+      "valid_max": 90.0,
+      "valid_min": -90.0
+    },
+    "LONGITUDE": {
+      "type": "double",
+      "axis": "X",
+      "long_name": "longitude",
+      "reference_datum": "geographical coordinates, WGS84 projection",
+      "standard_name": "longitude",
+      "units": "degrees_east",
+      "valid_max": 180.0,
+      "valid_min": -180.0
+    },
+    "TIME": {
+      "type": "timestamp[ns]",
+      "axis": "T",
+      "description": "days since 1950-01-01 (UTC)",
+      "long_name": "time",
+      "standard_name": "time",
+      "valid_max": 90000.0,
+      "valid_min": 0.0
+    },
+    "sza": {
+      "type": "double",
+      "dims": [
+        "TIME"
+      ],
+      "description": "solar zenith angle",
+      "long_name": "solar zenith angle",
+      "units": "degrees"
+    },
+    "saa": {
+      "type": "double",
+      "dims": [
+        "TIME"
+      ],
+      "description": "solar azimuth angle (clockwise from true north)",
+      "long_name": "solar azimuth angle",
+      "units": "degrees"
+    },
+    "WAVELENGTH_Ed": {
+      "type": "float",
+      "description": "wavelengths",
+      "long_name": "Wavelengths",
+      "units": "nm"
+    },
+    "Ed_inttime": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "description": "integration time",
+      "long_name": "integration time",
+      "units": "sec"
+    },
+    "Ed_spectemp": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "description": "spectrometer temperature",
+      "long_name": "spectrometer instrument temperature",
+      "units": "degree_Celsius"
+    },
+    "Ed": {
+      "type": "float",
+      "dims": [
+        "WAVELENGTH_Ed",
+        "TIME"
+      ],
+      "description": "Downwelling spectral sky irradiance taken at a nadir viewing angle of 0 deg measured from the downward vertical axis.",
+      "long_name": "Downwelling spectral sky irradiance",
+      "units": "uW/cm^2/nm",
+      "valid_max": 400.0,
+      "valid_min": 0.0,
+      "ancillary_variables": "Ed_quality_control"
+    },
+    "Ed_quality_control": {
+      "type": "int32",
+      "dims": [
+        "WAVELENGTH_Ed",
+        "TIME"
+      ],
+      "quality_control_conventions": "IMOS standard flags",
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "long_name": "quality flag for Downwelling spectral sky irradiance"
+    }
+  },
+  "aws_opendata_registry": {
+    "Name": "IMOS - Satellite Remote Sensing - Ocean Colour Sub-Facility - Lucinda Jetty Coastal Observatory (LJCO)",
+    "Description": "The Lucinda Jetty Coastal Observatory (LJCO) is located on the end of the 5.8 km long Lucinda Jetty (18.52 S, 146.39 E) in the coastal waters of the Great Barrier Reef World Heritage Area close to the Herbert River Estuary and the Hinchinbrook Channel in Queensland.\n\nThe observatory acquires continuous above and in-water optical measurements with the objective to support satellite ocean colour validation and algorithm development. Data collection and delivery was interrupted in 2011 with tropical cyclone Yasi.  Currently, LJCO is the only southern-hemisphere ocean colour validation site integrated into NASA\u2019s AERONET-OC global network of ground-based radiometers and one of a few sites globally that combines the acquisition of both atmospheric and in-water optical measurements. \n\nMounted instruments on the LJCO included:\n- Met Station (Vaisala WXT520)\n- Above-water radiometry\n--- CIMEL SeaPRISM\n--- Satlantic HyperOCR\n--- DALEC instrument (added in mid-2016 for continuous hyper-spectral radiometric measurements)\n-Instrument telemetry\n--- Power supply\n--- UPS\n--- NextG Router\n--- WETLabs DAPCS\n--- PC controller\n--- Automated winch\n- Underwater optics\n--- WETLabs WQM\n--- WETLabs Eco Triplet\n--- WETLabs ac-s\n--- WETLabs BB9\n- Campbell Scientific submersible pressure transducer\n\nThe above-water measurements collected at LJCO compromise of multi-spectral water-leaving radiance and atmospheric observations for retrieving aerosol optical properties using an autonomous CIMEL SeaPRISM radiometer, in addition to hyper-spectral down-welling radiance\nmeasurements using the a Satlantic Hyper-OCR. In mid 2016 continuous hyper-spectral radiometric measurements were added using the DALEC instrument.\n\nThe in-water optical measurements consist of conductivity, temperature, pressure, dissolved oxygen, chlorophyll fluorescence and turbidity using a WETLabs WQM, coloured dissolved organic matter (CDOM) fluorescence using a WETLabs EcoTriplet, as well as particulate and dissolved spectral absorption and attenuation coefficients using a WETLabs AC-S. Further, total backscattering coefficients are measured using a WETLabs BB9 radiometer. \n\nAdditional meteorological and sea state measurements are continuously recorded such as barometric pressure, relative humidity, air  emperature, wind speed and direction using a Vaisala WXT520 weather transmitter. Wave height and water temperature are measured with a Campbell Scientific submersible pressure transducer that is used to keep the caged in-water optical instruments at a constant depth.\n\nAll data streams are processed in delayed-mode with automatic quality control applied and made publicly available through the AODN portal; and the data presented here is the daily in-water generated products.",
+    "Documentation": "https://catalogue-imos.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/4ac6bf81-cd37-4611-8da8-4d5ae5e2bda3",
+    "Contact": "info@aodn.org.au",
+    "ManagedBy": "AODN",
+    "UpdateFrequency": "As Needed",
+    "Tags": [
+      "FILL UP MANUALLY - CHECK DOCUMENTATION"
+    ],
+    "License": "http://creativecommons.org/licenses/by/4.0/",
+    "Resources": [
+      {
+        "Description": "Cloud Optimised AODN dataset of IMOS - Satellite Remote Sensing - Ocean Colour Sub-Facility - Lucinda Jetty Coastal Observatory (LJCO)",
+        "ARN": "arn:aws:s3:::aodn-cloud-optimised/station_lucinda_jetty_hourly_satlantic-hyperocr.zarr",
+        "Region": "ap-southeast-2",
+        "Type": "S3 Bucket"
+      }
+    ],
+    "DataAtWork": {
+      "Tutorials": [
+        {
+          "Title": "Accessing IMOS - Satellite Remote Sensing - Ocean Colour Sub-Facility - Lucinda Jetty Coastal Observatory (LJCO)",
+          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/station_lucinda_jetty_hourly_satlantic-hyperocr.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/station_lucinda_jetty_hourly_satlantic-hyperocr.ipynb",
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
+        },
+        {
+          "Title": "Accessing and search for any AODN dataset",
+          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
+        }
+      ]
+    },
+    "Citation": "IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access]"
+  }
+}
