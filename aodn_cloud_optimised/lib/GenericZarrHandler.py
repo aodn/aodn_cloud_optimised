@@ -191,14 +191,14 @@ def preprocess_xarray(ds, dataset_config):
 
     # Regrid spectral (or any non-time) dimensions to a standard target grid when
     # source files have inconsistent coordinate values (e.g. ACS WAVELENGTH_a/c).
-    target_wavelength_grids = dataset_config["schema_transformation"].get(
-        "target_wavelength_grids"
+    target_dimension_grids = dataset_config["schema_transformation"].get(
+        "target_dimension_grids"
     )
-    if target_wavelength_grids:
-        for dim_name, grid_spec in target_wavelength_grids.items():
+    if target_dimension_grids:
+        for dim_name, grid_spec in target_dimension_grids.items():
             if dim_name not in ds.coords:
                 logger.warning(
-                    f"target_wavelength_grids: dimension '{dim_name}' not found in dataset, skipping."
+                    f"target_dimension_grids: dimension '{dim_name}' not found in dataset, skipping."
                 )
                 continue
 

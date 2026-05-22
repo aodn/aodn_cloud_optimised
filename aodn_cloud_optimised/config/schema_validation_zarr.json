@@ -191,7 +191,7 @@
             "type": "string"
           }
         },
-        "target_wavelength_grids": {
+        "target_dimension_grids": {
           "type": "object",
           "additionalProperties": {
             "type": "object",
