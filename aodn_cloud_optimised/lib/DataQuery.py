@@ -91,9 +91,7 @@ GLOBAL_VIEW_STATE: Final[pydeck.ViewState] = pydeck.ViewState(
     bearing=0,
 )
 
-
 TIME_VAR_CANDIDATES = ("TIME", "JULD", "detection_timestamp", "eventDate")
-
 
 class PolygonNotIntersectingError(ValueError):
     """For more precise exception handling"""
