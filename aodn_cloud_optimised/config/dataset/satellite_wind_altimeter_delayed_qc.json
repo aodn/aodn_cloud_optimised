@@ -1,0 +1,239 @@
+{
+  "dataset_name": "satellite_wind_altimeter_delayed_qc",
+  "logger_name": "satellite_wind_altimeter_delayed_qc",
+  "cloud_optimised_format": "zarr",
+  "run_settings": {
+    "paths": [
+      {
+        "type": "files",
+        "s3_uri": "s3://imos-data/IMOS/SRS/Surface-Waves/SAR_Wind/DELAYED/GRIDDED/SENTINEL-1/",
+        "filter": [
+          ".*\\.nc$"
+        ],
+        "year_range": [
+          2017,
+          2025
+        ]
+      }
+    ],
+    "cluster": {
+      "mode": "coiled",
+      "restart_every_path": true
+    },
+    "clear_existing_data": true,
+    "raise_error": false,
+    "coiled_cluster_options": {
+      "n_workers": [
+        1,
+        50
+      ],
+      "scheduler_vm_types": "m7i-flex.large",
+      "worker_vm_types": "m7i-flex.2xlarge",
+      "allow_ingress_from": "me",
+      "compute_purchase_option": "spot_with_fallback",
+      "worker_options": {
+        "nthreads": 1,
+        "memory_limit": "32GB"
+      }
+    },
+    "batch_size": 50
+  },
+  "metadata_uuid": "b02b929f-2caf-45d4-ac60-d4632b7ca0ca",
+  "schema_transformation": {
+    "dimensions": {
+      "time": {
+        "name": "TIME",
+        "chunk": 20,
+        "rechunk": false,
+        "append_dim": true
+      },
+      "latitude": {
+        "name": "LATITUDE",
+        "chunk": 2000,
+        "size": 0
+      },
+      "longitude": {
+        "name": "LONGITUDE",
+        "chunk": 2000,
+        "size": 0
+      }
+    },
+    "var_template_shape": "WDIR",
+    "vars_incompatible_with_region": [],
+    "target_dimension_grids": {},
+    "global_attributes": {
+      "delete": [],
+      "set": {}
+    }
+  },
+  "schema": {
+    "TIME": {
+      "type": "timestamp[ns]",
+      "axis": "T",
+      "long_name": "time",
+      "standard_name": "time",
+      "valid_max": 90000,
+      "valid_min": 0
+    },
+    "LATITUDE": {
+      "type": "float",
+      "axis": "Y",
+      "long_name": "latitude",
+      "reference_datum": "geographical coordinates, WGS84 projection",
+      "standard_name": "latitude",
+      "units": "degrees_north",
+      "valid_max": 90.0,
+      "valid_min": -90.0
+    },
+    "LONGITUDE": {
+      "type": "float",
+      "axis": "X",
+      "long_name": "longitude",
+      "reference_datum": "geographical coordinates, WGS84 projection",
+      "standard_name": "longitude",
+      "units": "degrees_east",
+      "valid_max": 360.0,
+      "valid_min": 0.0
+    },
+    "TIME_AT": {
+      "type": "timestamp[ns]",
+      "dims": [
+        "TIME",
+        "LATITUDE",
+        "LONGITUDE"
+      ],
+      "long_name": "Time at each along-track observation",
+      "standard_name": "time",
+      "valid_max": 90000.0,
+      "valid_min": 0.0
+    },
+    "WDIR": {
+      "type": "float",
+      "dims": [
+        "TIME",
+        "LATITUDE",
+        "LONGITUDE"
+      ],
+      "long_name": "SAR wind from direction at 10m height, measured positive clockwise from due North",
+      "standard_name": "wind_from_direction",
+      "units": "degree",
+      "valid_max": 18000,
+      "valid_min": -18000
+    },
+    "WSPD": {
+      "type": "float",
+      "dims": [
+        "TIME",
+        "LATITUDE",
+        "LONGITUDE"
+      ],
+      "ancillary_variables": "WSPD_quality_control",
+      "long_name": "SAR wind speed at 10m height assuming neutral marine boundary layer",
+      "standard_name": "wind_speed",
+      "units": "m s-1",
+      "valid_max": 30000,
+      "valid_min": -20000
+    },
+    "WSPD_CAL": {
+      "type": "float",
+      "dims": [
+        "TIME",
+        "LATITUDE",
+        "LONGITUDE"
+      ],
+      "ancillary_variables": "WSPD_CAL_quality_control",
+      "long_name": "Calibrated SAR wind speed at 10m height assuming neutral marine boundary layer",
+      "standard_name": "wind_speed",
+      "units": "m s-1",
+      "valid_max": 30000,
+      "valid_min": -30000
+    },
+    "WSPD_quality_control": {
+      "type": "float",
+      "dims": [
+        "TIME",
+        "LATITUDE",
+        "LONGITUDE"
+      ],
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "long_name": "Wind speed quality flag",
+      "quality_control_conventions": "IMOS standard flags",
+      "standard_name": "wind_speed status_flag"
+    },
+    "WSPD_CAL_quality_control": {
+      "type": "float",
+      "dims": [
+        "TIME",
+        "LATITUDE",
+        "LONGITUDE"
+      ],
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "long_name": "Wind speed quality flag",
+      "quality_control_conventions": "IMOS standard flags",
+      "standard_name": "wind_speed status_flag"
+    }
+  },
+  "aws_opendata_registry": {
+    "Name": "IMOS - Satellite Remote Sensing - Surface Waves Sub-Facility - SAR wind - Delayed mode data",
+    "Description": "Sentinel-1 A, B and C satellites are part of Europe's Copernicus Earth Observation program and carry identical C-band Synthetic Aperture Radar (SAR) instruments. This dataset contains 10m neutral stability wind speed and direction derived from Sentinel-1 A, B and C SARs in the wider Australian coastal regions. In these regions, the satellites normally operate in interferometric wide (IW) swath mode. The winds are derived using a consistent geophysical model function (gmf), CMOD5N, and variational Bayesian inversion approach as proposed in Portabella et al. (2002) and Sentinel-1 Ocean wind (owi) algorithm definition document. The input SAR and model (ECMWF) data used in the inversion are sourced from owi level-2 product, and the resulting derived winds are approximately at 1km horizontal spatial resolution as in the source product but derived using a consistent gmf over time (unlike the source product). Wind speeds are also calibrated against Metop-A and B scatterometer wind database of Ribal and Young, 2020 (JTECH).\n\nThis data has also been combined and interpolated to a nominal 0.01 x 0.01-degree regular grid (available as a separate gridded product: IMOS - Satellite Remote Sensing - Surface Waves Sub-Facility - Gridded SAR wind - Delayed mode data). \n\nThe data represented by this record, are presented in delayed mode.",
+    "Documentation": "https://catalogue-imos.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/b02b929f-2caf-45d4-ac60-d4632b7ca0ca",
+    "Contact": "info@aodn.org.au",
+    "ManagedBy": "AODN",
+    "UpdateFrequency": "As Needed",
+    "Tags": [
+      "FILL UP MANUALLY - CHECK DOCUMENTATION"
+    ],
+    "License": "http://creativecommons.org/licenses/by/4.0/",
+    "Resources": [
+      {
+        "Description": "Cloud Optimised AODN dataset of IMOS - Satellite Remote Sensing - Surface Waves Sub-Facility - SAR wind - Delayed mode data",
+        "ARN": "arn:aws:s3:::aodn-cloud-optimised/satellite_wind_altimeter_delayed_qc.zarr",
+        "Region": "ap-southeast-2",
+        "Type": "S3 Bucket"
+      }
+    ],
+    "DataAtWork": {
+      "Tutorials": [
+        {
+          "Title": "Accessing IMOS - Satellite Remote Sensing - Surface Waves Sub-Facility - SAR wind - Delayed mode data",
+          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_wind_altimeter_delayed_qc.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_wind_altimeter_delayed_qc.ipynb",
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
+        },
+        {
+          "Title": "Accessing and search for any AODN dataset",
+          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
+        }
+      ]
+    },
+    "Citation": "IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access]"
+  }
+}
