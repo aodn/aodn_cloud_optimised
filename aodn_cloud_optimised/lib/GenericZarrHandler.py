@@ -2362,6 +2362,21 @@ class GenericHandler(CommonHandler):
             f"{self.uuid_log}: Engine {engine} used to open the batch of files"
         )
 
+        # Clean up attributes for skip_cftime_decode variables
+        # These variables stay as numeric, so they shouldn't have CF time encoding attributes
+        # that would conflict when xarray tries to CF-encode them for zarr
+        if skip_vars:
+            for var_name in skip_vars:
+                if var_name in ds:
+                    # Remove CF time attributes that conflict during zarr encoding
+                    for attr_key in ["units", "calendar"]:
+                        if attr_key in ds[var_name].attrs:
+                            del ds[var_name].attrs[attr_key]
+                            self.logger.debug(
+                                f"{self.uuid_log}: Removed '{attr_key}' from {var_name} "
+                                "(variable stored as numeric, not CF time)"
+                            )
+
         dataset_sort_by = self.dataset_config["schema_transformation"].get(
             "dataset_sort_by", None
         )
