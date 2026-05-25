@@ -762,6 +762,32 @@ class GenericHandler(CommonHandler):
 
         self.time_coder = CFDatetimeCoder(use_cftime=True)
 
+    def _get_decode_times(self):
+        """Build decode_times parameter for xarray open operations.
+
+        Returns a Mapping for selective CF time decoding when skip_cftime_decode
+        is configured, otherwise returns self.time_coder (CFDatetimeCoder).
+
+        This ensures that variables in skip_cftime_decode remain as numeric
+        float64 throughout zarr write/append cycles, avoiding CF encoding conflicts.
+
+        Returns:
+            dict or CFDatetimeCoder: Mapping for per-variable decode or global decoder
+        """
+        skip_vars = self.dataset_config["schema_transformation"].get(
+            "skip_cftime_decode", []
+        )
+
+        if skip_vars:
+            # Create a mapping: True (decode) by default, False (skip) for listed vars
+            decode_times_map = {}
+            for var_name in self.schema:
+                decode_times_map[var_name] = var_name not in skip_vars
+            return decode_times_map
+        else:
+            # If no skip list, use the original time_coder
+            return self.time_coder
+
     def delete_cloud_optimised_data(self, filename: str):
         """
         Deletes data in the cloud-optimised Zarr dataset corresponding to a specific filename by
@@ -788,7 +814,7 @@ class GenericHandler(CommonHandler):
                 self.store,
                 consolidated=True,
                 decode_cf=True,
-                decode_times=self.time_coder,
+                decode_times=self._get_decode_times(),
                 decode_coords=True,
             ) as ds_org:
                 # Compute only the filename variable to memory
@@ -877,7 +903,7 @@ class GenericHandler(CommonHandler):
                 self.store,
                 consolidated=True,
                 decode_cf=True,
-                decode_times=self.time_coder,
+                decode_times=self._get_decode_times(),
                 decode_coords=True,
             ) as ds_mod:
                 # assert self.dataset_config["schema_transformation"]["global_attributes"]["set"].items() <= ds_mod.attrs.items()
@@ -1978,7 +2004,7 @@ class GenericHandler(CommonHandler):
             self.store,
             consolidated=True,
             decode_cf=True,
-            decode_times=self.time_coder,
+            decode_times=self._get_decode_times(),
             decode_coords=True,
         ) as ds_zarr:
             ds_zarr = ds_zarr.unify_chunks()
@@ -2105,7 +2131,7 @@ class GenericHandler(CommonHandler):
             self.store,
             consolidated=True,
             decode_cf=True,
-            decode_times=self.time_coder,
+            decode_times=self._get_decode_times(),
             decode_coords=True,
         ) as ds_stored_zarr:
             # breakpoint()
@@ -2322,24 +2348,18 @@ class GenericHandler(CommonHandler):
         # if preprocess is called after the open_mfdataset, then data_vars should probably be set to "all" as some variables
         # might be changed to NaN for a specific batch, if some variables aren't common to all NetCDF
 
-        # Build selective decode_times mapping to skip cftime decoding for problematic variables
+        # Use selective decode_times mapping to skip cftime decoding for problematic variables
         # Variables in skip_cftime_decode will remain as numeric (e.g., float64) instead of being
         # converted to datetime64[ns], which is important for time variables with NaN values.
-        decode_times_map = {}
+        decode_times_map = self._get_decode_times()
+
         skip_vars = self.dataset_config["schema_transformation"].get(
             "skip_cftime_decode", []
         )
-
         if skip_vars:
             self.logger.info(
                 f"{self.uuid_log}: Skip CF time decoding for variables: {skip_vars}"
             )
-            # Create a mapping: True (decode) by default, False (skip) for listed vars
-            for var_name in self.schema:
-                decode_times_map[var_name] = var_name not in skip_vars
-        else:
-            # If no skip list, use the original time_coder for all variables
-            decode_times_map = self.time_coder
 
         open_mfdataset_params = {
             "engine": engine,
@@ -2583,7 +2603,7 @@ class GenericHandler(CommonHandler):
                 self.store,
                 consolidated=True,
                 decode_cf=True,
-                decode_times=self.time_coder,
+                decode_times=self._get_decode_times(),
                 decode_coords=True,
             ) as ds_org:
                 ds_org = ds_org.unify_chunks()
