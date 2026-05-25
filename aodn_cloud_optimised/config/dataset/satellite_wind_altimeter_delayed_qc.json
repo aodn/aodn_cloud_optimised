@@ -61,6 +61,9 @@
     "var_template_shape": "WDIR",
     "vars_incompatible_with_region": [],
     "target_dimension_grids": {},
+    "skip_cftime_decode": [
+      "TIME_AT"
+    ],
     "global_attributes": {
       "delete": [],
       "set": {}

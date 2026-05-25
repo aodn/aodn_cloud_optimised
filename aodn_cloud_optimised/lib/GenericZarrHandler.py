@@ -2322,6 +2322,25 @@ class GenericHandler(CommonHandler):
         # if preprocess is called after the open_mfdataset, then data_vars should probably be set to "all" as some variables
         # might be changed to NaN for a specific batch, if some variables aren't common to all NetCDF
 
+        # Build selective decode_times mapping to skip cftime decoding for problematic variables
+        # Variables in skip_cftime_decode will remain as numeric (e.g., float64) instead of being
+        # converted to datetime64[ns], which is important for time variables with NaN values.
+        decode_times_map = {}
+        skip_vars = self.dataset_config["schema_transformation"].get(
+            "skip_cftime_decode", []
+        )
+
+        if skip_vars:
+            self.logger.info(
+                f"{self.uuid_log}: Skip CF time decoding for variables: {skip_vars}"
+            )
+            # Create a mapping: True (decode) by default, False (skip) for listed vars
+            for var_name in self.schema:
+                decode_times_map[var_name] = var_name not in skip_vars
+        else:
+            # If no skip list, use the original time_coder for all variables
+            decode_times_map = self.time_coder
+
         open_mfdataset_params = {
             "engine": engine,
             "parallel": True,
@@ -2331,7 +2350,7 @@ class GenericHandler(CommonHandler):
             "concat_characters": True,
             "mask_and_scale": True,
             "decode_cf": True,
-            "decode_times": self.time_coder,
+            "decode_times": decode_times_map,
             "decode_coords": True,
             "compat": "override",
             "coords": "minimal",

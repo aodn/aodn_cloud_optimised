@@ -55,7 +55,7 @@ from shapely.geometry import MultiPolygon, Polygon
 from tqdm.notebook import tqdm
 from windrose import WindroseAxes
 
-__version__ = "0.3.16"
+__version__ = "0.3.17"
 
 REGION: Final[str] = "ap-southeast-2"
 ENDPOINT_URL = "https://s3.ap-southeast-2.amazonaws.com"
@@ -327,6 +327,37 @@ def s3_opts_to_pyarrow(s3_fs_opts: dict) -> dict:
         pa_opts["anonymous"] = False
 
     return pa_opts
+
+
+def safe_item(array):
+    """
+    Safely extract a scalar value from a numpy or dask array.
+
+    When xarray opens Zarr stores with chunks='auto', coordinate arrays
+    may remain as dask arrays (lazy-evaluated). This function checks if
+    the array is a dask array and computes it before calling .item().
+
+    Args:
+        array: A numpy array, dask array, numpy scalar, or xarray DataArray/Variable
+
+    Returns:
+        The scalar value extracted from the array
+    """
+    # Handle xarray DataArray/Variable
+    if hasattr(array, "data"):
+        array = array.data
+
+    # Check if it's a dask array and compute it if needed
+    if hasattr(array, "compute"):
+        array = array.compute()
+
+    # Handle numpy arrays and scalars
+    # Use .tolist() which works for both arrays and scalars, and returns Python types
+    if hasattr(array, "tolist"):
+        return array.tolist()
+
+    # If it's already a Python scalar, return as-is
+    return array
 
 
 def query_unique_value(dataset: ds.Dataset, partition: str) -> Set[str]:
@@ -847,11 +878,11 @@ def create_timeseries(
     ds = ds.sortby(time_name)
 
     # Get latitude, longitude, and time extents
-    lat_min, lat_max = ds[lat_name].min().item(), ds[lat_name].max().item()
-    lon_min, lon_max = ds[lon_name].min().item(), ds[lon_name].max().item()
+    lat_min, lat_max = safe_item(ds[lat_name].min()), safe_item(ds[lat_name].max())
+    lon_min, lon_max = safe_item(ds[lon_name].min()), safe_item(ds[lon_name].max())
     time_min, time_max = (
-        pd.to_datetime(ds[time_name].min().item()),
-        pd.to_datetime(ds[time_name].max().item()),
+        pd.to_datetime(safe_item(ds[time_name].min())),
+        pd.to_datetime(safe_item(ds[time_name].max())),
     )
 
     # Test if latitude and longitude are within bounds
@@ -1607,8 +1638,8 @@ def plot_gridded_variable(
     ds = ds.sortby(time_name)
 
     # Get latitude and longitude extents
-    lat_min, lat_max = ds[lat_name].min().item(), ds[lat_name].max().item()
-    lon_min, lon_max = ds[lon_name].min().item(), ds[lon_name].max().item()
+    lat_min, lat_max = safe_item(ds[lat_name].min()), safe_item(ds[lat_name].max())
+    lon_min, lon_max = safe_item(ds[lon_name].min()), safe_item(ds[lon_name].max())
 
     if lat_slice is None:
         lat_slice = (lat_min, lat_max)
@@ -2831,6 +2862,7 @@ class ZarrDataSource(DataSource):
         try:
             mapper = self.s3.get_mapper(self.dname)
             # Open with 'auto' chunks so it stays lazy
+            # ds = xr.open_zarr(mapper, chunks=None, consolidated=True)
             ds = xr.open_zarr(mapper, chunks="auto", consolidated=True)
             # Fix the inconsistent chunks instantly in-memory
             ds = ds.unify_chunks()
@@ -3122,8 +3154,8 @@ class ZarrDataSource(DataSource):
         # For xarray DataArrays, min/max handle this, but if it's a raw numpy array from .values, sorting is safer.
         # Actually, xarray's .min() and .max() on a DataArray should be correct without pre-sorting values.
 
-        min_val = self.zarr_store[time_var_name].min().item()
-        max_val = self.zarr_store[time_var_name].max().item()
+        min_val = safe_item(self.zarr_store[time_var_name].min())
+        max_val = safe_item(self.zarr_store[time_var_name].max())
 
         cftime_types = (
             cftime.DatetimeGregorian,
@@ -3242,16 +3274,16 @@ class ZarrDataSource(DataSource):
 
         # Get latitude, longitude, and time extents for validation
         ds_lat_min, ds_lat_max = (
-            ds[actual_lat_name].min().item(),
-            ds[actual_lat_name].max().item(),
+            safe_item(ds[actual_lat_name].min()),
+            safe_item(ds[actual_lat_name].max()),
         )
         ds_lon_min, ds_lon_max = (
-            ds[actual_lon_name].min().item(),
-            ds[actual_lon_name].max().item(),
+            safe_item(ds[actual_lon_name].min()),
+            safe_item(ds[actual_lon_name].max()),
         )
 
-        time_min_val = ds[actual_time_name].min().item()
-        time_max_val = ds[actual_time_name].max().item()
+        time_min_val = safe_item(ds[actual_time_name].min())
+        time_max_val = safe_item(ds[actual_time_name].max())
         cftime_types = (
             cftime.DatetimeGregorian,
             cftime.DatetimeProlepticGregorian,
@@ -3465,31 +3497,22 @@ class ZarrDataSource(DataSource):
 
         ds = ds.sortby(actual_time_name)
 
-        # Get latitude and longitude extents
-        lat_min, lat_max = (
-            ds[actual_lat_name].min().item(),
-            ds[actual_lat_name].max().item(),
-        )
-        lon_min, lon_max = (
-            ds[actual_lon_name].min().item(),
-            ds[actual_lon_name].max().item(),
-        )
-
-        if lat_slice is None:
-            lat_slice = (lat_min, lat_max)
-
-        if lon_slice is None:
-            lon_slice = (lon_min, lon_max)
-
-        # Get latitude and longitude extents from dataset for validation
+        # Get latitude and longitude extents (compute only once)
         ds_lat_min, ds_lat_max = (
-            ds[actual_lat_name].min().item(),
-            ds[actual_lat_name].max().item(),
+            safe_item(ds[actual_lat_name].min()),
+            safe_item(ds[actual_lat_name].max()),
         )
         ds_lon_min, ds_lon_max = (
-            ds[actual_lon_name].min().item(),
-            ds[actual_lon_name].max().item(),
+            safe_item(ds[actual_lon_name].min()),
+            safe_item(ds[actual_lon_name].max()),
         )
+
+        # Use dataset extents as defaults if user didn't provide slices
+        if lat_slice is None:
+            lat_slice = (ds_lat_min, ds_lat_max)
+
+        if lon_slice is None:
+            lon_slice = (ds_lon_min, ds_lon_max)
 
         # Validate derived slices
         # Ensure slice is within [ds_lat_min, ds_lat_max] and handle reversed axes if necessary
@@ -3621,8 +3644,8 @@ class ZarrDataSource(DataSource):
                     data = data - 273.15
 
                 plot_data_cache[date_obj] = data  # Cache data (potentially converted)
-                vmin_all = min(vmin_all, data.min().item())
-                vmax_all = max(vmax_all, data.max().item())
+                vmin_all = min(vmin_all, safe_item(data.min()))
+                vmax_all = max(vmax_all, safe_item(data.max()))
 
             except Exception as err:
                 self.logger.error(
