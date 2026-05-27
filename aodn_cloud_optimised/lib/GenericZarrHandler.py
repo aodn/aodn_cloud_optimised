@@ -2352,9 +2352,10 @@ class GenericHandler(CommonHandler):
         # Variables in skip_cftime_decode will remain as numeric (e.g., float64) instead of being
         # converted to datetime64[ns], which is important for time variables with NaN values.
         decode_times_map = self._get_decode_times()
-
-        skip_vars = self.dataset_config["schema_transformation"].get(
-            "skip_cftime_decode", []
+        skip_vars = (
+            [k for k, v in decode_times_map.items() if not v]
+            if isinstance(decode_times_map, dict)
+            else []
         )
         if skip_vars:
             self.logger.info(
@@ -2440,7 +2441,7 @@ class GenericHandler(CommonHandler):
             "engine": engine,
             "mask_and_scale": True,
             "decode_cf": True,
-            "decode_times": self.time_coder,
+            "decode_times": self._get_decode_times(),
             "decode_coords": True,
             "drop_variables": drop_vars_list,
         }
