@@ -25,7 +25,7 @@
     "coiled_cluster_options": {
       "n_workers": [
         1,
-        50
+        100
       ],
       "scheduler_vm_types": "m7i-flex.large",
       "worker_vm_types": "m7i-flex.2xlarge",
@@ -33,17 +33,17 @@
       "compute_purchase_option": "spot_with_fallback",
       "worker_options": {
         "nthreads": 1,
-        "memory_limit": "32GB"
+        "memory_limit": "28GB"
       }
     },
-    "batch_size": 50
+    "batch_size": 40
   },
   "metadata_uuid": "b02b929f-2caf-45d4-ac60-d4632b7ca0ca",
   "schema_transformation": {
     "dimensions": {
       "time": {
         "name": "TIME",
-        "chunk": 20,
+        "chunk": 40,
         "rechunk": false,
         "append_dim": true
       },

@@ -55,7 +55,7 @@ from shapely.geometry import MultiPolygon, Polygon
 from tqdm.notebook import tqdm
 from windrose import WindroseAxes
 
-__version__ = "0.3.17"
+__version__ = "0.3.18"
 
 REGION: Final[str] = "ap-southeast-2"
 ENDPOINT_URL = "https://s3.ap-southeast-2.amazonaws.com"
@@ -3752,6 +3752,232 @@ class ZarrDataSource(DataSource):
         plt.tight_layout(
             rect=[0, 0, 0.85, 0.95]
         )  # Adjust rect to prevent suptitle overlap and leave space for cbar
+        plt.show()
+
+    def plot_gridded_vector_field(
+        self,
+        speed_var_name: str,
+        dir_var_name: str,
+        lon_slice: tuple[float, float] | None = None,
+        lat_slice: tuple[float, float] | None = None,
+        date_start: str | None = None,
+        date_end: str | None = None,
+        n_days: int = 6,
+        coastline_resolution: str | None = "110m",
+        log_scale: bool = False,
+        plot_type: str = "default",
+        lat_name_override: str | None = None,
+        lon_name_override: str | None = None,
+        time_name_override: str | None = None,
+        skip_step: int = 25,  # Control vector density to prevent overlapping
+    ) -> None:
+        """Plots gridded background speed magnitude with overlaid direction vector arrows.
+
+        Handles direct speed/direction conversion (e.g., WSPD & WDIR) across panels.
+        """
+
+        if date_start is None:
+            raise ValueError("date_start value must be a valid time string, not None")
+
+        valid_plot_types = {"default", "anomaly"}
+        if plot_type not in valid_plot_types:
+            raise ValueError(
+                f"Invalid plot_type '{plot_type}'. Must be one of {valid_plot_types}."
+            )
+
+        # 1. Access class internal dataset store
+        if self.zarr_store is None:
+            self.zarr_store = self._open_zarr_store()
+        ds = self.zarr_store
+
+        # 2. Coordinate resolution using internal logic
+        actual_lat_name = (
+            lat_name_override
+            if lat_name_override
+            else _find_var_name_global(
+                ds, ["latitude", "lat", "LATITUDE", "LAT"], "latitude"
+            )
+        )
+        actual_lon_name = (
+            lon_name_override
+            if lon_name_override
+            else _find_var_name_global(
+                ds, ["longitude", "lon", "LONGITUDE", "LON"], "longitude"
+            )
+        )
+        actual_time_name = (
+            time_name_override
+            if time_name_override
+            else _find_var_name_global(
+                ds,
+                ["time", "TIME", "datetime", "date", "Date", "DateTime", "JULD"],
+                "time",
+            )
+        )
+
+        ds = ds.sortby(actual_time_name)
+
+        # 3. Handle default spatial fallback configurations
+        ds_lat_min, ds_lat_max = (
+            float(ds[actual_lat_name].min()),
+            float(ds[actual_lat_name].max()),
+        )
+        ds_lon_min, ds_lon_max = (
+            float(ds[actual_lon_name].min()),
+            float(ds[actual_lon_name].max()),
+        )
+
+        if lat_slice is None:
+            lat_slice = (ds_lat_min, ds_lat_max)
+        if lon_slice is None:
+            lon_slice = (ds_lon_min, ds_lon_max)
+
+        # 4. Handle slice orientation sorting
+        lat_slice_for_sel = tuple(sorted(lat_slice))
+        lon_slice_for_sel = tuple(sorted(lon_slice))
+
+        if ds[actual_lat_name][0] > ds[actual_lat_name][-1]:
+            lat_slice_for_sel = (max(lat_slice), min(lat_slice))
+        if ds[actual_lon_name][0] > ds[actual_lon_name][-1]:
+            lon_slice_for_sel = (max(lon_slice), min(lon_slice))
+
+        # 5. Temporal indexing selection matching step windows
+        nearest_ds = ds.sel({actual_time_name: date_start}, method="nearest")
+        norm_date_start = nearest_ds[actual_time_name].values
+        iTime_start = list(ds[actual_time_name].values).index(norm_date_start)
+
+        if date_end is not None:
+            norm_date_end = ds.sel({actual_time_name: date_end}, method="nearest")[
+                actual_time_name
+            ].values
+            iTime_end = list(ds[actual_time_name].values).index(norm_date_end)
+            total_steps = min(n_days, iTime_end - iTime_start + 1)
+        else:
+            total_steps = min(n_days, len(ds[actual_time_name].values) - iTime_start)
+
+        if total_steps <= 0:
+            raise ValueError(
+                "No matching time steps found to generate grid plot panels."
+            )
+
+        # 6. Apply spatial slicing constraints
+        ds_spatial = ds.sel(
+            {
+                actual_lat_name: slice(*lat_slice_for_sel),
+                actual_lon_name: slice(*lon_slice_for_sel),
+            }
+        )
+
+        # Pull coordinates
+        lonData = ds_spatial[actual_lon_name].values
+        latData = ds_spatial[actual_lat_name].values
+        lon_mesh, lat_mesh = np.meshgrid(lonData, latData)
+
+        # 7. Dynamically calculate grid proportions
+        ncols = 2 if total_steps > 1 else 1
+        nrows = int(np.ceil(total_steps / ncols))
+
+        fig, axes = plt.subplots(
+            nrows=nrows,
+            ncols=ncols,
+            figsize=(8 * ncols, 6 * nrows),
+            subplot_kw={"projection": ccrs.PlateCarree()},
+            squeeze=False,
+        )
+        axes = axes.flatten()
+
+        # Colorbar layout space
+        cbar_ax = fig.add_axes([0.93, 0.15, 0.02, 0.7])
+
+        # 8. Render loop
+        for idx in range(total_steps):
+            ax = axes[idx]
+            current_time_idx = iTime_start + idx
+
+            # Extract Speed and Direction arrays natively
+            speed = ds_spatial[speed_var_name][current_time_idx, :, :].values
+            wdir = ds_spatial[dir_var_name][current_time_idx, :, :].values
+
+            # --- CORRECTION 1: TRIGONOMETRIC CONVERSION ---
+            # Convert meteorological degrees to Cartesian vector coordinates (U, V)
+            rad = np.deg2rad(wdir)
+            uData = -speed * np.sin(rad)
+            vData = -speed * np.cos(rad)
+
+            # Define color profiles dynamically
+            vmin = (
+                float(np.nanmin(speed))
+                if not log_scale
+                else max(float(np.nanmin(speed)), 1e-4)
+            )
+            vmax = float(np.nanmax(speed))
+
+            if plot_type == "anomaly":
+                norm = TwoSlopeNorm(vcenter=0.0, vmin=vmin, vmax=vmax)
+                cmap = "RdBu_r"
+            elif log_scale:
+                norm = LogNorm(vmin=vmin, vmax=vmax)
+                cmap = "viridis"
+            else:
+                norm = Normalize(vmin=vmin, vmax=vmax)
+                cmap = "viridis"
+
+            # Render background color mesh
+            p = ax.pcolormesh(
+                lon_mesh,
+                lat_mesh,
+                speed,
+                transform=ccrs.PlateCarree(),
+                cmap=cmap,
+                norm=norm,
+                shading="auto",
+            )
+
+            # --- CORRECTION 2: ARROW SUBSAMPLING (SKIP STEP) ---
+            skip = slice(None, None, skip_step)
+
+            ax.quiver(
+                lon_mesh[skip, skip],
+                lat_mesh[skip, skip],
+                uData[skip, skip],
+                vData[skip, skip],
+                transform=ccrs.PlateCarree(),
+                color="white",
+                edgecolor="black",
+                linewidth=0.5,
+                scale=400,
+                width=0.002,
+                headwidth=3.5,
+                headlength=4.5,
+                zorder=3,
+            )
+
+            if coastline_resolution:
+                coast = cfeature.NaturalEarthFeature(
+                    "physical",
+                    "coastline",
+                    coastline_resolution,
+                    edgecolor="black",
+                    facecolor="none",
+                )
+                ax.add_feature(coast, linewidth=1)
+                ax.add_feature(cfeature.LAND, facecolor="#eaeaea", zorder=2)
+
+            ax.gridlines(draw_labels=True, linestyle="--", color="gray", alpha=0.5)
+
+            time_str = np.datetime_as_string(
+                ds_spatial[actual_time_name].values[current_time_idx], unit="m"
+            )
+            ax.set_title(f"{time_str}")
+
+        # Clear empty layout blocks
+        for idx in range(total_steps, len(axes)):
+            fig.delaxes(axes[idx])
+
+        # Color scale bar properties
+        units_label = ds[speed_var_name].attrs.get("units", "m s-1")
+        fig.colorbar(p, cax=cbar_ax, label=f"{speed_var_name} ({units_label})")
+        plt.tight_layout(rect=[0, 0, 0.9, 1])
         plt.show()
 
     def plot_gridded_variable_viewer_calendar(
