@@ -762,6 +762,32 @@ class GenericHandler(CommonHandler):
 
         self.time_coder = CFDatetimeCoder(use_cftime=True)
 
+    def _get_decode_times(self):
+        """Build decode_times parameter for xarray open operations.
+
+        Returns a Mapping for selective CF time decoding when skip_cftime_decode
+        is configured, otherwise returns self.time_coder (CFDatetimeCoder).
+
+        This ensures that variables in skip_cftime_decode remain as numeric
+        float64 throughout zarr write/append cycles, avoiding CF encoding conflicts.
+
+        Returns:
+            dict or CFDatetimeCoder: Mapping for per-variable decode or global decoder
+        """
+        skip_vars = self.dataset_config["schema_transformation"].get(
+            "skip_cftime_decode", []
+        )
+
+        if skip_vars:
+            # Create a mapping: True (decode) by default, False (skip) for listed vars
+            decode_times_map = {}
+            for var_name in self.schema:
+                decode_times_map[var_name] = var_name not in skip_vars
+            return decode_times_map
+        else:
+            # If no skip list, use the original time_coder
+            return self.time_coder
+
     def delete_cloud_optimised_data(self, filename: str):
         """
         Deletes data in the cloud-optimised Zarr dataset corresponding to a specific filename by
@@ -788,7 +814,7 @@ class GenericHandler(CommonHandler):
                 self.store,
                 consolidated=True,
                 decode_cf=True,
-                decode_times=self.time_coder,
+                decode_times=self._get_decode_times(),
                 decode_coords=True,
             ) as ds_org:
                 # Compute only the filename variable to memory
@@ -877,7 +903,7 @@ class GenericHandler(CommonHandler):
                 self.store,
                 consolidated=True,
                 decode_cf=True,
-                decode_times=self.time_coder,
+                decode_times=self._get_decode_times(),
                 decode_coords=True,
             ) as ds_mod:
                 # assert self.dataset_config["schema_transformation"]["global_attributes"]["set"].items() <= ds_mod.attrs.items()
@@ -1978,7 +2004,7 @@ class GenericHandler(CommonHandler):
             self.store,
             consolidated=True,
             decode_cf=True,
-            decode_times=self.time_coder,
+            decode_times=self._get_decode_times(),
             decode_coords=True,
         ) as ds_zarr:
             ds_zarr = ds_zarr.unify_chunks()
@@ -2105,7 +2131,7 @@ class GenericHandler(CommonHandler):
             self.store,
             consolidated=True,
             decode_cf=True,
-            decode_times=self.time_coder,
+            decode_times=self._get_decode_times(),
             decode_coords=True,
         ) as ds_stored_zarr:
             # breakpoint()
@@ -2322,6 +2348,20 @@ class GenericHandler(CommonHandler):
         # if preprocess is called after the open_mfdataset, then data_vars should probably be set to "all" as some variables
         # might be changed to NaN for a specific batch, if some variables aren't common to all NetCDF
 
+        # Use selective decode_times mapping to skip cftime decoding for problematic variables
+        # Variables in skip_cftime_decode will remain as numeric (e.g., float64) instead of being
+        # converted to datetime64[ns], which is important for time variables with NaN values.
+        decode_times_map = self._get_decode_times()
+        skip_vars = (
+            [k for k, v in decode_times_map.items() if not v]
+            if isinstance(decode_times_map, dict)
+            else []
+        )
+        if skip_vars:
+            self.logger.info(
+                f"{self.uuid_log}: Skip CF time decoding for variables: {skip_vars}"
+            )
+
         open_mfdataset_params = {
             "engine": engine,
             "parallel": True,
@@ -2331,7 +2371,7 @@ class GenericHandler(CommonHandler):
             "concat_characters": True,
             "mask_and_scale": True,
             "decode_cf": True,
-            "decode_times": self.time_coder,
+            "decode_times": decode_times_map,
             "decode_coords": True,
             "compat": "override",
             "coords": "minimal",
@@ -2342,6 +2382,21 @@ class GenericHandler(CommonHandler):
         self.logger.info(
             f"{self.uuid_log}: Engine {engine} used to open the batch of files"
         )
+
+        # Clean up attributes for skip_cftime_decode variables
+        # These variables stay as numeric, so they shouldn't have CF time encoding attributes
+        # that would conflict when xarray tries to CF-encode them for zarr
+        if skip_vars:
+            for var_name in skip_vars:
+                if var_name in ds:
+                    # Remove CF time attributes that conflict during zarr encoding
+                    for attr_key in ["units", "calendar"]:
+                        if attr_key in ds[var_name].attrs:
+                            del ds[var_name].attrs[attr_key]
+                            self.logger.debug(
+                                f"{self.uuid_log}: Removed '{attr_key}' from {var_name} "
+                                "(variable stored as numeric, not CF time)"
+                            )
 
         dataset_sort_by = self.dataset_config["schema_transformation"].get(
             "dataset_sort_by", None
@@ -2386,7 +2441,7 @@ class GenericHandler(CommonHandler):
             "engine": engine,
             "mask_and_scale": True,
             "decode_cf": True,
-            "decode_times": self.time_coder,
+            "decode_times": self._get_decode_times(),
             "decode_coords": True,
             "drop_variables": drop_vars_list,
         }
@@ -2549,7 +2604,7 @@ class GenericHandler(CommonHandler):
                 self.store,
                 consolidated=True,
                 decode_cf=True,
-                decode_times=self.time_coder,
+                decode_times=self._get_decode_times(),
                 decode_coords=True,
             ) as ds_org:
                 ds_org = ds_org.unify_chunks()

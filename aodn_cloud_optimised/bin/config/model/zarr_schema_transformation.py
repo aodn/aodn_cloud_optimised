@@ -23,6 +23,12 @@ class ZarrSchemaTransformation(pydantic.BaseModel):
     dimensions: dict[str, dict[str, typing.Any]] | None = None
     dataset_sort_by: list[str] | None = None
     vars_incompatible_with_region: list[str] | None = None
+    skip_cftime_decode: list[str] | None = pydantic.Field(
+        default=None,
+        description="List of time variables to keep as numeric (don't decode to datetime64). "
+        "Useful for time variables with NaN values that would fail CF decoding. "
+        "Example: ['TIME_AT'] to keep TIME_AT as float64 instead of datetime64[ns].",
+    )
 
     @pydantic.model_validator(mode="after")
     def validate_dataset_sortby(self):
@@ -66,6 +72,18 @@ class ZarrSchemaTransformation(pydantic.BaseModel):
                 stacklevel=1,
             )
 
+        return self
+
+    @pydantic.model_validator(mode="after")
+    def validate_skip_cftime_decode(self):
+        if self.skip_cftime_decode:
+            missing = [
+                var for var in self.skip_cftime_decode if var not in self.dataset_schema
+            ]
+            if missing:
+                raise ValueError(
+                    f"The following skip_cftime_decode variables are not defined in schema configuration or mispelled: {missing}"
+                )
         return self
 
     @pydantic.model_validator(mode="after")

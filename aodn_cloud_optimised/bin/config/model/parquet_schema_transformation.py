@@ -34,6 +34,12 @@ class ParquetSchemaTransformation(pydantic.BaseModel):
     skip_partitioning_validation: bool = pydantic.Field(
         False, description="Set to true to skip required partitioning validation."
     )
+    skip_cftime_decode: list[str] | None = pydantic.Field(
+        default=None,
+        description="List of time variables to keep as numeric (don't decode to datetime64). "
+        "Useful for time variables with NaN values that would fail CF decoding. "
+        "Example: ['TIME_AT'] to keep TIME_AT as float64 instead of datetime64[ns].",
+    )
 
     @pydantic.field_validator("add_variables")
     @classmethod
