@@ -27,7 +27,7 @@ from aodn_cloud_optimised.lib.config import (
     load_dataset_config,
     load_variable_from_config,
 )
-from aodn_cloud_optimised.lib.logging import print_processing_summary
+from aodn_cloud_optimised.lib.run_summary import RunSummary
 from aodn_cloud_optimised.lib.s3Tools import boto3_from_opts_dict, s3_ls
 
 logger = logging.getLogger(__name__)
@@ -220,7 +220,7 @@ def main():
     try:
         config = load_config_and_validate(args.config)
     except ValidationError as e:
-        print(f"❌ Validation error in config file:\n{e}")
+        print(f"❌ Validation error in config file:\n{e}")  # noqa: T201
         sys.exit(1)
 
     overwrite_dict: dict[str, Any] = {}
@@ -283,6 +283,8 @@ def main():
         dataset_config_path
     )  # not using config.model_dump() as it retains only the validated objects.
 
+    run_summary = RunSummary()
+
     # If restart_every_path is True, run one cloud_optimised_creation per path/year
     if config.run_settings.cluster.restart_every_path:
         clear_flag_added = False
@@ -304,6 +306,7 @@ def main():
                 result = cloud_optimised_creation(
                     matching_files,
                     dataset_config=dataset_config,
+                    run_summary=run_summary,
                     handler_class=None,
                     clear_existing_data=(
                         config.run_settings.clear_existing_data and not clear_flag_added
@@ -346,6 +349,7 @@ def main():
                     result = cloud_optimised_creation(
                         matching_files,
                         dataset_config=dataset_config,
+                        run_summary=run_summary,
                         handler_class=None,
                         clear_existing_data=(
                             config.run_settings.clear_existing_data
@@ -407,6 +411,7 @@ def main():
         result = cloud_optimised_creation(
             all_files,
             dataset_config=dataset_config,
+            run_summary=run_summary,
             handler_class=None,
             clear_existing_data=config.run_settings.clear_existing_data,
             force_previous_parquet_deletion=config.run_settings.force_previous_parquet_deletion,
@@ -421,7 +426,7 @@ def main():
 
     logger_name = dataset_config.get("logger_name", args.config or "generic")
     dataset_name = dataset_config.get("dataset_name", args.config or "")
-    print_processing_summary(logger_name, dataset_name)
+    run_summary.render(logger_name, dataset_name)
     sys.exit(0)
 
 

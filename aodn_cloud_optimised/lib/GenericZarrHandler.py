@@ -5,7 +5,7 @@ import traceback
 import uuid
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from contextlib import nullcontext
-from functools import partial
+from functools import cached_property, partial
 
 import numcodecs
 import numpy as np
@@ -762,6 +762,7 @@ class GenericHandler(CommonHandler):
 
         self.time_coder = CFDatetimeCoder(use_cftime=True)
 
+    @cached_property
     def _get_decode_times(self):
         """Build decode_times parameter for xarray open operations.
 
@@ -814,7 +815,7 @@ class GenericHandler(CommonHandler):
                 self.store,
                 consolidated=True,
                 decode_cf=True,
-                decode_times=self._get_decode_times(),
+                decode_times=self._get_decode_times,
                 decode_coords=True,
             ) as ds_org:
                 # Compute only the filename variable to memory
@@ -903,7 +904,7 @@ class GenericHandler(CommonHandler):
                 self.store,
                 consolidated=True,
                 decode_cf=True,
-                decode_times=self._get_decode_times(),
+                decode_times=self._get_decode_times,
                 decode_coords=True,
             ) as ds_mod:
                 # assert self.dataset_config["schema_transformation"]["global_attributes"]["set"].items() <= ds_mod.attrs.items()
@@ -1142,6 +1143,7 @@ class GenericHandler(CommonHandler):
                     self.logger.info(
                         f"{self.uuid_log}: Batch {idx + 1} successfully published to Zarr store: {self.store}"
                     )
+                    self.run_summary.record_batch_outcome(idx + 1, "success")
 
                     batch_is_processed = True  # Exit loop
 
@@ -1220,6 +1222,9 @@ class GenericHandler(CommonHandler):
                                 f"{self.uuid_log}: Batch {idx + 1} has exceeded retry limit "
                                 f"({max_retries}). Falling back to individual processing."
                             )
+                            self.run_summary.record_batch_outcome(
+                                idx + 1, "individual_fallback"
+                            )
 
                             self.fallback_to_individual_processing(
                                 batch_files, partial_preprocess, drop_vars_list, idx
@@ -1236,6 +1241,7 @@ class GenericHandler(CommonHandler):
                                 f"Recreating Dask cluster and retrying batch…\nRetry number for failing batch:{retry_count}/{max_retries}"
                                 f"{traceback.format_exc()}"
                             )
+                            self.run_summary.record_batch_retry(idx + 1)
                             self._reset_cluster()
                             batch_is_processed = False
 
@@ -1263,6 +1269,7 @@ class GenericHandler(CommonHandler):
                         f"spatial grid and will be skipped:\n"
                         + "\n".join(f"  - {n}" for n in file_basenames)
                     )
+                    self.run_summary.record_grid_mismatch(idx + 1, file_basenames)
                     batch_is_processed = True
 
                 except Exception as e:
@@ -1696,6 +1703,9 @@ class GenericHandler(CommonHandler):
                     f"{self.uuid_log}: Contact the data provider. "
                     f"Excluding structurally incomplete file from batch: {bad_file}"
                 )
+                self.run_summary.record_bad_file(
+                    "structural", str(bad_file), [os.path.basename(str(bad_file))]
+                )
                 excluded.append(bad_file)
                 remaining = [f for f in remaining if f is not bad_file]
 
@@ -1818,6 +1828,11 @@ class GenericHandler(CommonHandler):
                     f"{dim_name} values that overlap with a preceding file in the batch "
                     f"(file range: [{lo}, {hi}], previous max: {current_max}). "
                     f"Excluding it from this batch."
+                )
+                self.run_summary.record_bad_file(
+                    "time_overlap",
+                    str(getattr(f, "path", str(f))),
+                    [os.path.basename(getattr(f, "path", str(f)))],
                 )
             else:
                 current_max = hi
@@ -1972,6 +1987,12 @@ class GenericHandler(CommonHandler):
             self.logger.error(
                 f"{self.uuid_log}: Contact the data provider. The following files have an inconsistent grid with the rest of the dataset for variable '{variable_name}':\n{problematic_files}"
             )
+            for f in problematic_files:
+                self.run_summary.record_bad_file(
+                    "grid_inconsistency",
+                    str(getattr(f, "path", str(f))),
+                    [os.path.basename(getattr(f, "path", str(f)))],
+                )
         return problematic_files
 
     def _handle_duplicate_regions(
@@ -2004,7 +2025,7 @@ class GenericHandler(CommonHandler):
             self.store,
             consolidated=True,
             decode_cf=True,
-            decode_times=self._get_decode_times(),
+            decode_times=self._get_decode_times,
             decode_coords=True,
         ) as ds_zarr:
             ds_zarr = ds_zarr.unify_chunks()
@@ -2074,11 +2095,14 @@ class GenericHandler(CommonHandler):
             and not any(d in region_dims for d in sub_ds_for_region[v].dims)
         ]
         if auto_incompatible:
-            self.logger.warning(
+            self.logger.error(
                 f"{self.uuid_log}: Auto-dropping variables/coordinates with no dimensions "
                 f"in common with region dims {region_dims}: {auto_incompatible}. "
                 f"Consider adding these to 'vars_incompatible_with_region' in the dataset config."
             )
+            region_dims_str = ", ".join(f"'{d}'" for d in sorted(region_dims))
+            auto_incompatible_str = ", ".join(f"'{v}'" for v in auto_incompatible)
+            self.run_summary.record_config_hint(region_dims_str, auto_incompatible_str)
             sub_ds_for_region = sub_ds_for_region.drop_vars(
                 auto_incompatible, errors="ignore"
             )
@@ -2131,7 +2155,7 @@ class GenericHandler(CommonHandler):
             self.store,
             consolidated=True,
             decode_cf=True,
-            decode_times=self._get_decode_times(),
+            decode_times=self._get_decode_times,
             decode_coords=True,
         ) as ds_stored_zarr:
             # breakpoint()
@@ -2248,6 +2272,10 @@ class GenericHandler(CommonHandler):
                 f"{self.uuid_log}: {len(failed_files)}/{len(batch_files)} file(s) "
                 f"failed during individual fallback for batch {idx + 1}:\n  {file_list}"
             )
+            for f, err in failed_files:
+                self.run_summary.record_individual_failure(
+                    idx + 1, os.path.basename(str(f)), err
+                )
 
     def _concatenate_files_different_engines(
         self, batch_files, partial_preprocess, drop_vars_list
@@ -2294,6 +2322,10 @@ class GenericHandler(CommonHandler):
                 f"{len(failed_files)}/{len(batch_files)} file(s) could not be opened "
                 f"and were excluded from the batch:\n  {file_list}"
             )
+            for f, _err in failed_files:
+                self.run_summary.record_bad_file(
+                    "cant_open", str(f), [os.path.basename(str(f))]
+                )
 
         if not datasets:
             raise RuntimeError(
@@ -2351,7 +2383,7 @@ class GenericHandler(CommonHandler):
         # Use selective decode_times mapping to skip cftime decoding for problematic variables
         # Variables in skip_cftime_decode will remain as numeric (e.g., float64) instead of being
         # converted to datetime64[ns], which is important for time variables with NaN values.
-        decode_times_map = self._get_decode_times()
+        decode_times_map = self._get_decode_times
         skip_vars = (
             [k for k, v in decode_times_map.items() if not v]
             if isinstance(decode_times_map, dict)
@@ -2441,7 +2473,7 @@ class GenericHandler(CommonHandler):
             "engine": engine,
             "mask_and_scale": True,
             "decode_cf": True,
-            "decode_times": self._get_decode_times(),
+            "decode_times": self._get_decode_times,
             "decode_coords": True,
             "drop_variables": drop_vars_list,
         }
@@ -2604,7 +2636,7 @@ class GenericHandler(CommonHandler):
                 self.store,
                 consolidated=True,
                 decode_cf=True,
-                decode_times=self._get_decode_times(),
+                decode_times=self._get_decode_times,
                 decode_coords=True,
             ) as ds_org:
                 ds_org = ds_org.unify_chunks()

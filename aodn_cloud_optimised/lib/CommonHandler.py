@@ -15,6 +15,7 @@ from s3path import PureS3Path
 from .clusterLib import ClusterManager, ClusterMode
 from .config import load_dataset_config, load_variable_from_config
 from .logging import get_logger
+from .run_summary import RunSummary
 
 
 class CommonHandler:
@@ -157,6 +158,8 @@ class CommonHandler:
         self.drop_variables = self.dataset_config.get("schema_transformation", {}).get(
             "drop_variables", []
         )
+
+        self.run_summary = kwargs.get("run_summary") or RunSummary()
 
     def init_s3_filesystems(
         self,
@@ -624,6 +627,7 @@ def _get_generic_handler_class(dataset_config):
 def cloud_optimised_creation(
     s3_file_uri_list: List[str],
     dataset_config: dict,
+    run_summary: "RunSummary | None" = None,
     **kwargs,
 ) -> bool:
     """
@@ -682,6 +686,10 @@ def cloud_optimised_creation(
 
     kwargs_handler_class["optimised_bucket"] = kwargs.get("optimised_bucket", None)
     kwargs_handler_class["source_bucket"] = kwargs.get("source_bucket", None)
+
+    if run_summary is None:
+        run_summary = RunSummary()
+    kwargs_handler_class["run_summary"] = run_summary
 
     # Creating an instance of the specified class with the provided arguments
     start_whole_processing = timeit.default_timer()
