@@ -1,13 +1,13 @@
 {
-  "dataset_name": "animal_satellite_relay_tagging_dive_realtime_qc",
-  "logger_name": "animal_satellite_relay_tagging_dive_realtime_qc",
+  "dataset_name": "animal_diag_satellite_relay_tagging_realtime_qc",
+  "logger_name": "animal_diag_satellite_relay_tagging_realtime_qc",
   "cloud_optimised_format": "parquet",
   "run_settings": {
     "paths": [
       {
         "s3_uri": "s3://imos-data/IMOS/AATAMS/satellite_tagging/ATF_Location_QC_NRT",
         "filter": [
-          ".*_dive_.*_nrt\\.csv$"
+          ".*_diag_.*_nrt\\.csv$"
         ],
         "year_range": []
       }
@@ -43,311 +43,83 @@
     "ptt": {
       "type": "int32"
     },
-    "cnt": {
-      "type": "int32"
-    },
-    "de_date": {
+    "d_date": {
       "type": "timestamp[ns]"
     },
-    "surf_dur": {
+    "lq": {
       "type": "int32"
-    },
-    "dive_dur": {
-      "type": "int32"
-    },
-    "max_dep": {
-      "type": "double"
-    },
-    "d1": {
-      "type": "double"
-    },
-    "d2": {
-      "type": "double"
-    },
-    "d3": {
-      "type": "double"
-    },
-    "d4": {
-      "type": "double"
-    },
-    "v1": {
-      "type": "double"
-    },
-    "v2": {
-      "type": "double"
-    },
-    "v3": {
-      "type": "double"
-    },
-    "v4": {
-      "type": "double"
-    },
-    "v5": {
-      "type": "double"
-    },
-    "travel_r": {
-      "type": "double"
-    },
-    "homedist": {
-      "type": "double"
-    },
-    "bottom": {
-      "type": "double"
-    },
-    "t1": {
-      "type": "double"
-    },
-    "t2": {
-      "type": "double"
-    },
-    "t3": {
-      "type": "double"
-    },
-    "t4": {
-      "type": "double"
-    },
-    "d_speed": {
-      "type": "double"
-    },
-    "n_depths": {
-      "type": "int32"
-    },
-    "n_speeds": {
-      "type": "int32"
-    },
-    "depth_str": {
-      "type": "double"
-    },
-    "speed_str": {
-      "type": "double"
-    },
-    "propn_str": {
-      "type": "double"
-    },
-    "percent_area": {
-      "type": "double"
-    },
-    "residual": {
-      "type": "int32"
-    },
-    "grp_number": {
-      "type": "int32"
-    },
-    "d5": {
-      "type": "double"
-    },
-    "t5": {
-      "type": "double"
-    },
-    "degc_str": {
-      "type": "double"
-    },
-    "illum_str": {
-      "type": "double"
-    },
-    "pca_desc": {
-      "type": "double"
-    },
-    "pca_btm": {
-      "type": "double"
-    },
-    "pca_asc": {
-      "type": "double"
-    },
-    "pca_max_desc": {
-      "type": "double"
-    },
-    "pca_max_btm": {
-      "type": "double"
-    },
-    "pca_max_asc": {
-      "type": "double"
-    },
-    "pca_mean_desc": {
-      "type": "double"
-    },
-    "pca_mean_btm": {
-      "type": "double"
-    },
-    "pca_mean_asc": {
-      "type": "double"
-    },
-    "swim_eff_desc": {
-      "type": "double"
-    },
-    "swim_eff_btm": {
-      "type": "double"
-    },
-    "swim_eff_asc": {
-      "type": "double"
-    },
-    "swim_eff_whole": {
-      "type": "double"
-    },
-    "secs_desc": {
-      "type": "double"
-    },
-    "secs_btm": {
-      "type": "double"
-    },
-    "secs_asc": {
-      "type": "double"
-    },
-    "pitch_desc": {
-      "type": "double"
-    },
-    "pitch_btm": {
-      "type": "double"
-    },
-    "pitch_asc": {
-      "type": "double"
-    },
-    "pitch_str": {
-      "type": "double"
-    },
-    "tagging_id": {
-      "type": "double"
-    },
-    "de_date_tag": {
-      "type": "string"
-    },
-    "qc": {
-      "type": "double"
-    },
-    "d6": {
-      "type": "double"
-    },
-    "d7": {
-      "type": "double"
-    },
-    "d8": {
-      "type": "double"
-    },
-    "d9": {
-      "type": "double"
-    },
-    "d10": {
-      "type": "double"
-    },
-    "d11": {
-      "type": "double"
-    },
-    "d12": {
-      "type": "double"
-    },
-    "d13": {
-      "type": "double"
-    },
-    "d14": {
-      "type": "double"
-    },
-    "d15": {
-      "type": "double"
-    },
-    "d16": {
-      "type": "double"
-    },
-    "d17": {
-      "type": "double"
-    },
-    "d18": {
-      "type": "double"
-    },
-    "d19": {
-      "type": "double"
-    },
-    "d20": {
-      "type": "double"
-    },
-    "d21": {
-      "type": "double"
-    },
-    "d22": {
-      "type": "double"
-    },
-    "d23": {
-      "type": "double"
-    },
-    "d24": {
-      "type": "double"
-    },
-    "d25": {
-      "type": "double"
-    },
-    "t6": {
-      "type": "double"
-    },
-    "t7": {
-      "type": "double"
-    },
-    "t8": {
-      "type": "double"
-    },
-    "t9": {
-      "type": "double"
-    },
-    "t10": {
-      "type": "double"
-    },
-    "t11": {
-      "type": "double"
-    },
-    "t12": {
-      "type": "double"
-    },
-    "t13": {
-      "type": "double"
-    },
-    "t14": {
-      "type": "double"
-    },
-    "t15": {
-      "type": "double"
-    },
-    "t16": {
-      "type": "double"
-    },
-    "t17": {
-      "type": "double"
-    },
-    "t18": {
-      "type": "double"
-    },
-    "t19": {
-      "type": "double"
-    },
-    "t20": {
-      "type": "double"
-    },
-    "t21": {
-      "type": "double"
-    },
-    "t22": {
-      "type": "double"
-    },
-    "t23": {
-      "type": "double"
-    },
-    "t24": {
-      "type": "double"
-    },
-    "t25": {
-      "type": "double"
-    },
-    "ds_date": {
-      "type": "string"
-    },
-    "start_lat": {
-      "type": "double"
-    },
-    "start_lon": {
-      "type": "double"
     },
     "lat": {
       "type": "double"
     },
     "lon": {
       "type": "double"
+    },
+    "alt_lat": {
+      "type": "double"
+    },
+    "alt_lon": {
+      "type": "double"
+    },
+    "n_mess": {
+      "type": "int32"
+    },
+    "n_mess_120": {
+      "type": "int32"
+    },
+    "best_level": {
+      "type": "int32"
+    },
+    "pass_dur": {
+      "type": "int32"
+    },
+    "freq": {
+      "type": "double"
+    },
+    "v_mask": {
+      "type": "int32"
+    },
+    "alt": {
+      "type": "double"
+    },
+    "est_speed": {
+      "type": "double"
+    },
+    "km_from_home": {
+      "type": "double"
+    },
+    "iq": {
+      "type": "int32"
+    },
+    "nops": {
+      "type": "int32"
+    },
+    "deleted": {
+      "type": "double"
+    },
+    "actual_ptt": {
+      "type": "int32"
+    },
+    "error_radius": {
+      "type": "int32"
+    },
+    "semi_major_axis": {
+      "type": "int32"
+    },
+    "semi_minor_axis": {
+      "type": "int32"
+    },
+    "ellipse_orientation": {
+      "type": "int32"
+    },
+    "hdop": {
+      "type": "double"
+    },
+    "satellite": {
+      "type": "double"
+    },
+    "diag_id": {
+      "type": "int32"
     },
     "ssm_lon": {
       "type": "double"
@@ -385,7 +157,7 @@
     "Resources": [
       {
         "Description": "Cloud Optimised AODN dataset of IMOS - Animal Tracking Facility - Satellite Relay Tagging Program - Near real-time data with quality-controlled locations",
-        "ARN": "arn:aws:s3:::aodn-cloud-optimised/animal_satellite_relay_tagging_dive_realtime_qc.parquet",
+        "ARN": "arn:aws:s3:::aodn-cloud-optimised/animal_diag_satellite_relay_tagging_realtime_qc.parquet",
         "Region": "ap-southeast-2",
         "Type": "S3 Bucket"
       }
@@ -394,8 +166,8 @@
       "Tutorials": [
         {
           "Title": "Accessing IMOS - Animal Tracking Facility - Satellite Relay Tagging Program - Near real-time data with quality-controlled locations",
-          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/animal_satellite_relay_tagging_dive_realtime_qc.ipynb",
-          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/animal_satellite_relay_tagging_dive_realtime_qc.ipynb",
+          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/animal_diag_satellite_relay_tagging_realtime_qc.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/animal_diag_satellite_relay_tagging_realtime_qc.ipynb",
           "AuthorName": "Laurent Besnard",
           "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
         },
@@ -417,9 +189,9 @@
         "NaN"
       ],
       "encoding": "utf-8",
-      "index_col": "de_date",
+      "index_col": "d_date",
       "parse_dates": [
-        "de_date"
+        "d_date"
       ]
     }
   },
@@ -456,7 +228,7 @@
         "source_variable": "timestamp",
         "type": "time_extent",
         "time_extent": {
-          "time_varname": "de_date",
+          "time_varname": "d_date",
           "partition_period": "Y"
         }
       },

@@ -1,13 +1,13 @@
 {
-  "dataset_name": "animal_satellite_relay_tagging_diag_realtime_qc",
-  "logger_name": "animal_satellite_relay_tagging_diag_realtime_qc",
+  "dataset_name": "animal_ssmoutputs_satellite_relay_tagging_realtime_qc",
+  "logger_name": "animal_ssmoutputs_satellite_relay_tagging_realtime_qc",
   "cloud_optimised_format": "parquet",
   "run_settings": {
     "paths": [
       {
         "s3_uri": "s3://imos-data/IMOS/AATAMS/satellite_tagging/ATF_Location_QC_NRT",
         "filter": [
-          ".*_diag_.*_nrt\\.csv$"
+          ".*_ssmoutputs_.*_nrt\\.csv$"
         ],
         "year_range": []
       }
@@ -40,103 +40,43 @@
     "ref": {
       "type": "string"
     },
-    "ptt": {
-      "type": "int32"
-    },
-    "d_date": {
+    "date": {
       "type": "timestamp[ns]"
-    },
-    "lq": {
-      "type": "int32"
-    },
-    "lat": {
-      "type": "double"
     },
     "lon": {
       "type": "double"
     },
-    "alt_lat": {
+    "lat": {
       "type": "double"
     },
-    "alt_lon": {
+    "x": {
       "type": "double"
     },
-    "n_mess": {
-      "type": "int32"
-    },
-    "n_mess_120": {
-      "type": "int32"
-    },
-    "best_level": {
-      "type": "int32"
-    },
-    "pass_dur": {
-      "type": "int32"
-    },
-    "freq": {
+    "y": {
       "type": "double"
     },
-    "v_mask": {
-      "type": "int32"
-    },
-    "alt": {
+    "x_se": {
       "type": "double"
     },
-    "est_speed": {
+    "y_se": {
       "type": "double"
     },
-    "km_from_home": {
+    "u": {
       "type": "double"
     },
-    "iq": {
-      "type": "int32"
-    },
-    "nops": {
-      "type": "int32"
-    },
-    "deleted": {
+    "v": {
       "type": "double"
     },
-    "actual_ptt": {
-      "type": "int32"
-    },
-    "error_radius": {
-      "type": "int32"
-    },
-    "semi_major_axis": {
-      "type": "int32"
-    },
-    "semi_minor_axis": {
-      "type": "int32"
-    },
-    "ellipse_orientation": {
-      "type": "int32"
-    },
-    "hdop": {
+    "u_se": {
       "type": "double"
     },
-    "satellite": {
+    "v_se": {
       "type": "double"
     },
-    "diag_id": {
-      "type": "int32"
-    },
-    "ssm_lon": {
+    "s": {
       "type": "double"
     },
-    "ssm_lat": {
-      "type": "double"
-    },
-    "ssm_x": {
-      "type": "double"
-    },
-    "ssm_y": {
-      "type": "double"
-    },
-    "ssm_x_se": {
-      "type": "double"
-    },
-    "ssm_y_se": {
+    "s_se": {
       "type": "double"
     },
     "cid": {
@@ -157,7 +97,7 @@
     "Resources": [
       {
         "Description": "Cloud Optimised AODN dataset of IMOS - Animal Tracking Facility - Satellite Relay Tagging Program - Near real-time data with quality-controlled locations",
-        "ARN": "arn:aws:s3:::aodn-cloud-optimised/animal_satellite_relay_tagging_diag_realtime_qc.parquet",
+        "ARN": "arn:aws:s3:::aodn-cloud-optimised/animal_ssmoutputs_satellite_relay_tagging_realtime_qc.parquet",
         "Region": "ap-southeast-2",
         "Type": "S3 Bucket"
       }
@@ -166,8 +106,8 @@
       "Tutorials": [
         {
           "Title": "Accessing IMOS - Animal Tracking Facility - Satellite Relay Tagging Program - Near real-time data with quality-controlled locations",
-          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/animal_satellite_relay_tagging_diag_realtime_qc.ipynb",
-          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/animal_satellite_relay_tagging_diag_realtime_qc.ipynb",
+          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/animal_ssmoutputs_satellite_relay_tagging_realtime_qc.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/animal_ssmoutputs_satellite_relay_tagging_realtime_qc.ipynb",
           "AuthorName": "Laurent Besnard",
           "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
         },
@@ -189,9 +129,9 @@
         "NaN"
       ],
       "encoding": "utf-8",
-      "index_col": "d_date",
+      "index_col": "date",
       "parse_dates": [
-        "d_date"
+        "date"
       ]
     }
   },
@@ -228,7 +168,7 @@
         "source_variable": "timestamp",
         "type": "time_extent",
         "time_extent": {
-          "time_varname": "d_date",
+          "time_varname": "date",
           "partition_period": "Y"
         }
       },

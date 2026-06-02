@@ -55,7 +55,7 @@ from shapely.geometry import MultiPolygon, Polygon
 from tqdm.notebook import tqdm
 from windrose import WindroseAxes
 
-__version__ = "0.3.18"
+__version__ = "0.3.20"
 
 REGION: Final[str] = "ap-southeast-2"
 ENDPOINT_URL = "https://s3.ap-southeast-2.amazonaws.com"
@@ -91,7 +91,30 @@ GLOBAL_VIEW_STATE: Final[pydeck.ViewState] = pydeck.ViewState(
     bearing=0,
 )
 
-TIME_VAR_CANDIDATES = ("TIME", "JULD", "detection_timestamp", "eventDate")
+TIME_VAR_CANDIDATES = (
+    "TIME",
+    # "Argo"
+    "JULD",
+    "juld_location",
+    "detection_timestamp",
+    # NESP products
+    "eventDate",
+    # Animal Tracking datasets below
+    "end_date",
+    "s_date",
+    "d_date",
+    "de_date",
+)
+
+# Zarr datasets may use lowercase or alternative datetime coordinate names.
+# ZARR_TIME_VAR_CANDIDATES extends the common list with those variants.
+ZARR_TIME_VAR_CANDIDATES = (
+    "time",
+    "datetime",
+    "date",
+    "Date",
+    "DateTime",
+) + TIME_VAR_CANDIDATES
 
 
 class PolygonNotIntersectingError(ValueError):
@@ -741,13 +764,13 @@ def create_time_filter(dataset: ds.Dataset, **kwargs) -> pc.Expression:
 
     if not time_varname:
         names = dataset.schema.names
-        for candidate in ("TIME", "JULD", "detection_timestamp", "eventDate"):
+        for candidate in TIME_VAR_CANDIDATES:
             if candidate in names:
                 time_varname = candidate
                 break
         else:
             raise ValueError(
-                "No known time variable ('TIME', 'JULD', 'detection_timestamp', 'eventDate') found in dataset schema"
+                f"No known time variable found in dataset schema. Candidates: {list(TIME_VAR_CANDIDATES)}"
             )
 
     expr3 = pc.field(time_varname) >= pd.to_datetime(date_start)
@@ -2335,7 +2358,7 @@ class DataSource(ABC):
         for name, meta in all_vars.items():
             low = name.lower()
             role = "DATA"
-            if low in ("time", "juld", "juld_location", "detection_timestamp"):
+            if name in ZARR_TIME_VAR_CANDIDATES:
                 role = "TIME_AXIS"
             elif low in ("latitude", "lat"):
                 role = "LAT"
@@ -2868,23 +2891,10 @@ class ZarrDataSource(DataSource):
             ds = ds.unify_chunks()
 
             # Find the time variable name to sort by
-            time_names = [
-                "time",
-                "TIME",
-                "datetime",
-                "date",
-                "Date",
-                "DateTime",
-                "JULD",
-            ]
-            # We need a logger instance here if _find_var_name uses it.
-            # Since _find_var_name is part of ZarrDataSource, it can call self.get_logger()
-            # However, _open_zarr_store is called in __init__ before logger might be fully set up by CommonHandler if not careful.
-            # For now, assuming _find_var_name_global can access a logger or doesn't strictly need it for this path.
-            # A safer approach might be to pass a logger or make _find_var_name_global static if it doesn't need self.
-            # Let's assume self.get_logger() is available or _find_var_name_global handles its absence.
             try:
-                time_var_name = _find_var_name_global(ds, time_names, "time")
+                time_var_name = _find_var_name_global(
+                    ds, list(ZARR_TIME_VAR_CANDIDATES), "time"
+                )
                 return ds.sortby(time_var_name)
             except ValueError as ve:
                 # Log this, but still return the unsorted dataset if time var not found for sorting.
@@ -2998,16 +3008,9 @@ class ZarrDataSource(DataSource):
 
         # Time slicing
         if date_start is not None or date_end is not None:
-            time_names = [
-                "time",
-                "TIME",
-                "datetime",
-                "date",
-                "Date",
-                "DateTime",
-                "JULD",
-            ]
-            time_var_name = _find_var_name_global(ds, time_names, "time")
+            time_var_name = _find_var_name_global(
+                ds, list(ZARR_TIME_VAR_CANDIDATES), "time"
+            )
             selectors[time_var_name] = slice(date_start, date_end)
 
         # Latitude slicing
@@ -3142,7 +3145,7 @@ class ZarrDataSource(DataSource):
 
         time_var_name = _find_var_name_global(
             self.zarr_store,
-            ["time", "TIME", "datetime", "date", "Date", "DateTime", "JULD"],
+            list(ZARR_TIME_VAR_CANDIDATES),
             "time",
         )
 
@@ -3192,7 +3195,7 @@ class ZarrDataSource(DataSource):
 
         time_var_name = _find_var_name_global(
             self.zarr_store,
-            ["time", "TIME", "datetime", "date", "Date", "DateTime", "JULD"],
+            list(ZARR_TIME_VAR_CANDIDATES),
             "time",
         )
 
@@ -3250,7 +3253,7 @@ class ZarrDataSource(DataSource):
             if time_name_override
             else _find_var_name_global(
                 ds,
-                ["time", "TIME", "datetime", "date", "Date", "DateTime", "JULD"],
+                list(ZARR_TIME_VAR_CANDIDATES),
                 "time",
             )
         )
@@ -3490,7 +3493,7 @@ class ZarrDataSource(DataSource):
             if time_name_override
             else _find_var_name_global(
                 ds,
-                ["time", "TIME", "datetime", "date", "Date", "DateTime", "JULD"],
+                list(ZARR_TIME_VAR_CANDIDATES),
                 "time",
             )
         )
@@ -3810,7 +3813,7 @@ class ZarrDataSource(DataSource):
             if time_name_override
             else _find_var_name_global(
                 ds,
-                ["time", "TIME", "datetime", "date", "Date", "DateTime", "JULD"],
+                list(ZARR_TIME_VAR_CANDIDATES),
                 "time",
             )
         )

@@ -1,13 +1,13 @@
 {
-  "dataset_name": "animal_satellite_relay_tagging_haulout_realtime_qc",
-  "logger_name": "animal_satellite_relay_tagging_haulout_realtime_qc",
+  "dataset_name": "animal_ctd_satellite_relay_tagging_realtime_qc",
+  "logger_name": "animal_ctd_satellite_relay_tagging_realtime_qc",
   "cloud_optimised_format": "parquet",
   "run_settings": {
     "paths": [
       {
         "s3_uri": "s3://imos-data/IMOS/AATAMS/satellite_tagging/ATF_Location_QC_NRT",
         "filter": [
-          ".*_haulout_.*_nrt\\.csv$"
+          ".*_ctd_.*_nrt\\.csv$"
         ],
         "year_range": []
       }
@@ -43,47 +43,86 @@
     "ptt": {
       "type": "int32"
     },
-    "s_date": {
+    "end_date": {
       "type": "timestamp[ns]"
     },
-    "e_date": {
+    "max_dbar": {
+      "type": "double"
+    },
+    "num": {
+      "type": "int32"
+    },
+    "n_temp": {
+      "type": "int32"
+    },
+    "n_cond": {
+      "type": "double"
+    },
+    "n_sal": {
+      "type": "int32"
+    },
+    "temp_dbar": {
+      "type": "double"
+    },
+    "temp_vals": {
+      "type": "double"
+    },
+    "cond_dbar": {
+      "type": "double"
+    },
+    "cond_vals": {
+      "type": "double"
+    },
+    "sal_dbar": {
+      "type": "double"
+    },
+    "sal_vals": {
+      "type": "double"
+    },
+    "n_fluoro": {
+      "type": "double"
+    },
+    "fluoro_dbar": {
+      "type": "double"
+    },
+    "fluoro_vals": {
+      "type": "double"
+    },
+    "n_oxy": {
+      "type": "double"
+    },
+    "oxy_dbar": {
+      "type": "double"
+    },
+    "oxy_vals": {
+      "type": "double"
+    },
+    "qc_profile": {
+      "type": "int32"
+    },
+    "qc_temp": {
+      "type": "double"
+    },
+    "qc_sal": {
+      "type": "double"
+    },
+    "sal_corrected_vals": {
+      "type": "double"
+    },
+    "created": {
       "type": "string"
     },
-    "haulout_number": {
-      "type": "int32"
-    },
-    "cnt": {
-      "type": "int32"
-    },
-    "phosi_secs": {
-      "type": "int32"
-    },
-    "wet_n": {
-      "type": "double"
-    },
-    "wet_min": {
-      "type": "double"
-    },
-    "wet_max": {
-      "type": "double"
-    },
-    "wet_mean": {
-      "type": "double"
-    },
-    "wet_sd": {
-      "type": "double"
-    },
-    "tagging_id": {
-      "type": "double"
-    },
-    "s_date_tag": {
+    "modified": {
       "type": "string"
     },
-    "e_date_tag": {
-      "type": "string"
+    "n_photo": {
+      "type": "double"
     },
-    "end_number": {
-      "type": "int32"
+    "photo_dbar": {
+      "type": "double"
+    },
+    "photo_vals": {
+      "type": "double"
     },
     "lat": {
       "type": "double"
@@ -127,7 +166,7 @@
     "Resources": [
       {
         "Description": "Cloud Optimised AODN dataset of IMOS - Animal Tracking Facility - Satellite Relay Tagging Program - Near real-time data with quality-controlled locations",
-        "ARN": "arn:aws:s3:::aodn-cloud-optimised/animal_satellite_relay_tagging_haulout_realtime_qc.parquet",
+        "ARN": "arn:aws:s3:::aodn-cloud-optimised/animal_ctd_satellite_relay_tagging_realtime_qc.parquet",
         "Region": "ap-southeast-2",
         "Type": "S3 Bucket"
       }
@@ -136,8 +175,8 @@
       "Tutorials": [
         {
           "Title": "Accessing IMOS - Animal Tracking Facility - Satellite Relay Tagging Program - Near real-time data with quality-controlled locations",
-          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/animal_satellite_relay_tagging_haulout_realtime_qc.ipynb",
-          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/animal_satellite_relay_tagging_haulout_realtime_qc.ipynb",
+          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/animal_ctd_satellite_relay_tagging_realtime_qc.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/animal_ctd_satellite_relay_tagging_realtime_qc.ipynb",
           "AuthorName": "Laurent Besnard",
           "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
         },
@@ -159,9 +198,9 @@
         "NaN"
       ],
       "encoding": "utf-8",
-      "index_col": "s_date",
+      "index_col": "end_date",
       "parse_dates": [
-        "s_date"
+        "end_date"
       ]
     }
   },
@@ -198,7 +237,7 @@
         "source_variable": "timestamp",
         "type": "time_extent",
         "time_extent": {
-          "time_varname": "s_date",
+          "time_varname": "end_date",
           "partition_period": "Y"
         }
       },

@@ -1,13 +1,13 @@
 {
-  "dataset_name": "animal_satellite_relay_tagging_ssmoutputs_realtime_qc",
-  "logger_name": "animal_satellite_relay_tagging_ssmoutputs_realtime_qc",
+  "dataset_name": "animal_summary_satellite_relay_tagging_realtime_qc",
+  "logger_name": "animal_summary_satellite_relay_tagging_realtime_qc",
   "cloud_optimised_format": "parquet",
   "run_settings": {
     "paths": [
       {
         "s3_uri": "s3://imos-data/IMOS/AATAMS/satellite_tagging/ATF_Location_QC_NRT",
         "filter": [
-          ".*_ssmoutputs_.*_nrt\\.csv$"
+          ".*_summary_.*_nrt\\.csv$"
         ],
         "year_range": []
       }
@@ -40,43 +40,172 @@
     "ref": {
       "type": "string"
     },
-    "date": {
+    "ptt": {
+      "type": "int32"
+    },
+    "cnt": {
+      "type": "int32"
+    },
+    "s_date": {
       "type": "timestamp[ns]"
     },
-    "lon": {
+    "e_date": {
+      "type": "string"
+    },
+    "div_dist": {
       "type": "double"
     },
-    "lat": {
+    "surf_tm": {
       "type": "double"
     },
-    "x": {
+    "dive_tm": {
       "type": "double"
     },
-    "y": {
+    "haul_tm": {
       "type": "double"
     },
-    "x_se": {
+    "n_cycles": {
+      "type": "int32"
+    },
+    "av_depth": {
       "type": "double"
     },
-    "y_se": {
+    "max_depth": {
       "type": "double"
     },
-    "u": {
+    "cruise_tm": {
       "type": "double"
     },
-    "v": {
+    "avg_sst": {
       "type": "double"
     },
-    "u_se": {
+    "avg_speed": {
       "type": "double"
     },
-    "v_se": {
+    "sd_depth": {
       "type": "double"
     },
-    "s": {
+    "av_dur": {
+      "type": "int32"
+    },
+    "sd_dur": {
+      "type": "int32"
+    },
+    "max_dur": {
+      "type": "int32"
+    },
+    "dp_n_cycles": {
       "type": "double"
     },
-    "s_se": {
+    "dp_av_depth": {
+      "type": "double"
+    },
+    "dp_max_depth": {
+      "type": "double"
+    },
+    "dp_avg_speed": {
+      "type": "double"
+    },
+    "dp_sd_depth": {
+      "type": "double"
+    },
+    "dp_av_dur": {
+      "type": "double"
+    },
+    "dp_sd_dur": {
+      "type": "double"
+    },
+    "dp_max_dur": {
+      "type": "double"
+    },
+    "dp_dive_tm": {
+      "type": "double"
+    },
+    "av_surf_dur": {
+      "type": "double"
+    },
+    "sd_surf_dur": {
+      "type": "double"
+    },
+    "max_surf_dur": {
+      "type": "double"
+    },
+    "dp_av_surf_dur": {
+      "type": "double"
+    },
+    "dp_sd_surf_dur": {
+      "type": "double"
+    },
+    "dp_max_surf_dur": {
+      "type": "double"
+    },
+    "pca": {
+      "type": "double"
+    },
+    "swim_eff_desc": {
+      "type": "double"
+    },
+    "swim_eff_asc": {
+      "type": "double"
+    },
+    "swim_eff_whole": {
+      "type": "double"
+    },
+    "secs_desc": {
+      "type": "double"
+    },
+    "secs_asc": {
+      "type": "double"
+    },
+    "pitch_desc": {
+      "type": "double"
+    },
+    "pitch_asc": {
+      "type": "double"
+    },
+    "av_haulout_dur": {
+      "type": "double"
+    },
+    "sd_haulout_dur": {
+      "type": "double"
+    },
+    "max_haulout_dur": {
+      "type": "double"
+    },
+    "av_phosi_dur": {
+      "type": "double"
+    },
+    "sd_phosi_dur": {
+      "type": "double"
+    },
+    "max_phosi_dur": {
+      "type": "double"
+    },
+    "tagging_id": {
+      "type": "double"
+    },
+    "s_date_tag": {
+      "type": "string"
+    },
+    "e_date_tag": {
+      "type": "string"
+    },
+    "ssm_lon": {
+      "type": "double"
+    },
+    "ssm_lat": {
+      "type": "double"
+    },
+    "ssm_x": {
+      "type": "double"
+    },
+    "ssm_y": {
+      "type": "double"
+    },
+    "ssm_x_se": {
+      "type": "double"
+    },
+    "ssm_y_se": {
       "type": "double"
     },
     "cid": {
@@ -97,7 +226,7 @@
     "Resources": [
       {
         "Description": "Cloud Optimised AODN dataset of IMOS - Animal Tracking Facility - Satellite Relay Tagging Program - Near real-time data with quality-controlled locations",
-        "ARN": "arn:aws:s3:::aodn-cloud-optimised/animal_satellite_relay_tagging_ssmoutputs_realtime_qc.parquet",
+        "ARN": "arn:aws:s3:::aodn-cloud-optimised/animal_summary_satellite_relay_tagging_realtime_qc.parquet",
         "Region": "ap-southeast-2",
         "Type": "S3 Bucket"
       }
@@ -106,8 +235,8 @@
       "Tutorials": [
         {
           "Title": "Accessing IMOS - Animal Tracking Facility - Satellite Relay Tagging Program - Near real-time data with quality-controlled locations",
-          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/animal_satellite_relay_tagging_ssmoutputs_realtime_qc.ipynb",
-          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/animal_satellite_relay_tagging_ssmoutputs_realtime_qc.ipynb",
+          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/animal_summary_satellite_relay_tagging_realtime_qc.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/animal_summary_satellite_relay_tagging_realtime_qc.ipynb",
           "AuthorName": "Laurent Besnard",
           "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
         },
@@ -129,9 +258,9 @@
         "NaN"
       ],
       "encoding": "utf-8",
-      "index_col": "date",
+      "index_col": "s_date",
       "parse_dates": [
-        "date"
+        "s_date"
       ]
     }
   },
@@ -168,7 +297,7 @@
         "source_variable": "timestamp",
         "type": "time_extent",
         "time_extent": {
-          "time_varname": "date",
+          "time_varname": "s_date",
           "partition_period": "Y"
         }
       },
@@ -176,8 +305,8 @@
         "source_variable": "polygon",
         "type": "spatial_extent",
         "spatial_extent": {
-          "lat_varname": "lat",
-          "lon_varname": "lon",
+          "lat_varname": "ssm_lat",
+          "lon_varname": "ssm_lon",
           "spatial_resolution": 20
         }
       }
