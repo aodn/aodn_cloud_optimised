@@ -55,7 +55,7 @@ from shapely.geometry import MultiPolygon, Polygon
 from tqdm.notebook import tqdm
 from windrose import WindroseAxes
 
-__version__ = "0.3.20"
+__version__ = "0.3.21"
 
 REGION: Final[str] = "ap-southeast-2"
 ENDPOINT_URL = "https://s3.ap-southeast-2.amazonaws.com"
@@ -773,8 +773,16 @@ def create_time_filter(dataset: ds.Dataset, **kwargs) -> pc.Expression:
                 f"No known time variable found in dataset schema. Candidates: {list(TIME_VAR_CANDIDATES)}"
             )
 
-    expr3 = pc.field(time_varname) >= pd.to_datetime(date_start)
-    expr4 = pc.field(time_varname) <= pd.to_datetime(date_end)
+    # Cast comparison scalars to the exact PyArrow type of the time column so
+    # that precision (ns vs s) and timezone always match, avoiding
+    # ArrowNotImplementedError when the column is e.g. timestamp[ns, tz=UTC].
+    time_field_type = dataset.schema.field(time_varname).type
+    ts_start = pa.scalar(
+        ensure_utc_aware(pd.to_datetime(date_start)), type=time_field_type
+    )
+    ts_end = pa.scalar(ensure_utc_aware(pd.to_datetime(date_end)), type=time_field_type)
+    expr3 = pc.field(time_varname) >= ts_start
+    expr4 = pc.field(time_varname) <= ts_end
 
     expression = expr1 & expr2 & expr3 & expr4
     return expression
