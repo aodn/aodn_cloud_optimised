@@ -95,10 +95,10 @@
       "type": "string"
     },
     "qc_start_date": {
-      "type": "string"
+      "type": "timestamp[ns]"
     },
     "qc_end_date": {
-      "type": "string"
+      "type": "timestamp[ns]"
     },
     "qc_method": {
       "type": "string"
@@ -159,9 +159,11 @@
         "NaN"
       ],
       "encoding": "utf-8",
-      "index_col": "release_date",
+      "index_col": "qc_start_date",
       "parse_dates": [
-        "release_date"
+        "release_date",
+        "qc_start_date",
+        "qc_end_date"
       ]
     }
   },

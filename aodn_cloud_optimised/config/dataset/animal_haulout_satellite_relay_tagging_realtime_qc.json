@@ -47,7 +47,7 @@
       "type": "timestamp[ns]"
     },
     "e_date": {
-      "type": "string"
+      "type": "timestamp[ns]"
     },
     "haulout_number": {
       "type": "int32"
@@ -161,7 +161,8 @@
       "encoding": "utf-8",
       "index_col": "s_date",
       "parse_dates": [
-        "s_date"
+        "s_date",
+        "e_date"
       ]
     }
   },
