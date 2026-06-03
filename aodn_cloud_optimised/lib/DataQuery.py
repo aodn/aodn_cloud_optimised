@@ -55,7 +55,7 @@ from shapely.geometry import MultiPolygon, Polygon
 from tqdm.notebook import tqdm
 from windrose import WindroseAxes
 
-__version__ = "0.3.22"
+__version__ = "0.3.23"
 
 REGION: Final[str] = "ap-southeast-2"
 ENDPOINT_URL = "https://s3.ap-southeast-2.amazonaws.com"
@@ -91,32 +91,61 @@ GLOBAL_VIEW_STATE: Final[pydeck.ViewState] = pydeck.ViewState(
     bearing=0,
 )
 
-TIME_VAR_CANDIDATES = (
-    "TIME",
-    # "Argo"
-    "JULD",
-    "juld_location",
-    "detection_timestamp",
-    # NESP products
-    "eventDate",
-    # Animal Tracking datasets below
-    "end_date",
-    "s_date",
-    "d_date",
-    "de_date",
-    "qc_start_date",
-    "date",
-)
-
-# Zarr datasets may use lowercase or alternative datetime coordinate names.
-# ZARR_TIME_VAR_CANDIDATES extends the common list with those variants.
-ZARR_TIME_VAR_CANDIDATES = (
-    "time",
-    "datetime",
-    "date",
-    "Date",
-    "DateTime",
-) + TIME_VAR_CANDIDATES
+# Variable candidates for time, latitude, longitude, and depth.
+# Organized by format (PARQUET/ZARR) to support both PyArrow and xarray datasets.
+VARIABLE_CANDIDATES: Final[dict[str, dict[str, tuple[str, ...]]]] = {
+    "PARQUET": {
+        "TIME": (
+            "TIME",
+            # "Argo"
+            "JULD",
+            "juld_location",
+            "detection_timestamp",
+            # NESP products
+            "eventDate",
+            # Animal Tracking datasets below
+            "end_date",
+            "s_date",
+            "d_date",
+            "de_date",
+            "qc_start_date",
+            "date",
+        ),
+        "LAT": ("LATITUDE", "latitude", "LAT", "lat"),
+        "LON": ("LONGITUDE", "longitude", "LON", "lon"),
+        "DEPTH": (
+            "DEPTH",
+            "depth",
+            "PRES",
+            "pres",
+            "PRES_ADJUSTED",
+            "pres_adjusted",
+            "NOMINAL_DEPTH",
+            "nominal_depth",
+        ),
+    },
+    "ZARR": {
+        "TIME": (
+            "time",
+            "datetime",
+            "date",
+            "Date",
+            "DateTime",
+        ),
+        "LAT": ("latitude", "lat", "LATITUDE", "LAT"),
+        "LON": ("longitude", "lon", "LONGITUDE", "LON"),
+        "DEPTH": (
+            "depth",
+            "nominal_depth",
+            "pres",
+            "pres_adjusted",
+            "DEPTH",
+            "PRES",
+            "PRES_ADJUSTED",
+            "NOMINAL_DEPTH",
+        ),
+    },
+}
 
 
 class PolygonNotIntersectingError(ValueError):
@@ -485,14 +514,11 @@ def get_temporal_extent(
     unique_timestamps = np.sort(unique_timestamps)
 
     # Detect the time variable name in the schema
-    names = dataset.schema.names
-    time_varname = time_varname or next(
-        (c for c in TIME_VAR_CANDIDATES if c in names), None
-    )
     if not time_varname:
-        raise ValueError(
-            f"No known time variable found in dataset. Candidates: {list(TIME_VAR_CANDIDATES)}"
-        )
+        try:
+            time_varname = find_coord_var(dataset, "TIME", format_type="PARQUET")
+        except ValueError as e:
+            raise ValueError(f"No known time variable found in dataset. {e}") from e
 
     # Single scan across both boundary partitions with explicit readahead.
     # fragment_readahead=8 tells pyarrow to prefetch up to 8 Parquet files
@@ -568,9 +594,9 @@ def create_bbox_filter(dataset: ds.Dataset, **kwargs) -> pc.Expression:
             lat_min (float): Minimum latitude.
             lat_max (float): Maximum latitude.
             lat_varname (str, optional): Name of the latitude variable.
-                Defaults to "LATITUDE".
+                If None, automatically detected using find_coord_var().
             lon_varname (str, optional): Name of the longitude variable.
-                Defaults to "LONGITUDE".
+                If None, automatically detected using find_coord_var().
 
     Returns:
         A PyArrow compute expression suitable for the `filters` argument in
@@ -585,8 +611,14 @@ def create_bbox_filter(dataset: ds.Dataset, **kwargs) -> pc.Expression:
     lat_min = kwargs.get("lat_min")
     lat_max = kwargs.get("lat_max")
 
-    lat_varname = kwargs.get("lat_varname", "LATITUDE")
-    lon_varname = kwargs.get("lon_varname", "LONGITUDE")
+    # Use find_coord_var to detect coordinate names if not provided
+    lat_varname = kwargs.get("lat_varname")
+    if lat_varname is None:
+        lat_varname = find_coord_var(dataset, "LAT", format_type="PARQUET")
+
+    lon_varname = kwargs.get("lon_varname")
+    if lon_varname is None:
+        lon_varname = find_coord_var(dataset, "LON", format_type="PARQUET")
 
     if None in (lon_min, lon_max, lat_min, lat_max):
         raise ValueError("Bounding box coordinates must be provided.")
@@ -703,8 +735,8 @@ def create_time_filter(dataset: ds.Dataset, **kwargs) -> pc.Expression:
         **kwargs: Keyword arguments defining the time range and variable name.
             date_start (str): Start date string (e.g., "YYYY-MM-DD").
             date_end (str): End date string (e.g., "YYYY-MM-DD").
-            time_varname (str, optional): Name of the time variable. Defaults
-                to "TIME", but checks for "JULD" if "TIME" is not present.
+            time_varname (str, optional): Name of the time variable.
+                If None, automatically detected using find_coord_var().
 
     Returns:
         A PyArrow compute expression suitable for the `filters` argument in
@@ -715,7 +747,7 @@ def create_time_filter(dataset: ds.Dataset, **kwargs) -> pc.Expression:
     """
     date_start = kwargs.get("date_start")
     date_end = kwargs.get("date_end")
-    time_varname = kwargs.get("time_varname", None)
+    time_varname = kwargs.get("time_varname")
 
     if None in (date_start, date_end):
         raise ValueError("Start and end dates must be provided.")
@@ -765,15 +797,12 @@ def create_time_filter(dataset: ds.Dataset, **kwargs) -> pc.Expression:
     expr2 = pc.field("timestamp") <= _timestamp_scalar(timestamp_end, dataset)
 
     if not time_varname:
-        names = dataset.schema.names
-        for candidate in TIME_VAR_CANDIDATES:
-            if candidate in names:
-                time_varname = candidate
-                break
-        else:
+        try:
+            time_varname = find_coord_var(dataset, "TIME", format_type="PARQUET")
+        except ValueError as e:
             raise ValueError(
-                f"No known time variable found in dataset schema. Candidates: {list(TIME_VAR_CANDIDATES)}"
-            )
+                f"No known time variable found in dataset schema. {e}"
+            ) from e
 
     # Cast comparison scalars to the exact PyArrow type of the time column so
     # that precision (ns vs s) and timezone always match, avoiding
@@ -879,9 +908,9 @@ def create_timeseries(
     lon,
     start_time,
     end_time,
-    lat_name="lat",
-    lon_name="lon",
-    time_name="time",
+    lat_name: str | None = None,
+    lon_name: str | None = None,
+    time_name: str | None = None,
 ) -> pd.DataFrame:
     """Extracts and plots a time series for a variable at the nearest point.
 
@@ -898,10 +927,11 @@ def create_timeseries(
         start_time: The start time string (e.g., "YYYY-MM-DD").
         end_time: The end time string (e.g., "YYYY-MM-DD").
         lat_name: The name of the latitude coordinate/variable in `ds`.
-            Defaults to "lat".
+            If None, automatically detected using find_coord_var().
         lon_name: The name of the longitude coordinate/variable in `ds`.
-            Defaults to "lon".
-        time_name: The name of the time coordinate in `ds`. Defaults to "time".
+            If None, automatically detected using find_coord_var().
+        time_name: The name of the time coordinate in `ds`.
+            If None, automatically detected using find_coord_var().
 
     Returns:
         A pandas DataFrame containing the extracted time series data with
@@ -913,12 +943,18 @@ def create_timeseries(
             outside the bounds of the dataset.
     """
 
+    # Auto-detect coordinate names if not provided
+    if lat_name is None:
+        lat_name = find_coord_var(ds, "LAT", format_type="ZARR")
+    if lon_name is None:
+        lon_name = find_coord_var(ds, "LON", format_type="ZARR")
+    if time_name is None:
+        time_name = find_coord_var(ds, "TIME", format_type="ZARR")
+
     start_time = normalize_date(start_time)
     end_time = normalize_date(end_time)
 
     ds = ds.sortby(time_name)
-
-    # Get latitude, longitude, and time extents
     lat_min, lat_max = safe_item(ds[lat_name].min()), safe_item(ds[lat_name].max())
     lon_min, lon_max = safe_item(ds[lon_name].min()), safe_item(ds[lon_name].max())
     time_min, time_max = (
@@ -1237,7 +1273,7 @@ def create_h3_hexagon_map(
     return deck
 
 
-def plot_time_coverage(ds: xr.Dataset, time_var: str = "time") -> None:
+def plot_time_coverage(ds: xr.Dataset, time_var: str | None = None) -> None:
     """Plots a heatmap showing the temporal data coverage (data points per month).
 
     Calculates the number of data points for each year/month combination based
@@ -1247,8 +1283,12 @@ def plot_time_coverage(ds: xr.Dataset, time_var: str = "time") -> None:
     Args:
         ds: The input xarray Dataset.
         time_var: The name of the time coordinate variable in `ds`.
-            Defaults to "time".
+            If None, automatically detected using find_coord_var().
     """
+    # Auto-detect time variable if not provided
+    if time_var is None:
+        time_var = find_coord_var(ds, "TIME", format_type="ZARR")
+
     # Convert the time dimension to a pandas DatetimeIndex
     ds = ds.sortby(time_var)
 
@@ -1301,7 +1341,10 @@ def plot_time_coverage(ds: xr.Dataset, time_var: str = "time") -> None:
 
 
 def plot_radar_water_velocity_rose(
-    ds: xr.Dataset, date_start: str, date_end: str, time_name_override: str = "TIME"
+    ds: xr.Dataset,
+    date_start: str,
+    date_end: str,
+    time_name_override: str | None = None,
 ) -> None:
     """Plots a velocity rose (similar to wind rose) for radar data.
 
@@ -1314,8 +1357,13 @@ def plot_radar_water_velocity_rose(
             'LONGITUDE', 'LATITUDE', and a time coordinate.
         date_start: The start time string for averaging (e.g., "YYYY-MM-DDTHH:MM:SS").
         date_end: The end time string for averaging (e.g., "YYYY-MM-DDTHH:MM:SS").
-        time_name_override: The name of the time coordinate in `ds`. Defaults to "TIME".
+        time_name_override: The name of the time coordinate in `ds`.
+            If None, automatically detected using find_coord_var().
     """
+    # Auto-detect time variable if not provided
+    if time_name_override is None:
+        time_name_override = find_coord_var(ds, "TIME", format_type="ZARR")
+
     # Select the data in the specified time range
     subset = ds.sel({time_name_override: slice(date_start, date_end)})
 
@@ -1353,7 +1401,7 @@ def plot_radar_water_velocity_rose(
 def plot_radar_water_velocity_gridded(
     ds: xr.Dataset,
     date_start: str,
-    time_name_override: str = "TIME",
+    time_name_override: str | None = None,
     coastline_resolution: str = "50m",
 ) -> None:
     """Plots gridded radar velocity data for 6 consecutive time steps.
@@ -1368,10 +1416,15 @@ def plot_radar_water_velocity_gridded(
             'LONGITUDE', 'LATITUDE', and a time coordinate.
         time_start: The starting time string (e.g., "YYYY-MM-DDTHH:MM:SS").
             The plot will start from the time step nearest to this.
-        time_name: The name of the time coordinate in `ds`. Defaults to "TIME".
+        time_name_override: The name of the time coordinate in `ds`.
+            If None, automatically detected using find_coord_var().
         coastline_resolution: The resolution for the Cartopy coastline
             feature ('110m', '50m', '10m'). Defaults to "50m".
     """
+    # Auto-detect time variable if not provided
+    if time_name_override is None:
+        time_name_override = find_coord_var(ds, "TIME", format_type="ZARR")
+
     ds = ds.sortby(time_name_override)
 
     # Create a 3x2 grid of subplots with Cartopy projections
@@ -1451,7 +1504,7 @@ def plot_radar_water_velocity_timeseries(
     lat: float | None = None,
     lon: float | None = None,
     qc_suffix: str = "_quality_control",
-    time_name_override: str = "TIME",
+    time_name_override: str | None = None,
 ) -> pd.DataFrame | None:
     """Extracts and plots U/V current timeseries from a radar Zarr dataset.
 
@@ -1478,28 +1531,26 @@ def plot_radar_water_velocity_timeseries(
             quality-control variable names.  Defaults to
             ``"_quality_control"``.
         time_name_override: Name of the time coordinate in ``ds``.
-            Defaults to ``"TIME"``.
+            If None, automatically detected using find_coord_var().
 
     Returns:
         A :class:`pandas.DataFrame` with columns ``u`` and ``v`` indexed by
         date (daily mean), or ``None`` if no valid data were found.
     """
+    # Auto-detect time variable if not provided
+    if time_name_override is None:
+        time_name_override = find_coord_var(ds, "TIME", format_type="ZARR")
+
     subset = ds.sel({time_name_override: slice(date_start, date_end)})
 
     # Discover lat/lon coordinate names
-    lat_names = ["LATITUDE", "latitude", "LAT", "lat"]
-    lon_names = ["LONGITUDE", "longitude", "LON", "lon"]
-    lat_name = next(
-        (n for n in lat_names if n in subset.coords or n in subset.data_vars), None
-    )
-    lon_name = next(
-        (n for n in lon_names if n in subset.coords or n in subset.data_vars), None
-    )
-    if lat_name is None or lon_name is None:
+    try:
+        lat_name = find_coord_var(subset, "LAT", format_type="ZARR")
+        lon_name = find_coord_var(subset, "LON", format_type="ZARR")
+    except ValueError as e:
         raise ValueError(
-            "Could not find latitude/longitude coordinates in the dataset. "
-            f"Searched for {lat_names} / {lon_names}."
-        )
+            f"Could not find latitude/longitude coordinates in the dataset. {e}"
+        ) from e
 
     lat_da = subset[lat_name]
     lon_da = subset[lon_name]
@@ -1644,9 +1695,9 @@ def plot_gridded_variable(
     lat_slice=None,
     var_name="sea_surface_temperature",
     n_days=6,
-    lat_name="lat",
-    lon_name="lon",
-    time_name="time",
+    lat_name: str | None = None,
+    lon_name: str | None = None,
+    time_name: str | None = None,
     coastline_resolution="110m",
     log_scale=False,  # Optional argument to use a logarithmic color scale
     plot_type="default",  # "default" or "anomaly"
@@ -1660,6 +1711,9 @@ def plot_gridded_variable(
     - lon_slice: tuple, longitude slice (start_lon, end_lon). (min val, max val)
     - lat_slice: tuple, latitude slice (start_lat, end_lat). (min val, max val)
     - var_name: str, variable name to plot (default is 'sea_surface_temperature').
+    - lat_name: str, name of latitude coordinate. If None, automatically detected.
+    - lon_name: str, name of longitude coordinate. If None, automatically detected.
+    - time_name: str, name of time coordinate. If None, automatically detected.
     - coastline_resolution: str, resolution of the coastlines ('110m', '50m', '10m').
     - log_scale: bool, whether to use a logarithmic color scale (default is False).
       Ignored when plot_type='anomaly'.
@@ -1669,6 +1723,14 @@ def plot_gridded_variable(
       anomaly).
     """
     logger = logging.getLogger("aodn.GetAodn")
+
+    # Auto-detect coordinate names if not provided
+    if lat_name is None:
+        lat_name = find_coord_var(ds, "LAT", format_type="ZARR")
+    if lon_name is None:
+        lon_name = find_coord_var(ds, "LON", format_type="ZARR")
+    if time_name is None:
+        time_name = find_coord_var(ds, "TIME", format_type="ZARR")
 
     valid_plot_types = {"default", "anomaly"}
     if plot_type not in valid_plot_types:
@@ -2376,13 +2438,13 @@ class DataSource(ABC):
         for name, meta in all_vars.items():
             low = name.lower()
             role = "DATA"
-            if name in ZARR_TIME_VAR_CANDIDATES:
+            if name in VARIABLE_CANDIDATES["ZARR"]["TIME"]:
                 role = "TIME_AXIS"
-            elif low in ("latitude", "lat"):
+            elif any(low == c.lower() for c in VARIABLE_CANDIDATES["ZARR"]["LAT"]):
                 role = "LAT"
-            elif low in ("longitude", "lon"):
+            elif any(low == c.lower() for c in VARIABLE_CANDIDATES["ZARR"]["LON"]):
                 role = "LON"
-            elif low in ("depth", "nominal_depth", "pres", "pres_adjusted"):
+            elif any(low == c.lower() for c in VARIABLE_CANDIDATES["ZARR"]["DEPTH"]):
                 role = "DEPTH"
             elif meta.get("source") == "coord":
                 # Zarr coordinate not matching above names
@@ -2752,7 +2814,9 @@ class ParquetDataSource(DataSource):
 
         df = _append_metadata_to_dataframe(self.get_metadata(), df)
 
-        time_col = next((c for c in TIME_VAR_CANDIDATES if c in df.columns), None)
+        time_col = next(
+            (c for c in VARIABLE_CANDIDATES["PARQUET"]["TIME"] if c in df.columns), None
+        )
 
         if time_col:
             df = df.sort_values(by=time_col).reset_index(drop=True)
@@ -2910,15 +2974,10 @@ class ZarrDataSource(DataSource):
 
             # Find the time variable name to sort by
             try:
-                time_var_name = _find_var_name_global(
-                    ds, list(ZARR_TIME_VAR_CANDIDATES), "time"
-                )
+                time_var_name = find_coord_var(ds, "TIME", format_type="ZARR")
                 return ds.sortby(time_var_name)
             except ValueError as ve:
                 # Log this, but still return the unsorted dataset if time var not found for sorting.
-                # Or re-raise if sorting is critical. For now, let's log and return.
-                # Consider if self.get_logger() is available here.
-                # If not, use a simple print or a default logger.
                 self.logger.warning(
                     f"Could not find time variable to sort Zarr store {self.dname}: {ve}. Returning unsorted."
                 )
@@ -2930,8 +2989,8 @@ class ZarrDataSource(DataSource):
     def _find_lat_lon_vars(self, ds: xr.Dataset) -> tuple[xr.DataArray, xr.DataArray]:
         """Finds latitude and longitude variables/coordinates in a dataset.
 
-        Searches for common names (e.g., 'latitude', 'lat', 'LATITUDE', 'LAT')
-        first in the dataset coordinates and then in the data variables.
+        Searches for common names in the dataset, prioritizing coordinates
+        over 1D data variables.
 
         Args:
             ds: The xarray Dataset to search within.
@@ -2940,47 +2999,17 @@ class ZarrDataSource(DataSource):
             A tuple containing the xarray DataArrays for latitude and longitude.
 
         Raises:
-            ValueError: If a latitude or longitude variable/coordinate cannot
-                be found using the common names.
+            ValueError: If a latitude or longitude variable/coordinate cannot be found.
         """
-        lat_names = ["latitude", "lat", "LATITUDE", "LAT"]
-        lon_names = ["longitude", "lon", "LONGITUDE", "LON"]
-
-        lat_var = None
-        lon_var = None
-
-        # Check coordinates first
-        for name in lat_names:
-            if name in ds.coords:
-                lat_var = ds.coords[name]
-                break
-        for name in lon_names:
-            if name in ds.coords:
-                lon_var = ds.coords[name]
-                break
-
-        # If not in coords, check data variables
-        if lat_var is None:
-            for name in lat_names:
-                if name in ds.data_vars:
-                    lat_var = ds.data_vars[name]
-                    break
-        if lon_var is None:
-            for name in lon_names:
-                if name in ds.data_vars:
-                    lon_var = ds.data_vars[name]
-                    break
-
-        if lat_var is None:
+        try:
+            lat_name = find_coord_var(ds, "LAT", format_type="ZARR")
+            lon_name = find_coord_var(ds, "LON", format_type="ZARR")
+        except ValueError as e:
             raise ValueError(
-                f"Latitude variable/coordinate not found in dataset {self.dataset_name}. Searched for {lat_names}."
-            )
-        if lon_var is None:
-            raise ValueError(
-                f"Longitude variable/coordinate not found in dataset {self.dataset_name}. Searched for {lon_names}."
-            )
+                f"Coordinate variable not found in dataset {self.dataset_name}: {e}"
+            ) from e
 
-        return lat_var, lon_var
+        return ds[lat_name], ds[lon_name]
 
     def get_data(
         self,
@@ -3026,15 +3055,12 @@ class ZarrDataSource(DataSource):
 
         # Time slicing
         if date_start is not None or date_end is not None:
-            time_var_name = _find_var_name_global(
-                ds, list(ZARR_TIME_VAR_CANDIDATES), "time"
-            )
+            time_var_name = find_coord_var(ds, "TIME", format_type="ZARR")
             selectors[time_var_name] = slice(date_start, date_end)
 
         # Latitude slicing
         if lat_min is not None or lat_max is not None:
-            lat_names = ["latitude", "lat", "LATITUDE", "LAT"]
-            lat_var_name = _find_var_name_global(ds, lat_names, "latitude")
+            lat_var_name = find_coord_var(ds, "LAT", format_type="ZARR")
             lat_is_dim = lat_var_name in ds.dims
 
             if lat_is_dim:
@@ -3053,8 +3079,7 @@ class ZarrDataSource(DataSource):
 
         # Longitude slicing
         if lon_min is not None or lon_max is not None:
-            lon_names = ["longitude", "lon", "LONGITUDE", "LON"]
-            lon_var_name = _find_var_name_global(ds, lon_names, "longitude")
+            lon_var_name = find_coord_var(ds, "LON", format_type="ZARR")
             lon_is_dim = lon_var_name in ds.dims
 
             if lon_is_dim:
@@ -3161,10 +3186,10 @@ class ZarrDataSource(DataSource):
         if self.zarr_store is None:
             self._open_zarr_store()
 
-        time_var_name = _find_var_name_global(
+        time_var_name = find_coord_var(
             self.zarr_store,
-            list(ZARR_TIME_VAR_CANDIDATES),
-            "time",
+            "TIME",
+            format_type="ZARR",
         )
 
         # Calculate and return the temporal extent
@@ -3211,10 +3236,10 @@ class ZarrDataSource(DataSource):
         if self.zarr_store is None:
             self._open_zarr_store()
 
-        time_var_name = _find_var_name_global(
+        time_var_name = find_coord_var(
             self.zarr_store,
-            list(ZARR_TIME_VAR_CANDIDATES),
-            "time",
+            "TIME",
+            format_type="ZARR",
         )
 
         # Call the global plotting function
@@ -3269,25 +3294,17 @@ class ZarrDataSource(DataSource):
         actual_time_name = (
             time_name_override
             if time_name_override
-            else _find_var_name_global(
-                ds,
-                list(ZARR_TIME_VAR_CANDIDATES),
-                "time",
-            )
+            else find_coord_var(ds, "TIME", format_type="ZARR")
         )
         actual_lat_name = (
             lat_name_override
             if lat_name_override
-            else _find_var_name_global(
-                ds, ["latitude", "lat", "LATITUDE", "LAT"], "latitude"
-            )
+            else find_coord_var(ds, "LAT", format_type="ZARR")
         )
         actual_lon_name = (
             lon_name_override
             if lon_name_override
-            else _find_var_name_global(
-                ds, ["longitude", "lon", "LONGITUDE", "LON"], "longitude"
-            )
+            else find_coord_var(ds, "LON", format_type="ZARR")
         )
 
         norm_date_start = normalize_date(date_start)
@@ -3406,9 +3423,9 @@ class ZarrDataSource(DataSource):
         lon: float,
         date_start: str,
         date_end: str,
-        lat_name_override: str = "lat",
-        lon_name_override: str = "lon",
-        time_name_override: str = "time",
+        lat_name_override: str | None = None,
+        lon_name_override: str | None = None,
+        time_name_override: str | None = None,
     ) -> pd.DataFrame:
         """
         Shortcut to extract and plot time series data in one call.
@@ -3495,25 +3512,17 @@ class ZarrDataSource(DataSource):
         actual_lat_name = (
             lat_name_override
             if lat_name_override
-            else _find_var_name_global(
-                ds, ["latitude", "lat", "LATITUDE", "LAT"], "latitude"
-            )
+            else find_coord_var(ds, "LAT", format_type="ZARR")
         )
         actual_lon_name = (
             lon_name_override
             if lon_name_override
-            else _find_var_name_global(
-                ds, ["longitude", "lon", "LONGITUDE", "LON"], "longitude"
-            )
+            else find_coord_var(ds, "LON", format_type="ZARR")
         )
         actual_time_name = (
             time_name_override
             if time_name_override
-            else _find_var_name_global(
-                ds,
-                list(ZARR_TIME_VAR_CANDIDATES),
-                "time",
-            )
+            else find_coord_var(ds, "TIME", format_type="ZARR")
         )
 
         ds = ds.sortby(actual_time_name)
@@ -3815,25 +3824,17 @@ class ZarrDataSource(DataSource):
         actual_lat_name = (
             lat_name_override
             if lat_name_override
-            else _find_var_name_global(
-                ds, ["latitude", "lat", "LATITUDE", "LAT"], "latitude"
-            )
+            else find_coord_var(ds, "LAT", format_type="ZARR")
         )
         actual_lon_name = (
             lon_name_override
             if lon_name_override
-            else _find_var_name_global(
-                ds, ["longitude", "lon", "LONGITUDE", "LON"], "longitude"
-            )
+            else find_coord_var(ds, "LON", format_type="ZARR")
         )
         actual_time_name = (
             time_name_override
             if time_name_override
-            else _find_var_name_global(
-                ds,
-                list(ZARR_TIME_VAR_CANDIDATES),
-                "time",
-            )
+            else find_coord_var(ds, "TIME", format_type="ZARR")
         )
 
         ds = ds.sortby(actual_time_name)
@@ -4265,6 +4266,59 @@ def _find_var_name_global(
 
     raise ValueError(
         f"Could not find a suitable 1D {var_description} variable/coordinate in the provided Dataset. Searched for {common_names}."
+    )
+
+
+def find_coord_var(dataset, coord_role: str, format_type: str = "ZARR") -> str:
+    """Find variable name by role (TIME, LAT, LON, or DEPTH).
+
+    Searches through candidate variable names for the given role,
+    prioritizing coordinates over 1D data variables (for Zarr/xarray datasets).
+
+    Args:
+        dataset: PyArrow Dataset (for Parquet) or xarray.Dataset (for Zarr).
+        coord_role: Variable role — one of "TIME", "LAT", "LON", "DEPTH".
+        format_type: Dataset format — "PARQUET" or "ZARR" (default: "ZARR").
+
+    Returns:
+        str: The found variable/coordinate name.
+
+    Raises:
+        ValueError: If no candidate variable is found or coord_role is invalid.
+    """
+    if coord_role not in ("TIME", "LAT", "LON", "DEPTH"):
+        raise ValueError(
+            f"Invalid coord_role: {coord_role}. Must be one of: TIME, LAT, LON, DEPTH"
+        )
+
+    if format_type not in VARIABLE_CANDIDATES:
+        raise ValueError(
+            f"Invalid format_type: {format_type}. Must be one of: {list(VARIABLE_CANDIDATES.keys())}"
+        )
+
+    candidates = VARIABLE_CANDIDATES[format_type][coord_role]
+
+    # For Zarr/xarray: check coordinates first, then 1D data variables
+    if format_type == "ZARR":
+        # Check coordinates first
+        for name in candidates:
+            if name in dataset.coords:
+                return name
+        # Then check 1D data variables
+        for name in candidates:
+            if name in dataset.data_vars and dataset[name].ndim == 1:
+                return name
+    # For Parquet/PyArrow: check schema names
+    else:  # format_type == "PARQUET"
+        col_names = (
+            dataset.schema.names if hasattr(dataset, "schema") else dataset.column_names
+        )
+        for name in candidates:
+            if name in col_names:
+                return name
+
+    raise ValueError(
+        f"No {coord_role} variable found in {format_type} dataset. Searched for {list(candidates)}."
     )
 
 
