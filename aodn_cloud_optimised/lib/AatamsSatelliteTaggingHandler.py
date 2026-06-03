@@ -32,15 +32,11 @@ class AatamsSatelliteTaggingHandler(GenericHandler):
     Note: after running ``cloud_optimised_create_dataset_config`` on a packed CSV,
     the generated schema will show ``string`` for columns that are actually
     numeric after expansion.  These types **must be manually corrected** in the
-    JSON config before processing.  See ADR 0001 for rationale.
+    JSON config before processing.
     """
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-
-    # ------------------------------------------------------------------
-    # Public API
-    # ------------------------------------------------------------------
 
     def preprocess_data_csv(
         self, csv_fp
@@ -76,10 +72,6 @@ class AatamsSatelliteTaggingHandler(GenericHandler):
                     ds[var].attrs = attrs
 
             yield df, ds
-
-    # ------------------------------------------------------------------
-    # Private helpers
-    # ------------------------------------------------------------------
 
     def _detect_packed_string_columns(self, df: pd.DataFrame) -> List[str]:
         """Return names of columns that contain comma-separated numeric values.
