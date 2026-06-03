@@ -201,14 +201,16 @@
     }
   },
   "aws_opendata_registry": {
-    "Name": "IMOS - Satellite Remote Sensing - Surface Waves Sub-Facility - SAR wind - Delayed mode data",
+    "Name": "Satellite - Surface Waves - Synthetic Aperture Radar - Wind - Delayed mode",
     "Description": "Sentinel-1 A, B and C satellites are part of Europe's Copernicus Earth Observation program and carry identical C-band Synthetic Aperture Radar (SAR) instruments. This dataset contains 10m neutral stability wind speed and direction derived from Sentinel-1 A, B and C SARs in the wider Australian coastal regions. In these regions, the satellites normally operate in interferometric wide (IW) swath mode. The winds are derived using a consistent geophysical model function (gmf), CMOD5N, and variational Bayesian inversion approach as proposed in Portabella et al. (2002) and Sentinel-1 Ocean wind (owi) algorithm definition document. The input SAR and model (ECMWF) data used in the inversion are sourced from owi level-2 product, and the resulting derived winds are approximately at 1km horizontal spatial resolution as in the source product but derived using a consistent gmf over time (unlike the source product). Wind speeds are also calibrated against Metop-A and B scatterometer wind database of Ribal and Young, 2020 (JTECH).\n\nThis data has also been combined and interpolated to a nominal 0.01 x 0.01-degree regular grid (available as a separate gridded product: IMOS - Satellite Remote Sensing - Surface Waves Sub-Facility - Gridded SAR wind - Delayed mode data). \n\nThe data represented by this record, are presented in delayed mode.",
     "Documentation": "https://catalogue-imos.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/b02b929f-2caf-45d4-ac60-d4632b7ca0ca",
     "Contact": "info@aodn.org.au",
     "ManagedBy": "AODN",
     "UpdateFrequency": "As Needed",
     "Tags": [
-      "FILL UP MANUALLY - CHECK DOCUMENTATION"
+      "oceans",
+      "satellite imagery",
+      "meteorological"
     ],
     "License": "http://creativecommons.org/licenses/by/4.0/",
     "Resources": [
@@ -237,6 +239,6 @@
         }
       ]
     },
-    "Citation": "IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access]"
+    "Citation": "The citation in a list of references is: \"IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access].\""
   }
 }

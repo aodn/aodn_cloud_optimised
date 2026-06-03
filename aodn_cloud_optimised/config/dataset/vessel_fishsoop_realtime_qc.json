@@ -290,7 +290,7 @@
         }
       ]
     },
-    "Citation": "For data collected prior to 1 July 2024: \" UNSW Sydney [year-of-data-download], IMOS SOOP - Vessels as Ships of Opportunity Sub-Facility - Real-time data, Downloaded from [url] on [date-of-download]\". For data collected after 1 July 2024: \" UNSW Sydney; IMOS [year-of-data-download], IMOS SOOP - Vessels as Ships of Opportunity Sub-Facility - Real-time data, Downloaded from [url] on [date-of-download]\"."
+    "Citation": "The citation in a list of references is: For data collected prior to 1 July 2024: \"UNSW Sydney [year-of-data-download], IMOS SOOP - Fisheries Ships of Opportunity Sub-Facility - Real-time data, [data-access-URL], accessed [date-of-access].\" For data collected after 1 July 2024: \" UNSW Sydney; IMOS [year-of-data-download], IMOS SOOP - Fisheries Ships of Opportunity Sub-Facility - Real-time data, [data-access-URL], accessed [date-of-access].\""
   },
   "run_settings": {
     "coiled_cluster_options": {
