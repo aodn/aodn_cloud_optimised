@@ -214,6 +214,18 @@ def populate_dataset_config_with_metadata_from_csv(json_file, csv_path):
         print(f"{dataset_name} NOT FOUND in CSV file")
         return
 
+    if isinstance(csv_dataset, pd.DataFrame):
+        print(
+            f"{Fore.YELLOW}WARNING: Found duplicate entries for '{dataset_name}' in CSV file. Using first 'Done' entry if available.{Style.RESET_ALL}"
+        )
+        ready_rows = csv_dataset[csv_dataset["AWS_Registry_Ready"] == "Done"]
+        if ready_rows.empty:
+            print(
+                f"{Fore.RED}{dataset_name} hasn't been checked/done yet by Metadata expert.{Style.RESET_ALL}"
+            )
+            return False
+        csv_dataset = ready_rows.iloc[0]
+
     if csv_dataset["AWS_Registry_Ready"] == "Done":
 
         if not csv_dataset["AWS_Title"] == "":
