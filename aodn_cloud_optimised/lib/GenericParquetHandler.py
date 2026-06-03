@@ -542,7 +542,7 @@ class GenericHandler(CommonHandler):
                 self.logger.error(
                     f"{self.uuid_log}: The dataframe is now empty after removing out of range latitude/longitude data. Operation Cancelled"
                 )
-            df.reset_index()
+            df = df.reset_index(drop=True)
 
         # Clean dataset from NaN values of LAT and LON; for ex 'IMOS/Argo/dac/csiro/5905017/5905017_prof.nc'
         for geo_var in [lat_varname, lon_varname]:
