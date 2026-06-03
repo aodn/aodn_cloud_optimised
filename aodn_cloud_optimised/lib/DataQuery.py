@@ -55,7 +55,7 @@ from shapely.geometry import MultiPolygon, Polygon
 from tqdm.notebook import tqdm
 from windrose import WindroseAxes
 
-__version__ = "0.3.23"
+__version__ = "0.3.24"
 
 REGION: Final[str] = "ap-southeast-2"
 ENDPOINT_URL = "https://s3.ap-southeast-2.amazonaws.com"
@@ -126,7 +126,7 @@ VARIABLE_CANDIDATES: Final[dict[str, dict[str, tuple[str, ...]]]] = {
     },
     "ZARR": {
         "TIME": (
-            "time",
+            "TIMEtime",
             "datetime",
             "date",
             "Date",
