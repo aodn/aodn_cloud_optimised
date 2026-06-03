@@ -1,0 +1,231 @@
+{
+  "dataset_name": "satellite_austemp_dhd_8day",
+  "logger_name": "satellite_austemp_dhd_8day",
+  "cloud_optimised_format": "zarr",
+  "run_settings": {
+    "paths": [
+      {
+        "type": "files",
+        "s3_uri": "s3://imos-data/IMOS/SRS/AusTemp/dhd/",
+        "filter": [
+          ".*\\.nc$"
+        ],
+        "year_range": [
+          2012,
+          2026
+        ]
+      }
+    ],
+    "cluster": {
+      "mode": "coiled",
+      "restart_every_path": true
+    },
+    "clear_existing_data": true,
+    "raise_error": false,
+    "coiled_cluster_options": {
+      "n_workers": [
+        1,
+        100
+      ],
+      "scheduler_vm_types": "m7i-flex.large",
+      "worker_vm_types": "m7i-flex.4xlarge",
+      "allow_ingress_from": "me",
+      "compute_purchase_option": "spot_with_fallback",
+      "worker_options": {
+        "nthreads": 1,
+        "memory_limit": "50GB"
+      }
+    },
+    "batch_size": 10
+  },
+  "metadata_uuid": "e1f2476a-b801-4a1f-9fbe-727b4f76f726",
+  "schema_transformation": {
+    "dimensions": {
+      "time": {
+        "name": "time",
+        "chunk": 10,
+        "rechunk": false,
+        "append_dim": true
+      },
+      "latitude": {
+        "name": "lat",
+        "chunk": 315,
+        "size": 0
+      },
+      "longitude": {
+        "name": "lon",
+        "chunk": 537,
+        "size": 0
+      }
+    },
+    "var_template_shape": "dhd",
+    "vars_incompatible_with_region": [
+      "lat",
+      "lon"
+    ],
+    "target_dimension_grids": {},
+    "global_attributes": {
+      "delete": [],
+      "set": {}
+    }
+  },
+  "schema": {
+    "dhd": {
+      "type": "float",
+      "dims": [
+        "time",
+        "lat",
+        "lon"
+      ],
+      "long_name": "degree heating days",
+      "units": "degrees_Celsius-days",
+      "comment": "Cumulative measure of heat stress above a defined temperature threshold, used for monitoring coral bleaching risk.",
+      "valid_min": 0.0,
+      "valid_max": 500.0
+    },
+    "time": {
+      "type": "timestamp[ns]",
+      "axis": "T",
+      "comment": "reference time of sst file",
+      "long_name": "time",
+      "standard_name": "time"
+    },
+    "lat": {
+      "type": "float",
+      "axis": "Y",
+      "long_name": "latitude",
+      "reference_datum": "WGS84 geographic coordinate system",
+      "standard_name": "latitude",
+      "units": "degrees_north",
+      "valid_max": 90.0,
+      "valid_min": -90.0
+    },
+    "lon": {
+      "type": "float",
+      "axis": "X",
+      "long_name": "longitude",
+      "reference_datum": "WGS84 geographic coordinate system",
+      "standard_name": "longitude",
+      "units": "degrees_east",
+      "valid_max": 180.0,
+      "valid_min": -180.0
+    },
+    "dhd_mosaic": {
+      "type": "float",
+      "dims": [
+        "time",
+        "lat",
+        "lon"
+      ],
+      "long_name": "degree heating days mosaic",
+      "units": "degrees_Celsius-days",
+      "comment": "A composite image combining multiple observations of degree heating days over a specific period, typically 14 days.",
+      "valid_min": 0.0,
+      "valid_max": 500.0
+    },
+    "dhd_mosaic_age": {
+      "type": "float",
+      "dims": [
+        "time",
+        "lat",
+        "lon"
+      ],
+      "long_name": "degree heating days mosaic age",
+      "units": "1",
+      "comment": "The age of a composite degree heating days image, typically spanning 14 days, combining multiple observations to improve completeness and cloud-free coverage.",
+      "valid_min": 0.0,
+      "valid_max": 500.0
+    },
+    "dhd_count": {
+      "type": "float",
+      "dims": [
+        "time",
+        "lat",
+        "lon"
+      ],
+      "long_name": "degree heating days count",
+      "units": "1",
+      "comment": "Number of days when the temperature exceeds a specific threshold, contributing to cumulative heat stress.",
+      "valid_min": 0.0,
+      "valid_max": 500.0
+    },
+    "dhd_count_mosaic": {
+      "type": "float",
+      "dims": [
+        "time",
+        "lat",
+        "lon"
+      ],
+      "long_name": "degree heating days count mosaic",
+      "units": "1",
+      "comment": "A composite image combining multiple observations of degree heating days count over a specific period, typically 14 days.",
+      "valid_min": 0.0,
+      "valid_max": 500.0
+    },
+    "mpsa": {
+      "type": "float",
+      "dims": [
+        "time",
+        "lat",
+        "lon"
+      ],
+      "long_name": "Mean Positive Summer Anomaly",
+      "units": "degrees_Celsius",
+      "comment": "The mean of positive temperature anomalies during the summer period, used for assessing seasonal heat stress on marine ecosystems.",
+      "valid_min": 0.0,
+      "valid_max": 500.0
+    },
+    "mpsa_mosaic": {
+      "type": "float",
+      "dims": [
+        "time",
+        "lat",
+        "lon"
+      ],
+      "long_name": "Mean Positive Summer Anomaly mosaic",
+      "units": "degrees_Celsius",
+      "comment": "A composite image combining multiple observations of Mean Positive Summer Anomalies over a specific period, typically 14 days.",
+      "valid_min": 0.0,
+      "valid_max": 500.0
+    }
+  },
+  "aws_opendata_registry": {
+    "Name": "IMOS - AusTemp - Degree Heating Days product",
+    "Description": "This dataset contains the summer Degree Heating Days (DHD) from the 1st of December to the 30th of April since 2012, which is calculated by accumulating the daily positive Sea Surface Temperature anomalies (SSTa). The SSTa is calculated by comparing the current SST to long-term averages (1993-2003, the \u201cCSIRO Legacy climatology\u201d or 2002-2011, the \u201cIMOS climatology\u201d). The magnitude of the DHD correlates well with past coral bleaching events. In cases where SST cannot be calculated due to cloud cover, the grid cell is left blank (white in web plots, transparent in Google Earth) to indicate missing data.\n\nThe ReefTemp Next Generation (RTNG) system was implemented and declared operational in the Bureau National Operations Centre (BNOC, formerly National Meteorological and Oceanographic Centre) on 22 October 2013. The system is based on a new state-of-the-art Integrated Marine Observing System (IMOS)  1-day L3S night-only Sea Surface Temperature (SST) product, which produces high-resolution satellite-based nowcasts of SST, thermal stress and associated coral bleaching risk over the Great Barrier Reef.\n\nThis product follows on from the decommissioned ReefTemp Next Generation a high resolution mapping product that provided information on coral bleaching risk for the Great Barrier Reef region. The ReefTemp Next Generation system was developed by the Bureau of Meteorology for eReefs, under the National Plan for Environmental Information (NPEI) initiative. A research Version 1 (V1) system, available from 2007, was the result of a collaborative project between the Bureau of Meteorology, CSIRO Marine and Atmospheric Research and the Great Barrier Reef Marine Park Authority.",
+    "Documentation": "https://catalogue-imos.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/e1f2476a-b801-4a1f-9fbe-727b4f76f726",
+    "Contact": "info@aodn.org.au",
+    "ManagedBy": "AODN",
+    "UpdateFrequency": "As Needed",
+    "Tags": [
+      "FILL UP MANUALLY - CHECK DOCUMENTATION"
+    ],
+    "License": "http://creativecommons.org/licenses/by/4.0/",
+    "Resources": [
+      {
+        "Description": "Cloud Optimised AODN dataset of IMOS - AusTemp - Degree Heating Days product",
+        "ARN": "arn:aws:s3:::aodn-cloud-optimised/satellite_austemp_dhd_8day.zarr",
+        "Region": "ap-southeast-2",
+        "Type": "S3 Bucket"
+      }
+    ],
+    "DataAtWork": {
+      "Tutorials": [
+        {
+          "Title": "Accessing IMOS - AusTemp - Degree Heating Days product",
+          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_austemp_dhd_8day.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_austemp_dhd_8day.ipynb",
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
+        },
+        {
+          "Title": "Accessing and search for any AODN dataset",
+          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
+        }
+      ]
+    },
+    "Citation": "IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access]"
+  }
+}

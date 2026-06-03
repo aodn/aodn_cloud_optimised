@@ -8,7 +8,12 @@ from io import StringIO
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-from aodn_cloud_optimised.bin.create_aws_registry_dataset import main
+import pandas as pd
+
+from aodn_cloud_optimised.bin.create_aws_registry_dataset import (
+    main,
+    populate_dataset_config_with_metadata_from_csv,
+)
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -75,6 +80,44 @@ class TestGenericCloudOptimisedCreation(unittest.TestCase):
             )
 
         finally:
+            sys.stdout = sys.__stdout__
+
+    @patch("builtins.input", return_value="n")
+    def test_populate_dataset_config_with_duplicate_csv_entries(self, mock_input):
+        """Test handling of duplicate dataset names in CSV (regression test for pandas Series/DataFrame ambiguity)."""
+        # Create a temporary CSV with duplicate dataset names
+        csv_content = """Cloud_Optimised_Collection_Name,AWS_Registry_Ready,AWS_Title,AWS_Tags,Cloud_Optimised_Conversion_Status,AWS_Citation
+radar_TurquoiseCoast_velocity_hourly_averaged_delayed_qc,Done,Test Title,tag1;tag2,Done,Test Citation
+radar_TurquoiseCoast_velocity_hourly_averaged_delayed_qc,NotDone,Another Title,tag3,NotDone,Another Citation
+another_dataset,Done,Another Test,tag4,Done,Citation Here
+"""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".csv", delete=False) as f:
+            f.write(csv_content)
+            csv_path = f.name
+
+        try:
+            # Capture stdout to check for warning message
+            captured_output = StringIO()
+            sys.stdout = captured_output
+
+            # This should not raise ValueError about "ambiguous truth value"
+            # which was the original bug when csv_dataset was a DataFrame
+            result = populate_dataset_config_with_metadata_from_csv(
+                "radar_TurquoiseCoast_velocity_hourly_averaged_delayed_qc.json",
+                csv_path,
+            )
+
+            sys.stdout = sys.__stdout__
+            output = captured_output.getvalue()
+
+            # Check that warning about duplicates was logged
+            self.assertIn(
+                "WARNING: Found duplicate entries for",
+                output,
+                "Should log warning when duplicate dataset names found",
+            )
+        finally:
+            os.unlink(csv_path)
             sys.stdout = sys.__stdout__
 
 

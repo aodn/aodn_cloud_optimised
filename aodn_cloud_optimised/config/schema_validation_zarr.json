@@ -235,19 +235,14 @@
         "global_attributes": {
           "type": "object",
           "properties": {
-            "dimensions": {
-              "type": "object",
-              "properties": {
-                "delete": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                },
-                "set": {
-                  "type": "object"
-                }
+            "delete": {
+              "type": "array",
+              "items": {
+                "type": "string"
               }
+            },
+            "set": {
+              "type": "object"
             }
           }
         }

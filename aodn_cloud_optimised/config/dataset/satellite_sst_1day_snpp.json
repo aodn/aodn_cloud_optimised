@@ -82,14 +82,16 @@
     }
   },
   "aws_opendata_registry": {
-    "Name": "IMOS - Satellite Remote Sensing - SNPP - 01 day - Ocean Colour - SST",
+    "Name": "Satellite - Ocean Colour - SNPP - 1 day - Sea surface temperature",
     "Description": "The SNPP/VIIRS Sea Surface Temperature product is derived from VIIRS 11 and 12 micron spectral bands according to the algorithm described at https://oceancolor.gsfc.nasa.gov/atbd/sst/. This is not a GHRSST-quality product, and demanding applications requiring a high standard of accuracy should consider using one of the IMOS GHRSST products in preference. The VIIRS SST is nevertheless useful primarily because it is measured at the same time as the water leaving radiances used to derive the optical properties (eg chl). This means it is both contemporaneous, and has a matching cloud mask, so it is valuable for applications that seek to combine both SST and optical properties (ie Net Primary Productivity variants). The data set provided here matches the Chl_oci product in temporal and spatial extent.\n\nThis SRS dataset covers waters around Australia.",
     "Documentation": "https://catalogue-imos.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/8e00907f-716d-4080-b212-534fcd78a602",
     "Contact": "info@aodn.org.au",
     "ManagedBy": "AODN",
     "UpdateFrequency": "As Needed",
     "Tags": [
-      "FILL UP MANUALLY - CHECK DOCUMENTATION"
+      "oceans",
+      "satellite imagery",
+      "biology"
     ],
     "License": "http://creativecommons.org/licenses/by/4.0/",
     "Resources": [
@@ -118,6 +120,6 @@
         }
       ]
     },
-    "Citation": "IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access]"
+    "Citation": "The citation in a list of references is: \"IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access].\""
   }
 }
