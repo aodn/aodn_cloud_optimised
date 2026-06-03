@@ -142,6 +142,7 @@ More information available [here](https://github.com/conda-forge/miniforge?tab=r
 - [radar_SouthAustraliaGulfs_wind_delayed_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/radar_SouthAustraliaGulfs_wind_delayed_qc.ipynb)
 - [radar_TurquoiseCoast_velocity_hourly_averaged_delayed_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/radar_TurquoiseCoast_velocity_hourly_averaged_delayed_qc.ipynb)
 - [radar_TurquoiseCoast_velocity_hourly_averaged_realtime_nonqc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/radar_TurquoiseCoast_velocity_hourly_averaged_realtime_nonqc.ipynb)
+- [satellite_austemp_dhd_8day.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_austemp_dhd_8day.ipynb)
 - [satellite_austemp_heatwave_8day.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_austemp_heatwave_8day.ipynb)
 - [satellite_austemp_sst_8day.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_austemp_sst_8day.ipynb)
 - [satellite_chlorophylla_carder_1day_aqua.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_chlorophylla_carder_1day_aqua.ipynb)
