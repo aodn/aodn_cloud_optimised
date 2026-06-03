@@ -686,6 +686,9 @@ class GenericHandler(CommonHandler):
                 self.logger.error(
                     f"{self.uuid_log}: {f.path}: Some values of the time variable were bad and removed:\n{bad_time_values}. \n Contact the data provider."
                 )
+                self.run_summary.record_bad_file(
+                    "bad_time", str(f.path), [os.path.basename(f.path)]
+                )
                 df = df[datetime_var.year <= bad_year_limit]
 
                 df.reset_index()
@@ -704,6 +707,9 @@ class GenericHandler(CommonHandler):
         except Exception as e:
             self.logger.error(
                 f"{self.uuid_log}: {f.path}: time issues with the input file. File not processed. Contact the data provider.{e}"
+            )
+            self.run_summary.record_bad_file(
+                "bad_time", str(f.path), [os.path.basename(f.path)]
             )
             raise ValueError
 
@@ -1600,11 +1606,13 @@ class GenericHandler(CommonHandler):
                             f"{ii + 1} (attempt {retry_count}/{max_retries}): {e}. "
                             f"Recreating Dask cluster and retrying batch..."
                         )
+                        self.run_summary.record_batch_retry(ii + 1)
                         if retry_count > max_retries:
                             self.logger.error(
                                 f"{self.uuid_log}: Batch {ii + 1} exceeded retry limit "
                                 f"({max_retries}). Skipping to next batch."
                             )
+                            self.run_summary.record_batch_outcome(ii + 1, "skipped")
                             batch_done = True
                         else:
                             try:
@@ -1631,6 +1639,7 @@ class GenericHandler(CommonHandler):
                             self.logger.error(f"Error processing task: {e}")
 
             self.logger.info(f"{self.uuid_log}: batch {ii + 1} processing completed.")
+            self.run_summary.record_batch_outcome(ii + 1, "success")
             ii += 1
 
             # Cleanup memory
@@ -1647,10 +1656,4 @@ class GenericHandler(CommonHandler):
         # Set only after all tasks are submitted so self is not carrying the full list
         # during cloudpickle serialisation of each Dask task closure (saves ~3 GB/batch).
         self.s3_file_uri_list = s3_file_uri_list
-        # Clear stream/file handlers but preserve SummaryCaptureHandler so the
-        # end-of-run summary (called from generic_cloud_optimised_creation.main())
-        # still has access to all collected events.
-        for h in list(self.logger.handlers):
-            if not getattr(h, "_is_summary_handler", False):
-                h.close()
-                self.logger.removeHandler(h)
+        self.logger.handlers.clear()

@@ -29,6 +29,13 @@ repos:
       - id: isort
         args: ["--profile", "black"]
 
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.14
+    hooks:
+      - id: ruff
+        args: ["--select", "T201"]
+        files: ^aodn_cloud_optimised/lib/(?!DataQuery\.py)
+
   - repo: https://github.com/python-jsonschema/check-jsonschema
     rev: 0.33.0
     hooks:
