@@ -1218,9 +1218,19 @@ class GenericHandler(CommonHandler):
                 )
                 raise ValueError
 
+        # 1. Get the list of column names in the exact order
+        expected_columns = self.pyarrow_schema.names
+
+        # 2. Select and reorder columns from the existing table
+        # This handles the ordering mismatch automatically
+        table = pdf.select(expected_columns)
+
+        # 3. cast to ensure types are correct
+        table = table.cast(self.pyarrow_schema)
+
         metadata_collector = []
         pq.write_to_dataset(
-            pdf,
+            table,
             root_path=self.cloud_optimised_output_path,
             filesystem=self.s3_fs_output,
             existing_data_behavior="overwrite_or_ignore",
@@ -1228,6 +1238,7 @@ class GenericHandler(CommonHandler):
             partition_cols=partition_keys,
             use_threads=True,
             metadata_collector=metadata_collector,
+            schema=self.pyarrow_schema,
             basename_template=filename
             + "-{i}.parquet",  # this is essential for the overwriting part
         )
@@ -1235,8 +1246,73 @@ class GenericHandler(CommonHandler):
         self.logger.info(
             f"{self.uuid_log}: {filename}: Parquet files successfully published to {self.cloud_optimised_output_path} \n"
         )
-
+        # TODO: create a _metadata collector file outside of this, using maybe the scanner to recreate the parquet metadata. cant do it here as it will cause race conditions between workers, unless of a lock mechanism put in place. to investigate
+        self._update_dataset_manifest_locked(metadata_collector)
         self._add_metadata_sidecar()
+
+    def _update_dataset_manifest_locked(self, metadata_collector: list) -> None:
+        """
+        Updates the dataset _metadata manifest using a distributed S3 lock.
+        """
+        import posixpath
+        import time
+
+        if not metadata_collector:
+            return
+
+        manifest_path = posixpath.join(self.cloud_optimised_output_path, "_metadata")
+        lock_path = manifest_path + ".lock"
+
+        # Acquire Distributed Lock (with stale-lock cleanup)
+        for attempt in range(20):
+            try:
+                # Atomic : 'x' mode fails if file exists
+                with self.s3_fs_output.open(lock_path, mode="xb") as f:
+                    f.write(str(time.time()).encode())
+                break
+            except FileExistsError:
+                # Check if lock is stale
+                try:
+                    with self.s3_fs_output.open(lock_path, mode="rb") as f:
+                        lock_time = float(f.read().decode())
+                    if time.time() - lock_time > 120:
+                        self.logger.warning("Found stale lock, removing it.")
+                        self.s3_fs_output.rm(lock_path)
+                        continue
+                except Exception:
+                    pass
+
+                time.sleep(2)
+        else:
+            raise TimeoutError(
+                "Could not acquire lock on _metadata file after retries."
+            )
+
+        # Perform Read-Modify-Write
+        try:
+            combined_metadata = None
+            if self.s3_fs_output.exists(manifest_path):
+                with self.s3_fs_output.open(manifest_path, mode="rb") as f:
+                    combined_metadata = pq.read_metadata(f)
+
+            # Merge new metadata
+            if not combined_metadata:
+                combined_metadata = metadata_collector[0]
+                new_items = metadata_collector[1:]
+            else:
+                new_items = metadata_collector
+
+            for new_meta in new_items:
+                combined_metadata.append_row_groups(new_meta)
+
+            # Write back
+            with self.s3_fs_output.open(manifest_path, mode="wb") as f:
+                combined_metadata.write_metadata_file(f)
+
+        finally:
+            #  Release Lock
+            if self.s3_fs_output.exists(lock_path):
+                self.s3_fs_output.rm(lock_path)
 
     def _add_metadata_sidecar(self) -> None:
         """
