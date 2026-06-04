@@ -56,7 +56,7 @@ from shapely.geometry import MultiPolygon, Polygon
 from tqdm.notebook import tqdm
 from windrose import WindroseAxes
 
-__version__ = "0.3.26"
+__version__ = "0.3.27"
 
 REGION: Final[str] = "ap-southeast-2"
 ENDPOINT_URL = "https://s3.ap-southeast-2.amazonaws.com"
@@ -77,6 +77,11 @@ pa.set_cpu_count(os.cpu_count() or 4)
 # Module-level cache for partition values, keyed by (id(dataset), partition_name).
 # Avoids redundant fragment iterations when multiple filters query the same partition.
 _partition_value_cache: dict[tuple[int, str], Set[str]] = {}
+
+# Module-level cache for temporal extents, keyed by (id(dataset), time_varname).
+# get_temporal_extent() does an S3 fragment scan on every call; the result is
+# static for the lifetime of a dataset object so we cache it here.
+_temporal_extent_cache: dict[tuple[int, str | None], tuple] = {}
 
 # H3 hexagon map defaults
 _N_QUANTILES: Final[int] = 10
@@ -503,6 +508,9 @@ def get_temporal_extent(
     using an OR filter so pyarrow's internal thread pool reads them in parallel.
     Aggregates with pyarrow compute directly (no pandas conversion overhead).
 
+    Results are cached per (dataset, time_varname) pair so repeated calls from
+    ``create_time_filter`` / ``get_data`` do not re-scan S3.
+
     Args:
         dataset: The pyarrow.dataset.Dataset object.
         time_varname: Optional explicit name of the time variable.
@@ -511,6 +519,11 @@ def get_temporal_extent(
         A tuple containing the minimum and maximum pandas Timestamp objects
         found within the dataset's time variable.
     """
+    cache_key = (id(dataset), time_varname)
+    cached = _temporal_extent_cache.get(cache_key)
+    if cached is not None:
+        return cached
+
     unique_timestamps = query_unique_value(dataset, "timestamp")
     unique_timestamps = np.array([np.int64(string) for string in unique_timestamps])
     unique_timestamps = np.sort(unique_timestamps)
@@ -537,7 +550,9 @@ def get_temporal_extent(
         use_threads=True,
     )
     col = scanner.to_table().column(time_varname)
-    return pd.Timestamp(pc.min(col).as_py()), pd.Timestamp(pc.max(col).as_py())
+    result = pd.Timestamp(pc.min(col).as_py()), pd.Timestamp(pc.max(col).as_py())
+    _temporal_extent_cache[cache_key] = result
+    return result
 
 
 def get_timestamps_boundary_values(
@@ -2565,6 +2580,7 @@ class ParquetDataSource(DataSource):
 
         super().__init__(bucket_name, prefix, dataset_name, s3_fs_opts=s3_fs_opts)
         self._dataset = None  # lazily created on first access
+        self._metadata = None  # lazily fetched on first get_metadata() call
 
     @property
     def dataset(self) -> ds.Dataset:
@@ -2817,7 +2833,9 @@ class ParquetDataSource(DataSource):
             data_filter = _combine_arrow_filters(data_filter, expr)
 
         # Set file system explicitly do not require folder prefix s3://
-        table = self.dataset.to_table(filter=data_filter, columns=columns)
+        table = self.dataset.to_table(
+            filter=data_filter, columns=columns, use_threads=True
+        )
         df = table.to_pandas()
 
         df = _append_metadata_to_dataframe(self.get_metadata(), df)
@@ -2838,12 +2856,15 @@ class ParquetDataSource(DataSource):
     def get_metadata(self) -> dict:
         """Retrieves metadata from the Parquet dataset's common metadata.
 
-        Uses the global `get_schema_metadata` function.
+        Result is cached on the instance after the first S3 read so repeated
+        calls (e.g. from ``get_data``) do not re-fetch ``_common_metadata``.
 
         Returns:
             A dictionary containing the decoded metadata.
         """
-        return get_schema_metadata(self.dname, s3_fs_opts=self.s3_fs_opts)
+        if self._metadata is None:
+            self._metadata = get_schema_metadata(self.dname, s3_fs_opts=self.s3_fs_opts)
+        return self._metadata
 
     def describe(self) -> dict:
         """Return a structured description of the dataset: column names and dtypes.
@@ -3194,16 +3215,15 @@ class ZarrDataSource(DataSource):
             format_type="ZARR",
         )
 
-        # Calculate and return the temporal extent
-        # time_values = self.zarr_store[time_var_name].values # Not strictly needed if using .min()/.max() on DataArray
+        # Batch both Dask computes into a single scheduler call.
+        time_da = self.zarr_store[time_var_name]
+        # (min_val,), (max_val,) = dask.compute(time_da.min(), time_da.max())
+        min_val, max_val = dask.compute(time_da.min(), time_da.max())
 
-        # Ensure time_values are sorted before taking min/max for safety, though plot_time_coverage also sorts.
-        # However, direct access to .values might not be sorted.
-        # For xarray DataArrays, min/max handle this, but if it's a raw numpy array from .values, sorting is safer.
-        # Actually, xarray's .min() and .max() on a DataArray should be correct without pre-sorting values.
-
-        min_val = safe_item(self.zarr_store[time_var_name].min())
-        max_val = safe_item(self.zarr_store[time_var_name].max())
+        # If min_val and max_val are still xarray DataArrays (scalars),
+        # extract the raw value:
+        min_val = min_val.item()
+        max_val = max_val.item()
 
         cftime_types = (
             cftime.DatetimeGregorian,
@@ -3385,15 +3405,11 @@ class ZarrDataSource(DataSource):
                     f"Variable '{var_name}' not found in dataset. Returning all available data variables for the selected point."
                 )
 
-        # Slice by time, then select nearest lat/lon
-        time_sliced_data = target_ds_selection.sel(
-            {actual_time_name: slice(norm_date_start, norm_date_end)}
-        )
-        selected_data_point = time_sliced_data.sel(
+        # Select the nearest spatial point and slice by time in one fluid chain
+        # This is highly efficient as it allows xarray to optimize the entire selection
+        selected_data_point = target_ds_selection.sel(
             {actual_lat_name: lat, actual_lon_name: lon}, method="nearest"
-        )
-
-        # Force dask to load the actual data chunks now, not doing this could lead to some missing chunks
+        ).sel({actual_time_name: slice(norm_date_start, norm_date_end)})
         selected_data_point = selected_data_point.load()  # or .compute()
 
         timeseries_df = selected_data_point.to_dataframe().reset_index()
@@ -4190,12 +4206,20 @@ class ZarrDataSource(DataSource):
     def get_metadata(self) -> dict:
         """Retrieves metadata from the Zarr store.
 
-        Uses the global `get_zarr_metadata` function.
+        Reuses ``self.zarr_store`` (already open) rather than re-opening the
+        store from S3.  Falls back to ``get_zarr_metadata`` if the store is
+        not yet open.
 
         Returns:
             A dictionary containing the Zarr store's metadata.
         """
-        return get_zarr_metadata(self.dname)
+        if self.zarr_store is None:
+            return get_zarr_metadata(self.dname)
+
+        metadata = {"global_attributes": self.zarr_store.attrs.copy()}
+        for var_name, variable in self.zarr_store.variables.items():
+            metadata[var_name] = variable.attrs.copy()
+        return metadata
 
     def describe(self) -> dict:
         """Return a structured description of the dataset: real data variables and coordinates.
