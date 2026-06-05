@@ -3,6 +3,7 @@ import importlib.resources
 import math
 import os
 import pathlib
+import posixpath
 import re
 import timeit
 import traceback
@@ -1247,72 +1248,138 @@ class GenericHandler(CommonHandler):
             f"{self.uuid_log}: {filename}: Parquet files successfully published to {self.cloud_optimised_output_path} \n"
         )
         # TODO: create a _metadata collector file outside of this, using maybe the scanner to recreate the parquet metadata. cant do it here as it will cause race conditions between workers, unless of a lock mechanism put in place. to investigate
-        self._update_dataset_manifest_locked(metadata_collector)
+        # self._update_dataset_manifest_locked(metadata_collector)
         self._add_metadata_sidecar()
 
-    def _update_dataset_manifest_locked(self, metadata_collector: list) -> None:
-        """
-        Updates the dataset _metadata manifest using a distributed S3 lock.
-        """
-        import posixpath
-        import time
+    # def _update_dataset_manifest_locked(self, metadata_collector: list) -> None:
+    #     """
+    #     Updates the dataset _metadata manifest using a distributed S3 lock.
+    #     """
+    #     import posixpath
+    #     import time
+    #
+    #     if not metadata_collector:
+    #         return
+    #
+    #     manifest_path = posixpath.join(self.cloud_optimised_output_path, "_metadata")
+    #     lock_path = manifest_path + ".lock"
+    #
+    #     # Acquire Distributed Lock (with stale-lock cleanup)
+    #     for attempt in range(20):
+    #         try:
+    #             # Atomic : 'x' mode fails if file exists
+    #             with self.s3_fs_output.open(lock_path, mode="xb") as f:
+    #                 f.write(str(time.time()).encode())
+    #             break
+    #         except FileExistsError:
+    #             # Check if lock is stale
+    #             try:
+    #                 with self.s3_fs_output.open(lock_path, mode="rb") as f:
+    #                     lock_time = float(f.read().decode())
+    #                 if time.time() - lock_time > 120:
+    #                     self.logger.warning("Found stale lock, removing it.")
+    #                     self.s3_fs_output.rm(lock_path)
+    #                     continue
+    #             except Exception:
+    #                 pass
+    #
+    #             time.sleep(2)
+    #     else:
+    #         raise TimeoutError(
+    #             "Could not acquire lock on _metadata file after retries."
+    #         )
+    #
+    #     # Perform Read-Modify-Write
+    #     try:
+    #         combined_metadata = None
+    #         if self.s3_fs_output.exists(manifest_path):
+    #             with self.s3_fs_output.open(manifest_path, mode="rb") as f:
+    #                 combined_metadata = pq.read_metadata(f)
+    #
+    #         # Merge new metadata
+    #         if not combined_metadata:
+    #             combined_metadata = metadata_collector[0]
+    #             new_items = metadata_collector[1:]
+    #         else:
+    #             new_items = metadata_collector
+    #
+    #         for new_meta in new_items:
+    #             combined_metadata.append_row_groups(new_meta)
+    #
+    #         # Write back
+    #         with self.s3_fs_output.open(manifest_path, mode="wb") as f:
+    #             combined_metadata.write_metadata_file(f)
+    #
+    #     finally:
+    #         #  Release Lock
+    #         if self.s3_fs_output.exists(lock_path):
+    #             self.s3_fs_output.rm(lock_path)
 
-        if not metadata_collector:
+    def generate_global_metadata_manifest(self) -> None:
+        """
+        Scans the existing S3 Hive partition structure from scratch and writes
+        a unified global _metadata manifest file. This entirely circumvents worker
+        race conditions and updates cleanly if file segments were deleted.
+        """
+        self.logger.info("Starting global _metadata generation via full S3 scan...")
+
+        # 1. Define the root directory and target manifest path
+        dataset_root = self.cloud_optimised_output_path
+        manifest_path = posixpath.join(dataset_root, "_metadata")
+
+        # 2. Discover the dataset via PyArrow Dataset API
+        # PyArrow will crawl the S3 hierarchy and infer your Hive partitions
+        # (timestamp, polygon, PLATFORM_NUMBER) cleanly into a virtual schema.
+        try:
+            dataset = ds.dataset(
+                source=dataset_root,
+                filesystem=self.s3_fs_output,
+                format="parquet",
+                partitioning="hive",
+            )
+        except Exception as e:
+            self.logger.error(f"Failed to scan S3 directory: {str(e)}")
+            raise
+
+        # 3. Collect individual file metadata footers
+        # Using get_fragments() lets us extract data without loading rows into memory.
+        fragments = list(dataset.get_fragments())
+
+        if not fragments:
+            self.logger.warning(
+                "No parquet fragments found in the directory. Manifest skipped."
+            )
             return
 
-        manifest_path = posixpath.join(self.cloud_optimised_output_path, "_metadata")
-        lock_path = manifest_path + ".lock"
+        self.logger.info(
+            f"Discovered {len(fragments)} file fragments. Gathering footers..."
+        )
 
-        # Acquire Distributed Lock (with stale-lock cleanup)
-        for attempt in range(20):
-            try:
-                # Atomic : 'x' mode fails if file exists
-                with self.s3_fs_output.open(lock_path, mode="xb") as f:
-                    f.write(str(time.time()).encode())
-                break
-            except FileExistsError:
-                # Check if lock is stale
-                try:
-                    with self.s3_fs_output.open(lock_path, mode="rb") as f:
-                        lock_time = float(f.read().decode())
-                    if time.time() - lock_time > 120:
-                        self.logger.warning("Found stale lock, removing it.")
-                        self.s3_fs_output.rm(lock_path)
-                        continue
-                except Exception:
-                    pass
+        metadata_collector = []
 
-                time.sleep(2)
-        else:
-            raise TimeoutError(
-                "Could not acquire lock on _metadata file after retries."
-            )
+        for fragment in fragments:
+            # Force PyArrow to read the footer of the physical file on S3
+            fragment.ensure_complete_metadata()
+            if fragment.metadata:
+                metadata_collector.append(fragment.metadata)
 
-        # Perform Read-Modify-Write
-        try:
-            combined_metadata = None
-            if self.s3_fs_output.exists(manifest_path):
-                with self.s3_fs_output.open(manifest_path, mode="rb") as f:
-                    combined_metadata = pq.read_metadata(f)
+        # 4. Combine footers into a unified FileMetaData block
+        # Start with the base file schema from your first file
+        combined_metadata = metadata_collector[0]
 
-            # Merge new metadata
-            if not combined_metadata:
-                combined_metadata = metadata_collector[0]
-                new_items = metadata_collector[1:]
-            else:
-                new_items = metadata_collector
+        # Append row group mappings from all subsequent discovered files
+        for next_metadata in metadata_collector[1:]:
+            combined_metadata.append_row_groups(next_metadata)
 
-            for new_meta in new_items:
-                combined_metadata.append_row_groups(new_meta)
+        # 5. Atomic-like write back to the root of your S3 dataset
+        self.logger.info(
+            f"Writing unified metadata tracking {combined_metadata.num_row_groups} row groups."
+        )
 
-            # Write back
-            with self.s3_fs_output.open(manifest_path, mode="wb") as f:
-                combined_metadata.write_metadata_file(f)
+        with self.s3_fs_output.open(manifest_path, mode="wb") as f:
+            combined_metadata.write_metadata_file(f)
 
-        finally:
-            #  Release Lock
-            if self.s3_fs_output.exists(lock_path):
-                self.s3_fs_output.rm(lock_path)
+        self.logger.info("Successfully generated global _metadata manifest.")
 
     def _add_metadata_sidecar(self) -> None:
         """
@@ -1728,6 +1795,7 @@ class GenericHandler(CommonHandler):
                 client.run_on_scheduler(gc.collect)  # GC!
 
         self.logger.info("All batches processed.")
+        self.generate_global_metadata_manifest()
         self.cluster_manager.close_cluster(client, cluster)
         # Set only after all tasks are submitted so self is not carrying the full list
         # during cloudpickle serialisation of each Dask task closure (saves ~3 GB/batch).
