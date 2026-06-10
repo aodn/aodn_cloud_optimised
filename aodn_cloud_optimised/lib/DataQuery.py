@@ -38,6 +38,7 @@ import pyarrow as pa
 import pyarrow.compute as pc
 import pyarrow.dataset as ds
 import pyarrow.fs as fs
+import pyarrow.parquet as pq
 import pydeck
 import s3fs
 import seaborn as sns
@@ -49,13 +50,14 @@ from dateutil.parser import parse
 from fuzzywuzzy import fuzz
 from IPython.display import FileLink, clear_output, display
 from matplotlib.colors import LogNorm, Normalize, TwoSlopeNorm
+from pyarrow.fs import FileType
 from s3path import PureS3Path
 from shapely import wkb
 from shapely.geometry import MultiPolygon, Polygon
 from tqdm.notebook import tqdm
 from windrose import WindroseAxes
 
-__version__ = "0.3.25"
+__version__ = "0.3.27"
 
 REGION: Final[str] = "ap-southeast-2"
 ENDPOINT_URL = "https://s3.ap-southeast-2.amazonaws.com"
@@ -2056,7 +2058,9 @@ def get_schema_metadata(dname: str, s3_fs_opts=None) -> dict:
     s3 = get_s3_filesystem(s3_fs_opts=s3_fs_opts)
     meta_name = posixpath.join(name, "_common_metadata")
     dataset = ds.dataset(meta_name, format="parquet", filesystem=s3)
-    parquet_meta = dataset.schema
+    # parquet_meta = dataset.schema
+    #
+    parquet_meta = pq.read_schema(meta_name, filesystem=s3)
     # parquet_meta = pa.parquet.read_schema(
     #     os.path.join(name, "_common_metadata"),
     #     # Pyarrow can infer file system from path prefix with s3 but it will try
@@ -2595,15 +2599,34 @@ class ParquetDataSource(DataSource):
         return query_unique_value(self.dataset, partition_name)
 
     def _create_pyarrow_dataset(self, filters=None) -> ds.Dataset:
-        """Creates a PyArrow Dataset object for the data source using the modern API.
-
-        Args:
-            filters: Optional PyArrow filter expression to apply when creating
-                the dataset object (for fragment-level filtering). Defaults to None.
-
-        Returns:
-            A pyarrow.dataset.Dataset instance.
         """
+        Creates a PyArrow Dataset object. Utilizes the global _metadata file
+        if available by checking file info safely via PyArrow FileSystem APIs.
+        """
+        metadata_path = posixpath.join(self.dname, "_metadata")
+
+        try:
+            # Use PyArrow's native way to verify an S3 file exists
+            file_info = self.s3.get_file_info(metadata_path)
+
+            if file_info.type != FileType.NotFound:
+                self.logger.info(
+                    "Loading PyArrow dataset instantly via global _metadata manifest."
+                )
+                return ds.parquet_dataset(
+                    metadata_path, filesystem=self.s3, partitioning="hive"
+                )
+
+        except Exception as e:
+            self.logger.warning(
+                f"Failed to check/load _metadata manifest ({e}). "
+                f"Falling back to full S3 directory crawl."
+            )
+
+        # Fallback to the slow directory crawl if info check failed or file was missing
+        self.logger.info(
+            "No global manifest found or accessible. Performing full S3 partition discovery crawl..."
+        )
         return ds.dataset(
             self.dname,
             format="parquet",

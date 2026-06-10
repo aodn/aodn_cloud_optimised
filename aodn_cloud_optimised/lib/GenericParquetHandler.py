@@ -22,6 +22,7 @@ import pyarrow as pa
 import pyarrow.compute as pc
 import pyarrow.dataset as pds
 import pyarrow.parquet as pq
+import s3fs
 import s3fs.core
 import xarray as xr
 from dask.distributed import wait
@@ -44,6 +45,7 @@ from aodn_cloud_optimised.lib.s3Tools import (
     split_s3_path,
 )
 
+from .clusterLib import ClusterMode
 from .CommonHandler import CommonHandler
 from .schema import (
     cast_value_to_config_type,
@@ -58,16 +60,51 @@ from .schema import (
 # TODO: improve log for parallism by adding a uuid for each task
 
 
-def _extract_metadata_worker(file_uri, filesystem):
+def _extract_and_merge_worker_chunk(file_uris, root_prefix, chunk_id, storage_options):
     """
-    Independent worker function. Safely serializable by Dask.
+    Worker task: Processes an isolated chunk of files, strips paths for portability,
+    and writes an intermediate metadata file directly to a temporary S3 location.
+    Explicitly formats the final S3 URI string to bypass posixpath prefix stripping bugs.
     """
-    with filesystem.open(file_uri, mode="rb") as f:
-        metadata = pq.read_metadata(f)
 
-    sink = io.BytesIO()
-    metadata.write_metadata_file(sink)
-    return sink.getvalue()
+    fs = s3fs.S3FileSystem(**storage_options)
+    combined = None
+
+    # Strip any protocol details temporarily to cleanly handle paths uniformly
+    clean_prefix = root_prefix.replace("s3://", "").rstrip("/")
+    target_keyword = clean_prefix.split("/")[-1] + "/"
+
+    for file_uri in file_uris:
+        ready_uri = file_uri if file_uri.startswith("s3://") else f"s3://{file_uri}"
+        with fs.open(ready_uri, mode="rb") as f:
+            md = pq.read_metadata(f)
+
+        file_uri_str = str(ready_uri)
+        if target_keyword in file_uri_str:
+            rel_path = file_uri_str.split(target_keyword, 1)[-1].lstrip("/")
+        else:
+            rel_path = file_uri_str.split("/")[-1]
+
+        md.set_file_path(rel_path)
+
+        if combined is None:
+            combined = md
+        else:
+            combined.append_row_groups(md)
+
+    if combined is None:
+        return None
+
+    clean_id = chunk_id[0] if isinstance(chunk_id, list) else chunk_id
+
+    # Build a raw path string for s3fs to write to safely
+    raw_s3_path = f"{clean_prefix}/_tmp_meta_{clean_id}.parquet"
+
+    with fs.open(f"s3://{raw_s3_path}", mode="wb") as f:
+        combined.write_metadata_file(f)
+
+    # FORCE return of a fully-qualified s3:// string URI directly to the driver
+    return f"s3://{raw_s3_path}"
 
 
 class GenericHandler(CommonHandler):
@@ -1264,140 +1301,143 @@ class GenericHandler(CommonHandler):
 
     def generate_global_metadata_manifest(self, client=None) -> None:
         """
-        Scans the existing S3 partition tree, distributes the extraction of
-        metadata footers across workers, and aggregates them into a central _metadata file.
+        Generates the global metadata manifest files.
+        Processes smaller file counts locally on the driver to bypass worker-side AWS SSO authentication bugs.
         """
-        self.logger.info("Starting distributed global _metadata generation...")
+
+        self.logger.info("Starting optimized chunked global _metadata generation...")
 
         dataset_root = self.cloud_optimised_output_path
-        manifest_path = posixpath.join(dataset_root, "_metadata")
+        root_prefix = dataset_root.rstrip("/") + "/"
 
-        try:
-            all_files = [
-                f
-                for f in self.s3_fs_output.glob(
-                    posixpath.join(dataset_root, "**/*.parquet")
-                )
-                if not f.endswith("_metadata")
-            ]
-        except Exception as e:
-            self.logger.error(f"Failed to scan S3 directory tree: {e}")
-            raise
+        _meta_data_path = posixpath.join(root_prefix, "_metadata")
+
+        # Clean paths for s3fs use
+        meta_data_path_clean = self.s3_fs_output._strip_protocol(_meta_data_path)
+
+        # Gather target files using the active, authenticated driver filesystem
+        raw_files = self.s3_fs_output.glob(
+            posixpath.join(
+                self.s3_fs_output._strip_protocol(root_prefix), "**/*.parquet"
+            )
+        )
+        all_files = []
+        for f in raw_files:
+            f_str = str(f)
+            if (
+                f_str.endswith("_metadata")
+                or f_str.endswith("_common_metadata")
+                or "_tmp_meta_" in f_str
+            ):
+                continue
+            all_files.append(f_str)
 
         if not all_files:
-            self.logger.warning("No parquet files found on S3. Manifest skipped.")
-            return
-
-        self.logger.info(f"Found {len(all_files)} total parquet files to scan.")
-
-        serialized_footers = []
-        batch_size = 100
-        ii = 0
-
-        while ii * batch_size < len(all_files):
-            i = ii * batch_size
-            batch = all_files[i : i + batch_size]
-            batch_tasks = []
-
-            if client:
-                max_retries = 3
-                retry_count = 0
-                batch_done = False
-
-                while not batch_done:
-                    try:
-                        batch_tasks = [
-                            client.submit(
-                                _extract_metadata_worker,
-                                f,
-                                self.s3_fs_output,
-                                pure=False,
-                            )
-                            for f in batch
-                        ]
-                        wait(batch_tasks, return_when="ALL_COMPLETED")
-                        serialized_footers.extend(
-                            [future.result() for future in batch_tasks]
-                        )
-                        batch_done = True
-
-                    except (
-                        FutureCancelledError,
-                        CommClosedError,
-                        StreamClosedError,
-                    ) as e:
-                        retry_count += 1
-                        self.logger.error(
-                            f"{self.uuid_log}: Scheduler connection lost during metadata batch {ii + 1} "
-                            f"(attempt {retry_count}/{max_retries}): {e}. Recreating Dask cluster..."
-                        )
-
-                        if retry_count > max_retries:
-                            self.logger.error(
-                                f"Metadata batch {ii + 1} exceeded retry limit. Skipping."
-                            )
-                            batch_done = True
-                        else:
-                            try:
-                                # Using self.cluster here keeps it clean if the manager needs it,
-                                # or you can drop this block if you manage lifetimes elsewhere.
-                                self.cluster_manager.close_cluster(client, self.cluster)
-                            except Exception:
-                                pass
-
-                            # Re-create using your internal class factory
-                            self.client, self.cluster = self.create_cluster()
-                            client = (
-                                self.client
-                            )  # Update local pointer for the next loop attempt
-                            self.logger.info(
-                                f"New cluster created. Retrying metadata batch {ii + 1}."
-                            )
-            else:
-                self.logger.info(
-                    "No Dask client passed; using local processing for metadata."
-                )
-                with ThreadPoolExecutor() as executor:
-                    batch_tasks = [
-                        executor.submit(_extract_metadata_worker, f, self.s3_fs_output)
-                        for f in batch
-                    ]
-                    for future in as_completed(batch_tasks):
-                        try:
-                            serialized_footers.append(future.result())
-                        except Exception as e:
-                            self.logger.error(
-                                f"Local thread error processing metadata: {e}"
-                            )
-
-            if "batch_tasks" in locals():
-                del batch_tasks
-            gc.collect()
-            if client:
-                client.run_on_scheduler(gc.collect)
-
-            ii += 1
-
-        if not serialized_footers:
-            self.logger.error(
-                "No metadata footers successfully collected. Cannot write manifest."
+            self.logger.warning(
+                "No parquet files found on S3 directory target. Manifest skipped."
             )
             return
 
-        self.logger.info("Deserializing and merging metadata footers on driver...")
-        combined_metadata = pq.read_metadata(io.BytesIO(serialized_footers[0]))
+        self.logger.info(f"Found {len(all_files)} files to aggregate.")
 
-        for footer_bytes in serialized_footers[1:]:
-            next_meta = pq.read_metadata(io.BytesIO(footer_bytes))
-            combined_metadata.append_row_groups(next_meta)
+        physical_schema = None
+        combined_metadata = None
+        target_keyword = root_prefix.rstrip("/").split("/")[-1] + "/"
 
-        self.logger.info(
-            f"Writing unified _metadata mapping {combined_metadata.num_row_groups} row groups."
-        )
-        with self.s3_fs_output.open(manifest_path, mode="wb") as f:
-            combined_metadata.write_metadata_file(f)
+        if (
+            self.cluster_mode == ClusterMode.NONE.value
+            or self.cluster_mode == ClusterMode.LOCAL.value
+        ):
+            self.logger.info(
+                "Processing metadata accumulation directly on local authenticated driver context..."
+            )
 
-        self.logger.info("Successfully generated global _metadata manifest.")
+            for file_uri in all_files:
+                clean_uri = self.s3_fs_output._strip_protocol(file_uri)
+                with self.s3_fs_output.open(clean_uri, mode="rb") as f:
+                    md = pq.read_metadata(f)
+
+                if target_keyword in file_uri:
+                    rel_path = file_uri.split(target_keyword, 1)[-1].lstrip("/")
+                else:
+                    rel_path = file_uri.split("/")[-1]
+
+                md.set_file_path(rel_path)
+
+                if combined_metadata is None:
+                    combined_metadata = md
+                    physical_schema = md.schema.to_arrow_schema()
+                else:
+                    combined_metadata.append_row_groups(md)
+        else:
+            # Scaled Dask distributed fallback implementation for huge dataset pipelines
+            self.logger.info(
+                "Scaling out metadata extraction across distributed workers..."
+            )
+            from dask.distributed import as_completed
+
+            storage_options = getattr(
+                self.s3_fs_output, "storage_options", {"anon": False}
+            )
+            worker_chunk_size = 500
+            temp_file_paths = []
+
+            grouped_worker_chunks = [
+                all_files[x : x + worker_chunk_size]
+                for x in range(0, len(all_files), worker_chunk_size)
+            ]
+            chunk_ids = list(range(len(grouped_worker_chunks)))
+
+            futures = client.map(
+                _extract_and_merge_worker_chunk,
+                grouped_worker_chunks,
+                root_prefix=root_prefix,
+                chunk_id=chunk_ids,
+                storage_options=storage_options,
+                pure=False,
+            )
+
+            for future in as_completed(futures):
+                temp_path = future.result()
+                if temp_path:
+                    temp_file_paths.append(temp_path)
+
+            if temp_file_paths:
+                # CRITICAL: Invalidate the driver's s3fs directory cache
+                # to force it to see the newly uploaded worker files!
+                self.s3_fs_output.invalidate_cache(
+                    self.s3_fs_output._strip_protocol(root_prefix)
+                )
+
+                # Read back and merge intermediate chunks
+                for path in temp_file_paths:
+                    clean_path = self.s3_fs_output._strip_protocol(path)
+                    with self.s3_fs_output.open(clean_path, mode="rb") as f:
+                        next_meta = pq.read_metadata(f)
+                    if combined_metadata is None:
+                        combined_metadata = next_meta
+                        physical_schema = next_meta.schema.to_arrow_schema()
+                    else:
+                        combined_metadata.append_row_groups(next_meta)
+
+                # Clean up intermediate chunks
+                for path in temp_file_paths:
+                    try:
+                        self.logger.info(f"Deleting temporary file from S3: {path}")
+                        clean_del_path = self.s3_fs_output._strip_protocol(path)
+                        self.s3_fs_output.rm(clean_del_path)
+                    except Exception as e:
+                        self.logger.warning(
+                            f"Could not clear temporary file {path}: {e}"
+                        )
+
+        # Write final outputs to S3
+        if combined_metadata is not None and physical_schema is not None:
+            self.logger.info("Writing final unified metadata manifests to S3...")
+            with self.s3_fs_output.open(meta_data_path_clean, mode="wb") as f:
+                combined_metadata.write_metadata_file(f)
+
+        self.logger.info("Global metadata generation complete!")
 
     def _add_metadata_sidecar(self) -> None:
         """
@@ -1710,7 +1750,7 @@ class GenericHandler(CommonHandler):
         client, cluster = self.create_cluster()
 
         if self.cluster_mode:
-            if self.cluster_mode == "coiled":
+            if self.cluster_mode == self.cluster_mode == ClusterMode.COILED.value:
                 self.cluster_id = cluster.cluster_id
             else:
                 self.cluster_id = cluster.name
