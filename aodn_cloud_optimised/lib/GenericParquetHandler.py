@@ -60,51 +60,115 @@ from .schema import (
 # TODO: improve log for parallism by adding a uuid for each task
 
 
-def _extract_and_merge_worker_chunk(file_uris, root_prefix, chunk_id, storage_options):
+def _tree_reduce_pair_task(path1, path2, root_prefix, layer, index, storage_options):
     """
-    Worker task: Processes an isolated chunk of files, strips paths for portability,
-    and writes an intermediate metadata file directly to a temporary S3 location.
-    Explicitly formats the final S3 URI string to bypass posixpath prefix stripping bugs.
+    Combines exactly two metadata sidecar files together on an arbitrary worker node,
+    preventing large data-bloat memory traps.
     """
+    import pyarrow.parquet as pq
+    import s3fs
 
     fs = s3fs.S3FileSystem(**storage_options)
-    combined = None
-
-    # Strip any protocol details temporarily to cleanly handle paths uniformly
     clean_prefix = root_prefix.replace("s3://", "").rstrip("/")
-    target_keyword = clean_prefix.split("/")[-1] + "/"
+    target_s3_uri = f"s3://{clean_prefix}/_tmp_meta_L{layer}_{index}.parquet"
 
-    for file_uri in file_uris:
-        ready_uri = file_uri if file_uri.startswith("s3://") else f"s3://{file_uri}"
-        with fs.open(ready_uri, mode="rb") as f:
-            md = pq.read_metadata(f)
+    try:
+        with fs.open(fs._strip_protocol(path1), mode="rb") as f:
+            md1 = pq.read_metadata(f)
+        with fs.open(fs._strip_protocol(path2), mode="rb") as f:
+            md2 = pq.read_metadata(f)
 
-        file_uri_str = str(ready_uri)
-        if target_keyword in file_uri_str:
-            rel_path = file_uri_str.split(target_keyword, 1)[-1].lstrip("/")
-        else:
-            rel_path = file_uri_str.split("/")[-1]
+        # Merge row groups safely
+        md1.append_row_groups(md2)
 
-        md.set_file_path(rel_path)
+        with fs.open(fs._strip_protocol(target_s3_uri), mode="wb") as f:
+            md1.write_metadata_file(f)
 
-        if combined is None:
-            combined = md
-        else:
-            combined.append_row_groups(md)
-
-    if combined is None:
+        return target_s3_uri
+    except Exception as e:
+        # print(f"Failed to tree-reduce pair ({path1}, {path2}): {e}")
         return None
 
-    clean_id = chunk_id[0] if isinstance(chunk_id, list) else chunk_id
 
-    # Build a raw path string for s3fs to write to safely
-    raw_s3_path = f"{clean_prefix}/_tmp_meta_{clean_id}.parquet"
+def _final_worker_reduction_task(temp_file_paths, final_meta_path, storage_options):
+    """
+    Combines stage-1 chunk metadata arrays together and serializes the
+    completed global _metadata layout file entirely inside a worker node thread.
+    """
+    import pyarrow.parquet as pq
+    import s3fs
 
-    with fs.open(f"s3://{raw_s3_path}", mode="wb") as f:
-        combined.write_metadata_file(f)
+    fs = s3fs.S3FileSystem(**storage_options)
+    combined_metadata = None
 
-    # FORCE return of a fully-qualified s3:// string URI directly to the driver
-    return f"s3://{raw_s3_path}"
+    try:
+        for path in temp_file_paths:
+            clean_path = fs._strip_protocol(path)
+            with fs.open(clean_path, mode="rb") as f:
+                next_meta = pq.read_metadata(f)
+
+            if combined_metadata is None:
+                combined_metadata = next_meta
+            else:
+                combined_metadata.append_row_groups(next_meta)
+
+        if combined_metadata is not None:
+            clean_output_path = fs._strip_protocol(final_meta_path)
+            with fs.open(clean_output_path, mode="wb") as f:
+                combined_metadata.write_metadata_file(f)
+            return True
+
+    except Exception as e:
+        # print(f"Worker-side global manifest reduction task crashed: {e}")
+        return False
+
+    return False
+
+
+def _extract_and_merge_worker_chunk(file_uris, chunk_id, root_prefix, storage_options):
+    """
+    Worker task running on the cluster to combine individual file metadata row groups.
+    """
+    import pyarrow.parquet as pq
+    import s3fs
+
+    fs = s3fs.S3FileSystem(**storage_options)
+
+    clean_prefix = root_prefix.replace("s3://", "").rstrip("/")
+    # This will now correctly evaluate to unique paths like _tmp_meta_0.parquet, _tmp_meta_1.parquet, etc.
+    target_s3_uri = f"s3://{clean_prefix}/_tmp_meta_{chunk_id}.parquet"
+
+    combined = None
+    target_keyword = clean_prefix.split("/")[-1] + "/"
+
+    try:
+        for file_uri in file_uris:
+            clean_uri = fs._strip_protocol(file_uri)
+            with fs.open(clean_uri, mode="rb") as f:
+                md = pq.read_metadata(f)
+
+            rel_path = (
+                file_uri.split(target_keyword, 1)[-1].lstrip("/")
+                if target_keyword in file_uri
+                else file_uri.split("/")[-1]
+            )
+            md.set_file_path(rel_path)
+
+            if combined is None:
+                combined = md
+            else:
+                combined.append_row_groups(md)
+
+        if combined is not None:
+            with fs.open(fs._strip_protocol(target_s3_uri), mode="wb") as f:
+                combined.write_metadata_file(f)
+            return target_s3_uri
+
+    except Exception as e:
+        # print(f"Worker chunk {chunk_id} failed: {e}")
+        return None
+
+    return None
 
 
 class GenericHandler(CommonHandler):
@@ -1304,6 +1368,8 @@ class GenericHandler(CommonHandler):
         Generates the global metadata manifest files.
         Processes smaller file counts locally on the driver to bypass worker-side AWS SSO authentication bugs.
         """
+        import pyarrow.parquet as pq
+        from dask.distributed import wait
 
         self.logger.info("Starting optimized chunked global _metadata generation...")
 
@@ -1311,8 +1377,6 @@ class GenericHandler(CommonHandler):
         root_prefix = dataset_root.rstrip("/") + "/"
 
         _meta_data_path = posixpath.join(root_prefix, "_metadata")
-
-        # Clean paths for s3fs use
         meta_data_path_clean = self.s3_fs_output._strip_protocol(_meta_data_path)
 
         # Gather target files using the active, authenticated driver filesystem
@@ -1369,8 +1433,12 @@ class GenericHandler(CommonHandler):
                     physical_schema = md.schema.to_arrow_schema()
                 else:
                     combined_metadata.append_row_groups(md)
+
+            if combined_metadata is not None and physical_schema is not None:
+                self.logger.info("Writing final unified metadata manifests to S3...")
+                with self.s3_fs_output.open(meta_data_path_clean, mode="wb") as f:
+                    combined_metadata.write_metadata_file(f)
         else:
-            # Scaled Dask distributed fallback implementation for huge dataset pipelines
             self.logger.info(
                 "Scaling out metadata extraction across distributed workers..."
             )
@@ -1379,7 +1447,7 @@ class GenericHandler(CommonHandler):
             storage_options = getattr(
                 self.s3_fs_output, "storage_options", {"anon": False}
             )
-            worker_chunk_size = 500
+            worker_chunk_size = 1000
             temp_file_paths = []
 
             grouped_worker_chunks = [
@@ -1388,11 +1456,12 @@ class GenericHandler(CommonHandler):
             ]
             chunk_ids = list(range(len(grouped_worker_chunks)))
 
+            # --- FIX: Pass chunk_ids positionally so Dask iterates over them sequentially ---
             futures = client.map(
                 _extract_and_merge_worker_chunk,
                 grouped_worker_chunks,
+                chunk_ids,  # <-- Passed positionally now!
                 root_prefix=root_prefix,
-                chunk_id=chunk_ids,
                 storage_options=storage_options,
                 pure=False,
             )
@@ -1403,27 +1472,82 @@ class GenericHandler(CommonHandler):
                     temp_file_paths.append(temp_path)
 
             if temp_file_paths:
-                # CRITICAL: Invalidate the driver's s3fs directory cache
-                # to force it to see the newly uploaded worker files!
                 self.s3_fs_output.invalidate_cache(
                     self.s3_fs_output._strip_protocol(root_prefix)
                 )
 
-                # Read back and merge intermediate chunks
-                for path in temp_file_paths:
-                    clean_path = self.s3_fs_output._strip_protocol(path)
-                    with self.s3_fs_output.open(clean_path, mode="rb") as f:
-                        next_meta = pq.read_metadata(f)
-                    if combined_metadata is None:
-                        combined_metadata = next_meta
-                        physical_schema = next_meta.schema.to_arrow_schema()
-                    else:
-                        combined_metadata.append_row_groups(next_meta)
+                # --- BINARY TREE REDUCTION LAYER ---
+                self.logger.info(
+                    f"Starting distributed binary tree reduction for {len(temp_file_paths)} unique chunks..."
+                )
 
-                # Clean up intermediate chunks
-                for path in temp_file_paths:
+                current_layer_paths = temp_file_paths.copy()
+                layer_counter = 0
+                all_generated_tmp_paths = temp_file_paths.copy()
+
+                while len(current_layer_paths) > 1:
+                    layer_counter += 1
+                    next_layer_futures = []
+
+                    self.logger.info(
+                        f"Reducing layer {layer_counter}: {len(current_layer_paths)} files remaining..."
+                    )
+
+                    for i in range(0, len(current_layer_paths), 2):
+                        pair = current_layer_paths[i : i + 2]
+
+                        if len(pair) == 2:
+                            f = client.submit(
+                                _tree_reduce_pair_task,
+                                pair[0],
+                                pair[1],
+                                root_prefix=root_prefix,
+                                layer=layer_counter,
+                                index=i,
+                                storage_options=storage_options,
+                                pure=False,
+                            )
+                            next_layer_futures.append(f)
+                        else:
+                            next_layer_futures.append(pair[0])
+
+                    wait(next_layer_futures)
+
+                    current_layer_paths = []
+                    for item in next_layer_futures:
+                        p = item.result() if hasattr(item, "result") else item
+                        if p:
+                            current_layer_paths.append(p)
+                            if p not in all_generated_tmp_paths:
+                                all_generated_tmp_paths.append(p)
+
+                if current_layer_paths:
+                    self.logger.info(
+                        "Tree reduction complete. Generating final master _metadata manifest..."
+                    )
+                    final_root_chunk = current_layer_paths[0]
+
+                    reduction_future = client.submit(
+                        _final_worker_reduction_task,
+                        [final_root_chunk],
+                        final_meta_path=_meta_data_path,
+                        storage_options=storage_options,
+                        pure=False,
+                    )
+                    wait([reduction_future])
+                    reduction_success = reduction_future.result()
+
+                    if not reduction_success:
+                        self.logger.error(
+                            "Distributed metadata reduction failed on final serialization pass."
+                        )
+
+                # Clean up every unique temporary file generated from S3
+                self.logger.info(
+                    f"Cleaning up {len(all_generated_tmp_paths)} temporary workspace artifacts from S3..."
+                )
+                for path in all_generated_tmp_paths:
                     try:
-                        self.logger.info(f"Deleting temporary file from S3: {path}")
                         clean_del_path = self.s3_fs_output._strip_protocol(path)
                         self.s3_fs_output.rm(clean_del_path)
                     except Exception as e:
@@ -1431,11 +1555,9 @@ class GenericHandler(CommonHandler):
                             f"Could not clear temporary file {path}: {e}"
                         )
 
-        # Write final outputs to S3
-        if combined_metadata is not None and physical_schema is not None:
-            self.logger.info("Writing final unified metadata manifests to S3...")
-            with self.s3_fs_output.open(meta_data_path_clean, mode="wb") as f:
-                combined_metadata.write_metadata_file(f)
+                self.s3_fs_output.invalidate_cache(
+                    self.s3_fs_output._strip_protocol(root_prefix)
+                )
 
         self.logger.info("Global metadata generation complete!")
 
