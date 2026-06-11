@@ -1530,31 +1530,38 @@ class GenericHandler(CommonHandler):
                     bucket_name, prefix, self.s3_client_opts_output
                 )
 
-        # Capture only the count — NOT the full list — to avoid cloudpickle serializing
-        # the list into every Dask task closure.  The real leak is via `self`: task()
-        # captures `self` because it calls self.to_cloud_optimised_single(), and
-        # cloudpickle serialises the entire handler instance with every client.submit().
-        # self.s3_file_uri_list is set AFTER the batch loop so that self is lean
-        # (~7 KB) rather than carrying the 19k-path list (~694 KB × batch_size).
-        total_files = len(s3_file_uri_list)
+        if not self.schedular:
 
-        def task(f, i):
-            try:
-                self.to_cloud_optimised_single(f)
-            except Exception as e:
-                self.logger.error(
-                    f"Issue {i}/{total_files} with {f}: {type(e).__name__}: {e}"
-                )
+            # If a schedular is not provided then use the aodn CO provided schedulars
 
-        client, cluster = self.create_cluster()
+            # Capture only the count — NOT the full list — to avoid cloudpickle serializing
+            # the list into every Dask task closure.  The real leak is via `self`: task()
+            # captures `self` because it calls self.to_cloud_optimised_single(), and
+            # cloudpickle serialises the entire handler instance with every client.submit().
+            # self.s3_file_uri_list is set AFTER the batch loop so that self is lean
+            # (~7 KB) rather than carrying the 19k-path list (~694 KB × batch_size).
+            total_files = len(s3_file_uri_list)
 
-        if self.cluster_mode:
-            if self.cluster_mode == "coiled":
-                self.cluster_id = cluster.cluster_id
+            def task(f, i):
+                try:
+                    self.to_cloud_optimised_single(f)
+                except Exception as e:
+                    self.logger.error(
+                        f"Issue {i}/{total_files} with {f}: {type(e).__name__}: {e}"
+                    )
+
+            client, cluster = self.create_cluster()
+
+            if self.cluster_mode:
+                if self.cluster_mode == "coiled":
+                    self.cluster_id = cluster.cluster_id
+                else:
+                    self.cluster_id = cluster.name
             else:
-                self.cluster_id = cluster.name
+                self.cluster_id = "local_execution"
         else:
-            self.cluster_id = "local_execution"
+            client = None
+            cluster = None
 
         batch_size = self.get_batch_size(client=client)
 
@@ -1623,6 +1630,8 @@ class GenericHandler(CommonHandler):
                             self.logger.info(
                                 f"{self.uuid_log}: New cluster created. Retrying batch {ii + 1}."
                             )
+            elif self.schedular:
+                batch_tasks = self.schedular.schedule(handler=self, files=batch)
             else:
                 # Fall back to local processing with ThreadPoolExecutor
                 self.logger.info(
@@ -1656,4 +1665,7 @@ class GenericHandler(CommonHandler):
         # Set only after all tasks are submitted so self is not carrying the full list
         # during cloudpickle serialisation of each Dask task closure (saves ~3 GB/batch).
         self.s3_file_uri_list = s3_file_uri_list
-        self.logger.handlers.clear()
+        try:
+            self.logger.handlers.clear()
+        except AttributeError:
+            pass
