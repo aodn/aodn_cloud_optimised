@@ -1219,6 +1219,7 @@ class GenericHandler(CommonHandler):
                 raise ValueError
 
         metadata_collector = []
+        self.logger.debug(self.cloud_optimised_output_path)
         pq.write_to_dataset(
             pdf,
             root_path=self.cloud_optimised_output_path,
