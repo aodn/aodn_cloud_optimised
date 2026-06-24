@@ -122,7 +122,7 @@ class CommonHandler:
             "coiled_cluster_options", None
         )
 
-        # TODO: if there is a schedular then we probably don't need this
+        # TODO: if there is a scheduler then create a cluster manager that just has the client
         self.cluster_manager = ClusterManager(
             cluster_mode=self.cluster_mode,
             dataset_name=self.dataset_name,

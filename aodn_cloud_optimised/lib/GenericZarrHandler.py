@@ -18,7 +18,7 @@ from distributed.client import FutureCancelledError
 from distributed.scheduler import KilledWorker
 from distributed.shuffle._exceptions import P2PConsistencyError
 from xarray.coding.times import CFDatetimeCoder
-from xarray.structure.merge import MergeError
+from xarray import MergeError
 
 from aodn_cloud_optimised.lib.CommonHandler import CommonHandler
 from aodn_cloud_optimised.lib.logging import get_logger
@@ -1089,6 +1089,8 @@ class GenericHandler(CommonHandler):
 
         if self.cluster_mode:
             batch_size = self.get_batch_size(client=self.client)
+        elif self.schedular:
+            batch_size = self.get_batch_size()
         else:
             batch_size = 1
 
@@ -2799,6 +2801,8 @@ class GenericHandler(CommonHandler):
                     self.cluster_id = self.cluster.cluster_id
                 else:
                     self.cluster_id = self.cluster.name
+            elif self.schedular:
+                self.client = self.schedular.schedule(handler=self)
             else:
                 self.cluster_id = "local_execution"
 

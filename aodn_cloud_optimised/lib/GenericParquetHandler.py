@@ -1632,7 +1632,7 @@ class GenericHandler(CommonHandler):
                                 f"{self.uuid_log}: New cluster created. Retrying batch {ii + 1}."
                             )
             elif self.schedular:
-                batch_tasks = self.schedular.schedule(handler=self, files=batch)
+                self.schedular.schedule(handler=self, files=batch)
             else:
                 # Fall back to local processing with ThreadPoolExecutor
                 self.logger.info(
