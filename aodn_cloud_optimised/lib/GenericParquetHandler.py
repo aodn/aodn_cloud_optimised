@@ -1653,7 +1653,8 @@ class GenericHandler(CommonHandler):
             ii += 1
 
             # Cleanup memory
-            del batch_tasks
+            if 'batch_tasks' in locals():
+                del batch_tasks
 
             # Trigger garbage collection
             gc.collect()
