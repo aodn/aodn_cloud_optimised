@@ -38,7 +38,7 @@ class GridSizeMismatchError(ValueError):
 
 
 def check_variable_values_dask(
-    file_path, reference_values, variable_name, dataset_config, uuid_log
+    file_path, reference_values, variable_name, dataset_config, uuid_log, logger_override=False
 ):
     """Checks if variable values in a file match reference values.
 
@@ -59,7 +59,10 @@ def check_variable_values_dask(
             indicating if the file is problematic (True) or consistent (False).
             Returns (file_path, True) if any exception occurs during processing.
     """
-    logger_name = dataset_config.get("logger_name", "generic")
+    if logger_override:
+        logger_name = __name__
+    else:
+        logger_name = dataset_config.get("logger_name", "generic")
     logger = get_logger(logger_name)
     try:
         ds = xr.open_dataset(file_path)
@@ -89,7 +92,7 @@ def check_variable_values_dask(
         return file_path, True
 
 
-def check_append_dim_range_dask(file_path, dim_name, dataset_config, uuid_log):
+def check_append_dim_range_dask(file_path, dim_name, dataset_config, uuid_log, logger_override=False):
     """Returns the min and max values of a dimension in a single file.
 
     Designed to be run in parallel (e.g., with Dask) to identify files whose
@@ -106,7 +109,10 @@ def check_append_dim_range_dask(file_path, dim_name, dataset_config, uuid_log):
             ``(file_path, None, None)`` if the file cannot be opened or the
             dimension is missing.
     """
-    logger_name = dataset_config.get("logger_name", "generic")
+    if logger_override:
+        logger_name = __name__
+    else:
+        logger_name = dataset_config.get("logger_name", "generic")
     logger = get_logger(logger_name)
     try:
         with xr.open_dataset(file_path) as ds:
@@ -130,7 +136,7 @@ def get_var_template_shape(ds, var_template_shape):
     return None
 
 
-def preprocess_xarray(ds, dataset_config):
+def preprocess_xarray(ds, dataset_config, logger_override=False):
     """Performs preprocessing steps on an xarray Dataset.
 
     This function applies preprocessing logic defined in the dataset
@@ -164,11 +170,14 @@ def preprocess_xarray(ds, dataset_config):
     # https://github.com/fsspec/filesystem_spec/issues/1747
     # https://discourse.pangeo.io/t/remote-cluster-with-dask-distributed-uses-the-deployment-machines-memory-and-internet-bandwitch/4637
     # https://github.com/dask/distributed/discussions/8913
-    logger_name = dataset_config.get("logger_name", "generic")
+
+    if logger_override:
+        logger_name = __name__
+    else:
+        logger_name = dataset_config.get("logger_name", "generic")
+    logger = get_logger(logger_name)
     dimensions = dataset_config["schema_transformation"].get("dimensions")
     schema = dataset_config.get("schema")
-
-    logger = get_logger(logger_name)
 
     # Drop variables not in the list
     vars_to_drop = set(ds.data_vars) - set(schema)
@@ -1084,7 +1093,7 @@ class GenericHandler(CommonHandler):
         ]
 
         partial_preprocess = partial(
-            preprocess_xarray, dataset_config=self.dataset_config
+            preprocess_xarray, dataset_config=self.dataset_config, logger_override=self.logger_override
         )
 
         if self.cluster_mode:
@@ -1139,7 +1148,7 @@ class GenericHandler(CommonHandler):
                         self.logger.debug(
                             f"{self.uuid_log}: 'partial_preprocess_already_run' is False. Applying preprocess_xarray."
                         )
-                        ds = preprocess_xarray(ds, self.dataset_config)
+                        ds = preprocess_xarray(ds, self.dataset_config, logger_override=self.logger_override)
 
                     self._write_ds(ds, idx)
                     self.logger.info(
@@ -1803,12 +1812,13 @@ class GenericHandler(CommonHandler):
                 dim_name=dim_name,
                 dataset_config=self.dataset_config,
                 uuid_log=self.uuid_log,
+                logger_override=self.logger_override,
             )
             ranges = self.client.gather(futures)
         else:
             ranges = [
                 check_append_dim_range_dask(
-                    f, dim_name, self.dataset_config, self.uuid_log
+                    f, dim_name, self.dataset_config, self.uuid_log, self.logger_override
                 )
                 for f in batch_files
             ]
@@ -1962,6 +1972,7 @@ class GenericHandler(CommonHandler):
                 variable_name=variable_name,
                 dataset_config=self.dataset_config,
                 uuid_log=self.uuid_log,
+                override_logger=self.logger_override
             )
             results = self.client.gather(futures)
         else:
@@ -1977,6 +1988,7 @@ class GenericHandler(CommonHandler):
                     variable_name,
                     self.dataset_config,
                     self.uuid_log,
+                    self.logger_override
                 )
                 for file_path in file_paths[1:]
             ]
@@ -2489,7 +2501,7 @@ class GenericHandler(CommonHandler):
         ds = ds.chunk(chunks=self.chunks)
         ds = ds.unify_chunks()
 
-        ds = preprocess_xarray(ds, self.dataset_config)
+        ds = preprocess_xarray(ds, self.dataset_config, logger_override=self.logger_override)
 
         return ds
 

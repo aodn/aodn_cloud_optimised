@@ -97,6 +97,9 @@ class CommonHandler:
         if not self.logger:
             logger_name = self.dataset_config.get("logger_name", "generic")
             self.logger = get_logger(logger_name, raise_error=self.raise_error)
+            self.logger_override = False
+        else:
+            self.logger_override = True
 
         cloud_optimised_format = self.dataset_config.get("cloud_optimised_format")
 
@@ -122,7 +125,7 @@ class CommonHandler:
             "coiled_cluster_options", None
         )
 
-        # TODO: if there is a scheduler then create a cluster manager that just has the client
+        # TODO: if there is a schedular then we probably don't need this
         self.cluster_manager = ClusterManager(
             cluster_mode=self.cluster_mode,
             dataset_name=self.dataset_name,
