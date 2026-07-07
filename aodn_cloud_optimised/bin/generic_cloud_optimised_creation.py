@@ -112,7 +112,7 @@ def collect_files(
         )
 
         if path_cfg.filter:
-            pattern = path_cfg.filter[0]
+            pattern = path_cfg.filter
             logger.info(f"Filtering files with regex pattern: {pattern}")
             regex = re.compile(pattern)
             matching_files = [f for f in matching_files if regex.search(f)]

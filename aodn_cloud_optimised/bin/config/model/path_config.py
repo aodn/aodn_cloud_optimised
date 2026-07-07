@@ -28,7 +28,7 @@ class PathConfig(pydantic.BaseModel):
         default=None,
         description="Partitioning scheme, only valid when type='parquet'. Currently supports 'hive'.",
     )
-    filter: list[re.Pattern] | list[str] | None = pydantic.Field(
+    filter: list[re.Pattern] | str | None = pydantic.Field(
         default_factory=list,
         description="List of regex pattern used to filter matching files.",
     )
@@ -97,10 +97,13 @@ class PathConfig(pydantic.BaseModel):
     @pydantic.field_validator("filter", mode="after")
     @classmethod
     def validate_regex(cls, v: list[re.Pattern]) -> str | None:
-        # Convert regex patterns to a single item string list
+        # Convert regex patterns to a string
         if isinstance(v, list):
             # concat each pattern into a single string
-            return ["|".join(f"(?:{p.pattern})" for p in v)]
+            return "|".join(f"(?:{p.pattern})" for p in v)
+
+        if isinstance(v, str):
+            return v
 
         return None
 
