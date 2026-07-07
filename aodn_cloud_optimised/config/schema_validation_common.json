@@ -32,11 +32,7 @@
                       "type": "string"
                     }
                   }
-                ],
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
+                ]
               },
               "year_range": {
                 "type": "array",
