@@ -96,7 +96,7 @@ class PathConfig(pydantic.BaseModel):
 
     @pydantic.field_validator("filter", mode="after")
     @classmethod
-    def validate_regex(cls, v: list[re.Pattern]) -> str | None:
+    def validate_regex(cls, v: list[re.Pattern]) -> str:
         # Convert regex patterns to a string
         if isinstance(v, list):
             # concat each pattern into a single string
@@ -105,7 +105,7 @@ class PathConfig(pydantic.BaseModel):
         if isinstance(v, str):
             return v
 
-        return None
+        return ""
 
     @pydantic.model_validator(mode="after")
     def validate_cross_fields(self) -> "PathConfig":
