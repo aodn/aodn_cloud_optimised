@@ -698,19 +698,19 @@
     }
   },
   "aws_opendata_registry": {
-    "Name": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+    "Name": "Ocean Gliders - Real-time glider deployments",
     "Description": "The Ocean Gliders Facility (formerly known as the Australian National Facility for Ocean Gliders (ANFOG)), deploys a fleet of eight gliders around Australia. The data represented by this record, are presented in real-time. \n\nThe underwater ocean glider represents a technological revolution for oceanography. Autonomous ocean gliders can be built relatively cheaply, are controlled remotely and are reusable allowing them to make repeated subsurface ocean observations at a fraction of the cost of conventional methods. The data retrieved from the glider fleet will contribute to the study of the major boundary current systems surrounding Australia and their links to coastal ecosystems. The glider fleet consists of two types; Slocum gliders and Seagliders. Slocum gliders (named for Joshua Slocum, the first solo global circumnavigator), manufactured by Webb Research Corp are optimised for shallow coastal waters (<200m) where high manoeuvrability is needed. The facility has Slocum gliders for deployment on the continental shelf. Seagliders, built at the University of Washington, are designed to operate more efficiently in the open ocean up to 1000m water depth. The facility uses their Seagliders to monitor the boundary currents and continental shelves, which is valuable for gathering long-term environmental records of physical, chemical and biological data not widely measured to date. Whilst the Slocum gliders, due to their low cost and operational flexibility, will be of great use in intensive coastal monitoring, both types of gliders weigh only 52kg, enabling them to be launched from small boats. They have a suite of sensors able to record temperature, salinity, dissolved oxygen, turbidity, dissolved organic matter and chlorophyll against position and depth. \n\nSustained ocean observations will allow researchers to document the natural variability of the ocean, and better understand the effect of climate change on coastal ecosystems. The IMOS gliders will focus particularly on the major boundary currents that run down the Australian coast, the Leeuwin in the west and the East Australian Current (EAC). The study of these currents is critical for understanding the north-south transport of freshwater, heat and biogeochemical properties. The currents exert a large influence on coastal ecosystems, shipping lanes and fisheries.",
     "Documentation": "https://catalogue-imos.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/a681fdba-c6d9-44ab-90b9-113b0ed03536",
     "Contact": "info@aodn.org.au",
     "ManagedBy": "AODN",
     "UpdateFrequency": "As Needed",
     "Tags": [
-      "FILL UP MANUALLY - CHECK DOCUMENTATION"
+      "oceans"
     ],
     "License": "http://creativecommons.org/licenses/by/4.0/",
     "Resources": [
       {
-        "Description": "Cloud Optimised AODN dataset of FILL UP MANUALLY - CHECK DOCUMENTATION",
+        "Description": "Cloud Optimised AODN dataset of Ocean Gliders - Real-time glider deployments",
         "ARN": "arn:aws:s3:::aodn-cloud-optimised/glider_realtime_nonqc.parquet",
         "Region": "ap-southeast-2",
         "Type": "S3 Bucket"
@@ -719,7 +719,7 @@
     "DataAtWork": {
       "Tutorials": [
         {
-          "Title": "Accessing FILL UP MANUALLY - CHECK DOCUMENTATION",
+          "Title": "Accessing Ocean Gliders - Real-time glider deployments",
           "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/glider_realtime_nonqc.ipynb",
           "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/glider_realtime_nonqc.ipynb",
           "AuthorName": "Laurent Besnard",
@@ -769,7 +769,7 @@
         "source_variable": "timestamp",
         "type": "time_extent",
         "time_extent": {
-          "time_varname": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+          "time_varname": "TIME",
           "partition_period": "M"
         }
       },
@@ -777,8 +777,8 @@
         "source_variable": "polygon",
         "type": "spatial_extent",
         "spatial_extent": {
-          "lat_varname": "FILL UP MANUALLY - CHECK DOCUMENTATION",
-          "lon_varname": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+          "lat_varname": "LATITUDE",
+          "lon_varname": "LONGITUDE",
           "spatial_resolution": 5
         }
       }
@@ -792,7 +792,7 @@
         "date_created"
       ],
       "set": {
-        "title": "FILL UP MANUALLY - CHECK DOCUMENTATION"
+        "title": "Ocean Gliders - Real-time glider deployments"
       }
     }
   }
