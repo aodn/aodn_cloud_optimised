@@ -98,9 +98,6 @@ class CommonHandler:
         if not self.logger:
             logger_name = self.dataset_config.get("logger_name", "generic")
             self.logger = get_logger(logger_name, raise_error=self.raise_error)
-            self.logger_override = False  # TODO: is it needed?
-        else:
-            self.logger_override = True  # TODO: is it needed?
 
         cloud_optimised_format = self.dataset_config.get("cloud_optimised_format")
 
