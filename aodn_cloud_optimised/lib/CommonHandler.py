@@ -93,13 +93,14 @@ class CommonHandler:
 
         self.schema = self.dataset_config.get("schema")
 
+        # Override the logger
         self.logger = kwargs.get("logger", None)
         if not self.logger:
             logger_name = self.dataset_config.get("logger_name", "generic")
             self.logger = get_logger(logger_name, raise_error=self.raise_error)
-            self.logger_override = False
+            self.logger_override = False  # TODO: is it needed?
         else:
-            self.logger_override = True
+            self.logger_override = True  # TODO: is it needed?
 
         cloud_optimised_format = self.dataset_config.get("cloud_optimised_format")
 
@@ -120,20 +121,18 @@ class CommonHandler:
             "clear_existing_data", None
         )  # setting to True will recreate the zarr from scratch at every run!
 
-        # TODO: if there is a schedular then we probably don't need this
-        self.coiled_cluster_options = self.dataset_config.get("run_settings", {}).get(
-            "coiled_cluster_options", None
-        )
+        self.scheduler = kwargs.get("scheduler", None)
+        if self.scheduler is None:
+            self.coiled_cluster_options = self.dataset_config.get("run_settings", {}).get(
+                "coiled_cluster_options", None
+            )
 
-        # TODO: if there is a schedular then we probably don't need this
-        self.cluster_manager = ClusterManager(
-            cluster_mode=self.cluster_mode,
-            dataset_name=self.dataset_name,
-            dataset_config=self.dataset_config,
-            logger=self.logger,
-        )
-
-        self.schedular = kwargs.get("schedular", None)
+            self.cluster_manager = ClusterManager(
+                cluster_mode=self.cluster_mode,
+                dataset_name=self.dataset_name,
+                dataset_config=self.dataset_config,
+                logger=self.logger,
+            )
 
         self.s3_client_opts_common = kwargs.get("s3_client_opts_common", None)
 
@@ -706,7 +705,7 @@ def cloud_optimised_creation(
         run_summary = RunSummary()
     kwargs_handler_class["run_summary"] = run_summary
 
-    kwargs_handler_class["schedular"] = kwargs.get("schedular", None)
+    kwargs_handler_class["scheduler"] = kwargs.get("scheduler", None)
 
     # Creating an instance of the specified class with the provided arguments
     start_whole_processing = timeit.default_timer()

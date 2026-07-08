@@ -1531,9 +1531,9 @@ class GenericHandler(CommonHandler):
                     bucket_name, prefix, self.s3_client_opts_output
                 )
 
-        if not self.schedular:
+        if not self.scheduler:
 
-            # If a schedular is not provided then use the aodn CO provided schedulars
+            # If a scheduler is not provided then use the aodn CO provided schedulars
 
             # Capture only the count — NOT the full list — to avoid cloudpickle serializing
             # the list into every Dask task closure.  The real leak is via `self`: task()
@@ -1631,8 +1631,8 @@ class GenericHandler(CommonHandler):
                             self.logger.info(
                                 f"{self.uuid_log}: New cluster created. Retrying batch {ii + 1}."
                             )
-            elif self.schedular:
-                self.schedular.schedule(handler=self, files=batch)
+            elif self.scheduler:
+                self.scheduler.schedule(handler=self, files=batch)
             else:
                 # Fall back to local processing with ThreadPoolExecutor
                 self.logger.info(

@@ -1098,7 +1098,7 @@ class GenericHandler(CommonHandler):
 
         if self.cluster_mode:
             batch_size = self.get_batch_size(client=self.client)
-        elif self.schedular:
+        elif self.scheduler:
             batch_size = self.get_batch_size()
         else:
             batch_size = 1
@@ -2813,8 +2813,8 @@ class GenericHandler(CommonHandler):
                     self.cluster_id = self.cluster.cluster_id
                 else:
                     self.cluster_id = self.cluster.name
-            elif self.schedular:
-                self.client = self.schedular.schedule(handler=self)
+            elif self.scheduler:
+                self.client = self.scheduler.schedule(handler=self)
             else:
                 self.cluster_id = "local_execution"
 
