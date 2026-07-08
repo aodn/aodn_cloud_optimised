@@ -6,7 +6,7 @@
     "paths": [
       {
         "type": "files",
-        "s3_uri": "s3://imos-data/IMOS/ANFOG/REALTIME/slocum_glider/TasEastCoast20260603",
+        "s3_uri": "s3://imos-data/IMOS/ANFOG/REALTIME/",
         "filter": [
           ".*\\.nc$"
         ],
