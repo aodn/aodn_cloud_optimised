@@ -14,7 +14,7 @@
       }
     ],
     "cluster": {
-      "mode": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+      "mode": "coiled",
       "restart_every_path": false
     },
     "clear_existing_data": true,
