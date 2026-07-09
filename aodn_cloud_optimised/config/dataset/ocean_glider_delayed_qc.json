@@ -1,6 +1,6 @@
 {
-  "dataset_name": "slocum_glider_delayed_qc",
-  "logger_name": "slocum_glider_delayed_qc",
+  "dataset_name": "ocean_glider_delayed_qc",
+  "logger_name": "ocean_glider_delayed_qc",
   "cloud_optimised_format": "parquet",
   "metadata_uuid": "c317b0fe-02e8-4ff9-96c9-563fd58e82ac",
   "schema_transformation": {
@@ -1043,7 +1043,7 @@
     "Resources": [
       {
         "Description": "Cloud Optimised AODN dataset of Ocean Gliders - delayed mode glider deployments",
-        "ARN": "arn:aws:s3:::aodn-cloud-optimised/slocum_glider_delayed_qc.parquet",
+        "ARN": "arn:aws:s3:::aodn-cloud-optimised/ocean_glider_delayed_qc.parquet",
         "Region": "ap-southeast-2",
         "Type": "S3 Bucket"
       }
@@ -1052,8 +1052,8 @@
       "Tutorials": [
         {
           "Title": "Accessing Ocean Gliders - delayed mode glider deployments",
-          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/slocum_glider_delayed_qc.ipynb",
-          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/slocum_glider_delayed_qc.ipynb",
+          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/ocean_glider_delayed_qc.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/ocean_glider_delayed_qc.ipynb",
           "AuthorName": "Laurent Besnard",
           "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
         },
