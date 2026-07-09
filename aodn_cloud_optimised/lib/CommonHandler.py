@@ -685,12 +685,12 @@ def cloud_optimised_creation(
     kwargs_handler_class = filtered_kwargs
 
     # Replace the logger if one is provided
-    logger_name = kwargs.get("logger", None)
-    if logger_name is None:
+    logger = kwargs.get("logger", None)
+    if logger is None:
         logger_name = dataset_config.get("logger_name", "generic")
         logger = get_logger(logger_name, raise_error=kwargs.get("raise_error", False))
     else:
-        kwargs_handler_class["logger"] = logger_name
+        kwargs_handler_class["logger"] = logger
 
     kwargs_handler_class["dataset_config"] = dataset_config
     kwargs_handler_class["clear_existing_data"] = handler_clear_existing_data_arg
