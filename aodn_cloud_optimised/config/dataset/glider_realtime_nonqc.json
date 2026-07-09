@@ -59,12 +59,6 @@
       "deployment_start_latitude": -41.297466666666665,
       "deployment_start_longitude": 148.41058333333334,
       "long_name": "Deployment information",
-      "deployment_start_technician": NaN,
-      "deployment_end_date": NaN,
-      "deployment_end_latitude": NaN,
-      "deployment_end_longitude": NaN,
-      "deployment_end_technician": NaN,
-      "deployment_end_status": NaN,
       "deployment_pilot": "Rob Wocheslander"
     },
     "SENSOR1": {
