@@ -22,10 +22,17 @@
                 "type": "string"
               },
               "filter": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
+                "oneOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                ]
               },
               "year_range": {
                 "type": [

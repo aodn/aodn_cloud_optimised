@@ -93,8 +93,11 @@ class CommonHandler:
 
         self.schema = self.dataset_config.get("schema")
 
-        logger_name = self.dataset_config.get("logger_name", "generic")
-        self.logger = get_logger(logger_name, raise_error=self.raise_error)
+        # Override the logger
+        self.logger = kwargs.get("logger", None)
+        if self.logger is None:
+            logger_name = self.dataset_config.get("logger_name", "generic")
+            self.logger = get_logger(logger_name, raise_error=self.raise_error)
 
         cloud_optimised_format = self.dataset_config.get("cloud_optimised_format")
 
@@ -115,16 +118,18 @@ class CommonHandler:
             "clear_existing_data", None
         )  # setting to True will recreate the zarr from scratch at every run!
 
-        self.coiled_cluster_options = self.dataset_config.get("run_settings", {}).get(
-            "coiled_cluster_options", None
-        )
+        self.scheduler = kwargs.get("scheduler", None)
+        if self.scheduler is None:
+            self.coiled_cluster_options = self.dataset_config.get(
+                "run_settings", {}
+            ).get("coiled_cluster_options", None)
 
-        self.cluster_manager = ClusterManager(
-            cluster_mode=self.cluster_mode,
-            dataset_name=self.dataset_name,
-            dataset_config=self.dataset_config,
-            logger=self.logger,
-        )
+            self.cluster_manager = ClusterManager(
+                cluster_mode=self.cluster_mode,
+                dataset_name=self.dataset_name,
+                dataset_config=self.dataset_config,
+                logger=self.logger,
+            )
 
         self.s3_client_opts_common = kwargs.get("s3_client_opts_common", None)
 
@@ -678,8 +683,14 @@ def cloud_optimised_creation(
     # Filter out None values
     filtered_kwargs = {k: v for k, v in kwargs_handler_class.items() if v is not None}
     kwargs_handler_class = filtered_kwargs
-    logger_name = dataset_config.get("logger_name", "generic")
-    logger = get_logger(logger_name, raise_error=kwargs.get("raise_error", False))
+
+    # Replace the logger if one is provided
+    logger = kwargs.get("logger", None)
+    if logger is None:
+        logger_name = dataset_config.get("logger_name", "generic")
+        logger = get_logger(logger_name, raise_error=kwargs.get("raise_error", False))
+    else:
+        kwargs_handler_class["logger"] = logger
 
     kwargs_handler_class["dataset_config"] = dataset_config
     kwargs_handler_class["clear_existing_data"] = handler_clear_existing_data_arg
@@ -690,6 +701,8 @@ def cloud_optimised_creation(
     if run_summary is None:
         run_summary = RunSummary()
     kwargs_handler_class["run_summary"] = run_summary
+
+    kwargs_handler_class["scheduler"] = kwargs.get("scheduler", None)
 
     # Creating an instance of the specified class with the provided arguments
     start_whole_processing = timeit.default_timer()

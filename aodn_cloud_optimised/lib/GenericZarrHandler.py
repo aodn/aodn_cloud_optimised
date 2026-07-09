@@ -17,8 +17,8 @@ from dask.distributed import Lock
 from distributed.client import FutureCancelledError
 from distributed.scheduler import KilledWorker
 from distributed.shuffle._exceptions import P2PConsistencyError
+from xarray import MergeError
 from xarray.coding.times import CFDatetimeCoder
-from xarray.structure.merge import MergeError
 
 from aodn_cloud_optimised.lib.CommonHandler import CommonHandler
 from aodn_cloud_optimised.lib.logging import get_logger
@@ -164,11 +164,11 @@ def preprocess_xarray(ds, dataset_config):
     # https://github.com/fsspec/filesystem_spec/issues/1747
     # https://discourse.pangeo.io/t/remote-cluster-with-dask-distributed-uses-the-deployment-machines-memory-and-internet-bandwitch/4637
     # https://github.com/dask/distributed/discussions/8913
+
     logger_name = dataset_config.get("logger_name", "generic")
+    logger = get_logger(logger_name)
     dimensions = dataset_config["schema_transformation"].get("dimensions")
     schema = dataset_config.get("schema")
-
-    logger = get_logger(logger_name)
 
     # Drop variables not in the list
     vars_to_drop = set(ds.data_vars) - set(schema)
@@ -1006,7 +1006,7 @@ class GenericHandler(CommonHandler):
         )
 
     def create_sync_lock(self):
-        if self.cluster_mode:
+        if self.cluster_mode or self.scheduler:
             self.lock = Lock(
                 "zarr-append-lock"
             )  # Use a consistent name for locking access across all workers
@@ -1089,6 +1089,8 @@ class GenericHandler(CommonHandler):
 
         if self.cluster_mode:
             batch_size = self.get_batch_size(client=self.client)
+        elif self.scheduler:
+            batch_size = self.get_batch_size()
         else:
             batch_size = 1
 
@@ -2799,6 +2801,9 @@ class GenericHandler(CommonHandler):
                     self.cluster_id = self.cluster.cluster_id
                 else:
                     self.cluster_id = self.cluster.name
+            elif self.scheduler:
+                # This is where we call the injected scheduler
+                self.client = self.scheduler.schedule(handler=self)
             else:
                 self.cluster_id = "local_execution"
 

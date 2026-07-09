@@ -28,9 +28,13 @@ class PathConfig(pydantic.BaseModel):
         default=None,
         description="Partitioning scheme, only valid when type='parquet'. Currently supports 'hive'.",
     )
-    filter: str | list[str] = pydantic.Field(
+    filter: (
+        typing.Annotated[list[re.Pattern], pydantic.Field(min_length=0, max_length=1)]
+        | str
+        | None
+    ) = pydantic.Field(
         default_factory=list,
-        description="List of regex pattern used to filter matching files. Must contain None or one pattern only.",
+        description="List of regex pattern used to filter matching files.",
     )
     year_range: list[int] | None = pydantic.Field(
         default=None,
@@ -94,36 +98,18 @@ class PathConfig(pydantic.BaseModel):
 
         return v
 
-    @pydantic.field_validator("filter", mode="before")
-    @classmethod
-    def extract_string_from_filter(cls, v):
-        # 1. Handle List input: check length and extract the string
-        if isinstance(v, list):
-            if len(v) > 1:
-                raise ValueError(
-                    f"Filter list must contain at most one element, got {len(v)}"
-                )
-            return v[0] if v else ""
-
-        # 2. Handle None/Empty
-        if v is None:
-            return ""
-
-        # 3. If it's already a string, just pass it through
-        return v
-
     @pydantic.field_validator("filter", mode="after")
     @classmethod
-    def validate_regex(cls, v: str) -> str:
-        # Now 'v' is guaranteed to be a string
-        if not v:
+    def validate_regex(cls, v: list[re.Pattern]) -> str:
+        # Convert regex patterns to a string
+        if isinstance(v, list):
+            # concat each pattern into a single string
+            return "|".join(f"(?:{p.pattern})" for p in v)
+
+        if isinstance(v, str):
             return v
 
-        try:
-            re.compile(v)
-        except re.error as e:
-            raise ValueError(f"Invalid regex: {v} ({e})")
-        return v
+        return ""
 
     @pydantic.model_validator(mode="after")
     def validate_cross_fields(self) -> "PathConfig":

@@ -133,7 +133,7 @@ class TestPathConfigFilter(unittest.TestCase):
     def test_filter_list_normalised_to_string(self):
         """A single-element list should be stored as a plain string."""
         p = self._make_path_config([".*\\.nc"])
-        self.assertEqual(p.filter, ".*\\.nc")
+        self.assertEqual(p.filter, "(?:.*\\.nc)")
         self.assertIsInstance(p.filter, str)
 
     def test_filter_empty_list_normalised_to_empty_string(self):
