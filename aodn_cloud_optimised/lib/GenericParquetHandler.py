@@ -1653,7 +1653,7 @@ class GenericHandler(CommonHandler):
             ii += 1
 
             # Cleanup memory
-            if 'batch_tasks' in locals():
+            if "batch_tasks" in locals():
                 del batch_tasks
 
             # Trigger garbage collection

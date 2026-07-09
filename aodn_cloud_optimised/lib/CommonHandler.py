@@ -120,9 +120,9 @@ class CommonHandler:
 
         self.scheduler = kwargs.get("scheduler", None)
         if self.scheduler is None:
-            self.coiled_cluster_options = self.dataset_config.get("run_settings", {}).get(
-                "coiled_cluster_options", None
-            )
+            self.coiled_cluster_options = self.dataset_config.get(
+                "run_settings", {}
+            ).get("coiled_cluster_options", None)
 
             self.cluster_manager = ClusterManager(
                 cluster_mode=self.cluster_mode,

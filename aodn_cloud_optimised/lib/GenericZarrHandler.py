@@ -17,8 +17,8 @@ from dask.distributed import Lock
 from distributed.client import FutureCancelledError
 from distributed.scheduler import KilledWorker
 from distributed.shuffle._exceptions import P2PConsistencyError
-from xarray.coding.times import CFDatetimeCoder
 from xarray import MergeError
+from xarray.coding.times import CFDatetimeCoder
 
 from aodn_cloud_optimised.lib.CommonHandler import CommonHandler
 from aodn_cloud_optimised.lib.logging import get_logger
@@ -1083,7 +1083,9 @@ class GenericHandler(CommonHandler):
             if attrs.get("drop_var", False)
         ]
 
-        partial_preprocess = partial(preprocess_xarray, dataset_config=self.dataset_config)
+        partial_preprocess = partial(
+            preprocess_xarray, dataset_config=self.dataset_config
+        )
 
         if self.cluster_mode:
             batch_size = self.get_batch_size(client=self.client)
@@ -1800,12 +1802,14 @@ class GenericHandler(CommonHandler):
                 batch_files,
                 dim_name=dim_name,
                 dataset_config=self.dataset_config,
-                uuid_log=self.uuid_log
+                uuid_log=self.uuid_log,
             )
             ranges = self.client.gather(futures)
         else:
             ranges = [
-                check_append_dim_range_dask(f, dim_name, self.dataset_config, self.uuid_log)
+                check_append_dim_range_dask(
+                    f, dim_name, self.dataset_config, self.uuid_log
+                )
                 for f in batch_files
             ]
 
@@ -1957,7 +1961,7 @@ class GenericHandler(CommonHandler):
                 reference_values=reference_values,
                 variable_name=variable_name,
                 dataset_config=self.dataset_config,
-                uuid_log=self.uuid_log
+                uuid_log=self.uuid_log,
             )
             results = self.client.gather(futures)
         else:
@@ -1972,7 +1976,7 @@ class GenericHandler(CommonHandler):
                     reference_values,
                     variable_name,
                     self.dataset_config,
-                    self.uuid_log
+                    self.uuid_log,
                 )
                 for file_path in file_paths[1:]
             ]
