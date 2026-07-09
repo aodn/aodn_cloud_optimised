@@ -1219,7 +1219,6 @@ class GenericHandler(CommonHandler):
                 raise ValueError
 
         metadata_collector = []
-        self.logger.debug(self.cloud_optimised_output_path)
         pq.write_to_dataset(
             pdf,
             root_path=self.cloud_optimised_output_path,
@@ -1531,9 +1530,9 @@ class GenericHandler(CommonHandler):
                     bucket_name, prefix, self.s3_client_opts_output
                 )
 
-        if not self.scheduler:
+        if self.scheduler is None:
 
-            # If a scheduler is not provided then use the aodn CO provided schedulars
+            # If a scheduler is not provided then use the aodn CO provided schedulers
 
             # Capture only the count — NOT the full list — to avoid cloudpickle serializing
             # the list into every Dask task closure.  The real leak is via `self`: task()
@@ -1632,6 +1631,7 @@ class GenericHandler(CommonHandler):
                                 f"{self.uuid_log}: New cluster created. Retrying batch {ii + 1}."
                             )
             elif self.scheduler:
+                # This is where we call the injected scheduler
                 self.scheduler.schedule(handler=self, files=batch)
             else:
                 # Fall back to local processing with ThreadPoolExecutor

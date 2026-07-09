@@ -2798,6 +2798,7 @@ class GenericHandler(CommonHandler):
                 else:
                     self.cluster_id = self.cluster.name
             elif self.scheduler:
+                # This is where we call the injected scheduler
                 self.client = self.scheduler.schedule(handler=self)
             else:
                 self.cluster_id = "local_execution"
