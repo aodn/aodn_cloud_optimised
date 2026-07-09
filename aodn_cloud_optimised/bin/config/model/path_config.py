@@ -28,7 +28,11 @@ class PathConfig(pydantic.BaseModel):
         default=None,
         description="Partitioning scheme, only valid when type='parquet'. Currently supports 'hive'.",
     )
-    filter: typing.Annotated[list[re.Pattern], pydantic.Field(min_length=0, max_length=1)] | str | None = pydantic.Field(
+    filter: (
+        typing.Annotated[list[re.Pattern], pydantic.Field(min_length=0, max_length=1)]
+        | str
+        | None
+    ) = pydantic.Field(
         default_factory=list,
         description="List of regex pattern used to filter matching files.",
     )
