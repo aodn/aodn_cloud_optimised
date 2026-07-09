@@ -699,7 +699,10 @@
     "ManagedBy": "AODN",
     "UpdateFrequency": "As Needed",
     "Tags": [
-      "oceans"
+      "oceans",
+      "ocean currents",
+      "chemistry",
+      "ocean velocity"
     ],
     "License": "http://creativecommons.org/licenses/by/4.0/",
     "Resources": [
