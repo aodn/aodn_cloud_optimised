@@ -1094,6 +1094,13 @@
           ".*\\.nc$"
         ],
         "year_range": []
+      },
+      {
+        "s3_uri": "s3://imos-data/IMOS/ANFOG/seaglider/",
+        "filter": [
+          ".*\\.nc$"
+        ],
+        "year_range": []
       }
     ],
     "clear_existing_data": true,
