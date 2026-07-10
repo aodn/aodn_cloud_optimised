@@ -38,8 +38,8 @@
   "metadata_uuid": "48cf3cb9-caa9-4633-9baa-8bba3c4d904a",
   "schema": {
     "index": {
-      "type": "int32"
-    },
+      "type": "int64"
+    }
     "survey_id": {
       "type": "int32",
       "long_name": "survey identification number"

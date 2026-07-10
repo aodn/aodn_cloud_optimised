@@ -38,8 +38,8 @@
   "metadata_uuid": "e41efa35-03f0-4dea-be98-2a69e46b510b",
   "schema": {
     "index": {
-      "type": "int32"
-    },
+      "type": "int64"
+    }
     "country": {
       "type": "string",
       "long_name": "country where the survey was conducted"
