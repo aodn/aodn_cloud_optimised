@@ -149,7 +149,7 @@ jobs:
           python -m venv test_env_unfrozen
           source test_env_unfrozen/bin/activate
           # Install the unfrozen wheel. This WILL trigger dependency downloads.
-          pip install dist-artifacts/*unfrozen.whl
+          poetry run pip install dist-artifacts/*unfrozen.whl
           python -c "import aodn_cloud_optimised; print('Unfrozen wheel verification successful')"
           deactivate
           rm -rf test_env_unfrozen
