@@ -144,15 +144,16 @@ jobs:
       #        verify the wheels
       #----------------------------------------------
       #
-      - name: Verify Unfrozen Wheel
-        run: |
-          python -m venv test_env_unfrozen
-          source test_env_unfrozen/bin/activate
-          # Install the unfrozen wheel. This WILL trigger dependency downloads.
-          pip install dist-artifacts/*unfrozen.whl
-          python -c "import aodn_cloud_optimised; print('Unfrozen wheel verification successful')"
-          deactivate
-          rm -rf test_env_unfrozen
+      # TODO: find a faster way to do this; it is too slow/stalling completely in CICD
+      # - name: Verify Unfrozen Wheel
+      #   run: |
+      #     python -m venv test_env_unfrozen
+      #     source test_env_unfrozen/bin/activate
+      #     # Install the unfrozen wheel. This WILL trigger dependency downloads.
+      #     poetry run pip install dist-artifacts/*unfrozen.whl
+      #     python -c "import aodn_cloud_optimised; print('Unfrozen wheel verification successful')"
+      #     deactivate
+      #     rm -rf test_env_unfrozen
 
       - name: Verify Frozen Wheel
         run: |
