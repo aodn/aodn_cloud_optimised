@@ -39,7 +39,7 @@
   "schema": {
     "index": {
       "type": "int64"
-    }
+    },
     "survey_id": {
       "type": "int32",
       "long_name": "survey identification number"
