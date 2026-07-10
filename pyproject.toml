@@ -138,10 +138,6 @@ mcp = ["mcp>=1.26.0,<2.0.0", "nbformat>=5.0.0", "nbconvert>=7.0.0"]
 [project.scripts]
 #cloud_optimised_srs_oc_ljco_to_parquet = "aodn_cloud_optimised.bin.srs_oc_ljco_to_parquet:main"
 aodn-mcp-server = "aodn_cloud_optimised.mcp.server:main"
-cloud_optimised_aggregated_kelp_nonqc = "aodn_cloud_optimised.bin.datasets.aggregated_kelp_nonqc:main"
-cloud_optimised_aggregated_seabird_nonqc = "aodn_cloud_optimised.bin.datasets.aggregated_seabird_nonqc:main"
-cloud_optimised_aggregated_seagrass_nonqc = "aodn_cloud_optimised.bin.datasets.aggregated_seagrass_nonqc:main"
-cloud_optimised_amsa_vessel_tracking = "aodn_cloud_optimised.bin.datasets.amsa_vessel_tracking:main"
 cloud_optimised_animal_acoustic_tracking_delayed_qc = "aodn_cloud_optimised.bin.datasets.animal_acoustic_tracking_delayed_qc:main"
 cloud_optimised_animal_ctd_satellite_relay_tagging_delayed_qc = "aodn_cloud_optimised.bin.datasets.animal_ctd_satellite_relay_tagging_delayed_qc:main"
 cloud_optimised_animal_ctd_satellite_relay_tagging_realtime_qc = "aodn_cloud_optimised.bin.datasets.animal_ctd_satellite_relay_tagging_realtime_qc:main"
@@ -159,7 +155,6 @@ cloud_optimised_diver_benthic_cover_in_situ_qc = "aodn_cloud_optimised.bin.datas
 cloud_optimised_diver_cryptobenthic_fish_abundance_qc = "aodn_cloud_optimised.bin.datasets.diver_cryptobenthic_fish_abundance_qc:main"
 cloud_optimised_diver_mobile_macroinvertebrate_abundance_qc = "aodn_cloud_optimised.bin.datasets.diver_mobile_macroinvertebrate_abundance_qc:main"
 cloud_optimised_diver_off_transect_species_observations_qc = "aodn_cloud_optimised.bin.datasets.diver_off_transect_species_observations_qc:main"
-cloud_optimised_diver_photoquadrat_score_qc = "aodn_cloud_optimised.bin.datasets.diver_photoquadrat_score_qc:main"
 cloud_optimised_diver_reef_fish_abundance_biomass_qc = "aodn_cloud_optimised.bin.datasets.diver_reef_fish_abundance_biomass_qc:main"
 cloud_optimised_diver_site_information_qc = "aodn_cloud_optimised.bin.datasets.diver_site_information_qc:main"
 cloud_optimised_diver_survey_metadata_qc = "aodn_cloud_optimised.bin.datasets.diver_survey_metadata_qc:main"
