@@ -23,6 +23,7 @@ import boto3
 import cartopy.crs as ccrs  # For coastline plotting
 import cartopy.feature as cfeature
 import cftime
+import dask
 import fsspec
 import geopandas as gpd
 import gsw  # TEOS-10 library
@@ -55,7 +56,7 @@ from shapely.geometry import MultiPolygon, Polygon
 from tqdm.notebook import tqdm
 from windrose import WindroseAxes
 
-__version__ = "0.3.25"
+__version__ = "0.3.27"
 
 REGION: Final[str] = "ap-southeast-2"
 ENDPOINT_URL = "https://s3.ap-southeast-2.amazonaws.com"
@@ -76,6 +77,11 @@ pa.set_cpu_count(os.cpu_count() or 4)
 # Module-level cache for partition values, keyed by (id(dataset), partition_name).
 # Avoids redundant fragment iterations when multiple filters query the same partition.
 _partition_value_cache: dict[tuple[int, str], Set[str]] = {}
+
+# Module-level cache for temporal extents, keyed by (id(dataset), time_varname).
+# get_temporal_extent() does an S3 fragment scan on every call; the result is
+# static for the lifetime of a dataset object so we cache it here.
+_temporal_extent_cache: dict[tuple[int, str | None], tuple] = {}
 
 # H3 hexagon map defaults
 _N_QUANTILES: Final[int] = 10
@@ -502,6 +508,9 @@ def get_temporal_extent(
     using an OR filter so pyarrow's internal thread pool reads them in parallel.
     Aggregates with pyarrow compute directly (no pandas conversion overhead).
 
+    Results are cached per (dataset, time_varname) pair so repeated calls from
+    ``create_time_filter`` / ``get_data`` do not re-scan S3.
+
     Args:
         dataset: The pyarrow.dataset.Dataset object.
         time_varname: Optional explicit name of the time variable.
@@ -510,6 +519,11 @@ def get_temporal_extent(
         A tuple containing the minimum and maximum pandas Timestamp objects
         found within the dataset's time variable.
     """
+    cache_key = (id(dataset), time_varname)
+    cached = _temporal_extent_cache.get(cache_key)
+    if cached is not None:
+        return cached
+
     unique_timestamps = query_unique_value(dataset, "timestamp")
     unique_timestamps = np.array([np.int64(string) for string in unique_timestamps])
     unique_timestamps = np.sort(unique_timestamps)
@@ -536,7 +550,9 @@ def get_temporal_extent(
         use_threads=True,
     )
     col = scanner.to_table().column(time_varname)
-    return pd.Timestamp(pc.min(col).as_py()), pd.Timestamp(pc.max(col).as_py())
+    result = pd.Timestamp(pc.min(col).as_py()), pd.Timestamp(pc.max(col).as_py())
+    _temporal_extent_cache[cache_key] = result
+    return result
 
 
 def get_timestamps_boundary_values(
@@ -1447,14 +1463,21 @@ def plot_radar_water_velocity_gridded(
         [0.92, 0.15, 0.02, 0.7]
     )  # Adjust the position and size of the colorbar
 
+    # Pre-fetch all 6 time steps for both variables in one Dask compute so all
+    # chunks are downloaded in parallel rather than one panel at a time.
+    ucur_all, vcur_all = dask.compute(
+        ds.UCUR.isel({time_name_override: slice(iTime, iTime + 6)}),
+        ds.VCUR.isel({time_name_override: slice(iTime, iTime + 6)}),
+    )
+    lonData = ds.LONGITUDE.values
+    latData = ds.LATITUDE.values
+
     for i in range(3):
         for j in range(2):
-            # Extract data for plotting
-            uData = ds.UCUR[iTime + ii, :, :]
-            vData = ds.VCUR[iTime + ii, :, :]
-            speed = np.sqrt(uData**2 + vData**2)
-            lonData = ds.LONGITUDE.values
-            latData = ds.LATITUDE.values
+            # Extract data for plotting from pre-fetched arrays
+            uData = ucur_all.isel({time_name_override: ii})
+            vData = vcur_all.isel({time_name_override: ii})
+            speed = np.sqrt(uData.values**2 + vData.values**2)
 
             # Plot speed as a filled contour
             p = axes[i, j].pcolor(
@@ -1469,8 +1492,8 @@ def plot_radar_water_velocity_gridded(
             axes[i, j].quiver(
                 lonData,
                 latData,
-                uData,
-                vData,
+                uData.values,
+                vData.values,
                 transform=ccrs.PlateCarree(),
                 units="width",
             )
@@ -1741,9 +1764,16 @@ def plot_gridded_variable(
 
     ds = ds.sortby(time_name)
 
-    # Get latitude and longitude extents
-    lat_min, lat_max = safe_item(ds[lat_name].min()), safe_item(ds[lat_name].max())
-    lon_min, lon_max = safe_item(ds[lon_name].min()), safe_item(ds[lon_name].max())
+    # Get latitude and longitude extents (batched into one Dask compute)
+    lat_min, lat_max, lon_min, lon_max = [
+        float(v)
+        for v in dask.compute(
+            ds[lat_name].min(),
+            ds[lat_name].max(),
+            ds[lon_name].min(),
+            ds[lon_name].max(),
+        )
+    ]
 
     if lat_slice is None:
         lat_slice = (lat_min, lat_max)
@@ -1812,40 +1842,49 @@ def plot_gridded_variable(
 
     # Create a placeholder for the color data range
     vmin, vmax = float("inf"), float("-inf")
+    var_units = ds[var_name].attrs.get("units", "unknown units")
+    plot_data_cache = {}
 
-    # First pass: gather all the data to find vmin and vmax
-    for date in dates:
-        try:
-            data = ds[var_name].sel(
+    # Batch-fetch all dates in one Dask compute, letting Dask parallelise S3 reads.
+    # Also eliminates the previous two-pass pattern (first pass for vmin/vmax, second
+    # pass for plotting) which fetched each date twice from S3.
+    try:
+        all_data = (
+            ds[var_name]
+            .isel(
                 {
-                    time_name: date.strftime("%Y-%m-%d %H:%M:%S"),
+                    time_name: slice(
+                        nearest_date_position, nearest_date_position + n_days
+                    )
+                }
+            )
+            .sel(
+                {
                     lon_name: slice(lon_slice[0], lon_slice[1]),
                     lat_name: slice(lat_slice[0], lat_slice[1]),
                 }
             )
+            .compute()
+        )
 
-            # Check for NaNs
+        for i, date in enumerate(dates):
+            data = all_data.isel({time_name: i})
             if data.isnull().all():
                 logger.warning(
                     f"No valid data for {date.strftime('%Y-%m-%d %H:%M:%S')}, skipping this date."
                 )
+                plot_data_cache[date] = None
                 continue
-
-            # Retrieve and check units for the current plot
-            var_units = ds[var_name].attrs.get("units", "unknown units")
-
-            # Convert Kelvin to Celsius if needed
             if var_units.lower() == "kelvin":
                 data = data - 273.15
-                var_units = "°C"  # Change units in the label
+            plot_data_cache[date] = data
+            vmin = min(vmin, float(data.min()))
+            vmax = max(vmax, float(data.max()))
 
-            # Update vmin and vmax for colorbar scaling
-            vmin = min(vmin, data.min().values)
-            vmax = max(vmax, data.max().values)
-
-        except Exception as err:
-            logger.error(f"Error processing date {date.strftime('%Y-%m-%d')}: {err}")
-            continue
+    except Exception as err:
+        logger.error(f"Error batch loading variable '{var_name}': {err}")
+        for date in dates:
+            plot_data_cache[date] = None
 
     # Check if vmin or vmax are still invalid (if no data was found)
     if not np.isfinite(vmin) or not np.isfinite(vmax):
@@ -1854,7 +1893,6 @@ def plot_gridded_variable(
         )
 
     # Build colormap and norm based on plot_type / log_scale
-    var_units = ds[var_name].attrs.get("units", "unknown units")
     if var_units.lower() == "kelvin":
         var_units = "°C"
 
@@ -1874,48 +1912,32 @@ def plot_gridded_variable(
         norm = Normalize(vmin=vmin, vmax=vmax)
         cbar_label = f"{var_long_name} ({var_units})"
 
-    # Plot each date after determining vmin and vmax
-    for date in dates:
-        try:
-            data = ds[var_name].sel(
-                {
-                    time_name: date.strftime("%Y-%m-%d %H:%M:%S"),
-                    lon_name: slice(lon_slice[0], lon_slice[1]),
-                    lat_name: slice(lat_slice[0], lat_slice[1]),
-                }
+    # Plot each date using the pre-fetched cache
+    img = None
+    for idx, date in enumerate(dates):
+        data_to_plot = plot_data_cache.get(date)
+        ax = axes[idx]
+        if data_to_plot is None or data_to_plot.isnull().all():
+            logger.warning(
+                f"No data for {date.strftime('%Y-%m-%d %H:%M:%S')}, skipping plot."
             )
+            ax.set_title(f"No data for {date.strftime('%Y-%m-%d %H:%M:%S')}")
+            ax.axis("off")
+            continue
 
-            # Skip if no valid data is found for the date
-            if data.isnull().all():
-                logger.warning(
-                    f"No data for {date.strftime('%Y-%m-%d %H:%M:%S')}, skipping plot."
-                )
-                continue
-
-            var_units = ds[var_name].attrs.get("units", "unknown units")
-            if var_units.lower() == "kelvin":
-                data = data - 273.15
-                var_units = "°C"
-
-            # Plot the data
-            img = data.plot(
-                ax=axes[dates.index(date)],
+        try:
+            img = data_to_plot.plot(
+                ax=ax,
                 cmap=cmap,
                 vmin=vmin,
                 vmax=vmax,
                 norm=norm,
                 add_colorbar=False,
             )
-
-            # Add coastlines and gridlines
-            ax = axes[dates.index(date)]
             ax.coastlines(resolution=coastline_resolution)
             ax.add_feature(cfeature.BORDERS, linestyle=":")
             ax.gridlines(draw_labels=True, dms=True, x_inline=False, y_inline=False)
-
-            # Set the title with the date
             ax.set_title(date.strftime("%Y-%m-%d %H:%M:%S"))
-
         except Exception as err:
             logger.error(
                 f"Error processing date {date.strftime('%Y-%m-%d %H:%M:%S')}: {err}"
@@ -2558,6 +2580,7 @@ class ParquetDataSource(DataSource):
 
         super().__init__(bucket_name, prefix, dataset_name, s3_fs_opts=s3_fs_opts)
         self._dataset = None  # lazily created on first access
+        self._metadata = None  # lazily fetched on first get_metadata() call
 
     @property
     def dataset(self) -> ds.Dataset:
@@ -2810,7 +2833,9 @@ class ParquetDataSource(DataSource):
             data_filter = _combine_arrow_filters(data_filter, expr)
 
         # Set file system explicitly do not require folder prefix s3://
-        table = self.dataset.to_table(filter=data_filter, columns=columns)
+        table = self.dataset.to_table(
+            filter=data_filter, columns=columns, use_threads=True
+        )
         df = table.to_pandas()
 
         df = _append_metadata_to_dataframe(self.get_metadata(), df)
@@ -2831,12 +2856,15 @@ class ParquetDataSource(DataSource):
     def get_metadata(self) -> dict:
         """Retrieves metadata from the Parquet dataset's common metadata.
 
-        Uses the global `get_schema_metadata` function.
+        Result is cached on the instance after the first S3 read so repeated
+        calls (e.g. from ``get_data``) do not re-fetch ``_common_metadata``.
 
         Returns:
             A dictionary containing the decoded metadata.
         """
-        return get_schema_metadata(self.dname, s3_fs_opts=self.s3_fs_opts)
+        if self._metadata is None:
+            self._metadata = get_schema_metadata(self.dname, s3_fs_opts=self.s3_fs_opts)
+        return self._metadata
 
     def describe(self) -> dict:
         """Return a structured description of the dataset: column names and dtypes.
@@ -3145,18 +3173,12 @@ class ZarrDataSource(DataSource):
 
         lat_var, lon_var = self._find_lat_lon_vars(self.zarr_store)
 
-        min_lat = float(
-            lat_var.min().compute() if hasattr(lat_var, "compute") else lat_var.min()
-        )
-        max_lat = float(
-            lat_var.max().compute() if hasattr(lat_var, "compute") else lat_var.max()
-        )
-        min_lon = float(
-            lon_var.min().compute() if hasattr(lon_var, "compute") else lon_var.min()
-        )
-        max_lon = float(
-            lon_var.max().compute() if hasattr(lon_var, "compute") else lon_var.max()
-        )
+        min_lat, max_lat, min_lon, max_lon = [
+            float(v)
+            for v in dask.compute(
+                lat_var.min(), lat_var.max(), lon_var.min(), lon_var.max()
+            )
+        ]
 
         return [min_lat, min_lon, max_lat, max_lon]
 
@@ -3193,16 +3215,15 @@ class ZarrDataSource(DataSource):
             format_type="ZARR",
         )
 
-        # Calculate and return the temporal extent
-        # time_values = self.zarr_store[time_var_name].values # Not strictly needed if using .min()/.max() on DataArray
+        # Batch both Dask computes into a single scheduler call.
+        time_da = self.zarr_store[time_var_name]
+        # (min_val,), (max_val,) = dask.compute(time_da.min(), time_da.max())
+        min_val, max_val = dask.compute(time_da.min(), time_da.max())
 
-        # Ensure time_values are sorted before taking min/max for safety, though plot_time_coverage also sorts.
-        # However, direct access to .values might not be sorted.
-        # For xarray DataArrays, min/max handle this, but if it's a raw numpy array from .values, sorting is safer.
-        # Actually, xarray's .min() and .max() on a DataArray should be correct without pre-sorting values.
-
-        min_val = safe_item(self.zarr_store[time_var_name].min())
-        max_val = safe_item(self.zarr_store[time_var_name].max())
+        # If min_val and max_val are still xarray DataArrays (scalars),
+        # extract the raw value:
+        min_val = min_val.item()
+        max_val = max_val.item()
 
         cftime_types = (
             cftime.DatetimeGregorian,
@@ -3311,18 +3332,28 @@ class ZarrDataSource(DataSource):
         norm_date_start = normalize_date(date_start)
         norm_date_end = normalize_date(date_end)
 
-        # Get latitude, longitude, and time extents for validation
-        ds_lat_min, ds_lat_max = (
-            safe_item(ds[actual_lat_name].min()),
-            safe_item(ds[actual_lat_name].max()),
+        # Batch compute all coordinate bounds in one Dask graph execution
+        (
+            lat_min_arr,
+            lat_max_arr,
+            lon_min_arr,
+            lon_max_arr,
+            time_min_arr,
+            time_max_arr,
+        ) = dask.compute(
+            ds[actual_lat_name].min(),
+            ds[actual_lat_name].max(),
+            ds[actual_lon_name].min(),
+            ds[actual_lon_name].max(),
+            ds[actual_time_name].min(),
+            ds[actual_time_name].max(),
         )
-        ds_lon_min, ds_lon_max = (
-            safe_item(ds[actual_lon_name].min()),
-            safe_item(ds[actual_lon_name].max()),
-        )
-
-        time_min_val = safe_item(ds[actual_time_name].min())
-        time_max_val = safe_item(ds[actual_time_name].max())
+        ds_lat_min = safe_item(lat_min_arr)
+        ds_lat_max = safe_item(lat_max_arr)
+        ds_lon_min = safe_item(lon_min_arr)
+        ds_lon_max = safe_item(lon_max_arr)
+        time_min_val = safe_item(time_min_arr)
+        time_max_val = safe_item(time_max_arr)
         cftime_types = (
             cftime.DatetimeGregorian,
             cftime.DatetimeProlepticGregorian,
@@ -3374,15 +3405,11 @@ class ZarrDataSource(DataSource):
                     f"Variable '{var_name}' not found in dataset. Returning all available data variables for the selected point."
                 )
 
-        # Slice by time, then select nearest lat/lon
-        time_sliced_data = target_ds_selection.sel(
-            {actual_time_name: slice(norm_date_start, norm_date_end)}
-        )
-        selected_data_point = time_sliced_data.sel(
+        # Select the nearest spatial point and slice by time in one fluid chain
+        # This is highly efficient as it allows xarray to optimize the entire selection
+        selected_data_point = target_ds_selection.sel(
             {actual_lat_name: lat, actual_lon_name: lon}, method="nearest"
-        )
-
-        # Force dask to load the actual data chunks now, not doing this could lead to some missing chunks
+        ).sel({actual_time_name: slice(norm_date_start, norm_date_end)})
         selected_data_point = selected_data_point.load()  # or .compute()
 
         timeseries_df = selected_data_point.to_dataframe().reset_index()
@@ -3652,12 +3679,16 @@ class ZarrDataSource(DataSource):
         # Store data for each plot to avoid re-selecting
         plot_data_cache = {}
 
-        # First pass: gather all data to find global vmin and vmax for consistent color scaling
-        for date_obj in dates_to_plot:
-            try:
-                data = ds[var_name].sel(
+        current_var_units = ds[var_name].attrs.get("units", "unknown units")
+
+        # First pass: batch-fetch all dates in one Dask compute so all chunks are
+        # downloaded in parallel rather than one date at a time.
+        try:
+            all_data = (
+                ds[var_name]
+                .sel(
                     {
-                        actual_time_name: date_obj,  # Use exact match for already selected dates
+                        actual_time_name: dates_to_plot,
                         actual_lon_name: slice(
                             lon_slice_for_sel[0], lon_slice_for_sel[1]
                         ),
@@ -3666,23 +3697,26 @@ class ZarrDataSource(DataSource):
                         ),
                     }
                 )
+                .compute()
+            )
+
+            for i, date_obj in enumerate(dates_to_plot):
+                data = all_data.isel({actual_time_name: i})
                 if data.isnull().all():
-                    plot_data_cache[date_obj] = None  # Mark as no data
+                    plot_data_cache[date_obj] = None
                     continue
 
-                current_var_units = ds[var_name].attrs.get("units", "unknown units")
                 if current_var_units.lower() == "kelvin":
                     data = data - 273.15
 
-                plot_data_cache[date_obj] = data  # Cache data (potentially converted)
-                vmin_all = min(vmin_all, safe_item(data.min()))
-                vmax_all = max(vmax_all, safe_item(data.max()))
+                plot_data_cache[date_obj] = data
+                vmin_all = min(vmin_all, float(data.min()))
+                vmax_all = max(vmax_all, float(data.max()))
 
-            except Exception as err:
-                self.logger.error(
-                    f"Processing data for date {date_obj.strftime('%Y-%m-%d %H:%M:%S')}: {err}"
-                )
-                plot_data_cache[date_obj] = None  # Mark as error/no data
+        except Exception as err:
+            self.logger.error(f"Batch loading data for variable '{var_name}': {err}")
+            for date_obj in dates_to_plot:
+                plot_data_cache[date_obj] = None
 
         if not np.isfinite(vmin_all) or not np.isfinite(vmax_all):
             self.logger.warning(
@@ -3840,15 +3874,16 @@ class ZarrDataSource(DataSource):
 
         ds = ds.sortby(actual_time_name)
 
-        # 3. Handle default spatial fallback configurations
-        ds_lat_min, ds_lat_max = (
-            float(ds[actual_lat_name].min()),
-            float(ds[actual_lat_name].max()),
-        )
-        ds_lon_min, ds_lon_max = (
-            float(ds[actual_lon_name].min()),
-            float(ds[actual_lon_name].max()),
-        )
+        # 3. Handle default spatial fallback configurations (batched into one Dask compute)
+        ds_lat_min, ds_lat_max, ds_lon_min, ds_lon_max = [
+            float(v)
+            for v in dask.compute(
+                ds[actual_lat_name].min(),
+                ds[actual_lat_name].max(),
+                ds[actual_lon_name].min(),
+                ds[actual_lon_name].max(),
+            )
+        ]
 
         if lat_slice is None:
             lat_slice = (ds_lat_min, ds_lat_max)
@@ -3912,14 +3947,24 @@ class ZarrDataSource(DataSource):
         # Colorbar layout space
         cbar_ax = fig.add_axes([0.93, 0.15, 0.02, 0.7])
 
-        # 8. Render loop
+        # 8. Pre-fetch all time steps for both variables in one Dask compute so all
+        # chunks are downloaded in parallel rather than one panel at a time.
+        speed_all, dir_all = dask.compute(
+            ds_spatial[speed_var_name].isel(
+                {actual_time_name: slice(iTime_start, iTime_start + total_steps)}
+            ),
+            ds_spatial[dir_var_name].isel(
+                {actual_time_name: slice(iTime_start, iTime_start + total_steps)}
+            ),
+        )
+
+        # Render loop
         for idx in range(total_steps):
             ax = axes[idx]
-            current_time_idx = iTime_start + idx
 
-            # Extract Speed and Direction arrays natively
-            speed = ds_spatial[speed_var_name][current_time_idx, :, :].values
-            wdir = ds_spatial[dir_var_name][current_time_idx, :, :].values
+            # Extract Speed and Direction arrays from pre-fetched data (pure numpy)
+            speed = speed_all.isel({actual_time_name: idx}).values
+            wdir = dir_all.isel({actual_time_name: idx}).values
 
             # --- CORRECTION 1: TRIGONOMETRIC CONVERSION ---
             # Convert meteorological degrees to Cartesian vector coordinates (U, V)
@@ -3989,7 +4034,7 @@ class ZarrDataSource(DataSource):
             ax.gridlines(draw_labels=True, linestyle="--", color="gray", alpha=0.5)
 
             time_str = np.datetime_as_string(
-                ds_spatial[actual_time_name].values[current_time_idx], unit="m"
+                speed_all[actual_time_name].values[idx], unit="m"
             )
             ax.set_title(f"{time_str}")
 
@@ -4161,12 +4206,20 @@ class ZarrDataSource(DataSource):
     def get_metadata(self) -> dict:
         """Retrieves metadata from the Zarr store.
 
-        Uses the global `get_zarr_metadata` function.
+        Reuses ``self.zarr_store`` (already open) rather than re-opening the
+        store from S3.  Falls back to ``get_zarr_metadata`` if the store is
+        not yet open.
 
         Returns:
             A dictionary containing the Zarr store's metadata.
         """
-        return get_zarr_metadata(self.dname)
+        if self.zarr_store is None:
+            return get_zarr_metadata(self.dname)
+
+        metadata = {"global_attributes": self.zarr_store.attrs.copy()}
+        for var_name, variable in self.zarr_store.variables.items():
+            metadata[var_name] = variable.attrs.copy()
+        return metadata
 
     def describe(self) -> dict:
         """Return a structured description of the dataset: real data variables and coordinates.
