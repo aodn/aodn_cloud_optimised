@@ -1,0 +1,752 @@
+{
+  "dataset_name": "mooring_estuarine_coastal_water_quality_monitoring_realtime_qc",
+  "logger_name": "mooring_estuarine_coastal_water_quality_monitoring_realtime_qc",
+  "cloud_optimised_format": "parquet",
+  "run_settings": {
+    "paths": [
+      {
+        "s3_uri": "s3://imos-data/IMOS/ESTUARINE-COASTAL-MOORINGS/REALTIME/",
+        "filter": [
+          ".*\\.nc$"
+        ],
+        "year_range": []
+      },
+      {
+        "s3_uri": "s3://imos-data/SARDI/ESTUARINE-COASTAL-MOORINGS/REALTIME/",
+        "filter": [
+          ".*\\.nc$"
+        ],
+        "year_range": []
+      }
+    ],
+    "cluster": {
+      "mode": "coiled",
+      "restart_every_path": false
+    },
+    "clear_existing_data": true,
+    "raise_error": false,
+    "coiled_cluster_options": {
+      "n_workers": [
+        1,
+        20
+      ],
+      "scheduler_vm_types": "m7i-flex.large",
+      "worker_vm_types": "m7i-flex.large",
+      "allow_ingress_from": "me",
+      "compute_purchase_option": "spot_with_fallback",
+      "worker_options": {
+        "nthreads": 4,
+        "memory_limit": "7GB"
+      }
+    },
+    "batch_size": 5,
+    "force_previous_parquet_deletion": false
+  },
+  "metadata_uuid": "a8f5c736-6eaa-47fb-a9eb-d778beb71701",
+  "schema": {
+    "TEMP": {
+      "type": "float",
+      "ancillary_variables": "TEMP_quality_control",
+      "standard_name": "sea_water_temperature",
+      "long_name": "sea_water_temperature",
+      "units": "degC",
+      "valid_min": -2.5,
+      "valid_max": 40.0
+    },
+    "TEMP_quality_control": {
+      "type": "float",
+      "flag_meanings": "pass not_evaluated questionable bad missing",
+      "flag_values": [
+        1,
+        2,
+        3,
+        4,
+        9
+      ],
+      "long_name": "quality flag for sea_water_temperature",
+      "quality_control_conventions": "Ocean Data Standards, UNESCO 2013 - IOC Manuals and Guides, 54, Volume 3 Version 1",
+      "standard_name": "sea_water_temperature status_flag"
+    },
+    "DEPTH": {
+      "type": "double",
+      "long_name": "actual depth",
+      "positive": "down",
+      "reference_datum": "sea surface",
+      "standard_name": "depth",
+      "comment": "Depth computed using the Gibbs-SeaWater toolbox (TEOS-10) from latitude and relative pressure measurements (calibration offset usually performed to balance current atmospheric pressure and acute sensor precision at a deployed depth).",
+      "units": "m",
+      "valid_max": 12000.0,
+      "valid_min": -5.0
+    },
+    "DEPTH_quality_control": {
+      "type": "float",
+      "flag_meanings": "pass not_evaluated questionable bad missing",
+      "flag_values": [
+        1,
+        2,
+        3,
+        4,
+        9
+      ],
+      "long_name": "quality flag for depth",
+      "quality_control_conventions": "Ocean Data Standards, UNESCO 2013 - IOC Manuals and Guides, 54, Volume 3 Version 1",
+      "standard_name": "depth status_flag"
+    },
+    "PSAL": {
+      "type": "float",
+      "ancillary_variables": "PSAL_quality_control",
+      "long_name": "sea_water_practical_salinity",
+      "standard_name": "sea_water_practical_salinity",
+      "units": "1",
+      "valid_max": 41.0,
+      "valid_min": 2.0
+    },
+    "PSAL_quality_control": {
+      "type": "float",
+      "flag_meanings": "pass not_evaluated questionable bad missing",
+      "flag_values": [
+        1,
+        2,
+        3,
+        4,
+        9
+      ],
+      "long_name": "quality flag for sea_water_practical_salinity",
+      "quality_control_conventions": "Ocean Data Standards, UNESCO 2013 - IOC Manuals and Guides, 54, Volume 3 Version 1",
+      "standard_name": "sea_water_practical_salinity status_flag"
+    },
+    "LATITUDE_GPS": {
+      "type": "double",
+      "long_name": "latitude at most recent GPS fix",
+      "reference_datum": "WGS84 geographic coordinate system",
+      "standard_name": "latitude",
+      "comment": "coordinates are carried forward to fill gaps between recorded fixes.",
+      "units": "degrees_north",
+      "valid_max": 90.0,
+      "valid_min": -90.0
+    },
+    "LONGITUDE_GPS": {
+      "type": "double",
+      "long_name": "longitude at most recent GPS fix",
+      "reference_datum": "WGS84 geographic coordinate system",
+      "standard_name": "longitude",
+      "comment": "coordinates are carried forward to fill gaps between recorded fixes.",
+      "units": "degrees_east",
+      "valid_max": 180.0,
+      "valid_min": -180.0
+    },
+    "TIME": {
+      "type": "timestamp[ns]",
+      "axis": "T",
+      "long_name": "time",
+      "standard_name": "time",
+      "valid_max": 90000.0,
+      "valid_min": 0.0
+    },
+    "NOMINAL_DEPTH": {
+      "type": "float",
+      "standard_name": "depth",
+      "long_name": "nominal depth",
+      "units": "m",
+      "reference_datum": "sea surface",
+      "positive": "down",
+      "axis": "Z",
+      "valid_min": -5.0,
+      "valid_max": 12000.0
+    },
+    "LATITUDE": {
+      "type": "double",
+      "axis": "Y",
+      "long_name": "latitude",
+      "reference_datum": "WGS84 geographic coordinate system",
+      "standard_name": "latitude",
+      "units": "degrees_north",
+      "valid_max": 90.0,
+      "valid_min": -90.0
+    },
+    "LONGITUDE": {
+      "type": "double",
+      "axis": "X",
+      "long_name": "longitude",
+      "reference_datum": "WGS84 geographic coordinate system",
+      "standard_name": "longitude",
+      "units": "degrees_east",
+      "valid_max": 180.0,
+      "valid_min": -180.0
+    },
+    "CPHL_RFU": {
+      "type": "float",
+      "long_name": "relative_fluorescence_optical_signal_associated_with_chlorophyll-a",
+      "units": "1",
+      "valid_min": 0.0,
+      "valid_max": 100.0,
+      "comment": "Instrument units rfu: Relative Fluorescence Units",
+      "sensor_serial_number": "24L003340",
+      "accuracy_note": "Linearity r2 >= 0.999 for Rhodamine WT across full range",
+      "ancillary_variables": "CPHL_RFU_quality_control"
+    },
+    "CPHL_RFU_quality_control": {
+      "type": "float",
+      "long_name": "quality flag for relative_fluorescence_optical_signal_associated_with_chlorophyll-a",
+      "flag_values": [
+        1,
+        2,
+        3,
+        4,
+        9
+      ],
+      "flag_meanings": "pass not_evaluated questionable fail missing",
+      "valid_min": 1,
+      "valid_max": 9,
+      "quality_control_conventions": "Ocean Data Standards, UNESCO 2013 - IOC Manuals and Guides, 54, Volume 3 Version 1",
+      "quality_control_comment": "The IOOS QARTOD Quality Control tests were used to derive the quality flags.",
+      "references": "http://www.ioos.noaa.gov/qartod/, https://www.ioccp.org/images/D4standards/IOC-OceanDataStandards54-3-2013.pdf"
+    },
+    "FLUSI": {
+      "type": "float",
+      "long_name": "fluorescence_spectral_shift_index",
+      "units": "1",
+      "valid_min": 0.0,
+      "valid_max": 15.0,
+      "sensor_serial_number": "0GZY010",
+      "accuracy_note": "Reproducibility Â±0.05 (0-200 ppb)",
+      "ancillary_variables": "FLUSI_quality_control",
+      "calibration_equation": "FLUSI = C x (FLU690 / FLU670) + D",
+      "calibration_coefficient_C": 0.80429,
+      "calibration_coefficient_D": 0.27239,
+      "calibration_date": "07-11-2025"
+    },
+    "FLUSI_quality_control": {
+      "type": "float",
+      "long_name": "quality flag for fluorescence_spectral_shift_index",
+      "flag_values": [
+        1,
+        2,
+        3,
+        4,
+        9
+      ],
+      "flag_meanings": "pass not_evaluated questionable fail missing",
+      "valid_min": 1,
+      "valid_max": 9,
+      "quality_control_conventions": "Ocean Data Standards, UNESCO 2013 - IOC Manuals and Guides, 54, Volume 3 Version 1",
+      "quality_control_comment": "The IOOS QARTOD Quality Control tests were used to derive the quality flags.",
+      "references": "http://www.ioos.noaa.gov/qartod/, https://www.ioccp.org/images/D4standards/IOC-OceanDataStandards54-3-2013.pdf"
+    },
+    "CPHL_rfu": {
+      "type": "float",
+      "long_name": "relative_fluorescence_optical_signal_associated_with_chlorophyll-a",
+      "units": "rfu",
+      "valid_min": 0.0,
+      "valid_max": 100.0,
+      "comment": "rfu: relative fluorescence units",
+      "sensor_serial_number": "24L003340",
+      "accuracy": "Linearity r2 >= 0.999 for Rhodamine WT across full range",
+      "ancillary_variables": "CPHL_rfu_quality_control"
+    },
+    "CPHL": {
+      "type": "float",
+      "long_name": "mass_concentration_of_inferred_chlorophyll_from_relative_fluorescence_units_in_sea_water",
+      "units": "mg m-3",
+      "valid_min": 0.0,
+      "valid_max": 400.0,
+      "comment": "Factory calibration against Rhodamine WT dye",
+      "sensor_serial_number": "24L003340",
+      "accuracy": "Linearity r2 >= 0.999 for Rhodamine WT across full range",
+      "ancillary_variables": "CPHL_quality_control"
+    },
+    "CPHL_quality_control": {
+      "type": "float",
+      "long_name": "quality flag for mass_concentration_of_inferred_chlorophyll_from_relative_fluorescence_units_in_sea_water",
+      "flag_values": [
+        1,
+        2,
+        3,
+        4,
+        9
+      ],
+      "flag_meanings": "pass not_evaluated questionable fail missing",
+      "valid_min": 1,
+      "valid_max": 9,
+      "quality_control_conventions": "Ocean Data Standards, UNESCO 2013 - IOC Manuals and Guides, 54, Volume 3 Version 1",
+      "quality_control_comment": "The IOOS QARTOD Quality Control tests were used to derive the quality flags.",
+      "references": "http://www.ioos.noaa.gov/qartod/, https://www.ioccp.org/images/D4standards/IOC-OceanDataStandards54-3-2013.pdf"
+    },
+    "CPHL_PPB": {
+      "type": "float",
+      "long_name": "mass_concentration_of_inferred_chlorophyll_from_relative_fluorescence_units_in_sea_water",
+      "units": "ppb",
+      "valid_min": 0.0,
+      "valid_max": 400.0,
+      "comment": "Fluorescence Measurement calibrated with Uranine reference",
+      "sensor_serial_number": "0GZY010",
+      "accuracy_note": "Non-linearity Â±1% FS (0-200 ppb)",
+      "ancillary_variables": "CPHL_PPB_quality_control",
+      "calibration_equation": "Instrument uranine concentration[ppb] = A + B x N  (N: A/D value)",
+      "calibration_coefficient_A": -5.935,
+      "calibration_coefficient_B": 0.009159,
+      "calibration_date": "07-11-2025"
+    },
+    "CPHL_rfu_quality_control": {
+      "type": "float",
+      "long_name": "quality flag for relative_fluorescence_optical_signal_associated_with_chlorophyll-a",
+      "flag_values": [
+        1,
+        2,
+        3,
+        4,
+        9
+      ],
+      "flag_meanings": "pass not_evaluated questionable fail missing",
+      "valid_min": 1,
+      "valid_max": 9,
+      "quality_control_conventions": "Ocean Data Standards, UNESCO 2013 - IOC Manuals and Guides, 54, Volume 3 Version 1",
+      "quality_control_comment": "The IOOS QARTOD Quality Control tests were used to derive the quality flags.",
+      "references": "http://www.ioos.noaa.gov/qartod/, https://www.ioccp.org/images/D4standards/IOC-OceanDataStandards54-3-2013.pdf"
+    },
+    "DOXY": {
+      "type": "float",
+      "standard_name": "mass_concentration_of_oxygen_in_sea_water",
+      "long_name": "mass_concentration_of_oxygen_in_sea_water",
+      "units": "mg l-1",
+      "valid_min": 0.0,
+      "valid_max": 50.0,
+      "sensor_serial_number": "25J103408",
+      "accuracy": "±1% of reading or 0.1 mg/L, whichever is greater (0-20 mg/L); ±5% of reading (20-50 mg/L)",
+      "ancillary_variables": "DOXY_quality_control"
+    },
+    "CPHL_PPB_quality_control": {
+      "type": "float",
+      "long_name": "quality flag for mass_concentration_of_inferred_chlorophyll_from_relative_fluorescence_units_in_sea_water",
+      "flag_values": [
+        1,
+        2,
+        3,
+        4,
+        9
+      ],
+      "flag_meanings": "pass not_evaluated questionable fail missing",
+      "valid_min": 1,
+      "valid_max": 9,
+      "quality_control_conventions": "Ocean Data Standards, UNESCO 2013 - IOC Manuals and Guides, 54, Volume 3 Version 1",
+      "quality_control_comment": "The IOOS QARTOD Quality Control tests were used to derive the quality flags.",
+      "references": "http://www.ioos.noaa.gov/qartod/, https://www.ioccp.org/images/D4standards/IOC-OceanDataStandards54-3-2013.pdf"
+    },
+    "DOXY_quality_control": {
+      "type": "float",
+      "long_name": "quality flag for mass_concentration_of_oxygen_in_sea_water",
+      "flag_values": [
+        1,
+        2,
+        3,
+        4,
+        9
+      ],
+      "flag_meanings": "pass not_evaluated questionable fail missing",
+      "valid_min": 1,
+      "valid_max": 9,
+      "quality_control_conventions": "Ocean Data Standards, UNESCO 2013 - IOC Manuals and Guides, 54, Volume 3 Version 1",
+      "quality_control_comment": "The IOOS QARTOD Quality Control tests were used to derive the quality flags.",
+      "references": "http://www.ioos.noaa.gov/qartod/, https://www.ioccp.org/images/D4standards/IOC-OceanDataStandards54-3-2013.pdf",
+      "standard_name": "mass_concentration_of_oxygen_in_sea_water status_flag"
+    },
+    "FLU670": {
+      "type": "float",
+      "long_name": "670_nm_fluorescence_intensity",
+      "units": "ppb",
+      "valid_min": 0.0,
+      "valid_max": 200.0,
+      "sensor_serial_number": "0GZY010",
+      "ancillary_variables": "FLU670_quality_control",
+      "calibration_equation": "FLU670 fluorescence intensity = A + B x [AD value]",
+      "calibration_coefficient_A": -0.55965,
+      "calibration_coefficient_B": 0.00086366,
+      "calibration_date": "07-11-2025"
+    },
+    "DOXS": {
+      "type": "float",
+      "standard_name": "fractional_saturation_of_oxygen_in_sea_water",
+      "long_name": "fractional_saturation_of_oxygen_in_sea_water",
+      "units": "percent",
+      "valid_min": 0.0,
+      "valid_max": 500.0,
+      "sensor_serial_number": "25J103408",
+      "accuracy": "±1% of reading or 1% sat., whichever is greater (0-200%); ±5% of reading (200-500%)",
+      "ancillary_variables": "DOXS_quality_control"
+    },
+    "DOXS_quality_control": {
+      "type": "float",
+      "long_name": "quality flag for fractional_saturation_of_oxygen_in_sea_water",
+      "flag_values": [
+        1,
+        2,
+        3,
+        4,
+        9
+      ],
+      "flag_meanings": "pass not_evaluated questionable fail missing",
+      "valid_min": 1,
+      "valid_max": 9,
+      "quality_control_conventions": "Ocean Data Standards, UNESCO 2013 - IOC Manuals and Guides, 54, Volume 3 Version 1",
+      "quality_control_comment": "The IOOS QARTOD Quality Control tests were used to derive the quality flags.",
+      "references": "http://www.ioos.noaa.gov/qartod/, https://www.ioccp.org/images/D4standards/IOC-OceanDataStandards54-3-2013.pdf",
+      "standard_name": "fractional_saturation_of_oxygen_in_sea_water status_flag"
+    },
+    "FLU670_quality_control": {
+      "type": "float",
+      "long_name": "quality flag for 670_nm_fluorescence_intensity",
+      "flag_values": [
+        1,
+        2,
+        3,
+        4,
+        9
+      ],
+      "flag_meanings": "pass not_evaluated questionable fail missing",
+      "valid_min": 1,
+      "valid_max": 9,
+      "quality_control_conventions": "Ocean Data Standards, UNESCO 2013 - IOC Manuals and Guides, 54, Volume 3 Version 1",
+      "quality_control_comment": "The IOOS QARTOD Quality Control tests were used to derive the quality flags.",
+      "references": "http://www.ioos.noaa.gov/qartod/, https://www.ioccp.org/images/D4standards/IOC-OceanDataStandards54-3-2013.pdf"
+    },
+    "FDOM": {
+      "type": "float",
+      "long_name": "fluorescent_dissolved_organic_matter_in_sea_water",
+      "units": "qsu",
+      "valid_min": 0.0,
+      "valid_max": 300.0,
+      "comment": "qsu: Quinine Sulfate Units. ",
+      "sensor_serial_number": "25K104246",
+      "accuracy": "Linearity r2 >= 0.999 for 0-300 qsu; MDL 0.016 qsu",
+      "ancillary_variables": "FDOM_quality_control"
+    },
+    "FLU690": {
+      "type": "float",
+      "long_name": "690_nm_fluorescence_intensity",
+      "units": "ppb",
+      "valid_min": 0.0,
+      "valid_max": 200.0,
+      "sensor_serial_number": "0GZY010",
+      "ancillary_variables": "FLU690_quality_control",
+      "calibration_equation": "FLU690 fluorescence intensity = A + B x [AD value]",
+      "calibration_coefficient_A": -0.45635,
+      "calibration_coefficient_B": 0.00070425,
+      "calibration_date": "07-11-2025"
+    },
+    "FDOM_quality_control": {
+      "type": "float",
+      "long_name": "quality flag for fluorescent_dissolved_organic_matter_in_sea_water",
+      "flag_values": [
+        1,
+        2,
+        3,
+        4,
+        9
+      ],
+      "flag_meanings": "pass not_evaluated questionable fail missing",
+      "valid_min": 1,
+      "valid_max": 9,
+      "quality_control_conventions": "Ocean Data Standards, UNESCO 2013 - IOC Manuals and Guides, 54, Volume 3 Version 1",
+      "quality_control_comment": "The IOOS QARTOD Quality Control tests were used to derive the quality flags.",
+      "references": "http://www.ioos.noaa.gov/qartod/, https://www.ioccp.org/images/D4standards/IOC-OceanDataStandards54-3-2013.pdf"
+    },
+    "FLU690_quality_control": {
+      "type": "float",
+      "long_name": "quality flag for 690_nm_fluorescence_intensity",
+      "flag_values": [
+        1,
+        2,
+        3,
+        4,
+        9
+      ],
+      "flag_meanings": "pass not_evaluated questionable fail missing",
+      "valid_min": 1,
+      "valid_max": 9,
+      "quality_control_conventions": "Ocean Data Standards, UNESCO 2013 - IOC Manuals and Guides, 54, Volume 3 Version 1",
+      "quality_control_comment": "The IOOS QARTOD Quality Control tests were used to derive the quality flags.",
+      "references": "http://www.ioos.noaa.gov/qartod/, https://www.ioccp.org/images/D4standards/IOC-OceanDataStandards54-3-2013.pdf"
+    },
+    "PHYCO_RFU": {
+      "type": "float",
+      "long_name": "phycoerythrin_in_sea_water",
+      "units": "1",
+      "valid_min": 0.0,
+      "valid_max": 100.0,
+      "comment": "Instrument units rfu: Relative Fluorescence Units",
+      "sensor_serial_number": "24L003340",
+      "accuracy_note": "Linearity r2 >= 0.999 for Rhodamine WT across full range",
+      "ancillary_variables": "PHYCO_RFU_quality_control"
+    },
+    "PHYCO_RFU_quality_control": {
+      "type": "float",
+      "long_name": "quality flag for phycoerythrin_in_sea_water",
+      "flag_values": [
+        1,
+        2,
+        3,
+        4,
+        9
+      ],
+      "flag_meanings": "pass not_evaluated questionable fail missing",
+      "valid_min": 1,
+      "valid_max": 9,
+      "quality_control_conventions": "Ocean Data Standards, UNESCO 2013 - IOC Manuals and Guides, 54, Volume 3 Version 1",
+      "quality_control_comment": "The IOOS QARTOD Quality Control tests were used to derive the quality flags.",
+      "references": "http://www.ioos.noaa.gov/qartod/, https://www.ioccp.org/images/D4standards/IOC-OceanDataStandards54-3-2013.pdf"
+    },
+    "PHYCO": {
+      "type": "float",
+      "long_name": "mass_concentration_of_phycoerythrin_in_sea_water",
+      "units": "mg m-3",
+      "valid_min": 0.0,
+      "valid_max": 280.0,
+      "comment": "Factory calibration against Rhodamine WT dye only.",
+      "sensor_serial_number": "24L003340",
+      "accuracy_note": "Linearity r2 >= 0.999 for Rhodamine WT across full range",
+      "ancillary_variables": "PHYCO_quality_control"
+    },
+    "PHYCO_quality_control": {
+      "type": "float",
+      "long_name": "quality flag for mass_concentration_of_phycoerythrin_in_sea_water",
+      "flag_values": [
+        1,
+        2,
+        3,
+        4,
+        9
+      ],
+      "flag_meanings": "pass not_evaluated questionable fail missing",
+      "valid_min": 1,
+      "valid_max": 9,
+      "quality_control_conventions": "Ocean Data Standards, UNESCO 2013 - IOC Manuals and Guides, 54, Volume 3 Version 1",
+      "quality_control_comment": "The IOOS QARTOD Quality Control tests were used to derive the quality flags.",
+      "references": "http://www.ioos.noaa.gov/qartod/, https://www.ioccp.org/images/D4standards/IOC-OceanDataStandards54-3-2013.pdf"
+    },
+    "SPEC_CNDC": {
+      "type": "float",
+      "long_name": "sea_water_specific_electrical_conductivity_corrected_at_25degC",
+      "units": "S m-1",
+      "valid_min": 0.0,
+      "valid_max": 10.0,
+      "comment": "Converted from uS/cm (Eagle) to S m-1 (IMOS) by factor 1e-4",
+      "sensor_serial_number": "25H106877",
+      "accuracy": "±1% of reading or 2 uS/cm, whichever is greater",
+      "ancillary_variables": "SPEC_CNDC_quality_control"
+    },
+    "SPEC_CNDC_quality_control": {
+      "type": "float",
+      "long_name": "quality flag for sea_water_specific_electrical_conductivity_corrected_at_25degC",
+      "flag_values": [
+        1,
+        2,
+        3,
+        4,
+        9
+      ],
+      "flag_meanings": "pass not_evaluated questionable fail missing",
+      "valid_min": 1,
+      "valid_max": 9,
+      "quality_control_conventions": "Ocean Data Standards, UNESCO 2013 - IOC Manuals and Guides, 54, Volume 3 Version 1",
+      "quality_control_comment": "The IOOS QARTOD Quality Control tests were used to derive the quality flags.",
+      "references": "http://www.ioos.noaa.gov/qartod/, https://www.ioccp.org/images/D4standards/IOC-OceanDataStandards54-3-2013.pdf"
+    },
+    "PHYCOE_rfu": {
+      "type": "float",
+      "long_name": "phycoerythrin_in_sea_water",
+      "units": "rfu",
+      "valid_min": 0.0,
+      "valid_max": 100.0,
+      "comment": "Phycoerythrin in rfu (Relative Fluorescence Units). ",
+      "sensor_serial_number": "24L003340",
+      "accuracy": "Linearity r2 >= 0.999 for Rhodamine WT across full range",
+      "ancillary_variables": "PHYCOE_rfu_quality_control"
+    },
+    "TURB": {
+      "type": "float",
+      "standard_name": "sea_water_turbidity",
+      "long_name": "sea_water_turbidity",
+      "units": "fnu",
+      "valid_min": 0.0,
+      "valid_max": 4000.0,
+      "sensor_serial_number": "25K100295",
+      "accuracy": "±3% of reading (0-999 fnu); ±5% of reading (1000-4000 fnu)",
+      "ancillary_variables": "TURB_quality_control"
+    },
+    "PHYCOE_rfu_quality_control": {
+      "type": "float",
+      "long_name": "quality flag for phycoerythrin_in_sea_water",
+      "flag_values": [
+        1,
+        2,
+        3,
+        4,
+        9
+      ],
+      "flag_meanings": "pass not_evaluated questionable fail missing",
+      "valid_min": 1,
+      "valid_max": 9,
+      "quality_control_conventions": "Ocean Data Standards, UNESCO 2013 - IOC Manuals and Guides, 54, Volume 3 Version 1",
+      "quality_control_comment": "The IOOS QARTOD Quality Control tests were used to derive the quality flags.",
+      "references": "http://www.ioos.noaa.gov/qartod/, https://www.ioccp.org/images/D4standards/IOC-OceanDataStandards54-3-2013.pdf"
+    },
+    "TURB_quality_control": {
+      "type": "float",
+      "long_name": "quality flag for sea_water_turbidity",
+      "flag_values": [
+        1,
+        2,
+        3,
+        4,
+        9
+      ],
+      "flag_meanings": "pass not_evaluated questionable fail missing",
+      "valid_min": 1,
+      "valid_max": 9,
+      "quality_control_conventions": "Ocean Data Standards, UNESCO 2013 - IOC Manuals and Guides, 54, Volume 3 Version 1",
+      "quality_control_comment": "The IOOS QARTOD Quality Control tests were used to derive the quality flags.",
+      "references": "http://www.ioos.noaa.gov/qartod/, https://www.ioccp.org/images/D4standards/IOC-OceanDataStandards54-3-2013.pdf",
+      "standard_name": "sea_water_turbidity status_flag"
+    },
+    "PHYCOE": {
+      "type": "float",
+      "long_name": "mass_concentration_of_phycoerythrin_in_sea_water",
+      "units": "mg m-3",
+      "valid_min": 0.0,
+      "valid_max": 280.0,
+      "comment": "Factory calibration against Rhodamine WT dye only.",
+      "sensor_serial_number": "24L003340",
+      "accuracy": "Linearity r2 >= 0.999 for Rhodamine WT across full range",
+      "ancillary_variables": "PHYCOE_quality_control"
+    },
+    "PHYCOE_quality_control": {
+      "type": "float",
+      "long_name": "quality flag for mass_concentration_of_phycoerythrin_in_sea_water",
+      "flag_values": [
+        1,
+        2,
+        3,
+        4,
+        9
+      ],
+      "flag_meanings": "pass not_evaluated questionable fail missing",
+      "valid_min": 1,
+      "valid_max": 9,
+      "quality_control_conventions": "Ocean Data Standards, UNESCO 2013 - IOC Manuals and Guides, 54, Volume 3 Version 1",
+      "quality_control_comment": "The IOOS QARTOD Quality Control tests were used to derive the quality flags.",
+      "references": "http://www.ioos.noaa.gov/qartod/, https://www.ioccp.org/images/D4standards/IOC-OceanDataStandards54-3-2013.pdf"
+    }
+  },
+  "aws_opendata_registry": {
+    "Name": "IMOS - Estuarine and Coastal Moorings Facility",
+    "Description": "The Estuarine and Coastal Moorings Facility provides a national, standardised network of estuarine and coastal moorings with a primary focus on water quality observations. This Facility will be undertaken in two phases and will begin with the development and coordination of an expansion of IMOS observations into estuarine environments. The second phase will focus on further expanding the estuarine network and establishing a network of coastal moorings to monitor near-real time, near-shore oceanographic processes and environmental parameters in regions of high-significance. Initial mooring deployments focused on the interface between land and sea, in typical estuarine environments, within the tidal incursion zone. In the first phase, the Estuarine Moorings Network consists of 2 moorings in each State and Territory (aside from the ACT), monitoring surface conditions. Small to medium sized buoys are deployed in shallow waters and anchored securely to the seabed or to fixed infrastructure. These moorings are from the Xylem DB platform range. The DB range of telemetered data buoys allow for easy deployment, maintenance and provide future monitoring flexibility in various types of environmental conditions. Each mooring measures 5-7 essential ocean variables, such as temperature, salinity, chlorophyll-a fluorescence, dissolved oxygen, turbidity, and fDOM, with the option to include additional sensors to measure currents, pH, or nutrients. Moorings are serviced every two to three months to clean and re-calibrate sensors, replace components, and collect in-situ water samples for sensor validation. Complementary CTD profiles are taken at servicing intervals to assist with sensor validation. Near real-time data are processed by SARDI and quality controlled in accordance with the Integrated Ocean Observing System's QARTOD protocols (http://www.ioos.noaa.gov/qartod/, https://www.ioccp.org/images/D4standards/IOC-OceanDataStandards54-3-2013.pdf). These data are made available through the AODN Portal and IMOS Live. Delayed-mode data will be published through the AODN Portal upon availability.",
+    "Documentation": "https://catalogue-imos.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/613cd7ce-0677-4c3b-8cc7-6d22ff1f4120",
+    "Contact": "info@aodn.org.au",
+    "ManagedBy": "AODN",
+    "UpdateFrequency": "As Needed",
+    "Tags": [
+      "oceans",
+      "chemistry"
+    ],
+    "License": "http://creativecommons.org/licenses/by/4.0/",
+    "Resources": [
+      {
+        "Description": "Cloud Optimised AODN dataset of IMOS - Estuarine and Coastal Moorings Water Quality Monitoring - Near real-time data",
+        "ARN": "arn:aws:s3:::imos-data-lab-optimised/mooring_estuarine_coastal_water_quality_monitoring_realtime_qc.parquet",
+        "Region": "ap-southeast-2",
+        "Type": "S3 Bucket"
+      }
+    ],
+    "DataAtWork": {
+      "Tutorials": [
+        {
+          "Title": "Accessing IMOS - Estuarine and Coastal Moorings Water Quality Monitoring - Near real-time data",
+          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/mooring_estuarine_coastal_water_quality_monitoring_realtime_qc.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/mooring_estuarine_coastal_water_quality_monitoring_realtime_qc.ipynb",
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
+        },
+        {
+          "Title": "Accessing and search for any AODN dataset",
+          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
+        }
+      ]
+    },
+    "Citation": "The citation in a list of references is: \"IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access].\""
+  },
+  "schema_transformation": {
+    "drop_variables": [],
+    "add_variables": {
+      "filename": {
+        "source": "@filename",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "long_name": "Filename of the source file"
+        }
+      },
+      "timestamp": {
+        "source": "@partitioning:time_extent",
+        "schema": {
+          "type": "int64",
+          "units": "1",
+          "long_name": "Partition timestamp"
+        }
+      },
+      "polygon": {
+        "source": "@partitioning:spatial_extent",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "long_name": "Spatial partition polygon"
+        }
+      },
+      "site_code": {
+        "source": "@global_attribute:site_code",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "long_name": "site code"
+        }
+      }
+    },
+    "partitioning": [
+      {
+        "source_variable": "site_code"
+      },
+      {
+        "source_variable": "timestamp",
+        "type": "time_extent",
+        "time_extent": {
+          "time_varname": "TIME",
+          "partition_period": "Y"
+        }
+      },
+      {
+        "source_variable": "polygon",
+        "type": "spatial_extent",
+        "spatial_extent": {
+          "lat_varname": "LATITUDE",
+          "lon_varname": "LONGITUDE",
+          "spatial_resolution": 2
+        }
+      }
+    ],
+    "global_attributes": {
+      "delete": [
+        "geospatial_lat_max",
+        "geospatial_lat_min",
+        "geospatial_lon_max",
+        "geospatial_lon_min",
+        "date_created"
+      ],
+      "set": {
+        "title": "IMOS - Estuarine and Coastal Moorings Water Quality Monitoring - Near real-time data",
+        "quality_control_tests_applied": "IOOS QARTOD: location_test, gross_range_test, spike_test, rate_of_change_test, flat_line_test"
+      }
+    }
+  }
+}
