@@ -204,7 +204,7 @@ More information available [here](https://github.com/conda-forge/miniforge?tab=r
 - [satellite_sst_1day_aqua.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_sst_1day_aqua.ipynb)
 - [satellite_sst_1day_snpp.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_sst_1day_snpp.ipynb)
 - [satellite_wind_altimeter_delayed_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_wind_altimeter_delayed_qc.ipynb)
-- [slocum_glider_delayed_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/slocum_glider_delayed_qc.ipynb)
+- [ocean_glider_delayed_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/ocean_glider_delayed_qc.ipynb)
 - [srs_oc_ljco_wqm_daily.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/srs_oc_ljco_wqm_daily.ipynb)
 - [station_lucinda_jetty_daily_satlantic_hyperocr.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/station_lucinda_jetty_daily_satlantic_hyperocr.ipynb)
 - [station_lucinda_jetty_daily_satlantic_hyperocr_derived_product.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/station_lucinda_jetty_daily_satlantic_hyperocr_derived_product.ipynb)
