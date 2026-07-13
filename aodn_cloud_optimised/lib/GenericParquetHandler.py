@@ -189,6 +189,7 @@ class GenericHandler(CommonHandler):
 
         df = df.drop(columns=self.drop_variables, errors="ignore")
         ds = xr.Dataset.from_dataframe(df)
+        ds = ds.drop_vars([v for v in self.drop_variables if v in ds], errors="ignore")
 
         for var in ds.variables:
             if var not in self.schema:
