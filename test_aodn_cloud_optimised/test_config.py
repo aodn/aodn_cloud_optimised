@@ -345,10 +345,6 @@ _PLACEHOLDER_CONFIGS = {
     # dataset_template.json uses // comments and is a human-readable template,
     # not a loadable dataset config.
     "dataset_template.json",
-    "aggregated_kelp_nonqc.json",
-    "aggregated_seabird_nonqc.json",
-    "aggregated_seagrass_nonqc.json",
-    "amsa_vessel_tracking.json",
     "diver_photoquadrat_score_qc.json",
     "mooring_wave_timeseries_delayed_qc.json",
     "radar_wave_delayed_qc_no_I_J_version_main.json",
