@@ -209,7 +209,7 @@
       "valid_min": 0.0,
       "valid_max": 15.0,
       "sensor_serial_number": "0GZY010",
-      "accuracy_note": "Reproducibility Â±0.05 (0-200 ppb)",
+      "accuracy_note": "Reproducibility \u00c2\u00b10.05 (0-200 ppb)",
       "ancillary_variables": "FLUSI_quality_control",
       "calibration_equation": "FLUSI = C x (FLU690 / FLU670) + D",
       "calibration_coefficient_C": 0.80429,
@@ -280,7 +280,7 @@
       "valid_max": 400.0,
       "comment": "Fluorescence Measurement calibrated with Uranine reference",
       "sensor_serial_number": "0GZY010",
-      "accuracy_note": "Non-linearity Â±1% FS (0-200 ppb)",
+      "accuracy_note": "Non-linearity \u00c2\u00b11% FS (0-200 ppb)",
       "ancillary_variables": "CPHL_PPB_quality_control",
       "calibration_equation": "Instrument uranine concentration[ppb] = A + B x N  (N: A/D value)",
       "calibration_coefficient_A": -5.935,
@@ -312,7 +312,7 @@
       "valid_min": 0.0,
       "valid_max": 50.0,
       "sensor_serial_number": "25J103408",
-      "accuracy": "±1% of reading or 0.1 mg/L, whichever is greater (0-20 mg/L); ±5% of reading (20-50 mg/L)",
+      "accuracy": "\u00b11% of reading or 0.1 mg/L, whichever is greater (0-20 mg/L); \u00b15% of reading (20-50 mg/L)",
       "ancillary_variables": "DOXY_quality_control"
     },
     "CPHL_PPB_quality_control": {
@@ -371,7 +371,7 @@
       "valid_min": 0.0,
       "valid_max": 500.0,
       "sensor_serial_number": "25J103408",
-      "accuracy": "±1% of reading or 1% sat., whichever is greater (0-200%); ±5% of reading (200-500%)",
+      "accuracy": "\u00b11% of reading or 1% sat., whichever is greater (0-200%); \u00b15% of reading (200-500%)",
       "ancillary_variables": "DOXS_quality_control"
     },
     "DOXS_quality_control": {
@@ -531,7 +531,7 @@
       "valid_max": 10.0,
       "comment": "Converted from uS/cm (Eagle) to S m-1 (IMOS) by factor 1e-4",
       "sensor_serial_number": "25H106877",
-      "accuracy": "±1% of reading or 2 uS/cm, whichever is greater",
+      "accuracy": "\u00b11% of reading or 2 uS/cm, whichever is greater",
       "ancillary_variables": "SPEC_CNDC_quality_control"
     },
     "SPEC_CNDC_quality_control": {
@@ -570,7 +570,7 @@
       "valid_min": 0.0,
       "valid_max": 4000.0,
       "sensor_serial_number": "25K100295",
-      "accuracy": "±3% of reading (0-999 fnu); ±5% of reading (1000-4000 fnu)",
+      "accuracy": "\u00b13% of reading (0-999 fnu); \u00b15% of reading (1000-4000 fnu)",
       "ancillary_variables": "TURB_quality_control"
     },
     "PHYCOE_rfu_quality_control": {
