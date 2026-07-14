@@ -44,11 +44,6 @@
   },
   "metadata_uuid": "a8f5c736-6eaa-47fb-a9eb-d778beb71701",
   "schema": {
-    "index": {
-      "type": "int64",
-      "units": "1",
-      "long_name": "Row index"
-    },
     "TEMP": {
       "type": "float",
       "ancillary_variables": "TEMP_quality_control",
@@ -683,7 +678,9 @@
     "Citation": "The citation in a list of references is: \"IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access].\""
   },
   "schema_transformation": {
-    "drop_variables": [],
+    "drop_variables": [
+      "index"
+    ],
     "add_variables": {
       "filename": {
         "source": "@filename",
