@@ -38,9 +38,6 @@
   },
   "metadata_uuid": "0a65be6d-1c76-49ac-a151-80acf123612c",
   "schema": {
-    "index": {
-      "type": "int64"
-    },
     "dataset_id": {
       "type": "string"
     },

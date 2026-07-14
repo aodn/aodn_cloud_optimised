@@ -37,9 +37,6 @@
   },
   "metadata_uuid": "9efa25cd-4da4-47b5-9385-45e3cbd11705",
   "schema": {
-    "index": {
-      "type": "int64"
-    },
     "survey_id": {
       "type": "int32",
       "long_name": "survey identification number"
