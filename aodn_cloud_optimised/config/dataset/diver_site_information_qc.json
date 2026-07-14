@@ -37,9 +37,6 @@
   },
   "metadata_uuid": "e41efa35-03f0-4dea-be98-2a69e46b510b",
   "schema": {
-    "index": {
-      "type": "int64"
-    },
     "country": {
       "type": "string",
       "long_name": "country where the survey was conducted"
@@ -159,7 +156,9 @@
     }
   },
   "schema_transformation": {
-    "drop_variables": [],
+    "drop_variables": [
+      "index"
+    ],
     "add_variables": {
       "filename": {
         "source": "@filename",
