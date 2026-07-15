@@ -1664,7 +1664,8 @@ class GenericHandler(CommonHandler):
                 client.run_on_scheduler(gc.collect)  # GC!
 
         self.logger.info("All batches processed.")
-        self.cluster_manager.close_cluster(client, cluster)
+        if hasattr(self, "cluster_manager") and self.cluster_manager:
+            self.cluster_manager.close_cluster(client, cluster)
         # Set only after all tasks are submitted so self is not carrying the full list
         # during cloudpickle serialisation of each Dask task closure (saves ~3 GB/batch).
         self.s3_file_uri_list = s3_file_uri_list
