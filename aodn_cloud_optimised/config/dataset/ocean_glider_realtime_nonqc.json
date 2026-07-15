@@ -1030,6 +1030,9 @@
     },
     "partitioning": [
       {
+        "source_variable": "deployment_code"
+      },
+      {
         "source_variable": "timestamp",
         "type": "time_extent",
         "time_extent": {
