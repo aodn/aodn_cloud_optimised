@@ -746,21 +746,29 @@ class GenericHandler(CommonHandler):
                 elif variable_to_add_info["source"].startswith("@variable_attribute:"):
                     varname = variable_to_add_info["source"].split(":")[1].split(".")[0]
                     attr = variable_to_add_info["source"].split(":")[1].split(".")[1]
-                    if not hasattr(ds, varname):
+                    # Resolve variable-attribute source defensively: both "variable missing"
+                    # and "attribute missing" should fall back to configured _FillValue.
+                    raw_attr_value = None
+
+                    if varname not in ds.variables:
                         self.logger.warning(
-                            f"{self.uuid_log}: cannot create variable {variable_to_add_name} from {varname}.{attr} as {varname} does not exist in current file"
+                            f"{self.uuid_log}: variable {varname} does not exist in current file. {variable_to_add_name} will be created with _FillValue"
                         )
-
                     else:
-                        attr_value = getattr(ds[varname], attr)
+                        raw_attr_value = ds[varname].attrs.get(attr)
+                        if raw_attr_value is None:
+                            self.logger.warning(
+                                f"{self.uuid_log}: variable attribute {varname}.{attr} is missing from input NetCDF. {variable_to_add_name} will be created with _FillValue"
+                            )
 
-                        attr_value = cast_value_to_config_type(
-                            attr_value, var_type, fillvalue=var_fillvalue
-                        )  # convert variable to required type
-                        df[variable_to_add_name] = attr_value
-                        self.logger.info(
-                            f"{self.uuid_log}: variable {variable_to_add_name} created with value {attr_value}"
-                        )
+                    # Keep one cast/assign path so behavior is consistent across both missing cases.
+                    attr_value = cast_value_to_config_type(
+                        raw_attr_value, var_type, fillvalue=var_fillvalue
+                    )  # convert variable to required type
+                    df[variable_to_add_name] = attr_value
+                    self.logger.info(
+                        f"{self.uuid_log}: variable {variable_to_add_name} created with value {attr_value}"
+                    )
 
                 elif variable_to_add_info["source"].startswith("@global_attribute:"):
                     gattr = variable_to_add_info["source"].split(":")[1]
