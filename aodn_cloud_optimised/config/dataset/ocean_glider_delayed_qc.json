@@ -38,6 +38,220 @@
           "units": "1",
           "long_name": "Spatial partition polygon"
         }
+      },
+      "trans_system_id": {
+        "source": "@variable_attribute:PLATFORM.trans_system_id",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "positioning_system": {
+        "source": "@variable_attribute:PLATFORM.positioning_system",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "platform_type": {
+        "source": "@variable_attribute:PLATFORM.platform_type",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "wmo": {
+        "source": "@variable_attribute:PLATFORM.wmo",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "glider_serial_no": {
+        "source": "@variable_attribute:PLATFORM.glider_serial_no",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "SENSOR1_sensor_type": {
+        "source": "@variable_attribute:SENSOR1.sensor_type",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "SENSOR1_sensor_maker": {
+        "source": "@variable_attribute:SENSOR1.sensor_maker",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "SENSOR1_sensor_model": {
+        "source": "@variable_attribute:SENSOR1.sensor_model",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "SENSOR2_sensor_type": {
+        "source": "@variable_attribute:SENSOR2.sensor_type",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "SENSOR2_sensor_maker": {
+        "source": "@variable_attribute:SENSOR2.sensor_maker",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "SENSOR2_sensor_model": {
+        "source": "@variable_attribute:SENSOR2.sensor_model",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "SENSOR3_sensor_type": {
+        "source": "@variable_attribute:SENSOR3.sensor_type",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": "",
+          "long_name": "SENSOR3 type"
+        }
+      },
+      "SENSOR3_sensor_maker": {
+        "source": "@variable_attribute:SENSOR3.sensor_maker",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": "",
+          "long_name": "SENSOR3 maker"
+        }
+      },
+      "SENSOR3_sensor_model": {
+        "source": "@variable_attribute:SENSOR3.sensor_model",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": "",
+          "long_name": "SENSOR3 model"
+        }
+      },
+      "SENSOR4_sensor_type": {
+        "source": "@variable_attribute:SENSOR4.sensor_type",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": "",
+          "long_name": "SENSOR4 type"
+        }
+      },
+      "SENSOR4_sensor_maker": {
+        "source": "@variable_attribute:SENSOR4.sensor_maker",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": "",
+          "long_name": "SENSOR4 maker"
+        }
+      },
+      "SENSOR4_sensor_model": {
+        "source": "@variable_attribute:SENSOR4.sensor_model",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": "",
+          "long_name": "SENSOR4 model"
+        }
+      },
+      "DOX1_comment": {
+        "source": "@variable_attribute:DOX1.comment",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "DOX2_comment": {
+        "source": "@variable_attribute:DOX2.comment",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "IRRAD443_comment": {
+        "source": "@variable_attribute:IRRAD443.comment",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "IRRAD456_comment": {
+        "source": "@variable_attribute:IRRAD456.comment",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "IRRAD490_comment": {
+        "source": "@variable_attribute:IRRAD490.comment",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "IRRAD555_comment": {
+        "source": "@variable_attribute:IRRAD555.comment",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "IRRAD670_comment": {
+        "source": "@variable_attribute:IRRAD670.comment",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "IRRAD470_comment": {
+        "source": "@variable_attribute:IRRAD470.comment",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "IRRAD520_comment": {
+        "source": "@variable_attribute:IRRAD520.comment",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
       }
     },
     "partitioning": [
@@ -78,69 +292,26 @@
   "schema": {
     "PLATFORM": {
       "type": "string",
-      "trans_system_id": "Irridium",
-      "positioning_system": "GPS",
-      "platform_type": "Slocum G2",
-      "platform_maker": "Teledyne Webb Research",
-      "firmware_version_navigation": 7.1,
-      "firmware_version_science": 7.1,
-      "glider_serial_no": "416",
-      "battery_type": "Alkaline",
-      "glider_owner": "CSIRO",
-      "operating_institution": "ANFOG",
-      "long_name": "platform informations"
+      "long_name": "platform information"
     },
     "DEPLOYMENT": {
       "type": "string",
-      "deployment_start_date": "2015-10-21-T05:00:02Z",
-      "deployment_start_latitude": -18.9373,
-      "deployment_start_longitude": 146.881,
-      "deployment_start_technician": "Gregor, Rob",
-      "deployment_end_date": "2015-10-27-T01:56:23Z",
-      "deployment_end_latitude": -19.2358,
-      "deployment_end_longitude": 147.5188,
-      "deployment_end_status": "recovered",
-      "deployment_pilot": "pilot, CSIRO",
-      "long_name": "deployment informations"
+      "long_name": "deployment information"
     },
     "SENSOR1": {
       "type": "string",
-      "sensor_type": "CTD",
-      "sensor_maker": "Seabird",
-      "sensor_model": "GPCTD",
-      "sensor_serial_no": "9117",
-      "sensor_calibration_date": "2013-09-17",
-      "sensor_parameters": "TEMP, CNDC, PRES, PSAL",
       "long_name": "sensor1 informations"
     },
     "SENSOR2": {
       "type": "string",
-      "sensor_type": "ECO Puck",
-      "sensor_maker": "Wetlabs",
-      "sensor_model": "FLBBCDSLC",
-      "sensor_serial_no": "3345",
-      "sensor_calibration_date": "2013-10-07",
-      "sensor_parameters": "CPHL, CDOM, VBSC",
       "long_name": "sensor2 informations"
     },
     "SENSOR3": {
       "type": "string",
-      "sensor_type": "oxygen sensor",
-      "sensor_maker": "Aanderaa",
-      "sensor_model": "OXY4831_WPHASE",
-      "sensor_serial_no": "249",
-      "sensor_calibration_date": "2013-09-20",
-      "sensor_parameters": "DOX1, DOX2",
       "long_name": "sensor3 informations"
     },
     "SENSOR4": {
       "type": "string",
-      "sensor_type": "SUNAV2",
-      "sensor_maker": "SAtlantic",
-      "sensor_model": "SUNAV2",
-      "sensor_serial_no": "349",
-      "sensor_calibration_date": "2014-05-05",
-      "sensor_parameters": "NITRATE",
       "long_name": "sensor4 informations"
     },
     "LATITUDE": {
@@ -177,7 +348,7 @@
         9
       ],
       "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
-      "quality_control_conventions": "IMOS standard set using the IODE flags"
+      "quality_control_conventions": "IMOS standard flags"
     },
     "LONGITUDE": {
       "type": "double",
@@ -213,7 +384,7 @@
         9
       ],
       "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
-      "quality_control_conventions": "IMOS standard set using the IODE flags"
+      "quality_control_conventions": "IMOS standard flags"
     },
     "TIME": {
       "type": "timestamp[ns]",
@@ -246,7 +417,7 @@
         9
       ],
       "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
-      "quality_control_conventions": "IMOS standard set using the IODE flags"
+      "quality_control_conventions": "IMOS standard flags"
     },
     "HEAD": {
       "type": "double",
@@ -278,7 +449,7 @@
         9
       ],
       "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
-      "quality_control_conventions": "IMOS standard set using the IODE flags"
+      "quality_control_conventions": "IMOS standard flags"
     },
     "UCUR": {
       "type": "double",
@@ -312,7 +483,7 @@
         9
       ],
       "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
-      "quality_control_conventions": "IMOS standard set using the IODE flags"
+      "quality_control_conventions": "IMOS standard flags"
     },
     "VCUR": {
       "type": "double",
@@ -346,7 +517,7 @@
         9
       ],
       "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
-      "quality_control_conventions": "IMOS standard set using the IODE flags"
+      "quality_control_conventions": "IMOS standard flags"
     },
     "UCUR_GPS": {
       "type": "double",
@@ -378,7 +549,7 @@
         9
       ],
       "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
-      "quality_control_conventions": "IMOS standard set using the IODE flags"
+      "quality_control_conventions": "IMOS standard flags"
     },
     "VCUR_GPS": {
       "type": "double",
@@ -410,7 +581,7 @@
         9
       ],
       "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
-      "quality_control_conventions": "IMOS standard set using the IODE flags"
+      "quality_control_conventions": "IMOS standard flags"
     },
     "PHASE": {
       "type": "float",
@@ -442,7 +613,7 @@
         9
       ],
       "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
-      "quality_control_conventions": "IMOS standard set using the IODE flags"
+      "quality_control_conventions": "IMOS standard flags"
     },
     "PROFILE": {
       "type": "double",
@@ -474,7 +645,7 @@
         9
       ],
       "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
-      "quality_control_conventions": "IMOS standard set using the IODE flags"
+      "quality_control_conventions": "IMOS standard flags"
     },
     "PRES": {
       "type": "double",
@@ -509,7 +680,7 @@
         9
       ],
       "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
-      "quality_control_conventions": "IMOS standard set using the IODE flags"
+      "quality_control_conventions": "IMOS standard flags"
     },
     "DEPTH": {
       "type": "double",
@@ -547,7 +718,7 @@
         9
       ],
       "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
-      "quality_control_conventions": "IMOS standard set using the IODE flags"
+      "quality_control_conventions": "IMOS standard flags"
     },
     "TEMP": {
       "type": "double",
@@ -581,7 +752,7 @@
         9
       ],
       "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
-      "quality_control_conventions": "IMOS standard set using the IODE flags"
+      "quality_control_conventions": "IMOS standard flags"
     },
     "CNDC": {
       "type": "double",
@@ -615,7 +786,7 @@
         9
       ],
       "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
-      "quality_control_conventions": "IMOS standard set using the IODE flags"
+      "quality_control_conventions": "IMOS standard flags"
     },
     "PSAL": {
       "type": "double",
@@ -649,7 +820,7 @@
         9
       ],
       "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
-      "quality_control_conventions": "IMOS standard set using the IODE flags"
+      "quality_control_conventions": "IMOS standard flags"
     },
     "DOX2": {
       "type": "double",
@@ -660,8 +831,7 @@
       "valid_max": 650.0,
       "ancillary_variables": "DOX2_quality_control",
       "observation_type": "computed",
-      "quality_control_set": 1,
-      "comment": "mole concentration per unit mass computed as the mole concentration per litre divided by the potential density. Glider output. Data computed internally from phase measurements using the Optode temperature and calibration coefficients. Data should be used with caution."
+      "quality_control_set": 1
     },
     "DOX2_quality_control": {
       "type": "float",
@@ -683,7 +853,7 @@
         9
       ],
       "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
-      "quality_control_conventions": "IMOS standard set using the IODE flags"
+      "quality_control_conventions": "IMOS standard flags"
     },
     "DOX1": {
       "type": "double",
@@ -694,8 +864,7 @@
       "valid_max": 650.0,
       "ancillary_variables": "DOX1_quality_control",
       "observation_type": "computed",
-      "quality_control_set": 1,
-      "comment": "Glider output. Data computed internally from phase measurements using the Optode temperature and calibration coefficients. Data should be used with caution. (Need to multiply by 0.0223916 to get values in ml/L). "
+      "quality_control_set": 1
     },
     "DOX1_quality_control": {
       "type": "float",
@@ -717,7 +886,7 @@
         9
       ],
       "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
-      "quality_control_conventions": "IMOS standard set using the IODE flags"
+      "quality_control_conventions": "IMOS standard flags"
     },
     "CPHL": {
       "type": "double",
@@ -751,7 +920,7 @@
         9
       ],
       "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
-      "quality_control_conventions": "IMOS standard set using the IODE flags"
+      "quality_control_conventions": "IMOS standard flags"
     },
     "CDOM": {
       "type": "double",
@@ -783,7 +952,7 @@
         9
       ],
       "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
-      "quality_control_conventions": "IMOS standard set using the IODE flags"
+      "quality_control_conventions": "IMOS standard flags"
     },
     "VBSC": {
       "type": "double",
@@ -815,7 +984,7 @@
         9
       ],
       "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
-      "quality_control_conventions": "IMOS standard set using the IODE flags"
+      "quality_control_conventions": "IMOS standard flags"
     },
     "NTRA": {
       "type": "double",
@@ -849,7 +1018,7 @@
       ],
       "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
       "standard_name": "mole_concentration_of_nitrate_in_sea_water status_flag",
-      "quality_control_conventions": "IMOS standard set using the IODE flags"
+      "quality_control_conventions": "IMOS standard flags"
     },
     "IRRAD443": {
       "type": "double",
@@ -859,8 +1028,7 @@
       "valid_max": 1000.0,
       "ancillary_variables": "IRRAD443_quality_control",
       "observation_type": "computed",
-      "quality_control_set": 1,
-      "comment": "The real wavelength for this beam is 443.52 nm. Irradiance data have been corrected to account for suspected shift in Dark Count values since the calibration, that lead to many negative values. Uncorrected data are available in the FV00 file associated with this mission. "
+      "quality_control_set": 1
     },
     "IRRAD443_quality_control": {
       "type": "float",
@@ -881,18 +1049,100 @@
         9
       ],
       "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
-      "quality_control_conventions": "IMOS standard set using the IODE flags"
+      "quality_control_conventions": "IMOS standard flags"
     },
     "IRRAD456": {
-      "type": "float",
+      "type": "double",
       "long_name": "downwelling_spectral_irradiance_in_sea_water_beam1",
       "units": "uW cm-2 nm-1",
       "valid_min": 0.0,
       "valid_max": 1000.0,
       "ancillary_variables": "IRRAD456_quality_control",
       "observation_type": "computed",
+      "quality_control_set": 1
+    },
+    "IRRAD456_quality_control": {
+      "type": "float",
+      "long_name": "quality control flag for downwelling_spectral_irradiance_in_sea_water_beam1",
       "quality_control_set": 1,
-      "comment": "The real wavelength for this beam is 456.6 nm. Irradiance data have been corrected to account for suspected shift in Dark Count values since the calibration, that lead to many negative values. Uncorrected data are available in the FV00 file associated with this mission. "
+      "valid_min": 0,
+      "valid_max": 9,
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
+      "quality_control_conventions": "IMOS standard flags"
+    },
+    "IRRAD470": {
+      "type": "double",
+      "long_name": "downwelling_spectral_irradiance_in_sea_water_beam2",
+      "units": "uW cm-2 nm-1",
+      "valid_min": 0.0,
+      "valid_max": 1000.0,
+      "ancillary_variables": "IRRAD470_quality_control",
+      "observation_type": "computed",
+      "quality_control_set": 1
+    },
+    "IRRAD470_quality_control": {
+      "type": "float",
+      "long_name": "quality control flag for downwelling_spectral_irradiance_in_sea_water_beam2",
+      "quality_control_set": 1,
+      "quality_control_conventions": "IMOS standard flags",
+      "valid_min": 0,
+      "valid_max": 9,
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values"
+    },
+    "IRRAD520": {
+      "type": "double",
+      "long_name": "downwelling_spectral_irradiance_in_sea_water_beam4",
+      "units": "uW cm-2 nm-1",
+      "valid_min": 0.0,
+      "valid_max": 1000.0,
+      "ancillary_variables": "IRRAD520_quality_control",
+      "observation_type": "computed",
+      "quality_control_set": 1
+    },
+    "IRRAD520_quality_control": {
+      "type": "float",
+      "long_name": "quality control flag for downwelling_spectral_irradiance_in_sea_water_beam4",
+      "quality_control_set": 1,
+      "quality_control_conventions": "IMOS standard flags",
+      "valid_min": 0,
+      "valid_max": 9,
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values"
     },
     "IRRAD490": {
       "type": "double",
@@ -902,8 +1152,7 @@
       "valid_max": 1000.0,
       "ancillary_variables": "IRRAD490_quality_control",
       "observation_type": "computed",
-      "quality_control_set": 1,
-      "comment": "The real wavelength for this beam is 489.59 nm. Irradiance data have been corrected to account for suspected shift in Dark Count values since the calibration, that lead to many negative values. Uncorrected data are available in the FV00 file associated with this mission. "
+      "quality_control_set": 1
     },
     "IRRAD490_quality_control": {
       "type": "float",
@@ -924,7 +1173,7 @@
         9
       ],
       "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
-      "quality_control_conventions": "IMOS standard set using the IODE flags"
+      "quality_control_conventions": "IMOS standard flags"
     },
     "IRRAD555": {
       "type": "double",
@@ -934,8 +1183,7 @@
       "valid_max": 1000.0,
       "ancillary_variables": "IRRAD555_quality_control",
       "observation_type": "computed",
-      "quality_control_set": 1,
-      "comment": "The real wavelength for this beam is 554.77 nm. Irradiance data have been corrected to account for suspected shift in Dark Count values since the calibration, that lead to many negative values. Uncorrected data are available in the FV00 file associated with this mission. "
+      "quality_control_set": 1
     },
     "IRRAD555_quality_control": {
       "type": "float",
@@ -956,7 +1204,7 @@
         9
       ],
       "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
-      "quality_control_conventions": "IMOS standard set using the IODE flags"
+      "quality_control_conventions": "IMOS standard flags"
     },
     "IRRAD670": {
       "type": "double",
@@ -966,8 +1214,7 @@
       "valid_max": 1000.0,
       "ancillary_variables": "IRRAD670_quality_control",
       "observation_type": "computed",
-      "quality_control_set": 1,
-      "comment": "The real wavelength for this beam is 664.89 nm. Irradiance data have been corrected to account for suspected shift in Dark Count values since the calibration, that lead to many negative values. Uncorrected data are available in the FV00 file associated with this mission. "
+      "quality_control_set": 1
     },
     "IRRAD670_quality_control": {
       "type": "float",
@@ -988,7 +1235,7 @@
         9
       ],
       "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
-      "quality_control_conventions": "IMOS standard set using the IODE flags"
+      "quality_control_conventions": "IMOS standard flags"
     },
     "BBP": {
       "type": "double",
@@ -1022,7 +1269,7 @@
       "observation_type": "computed",
       "quality_control_set": 1,
       "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
-      "quality_control_conventions": "IMOS standard set using the IODE flags"
+      "quality_control_conventions": "IMOS standard flags"
     }
   },
   "aws_opendata_registry": {

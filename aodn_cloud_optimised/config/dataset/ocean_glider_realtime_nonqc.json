@@ -1,6 +1,6 @@
 {
-  "dataset_name": "glider_realtime_nonqc",
-  "logger_name": "glider_realtime_nonqc",
+  "dataset_name": "ocean_glider_realtime_nonqc",
+  "logger_name": "ocean_glider_realtime_nonqc",
   "cloud_optimised_format": "parquet",
   "run_settings": {
     "paths": [
@@ -40,66 +40,27 @@
   "schema": {
     "PLATFORM": {
       "type": "string",
-      "trans_system_id": "Iridium",
-      "positioning_system": "GPS",
-      "platform_type": "Slocum G3",
-      "long_name": "Platform information",
-      "platform_maker": "Teledyne Webb Research",
-      "firmware_version_navigation": "8.3",
-      "firmware_version_science": "8.3",
-      "glider_serial_no": "1227",
-      "battery_type": "lithium",
-      "glider_owner": "ANFOG",
-      "operating_institution": "ANFOG",
-      "wmo": "8901119"
+      "long_name": "Platform information"
     },
     "DEPLOYMENT": {
       "type": "string",
-      "deployment_start_date": "03/06/2026",
-      "deployment_start_latitude": -41.297466666666665,
-      "deployment_start_longitude": 148.41058333333334,
-      "long_name": "Deployment information",
-      "deployment_pilot": "Rob Wocheslander"
+      "long_name": "Deployment information"
     },
     "SENSOR1": {
       "type": "string",
-      "sensor_type": "CTD",
-      "sensor_maker": "Seabird",
-      "sensor_model": "GPCTD",
-      "sensor_serial_no": "10046",
-      "long_name": "Sensor1 information",
-      "sensor_calibration_date": "20/09/2024",
-      "sensor_parameters": "TEMP, CNDC, PRES, PSAL"
+      "long_name": "Sensor1 information"
     },
     "SENSOR2": {
       "type": "string",
-      "sensor_type": "ECO Puck",
-      "sensor_maker": "Wetlabs",
-      "sensor_model": "FLBBCDSLC",
-      "sensor_serial_no": "7085",
-      "long_name": "Sensor2 information",
-      "sensor_calibration_date": "14/09/2021",
-      "sensor_parameters": "CPHL, CDOM, VBSC, BBP"
+      "long_name": "Sensor2 information"
     },
     "SENSOR3": {
       "type": "string",
-      "sensor_type": "oxygen sensor",
-      "sensor_maker": "Aanderaa",
-      "sensor_model": "OXY4831_WPHASE",
-      "sensor_serial_no": "1168",
-      "long_name": "Sensor3 information",
-      "sensor_calibration_date": "02/05/2024",
-      "sensor_parameters": "DOX1"
+      "long_name": "Sensor3 information"
     },
     "SENSOR4": {
       "type": "string",
-      "sensor_type": "multispectral radiometer",
-      "sensor_maker": "Satlantic",
-      "sensor_model": "OCR504_ISCW",
-      "sensor_serial_no": "2501",
-      "long_name": "Sensor4 information",
-      "sensor_calibration_date": "06/06/2024",
-      "sensor_parameters": "IRRAD443, IRRAD490, IRRAD555, IRRAD670"
+      "long_name": "Sensor4 information"
     },
     "TIME": {
       "type": "timestamp[ns]",
@@ -427,13 +388,46 @@
       "units": "umol l-1",
       "valid_min": 0.0,
       "valid_max": 650.0,
-      "comment": "Values are computed onboard the glider by the optode. No corrections have been performed.",
       "ancillary_variables": "DOX1_quality_control",
       "observation_type": "computed",
       "quality_control_set": 1,
       "quality_control_indicator": 0
     },
     "DOX1_quality_control": {
+      "type": "float",
+      "standard_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water status_flag",
+      "long_name": "quality control flag for mole_concentration_of_dissolved_molecular_oxygen_in_sea_water",
+      "quality_control_set": 0,
+      "quality_control_conventions": "IMOS standard flags",
+      "valid_min": 0,
+      "valid_max": 9,
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values"
+    },
+    "DOX2": {
+      "type": "double",
+      "standard_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water",
+      "long_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water",
+      "units": "umol l-1",
+      "valid_min": 0.0,
+      "valid_max": 650.0,
+      "ancillary_variables": "DOX2_quality_control",
+      "observation_type": "computed",
+      "quality_control_set": 1,
+      "quality_control_indicator": 0
+    },
+    "DOX2_quality_control": {
       "type": "float",
       "standard_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water status_flag",
       "long_name": "quality control flag for mole_concentration_of_dissolved_molecular_oxygen_in_sea_water",
@@ -564,7 +558,6 @@
       "units": "uW cm-2 nm-1",
       "valid_min": 0.0,
       "valid_max": 1000.0,
-      "comment": "downwelling spectral irradiance at 442.87nm",
       "ancillary_variables": "IRRAD443quality_control",
       "observation_type": "computed",
       "quality_control_set": 1,
@@ -597,7 +590,6 @@
       "units": "uW cm-2 nm-1",
       "valid_min": 0.0,
       "valid_max": 1000.0,
-      "comment": "downwelling spectral irradiance at 490.8nm",
       "ancillary_variables": "IRRAD490quality_control",
       "observation_type": "computed",
       "quality_control_set": 1,
@@ -630,7 +622,6 @@
       "units": "uW cm-2 nm-1",
       "valid_min": 0.0,
       "valid_max": 1000.0,
-      "comment": "downwelling spectral irradiance at 555.75nm",
       "ancillary_variables": "IRRAD555quality_control",
       "observation_type": "computed",
       "quality_control_set": 1,
@@ -663,7 +654,6 @@
       "units": "uW cm-2 nm-1",
       "valid_min": 0.0,
       "valid_max": 1000.0,
-      "comment": "downwelling spectral irradiance at 664.42nm",
       "ancillary_variables": "IRRAD670quality_control",
       "observation_type": "computed",
       "quality_control_set": 1,
@@ -672,6 +662,68 @@
     "IRRAD670_quality_control": {
       "type": "float",
       "long_name": "quality control flag for downwelling_spectral_irradiance_in_seawater_beam4",
+      "quality_control_set": 1,
+      "quality_control_conventions": "IMOS standard flags",
+      "valid_min": 0,
+      "valid_max": 9,
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values"
+    },
+    "IRRAD470": {
+      "type": "double",
+      "long_name": "downwelling_spectral_irradiance_in_sea_water_beam2",
+      "units": "uW cm-2 nm-1",
+      "valid_min": 0.0,
+      "valid_max": 1000.0,
+      "ancillary_variables": "IRRAD470_quality_control",
+      "observation_type": "computed",
+      "quality_control_set": 1
+    },
+    "IRRAD470_quality_control": {
+      "type": "float",
+      "long_name": "quality control flag for downwelling_spectral_irradiance_in_sea_water_beam2",
+      "quality_control_set": 1,
+      "quality_control_conventions": "IMOS standard flags",
+      "valid_min": 0,
+      "valid_max": 9,
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values"
+    },
+    "IRRAD520": {
+      "type": "double",
+      "long_name": "downwelling_spectral_irradiance_in_sea_water_beam4",
+      "units": "uW cm-2 nm-1",
+      "valid_min": 0.0,
+      "valid_max": 1000.0,
+      "ancillary_variables": "IRRAD520_quality_control",
+      "observation_type": "computed",
+      "quality_control_set": 1
+    },
+    "IRRAD520_quality_control": {
+      "type": "float",
+      "long_name": "quality control flag for downwelling_spectral_irradiance_in_sea_water_beam4",
       "quality_control_set": 1,
       "quality_control_conventions": "IMOS standard flags",
       "valid_min": 0,
@@ -744,6 +796,15 @@
           "long_name": "Filename of the source file"
         }
       },
+      "deployment_code": {
+        "source": "@global_attribute:deployment_code",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": "",
+          "long_name": "deployment code"
+        }
+      },
       "timestamp": {
         "source": "@partitioning:time_extent",
         "schema": {
@@ -758,6 +819,212 @@
           "type": "string",
           "units": "1",
           "long_name": "Spatial partition polygon"
+        }
+      },
+      "trans_system_id": {
+        "source": "@variable_attribute:PLATFORM.trans_system_id",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "positioning_system": {
+        "source": "@variable_attribute:PLATFORM.positioning_system",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "platform_type": {
+        "source": "@variable_attribute:PLATFORM.platform_type",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "wmo": {
+        "source": "@variable_attribute:PLATFORM.wmo",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "glider_serial_no": {
+        "source": "@variable_attribute:PLATFORM.glider_serial_no",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "SENSOR1_sensor_type": {
+        "source": "@variable_attribute:SENSOR1.sensor_type",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "SENSOR1_sensor_maker": {
+        "source": "@variable_attribute:SENSOR1.sensor_maker",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "SENSOR1_sensor_model": {
+        "source": "@variable_attribute:SENSOR1.sensor_model",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "SENSOR2_sensor_type": {
+        "source": "@variable_attribute:SENSOR2.sensor_type",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "SENSOR2_sensor_maker": {
+        "source": "@variable_attribute:SENSOR2.sensor_maker",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "SENSOR2_sensor_model": {
+        "source": "@variable_attribute:SENSOR2.sensor_model",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "SENSOR3_sensor_type": {
+        "source": "@variable_attribute:SENSOR3.sensor_type",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": "",
+          "long_name": "SENSOR3 type"
+        }
+      },
+      "SENSOR3_sensor_maker": {
+        "source": "@variable_attribute:SENSOR3.sensor_maker",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": "",
+          "long_name": "SENSOR3 maker"
+        }
+      },
+      "SENSOR3_sensor_model": {
+        "source": "@variable_attribute:SENSOR3.sensor_model",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": "",
+          "long_name": "SENSOR3 model"
+        }
+      },
+      "SENSOR4_sensor_type": {
+        "source": "@variable_attribute:SENSOR4.sensor_type",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": "",
+          "long_name": "SENSOR4 type"
+        }
+      },
+      "SENSOR4_sensor_maker": {
+        "source": "@variable_attribute:SENSOR4.sensor_maker",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": "",
+          "long_name": "SENSOR4 maker"
+        }
+      },
+      "SENSOR4_sensor_model": {
+        "source": "@variable_attribute:SENSOR4.sensor_model",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": "",
+          "long_name": "SENSOR4 model"
+        }
+      },
+      "DOX1_comment": {
+        "source": "@variable_attribute:DOX1.comment",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "DOX2_comment": {
+        "source": "@variable_attribute:DOX2.comment",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "IRRAD443_comment": {
+        "source": "@variable_attribute:IRRAD443.comment",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "IRRAD490_comment": {
+        "source": "@variable_attribute:IRRAD490.comment",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "IRRAD555_comment": {
+        "source": "@variable_attribute:IRRAD555.comment",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "IRRAD670_comment": {
+        "source": "@variable_attribute:IRRAD670.comment",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "IRRAD470_comment": {
+        "source": "@variable_attribute:IRRAD470.comment",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "IRRAD520_comment": {
+        "source": "@variable_attribute:IRRAD520.comment",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
         }
       }
     },
