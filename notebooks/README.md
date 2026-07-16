@@ -105,7 +105,7 @@ More information available [here](https://github.com/conda-forge/miniforge?tab=r
 - [diver_reef_fish_abundance_biomass_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/diver_reef_fish_abundance_biomass_qc.ipynb)
 - [diver_site_information_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/diver_site_information_qc.ipynb)
 - [diver_survey_metadata_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/diver_survey_metadata_qc.ipynb)
-- [glider_realtime_nonqc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/glider_realtime_nonqc.ipynb)
+- [ocean_glider_realtime_nonqc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/ocean_glider_realtime_nonqc.ipynb)
 - [model_sea_level_anomaly_gridded_realtime.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/model_sea_level_anomaly_gridded_realtime.ipynb)
 - [mooring_acidification_delayed_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/mooring_acidification_delayed_qc.ipynb)
 - [mooring_acidification_realtime_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/mooring_acidification_realtime_qc.ipynb)
