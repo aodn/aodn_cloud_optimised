@@ -7,7 +7,7 @@
     "Resources": [
       {
         "Description": "Cloud Optimised AODN dataset of Ocean Gliders - Real-time glider deployments",
-        "ARN": "arn:aws:s3:::aodn-cloud-optimised/glider_realtime_nonqc.parquet",
+        "ARN": "arn:aws:s3:::aodn-cloud-optimised/ocean_glider_realtime_nonqc.parquet",
         "Region": "ap-southeast-2",
         "Type": "S3 Bucket"
       }
@@ -16,8 +16,8 @@
       "Tutorials": [
         {
           "Title": "Accessing Ocean Gliders - Real-time glider deployments",
-          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/glider_realtime_nonqc.ipynb",
-          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/glider_realtime_nonqc.ipynb",
+          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/ocean_glider_realtime_nonqc.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/ocean_glider_realtime_nonqc.ipynb",
           "AuthorName": "Laurent Besnard",
           "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
         },
