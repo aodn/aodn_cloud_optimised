@@ -39,7 +39,7 @@
           "long_name": "Spatial partition polygon"
         }
       },
-      "trans_system_id": {
+      "PLATFORM_trans_system_id": {
         "source": "@variable_attribute:PLATFORM.trans_system_id",
         "schema": {
           "type": "string",
@@ -47,7 +47,7 @@
           "_FillValue": ""
         }
       },
-      "positioning_system": {
+      "PLATFORM_positioning_system": {
         "source": "@variable_attribute:PLATFORM.positioning_system",
         "schema": {
           "type": "string",
@@ -55,7 +55,7 @@
           "_FillValue": ""
         }
       },
-      "platform_type": {
+      "PLATFORM_platform_type": {
         "source": "@variable_attribute:PLATFORM.platform_type",
         "schema": {
           "type": "string",
@@ -63,7 +63,7 @@
           "_FillValue": ""
         }
       },
-      "wmo": {
+      "PLATFORM_wmo": {
         "source": "@variable_attribute:PLATFORM.wmo",
         "schema": {
           "type": "string",
@@ -71,7 +71,7 @@
           "_FillValue": ""
         }
       },
-      "glider_serial_no": {
+      "PLATFORM_glider_serial_no": {
         "source": "@variable_attribute:PLATFORM.glider_serial_no",
         "schema": {
           "type": "string",
@@ -252,6 +252,293 @@
           "units": "1",
           "_FillValue": ""
         }
+      },
+      "BBP_comment": {
+        "source": "@variable_attribute:BBP.comment",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "CDOM_comment": {
+        "source": "@variable_attribute:CDOM.comment",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "CNDC_comment": {
+        "source": "@variable_attribute:CNDC.comment",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "CPHL_comment": {
+        "source": "@variable_attribute:CPHL.comment",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "DEPTH_comment": {
+        "source": "@variable_attribute:DEPTH.comment",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "HEAD_comment": {
+        "source": "@variable_attribute:HEAD.comment",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "LATITUDE_comment": {
+        "source": "@variable_attribute:LATITUDE.comment",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "LONGITUDE_comment": {
+        "source": "@variable_attribute:LONGITUDE.comment",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "NTRA_comment": {
+        "source": "@variable_attribute:NTRA.comment",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "PHASE_comment": {
+        "source": "@variable_attribute:PHASE.comment",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "PRES_comment": {
+        "source": "@variable_attribute:PRES.comment",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "PROFILE_comment": {
+        "source": "@variable_attribute:PROFILE.comment",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "PSAL_comment": {
+        "source": "@variable_attribute:PSAL.comment",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "TEMP_comment": {
+        "source": "@variable_attribute:TEMP.comment",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "UCUR_comment": {
+        "source": "@variable_attribute:UCUR.comment",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "UCUR_GPS_comment": {
+        "source": "@variable_attribute:UCUR_GPS.comment",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "VBSC_comment": {
+        "source": "@variable_attribute:VBSC.comment",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "VCUR_comment": {
+        "source": "@variable_attribute:VCUR.comment",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "VCUR_GPS_comment": {
+        "source": "@variable_attribute:VCUR_GPS.comment",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "DOX1_units": {
+        "source": "@variable_attribute:DOX1.units",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "DOX2_units": {
+        "source": "@variable_attribute:DOX2.units",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "CDOM_quality_control_indicator": {
+        "source": "@variable_attribute:CDOM.quality_control_indicator",
+        "schema": {
+          "type": "float",
+          "units": "1"
+        }
+      },
+      "CNDC_quality_control_indicator": {
+        "source": "@variable_attribute:CNDC.quality_control_indicator",
+        "schema": {
+          "type": "float",
+          "units": "1"
+        }
+      },
+      "CPHL_quality_control_indicator": {
+        "source": "@variable_attribute:CPHL.quality_control_indicator",
+        "schema": {
+          "type": "float",
+          "units": "1"
+        }
+      },
+      "DEPTH_quality_control_indicator": {
+        "source": "@variable_attribute:DEPTH.quality_control_indicator",
+        "schema": {
+          "type": "float",
+          "units": "1"
+        }
+      },
+      "DOX1_quality_control_indicator": {
+        "source": "@variable_attribute:DOX1.quality_control_indicator",
+        "schema": {
+          "type": "float",
+          "units": "1"
+        }
+      },
+      "DOX2_quality_control_indicator": {
+        "source": "@variable_attribute:DOX2.quality_control_indicator",
+        "schema": {
+          "type": "float",
+          "units": "1"
+        }
+      },
+      "IRRAD443_quality_control_indicator": {
+        "source": "@variable_attribute:IRRAD443.quality_control_indicator",
+        "schema": {
+          "type": "float",
+          "units": "1"
+        }
+      },
+      "IRRAD490_quality_control_indicator": {
+        "source": "@variable_attribute:IRRAD490.quality_control_indicator",
+        "schema": {
+          "type": "float",
+          "units": "1"
+        }
+      },
+      "IRRAD555_quality_control_indicator": {
+        "source": "@variable_attribute:IRRAD555.quality_control_indicator",
+        "schema": {
+          "type": "float",
+          "units": "1"
+        }
+      },
+      "IRRAD670_quality_control_indicator": {
+        "source": "@variable_attribute:IRRAD670.quality_control_indicator",
+        "schema": {
+          "type": "float",
+          "units": "1"
+        }
+      },
+      "PRES_quality_control_indicator": {
+        "source": "@variable_attribute:PRES.quality_control_indicator",
+        "schema": {
+          "type": "float",
+          "units": "1"
+        }
+      },
+      "PSAL_quality_control_indicator": {
+        "source": "@variable_attribute:PSAL.quality_control_indicator",
+        "schema": {
+          "type": "float",
+          "units": "1"
+        }
+      },
+      "TEMP_quality_control_indicator": {
+        "source": "@variable_attribute:TEMP.quality_control_indicator",
+        "schema": {
+          "type": "float",
+          "units": "1"
+        }
+      },
+      "TIME_quality_control_indicator": {
+        "source": "@variable_attribute:TIME.quality_control_indicator",
+        "schema": {
+          "type": "float",
+          "units": "1"
+        }
+      },
+      "UCUR_quality_control_indicator": {
+        "source": "@variable_attribute:UCUR.quality_control_indicator",
+        "schema": {
+          "type": "float",
+          "units": "1"
+        }
+      },
+      "VBSC_quality_control_indicator": {
+        "source": "@variable_attribute:VBSC.quality_control_indicator",
+        "schema": {
+          "type": "float",
+          "units": "1"
+        }
+      },
+      "VCUR_quality_control_indicator": {
+        "source": "@variable_attribute:VCUR.quality_control_indicator",
+        "schema": {
+          "type": "float",
+          "units": "1"
+        }
       }
     },
     "partitioning": [
@@ -290,30 +577,6 @@
     }
   },
   "schema": {
-    "PLATFORM": {
-      "type": "string",
-      "long_name": "platform information"
-    },
-    "DEPLOYMENT": {
-      "type": "string",
-      "long_name": "deployment information"
-    },
-    "SENSOR1": {
-      "type": "string",
-      "long_name": "sensor1 informations"
-    },
-    "SENSOR2": {
-      "type": "string",
-      "long_name": "sensor2 informations"
-    },
-    "SENSOR3": {
-      "type": "string",
-      "long_name": "sensor3 informations"
-    },
-    "SENSOR4": {
-      "type": "string",
-      "long_name": "sensor4 informations"
-    },
     "LATITUDE": {
       "type": "double",
       "standard_name": "latitude",
@@ -322,7 +585,6 @@
       "axis": "Y",
       "valid_min": -90.0,
       "valid_max": 90.0,
-      "comment": "obtained from GPS fixes",
       "reference_datum": "geographical coordinates, WGS84 projection",
       "ancillary_variables": "LATITUDE_quality_control",
       "observation_type": "measured",
@@ -357,7 +619,6 @@
       "units": "degrees_east",
       "valid_min": -180.0,
       "valid_max": 180.0,
-      "comment": "obtained from GPS fixes",
       "reference_datum": "geographical coordinates, WGS84 projection",
       "ancillary_variables": "LONGITUDE_quality_control",
       "observation_type": "measured",
@@ -425,7 +686,6 @@
       "units": "Degrees",
       "valid_min": 0.0,
       "valid_max": 360.0,
-      "comment": "Vehicle heading in degrees, clockwise from magnetic north.",
       "ancillary_variables": "HEAD_quality_control",
       "observation_type": "measured",
       "quality_control_set": 1
@@ -458,7 +718,6 @@
       "units": "m s-1",
       "valid_min": -10.0,
       "valid_max": 10.0,
-      "comment": "Average eastward velocity of the seawater over all the water that the glider travels through between surfacing. The values are rough estimates derived from engineering parameters.",
       "ancillary_variables": "UCUR_quality_control",
       "observation_type": "computed",
       "quality_control_set": 1
@@ -492,7 +751,6 @@
       "units": "m s-1",
       "valid_min": -10.0,
       "valid_max": 10.0,
-      "comment": "Average northward velocity of the seawater over all the water that the glider travels through between surfacing. The values are rough estimates derived from engineering parameters.",
       "ancillary_variables": "VCUR_quality_control",
       "observation_type": "computed",
       "quality_control_set": 1
@@ -525,7 +783,6 @@
       "units": "m s-1",
       "valid_min": -10.0,
       "valid_max": 10.0,
-      "comment": "Eastward surface sea-water velocity, calculated from parked glider drift between GPS fixes.",
       "observation_type": "computed",
       "quality_control_set": 1,
       "ancillary_variables": "UCUR_GPS_quality_control"
@@ -557,7 +814,6 @@
       "units": "m s-1",
       "valid_min": -10.0,
       "valid_max": 10.0,
-      "comment": "Northward surface sea-water velocity, calculated from parked glider drift between GPS fixes.",
       "ancillary_variables": "VCUR_GPS_quality_control",
       "observation_type": "computed",
       "quality_control_set": 1
@@ -588,7 +844,6 @@
       "long_name": "glider_trajectory_phase_code",
       "valid_min": 0,
       "valid_max": 6,
-      "comment": "Phase of the trajectory at that time, defined following EGO (see table 9 in the EGO user manual v1.1). Values used: 0 for surface drifting, 1 for descending profile, 4 for ascending profile, 3 for inflexion. Computed using a script based on depth rate",
       "observation_type": "computed",
       "quality_control_set": 1,
       "units": "1",
@@ -620,7 +875,6 @@
       "long_name": "glider_trajectory_profile_number",
       "valid_min": 0,
       "valid_max": 900000,
-      "comment": "The profile number is 1, and is increased at each phase change. It is set to 0 when the glider is at surface (PHASE=0) or during inflexion (PHASE=3) or if the profile is too short (less than 10 pressure measurements). Computed using a script based on depth rate",
       "observation_type": "computed",
       "quality_control_set": 1,
       "units": "1",
@@ -654,11 +908,9 @@
       "units": "dbar",
       "valid_min": -5.0,
       "valid_max": 1100.0,
-      "comment": "pressure measured by the CTD",
       "ancillary_variables": "PRES_quality_control",
       "observation_type": "measured",
-      "quality_control_set": 1,
-      "quality_control_indicator": 1.0
+      "quality_control_set": 1
     },
     "PRES_quality_control": {
       "type": "float",
@@ -694,9 +946,7 @@
       "reference_datum": "sea surface",
       "ancillary_variables": "DEPTH_quality_control",
       "observation_type": "computed",
-      "quality_control_set": 1,
-      "comment": "Depth computed using the Gibbs-SeaWater toolbox (TEOS-10) v3.02, from latitude and relative pressure measurements",
-      "quality_control_indicator": 1.0
+      "quality_control_set": 1
     },
     "DEPTH_quality_control": {
       "type": "float",
@@ -729,8 +979,7 @@
       "valid_max": 40.0,
       "ancillary_variables": "TEMP_quality_control",
       "observation_type": "measured",
-      "quality_control_set": 1,
-      "comment": "Data have been corrected for sensor time response. Uncorrected data are available in the FV00 file associated with this mission. "
+      "quality_control_set": 1
     },
     "TEMP_quality_control": {
       "type": "float",
@@ -763,8 +1012,7 @@
       "valid_max": 60.0,
       "observation_type": "measured",
       "ancillary_variables": "CNDC_quality_control",
-      "quality_control_set": 1,
-      "comment": "Data have been corrected for sensor time response. Uncorrected data are available in the FV00 file associated with this mission. "
+      "quality_control_set": 1
     },
     "CNDC_quality_control": {
       "type": "float",
@@ -797,7 +1045,6 @@
       "ancillary_variables": "PSAL_quality_control",
       "observation_type": "computed",
       "quality_control_set": 1,
-      "comment": "practical salinity computed using the Gibbs-SeaWater toolbox (TEOS-10) v3.02 from temperature, conductivity and relative pressure measurements. Users are cautioned that spikes predominantly occuring at the base of the mixed layer result from thermal inertia issues and may remain although correction have been applied.Temperature data have been corrected for sensor time response. A thermal lag correction has been applied. Conductivity data have been corrected for sensor time response. ",
       "units": "1e-3"
     },
     "PSAL_quality_control": {
@@ -824,9 +1071,7 @@
     },
     "DOX2": {
       "type": "double",
-      "standard_name": "moles_of_oxygen_per_unit_mass_in_sea_water",
-      "long_name": "moles_of_oxygen_per_unit_mass_in_sea_water",
-      "units": "umol kg-1",
+      "long_name": "dissolved_molecular_oxygen",
       "valid_min": 0.0,
       "valid_max": 650.0,
       "ancillary_variables": "DOX2_quality_control",
@@ -857,9 +1102,7 @@
     },
     "DOX1": {
       "type": "double",
-      "standard_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water",
-      "long_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water",
-      "units": "umol l-1",
+      "long_name": "dissolved_molecular_oxygen",
       "valid_min": 0.0,
       "valid_max": 650.0,
       "ancillary_variables": "DOX1_quality_control",
@@ -897,8 +1140,7 @@
       "valid_max": 100.0,
       "ancillary_variables": "CPHL_quality_control",
       "observation_type": "computed",
-      "quality_control_set": 1,
-      "comment": "Data have been corrected to account for a suspected shift in Dark Count value since the calibration that lead to many negative values. Uncorrected data are available in the FV00 file associated with this mission. "
+      "quality_control_set": 1
     },
     "CPHL_quality_control": {
       "type": "float",
@@ -924,18 +1166,18 @@
     },
     "CDOM": {
       "type": "double",
-      "long_name": "concentration_of_coloured_dissolved_organic_matter",
+      "long_name": "concentration_of_colored_dissolved_organic_matter_in_sea_water_expressed_as_equivalent_mass_fraction_of_quinine_sulfate_dihydrate",
       "valid_min": 0.0,
       "valid_max": 400.0,
       "ancillary_variables": "CDOM_quality_control",
       "observation_type": "computed",
       "quality_control_set": 1,
-      "comment": "Data have been corrected to account for a suspected shift in Dark Count value since the calibration that lead to many negative values. Uncorrected data are available in the FV00 file associated with this mission. ",
-      "units": "1e-9"
+      "units": "1e-9",
+      "standard_name": "concentration_of_colored_dissolved_organic_matter_in_sea_water_expressed_as_equivalent_mass_fraction_of_quinine_sulfate_dihydrate"
     },
     "CDOM_quality_control": {
       "type": "float",
-      "long_name": "quality control flag for concentration_of_coloured_dissolved_organic_matter",
+      "long_name": "quality control flag for concentration_of_colored_dissolved_organic_matter_in_sea_water_expressed_as_equivalent_mass_fraction_of_quinine_sulfate_dihydrate",
       "quality_control_set": 1,
       "valid_min": 0,
       "valid_max": 9,
@@ -952,7 +1194,8 @@
         9
       ],
       "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
-      "quality_control_conventions": "IMOS standard flags"
+      "quality_control_conventions": "IMOS standard flags",
+      "standard_name": "concentration_of_colored_dissolved_organic_matter_in_sea_water_expressed_as_equivalent_mass_fraction_of_quinine_sulfate_dihydrate status_flag"
     },
     "VBSC": {
       "type": "double",
@@ -962,8 +1205,7 @@
       "valid_max": 0.1,
       "ancillary_variables": "VBSC_quality_control",
       "observation_type": "computed",
-      "quality_control_set": 1,
-      "comment": "concentration computed from the measured raw values in counts and the calibration coefficients stored in the associate FV00 NetCDF file"
+      "quality_control_set": 1
     },
     "VBSC_quality_control": {
       "type": "float",
@@ -992,7 +1234,6 @@
       "units": "umol l-1",
       "valid_min": 0.0,
       "valid_max": 25.0,
-      "comment": "uncorrected raw optical nitrate in micromolar",
       "observation_type": "measured",
       "ancillary_variables": "NTRA_quality_control",
       "quality_control_set": 1,
@@ -1245,8 +1486,7 @@
       "valid_max": 1.0,
       "ancillary_variables": "BBP_quality_control",
       "observation_type": "computed",
-      "quality_control_set": 1.0,
-      "comment": "Computed using a Xp factor = 1.1 and backscatter from seawater from Zhang (2009) code"
+      "quality_control_set": 1.0
     },
     "BBP_quality_control": {
       "type": "int32",

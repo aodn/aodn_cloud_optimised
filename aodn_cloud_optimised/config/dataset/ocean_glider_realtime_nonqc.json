@@ -38,64 +38,6 @@
   },
   "metadata_uuid": "a681fdba-c6d9-44ab-90b9-113b0ed03536",
   "schema": {
-    "PLATFORM": {
-      "type": "string",
-      "long_name": "Platform information"
-    },
-    "DEPLOYMENT": {
-      "type": "string",
-      "long_name": "Deployment information"
-    },
-    "SENSOR1": {
-      "type": "string",
-      "long_name": "Sensor1 information"
-    },
-    "SENSOR2": {
-      "type": "string",
-      "long_name": "Sensor2 information"
-    },
-    "SENSOR3": {
-      "type": "string",
-      "long_name": "Sensor3 information"
-    },
-    "SENSOR4": {
-      "type": "string",
-      "long_name": "Sensor4 information"
-    },
-    "TIME": {
-      "type": "timestamp[ns]",
-      "standard_name": "time",
-      "long_name": "time from the CTD",
-      "axis": "T",
-      "valid_min": 0.0,
-      "valid_max": 90000.0,
-      "ancillary_variables": "TIME_quality_control",
-      "observation_type": "measured",
-      "quality_control_set": 1,
-      "quality_control_indicator": 0
-    },
-    "TIME_quality_control": {
-      "type": "float",
-      "standard_name": "time status_flag",
-      "long_name": "quality control flag for time from the CTD",
-      "quality_control_set": 1,
-      "quality_control_conventions": "IMOS standard flags",
-      "valid_min": 0,
-      "valid_max": 9,
-      "flag_values": [
-        0,
-        1,
-        2,
-        3,
-        4,
-        5,
-        6,
-        7,
-        8,
-        9
-      ],
-      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values"
-    },
     "LATITUDE": {
       "type": "double",
       "standard_name": "latitude",
@@ -104,7 +46,6 @@
       "axis": "Y",
       "valid_min": -90.0,
       "valid_max": 90.0,
-      "comment": "First and last values of each segment were obtained from GPS fixes; all others were derived by interpolation.",
       "reference_datum": "geographical coordinates, WGS84 projection",
       "ancillary_variables": "LATITUDE_quality_control",
       "observation_type": "measured",
@@ -115,255 +56,6 @@
       "standard_name": "latitude status_flag",
       "long_name": "quality control flag for latitude",
       "quality_control_set": 1,
-      "quality_control_conventions": "IMOS standard flags",
-      "valid_min": 0,
-      "valid_max": 9,
-      "flag_values": [
-        0,
-        1,
-        2,
-        3,
-        4,
-        5,
-        6,
-        7,
-        8,
-        9
-      ],
-      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values"
-    },
-    "LONGITUDE": {
-      "type": "double",
-      "standard_name": "longitude",
-      "long_name": "longitude",
-      "units": "degrees_east",
-      "axis": "X",
-      "valid_min": -180.0,
-      "valid_max": 180.0,
-      "comment": "obtained from GPS fixes",
-      "reference_datum": "geographical coordinates, WGS84 projection",
-      "ancillary_variables": "LONGITUDE_quality_control",
-      "observation_type": "measured",
-      "quality_control_set": 1
-    },
-    "LONGITUDE_quality_control": {
-      "type": "float",
-      "standard_name": "longitude status_flag",
-      "long_name": "quality control flag for LONGITUDE",
-      "quality_control_set": 1,
-      "quality_control_conventions": "IMOS standard flags",
-      "valid_min": 0,
-      "valid_max": 9,
-      "flag_values": [
-        0,
-        1,
-        2,
-        3,
-        4,
-        5,
-        6,
-        7,
-        8,
-        9
-      ],
-      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values"
-    },
-    "VCUR": {
-      "type": "double",
-      "standard_name": "northward_sea_water_velocity",
-      "long_name": "northward_sea_water_velocity",
-      "units": "m s-1",
-      "valid_min": -10.0,
-      "valid_max": 10.0,
-      "comment": "Average northward velocity of the seawater over all the water that the glider travels through between surfacing. The values are rough estimates derived from engineering parameters.",
-      "ancillary_variables": "VCUR_quality_control",
-      "observation_type": "computed",
-      "quality_control_set": 1,
-      "quality_control_indicator": 0
-    },
-    "VCUR_quality_control": {
-      "type": "float",
-      "standard_name": "northward_sea_water_velocity status_flag",
-      "long_name": "quality control flag for northward_sea_water_velocity",
-      "quality_control_set": 1,
-      "quality_control_conventions": "IMOS standard flags",
-      "valid_min": 0,
-      "valid_max": 9,
-      "flag_values": [
-        0,
-        1,
-        2,
-        3,
-        4,
-        5,
-        6,
-        7,
-        8,
-        9
-      ],
-      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values"
-    },
-    "UCUR": {
-      "type": "double",
-      "standard_name": "eastward_sea_water_velocity",
-      "long_name": "eastward_sea_water_velocity",
-      "units": "m s-1",
-      "valid_min": -10.0,
-      "valid_max": 10.0,
-      "comment": "Average eastward velocity of the seawater over all the water that the glider travels through between surfacing. The values are rough estimates derived from engineering parameters.",
-      "ancillary_variables": "UCUR_quality_control",
-      "observation_type": "computed",
-      "quality_control_set": 1,
-      "quality_control_indicator": 0
-    },
-    "UCUR_quality_control": {
-      "type": "float",
-      "standard_name": "eastward_sea_water_velocity status_flag",
-      "long_name": "quality control flag for eastward_sea_water_velocity",
-      "quality_control_set": 1,
-      "quality_control_conventions": "IMOS standard flags",
-      "valid_min": 0,
-      "valid_max": 9,
-      "flag_values": [
-        0,
-        1,
-        2,
-        3,
-        4,
-        5,
-        6,
-        7,
-        8,
-        9
-      ],
-      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values"
-    },
-    "DEPTH": {
-      "type": "double",
-      "standard_name": "depth",
-      "long_name": "depth",
-      "units": "m",
-      "valid_min": -5.0,
-      "valid_max": 1000.0,
-      "positive": "down",
-      "axis": "Z",
-      "reference_datum": "sea surface",
-      "ancillary_variables": "DEPTH_quality_control",
-      "observation_type": "computed",
-      "comment": "Depth computed using the Gibbs-SeaWater toolbox (TEOS-10) v3.02, from latitude and relative pressure measurements",
-      "quality_control_set": 1,
-      "quality_control_indicator": 0
-    },
-    "DEPTH_quality_control": {
-      "type": "float",
-      "long_name": "quality control flag for depth",
-      "standard_name": "depth status_flag",
-      "quality_control_set": 1,
-      "quality_control_conventions": "IMOS standard flags",
-      "valid_min": 0,
-      "valid_max": 9,
-      "flag_values": [
-        0,
-        1,
-        2,
-        3,
-        4,
-        5,
-        6,
-        7,
-        8,
-        9
-      ],
-      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values"
-    },
-    "CNDC": {
-      "type": "double",
-      "standard_name": "sea_water_electrical_conductivity",
-      "long_name": "sea_water_electrical_conductivity",
-      "units": "S m-1",
-      "valid_min": 0.0,
-      "valid_max": 60.0,
-      "observation_type": "measured",
-      "ancillary_variables": "CNDC_quality_control",
-      "quality_control_set": 1,
-      "quality_control_indicator": 0,
-      "comment": "No corrections applied"
-    },
-    "CNDC_quality_control": {
-      "type": "float",
-      "standard_name": "sea_water_electrical_conductivity status_flag",
-      "long_name": "quality control flag for sea_water_electrical_conductivity",
-      "quality_control_set": 1,
-      "quality_control_conventions": "IMOS standard flags",
-      "valid_min": 0,
-      "valid_max": 9,
-      "flag_values": [
-        0,
-        1,
-        2,
-        3,
-        4,
-        5,
-        6,
-        7,
-        8,
-        9
-      ],
-      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values"
-    },
-    "TEMP": {
-      "type": "double",
-      "standard_name": "sea_water_temperature",
-      "long_name": "sea_water_temperature",
-      "units": "Celsius",
-      "valid_min": -2.5,
-      "valid_max": 40.0,
-      "ancillary_variables": "TEMP_quality_control",
-      "observation_type": "measured",
-      "quality_control_set": 1,
-      "quality_control_indicator": 0,
-      "comment": "No corrections applied"
-    },
-    "TEMP_quality_control": {
-      "type": "float",
-      "standard_name": "sea_water_temperature status_flag",
-      "long_name": "quality control flag for sea_water_temperature",
-      "quality_control_set": 1,
-      "quality_control_conventions": "IMOS standard flags",
-      "valid_min": 0,
-      "valid_max": 9,
-      "flag_values": [
-        0,
-        1,
-        2,
-        3,
-        4,
-        5,
-        6,
-        7,
-        8,
-        9
-      ],
-      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values"
-    },
-    "PSAL": {
-      "type": "double",
-      "standard_name": "sea_water_salinity",
-      "long_name": "sea_water_salinity",
-      "units": "1e-3",
-      "valid_min": 2.0,
-      "valid_max": 41.0,
-      "ancillary_variables": "PSAL_quality_control",
-      "observation_type": "computed",
-      "quality_control_set": 1,
-      "quality_control_indicator": 0,
-      "comment": "Users are cautioned that spikes predominantly occuring at the base of the mixed layer result from thermal inertia issues."
-    },
-    "PSAL_quality_control": {
-      "type": "float",
-      "standard_name": "sea_water_salinity status_flag",
-      "long_name": "quality control flag for sea_water_salinity",
-      "quality_control_conventions": "IMOS standard flags",
       "valid_min": 0,
       "valid_max": 9,
       "flag_values": [
@@ -379,60 +71,510 @@
         9
       ],
       "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
+      "quality_control_conventions": "IMOS standard flags"
+    },
+    "LONGITUDE": {
+      "type": "double",
+      "standard_name": "longitude",
+      "long_name": "longitude",
+      "units": "degrees_east",
+      "valid_min": -180.0,
+      "valid_max": 180.0,
+      "reference_datum": "geographical coordinates, WGS84 projection",
+      "ancillary_variables": "LONGITUDE_quality_control",
+      "observation_type": "measured",
+      "quality_control_set": 1,
+      "axis": "X"
+    },
+    "LONGITUDE_quality_control": {
+      "type": "float",
+      "standard_name": "longitude status_flag",
+      "long_name": "quality control flag for longitude",
+      "quality_control_set": 1,
+      "valid_min": 0,
+      "valid_max": 9,
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
+      "quality_control_conventions": "IMOS standard flags"
+    },
+    "TIME": {
+      "type": "timestamp[ns]",
+      "standard_name": "time",
+      "long_name": "time from the CTD",
+      "axis": "T",
+      "valid_min": 0.0,
+      "valid_max": 90000.0,
+      "ancillary_variables": "TIME_quality_control",
+      "observation_type": "measured",
       "quality_control_set": 1
+    },
+    "TIME_quality_control": {
+      "type": "float",
+      "standard_name": "time status_flag",
+      "long_name": "quality control flag for time from the CTD",
+      "quality_control_set": 1,
+      "valid_min": 0,
+      "valid_max": 9,
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
+      "quality_control_conventions": "IMOS standard flags"
+    },
+    "HEAD": {
+      "type": "double",
+      "long_name": "vehicle_heading",
+      "units": "Degrees",
+      "valid_min": 0.0,
+      "valid_max": 360.0,
+      "ancillary_variables": "HEAD_quality_control",
+      "observation_type": "measured",
+      "quality_control_set": 1
+    },
+    "HEAD_quality_control": {
+      "type": "float",
+      "long_name": "quality control flag for vehicle_heading",
+      "quality_control_set": 1,
+      "valid_min": 0,
+      "valid_max": 9,
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
+      "quality_control_conventions": "IMOS standard flags"
+    },
+    "UCUR": {
+      "type": "double",
+      "standard_name": "eastward_sea_water_velocity",
+      "long_name": "eastward_sea_water_velocity",
+      "units": "m s-1",
+      "valid_min": -10.0,
+      "valid_max": 10.0,
+      "ancillary_variables": "UCUR_quality_control",
+      "observation_type": "computed",
+      "quality_control_set": 1
+    },
+    "UCUR_quality_control": {
+      "type": "float",
+      "standard_name": "eastward_sea_water_velocity status_flag",
+      "long_name": "quality control flag for eastward_sea_water_velocity",
+      "quality_control_set": 1,
+      "valid_min": 0,
+      "valid_max": 9,
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
+      "quality_control_conventions": "IMOS standard flags"
+    },
+    "VCUR": {
+      "type": "double",
+      "standard_name": "northward_sea_water_velocity",
+      "long_name": "northward_sea_water_velocity",
+      "units": "m s-1",
+      "valid_min": -10.0,
+      "valid_max": 10.0,
+      "ancillary_variables": "VCUR_quality_control",
+      "observation_type": "computed",
+      "quality_control_set": 1
+    },
+    "VCUR_quality_control": {
+      "type": "float",
+      "standard_name": "northward_sea_water_velocity status_flag",
+      "long_name": "quality control flag for northward_sea_water_velocity",
+      "quality_control_set": 1,
+      "valid_min": 0,
+      "valid_max": 9,
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
+      "quality_control_conventions": "IMOS standard flags"
+    },
+    "UCUR_GPS": {
+      "type": "double",
+      "long_name": "eastward_surface_sea_water_velocity",
+      "units": "m s-1",
+      "valid_min": -10.0,
+      "valid_max": 10.0,
+      "observation_type": "computed",
+      "quality_control_set": 1,
+      "ancillary_variables": "UCUR_GPS_quality_control"
+    },
+    "UCUR_GPS_quality_control": {
+      "type": "float",
+      "long_name": "quality control flag for eastward_surface_sea_water_velocity",
+      "quality_control_set": 1,
+      "valid_min": 0,
+      "valid_max": 9,
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
+      "quality_control_conventions": "IMOS standard flags"
+    },
+    "VCUR_GPS": {
+      "type": "double",
+      "long_name": "northward_surface_sea_water_velocity",
+      "units": "m s-1",
+      "valid_min": -10.0,
+      "valid_max": 10.0,
+      "ancillary_variables": "VCUR_GPS_quality_control",
+      "observation_type": "computed",
+      "quality_control_set": 1
+    },
+    "VCUR_GPS_quality_control": {
+      "type": "float",
+      "long_name": "quality control flag for northward_surface_sea_water_velocity",
+      "quality_control_set": 1,
+      "valid_min": 0,
+      "valid_max": 9,
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
+      "quality_control_conventions": "IMOS standard flags"
+    },
+    "PHASE": {
+      "type": "float",
+      "long_name": "glider_trajectory_phase_code",
+      "valid_min": 0,
+      "valid_max": 6,
+      "observation_type": "computed",
+      "quality_control_set": 1,
+      "units": "1",
+      "ancillary_variables": "PHASE_quality_control PROFILE"
+    },
+    "PHASE_quality_control": {
+      "type": "float",
+      "long_name": "quality control flag for glider_trajectory_phase_code",
+      "quality_control_set": 1,
+      "valid_min": 0,
+      "valid_max": 9,
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
+      "quality_control_conventions": "IMOS standard flags"
+    },
+    "PROFILE": {
+      "type": "double",
+      "long_name": "glider_trajectory_profile_number",
+      "valid_min": 0,
+      "valid_max": 900000,
+      "observation_type": "computed",
+      "quality_control_set": 1,
+      "units": "1",
+      "ancillary_variables": "PROFILE_quality_control PHASE"
+    },
+    "PROFILE_quality_control": {
+      "type": "float",
+      "long_name": "quality control flag for glider_trajectory_profile_number",
+      "quality_control_set": 1,
+      "valid_min": 0,
+      "valid_max": 9,
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
+      "quality_control_conventions": "IMOS standard flags"
+    },
+    "PRES": {
+      "type": "double",
+      "standard_name": "sea_water_pressure",
+      "long_name": "sea_water_pressure",
+      "units": "dbar",
+      "valid_min": -5.0,
+      "valid_max": 1100.0,
+      "ancillary_variables": "PRES_quality_control",
+      "observation_type": "measured",
+      "quality_control_set": 1
+    },
+    "PRES_quality_control": {
+      "type": "float",
+      "standard_name": "sea_water_pressure status_flag",
+      "long_name": "quality control flag for sea_water_pressure",
+      "quality_control_set": 1,
+      "valid_min": 0,
+      "valid_max": 9,
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
+      "quality_control_conventions": "IMOS standard flags"
+    },
+    "DEPTH": {
+      "type": "double",
+      "standard_name": "depth",
+      "long_name": "depth",
+      "units": "m",
+      "valid_min": -5.0,
+      "valid_max": 1000.0,
+      "positive": "down",
+      "axis": "Z",
+      "reference_datum": "sea surface",
+      "ancillary_variables": "DEPTH_quality_control",
+      "observation_type": "computed",
+      "quality_control_set": 1
+    },
+    "DEPTH_quality_control": {
+      "type": "float",
+      "standard_name": "depth status_flag",
+      "long_name": "quality control flag for depth",
+      "quality_control_set": 1,
+      "valid_min": 0,
+      "valid_max": 9,
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
+      "quality_control_conventions": "IMOS standard flags"
+    },
+    "TEMP": {
+      "type": "double",
+      "standard_name": "sea_water_temperature",
+      "long_name": "sea_water_temperature",
+      "units": "Celsius",
+      "valid_min": -2.5,
+      "valid_max": 40.0,
+      "ancillary_variables": "TEMP_quality_control",
+      "observation_type": "measured",
+      "quality_control_set": 1
+    },
+    "TEMP_quality_control": {
+      "type": "float",
+      "standard_name": "sea_water_temperature status_flag",
+      "long_name": "quality control flag for sea_water_temperature",
+      "quality_control_set": 1,
+      "valid_min": 0,
+      "valid_max": 9,
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
+      "quality_control_conventions": "IMOS standard flags"
+    },
+    "CNDC": {
+      "type": "double",
+      "standard_name": "sea_water_electrical_conductivity",
+      "long_name": "sea_water_electrical_conductivity",
+      "units": "S m-1",
+      "valid_min": 0.0,
+      "valid_max": 60.0,
+      "observation_type": "measured",
+      "ancillary_variables": "CNDC_quality_control",
+      "quality_control_set": 1
+    },
+    "CNDC_quality_control": {
+      "type": "float",
+      "standard_name": "sea_water_electrical_conductivity status_flag",
+      "long_name": "quality control flag for sea_water_electrical_conductivity",
+      "quality_control_set": 1,
+      "valid_min": 0,
+      "valid_max": 9,
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
+      "quality_control_conventions": "IMOS standard flags"
+    },
+    "PSAL": {
+      "type": "double",
+      "standard_name": "sea_water_salinity",
+      "long_name": "sea_water_salinity",
+      "valid_min": 2.0,
+      "valid_max": 41.0,
+      "ancillary_variables": "PSAL_quality_control",
+      "observation_type": "computed",
+      "quality_control_set": 1,
+      "units": "1e-3"
+    },
+    "PSAL_quality_control": {
+      "type": "float",
+      "standard_name": "sea_water_salinity status_flag",
+      "long_name": "quality control flag for sea_water_salinity",
+      "quality_control_set": 1,
+      "valid_min": 0,
+      "valid_max": 9,
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
+      "quality_control_conventions": "IMOS standard flags"
+    },
+    "DOX2": {
+      "type": "double",
+      "long_name": "dissolved_molecular_oxygen",
+      "valid_min": 0.0,
+      "valid_max": 650.0,
+      "ancillary_variables": "DOX2_quality_control",
+      "observation_type": "computed",
+      "quality_control_set": 1
+    },
+    "DOX2_quality_control": {
+      "type": "float",
+      "standard_name": "moles_of_oxygen_per_unit_mass_in_sea_water status_flag",
+      "long_name": "quality control flag for moles_of_oxygen_per_unit_mass_in_sea_water",
+      "quality_control_set": 1,
+      "valid_min": 0,
+      "valid_max": 9,
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
+      "quality_control_conventions": "IMOS standard flags"
     },
     "DOX1": {
       "type": "double",
-      "standard_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water",
-      "long_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water",
-      "units": "umol l-1",
+      "long_name": "dissolved_molecular_oxygen",
       "valid_min": 0.0,
       "valid_max": 650.0,
       "ancillary_variables": "DOX1_quality_control",
       "observation_type": "computed",
-      "quality_control_set": 1,
-      "quality_control_indicator": 0
+      "quality_control_set": 1
     },
     "DOX1_quality_control": {
       "type": "float",
       "standard_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water status_flag",
       "long_name": "quality control flag for mole_concentration_of_dissolved_molecular_oxygen_in_sea_water",
-      "quality_control_set": 0,
-      "quality_control_conventions": "IMOS standard flags",
-      "valid_min": 0,
-      "valid_max": 9,
-      "flag_values": [
-        0,
-        1,
-        2,
-        3,
-        4,
-        5,
-        6,
-        7,
-        8,
-        9
-      ],
-      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values"
-    },
-    "DOX2": {
-      "type": "double",
-      "standard_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water",
-      "long_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water",
-      "units": "umol l-1",
-      "valid_min": 0.0,
-      "valid_max": 650.0,
-      "ancillary_variables": "DOX2_quality_control",
-      "observation_type": "computed",
       "quality_control_set": 1,
-      "quality_control_indicator": 0
-    },
-    "DOX2_quality_control": {
-      "type": "float",
-      "standard_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water status_flag",
-      "long_name": "quality control flag for mole_concentration_of_dissolved_molecular_oxygen_in_sea_water",
-      "quality_control_set": 0,
-      "quality_control_conventions": "IMOS standard flags",
       "valid_min": 0,
       "valid_max": 9,
       "flag_values": [
@@ -447,7 +589,8 @@
         8,
         9
       ],
-      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values"
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
+      "quality_control_conventions": "IMOS standard flags"
     },
     "CPHL": {
       "type": "double",
@@ -458,16 +601,13 @@
       "valid_max": 100.0,
       "ancillary_variables": "CPHL_quality_control",
       "observation_type": "computed",
-      "quality_control_set": 1,
-      "quality_control_indicator": 0,
-      "comment": "No corrections applied"
+      "quality_control_set": 1
     },
     "CPHL_quality_control": {
       "type": "float",
       "standard_name": "mass_concentration_of_chlorophyll_in_sea_water status_flag",
       "long_name": "quality control flag for mass_concentration_of_chlorophyll_in_sea_water",
       "quality_control_set": 1,
-      "quality_control_conventions": "IMOS standard flags",
       "valid_min": 0,
       "valid_max": 9,
       "flag_values": [
@@ -482,27 +622,24 @@
         8,
         9
       ],
-      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values"
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
+      "quality_control_conventions": "IMOS standard flags"
     },
     "CDOM": {
       "type": "double",
-      "standard_name": "concentration_of_colored_dissolved_organic_matter_in_sea_water_expressed_as_equivalent_mass_fraction_of_quinine_sulfate_dihydrate",
       "long_name": "concentration_of_colored_dissolved_organic_matter_in_sea_water_expressed_as_equivalent_mass_fraction_of_quinine_sulfate_dihydrate",
-      "units": "1e-9",
       "valid_min": 0.0,
       "valid_max": 400.0,
       "ancillary_variables": "CDOM_quality_control",
       "observation_type": "computed",
       "quality_control_set": 1,
-      "quality_control_indicator": 0,
-      "comment": "No corrections applied"
+      "units": "1e-9",
+      "standard_name": "concentration_of_colored_dissolved_organic_matter_in_sea_water_expressed_as_equivalent_mass_fraction_of_quinine_sulfate_dihydrate"
     },
     "CDOM_quality_control": {
       "type": "float",
-      "standard_name": "concentration_of_colored_dissolved_organic_matter_in_sea_water_expressed_as_equivalent_mass_fraction_of_quinine_sulfate_dihydrate status_flag",
       "long_name": "quality control flag for concentration_of_colored_dissolved_organic_matter_in_sea_water_expressed_as_equivalent_mass_fraction_of_quinine_sulfate_dihydrate",
       "quality_control_set": 1,
-      "quality_control_conventions": "IMOS standard flags",
       "valid_min": 0,
       "valid_max": 9,
       "flag_values": [
@@ -517,25 +654,24 @@
         8,
         9
       ],
-      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values"
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
+      "quality_control_conventions": "IMOS standard flags",
+      "standard_name": "concentration_of_colored_dissolved_organic_matter_in_sea_water_expressed_as_equivalent_mass_fraction_of_quinine_sulfate_dihydrate status_flag"
     },
     "VBSC": {
       "type": "double",
-      "long_name": "volume_scattering_function",
+      "long_name": "volumetric_backscatter_coefficient",
       "units": "m-1 sr-1",
       "valid_min": 0.0,
       "valid_max": 0.1,
       "ancillary_variables": "VBSC_quality_control",
       "observation_type": "computed",
-      "quality_control_set": 1,
-      "quality_control_indicator": 0,
-      "comment": "No corrections applied"
+      "quality_control_set": 1
     },
     "VBSC_quality_control": {
       "type": "float",
-      "long_name": "quality control flag for volume_scattering_function",
+      "long_name": "quality control flag for volumetric_backscatter_coefficient",
       "quality_control_set": 1,
-      "quality_control_conventions": "IMOS standard flags",
       "valid_min": 0,
       "valid_max": 9,
       "flag_values": [
@@ -550,24 +686,56 @@
         8,
         9
       ],
-      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values"
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
+      "quality_control_conventions": "IMOS standard flags"
+    },
+    "NTRA": {
+      "type": "double",
+      "long_name": "concentration_of_nitrate_in_seawater",
+      "units": "umol l-1",
+      "valid_min": 0.0,
+      "valid_max": 25.0,
+      "observation_type": "measured",
+      "ancillary_variables": "NTRA_quality_control",
+      "quality_control_set": 1,
+      "standard_name": "mole_concentration_of_nitrate_in_sea_water"
+    },
+    "NTRA_quality_control": {
+      "type": "float",
+      "long_name": "quality control flag for concentration_of_nitrate_in_seawater",
+      "quality_control_set": 1,
+      "valid_min": 0,
+      "valid_max": 9,
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
+      "standard_name": "mole_concentration_of_nitrate_in_sea_water status_flag",
+      "quality_control_conventions": "IMOS standard flags"
     },
     "IRRAD443": {
       "type": "double",
-      "long_name": "downwelling_spectral_irradiance_in_seawater_beam1",
+      "long_name": "downwelling_spectral_irradiance_in_sea_water_beam1",
       "units": "uW cm-2 nm-1",
       "valid_min": 0.0,
       "valid_max": 1000.0,
-      "ancillary_variables": "IRRAD443quality_control",
+      "ancillary_variables": "IRRAD443_quality_control",
       "observation_type": "computed",
-      "quality_control_set": 1,
-      "quality_control_indicator": 0
+      "quality_control_set": 1
     },
     "IRRAD443_quality_control": {
       "type": "float",
-      "long_name": "quality control flag for downwelling_spectral_irradiance_in_seawater_beam1",
+      "long_name": "quality control flag for downwelling_spectral_irradiance_in_sea_water_beam1",
       "quality_control_set": 1,
-      "quality_control_conventions": "IMOS standard flags",
       "valid_min": 0,
       "valid_max": 9,
       "flag_values": [
@@ -582,24 +750,23 @@
         8,
         9
       ],
-      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values"
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
+      "quality_control_conventions": "IMOS standard flags"
     },
-    "IRRAD490": {
+    "IRRAD456": {
       "type": "double",
-      "long_name": "downwelling_spectral_irradiance_in_seawater_beam2",
+      "long_name": "downwelling_spectral_irradiance_in_sea_water_beam1",
       "units": "uW cm-2 nm-1",
       "valid_min": 0.0,
       "valid_max": 1000.0,
-      "ancillary_variables": "IRRAD490quality_control",
+      "ancillary_variables": "IRRAD456_quality_control",
       "observation_type": "computed",
-      "quality_control_set": 1,
-      "quality_control_indicator": 0
+      "quality_control_set": 1
     },
-    "IRRAD490_quality_control": {
+    "IRRAD456_quality_control": {
       "type": "float",
-      "long_name": "quality control flag for downwelling_spectral_irradiance_in_seawater_beam2",
+      "long_name": "quality control flag for downwelling_spectral_irradiance_in_sea_water_beam1",
       "quality_control_set": 1,
-      "quality_control_conventions": "IMOS standard flags",
       "valid_min": 0,
       "valid_max": 9,
       "flag_values": [
@@ -614,71 +781,8 @@
         8,
         9
       ],
-      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values"
-    },
-    "IRRAD555": {
-      "type": "double",
-      "long_name": "downwelling_spectral_irradiance_in_seawater_beam3",
-      "units": "uW cm-2 nm-1",
-      "valid_min": 0.0,
-      "valid_max": 1000.0,
-      "ancillary_variables": "IRRAD555quality_control",
-      "observation_type": "computed",
-      "quality_control_set": 1,
-      "quality_control_indicator": 0
-    },
-    "IRRAD555_quality_control": {
-      "type": "float",
-      "long_name": "quality control flag for downwelling_spectral_irradiance_in_seawater_beam3",
-      "quality_control_set": 1,
-      "quality_control_conventions": "IMOS standard flags",
-      "valid_min": 0,
-      "valid_max": 9,
-      "flag_values": [
-        0,
-        1,
-        2,
-        3,
-        4,
-        5,
-        6,
-        7,
-        8,
-        9
-      ],
-      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values"
-    },
-    "IRRAD670": {
-      "type": "double",
-      "long_name": "downwelling_spectral_irradiance_in_seawater_beam4",
-      "units": "uW cm-2 nm-1",
-      "valid_min": 0.0,
-      "valid_max": 1000.0,
-      "ancillary_variables": "IRRAD670quality_control",
-      "observation_type": "computed",
-      "quality_control_set": 1,
-      "quality_control_indicator": 0
-    },
-    "IRRAD670_quality_control": {
-      "type": "float",
-      "long_name": "quality control flag for downwelling_spectral_irradiance_in_seawater_beam4",
-      "quality_control_set": 1,
-      "quality_control_conventions": "IMOS standard flags",
-      "valid_min": 0,
-      "valid_max": 9,
-      "flag_values": [
-        0,
-        1,
-        2,
-        3,
-        4,
-        5,
-        6,
-        7,
-        8,
-        9
-      ],
-      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values"
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
+      "quality_control_conventions": "IMOS standard flags"
     },
     "IRRAD470": {
       "type": "double",
@@ -741,6 +845,132 @@
         9
       ],
       "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values"
+    },
+    "IRRAD490": {
+      "type": "double",
+      "long_name": "downwelling_spectral_irradiance_in_sea_water_beam2",
+      "units": "uW cm-2 nm-1",
+      "valid_min": 0.0,
+      "valid_max": 1000.0,
+      "ancillary_variables": "IRRAD490_quality_control",
+      "observation_type": "computed",
+      "quality_control_set": 1
+    },
+    "IRRAD490_quality_control": {
+      "type": "float",
+      "long_name": "quality control flag for downwelling_spectral_irradiance_in_sea_water_beam2",
+      "quality_control_set": 1,
+      "valid_min": 0,
+      "valid_max": 9,
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
+      "quality_control_conventions": "IMOS standard flags"
+    },
+    "IRRAD555": {
+      "type": "double",
+      "long_name": "downwelling_spectral_irradiance_in_sea_water_beam3",
+      "units": "uW cm-2 nm-1",
+      "valid_min": 0.0,
+      "valid_max": 1000.0,
+      "ancillary_variables": "IRRAD555_quality_control",
+      "observation_type": "computed",
+      "quality_control_set": 1
+    },
+    "IRRAD555_quality_control": {
+      "type": "float",
+      "long_name": "quality control flag for downwelling_spectral_irradiance_in_sea_water_beam3",
+      "quality_control_set": 1,
+      "valid_min": 0,
+      "valid_max": 9,
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
+      "quality_control_conventions": "IMOS standard flags"
+    },
+    "IRRAD670": {
+      "type": "double",
+      "long_name": "downwelling_spectral_irradiance_in_sea_water_beam4",
+      "units": "uW cm-2 nm-1",
+      "valid_min": 0.0,
+      "valid_max": 1000.0,
+      "ancillary_variables": "IRRAD670_quality_control",
+      "observation_type": "computed",
+      "quality_control_set": 1
+    },
+    "IRRAD670_quality_control": {
+      "type": "float",
+      "long_name": "quality control flag for downwelling_spectral_irradiance_in_sea_water_beam4",
+      "quality_control_set": 1,
+      "valid_min": 0,
+      "valid_max": 9,
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
+      "quality_control_conventions": "IMOS standard flags"
+    },
+    "BBP": {
+      "type": "double",
+      "long_name": "particle_backscattering_coefficient",
+      "units": "m-1",
+      "valid_min": 0.0,
+      "valid_max": 1.0,
+      "ancillary_variables": "BBP_quality_control",
+      "observation_type": "computed",
+      "quality_control_set": 1.0
+    },
+    "BBP_quality_control": {
+      "type": "int32",
+      "long_name": "quality control flag for particle_backscattering_coefficient",
+      "FillValue": 99,
+      "valid_min": 0,
+      "valid_max": 9,
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "observation_type": "computed",
+      "quality_control_set": 1,
+      "flag_meanings": "no_qc_performed good_data probably_good_data bad_data_that_are_potentially_correctable bad_data value_changed not_used not_used interpolated_values missing_values",
+      "quality_control_conventions": "IMOS standard flags"
     }
   },
   "aws_opendata_registry": {
@@ -821,7 +1051,7 @@
           "long_name": "Spatial partition polygon"
         }
       },
-      "trans_system_id": {
+      "PLATFORM_trans_system_id": {
         "source": "@variable_attribute:PLATFORM.trans_system_id",
         "schema": {
           "type": "string",
@@ -829,7 +1059,7 @@
           "_FillValue": ""
         }
       },
-      "positioning_system": {
+      "PLATFORM_positioning_system": {
         "source": "@variable_attribute:PLATFORM.positioning_system",
         "schema": {
           "type": "string",
@@ -837,7 +1067,7 @@
           "_FillValue": ""
         }
       },
-      "platform_type": {
+      "PLATFORM_platform_type": {
         "source": "@variable_attribute:PLATFORM.platform_type",
         "schema": {
           "type": "string",
@@ -845,7 +1075,7 @@
           "_FillValue": ""
         }
       },
-      "wmo": {
+      "PLATFORM_wmo": {
         "source": "@variable_attribute:PLATFORM.wmo",
         "schema": {
           "type": "string",
@@ -853,7 +1083,7 @@
           "_FillValue": ""
         }
       },
-      "glider_serial_no": {
+      "PLATFORM_glider_serial_no": {
         "source": "@variable_attribute:PLATFORM.glider_serial_no",
         "schema": {
           "type": "string",
@@ -987,6 +1217,14 @@
           "_FillValue": ""
         }
       },
+      "IRRAD456_comment": {
+        "source": "@variable_attribute:IRRAD456.comment",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
       "IRRAD490_comment": {
         "source": "@variable_attribute:IRRAD490.comment",
         "schema": {
@@ -1025,6 +1263,293 @@
           "type": "string",
           "units": "1",
           "_FillValue": ""
+        }
+      },
+      "BBP_comment": {
+        "source": "@variable_attribute:BBP.comment",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "CDOM_comment": {
+        "source": "@variable_attribute:CDOM.comment",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "CNDC_comment": {
+        "source": "@variable_attribute:CNDC.comment",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "CPHL_comment": {
+        "source": "@variable_attribute:CPHL.comment",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "DEPTH_comment": {
+        "source": "@variable_attribute:DEPTH.comment",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "HEAD_comment": {
+        "source": "@variable_attribute:HEAD.comment",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "LATITUDE_comment": {
+        "source": "@variable_attribute:LATITUDE.comment",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "LONGITUDE_comment": {
+        "source": "@variable_attribute:LONGITUDE.comment",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "NTRA_comment": {
+        "source": "@variable_attribute:NTRA.comment",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "PHASE_comment": {
+        "source": "@variable_attribute:PHASE.comment",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "PRES_comment": {
+        "source": "@variable_attribute:PRES.comment",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "PROFILE_comment": {
+        "source": "@variable_attribute:PROFILE.comment",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "PSAL_comment": {
+        "source": "@variable_attribute:PSAL.comment",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "TEMP_comment": {
+        "source": "@variable_attribute:TEMP.comment",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "UCUR_comment": {
+        "source": "@variable_attribute:UCUR.comment",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "UCUR_GPS_comment": {
+        "source": "@variable_attribute:UCUR_GPS.comment",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "VBSC_comment": {
+        "source": "@variable_attribute:VBSC.comment",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "VCUR_comment": {
+        "source": "@variable_attribute:VCUR.comment",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "VCUR_GPS_comment": {
+        "source": "@variable_attribute:VCUR_GPS.comment",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "DOX1_units": {
+        "source": "@variable_attribute:DOX1.units",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "DOX2_units": {
+        "source": "@variable_attribute:DOX2.units",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "CDOM_quality_control_indicator": {
+        "source": "@variable_attribute:CDOM.quality_control_indicator",
+        "schema": {
+          "type": "float",
+          "units": "1"
+        }
+      },
+      "CNDC_quality_control_indicator": {
+        "source": "@variable_attribute:CNDC.quality_control_indicator",
+        "schema": {
+          "type": "float",
+          "units": "1"
+        }
+      },
+      "CPHL_quality_control_indicator": {
+        "source": "@variable_attribute:CPHL.quality_control_indicator",
+        "schema": {
+          "type": "float",
+          "units": "1"
+        }
+      },
+      "DEPTH_quality_control_indicator": {
+        "source": "@variable_attribute:DEPTH.quality_control_indicator",
+        "schema": {
+          "type": "float",
+          "units": "1"
+        }
+      },
+      "DOX1_quality_control_indicator": {
+        "source": "@variable_attribute:DOX1.quality_control_indicator",
+        "schema": {
+          "type": "float",
+          "units": "1"
+        }
+      },
+      "DOX2_quality_control_indicator": {
+        "source": "@variable_attribute:DOX2.quality_control_indicator",
+        "schema": {
+          "type": "float",
+          "units": "1"
+        }
+      },
+      "IRRAD443_quality_control_indicator": {
+        "source": "@variable_attribute:IRRAD443.quality_control_indicator",
+        "schema": {
+          "type": "float",
+          "units": "1"
+        }
+      },
+      "IRRAD490_quality_control_indicator": {
+        "source": "@variable_attribute:IRRAD490.quality_control_indicator",
+        "schema": {
+          "type": "float",
+          "units": "1"
+        }
+      },
+      "IRRAD555_quality_control_indicator": {
+        "source": "@variable_attribute:IRRAD555.quality_control_indicator",
+        "schema": {
+          "type": "float",
+          "units": "1"
+        }
+      },
+      "IRRAD670_quality_control_indicator": {
+        "source": "@variable_attribute:IRRAD670.quality_control_indicator",
+        "schema": {
+          "type": "float",
+          "units": "1"
+        }
+      },
+      "PRES_quality_control_indicator": {
+        "source": "@variable_attribute:PRES.quality_control_indicator",
+        "schema": {
+          "type": "float",
+          "units": "1"
+        }
+      },
+      "PSAL_quality_control_indicator": {
+        "source": "@variable_attribute:PSAL.quality_control_indicator",
+        "schema": {
+          "type": "float",
+          "units": "1"
+        }
+      },
+      "TEMP_quality_control_indicator": {
+        "source": "@variable_attribute:TEMP.quality_control_indicator",
+        "schema": {
+          "type": "float",
+          "units": "1"
+        }
+      },
+      "TIME_quality_control_indicator": {
+        "source": "@variable_attribute:TIME.quality_control_indicator",
+        "schema": {
+          "type": "float",
+          "units": "1"
+        }
+      },
+      "UCUR_quality_control_indicator": {
+        "source": "@variable_attribute:UCUR.quality_control_indicator",
+        "schema": {
+          "type": "float",
+          "units": "1"
+        }
+      },
+      "VBSC_quality_control_indicator": {
+        "source": "@variable_attribute:VBSC.quality_control_indicator",
+        "schema": {
+          "type": "float",
+          "units": "1"
+        }
+      },
+      "VCUR_quality_control_indicator": {
+        "source": "@variable_attribute:VCUR.quality_control_indicator",
+        "schema": {
+          "type": "float",
+          "units": "1"
         }
       }
     },
