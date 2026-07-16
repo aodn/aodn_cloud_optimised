@@ -269,6 +269,33 @@
           "long_name": "Filename of the source file"
         }
       },
+      "platform_code": {
+        "source": "@global_attribute:platform_code",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": "",
+          "long_name": "platform code"
+        }
+      },
+      "cruise_id": {
+        "source": "@global_attribute:cruise_id",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": "",
+          "long_name": "cruise identifier"
+        }
+      },
+      "vessel_name": {
+        "source": "@global_attribute:vessel_name",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": "",
+          "long_name": "vessel name"
+        }
+      },
       "timestamp": {
         "source": "@partitioning:time_extent",
         "schema": {
