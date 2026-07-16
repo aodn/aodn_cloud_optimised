@@ -1,0 +1,327 @@
+{
+  "dataset_name": "vessel_co2_realtime_nonqc",
+  "logger_name": "vessel_co2_realtime_nonqc",
+  "cloud_optimised_format": "parquet",
+  "run_settings": {
+    "paths": [
+      {
+        "type": "files",
+        "s3_uri": "s3://imos-data/IMOS/SOOP/SOOP-CO2/VLMJ_Investigator/REALTIME/",
+        "filter": [
+          ".*\\.nc$"
+        ],
+        "year_range": [
+          2022,
+          2023,
+          2024,
+          2026
+        ]
+      }
+    ],
+    "cluster": {
+      "mode": "coiled",
+      "restart_every_path": false
+    },
+    "clear_existing_data": true,
+    "raise_error": false,
+    "coiled_cluster_options": {
+      "n_workers": [
+        1,
+        20
+      ],
+      "scheduler_vm_types": "m7i-flex.large",
+      "worker_vm_types": "m7i-flex.large",
+      "allow_ingress_from": "me",
+      "compute_purchase_option": "spot_with_fallback",
+      "worker_options": {
+        "nthreads": 4,
+        "memory_limit": "8GB"
+      }
+    },
+    "batch_size": 5,
+    "force_previous_parquet_deletion": false
+  },
+  "metadata_uuid": "9e5c3031-a026-48b3-a153-a70c2e2b78b9",
+  "schema": {
+    "TIME": {
+      "type": "timestamp[ns]",
+      "standard_name": "time",
+      "long_name": "time",
+      "axis": "T",
+      "valid_min": 0.0,
+      "valid_max": 90000.0
+    },
+    "LATITUDE": {
+      "type": "double",
+      "standard_name": "latitude",
+      "long_name": "latitude",
+      "units": "degrees_north",
+      "axis": "Y",
+      "valid_min": -90.0,
+      "valid_max": 90.0,
+      "reference_datum": "WGS84 coordinate reference system"
+    },
+    "LONGITUDE": {
+      "type": "double",
+      "standard_name": "longitude",
+      "long_name": "longitude",
+      "units": "degrees_east",
+      "axis": "X",
+      "valid_min": -180.0,
+      "valid_max": 180.0,
+      "reference_datum": "WGS84 coordinate reference system"
+    },
+    "TYPE": {
+      "type": "string",
+      "long_name": "measurement type (equilibrator, standard or atmosphere)",
+      "units": "categorical"
+    },
+    "TEQ_raw": {
+      "type": "double",
+      "long_name": "equilibrator water temperature",
+      "reference_datum": "sea surface",
+      "units": "degree_Celsius",
+      "valid_max": 40.0,
+      "valid_min": -2.0
+    },
+    "CO2_STD_Value": {
+      "type": "double",
+      "long_name": "CO2 reference value",
+      "reference_datum": "sea surface",
+      "units": "1e-6"
+    },
+    "xCO2_PPM_raw": {
+      "type": "double",
+      "long_name": "mole fraction of CO2",
+      "comment": "the unit 1e-6 is also called parts per million (ppm)",
+      "reference_datum": "sea surface",
+      "units": "1e-6"
+    },
+    "xH2O_PPM_raw": {
+      "type": "double",
+      "long_name": "mole fraction of H2O",
+      "reference_datum": "sea surface",
+      "units": "1e-6",
+      "comment": "the unit 1e-6 is also called parts per million (ppm)"
+    },
+    "Druck_Lab_Press_raw": {
+      "type": "double",
+      "long_name": "pressure in the infrared gas analyser",
+      "reference_datum": "sea surface",
+      "units": "hPa"
+    },
+    "Diff_Press_Equ_raw": {
+      "type": "double",
+      "long_name": "differential pressure between equilibrator and ambient air",
+      "reference_datum": "sea surface",
+      "units": "hPa"
+    },
+    "H2O_flow_raw": {
+      "type": "double",
+      "long_name": "water flow to equilibrator",
+      "reference_datum": "sea surface",
+      "units": "l min-1"
+    },
+    "Licor_flow_raw": {
+      "type": "double",
+      "long_name": "Gas flow through infrared gas analyser",
+      "reference_datum": "sea surface",
+      "units": "ml min-1"
+    },
+    "TEMP_1_raw": {
+      "type": "double",
+      "long_name": "sea surface temperature",
+      "standard_name": "sea_surface_temperature",
+      "reference_datum": "sea surface",
+      "units": "degree_Celsius",
+      "valid_max": 40.0,
+      "valid_min": -2.0
+    },
+    "TEMP_2_raw": {
+      "type": "double",
+      "long_name": "sea surface temperature",
+      "standard_name": "sea_surface_temperature",
+      "reference_datum": "sea surface",
+      "units": "degree_Celsius",
+      "valid_max": 40.0,
+      "valid_min": -2.0
+    },
+    "PSAL_raw": {
+      "type": "double",
+      "long_name": "sea surface salinity measured by thermosalinograph",
+      "standard_name": "sea_surface_salinity",
+      "reference_datum": "sea surface",
+      "units": "1e-3",
+      "valid_max": 42.0,
+      "valid_min": 0.0
+    },
+    "ATMP_uncorr_raw": {
+      "type": "double",
+      "long_name": "atmospheric pressure at the height of the instrument",
+      "standard_name": "air_pressure",
+      "comment": "atmospheric pressure measured at 9.610 above sea level",
+      "units": "hPa"
+    },
+    "WSPD_raw": {
+      "type": "double",
+      "long_name": "wind speed",
+      "standard_name": "wind_speed",
+      "reference_datum": "sea surface",
+      "units": "m s-1"
+    },
+    "WDIR_raw": {
+      "type": "double",
+      "long_name": "wind direction",
+      "standard_name": "wind_from_direction",
+      "reference_datum": "magnetic north",
+      "positive": "clockwise",
+      "comment": "true wind direction where 0 is North and 90 is East",
+      "units": "degree"
+    },
+    "Tsg_flow_raw": {
+      "type": "double",
+      "long_name": "thermosalinograph water flow",
+      "reference_datum": "sea surface",
+      "units": "l min-1"
+    },
+    "TEMP_Tsg_raw": {
+      "type": "double",
+      "long_name": "sea water temperature measured by thermosalinograph",
+      "standard_name": "sea_surface_temperature",
+      "reference_datum": "sea surface",
+      "units": "degree_Celsius",
+      "valid_max": 40.0,
+      "valid_min": -2.0
+    },
+    "RELH_raw": {
+      "type": "double",
+      "long_name": "relative humidity ",
+      "standard_name": "relative_humidity",
+      "units": "percent",
+      "valid_max": 100.0,
+      "valid_min": 0.0
+    },
+    "AIRT_raw": {
+      "type": "double",
+      "long_name": "Air temperature",
+      "standard_name": "air_temperature",
+      "units": "degree_Celsius",
+      "valid_max": 100.0,
+      "valid_min": -100.0
+    },
+    "LabMain_sw_flow_raw": {
+      "type": "double",
+      "long_name": "seawater flow in main laboratory",
+      "reference_datum": "sea surface",
+      "units": "l min-1"
+    }
+  },
+  "aws_opendata_registry": {
+    "Name": "IMOS - Ships of Opportunity - Biogeochemical Sensors - Near real-time raw data",
+    "Description": "The IMOS Ships of Opportunity Biogeochemical Sensors Sub-Facility was formerly known as the Underway CO2 Measurements group, a research and data collection project working within the former IMOS Ship of Opportunity Multi-Disciplinary Underway Network Sub-Facility. The CO2 group sample critical regions of the Southern Ocean and the Australian shelf waters have a major impact on CO2 uptake by the ocean. These are regions where biogeochemical cycling is predicted to be particularly sensitive to a changing climate. The data represented by this record are presented in real-time mode. The pCO2 Underway System measures variables such as mole fraction of CO2, sea surface salinity (SSS), and sea surface temperature (SST) using an automated system. \n\nThe RV Aurora Australis provides data on surface ocean CO2 for the Southern Ocean, while the RV Investigator, covers shelf and offshore waters around Australia from the tropics to the sea-ice edge.",
+    "Documentation": "https://catalogue-imos.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/9e5c3031-a026-48b3-a153-a70c2e2b78b9",
+    "Contact": "info@aodn.org.au",
+    "ManagedBy": "AODN",
+    "UpdateFrequency": "As Needed",
+    "Tags": [
+      "oceans",
+      "chemistry",
+      "atmosphere",
+      "meteorological"
+    ],
+    "License": "http://creativecommons.org/licenses/by/4.0/",
+    "Resources": [
+      {
+        "Description": "Cloud Optimised AODN dataset of IMOS - Ships of Opportunity - Biogeochemical Sensors - Near real-time raw data",
+        "ARN": "arn:aws:s3:::aodn-cloud-optimised/vessel_co2_realtime_nonqc.parquet",
+        "Region": "ap-southeast-2",
+        "Type": "S3 Bucket"
+      }
+    ],
+    "DataAtWork": {
+      "Tutorials": [
+        {
+          "Title": "Accessing IMOS - Ships of Opportunity - Biogeochemical Sensors - Near real-time raw data",
+          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/vessel_co2_realtime_nonqc.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/vessel_co2_realtime_nonqc.ipynb",
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
+        },
+        {
+          "Title": "Accessing and search for any AODN dataset",
+          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
+        }
+      ]
+    },
+    "Citation": "IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access]"
+  },
+  "schema_transformation": {
+    "drop_variables": [],
+    "add_variables": {
+      "filename": {
+        "source": "@filename",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "long_name": "Filename of the source file"
+        }
+      },
+      "timestamp": {
+        "source": "@partitioning:time_extent",
+        "schema": {
+          "type": "int64",
+          "units": "1",
+          "long_name": "Partition timestamp"
+        }
+      },
+      "polygon": {
+        "source": "@partitioning:spatial_extent",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "long_name": "Spatial partition polygon"
+        }
+      }
+    },
+    "partitioning": [
+      {
+        "source_variable": "timestamp",
+        "type": "time_extent",
+        "time_extent": {
+          "time_varname": "TIME",
+          "partition_period": "M"
+        }
+      },
+      {
+        "source_variable": "polygon",
+        "type": "spatial_extent",
+        "spatial_extent": {
+          "lat_varname": "LATITUDE",
+          "lon_varname": "LONGITUDE",
+          "spatial_resolution": 5
+        }
+      },
+      {
+        "source_variable": "platform_code"
+      }
+    ],
+    "global_attributes": {
+      "delete": [
+        "geospatial_lat_max",
+        "geospatial_lat_min",
+        "geospatial_lon_max",
+        "geospatial_lon_min",
+        "date_created"
+      ],
+      "set": {
+        "title": "IMOS Underway CO2 dataset measured",
+        "principal_investigator": "",
+        "principal_investigator_email": "",
+        "featureType": "trajectory"
+      }
+    }
+  }
+}
