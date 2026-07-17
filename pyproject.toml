@@ -140,6 +140,7 @@ mcp = ["mcp>=1.26.0,<2.0.0", "nbformat>=5.0.0", "nbconvert>=7.0.0"]
 aodn-mcp-server = "aodn_cloud_optimised.mcp.server:main"
 cloud_optimised_animal_acoustic_tracking_delayed_detection_qc = "aodn_cloud_optimised.bin.datasets.animal_acoustic_tracking_delayed_detection_qc:main"
 cloud_optimised_animal_acoustic_tracking_delayed_qc = "aodn_cloud_optimised.bin.datasets.animal_acoustic_tracking_delayed_qc:main"
+cloud_optimised_animal_acoustic_tracking_delayed_summarised_detection_qc = "aodn_cloud_optimised.bin.datasets.animal_acoustic_tracking_delayed_summarised_detection_qc:main"
 cloud_optimised_animal_ctd_satellite_relay_tagging_delayed_qc = "aodn_cloud_optimised.bin.datasets.animal_ctd_satellite_relay_tagging_delayed_qc:main"
 cloud_optimised_animal_ctd_satellite_relay_tagging_realtime_qc = "aodn_cloud_optimised.bin.datasets.animal_ctd_satellite_relay_tagging_realtime_qc:main"
 cloud_optimised_animal_diag_satellite_relay_tagging_realtime_qc = "aodn_cloud_optimised.bin.datasets.animal_diag_satellite_relay_tagging_realtime_qc:main"

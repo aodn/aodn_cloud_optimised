@@ -88,6 +88,7 @@ More information available [here](https://github.com/conda-forge/miniforge?tab=r
 - [amsa_vessel_tracking.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/amsa_vessel_tracking.ipynb)
 - [animal_acoustic_tracking_delayed_detection_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/animal_acoustic_tracking_delayed_detection_qc.ipynb)
 - [animal_acoustic_tracking_delayed_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/animal_acoustic_tracking_delayed_qc.ipynb)
+- [animal_acoustic_tracking_delayed_summarised_detection_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/animal_acoustic_tracking_delayed_summarised_detection_qc.ipynb)
 - [animal_ctd_satellite_relay_tagging_delayed_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/animal_ctd_satellite_relay_tagging_delayed_qc.ipynb)
 - [animal_satellite_relay_tagging_ctd_realtime_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/animal_satellite_relay_tagging_ctd_realtime_qc.ipynb)
 - [animal_satellite_relay_tagging_diag_realtime_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/animal_satellite_relay_tagging_diag_realtime_qc.ipynb)
