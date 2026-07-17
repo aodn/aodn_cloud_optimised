@@ -8,12 +8,11 @@ import timeit
 import traceback
 import uuid
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import date, datetime
+from datetime import datetime
 from typing import Generator, Tuple
 
 import boto3
 import cftime
-import numpy as np
 import pandas as pd
 import polars as pl
 import pyarrow as pa
@@ -251,7 +250,7 @@ class GenericHandler(CommonHandler):
                     self.logger.error(
                         f"{self.uuid_log}: The NetCDF file does not conform to the pre-defined schema."
                     )
-        except:
+        except Exception as _:
             self.logger.warning(
                 f'{self.uuid_log}: The default engine "h5netcdf" could not be used. Falling back '
                 f'to using "scipy" engine. This is an issue with old NetCDF files'
@@ -492,15 +491,21 @@ class GenericHandler(CommonHandler):
             The DataFrame is assumed to contain 'LONGITUDE' and 'LATITUDE' columns representing
             longitude and latitude coordinates respectively.
         """
+        # Configuration Setup
         partitioning_info = self.dataset_config["schema_transformation"]["partitioning"]
-        spatial_extent_info = None
-        for item in partitioning_info:
-            if item.get("spatial_extent") is not None:
-                spatial_extent_info = item
+        spatial_extent_info = next(
+            (
+                item
+                for item in partitioning_info
+                if item.get("spatial_extent") is not None
+            ),
+            None,
+        )
 
         if spatial_extent_info is None:
             self.logger.warning(
-                f"{self.uuid_log}: No variable defined to create a polygon partition key. The parquet dataset will be created without. Check this is as intended"
+                f"{self.uuid_log}: No variable defined to create a polygon partition key. "
+                "The parquet dataset will be created without. Check this is as intended."
             )
             return df
 
@@ -513,7 +518,21 @@ class GenericHandler(CommonHandler):
         )
         spatial_res = spatial_extent_info["spatial_extent"].get("spatial_resolution", 5)
 
-        # Check for invalid latitude and longitude values outside of [-180, 180; -90; 90]
+        # Check and Remember Index Intent
+        # If the index has a name (like 'time'), we must preserve it as a column.
+        has_named_index = any(name is not None for name in df.index.names)
+        data_was_filtered = False
+
+        # Clean Missing (NaN) Coordinates First
+        nan_mask = df[lat_varname].isna() | df[lon_varname].isna()
+        if nan_mask.any():
+            self.logger.warning(
+                f"{self.uuid_log}: Dataset contains NaN spatial coordinates. Removing corresponding rows."
+            )
+            df = df[~nan_mask]
+            data_was_filtered = True
+
+        # Clean Out-of-Range Coordinates
         lat_min = self.dataset_config["schema"][lat_varname].get("valid_min", -90)
         lat_max = self.dataset_config["schema"][lat_varname].get("valid_max", 90)
         lon_min = self.dataset_config["schema"][lon_varname].get("valid_min", -180)
@@ -523,44 +542,37 @@ class GenericHandler(CommonHandler):
         invalid_lon = ~df[lon_varname].between(lon_min, lon_max)
 
         if invalid_lat.any() or invalid_lon.any():
-            # Collect examples of invalid values (up to 5 of each for readability)
             bad_lats = df.loc[invalid_lat, lat_varname].head().tolist()
             bad_lons = df.loc[invalid_lon, lon_varname].head().tolist()
 
             self.logger.warning(
-                f"{self.uuid_log}: Dataset contains latitude or longitude values outside the valid ranges [{lat_min}, {lat_max}], [{lon_min}, {lon_max}]. Cleaning data.\n"
+                f"{self.uuid_log}: Dataset contains coordinates outside valid ranges "
+                f"[{lat_min}, {lat_max}], [{lon_min}, {lon_max}]. Cleaning data.\n"
                 f"Invalid lat samples={bad_lats}, Invalid lon samples={bad_lons}"
             )
 
-            # Clean dataset
-            df = df[
-                (df[lat_varname].between(lat_min, lat_max))
-                & (df[lon_varname].between(lon_min, lon_max))
-            ]
+            df = df[~invalid_lat & ~invalid_lon]
+            data_was_filtered = True
 
-            if df.empty:
-                self.logger.error(
-                    f"{self.uuid_log}: The dataframe is now empty after removing out of range latitude/longitude data. Operation Cancelled"
-                )
-            df = df.reset_index(drop=True)
+        # Handle Empty State & Single Index Reset
+        if df.empty:
+            self.logger.error(
+                f"{self.uuid_log}: The dataframe is now empty after removing invalid spatial data. "
+                "Operation Cancelled."
+            )
+            return df
 
-        # Clean dataset from NaN values of LAT and LON; for ex 'IMOS/Argo/dac/csiro/5905017/5905017_prof.nc'
-        for geo_var in [lat_varname, lon_varname]:
-            geo_var_has_nan = df[geo_var].isna().any().any()
-            if geo_var_has_nan:
-                self.logger.warning(
-                    f"{self.uuid_log}: The NetCDF contains NaN values of {geo_var}. Removing corresponding data"
-                )
-                df = df.dropna(subset=[geo_var]).reset_index(
-                    drop=False
-                )  # For now leaving drop false to ensure no breaking changes
+        # We only reset the index if we actually altered the row structure with filters
+        if data_was_filtered:
+            if has_named_index:
+                df = df.reset_index(drop=False)
+            else:
+                df = df.reset_index(drop=True)
 
+        # Generate Geometry
         point_geometry = [
             Point(lon, lat) for lon, lat in zip(df[lon_varname], df[lat_varname])
         ]
-
-        # Create Polygon objects around each Point
-
         df[spatial_extent_varname] = [
             self.create_polygon(point, spatial_res) for point in point_geometry
         ]
@@ -656,7 +668,7 @@ class GenericHandler(CommonHandler):
                     pd.to_datetime(time_partition_column)
                 except Exception as e:
                     raise ValueError(
-                        "time partition column failed to translate to pandas datetime dtype: {e}"
+                        f"time partition column failed to translate to pandas datetime dtype: {e}"
                     )
 
                 # Because the df does not have a date time index, we have to create and fill the column in separately here
@@ -1524,7 +1536,7 @@ class GenericHandler(CommonHandler):
         """
         if self.clear_existing_data:
             self.logger.info(
-                f"Creating new Parquet dataset - DELETING existing all Parquet objects if exist"
+                "Creating new Parquet dataset - DELETING existing all Parquet objects if exist"
             )
             if prefix_exists(
                 self.cloud_optimised_output_path,
