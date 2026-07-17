@@ -48,7 +48,7 @@
       "comment": "Argos PTT number is used"
     },
     "end_date": {
-      "type": "timestamp",
+      "type": "timestamp[ns]",
       "comment": "The time (UTC) of the end of the upcast"
     },
     "max_dbar": {
