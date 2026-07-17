@@ -1,13 +1,13 @@
 {
-  "dataset_name": "animal_diag_satellite_relay_tagging_realtime_qc",
-  "logger_name": "animal_diag_satellite_relay_tagging_realtime_qc",
+  "dataset_name": "animal_metadata_satellite_relay_tagging_location_qc_realtime_qc",
+  "logger_name": "animal_metadata_satellite_relay_tagging_location_qc_realtime_qc",
   "cloud_optimised_format": "parquet",
   "run_settings": {
     "paths": [
       {
         "s3_uri": "s3://imos-data/IMOS/AATAMS/satellite_tagging/ATF_Location_QC_NRT",
         "filter": [
-          ".*_diag_.*_nrt\\.csv$"
+          ".*_metadata_.*_nrt\\.csv$"
         ],
         "year_range": []
       }
@@ -37,144 +37,106 @@
   },
   "metadata_uuid": "b2548767-514f-4a31-b65e-36bb894382d5",
   "schema": {
-    "ref": {
+    "sattag_program": {
       "type": "string",
-      "long_name": "reference",
-      "comment": "A three-part code (e.g. rs3-Fred-07) : The first part identifies the batch of tags, the second part is the name or number of the animal, the third part is the year"
+      "comment": "SMRU campaign name "
+    },
+    "device_id": {
+      "type": "string",
+      "comment": "SMRU reference ID "
     },
     "ptt": {
       "type": "int32",
-      "long_name": "Platform Transmitter Terminal",
-      "comment": "Argos PTT number is used"
+      "comment": "Argos platform terminal transmitter ID"
     },
-    "d_date": {
-      "type": "timestamp[ns]",
-      "comment": "The time assigned to the location by ARGOS (UTC)"
-    },
-    "lq": {
+    "body": {
       "type": "int32",
-      "comment": "The Location Quality assigned by Argos (-1 = class A, -2 = class B, -9 = class Z)"
+      "comment": "SMRU tag ID "
     },
-    "lat": {
-      "type": "double",
-      "long_name": "Latitude",
-      "units": "degrees_north",
-      "comment": "Position estimate (WGS 84 datum)"
+    "device_wmo_ref": {
+      "type": "string",
+      "comment": "WMO ID "
     },
-    "lon": {
+    "tag_type": {
+      "type": "string",
+      "comment": "SMRU tag type designation"
+    },
+    "common_name": {
+      "type": "string",
+      "comment": "Deployment animal common name"
+    },
+    "species": {
+      "type": "string",
+      "comment": "Deployment animal scientific name"
+    },
+    "release_longitude": {
       "type": "double",
-      "long_name": "Longitude",
       "units": "degrees_east",
-      "comment": "Position estimate (WGS 84 datum)"
+      "comment": "Tag deployment coordinate (WGS 84 datum)"
     },
-    "alt_lat": {
+    "release_latitude": {
       "type": "double",
-      "comment": "Alternative solution to position equations (this may have been swapped with LAT,LON by the location filtering algorithm). These fields are simply copies of LAT,LON when Kalman location processing is operating."
+      "units": "degrees_north",
+      "comment": "Tag deployment coordinate (WGS 84 datum)"
     },
-    "alt_lon": {
-      "type": "double",
-      "comment": "Alternative solution to position equations (this may have been swapped with LAT,LON by the location filtering algorithm). These fields are simply copies of LAT,LON when Kalman location processing is operating."
-    },
-    "n_mess": {
-      "type": "int32",
-      "comment": "Number of uplinks received during the satellite pass"
-    },
-    "n_mess_120": {
-      "type": "int32",
-      "comment": "Number of uplinks received with signal strength > -120 dB"
-    },
-    "best_level": {
-      "type": "int32",
-      "units": "dB",
-      "comment": "Signal strength of strongest uplink (dB)"
-    },
-    "pass_dur": {
-      "type": "int32",
-      "units": "s",
-      "comment": "Duration of satellite overpass (s)"
-    },
-    "freq": {
-      "type": "double",
-      "units": "Hz",
-      "comment": "Measured frequency of SRDL signal at the satellite (Hz)"
-    },
-    "v_mask": {
-      "type": "int32",
-      "comment": "Result of the location filtering algorithm: 0 = accepted, 20 = rejected at the 20 dm/s level (see VMASK_THRESHOLD). The first and last two points of the track are excluded from the algorithm and are assigned -1"
-    },
-    "alt": {
-      "type": "double",
-      "comment": "= 1 if the LAT,LON and ALT_LAT, ALT_LON were swapped by the location filter\u2019s initial plausibility check"
-    },
-    "est_speed": {
-      "type": "double",
-      "long_name": "Estimated speed",
-      "units": "m/s",
-      "comment": "Speed across the surface estimated by the location filtering algorithm (m/s)"
-    },
-    "km_from_home": {
-      "type": "double",
-      "long_name": "Distance from home",
-      "units": "km",
-      "comment": "Great-circle distance to the release_latitude, release_longitude position specified in the metadata table (km). This is simply the shortest distance between the two points: the path may cross land."
-    },
-    "iq": {
-      "type": "int32",
-      "comment": "A two-digit code which gives further information about the location calculation for poor quality locations (see Argos documentation for a complete explanation)"
-    },
-    "nops": {
-      "type": "int32"
-    },
-    "deleted": {
+    "release_site": {
       "type": "string",
-      "comment": "The value Y here causes this position to be ignored by the location filtering algorithm. Normally used to remove a very poor position occurring at the beginning of the track"
+      "comment": "Tag deployment locality"
     },
-    "actual_ptt": {
-      "type": "int32",
-      "comment": "When a single SRDL is programmed to use several different PTT numbers, the SMRU system overrides the PTT field to present all the data as if it had been transmitted under a single PTT number. This field records the true PTT number associated with this location."
+    "release_date": {
+      "type": "timestamp[ns]",
+      "comment": "Tag deployment date (UTC)"
     },
-    "error_radius": {
-      "type": "int32"
+    "recovery_date": {
+      "type": "timestamp[ns]",
+      "comment": "Tag recovery date (UTC)"
     },
-    "semi_major_axis": {
-      "type": "int32"
-    },
-    "semi_minor_axis": {
-      "type": "int32"
-    },
-    "ellipse_orientation": {
-      "type": "int32"
-    },
-    "hdop": {
-      "type": "double"
-    },
-    "satellite": {
-      "type": "double"
-    },
-    "diag_id": {
-      "type": "int32"
-    },
-    "ssm_lon": {
-      "type": "double"
-    },
-    "ssm_lat": {
-      "type": "double"
-    },
-    "ssm_x": {
-      "type": "double"
-    },
-    "ssm_y": {
-      "type": "double"
-    },
-    "ssm_x_se": {
-      "type": "double"
-    },
-    "ssm_y_se": {
-      "type": "double"
-    },
-    "cid": {
+    "age_class": {
       "type": "string",
-      "comment": "SMRU campaign name "
+      "comment": "Animal age class (e.g. Juvenile; adult; NA)"
+    },
+    "sex": {
+      "type": "string",
+      "comment": "Animal sex (e.g. m; f; NA)"
+    },
+    "length": {
+      "type": "double",
+      "units": "m",
+      "comment": "Animal length (m)"
+    },
+    "estimated_mass": {
+      "type": "double",
+      "units": "kg",
+      "comment": "Animal mass (kg) researcher estimated"
+    },
+    "actual_mass": {
+      "type": "double",
+      "units": "kg",
+      "comment": "Animal mass (kg) measurement"
+    },
+    "state_country": {
+      "type": "string",
+      "comment": "Country of deployment "
+    },
+    "qc_start_date": {
+      "type": "timestamp[ns]",
+      "comment": "Time of first data record included in QC (UTC)"
+    },
+    "qc_end_date": {
+      "type": "timestamp[ns]",
+      "comment": "Time of last data record included in QC (UTC)"
+    },
+    "qc_method": {
+      "type": "string"
+    },
+    "qc_method_version": {
+      "type": "string"
+    },
+    "qc_proj4string": {
+      "type": "string"
+    },
+    "qc_run_date": {
+      "type": "string"
     }
   },
   "aws_opendata_registry": {
@@ -191,7 +153,7 @@
     "Resources": [
       {
         "Description": "Cloud Optimised AODN dataset of IMOS - Animal Tracking Facility - Satellite Relay Tagging Program - Near real-time data with quality-controlled locations",
-        "ARN": "arn:aws:s3:::aodn-cloud-optimised/animal_diag_satellite_relay_tagging_realtime_qc.parquet",
+        "ARN": "arn:aws:s3:::aodn-cloud-optimised/animal_metadata_satellite_relay_tagging_location_qc_realtime_qc.parquet",
         "Region": "ap-southeast-2",
         "Type": "S3 Bucket"
       }
@@ -200,8 +162,8 @@
       "Tutorials": [
         {
           "Title": "Accessing IMOS - Animal Tracking Facility - Satellite Relay Tagging Program - Near real-time data with quality-controlled locations",
-          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/animal_diag_satellite_relay_tagging_realtime_qc.ipynb",
-          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/animal_diag_satellite_relay_tagging_realtime_qc.ipynb",
+          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/animal_metadata_satellite_relay_tagging_location_qc_realtime_qc.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/animal_metadata_satellite_relay_tagging_location_qc_realtime_qc.ipynb",
           "AuthorName": "Laurent Besnard",
           "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
         },
@@ -223,9 +185,11 @@
         "NaN"
       ],
       "encoding": "utf-8",
-      "index_col": "d_date",
+      "index_col": "qc_start_date",
       "parse_dates": [
-        "d_date"
+        "release_date",
+        "qc_start_date",
+        "qc_end_date"
       ]
     }
   },
@@ -262,17 +226,17 @@
         "source_variable": "timestamp",
         "type": "time_extent",
         "time_extent": {
-          "time_varname": "d_date",
-          "partition_period": "Y"
+          "time_varname": "release_date",
+          "partition_period": "M"
         }
       },
       {
         "source_variable": "polygon",
         "type": "spatial_extent",
         "spatial_extent": {
-          "lat_varname": "lat",
-          "lon_varname": "lon",
-          "spatial_resolution": 20
+          "lat_varname": "release_latitude",
+          "lon_varname": "release_longitude",
+          "spatial_resolution": 5
         }
       }
     ],

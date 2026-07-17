@@ -1,6 +1,6 @@
 {
-  "dataset_name": "animal_dive_satellite_relay_tagging_realtime_qc",
-  "logger_name": "animal_dive_satellite_relay_tagging_realtime_qc",
+  "dataset_name": "animal_dive_satellite_relay_tagging_location_qc_realtime_qc",
+  "logger_name": "animal_dive_satellite_relay_tagging_location_qc_realtime_qc",
   "cloud_optimised_format": "parquet",
   "run_settings": {
     "paths": [
@@ -509,7 +509,7 @@
     "Resources": [
       {
         "Description": "Cloud Optimised AODN dataset of IMOS - Animal Tracking Facility - Satellite Relay Tagging Program - Near real-time data with quality-controlled locations",
-        "ARN": "arn:aws:s3:::aodn-cloud-optimised/animal_dive_satellite_relay_tagging_realtime_qc.parquet",
+        "ARN": "arn:aws:s3:::aodn-cloud-optimised/animal_dive_satellite_relay_tagging_location_qc_realtime_qc.parquet",
         "Region": "ap-southeast-2",
         "Type": "S3 Bucket"
       }
@@ -518,8 +518,8 @@
       "Tutorials": [
         {
           "Title": "Accessing IMOS - Animal Tracking Facility - Satellite Relay Tagging Program - Near real-time data with quality-controlled locations",
-          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/animal_dive_satellite_relay_tagging_realtime_qc.ipynb",
-          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/animal_dive_satellite_relay_tagging_realtime_qc.ipynb",
+          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/animal_dive_satellite_relay_tagging_location_qc_realtime_qc.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/animal_dive_satellite_relay_tagging_location_qc_realtime_qc.ipynb",
           "AuthorName": "Laurent Besnard",
           "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
         },

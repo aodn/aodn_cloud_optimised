@@ -1,13 +1,13 @@
 {
-  "dataset_name": "animal_summary_satellite_relay_tagging_realtime_qc",
-  "logger_name": "animal_summary_satellite_relay_tagging_realtime_qc",
+  "dataset_name": "animal_ssmoutputs_satellite_relay_tagging_location_qc_realtime_qc",
+  "logger_name": "animal_ssmoutputs_satellite_relay_tagging_location_qc_realtime_qc",
   "cloud_optimised_format": "parquet",
   "run_settings": {
     "paths": [
       {
         "s3_uri": "s3://imos-data/IMOS/AATAMS/satellite_tagging/ATF_Location_QC_NRT",
         "filter": [
-          ".*_summary_.*_nrt\\.csv$"
+          ".*_ssmoutputs_.*_nrt\\.csv$"
         ],
         "year_range": []
       }
@@ -42,209 +42,49 @@
       "long_name": "reference",
       "comment": "A three-part code (e.g. rs3-Fred-07) : The first part identifies the batch of tags, the second part is the name or number of the animal, the third part is the year"
     },
-    "ptt": {
-      "type": "int32",
-      "long_name": "Platform Transmitter Terminal",
-      "comment": "Argos PTT number is used"
+    "date": {
+      "type": "timestamp[ns]"
     },
-    "cnt": {
-      "type": "int32",
-      "comment": "The number of times that this record was received"
-    },
-    "s_date": {
-      "type": "timestamp[ns]",
-      "comment": "The start time (UTC) of the summary period"
-    },
-    "e_date": {
-      "type": "timestamp[ns]",
-      "comment": "The end time (UTC) of the summary period. Note that dives are assigned to the period in which they ended for the purposes of calculating the summary statistics described below"
-    },
-    "div_dist": {
-      "type": "double"
-    },
-    "surf_tm": {
+    "lon": {
       "type": "double",
-      "comment": "The proportion of time spent at the surface (%). This includes the SURF_DUR periods described above, plus any other periods which were neither dives nor haulouts"
+      "long_name": "Longitude",
+      "units": "degrees_east",
+      "comment": "Position estimate (WGS 84 datum)"
     },
-    "dive_tm": {
+    "lat": {
       "type": "double",
-      "comment": "The proportion of time spent diving (%). This means the time between the detection of the start of the dive and the detection of the end of the dive. The subsequent SURF_DUR time at the surface that is included in the individual dive records does not contribute to DIVE_TM."
+      "long_name": "Latitude",
+      "units": "degrees_north",
+      "comment": "Position estimate (WGS 84 datum)"
     },
-    "haul_tm": {
-      "type": "double",
-      "comment": "The proportion of time spent hauled-out (%)"
-    },
-    "n_cycles": {
-      "type": "int32",
-      "comment": "The number of dives that finished during the summary period"
-    },
-    "av_depth": {
-      "type": "double",
-      "units": "m",
-      "comment": "The average max_depth in the summary period (metres), where max_depth is the maximum depth recorded in a given dive."
-    },
-    "max_depth": {
-      "type": "double",
-      "units": "m",
-      "comment": "The maximum dive depth (metres)"
-    },
-    "cruise_tm": {
+    "x": {
       "type": "double"
     },
-    "avg_sst": {
+    "y": {
       "type": "double"
     },
-    "avg_speed": {
-      "type": "double",
-      "units": "m/s",
-      "comment": "The average speed recorded during dives (metres/second)"
-    },
-    "sd_depth": {
-      "type": "double",
-      "units": "m",
-      "comment": "The standard deviation of max_depth (metres)"
-    },
-    "av_dur": {
-      "type": "int32",
-      "units": "s",
-      "comment": "The average dive duration (seconds)"
-    },
-    "sd_dur": {
-      "type": "int32",
-      "units": "s",
-      "comment": "The standard deviation of dive duration (seconds)"
-    },
-    "max_dur": {
-      "type": "int32",
-      "units": "s",
-      "comment": "The maximum dive duration (seconds)"
-    },
-    "dp_n_cycles": {
+    "x_se": {
       "type": "double"
     },
-    "dp_av_depth": {
-      "type": "double",
-      "comment": "These fields will be present where the SRDL has been programmed to separate deep from shallow dives according to a maximum depth threshold. These fields hold statistics calculated for the deep dives, the corresponding fields above hold the values for shallow dives."
-    },
-    "dp_max_depth": {
-      "type": "double",
-      "comment": "These fields will be present where the SRDL has been programmed to separate deep from shallow dives according to a maximum depth threshold. These fields hold statistics calculated for the deep dives, the corresponding fields above hold the values for shallow dives."
-    },
-    "dp_avg_speed": {
-      "type": "double",
-      "comment": "These fields will be present where the SRDL has been programmed to separate deep from shallow dives according to a maximum depth threshold. These fields hold statistics calculated for the deep dives, the corresponding fields above hold the values for shallow dives."
-    },
-    "dp_sd_depth": {
-      "type": "double",
-      "comment": "These fields will be present where the SRDL has been programmed to separate deep from shallow dives according to a maximum depth threshold. These fields hold statistics calculated for the deep dives, the corresponding fields above hold the values for shallow dives."
-    },
-    "dp_av_dur": {
-      "type": "double",
-      "comment": "These fields will be present where the SRDL has been programmed to separate deep from shallow dives according to a maximum depth threshold. These fields hold statistics calculated for the deep dives, the corresponding fields above hold the values for shallow dives."
-    },
-    "dp_sd_dur": {
-      "type": "double",
-      "comment": "These fields will be present where the SRDL has been programmed to separate deep from shallow dives according to a maximum depth threshold. These fields hold statistics calculated for the deep dives, the corresponding fields above hold the values for shallow dives."
-    },
-    "dp_max_dur": {
-      "type": "double",
-      "comment": "These fields will be present where the SRDL has been programmed to separate deep from shallow dives according to a maximum depth threshold. These fields hold statistics calculated for the deep dives, the corresponding fields above hold the values for shallow dives."
-    },
-    "dp_dive_tm": {
-      "type": "double",
-      "comment": "The proportion of DIVE_TM that was spent in deep dives (%). i.e. the percentage of time in deep dives = DIVE_TM x DP_DIVE_TM/100; the proportion of time in shallow dives = DIVE_TM x (1 - DP_DIVE_TM/100)"
-    },
-    "av_surf_dur": {
-      "type": "double",
-      "units": "s",
-      "comment": "The average post-dive surface duration (seconds)"
-    },
-    "sd_surf_dur": {
-      "type": "double",
-      "units": "s",
-      "comment": "The standard deviation of post-dive surface duration (seconds)"
-    },
-    "max_surf_dur": {
-      "type": "double",
-      "units": "s",
-      "comment": "The maximum post-dive surface duration (seconds)"
-    },
-    "dp_av_surf_dur": {
+    "y_se": {
       "type": "double"
     },
-    "dp_sd_surf_dur": {
+    "u": {
       "type": "double"
     },
-    "dp_max_surf_dur": {
+    "v": {
       "type": "double"
     },
-    "pca": {
+    "u_se": {
       "type": "double"
     },
-    "swim_eff_desc": {
+    "v_se": {
       "type": "double"
     },
-    "swim_eff_asc": {
+    "s": {
       "type": "double"
     },
-    "swim_eff_whole": {
-      "type": "double"
-    },
-    "secs_desc": {
-      "type": "double"
-    },
-    "secs_asc": {
-      "type": "double"
-    },
-    "pitch_desc": {
-      "type": "double"
-    },
-    "pitch_asc": {
-      "type": "double"
-    },
-    "av_haulout_dur": {
-      "type": "double"
-    },
-    "sd_haulout_dur": {
-      "type": "double"
-    },
-    "max_haulout_dur": {
-      "type": "double"
-    },
-    "av_phosi_dur": {
-      "type": "double"
-    },
-    "sd_phosi_dur": {
-      "type": "double"
-    },
-    "max_phosi_dur": {
-      "type": "double"
-    },
-    "tagging_id": {
-      "type": "double"
-    },
-    "s_date_tag": {
-      "type": "string"
-    },
-    "e_date_tag": {
-      "type": "string"
-    },
-    "ssm_lon": {
-      "type": "double"
-    },
-    "ssm_lat": {
-      "type": "double"
-    },
-    "ssm_x": {
-      "type": "double"
-    },
-    "ssm_y": {
-      "type": "double"
-    },
-    "ssm_x_se": {
-      "type": "double"
-    },
-    "ssm_y_se": {
+    "s_se": {
       "type": "double"
     },
     "cid": {
@@ -266,7 +106,7 @@
     "Resources": [
       {
         "Description": "Cloud Optimised AODN dataset of IMOS - Animal Tracking Facility - Satellite Relay Tagging Program - Near real-time data with quality-controlled locations",
-        "ARN": "arn:aws:s3:::aodn-cloud-optimised/animal_summary_satellite_relay_tagging_realtime_qc.parquet",
+        "ARN": "arn:aws:s3:::aodn-cloud-optimised/animal_ssmoutputs_satellite_relay_tagging_location_qc_realtime_qc.parquet",
         "Region": "ap-southeast-2",
         "Type": "S3 Bucket"
       }
@@ -275,8 +115,8 @@
       "Tutorials": [
         {
           "Title": "Accessing IMOS - Animal Tracking Facility - Satellite Relay Tagging Program - Near real-time data with quality-controlled locations",
-          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/animal_summary_satellite_relay_tagging_realtime_qc.ipynb",
-          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/animal_summary_satellite_relay_tagging_realtime_qc.ipynb",
+          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/animal_ssmoutputs_satellite_relay_tagging_location_qc_realtime_qc.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/animal_ssmoutputs_satellite_relay_tagging_location_qc_realtime_qc.ipynb",
           "AuthorName": "Laurent Besnard",
           "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
         },
@@ -298,10 +138,9 @@
         "NaN"
       ],
       "encoding": "utf-8",
-      "index_col": "s_date",
+      "index_col": "date",
       "parse_dates": [
-        "s_date",
-        "e_date"
+        "date"
       ]
     }
   },
@@ -338,7 +177,7 @@
         "source_variable": "timestamp",
         "type": "time_extent",
         "time_extent": {
-          "time_varname": "s_date",
+          "time_varname": "date",
           "partition_period": "Y"
         }
       },
@@ -346,8 +185,8 @@
         "source_variable": "polygon",
         "type": "spatial_extent",
         "spatial_extent": {
-          "lat_varname": "ssm_lat",
-          "lon_varname": "ssm_lon",
+          "lat_varname": "lat",
+          "lon_varname": "lon",
           "spatial_resolution": 20
         }
       }

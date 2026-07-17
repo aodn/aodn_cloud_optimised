@@ -1,13 +1,13 @@
 {
-  "dataset_name": "animal_metadata_satellite_relay_tagging_realtime_qc",
-  "logger_name": "animal_metadata_satellite_relay_tagging_realtime_qc",
+  "dataset_name": "animal_haulout_satellite_relay_tagging_location_qc_realtime_qc",
+  "logger_name": "animal_haulout_satellite_relay_tagging_location_qc_realtime_qc",
   "cloud_optimised_format": "parquet",
   "run_settings": {
     "paths": [
       {
         "s3_uri": "s3://imos-data/IMOS/AATAMS/satellite_tagging/ATF_Location_QC_NRT",
         "filter": [
-          ".*_metadata_.*_nrt\\.csv$"
+          ".*_haulout_.*_nrt\\.csv$"
         ],
         "year_range": []
       }
@@ -37,106 +37,92 @@
   },
   "metadata_uuid": "b2548767-514f-4a31-b65e-36bb894382d5",
   "schema": {
-    "sattag_program": {
+    "ref": {
       "type": "string",
-      "comment": "SMRU campaign name "
-    },
-    "device_id": {
-      "type": "string",
-      "comment": "SMRU reference ID "
+      "long_name": "reference",
+      "comment": "A three-part code (e.g. rs3-Fred-07) : The first part identifies the batch of tags, the second part is the name or number of the animal, the third part is the year"
     },
     "ptt": {
       "type": "int32",
-      "comment": "Argos platform terminal transmitter ID"
+      "long_name": "Platform Transmitter Terminal",
+      "comment": "Argos PTT number is used"
     },
-    "body": {
+    "s_date": {
+      "type": "timestamp[ns]",
+      "long_name": "Start date",
+      "comment": "the time (UTC) that the haulout started. It takes 10 minutes of uninterrupted dry readings to trigger a haulout these 10 minutes are included."
+    },
+    "e_date": {
+      "type": "timestamp[ns]",
+      "long_name": "End date",
+      "comment": "The time (UTC) that the haulout ended"
+    },
+    "haulout_number": {
       "type": "int32",
-      "comment": "SMRU tag ID "
+      "comment": "The SRDL assigns an incrementing number to each haulout that occurs. The value stored in this field returns to 0 when it reaches the limit of the resolution used to transmit it (normally 0..31 or 0..63). When two haulouts with consecutive numbers are received we can infer that no other haulout occurred between the end of the first haulout and the beginning of the second one. These periods of known non-haulout are shown as narrow grey bars connecting the green haulout bars on the MamVis strip chart display."
     },
-    "device_wmo_ref": {
-      "type": "string",
-      "comment": "WMO ID "
+    "cnt": {
+      "type": "int32",
+      "comment": "The number of times that this record was received"
     },
-    "tag_type": {
-      "type": "string",
-      "comment": "SMRU tag type designation"
+    "phosi_secs": {
+      "type": "int32"
     },
-    "common_name": {
-      "type": "string",
-      "comment": "Deployment animal common name"
+    "wet_n": {
+      "type": "double"
     },
-    "species": {
-      "type": "string",
-      "comment": "Deployment animal scientific name"
+    "wet_min": {
+      "type": "double"
     },
-    "release_longitude": {
-      "type": "double",
-      "units": "degrees_east",
-      "comment": "Tag deployment coordinate (WGS 84 datum)"
+    "wet_max": {
+      "type": "double"
     },
-    "release_latitude": {
-      "type": "double",
-      "units": "degrees_north",
-      "comment": "Tag deployment coordinate (WGS 84 datum)"
+    "wet_mean": {
+      "type": "double"
     },
-    "release_site": {
-      "type": "string",
-      "comment": "Tag deployment locality"
+    "wet_sd": {
+      "type": "double"
     },
-    "release_date": {
-      "type": "timestamp[ns]",
-      "comment": "Tag deployment date (UTC)"
+    "tagging_id": {
+      "type": "double"
     },
-    "recovery_date": {
-      "type": "timestamp[ns]",
-      "comment": "Tag recovery date (UTC)"
-    },
-    "age_class": {
-      "type": "string",
-      "comment": "Animal age class (e.g. Juvenile; adult; NA)"
-    },
-    "sex": {
-      "type": "string",
-      "comment": "Animal sex (e.g. m; f; NA)"
-    },
-    "length": {
-      "type": "double",
-      "units": "m",
-      "comment": "Animal length (m)"
-    },
-    "estimated_mass": {
-      "type": "double",
-      "units": "kg",
-      "comment": "Animal mass (kg) researcher estimated"
-    },
-    "actual_mass": {
-      "type": "double",
-      "units": "kg",
-      "comment": "Animal mass (kg) measurement"
-    },
-    "state_country": {
-      "type": "string",
-      "comment": "Country of deployment "
-    },
-    "qc_start_date": {
-      "type": "timestamp[ns]",
-      "comment": "Time of first data record included in QC (UTC)"
-    },
-    "qc_end_date": {
-      "type": "timestamp[ns]",
-      "comment": "Time of last data record included in QC (UTC)"
-    },
-    "qc_method": {
+    "s_date_tag": {
       "type": "string"
     },
-    "qc_method_version": {
+    "e_date_tag": {
       "type": "string"
     },
-    "qc_proj4string": {
-      "type": "string"
+    "end_number": {
+      "type": "int32",
+      "comment": "In this table HAULOUT_NUMBER to END_NUMBER give the range of transmitted records that were concatenated to form this record."
     },
-    "qc_run_date": {
-      "type": "string"
+    "lat": {
+      "type": "double"
+    },
+    "lon": {
+      "type": "double"
+    },
+    "ssm_lon": {
+      "type": "double"
+    },
+    "ssm_lat": {
+      "type": "double"
+    },
+    "ssm_x": {
+      "type": "double"
+    },
+    "ssm_y": {
+      "type": "double"
+    },
+    "ssm_x_se": {
+      "type": "double"
+    },
+    "ssm_y_se": {
+      "type": "double"
+    },
+    "cid": {
+      "type": "string",
+      "comment": "SMRU campaign name "
     }
   },
   "aws_opendata_registry": {
@@ -153,7 +139,7 @@
     "Resources": [
       {
         "Description": "Cloud Optimised AODN dataset of IMOS - Animal Tracking Facility - Satellite Relay Tagging Program - Near real-time data with quality-controlled locations",
-        "ARN": "arn:aws:s3:::aodn-cloud-optimised/animal_metadata_satellite_relay_tagging_realtime_qc.parquet",
+        "ARN": "arn:aws:s3:::aodn-cloud-optimised/animal_haulout_satellite_relay_tagging_location_qc_realtime_qc.parquet",
         "Region": "ap-southeast-2",
         "Type": "S3 Bucket"
       }
@@ -162,8 +148,8 @@
       "Tutorials": [
         {
           "Title": "Accessing IMOS - Animal Tracking Facility - Satellite Relay Tagging Program - Near real-time data with quality-controlled locations",
-          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/animal_metadata_satellite_relay_tagging_realtime_qc.ipynb",
-          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/animal_metadata_satellite_relay_tagging_realtime_qc.ipynb",
+          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/animal_haulout_satellite_relay_tagging_location_qc_realtime_qc.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/animal_haulout_satellite_relay_tagging_location_qc_realtime_qc.ipynb",
           "AuthorName": "Laurent Besnard",
           "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
         },
@@ -185,11 +171,10 @@
         "NaN"
       ],
       "encoding": "utf-8",
-      "index_col": "qc_start_date",
+      "index_col": "s_date",
       "parse_dates": [
-        "release_date",
-        "qc_start_date",
-        "qc_end_date"
+        "s_date",
+        "e_date"
       ]
     }
   },
@@ -226,17 +211,17 @@
         "source_variable": "timestamp",
         "type": "time_extent",
         "time_extent": {
-          "time_varname": "release_date",
-          "partition_period": "M"
+          "time_varname": "s_date",
+          "partition_period": "Y"
         }
       },
       {
         "source_variable": "polygon",
         "type": "spatial_extent",
         "spatial_extent": {
-          "lat_varname": "release_latitude",
-          "lon_varname": "release_longitude",
-          "spatial_resolution": 5
+          "lat_varname": "lat",
+          "lon_varname": "lon",
+          "spatial_resolution": 20
         }
       }
     ],

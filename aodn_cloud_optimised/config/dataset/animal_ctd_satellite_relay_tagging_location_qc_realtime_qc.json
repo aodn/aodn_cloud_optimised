@@ -1,13 +1,13 @@
 {
-  "dataset_name": "animal_ssmoutputs_satellite_relay_tagging_realtime_qc",
-  "logger_name": "animal_ssmoutputs_satellite_relay_tagging_realtime_qc",
+  "dataset_name": "animal_ctd_satellite_relay_tagging_location_qc_realtime_qc",
+  "logger_name": "animal_ctd_satellite_relay_tagging_location_qc_realtime_qc",
   "cloud_optimised_format": "parquet",
   "run_settings": {
     "paths": [
       {
         "s3_uri": "s3://imos-data/IMOS/AATAMS/satellite_tagging/ATF_Location_QC_NRT",
         "filter": [
-          ".*_ssmoutputs_.*_nrt\\.csv$"
+          ".*_ctd_.*_nrt\\.csv$"
         ],
         "year_range": []
       }
@@ -42,14 +42,121 @@
       "long_name": "reference",
       "comment": "A three-part code (e.g. rs3-Fred-07) : The first part identifies the batch of tags, the second part is the name or number of the animal, the third part is the year"
     },
-    "date": {
-      "type": "timestamp[ns]"
+    "ptt": {
+      "type": "int32",
+      "long_name": "Platform Transmitter Terminal",
+      "comment": "Argos PTT number is used"
     },
-    "lon": {
+    "end_date": {
+      "type": "timestamp",
+      "comment": "The time (UTC) of the end of the upcast"
+    },
+    "max_dbar": {
       "type": "double",
-      "long_name": "Longitude",
-      "units": "degrees_east",
-      "comment": "Position estimate (WGS 84 datum)"
+      "long_name": "Maximum pressure",
+      "comment": "The maximum pressure (in decibar, approximately 1 metre)"
+    },
+    "num": {
+      "type": "int32",
+      "long_name": "Upcast number",
+      "comment": "Upcasts are assigned sequential numbers as they are performed. The SRDL transmits only the deepest casts that occur in each period (usually 6 hours or 12 hours). This means that some earlier upcasts will not be transmitted so these numbers will not be consecutive."
+    },
+    "n_temp": {
+      "type": "int32",
+      "comment": "The number of (pressure,temperature) pairs "
+    },
+    "n_cond": {
+      "type": "double",
+      "comment": "The number of (pressure,conductivity) pairs "
+    },
+    "n_sal": {
+      "type": "int32",
+      "comment": "The number of (pressure,salinity) pairs "
+    },
+    "temp_dbar": {
+      "type": "double",
+      "long_name": "Pressure coordinates of the (pressure,temperature) profile",
+      "units": "decibars",
+      "comment": "A comma-separated list of the pressure coordinates of the (pressure,temperature) profile (decibars)"
+    },
+    "temp_vals": {
+      "type": "double",
+      "long_name": "Temperature profile",
+      "units": "degrees Celsius",
+      "comment": "A comma-separated list of the temperature coordinates of the (pressure,temperature) profile (degree C)"
+    },
+    "cond_dbar": {
+      "type": "double",
+      "long_name": "Pressure coordinates of the (pressure,conductivity) profile",
+      "units": "decibars",
+      "comment": "A comma-separated list of the pressure coordinates of the (pressure,conductivity) profile (decibars)"
+    },
+    "cond_vals": {
+      "type": "double",
+      "long_name": "Conductivity profile",
+      "units": "mS/cm",
+      "comment": "A comma-separated list of the conductivity coordinates of the (pressure,conductivity) profile (mS/cm)"
+    },
+    "sal_dbar": {
+      "type": "double",
+      "long_name": "Pressure coordinates of the (pressure,salinity) profile",
+      "units": "decibars",
+      "comment": "A comma-separated list of the pressure coordinates of the (pressure,salinity) profile (decibars)"
+    },
+    "sal_vals": {
+      "type": "double",
+      "long_name": "Salinity profile",
+      "units": " ",
+      "comment": "A comma-separated list of the salinity coordinates of the (pressure,salinity) profile"
+    },
+    "n_fluoro": {
+      "type": "double"
+    },
+    "fluoro_dbar": {
+      "type": "double",
+      "units": "decibars"
+    },
+    "fluoro_vals": {
+      "type": "double"
+    },
+    "n_oxy": {
+      "type": "double"
+    },
+    "oxy_dbar": {
+      "type": "double",
+      "units": "decibars"
+    },
+    "oxy_vals": {
+      "type": "double"
+    },
+    "qc_profile": {
+      "type": "int32"
+    },
+    "qc_temp": {
+      "type": "double"
+    },
+    "qc_sal": {
+      "type": "double"
+    },
+    "sal_corrected_vals": {
+      "type": "double"
+    },
+    "created": {
+      "type": "string",
+      "long_name": "Date of file creation (UTC)"
+    },
+    "modified": {
+      "type": "string",
+      "long_name": "Date of update of this file (UTC)"
+    },
+    "n_photo": {
+      "type": "double"
+    },
+    "photo_dbar": {
+      "type": "double"
+    },
+    "photo_vals": {
+      "type": "double"
     },
     "lat": {
       "type": "double",
@@ -57,34 +164,28 @@
       "units": "degrees_north",
       "comment": "Position estimate (WGS 84 datum)"
     },
-    "x": {
+    "lon": {
+      "type": "double",
+      "long_name": "Longitude",
+      "units": "degrees_east",
+      "comment": "Position estimate (WGS 84 datum)"
+    },
+    "ssm_lon": {
       "type": "double"
     },
-    "y": {
+    "ssm_lat": {
       "type": "double"
     },
-    "x_se": {
+    "ssm_x": {
       "type": "double"
     },
-    "y_se": {
+    "ssm_y": {
       "type": "double"
     },
-    "u": {
+    "ssm_x_se": {
       "type": "double"
     },
-    "v": {
-      "type": "double"
-    },
-    "u_se": {
-      "type": "double"
-    },
-    "v_se": {
-      "type": "double"
-    },
-    "s": {
-      "type": "double"
-    },
-    "s_se": {
+    "ssm_y_se": {
       "type": "double"
     },
     "cid": {
@@ -106,7 +207,7 @@
     "Resources": [
       {
         "Description": "Cloud Optimised AODN dataset of IMOS - Animal Tracking Facility - Satellite Relay Tagging Program - Near real-time data with quality-controlled locations",
-        "ARN": "arn:aws:s3:::aodn-cloud-optimised/animal_ssmoutputs_satellite_relay_tagging_realtime_qc.parquet",
+        "ARN": "arn:aws:s3:::aodn-cloud-optimised/animal_ctd_satellite_relay_tagging_location_qc_realtime_qc.parquet",
         "Region": "ap-southeast-2",
         "Type": "S3 Bucket"
       }
@@ -115,8 +216,8 @@
       "Tutorials": [
         {
           "Title": "Accessing IMOS - Animal Tracking Facility - Satellite Relay Tagging Program - Near real-time data with quality-controlled locations",
-          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/animal_ssmoutputs_satellite_relay_tagging_realtime_qc.ipynb",
-          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/animal_ssmoutputs_satellite_relay_tagging_realtime_qc.ipynb",
+          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/animal_ctd_satellite_relay_tagging_location_qc_realtime_qc.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/animal_ctd_satellite_relay_tagging_location_qc_realtime_qc.ipynb",
           "AuthorName": "Laurent Besnard",
           "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
         },
@@ -138,9 +239,9 @@
         "NaN"
       ],
       "encoding": "utf-8",
-      "index_col": "date",
+      "index_col": "end_date",
       "parse_dates": [
-        "date"
+        "end_date"
       ]
     }
   },
@@ -177,7 +278,7 @@
         "source_variable": "timestamp",
         "type": "time_extent",
         "time_extent": {
-          "time_varname": "date",
+          "time_varname": "end_date",
           "partition_period": "Y"
         }
       },

@@ -1,13 +1,13 @@
 {
-  "dataset_name": "animal_haulout_satellite_relay_tagging_realtime_qc",
-  "logger_name": "animal_haulout_satellite_relay_tagging_realtime_qc",
+  "dataset_name": "animal_diag_satellite_relay_tagging_location_qc_realtime_qc",
+  "logger_name": "animal_diag_satellite_relay_tagging_location_qc_realtime_qc",
   "cloud_optimised_format": "parquet",
   "run_settings": {
     "paths": [
       {
         "s3_uri": "s3://imos-data/IMOS/AATAMS/satellite_tagging/ATF_Location_QC_NRT",
         "filter": [
-          ".*_haulout_.*_nrt\\.csv$"
+          ".*_diag_.*_nrt\\.csv$"
         ],
         "year_range": []
       }
@@ -47,60 +47,112 @@
       "long_name": "Platform Transmitter Terminal",
       "comment": "Argos PTT number is used"
     },
-    "s_date": {
+    "d_date": {
       "type": "timestamp[ns]",
-      "long_name": "Start date",
-      "comment": "the time (UTC) that the haulout started. It takes 10 minutes of uninterrupted dry readings to trigger a haulout these 10 minutes are included."
+      "comment": "The time assigned to the location by ARGOS (UTC)"
     },
-    "e_date": {
-      "type": "timestamp[ns]",
-      "long_name": "End date",
-      "comment": "The time (UTC) that the haulout ended"
-    },
-    "haulout_number": {
+    "lq": {
       "type": "int32",
-      "comment": "The SRDL assigns an incrementing number to each haulout that occurs. The value stored in this field returns to 0 when it reaches the limit of the resolution used to transmit it (normally 0..31 or 0..63). When two haulouts with consecutive numbers are received we can infer that no other haulout occurred between the end of the first haulout and the beginning of the second one. These periods of known non-haulout are shown as narrow grey bars connecting the green haulout bars on the MamVis strip chart display."
-    },
-    "cnt": {
-      "type": "int32",
-      "comment": "The number of times that this record was received"
-    },
-    "phosi_secs": {
-      "type": "int32"
-    },
-    "wet_n": {
-      "type": "double"
-    },
-    "wet_min": {
-      "type": "double"
-    },
-    "wet_max": {
-      "type": "double"
-    },
-    "wet_mean": {
-      "type": "double"
-    },
-    "wet_sd": {
-      "type": "double"
-    },
-    "tagging_id": {
-      "type": "double"
-    },
-    "s_date_tag": {
-      "type": "string"
-    },
-    "e_date_tag": {
-      "type": "string"
-    },
-    "end_number": {
-      "type": "int32",
-      "comment": "In this table HAULOUT_NUMBER to END_NUMBER give the range of transmitted records that were concatenated to form this record."
+      "comment": "The Location Quality assigned by Argos (-1 = class A, -2 = class B, -9 = class Z)"
     },
     "lat": {
-      "type": "double"
+      "type": "double",
+      "long_name": "Latitude",
+      "units": "degrees_north",
+      "comment": "Position estimate (WGS 84 datum)"
     },
     "lon": {
+      "type": "double",
+      "long_name": "Longitude",
+      "units": "degrees_east",
+      "comment": "Position estimate (WGS 84 datum)"
+    },
+    "alt_lat": {
+      "type": "double",
+      "comment": "Alternative solution to position equations (this may have been swapped with LAT,LON by the location filtering algorithm). These fields are simply copies of LAT,LON when Kalman location processing is operating."
+    },
+    "alt_lon": {
+      "type": "double",
+      "comment": "Alternative solution to position equations (this may have been swapped with LAT,LON by the location filtering algorithm). These fields are simply copies of LAT,LON when Kalman location processing is operating."
+    },
+    "n_mess": {
+      "type": "int32",
+      "comment": "Number of uplinks received during the satellite pass"
+    },
+    "n_mess_120": {
+      "type": "int32",
+      "comment": "Number of uplinks received with signal strength > -120 dB"
+    },
+    "best_level": {
+      "type": "int32",
+      "units": "dB",
+      "comment": "Signal strength of strongest uplink (dB)"
+    },
+    "pass_dur": {
+      "type": "int32",
+      "units": "s",
+      "comment": "Duration of satellite overpass (s)"
+    },
+    "freq": {
+      "type": "double",
+      "units": "Hz",
+      "comment": "Measured frequency of SRDL signal at the satellite (Hz)"
+    },
+    "v_mask": {
+      "type": "int32",
+      "comment": "Result of the location filtering algorithm: 0 = accepted, 20 = rejected at the 20 dm/s level (see VMASK_THRESHOLD). The first and last two points of the track are excluded from the algorithm and are assigned -1"
+    },
+    "alt": {
+      "type": "double",
+      "comment": "= 1 if the LAT,LON and ALT_LAT, ALT_LON were swapped by the location filter\u2019s initial plausibility check"
+    },
+    "est_speed": {
+      "type": "double",
+      "long_name": "Estimated speed",
+      "units": "m/s",
+      "comment": "Speed across the surface estimated by the location filtering algorithm (m/s)"
+    },
+    "km_from_home": {
+      "type": "double",
+      "long_name": "Distance from home",
+      "units": "km",
+      "comment": "Great-circle distance to the release_latitude, release_longitude position specified in the metadata table (km). This is simply the shortest distance between the two points: the path may cross land."
+    },
+    "iq": {
+      "type": "int32",
+      "comment": "A two-digit code which gives further information about the location calculation for poor quality locations (see Argos documentation for a complete explanation)"
+    },
+    "nops": {
+      "type": "int32"
+    },
+    "deleted": {
+      "type": "string",
+      "comment": "The value Y here causes this position to be ignored by the location filtering algorithm. Normally used to remove a very poor position occurring at the beginning of the track"
+    },
+    "actual_ptt": {
+      "type": "int32",
+      "comment": "When a single SRDL is programmed to use several different PTT numbers, the SMRU system overrides the PTT field to present all the data as if it had been transmitted under a single PTT number. This field records the true PTT number associated with this location."
+    },
+    "error_radius": {
+      "type": "int32"
+    },
+    "semi_major_axis": {
+      "type": "int32"
+    },
+    "semi_minor_axis": {
+      "type": "int32"
+    },
+    "ellipse_orientation": {
+      "type": "int32"
+    },
+    "hdop": {
       "type": "double"
+    },
+    "satellite": {
+      "type": "double"
+    },
+    "diag_id": {
+      "type": "int32"
     },
     "ssm_lon": {
       "type": "double"
@@ -139,7 +191,7 @@
     "Resources": [
       {
         "Description": "Cloud Optimised AODN dataset of IMOS - Animal Tracking Facility - Satellite Relay Tagging Program - Near real-time data with quality-controlled locations",
-        "ARN": "arn:aws:s3:::aodn-cloud-optimised/animal_haulout_satellite_relay_tagging_realtime_qc.parquet",
+        "ARN": "arn:aws:s3:::aodn-cloud-optimised/animal_diag_satellite_relay_tagging_location_qc_realtime_qc.parquet",
         "Region": "ap-southeast-2",
         "Type": "S3 Bucket"
       }
@@ -148,8 +200,8 @@
       "Tutorials": [
         {
           "Title": "Accessing IMOS - Animal Tracking Facility - Satellite Relay Tagging Program - Near real-time data with quality-controlled locations",
-          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/animal_haulout_satellite_relay_tagging_realtime_qc.ipynb",
-          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/animal_haulout_satellite_relay_tagging_realtime_qc.ipynb",
+          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/animal_diag_satellite_relay_tagging_location_qc_realtime_qc.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/animal_diag_satellite_relay_tagging_location_qc_realtime_qc.ipynb",
           "AuthorName": "Laurent Besnard",
           "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
         },
@@ -171,10 +223,9 @@
         "NaN"
       ],
       "encoding": "utf-8",
-      "index_col": "s_date",
+      "index_col": "d_date",
       "parse_dates": [
-        "s_date",
-        "e_date"
+        "d_date"
       ]
     }
   },
@@ -211,7 +262,7 @@
         "source_variable": "timestamp",
         "type": "time_extent",
         "time_extent": {
-          "time_varname": "s_date",
+          "time_varname": "d_date",
           "partition_period": "Y"
         }
       },
