@@ -49,16 +49,16 @@
       "comment": "Argos PTT number is used"
     },
     "d_date": {
-      "type": "timestamp",
+      "type": "timestamp[ns]",
       "comment": "The time that the fix was obtained (UTC)"
     },
     "nsats_detected": {
       "type": "int32",
-      "comment": "The number of SV\u2019s detected by the tag"
+      "comment": "The number of SVs detected by the tag"
     },
     "nsats_transmitted": {
       "type": "int32",
-      "comment": "The number of ranges to SV\u2019s transmitted by the tag. SRDL\u2019s normally\ntransmit only the 8 strongest signals when more than 8 are detected. Only\n5 SV\u2019s are required to generate a location and error estimate."
+      "comment": "The number of ranges to SVs transmitted by the tag. SRDLs normally transmit only the 8 strongest signals when more than 8 are detected. Only 5 SVs are required to generate a location and error estimate."
     },
     "gps_mode": {
       "type": "int32"
@@ -92,15 +92,15 @@
     },
     "timeshift": {
       "type": "float32",
-      "comment": "Estimated discrepancy between the tag\u2019s real-time clock and the atomic clock maintained on board the GPS satellites. This value should drift steadily (about 0.1s / day)"
+      "comment": "Estimated discrepancy between the tags real-time clock and the atomic clock maintained on board the GPS satellites. This value should drift steadily (about 0.1s/day)"
     },
     "submitted": {
-      "type": "timestamp",
+      "type": "timestamp[ns]",
       "comment": "Date (UTC) that the fix was processed at SMRU"
     },
     "nsats_healthy": {
       "type": "float32",
-      "comment": "The number of SV\u2019s for which valid ephemeris data was available."
+      "comment": "The number of SV 2019s for which valid ephemeris data was available."
     },
     "nbits": {
       "type": "int32",
@@ -252,7 +252,7 @@
         "source_variable": "timestamp",
         "type": "time_extent",
         "time_extent": {
-          "time_varname": "d_date\"",
+          "time_varname": "d_date",
           "partition_period": "Y"
         }
       },

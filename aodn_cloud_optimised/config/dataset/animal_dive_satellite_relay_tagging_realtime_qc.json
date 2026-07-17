@@ -52,7 +52,7 @@
       "comment": "The number of times that this record was received"
     },
     "de_date": {
-      "type": "timestamp",
+      "type": "timestamp[ns]",
       "long_name": "Dive end date",
       "comment": "Dive end: the time (UTC) at which the depth crossed the threshold on the return to the surface"
     },
@@ -164,15 +164,15 @@
     },
     "depth_str": {
       "type": "string",
-      "comment": "The D1,D2,D3,\u2026 values as a comma-separated string"
+      "comment": "The D1,D2,D3, values as a comma-separated string"
     },
     "speed_str": {
       "type": "string",
-      "comment": "The V1,V2,V3,\u2026 values as a comma-separated string"
+      "comment": "The V1,V2,V3, values as a comma-separated string"
     },
     "propn_str": {
       "type": "string",
-      "comment": "The T1,T2,T3,\u2026 values as a comma-separated string"
+      "comment": "The T1,T2,T3, values as a comma-separated string"
     },
     "percent_area": {
       "type": "double",

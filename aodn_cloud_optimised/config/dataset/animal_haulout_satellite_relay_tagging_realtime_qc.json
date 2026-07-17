@@ -48,18 +48,18 @@
       "comment": "Argos PTT number is used"
     },
     "s_date": {
-      "type": "timestamp",
+      "type": "timestamp[ns]",
       "long_name": "Start date",
-      "comment": "the time (UTC) that the haulout started. It takes 10 minutes of uninterrupted dry readings to trigger a haulout \u2013 these 10 minutes are included."
+      "comment": "the time (UTC) that the haulout started. It takes 10 minutes of uninterrupted dry readings to trigger a haulout these 10 minutes are included."
     },
     "e_date": {
-      "type": "timestamp",
+      "type": "timestamp[ns]",
       "long_name": "End date",
       "comment": "The time (UTC) that the haulout ended"
     },
     "haulout_number": {
       "type": "int32",
-      "comment": "The SRDL assigns an incrementing number to each haulout that occurs. The value stored in this field returns to 0 when it reaches the limit of the resolution used to transmit it (normally 0..31 or 0..63). When two haulouts with consecutive numbers are received we can infer that no other haulout occurred between the end of the first haulout and the beginning of the second one. These periods of \u201cknown non-haulout\u201d are shown as narrow grey bars connecting the green haulout bars on the MamVis strip chart display."
+      "comment": "The SRDL assigns an incrementing number to each haulout that occurs. The value stored in this field returns to 0 when it reaches the limit of the resolution used to transmit it (normally 0..31 or 0..63). When two haulouts with consecutive numbers are received we can infer that no other haulout occurred between the end of the first haulout and the beginning of the second one. These periods of known non-haulout are shown as narrow grey bars connecting the green haulout bars on the MamVis strip chart display."
     },
     "cnt": {
       "type": "int32",

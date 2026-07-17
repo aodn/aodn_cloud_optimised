@@ -84,16 +84,16 @@
       "comment": "Tag deployment locality"
     },
     "release_date": {
-      "type": "timestamp",
+      "type": "timestamp[ns]",
       "comment": "Tag deployment date (UTC)"
     },
     "recovery_date": {
-      "type": "timestamp",
+      "type": "timestamp[ns]",
       "comment": "Tag recovery date (UTC)"
     },
     "age_class": {
       "type": "string",
-      "comment": "Animal age class (e.g. Juvenile; adult; NA"
+      "comment": "Animal age class (e.g. Juvenile; adult; NA)"
     },
     "sex": {
       "type": "string",
@@ -119,11 +119,11 @@
       "comment": "Country of deployment "
     },
     "qc_start_date": {
-      "type": "timestamp",
+      "type": "timestamp[ns]",
       "comment": "Time of first data record included in QC (UTC)"
     },
     "qc_end_date": {
-      "type": "timestamp",
+      "type": "timestamp[ns]",
       "comment": "Time of last data record included in QC (UTC)"
     },
     "qc_method": {

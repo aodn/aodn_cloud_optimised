@@ -48,8 +48,8 @@
       "comment": "Argos PTT number is used"
     },
     "d_date": {
-      "type": "timestamp",
-      "commment": "The time assigned to the location by ARGOS (UTC)"
+      "type": "timestamp[ns]",
+      "comment": "The time assigned to the location by ARGOS (UTC)"
     },
     "lq": {
       "type": "int32",

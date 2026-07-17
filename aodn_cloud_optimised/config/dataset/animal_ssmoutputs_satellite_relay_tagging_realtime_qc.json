@@ -43,7 +43,7 @@
       "comment": "A three-part code (e.g. rs3-Fred-07) : The first part identifies the batch of tags, the second part is the name or number of the animal, the third part is the year"
     },
     "date": {
-      "type": "timestamp"
+      "type": "timestamp[ns]"
     },
     "lon": {
       "type": "double",

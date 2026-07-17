@@ -52,11 +52,11 @@
       "comment": "The number of times that this record was received"
     },
     "s_date": {
-      "type": "timestamp",
+      "type": "timestamp[ns]",
       "comment": "The start time (UTC) of the summary period"
     },
     "e_date": {
-      "type": "timestamp",
+      "type": "timestamp[ns]",
       "comment": "The end time (UTC) of the summary period. Note that dives are assigned to the period in which they ended for the purposes of calculating the summary statistics described below"
     },
     "div_dist": {
@@ -152,7 +152,7 @@
     },
     "dp_dive_tm": {
       "type": "double",
-      "comment": "The proportion of DIVE_TM that was spent in deep dives (%). i.e. the percentage of time in deep dives = DIVE_TM x DP_DIVE_TM/100; the proportion of time in shallow dives = DIVE_TM x (1 \u2013 DP_DIVE_TM/100)"
+      "comment": "The proportion of DIVE_TM that was spent in deep dives (%). i.e. the percentage of time in deep dives = DIVE_TM x DP_DIVE_TM/100; the proportion of time in shallow dives = DIVE_TM x (1 - DP_DIVE_TM/100)"
     },
     "av_surf_dur": {
       "type": "double",
