@@ -38,22 +38,32 @@
   "metadata_uuid": "b2548767-514f-4a31-b65e-36bb894382d5",
   "schema": {
     "ref": {
-      "type": "string"
+      "type": "string",
+      "long_name": "reference",
+      "comment": "A three-part code (e.g. rs3-Fred-07) : The first part identifies the batch of tags, the second part is the name or number of the animal, the third part is the year"
     },
     "ptt": {
-      "type": "int32"
+      "type": "int32",
+      "long_name": "Platform Transmitter Terminal",
+      "comment": "Argos PTT number is used"
     },
     "s_date": {
-      "type": "timestamp[ns]"
+      "type": "timestamp",
+      "long_name": "Start date",
+      "comment": "the time (UTC) that the haulout started. It takes 10 minutes of uninterrupted dry readings to trigger a haulout \u2013 these 10 minutes are included."
     },
     "e_date": {
-      "type": "timestamp[ns]"
+      "type": "timestamp",
+      "long_name": "End date",
+      "comment": "The time (UTC) that the haulout ended"
     },
     "haulout_number": {
-      "type": "int32"
+      "type": "int32",
+      "comment": "The SRDL assigns an incrementing number to each haulout that occurs. The value stored in this field returns to 0 when it reaches the limit of the resolution used to transmit it (normally 0..31 or 0..63). When two haulouts with consecutive numbers are received we can infer that no other haulout occurred between the end of the first haulout and the beginning of the second one. These periods of \u201cknown non-haulout\u201d are shown as narrow grey bars connecting the green haulout bars on the MamVis strip chart display."
     },
     "cnt": {
-      "type": "int32"
+      "type": "int32",
+      "comment": "The number of times that this record was received"
     },
     "phosi_secs": {
       "type": "int32"
@@ -83,7 +93,8 @@
       "type": "string"
     },
     "end_number": {
-      "type": "int32"
+      "type": "int32",
+      "comment": "In this table HAULOUT_NUMBER to END_NUMBER give the range of transmitted records that were concatenated to form this record."
     },
     "lat": {
       "type": "double"
@@ -110,7 +121,8 @@
       "type": "double"
     },
     "cid": {
-      "type": "string"
+      "type": "string",
+      "comment": "SMRU campaign name "
     }
   },
   "aws_opendata_registry": {

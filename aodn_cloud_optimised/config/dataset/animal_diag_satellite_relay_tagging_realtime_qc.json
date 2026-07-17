@@ -38,67 +38,100 @@
   "metadata_uuid": "b2548767-514f-4a31-b65e-36bb894382d5",
   "schema": {
     "ref": {
-      "type": "string"
+      "type": "string",
+      "long_name": "reference",
+      "comment": "A three-part code (e.g. rs3-Fred-07) : The first part identifies the batch of tags, the second part is the name or number of the animal, the third part is the year"
     },
     "ptt": {
-      "type": "int32"
+      "type": "int32",
+      "long_name": "Platform Transmitter Terminal",
+      "comment": "Argos PTT number is used"
     },
     "d_date": {
-      "type": "timestamp[ns]"
+      "type": "timestamp",
+      "commment": "The time assigned to the location by ARGOS (UTC)"
     },
     "lq": {
-      "type": "int32"
+      "type": "int32",
+      "comment": "The Location Quality assigned by Argos (-1 = class A, -2 = class B, -9 = class Z)"
     },
     "lat": {
-      "type": "double"
+      "type": "double",
+      "long_name": "Latitude",
+      "units": "degrees_north",
+      "comment": "Position estimate (WGS 84 datum)"
     },
     "lon": {
-      "type": "double"
+      "type": "double",
+      "long_name": "Longitude",
+      "units": "degrees_east",
+      "comment": "Position estimate (WGS 84 datum)"
     },
     "alt_lat": {
-      "type": "double"
+      "type": "double",
+      "comment": "Alternative solution to position equations (this may have been swapped with LAT,LON by the location filtering algorithm). These fields are simply copies of LAT,LON when Kalman location processing is operating."
     },
     "alt_lon": {
-      "type": "double"
+      "type": "double",
+      "comment": "Alternative solution to position equations (this may have been swapped with LAT,LON by the location filtering algorithm). These fields are simply copies of LAT,LON when Kalman location processing is operating."
     },
     "n_mess": {
-      "type": "int32"
+      "type": "int32",
+      "comment": "Number of uplinks received during the satellite pass"
     },
     "n_mess_120": {
-      "type": "int32"
+      "type": "int32",
+      "comment": "Number of uplinks received with signal strength > -120 dB"
     },
     "best_level": {
-      "type": "int32"
+      "type": "int32",
+      "units": "dB",
+      "comment": "Signal strength of strongest uplink (dB)"
     },
     "pass_dur": {
-      "type": "int32"
+      "type": "int32",
+      "units": "s",
+      "comment": "Duration of satellite overpass (s)"
     },
     "freq": {
-      "type": "double"
+      "type": "double",
+      "units": "Hz",
+      "comment": "Measured frequency of SRDL signal at the satellite (Hz)"
     },
     "v_mask": {
-      "type": "int32"
+      "type": "int32",
+      "comment": "Result of the location filtering algorithm: 0 = accepted, 20 = rejected at the 20 dm/s level (see VMASK_THRESHOLD). The first and last two points of the track are excluded from the algorithm and are assigned -1"
     },
     "alt": {
-      "type": "double"
+      "type": "double",
+      "comment": "= 1 if the LAT,LON and ALT_LAT, ALT_LON were swapped by the location filter\u2019s initial plausibility check"
     },
     "est_speed": {
-      "type": "double"
+      "type": "double",
+      "long_name": "Estimated speed",
+      "units": "m/s",
+      "comment": "Speed across the surface estimated by the location filtering algorithm (m/s)"
     },
     "km_from_home": {
-      "type": "double"
+      "type": "double",
+      "long_name": "Distance from home",
+      "units": "km",
+      "comment": "Great-circle distance to the release_latitude, release_longitude position specified in the metadata table (km). This is simply the shortest distance between the two points: the path may cross land."
     },
     "iq": {
-      "type": "int32"
+      "type": "int32",
+      "comment": "A two-digit code which gives further information about the location calculation for poor quality locations (see Argos documentation for a complete explanation)"
     },
     "nops": {
       "type": "int32"
     },
     "deleted": {
-      "type": "double"
+      "type": "string",
+      "comment": "The value Y here causes this position to be ignored by the location filtering algorithm. Normally used to remove a very poor position occurring at the beginning of the track"
     },
     "actual_ptt": {
-      "type": "int32"
+      "type": "int32",
+      "comment": "When a single SRDL is programmed to use several different PTT numbers, the SMRU system overrides the PTT field to present all the data as if it had been transmitted under a single PTT number. This field records the true PTT number associated with this location."
     },
     "error_radius": {
       "type": "int32"
@@ -140,7 +173,8 @@
       "type": "double"
     },
     "cid": {
-      "type": "string"
+      "type": "string",
+      "comment": "SMRU campaign name "
     }
   },
   "aws_opendata_registry": {

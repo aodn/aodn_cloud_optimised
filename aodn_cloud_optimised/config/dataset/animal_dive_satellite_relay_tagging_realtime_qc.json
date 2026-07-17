@@ -38,106 +38,161 @@
   "metadata_uuid": "b2548767-514f-4a31-b65e-36bb894382d5",
   "schema": {
     "ref": {
-      "type": "string"
+      "type": "string",
+      "long_name": "reference",
+      "comment": "A three-part code (e.g. rs3-Fred-07) : The first part identifies the batch of tags, the second part is the name or number of the animal, the third part is the year"
     },
     "ptt": {
-      "type": "int32"
+      "type": "int32",
+      "long_name": "Platform Transmitter Terminal",
+      "comment": "Argos PTT number is used"
     },
     "cnt": {
-      "type": "int32"
+      "type": "int32",
+      "comment": "The number of times that this record was received"
     },
     "de_date": {
-      "type": "timestamp[ns]"
+      "type": "timestamp",
+      "long_name": "Dive end date",
+      "comment": "Dive end: the time (UTC) at which the depth crossed the threshold on the return to the surface"
     },
     "surf_dur": {
-      "type": "int32"
+      "type": "int32",
+      "long_name": "Surface duration",
+      "units": "s",
+      "comment": "Surface duration (seconds): the length of time following DE_DATE before the next dive or other event began."
     },
     "dive_dur": {
-      "type": "int32"
+      "type": "int32",
+      "long_name": "Dive duration",
+      "units": "s",
+      "comment": "Dive duration (seconds): the length of time between the crossing of the dive-start threshold on the descent and DE_DATE"
     },
     "max_dep": {
-      "type": "double"
+      "type": "double",
+      "units": "m",
+      "comment": "The maximum dive depth recorded"
     },
     "d1": {
-      "type": "double"
+      "type": "double",
+      "units": "m",
+      "comment": "Intermediate depth points (metres) in the dive. For most deployments one of these is guaranteed to be the maximum depth (so MAX_DEP is not transmitted)"
     },
     "d2": {
-      "type": "double"
+      "type": "double",
+      "units": "m",
+      "comment": "Intermediate depth points (metres) in the dive. For most deployments one of these is guaranteed to be the maximum depth (so MAX_DEP is not transmitted)"
     },
     "d3": {
-      "type": "double"
+      "type": "double",
+      "units": "m",
+      "comment": "Intermediate depth points (metres) in the dive. For most deployments one of these is guaranteed to be the maximum depth (so MAX_DEP is not transmitted)"
     },
     "d4": {
-      "type": "double"
+      "type": "double",
+      "units": "m",
+      "comment": "Intermediate depth points (metres) in the dive. For most deployments one of these is guaranteed to be the maximum depth (so MAX_DEP is not transmitted)"
     },
     "v1": {
-      "type": "double"
+      "type": "double",
+      "units": "m/s",
+      "comment": "Speeds (metres/second) in each section of the dive. If there is one more Vvalue than D- values then V1 is the speed up to D1, V2 between D1 and D2, etc. The last V- value is the speed between the last D- value and the surface. If there are three V- values then V1 is the speed from the surface to the D1 point, V3 is the speed from the last depth point to the surface, and V2 is the speed over the remainder of the dive between D1 and the last depth point."
     },
     "v2": {
-      "type": "double"
+      "type": "double",
+      "units": "m/s",
+      "comment": "Speeds (metres/second) in each section of the dive. If there is one more Vvalue than D- values then V1 is the speed up to D1, V2 between D1 and D2, etc. The last V- value is the speed between the last D- value and the surface. If there are three V- values then V1 is the speed from the surface to the D1 point, V3 is the speed from the last depth point to the surface, and V2 is the speed over the remainder of the dive between D1 and the last depth point."
     },
     "v3": {
-      "type": "double"
+      "type": "double",
+      "units": "m/s",
+      "comment": "Speeds (metres/second) in each section of the dive. If there is one more Vvalue than D- values then V1 is the speed up to D1, V2 between D1 and D2, etc. The last V- value is the speed between the last D- value and the surface. If there are three V- values then V1 is the speed from the surface to the D1 point, V3 is the speed from the last depth point to the surface, and V2 is the speed over the remainder of the dive between D1 and the last depth point."
     },
     "v4": {
-      "type": "double"
+      "type": "double",
+      "units": "m/s",
+      "comment": "Speeds (metres/second) in each section of the dive. If there is one more Vvalue than D- values then V1 is the speed up to D1, V2 between D1 and D2, etc. The last V- value is the speed between the last D- value and the surface. If there are three V- values then V1 is the speed from the surface to the D1 point, V3 is the speed from the last depth point to the surface, and V2 is the speed over the remainder of the dive between D1 and the last depth point."
     },
     "v5": {
-      "type": "double"
+      "type": "double",
+      "units": "m/s",
+      "comment": "Speeds (metres/second) in each section of the dive. If there is one more Vvalue than D- values then V1 is the speed up to D1, V2 between D1 and D2, etc. The last V- value is the speed between the last D- value and the surface. If there are three V- values then V1 is the speed from the surface to the D1 point, V3 is the speed from the last depth point to the surface, and V2 is the speed over the remainder of the dive between D1 and the last depth point."
     },
     "travel_r": {
-      "type": "double"
+      "type": "double",
+      "long_name": "estimate of speed-over-ground",
+      "units": "m/s",
+      "comment": " An estimate of speed-over-ground, based only on filtered Argos locations not the turbine speed (metres/second)"
     },
     "homedist": {
-      "type": "double"
+      "type": "double",
+      "comment": "Great-circle distance from the home point in the metadata table"
     },
     "bottom": {
-      "type": "double"
+      "type": "double",
+      "units": "m",
+      "comment": "An estimate of the ocean depth derived from the Smith and Sandwell gridded dataset (metres)"
     },
     "t1": {
-      "type": "double"
+      "type": "double",
+      "comment": "The percentage of DIVE_DUR elapsed since the beginning of the dive at each of the intermediate depth points"
     },
     "t2": {
-      "type": "double"
+      "type": "double",
+      "comment": "The percentage of DIVE_DUR elapsed since the beginning of the dive at each of the intermediate depth points"
     },
     "t3": {
-      "type": "double"
+      "type": "double",
+      "comment": "The percentage of DIVE_DUR elapsed since the beginning of the dive at each of the intermediate depth points"
     },
     "t4": {
-      "type": "double"
+      "type": "double",
+      "comment": "The percentage of DIVE_DUR elapsed since the beginning of the dive at each of the intermediate depth points"
     },
     "d_speed": {
-      "type": "double"
+      "type": "double",
+      "units": "m/s",
+      "comment": "The average speed recorded in the dive (metres/second)"
     },
     "n_depths": {
-      "type": "int32"
+      "type": "int32",
+      "comment": "The number of intermediate dive points present"
     },
     "n_speeds": {
-      "type": "int32"
+      "type": "int32",
+      "comment": "The number of intermediate speeds present"
     },
     "depth_str": {
-      "type": "double"
+      "type": "string",
+      "comment": "The D1,D2,D3,\u2026 values as a comma-separated string"
     },
     "speed_str": {
-      "type": "double"
+      "type": "string",
+      "comment": "The V1,V2,V3,\u2026 values as a comma-separated string"
     },
     "propn_str": {
-      "type": "double"
+      "type": "string",
+      "comment": "The T1,T2,T3,\u2026 values as a comma-separated string"
     },
     "percent_area": {
-      "type": "double"
+      "type": "double",
+      "comment": "Used to calculate the TAD dive index"
     },
     "residual": {
       "type": "int32"
     },
     "grp_number": {
-      "type": "int32"
+      "type": "int32",
+      "comment": "Shows which dives were sent in the same transmission"
     },
     "d5": {
-      "type": "double"
+      "type": "double",
+      "units": "m",
+      "comment": "Intermediate depth points (metres) in the dive. For most deployments one of these is guaranteed to be the maximum depth (so MAX_DEP is not transmitted)"
     },
     "t5": {
-      "type": "double"
+      "type": "double",
+      "comment": "The percentage of DIVE_DUR elapsed since the beginning of the dive at each of the intermediate depth points"
     },
     "degc_str": {
       "type": "double"
@@ -215,139 +270,207 @@
       "type": "double"
     },
     "d6": {
-      "type": "double"
+      "type": "double",
+      "units": "m",
+      "comment": "Intermediate depth points (metres) in the dive. For most deployments one of these is guaranteed to be the maximum depth (so MAX_DEP is not transmitted)"
     },
     "d7": {
-      "type": "double"
+      "type": "double",
+      "units": "m",
+      "comment": "Intermediate depth points (metres) in the dive. For most deployments one of these is guaranteed to be the maximum depth (so MAX_DEP is not transmitted)"
     },
     "d8": {
-      "type": "double"
+      "type": "double",
+      "units": "m",
+      "comment": "Intermediate depth points (metres) in the dive. For most deployments one of these is guaranteed to be the maximum depth (so MAX_DEP is not transmitted)"
     },
     "d9": {
-      "type": "double"
+      "type": "double",
+      "units": "m",
+      "comment": "Intermediate depth points (metres) in the dive. For most deployments one of these is guaranteed to be the maximum depth (so MAX_DEP is not transmitted)"
     },
     "d10": {
-      "type": "double"
+      "type": "double",
+      "units": "m",
+      "comment": "Intermediate depth points (metres) in the dive. For most deployments one of these is guaranteed to be the maximum depth (so MAX_DEP is not transmitted)"
     },
     "d11": {
-      "type": "double"
+      "type": "double",
+      "units": "m",
+      "comment": "Intermediate depth points (metres) in the dive. For most deployments one of these is guaranteed to be the maximum depth (so MAX_DEP is not transmitted)"
     },
     "d12": {
-      "type": "double"
+      "type": "double",
+      "units": "m",
+      "comment": "Intermediate depth points (metres) in the dive. For most deployments one of these is guaranteed to be the maximum depth (so MAX_DEP is not transmitted)"
     },
     "d13": {
-      "type": "double"
+      "type": "double",
+      "units": "m",
+      "comment": "Intermediate depth points (metres) in the dive. For most deployments one of these is guaranteed to be the maximum depth (so MAX_DEP is not transmitted)"
     },
     "d14": {
-      "type": "double"
+      "type": "double",
+      "units": "m",
+      "comment": "Intermediate depth points (metres) in the dive. For most deployments one of these is guaranteed to be the maximum depth (so MAX_DEP is not transmitted)"
     },
     "d15": {
-      "type": "double"
+      "type": "double",
+      "units": "m",
+      "comment": "Intermediate depth points (metres) in the dive. For most deployments one of these is guaranteed to be the maximum depth (so MAX_DEP is not transmitted)"
     },
     "d16": {
-      "type": "double"
+      "type": "double",
+      "units": "m",
+      "comment": "Intermediate depth points (metres) in the dive. For most deployments one of these is guaranteed to be the maximum depth (so MAX_DEP is not transmitted)"
     },
     "d17": {
-      "type": "double"
+      "type": "double",
+      "units": "m",
+      "comment": "Intermediate depth points (metres) in the dive. For most deployments one of these is guaranteed to be the maximum depth (so MAX_DEP is not transmitted)"
     },
     "d18": {
-      "type": "double"
+      "type": "double",
+      "units": "m",
+      "comment": "Intermediate depth points (metres) in the dive. For most deployments one of these is guaranteed to be the maximum depth (so MAX_DEP is not transmitted)"
     },
     "d19": {
-      "type": "double"
+      "type": "double",
+      "units": "m",
+      "comment": "Intermediate depth points (metres) in the dive. For most deployments one of these is guaranteed to be the maximum depth (so MAX_DEP is not transmitted)"
     },
     "d20": {
-      "type": "double"
+      "type": "double",
+      "units": "m",
+      "comment": "Intermediate depth points (metres) in the dive. For most deployments one of these is guaranteed to be the maximum depth (so MAX_DEP is not transmitted)"
     },
     "d21": {
-      "type": "double"
+      "type": "double",
+      "units": "m",
+      "comment": "Intermediate depth points (metres) in the dive. For most deployments one of these is guaranteed to be the maximum depth (so MAX_DEP is not transmitted)"
     },
     "d22": {
-      "type": "double"
+      "type": "double",
+      "units": "m",
+      "comment": "Intermediate depth points (metres) in the dive. For most deployments one of these is guaranteed to be the maximum depth (so MAX_DEP is not transmitted)"
     },
     "d23": {
-      "type": "double"
+      "type": "double",
+      "units": "m",
+      "comment": "Intermediate depth points (metres) in the dive. For most deployments one of these is guaranteed to be the maximum depth (so MAX_DEP is not transmitted)"
     },
     "d24": {
-      "type": "double"
+      "type": "double",
+      "units": "m",
+      "comment": "Intermediate depth points (metres) in the dive. For most deployments one of these is guaranteed to be the maximum depth (so MAX_DEP is not transmitted)"
     },
     "d25": {
-      "type": "double"
+      "type": "double",
+      "units": "m",
+      "comment": "Intermediate depth points (metres) in the dive. For most deployments one of these is guaranteed to be the maximum depth (so MAX_DEP is not transmitted)"
     },
     "t6": {
-      "type": "double"
+      "type": "double",
+      "comment": "The percentage of DIVE_DUR elapsed since the beginning of the dive at each of the intermediate depth points"
     },
     "t7": {
-      "type": "double"
+      "type": "double",
+      "comment": "The percentage of DIVE_DUR elapsed since the beginning of the dive at each of the intermediate depth points"
     },
     "t8": {
-      "type": "double"
+      "type": "double",
+      "comment": "The percentage of DIVE_DUR elapsed since the beginning of the dive at each of the intermediate depth points"
     },
     "t9": {
-      "type": "double"
+      "type": "double",
+      "comment": "The percentage of DIVE_DUR elapsed since the beginning of the dive at each of the intermediate depth points"
     },
     "t10": {
-      "type": "double"
+      "type": "double",
+      "comment": "The percentage of DIVE_DUR elapsed since the beginning of the dive at each of the intermediate depth points"
     },
     "t11": {
-      "type": "double"
+      "type": "double",
+      "comment": "The percentage of DIVE_DUR elapsed since the beginning of the dive at each of the intermediate depth points"
     },
     "t12": {
-      "type": "double"
+      "type": "double",
+      "comment": "The percentage of DIVE_DUR elapsed since the beginning of the dive at each of the intermediate depth points"
     },
     "t13": {
-      "type": "double"
+      "type": "double",
+      "comment": "The percentage of DIVE_DUR elapsed since the beginning of the dive at each of the intermediate depth points"
     },
     "t14": {
-      "type": "double"
+      "type": "double",
+      "comment": "The percentage of DIVE_DUR elapsed since the beginning of the dive at each of the intermediate depth points"
     },
     "t15": {
-      "type": "double"
+      "type": "double",
+      "comment": "The percentage of DIVE_DUR elapsed since the beginning of the dive at each of the intermediate depth points"
     },
     "t16": {
-      "type": "double"
+      "type": "double",
+      "comment": "The percentage of DIVE_DUR elapsed since the beginning of the dive at each of the intermediate depth points"
     },
     "t17": {
-      "type": "double"
+      "type": "double",
+      "comment": "The percentage of DIVE_DUR elapsed since the beginning of the dive at each of the intermediate depth points"
     },
     "t18": {
-      "type": "double"
+      "type": "double",
+      "comment": "The percentage of DIVE_DUR elapsed since the beginning of the dive at each of the intermediate depth points"
     },
     "t19": {
-      "type": "double"
+      "type": "double",
+      "comment": "The percentage of DIVE_DUR elapsed since the beginning of the dive at each of the intermediate depth points"
     },
     "t20": {
-      "type": "double"
+      "type": "double",
+      "comment": "The percentage of DIVE_DUR elapsed since the beginning of the dive at each of the intermediate depth points"
     },
     "t21": {
-      "type": "double"
+      "type": "double",
+      "comment": "The percentage of DIVE_DUR elapsed since the beginning of the dive at each of the intermediate depth points"
     },
     "t22": {
-      "type": "double"
+      "type": "double",
+      "comment": "The percentage of DIVE_DUR elapsed since the beginning of the dive at each of the intermediate depth points"
     },
     "t23": {
-      "type": "double"
+      "type": "double",
+      "comment": "The percentage of DIVE_DUR elapsed since the beginning of the dive at each of the intermediate depth points"
     },
     "t24": {
-      "type": "double"
+      "type": "double",
+      "comment": "The percentage of DIVE_DUR elapsed since the beginning of the dive at each of the intermediate depth points"
     },
     "t25": {
-      "type": "double"
+      "type": "double",
+      "comment": "The percentage of DIVE_DUR elapsed since the beginning of the dive at each of the intermediate depth points"
     },
     "ds_date": {
       "type": "string"
     },
     "start_lat": {
-      "type": "double"
+      "type": "double",
+      "comment": "The approximate position of the SRDL at the start of the deployment"
     },
     "start_lon": {
-      "type": "double"
+      "type": "double",
+      "comment": "The approximate position of the SRDL at the start of the deployment"
     },
     "lat": {
-      "type": "double"
+      "type": "double",
+      "long_name": "Latitude",
+      "units": "degrees_north",
+      "comment": "Position estimate (WGS 84 datum)"
     },
     "lon": {
-      "type": "double"
+      "type": "double",
+      "long_name": "Longitude",
+      "units": "degrees_east",
+      "comment": "Position estimate (WGS 84 datum)"
     },
     "ssm_lon": {
       "type": "double"
@@ -368,7 +491,8 @@
       "type": "double"
     },
     "cid": {
-      "type": "string"
+      "type": "string",
+      "comment": "SMRU campaign name "
     }
   },
   "aws_opendata_registry": {

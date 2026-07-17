@@ -38,40 +38,55 @@
   "metadata_uuid": "b2548767-514f-4a31-b65e-36bb894382d5",
   "schema": {
     "ref": {
-      "type": "string"
+      "type": "string",
+      "long_name": "reference",
+      "comment": "A three-part code (e.g. rs3-Fred-07) : The first part identifies the batch of tags, the second part is the name or number of the animal, the third part is the year"
     },
     "ptt": {
-      "type": "int32"
+      "type": "int32",
+      "long_name": "Platform Transmitter Terminal",
+      "comment": "Argos PTT number is used"
     },
     "cnt": {
-      "type": "int32"
+      "type": "int32",
+      "comment": "The number of times that this record was received"
     },
     "s_date": {
-      "type": "timestamp[ns]"
+      "type": "timestamp",
+      "comment": "The start time (UTC) of the summary period"
     },
     "e_date": {
-      "type": "timestamp[ns]"
+      "type": "timestamp",
+      "comment": "The end time (UTC) of the summary period. Note that dives are assigned to the period in which they ended for the purposes of calculating the summary statistics described below"
     },
     "div_dist": {
       "type": "double"
     },
     "surf_tm": {
-      "type": "double"
+      "type": "double",
+      "comment": "The proportion of time spent at the surface (%). This includes the SURF_DUR periods described above, plus any other periods which were neither dives nor haulouts"
     },
     "dive_tm": {
-      "type": "double"
+      "type": "double",
+      "comment": "The proportion of time spent diving (%). This means the time between the detection of the start of the dive and the detection of the end of the dive. The subsequent SURF_DUR time at the surface that is included in the individual dive records does not contribute to DIVE_TM."
     },
     "haul_tm": {
-      "type": "double"
+      "type": "double",
+      "comment": "The proportion of time spent hauled-out (%)"
     },
     "n_cycles": {
-      "type": "int32"
+      "type": "int32",
+      "comment": "The number of dives that finished during the summary period"
     },
     "av_depth": {
-      "type": "double"
+      "type": "double",
+      "units": "m",
+      "comment": "The average max_depth in the summary period (metres), where max_depth is the maximum depth recorded in a given dive."
     },
     "max_depth": {
-      "type": "double"
+      "type": "double",
+      "units": "m",
+      "comment": "The maximum dive depth (metres)"
     },
     "cruise_tm": {
       "type": "double"
@@ -80,55 +95,79 @@
       "type": "double"
     },
     "avg_speed": {
-      "type": "double"
+      "type": "double",
+      "units": "m/s",
+      "comment": "The average speed recorded during dives (metres/second)"
     },
     "sd_depth": {
-      "type": "double"
+      "type": "double",
+      "units": "m",
+      "comment": "The standard deviation of max_depth (metres)"
     },
     "av_dur": {
-      "type": "int32"
+      "type": "int32",
+      "units": "s",
+      "comment": "The average dive duration (seconds)"
     },
     "sd_dur": {
-      "type": "int32"
+      "type": "int32",
+      "units": "s",
+      "comment": "The standard deviation of dive duration (seconds)"
     },
     "max_dur": {
-      "type": "int32"
+      "type": "int32",
+      "units": "s",
+      "comment": "The maximum dive duration (seconds)"
     },
     "dp_n_cycles": {
       "type": "double"
     },
     "dp_av_depth": {
-      "type": "double"
+      "type": "double",
+      "comment": "These fields will be present where the SRDL has been programmed to separate deep from shallow dives according to a maximum depth threshold. These fields hold statistics calculated for the deep dives, the corresponding fields above hold the values for shallow dives."
     },
     "dp_max_depth": {
-      "type": "double"
+      "type": "double",
+      "comment": "These fields will be present where the SRDL has been programmed to separate deep from shallow dives according to a maximum depth threshold. These fields hold statistics calculated for the deep dives, the corresponding fields above hold the values for shallow dives."
     },
     "dp_avg_speed": {
-      "type": "double"
+      "type": "double",
+      "comment": "These fields will be present where the SRDL has been programmed to separate deep from shallow dives according to a maximum depth threshold. These fields hold statistics calculated for the deep dives, the corresponding fields above hold the values for shallow dives."
     },
     "dp_sd_depth": {
-      "type": "double"
+      "type": "double",
+      "comment": "These fields will be present where the SRDL has been programmed to separate deep from shallow dives according to a maximum depth threshold. These fields hold statistics calculated for the deep dives, the corresponding fields above hold the values for shallow dives."
     },
     "dp_av_dur": {
-      "type": "double"
+      "type": "double",
+      "comment": "These fields will be present where the SRDL has been programmed to separate deep from shallow dives according to a maximum depth threshold. These fields hold statistics calculated for the deep dives, the corresponding fields above hold the values for shallow dives."
     },
     "dp_sd_dur": {
-      "type": "double"
+      "type": "double",
+      "comment": "These fields will be present where the SRDL has been programmed to separate deep from shallow dives according to a maximum depth threshold. These fields hold statistics calculated for the deep dives, the corresponding fields above hold the values for shallow dives."
     },
     "dp_max_dur": {
-      "type": "double"
+      "type": "double",
+      "comment": "These fields will be present where the SRDL has been programmed to separate deep from shallow dives according to a maximum depth threshold. These fields hold statistics calculated for the deep dives, the corresponding fields above hold the values for shallow dives."
     },
     "dp_dive_tm": {
-      "type": "double"
+      "type": "double",
+      "comment": "The proportion of DIVE_TM that was spent in deep dives (%). i.e. the percentage of time in deep dives = DIVE_TM x DP_DIVE_TM/100; the proportion of time in shallow dives = DIVE_TM x (1 \u2013 DP_DIVE_TM/100)"
     },
     "av_surf_dur": {
-      "type": "double"
+      "type": "double",
+      "units": "s",
+      "comment": "The average post-dive surface duration (seconds)"
     },
     "sd_surf_dur": {
-      "type": "double"
+      "type": "double",
+      "units": "s",
+      "comment": "The standard deviation of post-dive surface duration (seconds)"
     },
     "max_surf_dur": {
-      "type": "double"
+      "type": "double",
+      "units": "s",
+      "comment": "The maximum post-dive surface duration (seconds)"
     },
     "dp_av_surf_dur": {
       "type": "double"
@@ -209,7 +248,8 @@
       "type": "double"
     },
     "cid": {
-      "type": "string"
+      "type": "string",
+      "comment": "SMRU campaign name "
     }
   },
   "aws_opendata_registry": {

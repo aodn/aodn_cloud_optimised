@@ -38,16 +38,24 @@
   "metadata_uuid": "b2548767-514f-4a31-b65e-36bb894382d5",
   "schema": {
     "ref": {
-      "type": "string"
+      "type": "string",
+      "long_name": "reference",
+      "comment": "A three-part code (e.g. rs3-Fred-07) : The first part identifies the batch of tags, the second part is the name or number of the animal, the third part is the year"
     },
     "date": {
-      "type": "timestamp[ns]"
+      "type": "timestamp"
     },
     "lon": {
-      "type": "double"
+      "type": "double",
+      "long_name": "Longitude",
+      "units": "degrees_east",
+      "comment": "Position estimate (WGS 84 datum)"
     },
     "lat": {
-      "type": "double"
+      "type": "double",
+      "long_name": "Latitude",
+      "units": "degrees_north",
+      "comment": "Position estimate (WGS 84 datum)"
     },
     "x": {
       "type": "double"
@@ -80,7 +88,8 @@
       "type": "double"
     },
     "cid": {
-      "type": "string"
+      "type": "string",
+      "comment": "SMRU campaign name "
     }
   },
   "aws_opendata_registry": {
