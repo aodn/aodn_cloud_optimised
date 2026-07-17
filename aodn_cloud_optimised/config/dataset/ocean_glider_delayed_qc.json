@@ -35,16 +35,16 @@
   "run_settings": {
     "coiled_cluster_options": {
       "n_workers": [
-        30,
-        35
+        2,
+        2
       ],
       "scheduler_vm_types": "m7i-flex.large",
-      "worker_vm_types": "m7i-flex.xlarge",
+      "worker_vm_types": "m7i-flex.2xlarge",
       "allow_ingress_from": "me",
       "compute_purchase_option": "spot_with_fallback",
       "worker_options": {
-        "nthreads": 8,
-        "memory_limit": "14GB"
+        "nthreads": 4,
+        "memory_limit": "28GB"
       }
     },
     "batch_size": 4,
