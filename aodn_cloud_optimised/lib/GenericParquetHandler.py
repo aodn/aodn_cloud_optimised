@@ -339,6 +339,7 @@ class GenericHandler(CommonHandler):
                 )
 
         df = table.to_pandas()
+        del table  # release PyArrow Table; df is a full in-memory copy
         df = df.drop(columns=self.drop_variables, errors="ignore")
         ds = xr.Dataset.from_dataframe(df)
 
@@ -1150,6 +1151,7 @@ class GenericHandler(CommonHandler):
             df_var_list = list(df.columns) + [df.index.name]
 
         pdf = pa.Table.from_pandas(df)  # Convert pandas DataFrame to PyArrow Table
+        del df  # df is no longer needed; release it before further pa.Table operations
 
         # Part A: casting existing columns to correct type
         # In the following part, we have to create a hugly hack which highlights the immaturity of pyarrow. Basically if some
@@ -1478,6 +1480,7 @@ class GenericHandler(CommonHandler):
                 # self.push_metadata_aws_registry()  # Deprecated
 
                 self.postprocess(ds)
+                del df, ds  # explicitly release per-file objects before next iteration
 
                 time_spent = timeit.default_timer() - start_time
                 self.logger.info(
