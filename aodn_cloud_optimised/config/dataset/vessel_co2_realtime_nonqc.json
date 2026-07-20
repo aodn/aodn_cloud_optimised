@@ -22,7 +22,7 @@
       "mode": "coiled",
       "restart_every_path": false
     },
-    "clear_existing_data": true,
+    "clear_existing_data": false,
     "raise_error": false,
     "coiled_cluster_options": {
       "n_workers": [
@@ -39,7 +39,7 @@
       }
     },
     "batch_size": 5,
-    "force_previous_parquet_deletion": false
+    "force_previous_parquet_deletion": true
   },
   "metadata_uuid": "9e5c3031-a026-48b3-a153-a70c2e2b78b9",
   "schema": {
@@ -217,7 +217,7 @@
     }
   },
   "aws_opendata_registry": {
-    "Name": "IMOS - Ships of Opportunity - Biogeochemical Sensors - Near real-time raw data",
+    "Name": "Ships of Opportunity - Biogeochemical sensors - Real time",
     "Description": "The IMOS Ships of Opportunity Biogeochemical Sensors Sub-Facility was formerly known as the Underway CO2 Measurements group, a research and data collection project working within the former IMOS Ship of Opportunity Multi-Disciplinary Underway Network Sub-Facility. The CO2 group sample critical regions of the Southern Ocean and the Australian shelf waters have a major impact on CO2 uptake by the ocean. These are regions where biogeochemical cycling is predicted to be particularly sensitive to a changing climate. The data represented by this record are presented in real-time mode. The pCO2 Underway System measures variables such as mole fraction of CO2, sea surface salinity (SSS), and sea surface temperature (SST) using an automated system. \n\nThe RV Aurora Australis provides data on surface ocean CO2 for the Southern Ocean, while the RV Investigator, covers shelf and offshore waters around Australia from the tropics to the sea-ice edge.",
     "Documentation": "https://catalogue-imos.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/9e5c3031-a026-48b3-a153-a70c2e2b78b9",
     "Contact": "info@aodn.org.au",
