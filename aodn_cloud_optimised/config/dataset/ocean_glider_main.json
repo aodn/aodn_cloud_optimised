@@ -1425,6 +1425,5 @@
       "quality_control_set": 1,
       "quality_control_conventions": "IMOS standard flags"
     }
-  },
-  "parent_config": "ocean_glider_main.json"
+  }
 }
