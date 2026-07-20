@@ -180,10 +180,7 @@
         "Description": "Cloud Optimised AODN dataset of IMOS - Animal Tracking Facility - Satellite Relay Tagging Program - Near real-time data with quality-controlled locations",
         "ARN": "arn:aws:s3:::aodn-cloud-optimised/animal_gps_satellite_relay_tagging_location_qc_realtime_qc.parquet",
         "Region": "ap-southeast-2",
-        "Type": "S3 Bucket",
-        "Explore": [
-          "FILL UP MANUALLY - CHECK DOCUMENTATION"
-        ]
+        "Type": "S3 Bucket"
       }
     ],
     "DataAtWork": {
