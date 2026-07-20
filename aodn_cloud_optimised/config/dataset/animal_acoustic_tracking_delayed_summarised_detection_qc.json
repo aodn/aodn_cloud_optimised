@@ -137,7 +137,7 @@
       "comments": ""
     },
     "transmitter_sensor_mean_value": {
-      "type": "string",
+      "type": "double",
       "standard_name": "",
       "long_name": "",
       "units": "",
@@ -151,14 +151,14 @@
       "comments": ""
     },
     "transmitter_sensor_intercept": {
-      "type": "string",
+      "type": "double",
       "standard_name": "",
       "long_name": "",
       "units": "",
       "comments": ""
     },
     "transmitter_sensor_slope": {
-      "type": "string",
+      "type": "double",
       "standard_name": "",
       "long_name": "",
       "units": "",
