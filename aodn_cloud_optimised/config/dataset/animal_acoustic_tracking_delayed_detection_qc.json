@@ -481,7 +481,9 @@
     }
   },
   "schema_transformation": {
-    "drop_variables": [],
+    "drop_variables": [
+      "index"
+    ],
     "add_variables": {
       "filename": {
         "source": "@filename",
