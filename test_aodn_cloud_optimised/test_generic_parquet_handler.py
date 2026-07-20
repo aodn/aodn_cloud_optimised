@@ -386,7 +386,7 @@ class TestGenericHandler(unittest.TestCase):
         # Validate logs
         self.assertTrue(
             any(
-                "The dataframe is now empty after removing out of range" in log
+                "The dataframe is now empty after removing invalid spatial data" in log
                 for log in captured_logs
             )
         )
