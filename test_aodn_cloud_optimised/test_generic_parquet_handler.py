@@ -687,7 +687,7 @@ class TestGenericHandlerPostprocessLifecycle(unittest.TestCase):
         s3_file_handle.path = s3_file_uri
         mock_create_fileset.return_value = [s3_file_handle]
 
-        ds = object()
+        ds = MagicMock(name="dataset_publish_error")
         handler.preprocess_data.return_value = iter([(pd.DataFrame({"x": [1]}), ds)])
         handler.publish_cloud_optimised.side_effect = RuntimeError("publish failed")
 
@@ -704,7 +704,7 @@ class TestGenericHandlerPostprocessLifecycle(unittest.TestCase):
         s3_file_handle.path = s3_file_uri
         mock_create_fileset.return_value = [s3_file_handle]
 
-        ds = object()
+        ds = MagicMock(name="dataset_subsequent_error")
         handler.preprocess_data.return_value = iter([(pd.DataFrame({"x": [1]}), ds)])
         handler.logger.info.side_effect = [None, RuntimeError("log failed")]
 
@@ -723,8 +723,8 @@ class TestGenericHandlerPostprocessLifecycle(unittest.TestCase):
         s3_file_handle.path = s3_file_uri
         mock_create_fileset.return_value = [s3_file_handle]
 
-        ds_1 = object()
-        ds_2 = object()
+        ds_1 = MagicMock(name="dataset_first_iteration")
+        ds_2 = MagicMock(name="dataset_second_iteration")
         handler.preprocess_data.return_value = iter(
             [
                 (pd.DataFrame({"x": [1]}), ds_1),

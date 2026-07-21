@@ -1484,7 +1484,7 @@ class GenericHandler(CommonHandler):
 
                 self.postprocess(ds)
                 ds_for_error_postprocess = None
-                del df, ds  # explicitly release per-iteration objects before next iteration
+                del df, ds  # drop local refs for this iteration; collection happens once no other refs remain
 
                 time_spent = timeit.default_timer() - start_time
                 self.logger.info(
