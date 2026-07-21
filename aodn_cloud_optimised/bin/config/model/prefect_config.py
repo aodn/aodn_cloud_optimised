@@ -2,11 +2,11 @@ import pydantic
 
 
 class PrefectConfig(pydantic.BaseModel):
-    """Cluster processing configuration.
+    """Prefect processing configuration.
 
     Attributes:
-        mode: Cluster mode (local, coiled, ec2, or None).
-        restart_every_path: Restart cluster after processing each path.
+        env: environment variables to override on the worker
+        job_variables: job_variables to override on the worker
     """
 
     env: dict = pydantic.Field(
