@@ -11,6 +11,7 @@ from .coiled_cluster_options import CoiledClusterOptions
 from .ec2_adapt_options import Ec2AdaptOptions
 from .ec2_cluster_options import Ec2ClusterOptions
 from .path_config import PathConfig
+from .prefect_config import PrefectConfig
 
 
 class RunSettings(pydantic.BaseModel):
@@ -45,6 +46,10 @@ class RunSettings(pydantic.BaseModel):
         - s3_fs_common_opts can be overridden per bucket in s3_bucket_opts.
     """
 
+    prefect: PrefectConfig = pydantic.Field(
+        default_factory=PrefectConfig,
+        description="Allows overriding of `env` and `job_variables`",
+    )
     paths: list[PathConfig] = pydantic.Field(
         ..., description="List of input S3 path configs to process."
     )

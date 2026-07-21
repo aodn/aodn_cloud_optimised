@@ -16,6 +16,13 @@
     "License": "http://creativecommons.org/licenses/by/4.0/"
   },
   "run_settings": {
+    "prefect": {
+      "job_variables": {
+        "memory": 30720,
+        "cpu": 4096,
+        "env.PREFECT_TASK_RUNNER_THREAD_POOL_MAX_WORKERS": 1
+      }
+    },
     "cluster": {
       "mode": "coiled",
       "restart_every_path": false
