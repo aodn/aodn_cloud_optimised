@@ -4,7 +4,7 @@ import logging
 import os
 import unittest
 from io import StringIO
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, call, patch
 
 import boto3
 import pandas as pd
@@ -666,7 +666,7 @@ class TestGenericHandler(unittest.TestCase):
         assert co_df.equals(og_df)
 
 
-class TestGenericHandlerToCloudOptimisedSingleLifecycle(unittest.TestCase):
+class TestGenericHandlerPostprocessLifecycle(unittest.TestCase):
     @staticmethod
     def _build_handler():
         handler = GenericHandler.__new__(GenericHandler)
@@ -697,7 +697,7 @@ class TestGenericHandlerToCloudOptimisedSingleLifecycle(unittest.TestCase):
         handler.postprocess.assert_called_once_with(ds)
 
     @patch("aodn_cloud_optimised.lib.GenericParquetHandler.create_fileset")
-    def test_postprocess_not_called_twice_after_success(self, mock_create_fileset):
+    def test_postprocess_not_called_twice_on_subsequent_error(self, mock_create_fileset):
         handler = self._build_handler()
         s3_file_uri = "s3://imos-data/example.nc"
         s3_file_handle = MagicMock()
@@ -712,6 +712,32 @@ class TestGenericHandlerToCloudOptimisedSingleLifecycle(unittest.TestCase):
             handler.to_cloud_optimised_single(s3_file_uri)
 
         handler.postprocess.assert_called_once_with(ds)
+
+    @patch("aodn_cloud_optimised.lib.GenericParquetHandler.create_fileset")
+    def test_postprocess_tracks_correct_dataset_across_multiple_iterations(
+        self, mock_create_fileset
+    ):
+        handler = self._build_handler()
+        s3_file_uri = "s3://imos-data/example.nc"
+        s3_file_handle = MagicMock()
+        s3_file_handle.path = s3_file_uri
+        mock_create_fileset.return_value = [s3_file_handle]
+
+        ds_1 = object()
+        ds_2 = object()
+        handler.preprocess_data.return_value = iter(
+            [
+                (pd.DataFrame({"x": [1]}), ds_1),
+                (pd.DataFrame({"x": [2]}), ds_2),
+            ]
+        )
+        handler.publish_cloud_optimised.side_effect = [None, RuntimeError("publish failed")]
+
+        with self.assertRaises(RuntimeError):
+            handler.to_cloud_optimised_single(s3_file_uri)
+
+        self.assertEqual(handler.postprocess.call_count, 2)
+        handler.postprocess.assert_has_calls([call(ds_1), call(ds_2)])
 
 
 if __name__ == "__main__":
