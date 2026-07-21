@@ -214,6 +214,14 @@
       "long_name": "seawater flow in main laboratory",
       "reference_datum": "sea surface",
       "units": "l min-1"
+    },
+    "Press_Licor_raw": {
+      "type": "double",
+      "_FillValue": -999.0,
+      "long_name": "pressure in the infrared gas analyser",
+      "reference_datum": "sea surface",
+      "units": "hPa",
+      "coordinates": "TIME LATITUDE LONGITUDE"
     }
   },
   "aws_opendata_registry": {
