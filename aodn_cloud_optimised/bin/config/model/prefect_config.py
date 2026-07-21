@@ -9,9 +9,6 @@ class PrefectConfig(pydantic.BaseModel):
         job_variables: job_variables to override on the worker
     """
 
-    env: dict = pydantic.Field(
-        default_factory=dict, description="Override deployment environment variables"
-    )
     job_variables: dict = pydantic.Field(
         default_factory=dict,
         description="Override deployment job_variables. Most notably allows configuration of cpu and memory",
