@@ -231,6 +231,7 @@ More information available [here](https://github.com/conda-forge/miniforge?tab=r
 - [vessel_bio_optical_pigment_delayed_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/vessel_bio_optical_pigment_delayed_qc.ipynb)
 - [vessel_bio_optical_suspended_matter_delayed_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/vessel_bio_optical_suspended_matter_delayed_qc.ipynb)
 - [vessel_co2_delayed_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/vessel_co2_delayed_qc.ipynb)
+- [vessel_co2_realtime_nonqc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/vessel_co2_realtime_nonqc.ipynb)
 - [vessel_fishsoop_realtime_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/vessel_fishsoop_realtime_qc.ipynb)
 - [vessel_nrs_ctd_profiles_delayed_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/vessel_nrs_ctd_profiles_delayed_qc.ipynb)
 - [vessel_satellite_radiance_delayed_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/vessel_satellite_radiance_delayed_qc.ipynb)
