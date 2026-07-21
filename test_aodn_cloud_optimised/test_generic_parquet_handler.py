@@ -4,7 +4,7 @@ import logging
 import os
 import unittest
 from io import StringIO
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import boto3
 import pandas as pd
@@ -664,6 +664,54 @@ class TestGenericHandler(unittest.TestCase):
 
         # Check values are the same
         assert co_df.equals(og_df)
+
+
+class TestGenericHandlerToCloudOptimisedSingleLifecycle(unittest.TestCase):
+    @staticmethod
+    def _build_handler():
+        handler = GenericHandler.__new__(GenericHandler)
+        handler.uuid_log = None
+        handler.delete_pq_unmatch_enable = False
+        handler.s3_fs_input = object()
+        handler.logger = MagicMock()
+        handler.publish_cloud_optimised = MagicMock()
+        handler.postprocess = MagicMock()
+        handler.preprocess_data = MagicMock()
+        return handler
+
+    @patch("aodn_cloud_optimised.lib.GenericParquetHandler.create_fileset")
+    def test_postprocess_called_on_publish_error(self, mock_create_fileset):
+        handler = self._build_handler()
+        s3_file_uri = "s3://imos-data/example.nc"
+        s3_file_handle = MagicMock()
+        s3_file_handle.path = s3_file_uri
+        mock_create_fileset.return_value = [s3_file_handle]
+
+        ds = object()
+        handler.preprocess_data.return_value = iter([(pd.DataFrame({"x": [1]}), ds)])
+        handler.publish_cloud_optimised.side_effect = RuntimeError("publish failed")
+
+        with self.assertRaises(RuntimeError):
+            handler.to_cloud_optimised_single(s3_file_uri)
+
+        handler.postprocess.assert_called_once_with(ds)
+
+    @patch("aodn_cloud_optimised.lib.GenericParquetHandler.create_fileset")
+    def test_postprocess_not_called_twice_after_success(self, mock_create_fileset):
+        handler = self._build_handler()
+        s3_file_uri = "s3://imos-data/example.nc"
+        s3_file_handle = MagicMock()
+        s3_file_handle.path = s3_file_uri
+        mock_create_fileset.return_value = [s3_file_handle]
+
+        ds = object()
+        handler.preprocess_data.return_value = iter([(pd.DataFrame({"x": [1]}), ds)])
+        handler.logger.info.side_effect = [None, RuntimeError("log failed")]
+
+        with self.assertRaises(RuntimeError):
+            handler.to_cloud_optimised_single(s3_file_uri)
+
+        handler.postprocess.assert_called_once_with(ds)
 
 
 if __name__ == "__main__":

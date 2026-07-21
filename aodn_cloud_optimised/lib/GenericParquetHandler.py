@@ -1462,6 +1462,8 @@ class GenericHandler(CommonHandler):
         if self.delete_pq_unmatch_enable:
             self.delete_existing_matching_parquet(filename)
 
+        ds_for_error_postprocess = None
+
         try:
             start_time = timeit.default_timer()
 
@@ -1471,6 +1473,7 @@ class GenericHandler(CommonHandler):
 
             generator = self.preprocess_data(s3_file_handle)
             for df, ds in generator:
+                ds_for_error_postprocess = ds
                 if df.empty:
                     raise ValueError(
                         f"{self.uuid_log}: {filename} Data corruption, Empty dataframe detected: {df}"
@@ -1480,6 +1483,7 @@ class GenericHandler(CommonHandler):
                 # self.push_metadata_aws_registry()  # Deprecated
 
                 self.postprocess(ds)
+                ds_for_error_postprocess = None
                 del df, ds  # explicitly release per-file objects before next iteration
 
                 time_spent = timeit.default_timer() - start_time
@@ -1492,8 +1496,8 @@ class GenericHandler(CommonHandler):
                 f"{self.uuid_log}: Issue encountered while creating Cloud Optimised file: {type(e).__name__}: {e} \n {traceback.format_exc()}"
             )
 
-            if "ds" in locals():
-                self.postprocess(ds)
+            if ds_for_error_postprocess is not None:
+                self.postprocess(ds_for_error_postprocess)
 
             raise e
 
