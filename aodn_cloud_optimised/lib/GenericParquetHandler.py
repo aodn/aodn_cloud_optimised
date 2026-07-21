@@ -1484,7 +1484,7 @@ class GenericHandler(CommonHandler):
 
                 self.postprocess(ds)
                 ds_for_error_postprocess = None
-                del df, ds  # explicitly release per-file objects before next iteration
+                del df, ds  # explicitly release per-iteration objects before next iteration
 
                 time_spent = timeit.default_timer() - start_time
                 self.logger.info(
