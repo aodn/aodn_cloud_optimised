@@ -669,6 +669,7 @@ class TestGenericHandler(unittest.TestCase):
 class TestGenericHandlerPostprocessLifecycle(unittest.TestCase):
     @staticmethod
     def _build_handler():
+        # Bypass full __init__ (S3/cluster setup) to isolate to_cloud_optimised_single control flow.
         handler = GenericHandler.__new__(GenericHandler)
         handler.uuid_log = None
         handler.delete_pq_unmatch_enable = False
@@ -706,10 +707,13 @@ class TestGenericHandlerPostprocessLifecycle(unittest.TestCase):
 
         ds = MagicMock(name="dataset_subsequent_error")
         handler.preprocess_data.return_value = iter([(pd.DataFrame({"x": [1]}), ds)])
-        handler.logger.info.side_effect = [None, RuntimeError("log failed")]
 
-        with self.assertRaises(RuntimeError):
-            handler.to_cloud_optimised_single(s3_file_uri)
+        with patch(
+            "aodn_cloud_optimised.lib.GenericParquetHandler.timeit.default_timer",
+            side_effect=[0.0, RuntimeError("timer failed")],
+        ):
+            with self.assertRaises(RuntimeError):
+                handler.to_cloud_optimised_single(s3_file_uri)
 
         handler.postprocess.assert_called_once_with(ds)
 
