@@ -2,7 +2,7 @@
   "dataset_name": "animal_acoustic_tracking_delayed_qc",
   "logger_name": "animal_acoustic_tracking_delayed_qc",
   "cloud_optimised_format": "parquet",
-  "metadata_uuid": "541d4f15-122a-443d-ab4e-2b5feb08d6a0",
+  "metadata_uuid": "0ede6b3d-8635-472f-b91c-56a758b4e091",
   "schema_transformation": {
     "drop_variables": [],
     "add_variables": {
@@ -203,9 +203,9 @@
     }
   },
   "aws_opendata_registry": {
-    "Name": "Animal Tracking - Acoustic Telemetry - Quality controlled detections",
-    "Description": "Since 2007, the Integrated Marine Observing System\u2019s Animal Tracking Facility (formerly known as the Australian Animal Tracking And Monitoring System (AATAMS)) has established a permanent array of acoustic receivers around Australia to detect the movements of tagged marine animals in coastal waters. Simultaneously, the Animal Tracking Facility developed a centralised national database (https://animaltracking.aodn.org.au/) to encourage collaborative research across the Australian research community and provide unprecedented opportunities to monitor broad-scale animal movements. The resulting dataset comprises observations of tagged animals in Australian waters collected by IMOS infrastructure as well as receivers operated by independent research projects and  organisations. This dataset constitutes a valuable resource facilitating meta-analysis of animal movement, distributions, and habitat use, and is important for relating species distribution shifts with environmental covariates.\n\nThis dataset comprises all available (2007 \u2013 ongoing) quality-controlled animal detections collected across the collaborative, continental IMOS network for a range of aquatic species (fish, sharks, rays, reptiles, and mammals). Here, raw animal detections collated via the IMOS Australian Animal Acoustic Telemetry Database have been quality-controlled as per Hoenner et al. (2018). This dataset is updated on a six-monthly basis.\n\nNote - There is a static snapshot of the database (up until 2017) (http://dx.doi.org/10.4225/69/5979810a7dd6f), and this has been documented in a Scientific Data Publication (Hoenner et al. 2018).",
-    "Documentation": "https://catalogue-imos.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/541d4f15-122a-443d-ab4e-2b5feb08d6a0",
+    "Name": "Animal Tracking - Acoustic Telemetry - Quality controlled detections (2007 - 2017) (SUPERSEDED BY ONGOING COLLECTION)",
+    "Description": "In its first decade, the Integrated Marine Observing System's Animal Tracking Facility (formerly known as the Australian Animal Tracking And Monitoring System (AATAMS)) established a permanent array of acoustic receivers around Australia to detect the movements of tagged marine animals in coastal waters. Simultaneously, the Animal Tracking Facility developed a centralised national database (https://animaltracking.aodn.org.au/) to encourage collaborative research across the Australian research community and provide unprecedented opportunities to quantify individual behaviour across a broad range of taxa. \n\nThis static dataset presents the first 10 years (2007 - 2017) of quality-controlled animal detections collated via the IMOS Australian Animal  Acoustic Telemetry Database. The dataset comprises 48.5 million valid detections collected at 1891 receiving stations around Australia, and consists of detection data for 3523 tags deployed on 117 species (fish, sharks, rays, reptiles, and mammals), with distances travelled ranging from a few to thousands of kilometres. \n\nTo access subsequent additions in a dynamic database, please refer to the following metadata record: https://catalogue-imos.aodn.org.au/geonetwork/srv/api/records/541d4f15-122a-443d-ab4e-2b5feb08d6a0",
+    "Documentation": "https://catalogue-imos.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/0ede6b3d-8635-472f-b91c-56a758b4e091",
     "Contact": "info@aodn.org.au",
     "ManagedBy": "AODN",
     "UpdateFrequency": "As Needed",
@@ -217,7 +217,7 @@
     "License": "http://creativecommons.org/licenses/by/4.0/",
     "Resources": [
       {
-        "Description": "Cloud Optimised AODN dataset of IMOS - Animal Tracking Facility - Acoustic Tracking - Quality Controlled Detections (2007 - ongoing)",
+        "Description": "Cloud Optimised AODN dataset of IMOS - Animal Tracking Facility - Acoustic Tracking - Quality Controlled Detections (2007 - 2017) (SUPERSEDED BY ONGOING COLLECTION)",
         "ARN": "arn:aws:s3:::aodn-cloud-optimised/animal_acoustic_tracking_delayed_qc.parquet",
         "Region": "ap-southeast-2",
         "Type": "S3 Bucket"
@@ -226,7 +226,7 @@
     "DataAtWork": {
       "Tutorials": [
         {
-          "Title": "Accessing IMOS - Animal Tracking Facility - Acoustic Tracking - Quality Controlled Detections (2007 - ongoing)",
+          "Title": "Accessing IMOS - Animal Tracking Facility - Acoustic Tracking - Quality Controlled Detections (2007 - 2017) (SUPERSEDED BY ONGOING COLLECTION)",
           "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/animal_acoustic_tracking_delayed_qc.ipynb",
           "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/animal_acoustic_tracking_delayed_qc.ipynb",
           "AuthorName": "Laurent Besnard",
