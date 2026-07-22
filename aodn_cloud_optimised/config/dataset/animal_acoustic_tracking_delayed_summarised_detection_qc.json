@@ -43,196 +43,196 @@
       "standard_name": "",
       "long_name": "",
       "units": "",
-      "comments": ""
+      "comments": "Unique identifier for the animal carrying the transmitter. This is a combination of the transmitter ID(s), the animal ID and the deployment ID in the IMOS Australian Animal Acoustic Telemetry Database."
     },
     "date_hour_UTC": {
       "type": "string",
       "standard_name": "",
-      "long_name": "",
+      "long_name": "Hourly timestamp in UTC",
       "units": "",
-      "comments": ""
+      "comments": "All detections have been aggregated with hourly resolution at the receiver and animal levels."
     },
     "nb_detections": {
       "type": "int32",
       "standard_name": "",
       "long_name": "",
       "units": "",
-      "comments": ""
+      "comments": "Number of detections used for the hourly aggregation."
     },
     "species_common_name": {
       "type": "string",
       "standard_name": "",
       "long_name": "",
       "units": "",
-      "comments": ""
+      "comments": "Deployment animal common name"
     },
     "species_scientific_name": {
       "type": "string",
       "standard_name": "",
       "long_name": "",
       "units": "",
-      "comments": ""
+      "comments": "Deployment animal scientific name"
     },
     "CAAB_species_id": {
       "type": "int32",
       "standard_name": "",
       "long_name": "",
       "units": "",
-      "comments": ""
+      "comments": "Codes for Australian Aquatic Biota (CAAB) species identifier"
     },
     "WORMS_species_aphia_id": {
       "type": "int32",
       "standard_name": "",
       "long_name": "",
       "units": "",
-      "comments": ""
+      "comments": "World Register of Marine Species (WoRMS) Aphia identifier"
     },
     "animal_sex": {
       "type": "string",
       "standard_name": "",
       "long_name": "",
       "units": "",
-      "comments": ""
+      "comments": "Animal sex (e.g. m; f; NA)"
     },
     "measurement": {
       "type": "string",
       "standard_name": "",
       "long_name": "",
       "units": "",
-      "comments": ""
+      "comments": "Measurement type of the animal tagged with its value and unit"
     },
     "transmitter_deployment_locality": {
       "type": "string",
       "standard_name": "",
       "long_name": "",
       "units": "",
-      "comments": ""
+      "comments": "Transmitter deployment locality"
     },
     "transmitter_deployment_longitude": {
       "type": "double",
       "standard_name": "",
       "long_name": "",
-      "units": "",
-      "comments": ""
+      "units": "degrees_east",
+      "comments": "Transmitter deployment longitude (WGS 84 datum)"
     },
     "transmitter_deployment_latitude": {
       "type": "double",
       "standard_name": "",
       "long_name": "",
-      "units": "",
-      "comments": ""
+      "units": "degrees_north",
+      "comments": "Transmitter deployment latitude (WGS 84 datum)"
     },
     "transmitter_deployment_datetime_UTC": {
       "type": "string",
       "standard_name": "",
       "long_name": "",
       "units": "",
-      "comments": ""
+      "comments": "Timestamp of the transmitter deployment in UTC"
     },
     "transmitter_sensor_type": {
       "type": "string",
       "standard_name": "",
       "long_name": "",
       "units": "",
-      "comments": ""
+      "comments": "Type of sensor on the transmitter (e.g. temperature, pressure, etc.)"
     },
     "transmitter_sensor_mean_value": {
       "type": "double",
       "standard_name": "",
       "long_name": "",
       "units": "",
-      "comments": ""
+      "comments": "Mean of the raw sensor values (unitless numbers, usually between 1 and 255) that require an equation for conversion into familiar units: sensor_value = (transmitter_sensor_raw_value * transmitter_sensor_slope) + transmitter_sensor_intercept"
     },
     "transmitter_sensor_unit": {
       "type": "string",
       "standard_name": "",
       "long_name": "",
       "units": "",
-      "comments": ""
+      "comments": "Unit corresponding to the sensor on the transmitter"
     },
     "transmitter_sensor_intercept": {
       "type": "double",
       "standard_name": "",
       "long_name": "",
       "units": "",
-      "comments": ""
+      "comments": "Transmitter sensor intercept used to convert raw sensor values into familiar units: sensor_value = (transmitter_sensor_raw_value * transmitter_sensor_slope) + transmitter_sensor_intercept"
     },
     "transmitter_sensor_slope": {
       "type": "double",
       "standard_name": "",
       "long_name": "",
       "units": "",
-      "comments": ""
+      "comments": "Transmitter sensor slope used to convert raw sensor values into familiar units: sensor_value = (transmitter_sensor_raw_value * transmitter_sensor_slope) + transmitter_sensor_intercept"
     },
     "tag_deployment_project_name": {
       "type": "string",
       "standard_name": "",
       "long_name": "",
       "units": "",
-      "comments": ""
+      "comments": "Project name which deployed the tag device in the IMOS Animal Tracking Acoustic Telemetry Database"
     },
     "installation_name": {
       "type": "string",
       "standard_name": "",
       "long_name": "",
       "units": "",
-      "comments": ""
+      "comments": "Installation name where the receiver was deployed in the IMOS Animal Tracking Acoustic Telemetry Database"
     },
     "station_name": {
       "type": "string",
       "standard_name": "",
       "long_name": "",
       "units": "",
-      "comments": ""
+      "comments": "Station name within the installation where the receiver was deployed in the IMOS Animal Tracking Acoustic Telemetry Database"
     },
     "receiver_project_name": {
       "type": "string",
       "standard_name": "",
       "long_name": "",
       "units": "",
-      "comments": ""
+      "comments": "Project name which deployed the receiver in the IMOS Animal Tracking Acoustic Telemetry Database"
     },
     "receiver_name": {
       "type": "string",
       "standard_name": "",
       "long_name": "",
       "units": "",
-      "comments": ""
+      "comments": "Receiver name combines the receiver model and the receiver serial number"
     },
     "receiver_deployment_id": {
       "type": "int32",
       "standard_name": "",
       "long_name": "",
       "units": "",
-      "comments": ""
+      "comments": "Unique identifier for the deployment of the receiver in the IMOS Animal Tracking Acoustic Telemetry Database"
     },
     "receiver_deployment_datetime_UTC": {
       "type": "string",
       "standard_name": "",
       "long_name": "",
       "units": "",
-      "comments": ""
+      "comments": "Timestamp of the receiver deployment in UTC"
     },
     "receiver_recovery_datetime_UTC": {
       "type": "string",
       "standard_name": "",
       "long_name": "",
       "units": "",
-      "comments": ""
+      "comments": "Timestamp of the receiver recovery in UTC"
     },
     "receiver_deployment_longitude": {
       "type": "double",
       "standard_name": "",
       "long_name": "",
-      "units": "",
-      "comments": ""
+      "units": "degrees_east",
+      "comments": "Receiver deployment longitude (WGS 84 datum)"
     },
     "receiver_deployment_latitude": {
       "type": "double",
       "standard_name": "",
       "long_name": "",
-      "units": "",
-      "comments": ""
+      "units": "degrees_north",
+      "comments": "Receiver deployment latitude (WGS 84 datum)"
     }
   },
   "aws_opendata_registry": {
