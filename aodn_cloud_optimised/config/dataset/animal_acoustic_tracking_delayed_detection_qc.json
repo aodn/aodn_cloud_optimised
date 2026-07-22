@@ -50,217 +50,217 @@
       "standard_name": "",
       "long_name": "",
       "units": "",
-      "comments": ""
+      "comments": "unique tag identifier in the IMOS Animal Tracking Acoustic Telemetry Database"
     },
     "transmitter_deployment_id": {
       "type": "int32",
       "standard_name": "",
       "long_name": "",
       "units": "",
-      "comments": ""
+      "comments": "unique identifier for the deployment of the tag in the IMOS Animal Tracking Acoustic Telemetry Database"
     },
     "tag_deployment_project_name": {
       "type": "string",
       "standard_name": "",
       "long_name": "",
       "units": "",
-      "comments": ""
+      "comments": "Project name which deployed the tag in the IMOS Animal Tracking Acoustic Telemetry Database"
     },
     "species_common_name": {
       "type": "string",
       "standard_name": "",
       "long_name": "",
       "units": "",
-      "comments": ""
+      "comments": "Deployment animal common name"
     },
     "species_scientific_name": {
       "type": "string",
       "standard_name": "",
       "long_name": "",
       "units": "",
-      "comments": ""
+      "comments": "Deployment animal scientific name"
     },
     "CAAB_species_id": {
       "type": "int32",
       "standard_name": "",
       "long_name": "",
       "units": "",
-      "comments": ""
+      "comments": "Codes for Australian Aquatic Biota (CAAB) species identifier"
     },
     "WORMS_species_aphia_id": {
       "type": "int32",
       "standard_name": "",
       "long_name": "",
       "units": "",
-      "comments": ""
+      "comments": "World Register of Marine Species (WoRMS) Aphia identifier"
     },
     "animal_sex": {
       "type": "string",
       "standard_name": "",
       "long_name": "",
       "units": "",
-      "comments": ""
+      "comments": "Animal sex (e.g. m; f; NA)"
     },
     "detection_datetime": {
       "type": "timestamp[ns]",
       "standard_name": "",
       "long_name": "",
       "units": "",
-      "comments": ""
+      "comments": "Timestamp of the detection in UTC"
     },
     "receiver_deployment_longitude": {
       "type": "double",
       "standard_name": "",
       "long_name": "",
-      "units": "",
-      "comments": ""
+      "units": "degrees_east",
+      "comments": "Receiver deployment longitude (WGS 84 datum)"
     },
     "receiver_deployment_latitude": {
       "type": "double",
       "standard_name": "",
       "long_name": "",
-      "units": "",
-      "comments": ""
+      "units": "degrees_north",
+      "comments": "Receiver deployment latitude (WGS 84 datum)"
     },
     "receiver_project_name": {
       "type": "string",
       "standard_name": "",
       "long_name": "",
       "units": "",
-      "comments": ""
+      "comments": "Project name which deployed the receiver in the IMOS Animal Tracking Acoustic Telemetry Database"
     },
     "installation_name": {
       "type": "string",
       "standard_name": "",
       "long_name": "",
       "units": "",
-      "comments": ""
+      "comments": "Installation name where the receiver was deployed in the IMOS Animal Tracking Acoustic Telemetry Database"
     },
     "station_name": {
       "type": "string",
       "standard_name": "",
       "long_name": "",
       "units": "",
-      "comments": ""
+      "comments": "Station name within the installation where the receiver was deployed in the IMOS Animal Tracking Acoustic Telemetry Database"
     },
     "receiver_name": {
       "type": "string",
       "standard_name": "",
       "long_name": "",
       "units": "",
-      "comments": ""
+      "comments": "Receiver name combines the receiver model and the receiver serial number"
     },
     "receiver_id": {
       "type": "int32",
       "standard_name": "",
       "long_name": "",
       "units": "",
-      "comments": ""
+      "comments": "Unique receiver identifier in the IMOS Animal Tracking Acoustic Telemetry Database"
     },
     "receiver_deployment_id": {
       "type": "int32",
       "standard_name": "",
       "long_name": "",
       "units": "",
-      "comments": ""
+      "comments": "Unique identifier for the deployment of the receiver in the IMOS Animal Tracking Acoustic Telemetry Database"
     },
     "receiver_depth": {
       "type": "double",
       "standard_name": "",
       "long_name": "",
-      "units": "",
-      "comments": ""
+      "units": "m",
+      "comments": "Depth of the receiver deployment"
     },
     "purchasing_organisation": {
       "type": "string",
       "standard_name": "",
       "long_name": "",
       "units": "",
-      "comments": ""
+      "comments": "Organisation owning the receiver"
     },
     "receiver_status": {
       "type": "string",
       "standard_name": "",
       "long_name": "",
       "units": "",
-      "comments": ""
+      "comments": "Status of the receiver (e.g. deployed, recovered, lost, etc.) in the IMOS Animal Tracking Acoustic Telemetry Database"
     },
     "receiver_deployment_datetime": {
       "type": "string",
       "standard_name": "",
       "long_name": "",
       "units": "",
-      "comments": ""
+      "comments": "Timestamp of the receiver deployment in UTC"
     },
     "receiver_recovery_datetime": {
       "type": "string",
       "standard_name": "",
       "long_name": "",
       "units": "",
-      "comments": ""
+      "comments": "Timestamp of the receiver recovery in UTC"
     },
     "receiver_recovery_longitude": {
       "type": "double",
       "standard_name": "",
       "long_name": "",
-      "units": "",
-      "comments": ""
+      "units": "degrees_east",
+      "comments": "Receiver recovery longitude (WGS 84 datum)"
     },
     "receiver_recovery_latitude": {
       "type": "double",
       "standard_name": "",
       "long_name": "",
-      "units": "",
-      "comments": ""
+      "units": "degrees_north",
+      "comments": "Receiver recovery latitude (WGS 84 datum)"
     },
     "tag_device_project_name": {
       "type": "string",
       "standard_name": "",
       "long_name": "",
       "units": "",
-      "comments": ""
+      "comments": "Project name which deployed the tag device in the IMOS Animal Tracking Acoustic Telemetry Database"
     },
     "transmitter_sensor_type": {
       "type": "string",
       "standard_name": "",
       "long_name": "",
       "units": "",
-      "comments": ""
+      "comments": "Type of sensor on the transmitter (e.g. temperature, pressure, etc.)"
     },
     "transmitter_sensor_raw_value": {
       "type": "double",
       "standard_name": "",
       "long_name": "",
       "units": "",
-      "comments": ""
+      "comments": "Raw sensor values (unitless numbers, usually between 1 and 255) that require an equation for conversion into familiar units: sensor_value = (transmitter_sensor_raw_value * transmitter_sensor_slope) + transmitter_sensor_intercept"
     },
     "transmitter_sensor_unit": {
       "type": "string",
       "standard_name": "",
       "long_name": "",
       "units": "",
-      "comments": ""
+      "comments": "Unit corresponding to the sensor on the transmitter"
     },
     "transmitter_sensor_slope": {
       "type": "double",
       "standard_name": "",
       "long_name": "",
       "units": "",
-      "comments": ""
+      "comments": "Transmitter sensor slope used to convert raw sensor values into familiar units: sensor_value = (transmitter_sensor_raw_value * transmitter_sensor_slope) + transmitter_sensor_intercept"
     },
     "transmitter_sensor_intercept": {
       "type": "double",
       "standard_name": "",
       "long_name": "",
       "units": "",
-      "comments": ""
+      "comments": "Transmitter sensor intercept used to convert raw sensor values into familiar units: sensor_value = (transmitter_sensor_raw_value * transmitter_sensor_slope) + transmitter_sensor_intercept"
     },
     "transmitter_type": {
       "type": "string",
       "standard_name": "",
       "long_name": "",
       "units": "",
-      "comments": ""
+      "comments": "Tag model (e.g. V9, V13, V16, etc.) of the transmitter in the IMOS Animal Tracking Acoustic Telemetry Database"
     },
     "transmitter_serial_number": {
       "type": "string",
@@ -273,7 +273,7 @@
       "type": "int32",
       "standard_name": "",
       "long_name": "",
-      "units": "",
+      "units": "days",
       "comments": ""
     },
     "transmitter_status": {
@@ -281,147 +281,147 @@
       "standard_name": "",
       "long_name": "",
       "units": "",
-      "comments": ""
+      "comments": "Status of the transmitter in the IMOS Animal Tracking Acoustic Telemetry Database"
     },
     "transmitter_deployment_longitude": {
       "type": "double",
       "standard_name": "",
       "long_name": "",
-      "units": "",
-      "comments": ""
+      "units": "degrees_east",
+      "comments": "Transmitter deployment longitude (WGS 84 datum)"
     },
     "transmitter_deployment_latitude": {
       "type": "double",
       "standard_name": "",
       "long_name": "",
-      "units": "",
-      "comments": ""
+      "units": "degrees_north",
+      "comments": "Transmitter deployment latitude (WGS 84 datum)"
     },
     "transmitter_deployment_datetime": {
       "type": "string",
       "standard_name": "",
       "long_name": "",
       "units": "",
-      "comments": ""
+      "comments": "Timestamp of the transmitter deployment in UTC"
     },
     "transmitter_dual_sensor": {
       "type": "bool",
       "standard_name": "",
       "long_name": "",
       "units": "",
-      "comments": ""
+      "comments": "TRUE if the transmitter has two sensors, FALSE if it has one sensor"
     },
     "active": {
       "type": "string",
       "standard_name": "",
       "long_name": "",
       "units": "",
-      "comments": ""
+      "comments": "True if the transmitter is still active, FALSE if it is inactive"
     },
     "placement": {
       "type": "string",
       "standard_name": "",
       "long_name": "",
       "units": "",
-      "comments": ""
+      "comments": "Surgery placement of the transmitter (e.g. internal, external, etc.)"
     },
     "transmitter_deployment_locality": {
       "type": "string",
       "standard_name": "",
       "long_name": "",
       "units": "",
-      "comments": ""
+      "comments": "Transmitter deployment locality"
     },
     "transmitter_deployment_comments": {
       "type": "string",
       "standard_name": "",
       "long_name": "",
       "units": "",
-      "comments": ""
+      "comments": "Transmitter deployment comments"
     },
     "transmitter_recovery_datetime": {
       "type": "string",
       "standard_name": "",
       "long_name": "",
       "units": "",
-      "comments": ""
+      "comments": "Timestamp of the transmitter recovery in UTC if recovered, otherwise NULL"
     },
     "transmitter_recovery_latitude": {
       "type": "double",
       "standard_name": "",
       "long_name": "",
-      "units": "",
-      "comments": ""
+      "units": "degrees_north",
+      "comments": "Transmitter recovery latitude (WGS 84 datum) if recovered, otherwise NULL"
     },
     "transmitter_recovery_longitude": {
       "type": "double",
       "standard_name": "",
       "long_name": "",
-      "units": "",
-      "comments": ""
+      "units": "degrees_east",
+      "comments": "Transmitter recovery longitude (WGS 84 datum) if recovered, otherwise NULL"
     },
     "measurement": {
       "type": "string",
       "standard_name": "",
       "long_name": "",
       "units": "",
-      "comments": ""
+      "comments": "Measurement type of the animal tagged with its value and unit"
     },
     "FDA_QC": {
       "type": "int32",
       "standard_name": "",
-      "long_name": "",
+      "long_name": "False Detection Algorithm test",
       "units": "",
-      "comments": ""
+      "comments": "detection fails this test (\u2018FDA_QC\u2019 = 2) if tag detected only once or if there were more long (> 12 hours) than short periods (< 30 minutes) between detections at a given installation. Quality Control Flag Values: ## 0: no qc performed ## 1: good data ## 2: likely invalid data ## 3: missing data"
     },
     "Velocity_QC": {
       "type": "int32",
       "standard_name": "",
-      "long_name": "",
+      "long_name": "Velocity test",
       "units": "",
-      "comments": ""
+      "comments": "a given detection failed this test if the velocity with the previous and next receiver was greater than 10 m.s-1 (\u2018Velocity_QC\u2019 = 2). Quality Control Flag Values: ## 0: no qc performed ## 1: good data ## 2: likely invalid data ## 3: missing data"
     },
     "Distance_QC": {
       "type": "int32",
       "standard_name": "",
-      "long_name": "",
+      "long_name": "Distance test",
       "units": "",
-      "comments": ""
+      "comments": "a given detection failed this test if the distance with the previous and next receiver was greater than 1000 km (\u2018Distance_QC\u2019 = 2). Quality Control Flag Values: ## 0: no qc performed ## 1: good data ## 2: likely invalid data ## 3: missing data"
     },
     "DetectionDistribution_QC": {
       "type": "int32",
       "standard_name": "",
-      "long_name": "",
+      "long_name": "Detection distribution test",
       "units": "",
-      "comments": ""
+      "comments": "detections failed this test if they occurred outside of a species known occurrence area (\u2018DetectionDistribution_QC\u2019 = 2), allowing for uncertainties in compiled distributions and climate-induced species range shifts by extending the original area\u2019s latitudinal range by 500 km. Quality Control Flag Values: ## 0: no qc performed ## 1: good data ## 2: likely invalid data ## 3: missing data"
     },
     "DistanceRelease_QC": {
       "type": "int32",
       "standard_name": "",
-      "long_name": "",
+      "long_name": "Distance from release",
       "units": "",
-      "comments": ""
+      "comments": "a given detection passed this test (\u2018DistanceRelease_QC\u2019 = 1) if it occurred within a 500 km radius of where the tagged animal was released. Quality Control Flag Values: ## 0: no qc performed ## 1: good data ## 2: likely invalid data ## 3: missing data"
     },
     "ReleaseDate_QC": {
       "type": "int32",
       "standard_name": "",
-      "long_name": "",
+      "long_name": "Release date before detection date",
       "units": "",
-      "comments": ""
+      "comments": "detections failed this test (\u2018ReleaseDate_QC\u2019 = 2) if they occurred before a tag\u2019s release date. Quality Control Flag Values: ## 0: no qc performed ## 1: good data ## 2: likely invalid data ## 3: missing data"
     },
     "ReleaseLocation_QC": {
       "type": "int32",
       "standard_name": "",
-      "long_name": "",
+      "long_name": "Release location test",
       "units": "",
-      "comments": ""
+      "comments": "tag's release coordinates failed this test (\u2018ReleaseLocation\u2019 = 2) if falling outside of a species distribution area and/or farther than 500 km of the first detection. Quality Control Flag Values: ## 0: no qc performed ## 1: good data ## 2: likely invalid data ## 3: missing data"
     },
     "Detection_QC": {
       "type": "int32",
       "standard_name": "",
-      "long_name": "",
+      "long_name": "Final Flag Values For 'Detection_QC'",
       "units": "",
-      "comments": ""
+      "comments": "this field summarises the output of the five first tests, i.e. \u2018FDA_QC\u2019, \u2018Distance_QC\u2019, \u2018Velocity_QC\u2019, \u2018DetectionDistribution_QC\u2019, and \u2018DistanceRelease_QC\u2019: ## 1: valid detection - All five tests passed ## 2: probably valid detection - Four tests passed ## 3: probably bad detection - Three tests passed ## 4: bad detection - Two or less tests passed "
     }
   },
   "aws_opendata_registry": {
