@@ -88,7 +88,7 @@
       "comment": "Tag deployment date (UTC)"
     },
     "recovery_date": {
-      "type": "timestamp[ns]",
+      "type": "string",
       "comment": "Tag recovery date (UTC)"
     },
     "age_class": {
