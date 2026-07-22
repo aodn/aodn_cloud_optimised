@@ -466,17 +466,18 @@
     "Citation": "IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access]"
   },
   "csv_config": {
-    "polars_read_csv_config": {
-      "separator": ",",
-      "has_header": true,
-      "quote_char": "\"",
-      "null_values": [
+    "pandas_read_csv_config": {
+      "delimiter": ",",
+      "header": 0,
+      "index_col": "detection_datetime",
+      "parse_dates": [
+        "detection_datetime"
+      ],
+      "na_values": [
         "",
         " ",
         "NA"
       ],
-      "try_parse_dates": false,
-      "infer_schema_length": 1000,
       "encoding": "utf-8"
     }
   },
