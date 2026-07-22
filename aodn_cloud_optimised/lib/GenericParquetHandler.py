@@ -154,7 +154,11 @@ class GenericHandler(CommonHandler):
         schema = self.dataset_config.get("schema", {})
         pa_type_map = get_pyarrow_type_map()
 
-        if "pandas_read_csv_config" in self.dataset_config["csv_config"]:
+        # Use truthiness (not membership): CSVConfigModel declares both keys with
+        # default=None, so model_dump() always emits both. A membership check would
+        # pick the pandas branch even when only polars_read_csv_config is set,
+        # calling pd.read_csv(**None) -> TypeError.
+        if self.dataset_config["csv_config"].get("pandas_read_csv_config"):
             config_from_json = self.dataset_config["csv_config"][
                 "pandas_read_csv_config"
             ]
@@ -162,7 +166,7 @@ class GenericHandler(CommonHandler):
             # df = pl.read_csv(csv_fp, **polars_opts).to_pandas()
             df = pd.read_csv(csv_fp, **config_from_json)
 
-        elif "polars_read_csv_config" in self.dataset_config["csv_config"]:
+        elif self.dataset_config["csv_config"].get("polars_read_csv_config"):
             config_from_json = self.dataset_config["csv_config"][
                 "polars_read_csv_config"
             ]
