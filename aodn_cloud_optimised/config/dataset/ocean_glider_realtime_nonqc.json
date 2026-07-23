@@ -33,6 +33,7 @@
     "Citation": "IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access]"
   },
   "run_settings": {
+    "clear_existing_data": true,
     "coiled_cluster_options": {
       "n_workers": [
         2,
