@@ -29,6 +29,57 @@ def _make_handler(pyarrow_schema=None, schema=None, raise_error=False):
     return handler
 
 
+class TestStringDtypeDetection(unittest.TestCase):
+    """Text columns must be found under both pandas dtype regimes.
+
+    pandas 2 reads text as ``object``; pandas 3 infers a ``str`` dtype. A check
+    for ``object`` alone silently skipped every packed column under pandas 3, so
+    profiles were written to parquet as strings against a ``double`` schema.
+    """
+
+    def test_detects_object_dtype_column(self):
+        handler = _make_handler()
+        s = pd.Series(["4,10,12"], dtype=object)
+        self.assertTrue(handler._holds_strings(s))
+
+    def test_detects_pandas3_str_dtype_column(self):
+        handler = _make_handler()
+        s = pd.Series(["4,10,12"]).astype("string")
+        self.assertTrue(handler._holds_strings(s))
+
+    def test_rejects_numeric_column(self):
+        handler = _make_handler()
+        self.assertFalse(handler._holds_strings(pd.Series([1.0, 2.0])))
+
+    def test_packed_detection_survives_string_dtype(self):
+        """The end-to-end symptom: detection must not come back empty."""
+        handler = _make_handler(pa.schema([pa.field("temp_vals", pa.float64())]))
+        df = pd.DataFrame({"temp_vals": pd.Series(["5.4,5.3"]).astype("string")})
+
+        self.assertEqual(handler._detect_packed_string_columns(df), ["temp_vals"])
+
+    def test_packed_expansion_survives_string_dtype(self):
+        handler = _make_handler(
+            pa.schema(
+                [
+                    pa.field("temp_dbar", pa.float64()),
+                    pa.field("temp_vals", pa.float64()),
+                ]
+            )
+        )
+        df = pd.DataFrame(
+            {
+                "temp_dbar": pd.Series(["4,10,12"]).astype("string"),
+                "temp_vals": pd.Series(["5.4,5.3,5.1"]).astype("string"),
+            }
+        )
+
+        out = handler._expand_packed_string_columns(df)
+
+        self.assertEqual(len(out), 3)
+        self.assertTrue(pd.api.types.is_float_dtype(out["temp_vals"]))
+
+
 class TestPackedExpansion(unittest.TestCase):
     def test_packed_strings_expand_to_numeric(self):
         """Comma-packed depth/value columns explode into float rows."""

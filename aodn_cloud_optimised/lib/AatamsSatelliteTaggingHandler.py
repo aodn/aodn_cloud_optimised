@@ -74,17 +74,29 @@ class AatamsSatelliteTaggingHandler(GenericHandler):
 
             yield df, ds
 
+    @staticmethod
+    def _holds_strings(series: pd.Series) -> bool:
+        """Return whether *series* can hold strings, across pandas versions.
+
+        pandas 2 reads text columns as ``object``; pandas 3 infers a dedicated
+        ``str`` dtype, for which ``dtype == object`` is False. Testing only for
+        ``object`` therefore made every text column invisible under pandas 3, so
+        packed profiles were never exploded and reached the parquet writer as
+        strings against a schema declaring double.
+        """
+        return series.dtype == object or pd.api.types.is_string_dtype(series.dtype)
+
     def _detect_packed_string_columns(self, df: pd.DataFrame) -> List[str]:
         """Return names of columns that contain comma-separated numeric values.
 
         A column is classified as packed if:
-        - its dtype is ``object``
+        - it holds strings (``object`` on pandas 2, ``str`` on pandas 3)
         - at least one non-null value contains a comma
         - the first comma-containing value splits into float-parseable parts
         """
         packed = []
         for col in df.columns:
-            if df[col].dtype != object:
+            if not self._holds_strings(df[col]):
                 continue
             non_null = df[col].dropna()
             if non_null.empty:
@@ -203,12 +215,12 @@ class AatamsSatelliteTaggingHandler(GenericHandler):
         return None
 
     def _coerce_numeric_string_columns(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Coerce ``object`` columns the schema declares numeric into numbers.
+        """Coerce string columns the schema declares numeric into numbers.
 
         Some deployments store a single-level profile as a lone string (e.g.
         ``fluoro_dbar = "12.5"``) rather than a comma-packed list, so
         :meth:`_detect_packed_string_columns` does not explode it and pandas
-        keeps the column as ``object``.  Left untouched it lands in the parquet
+        keeps the column as text.  Left untouched it lands in the parquet
         file as a string while the same column is ``double`` in other files,
         producing the ``double ↔ large_string`` cross-file conflict.
 
@@ -219,7 +231,7 @@ class AatamsSatelliteTaggingHandler(GenericHandler):
         per-column-tolerant schema cast can deal with it downstream.
         """
         for col in df.columns:
-            if df[col].dtype != object:
+            if not self._holds_strings(df[col]):
                 continue
             if self._schema_numeric_type(col) is None:
                 continue
