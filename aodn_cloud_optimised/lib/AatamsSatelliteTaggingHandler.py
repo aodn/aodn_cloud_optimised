@@ -2,6 +2,7 @@ from typing import Generator, List, Tuple
 
 import numpy as np
 import pandas as pd
+import pyarrow as pa
 import xarray as xr
 
 from .GenericParquetHandler import GenericHandler
@@ -122,7 +123,10 @@ class AatamsSatelliteTaggingHandler(GenericHandler):
         packed_cols = self._detect_packed_string_columns(df)
 
         if not packed_cols:
-            return df
+            # No comma-packed columns to explode, but a file may still store a
+            # single-level profile as a lone string (e.g. fluoro_dbar = "12.5").
+            # Coerce those to numeric so they do not leak through as strings.
+            return self._coerce_numeric_string_columns(df)
 
         self.logger.info(
             f"{self.uuid_log}: Detected packed-string columns for expansion: {packed_cols}"
@@ -178,5 +182,55 @@ class AatamsSatelliteTaggingHandler(GenericHandler):
                 df[col] = pd.to_numeric(df[col])
             except (ValueError, TypeError):
                 pass
+
+        # Also coerce any remaining string columns the schema declares numeric
+        # (e.g. single-level profiles stored as a lone string in some files).
+        return self._coerce_numeric_string_columns(df)
+
+    def _schema_numeric_type(self, col: str):
+        """Return the pyarrow type for *col* if the schema declares it numeric.
+
+        Returns ``None`` when the column is absent from the configured
+        ``pyarrow_schema`` or is declared as a non-numeric type (e.g. string,
+        timestamp), so callers can skip it.
+        """
+        try:
+            field_type = self.pyarrow_schema.field(col).type
+        except KeyError:
+            return None
+        if pa.types.is_integer(field_type) or pa.types.is_floating(field_type):
+            return field_type
+        return None
+
+    def _coerce_numeric_string_columns(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Coerce ``object`` columns the schema declares numeric into numbers.
+
+        Some deployments store a single-level profile as a lone string (e.g.
+        ``fluoro_dbar = "12.5"``) rather than a comma-packed list, so
+        :meth:`_detect_packed_string_columns` does not explode it and pandas
+        keeps the column as ``object``.  Left untouched it lands in the parquet
+        file as a string while the same column is ``double`` in other files,
+        producing the ``double ↔ large_string`` cross-file conflict.
+
+        Conversion is applied only to columns the dataset schema declares as an
+        integer or floating type, and only when every non-null value parses
+        cleanly — if a real value would be lost (e.g. an un-exploded packed
+        string), the column is left as-is and a warning is logged so the
+        per-column-tolerant schema cast can deal with it downstream.
+        """
+        for col in df.columns:
+            if df[col].dtype != object:
+                continue
+            if self._schema_numeric_type(col) is None:
+                continue
+            coerced = pd.to_numeric(df[col], errors="coerce")
+            lost = coerced.isna() & df[col].notna()
+            if lost.any():
+                self.logger.warning(
+                    f"{self.uuid_log}: Column '{col}' is declared numeric but holds "
+                    f"{int(lost.sum())} non-numeric value(s); leaving as-is."
+                )
+                continue
+            df[col] = coerced
 
         return df

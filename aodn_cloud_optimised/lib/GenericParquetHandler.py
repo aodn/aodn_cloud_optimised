@@ -395,35 +395,56 @@ class GenericHandler(CommonHandler):
                     f"files with suffix `{file_suffix}` not yet implemented in preprocess_data"
                 )
 
-    @staticmethod
-    def cast_table_by_schema(table, schema) -> pa.Table:
+    def cast_table_by_schema(self, table, schema) -> pa.Table:
         """
-        Cast each column of a PyArrow table individually according to a provided schema.
+        Cast each column of a PyArrow table individually to a provided schema,
+        tolerating per-column failures.
+
+        Columns are cast one at a time. If a column cannot be cast to its
+        schema type (e.g. a value that does not parse), that single column
+        keeps its original type and the failure is logged, instead of the
+        exception propagating and dropping the *entire* table back to its
+        pandas-inferred dtypes. A single bad column dragging a whole file back
+        to pandas dtypes is the root cause of cross-file schema conflicts
+        (e.g. ``double`` in one file, ``int64`` in another) in the resulting
+        parquet dataset.
 
         Args:
             table (pyarrow.Table): The PyArrow table to be casted.
             schema (pyarrow.Schema): The schema to cast the table to.
 
         Returns:
-            pyarrow.Table: The casted PyArrow table.
-
+            pyarrow.Table: A table whose columns follow *schema* wherever the
+                cast succeeded, keeping the original type for any column that
+                could not be cast.
         """
-        field_names = [field.name for field in schema]
-
         # Cast each column of the table individually according to the schema
         casted_arrays = []
-        for name in field_names:
-            # Get the data type of the field in the schema
-            data_type = schema.field(name).type
-
-            # Cast the column to the desired data type
-            casted_array = table.column(name).cast(data_type)
-
-            # Append the casted column to the list of casted arrays
-            casted_arrays.append(casted_array)
+        result_fields = []
+        for field in schema:
+            column = table.column(field.name)
+            try:
+                # Cast the column to the desired data type
+                casted_arrays.append(column.cast(field.type))
+                result_fields.append(field)
+            except (
+                pa.ArrowInvalid,
+                pa.ArrowNotImplementedError,
+                pa.ArrowTypeError,
+            ) as e:
+                # Keep this one column as-is rather than failing the whole file
+                casted_arrays.append(column)
+                result_fields.append(pa.field(field.name, column.type))
+                self.logger.error(
+                    f"{self.uuid_log}: Could not cast column '{field.name}' to "
+                    f"{field.type} ({type(e).__name__}: {e}). Keeping original "
+                    f"type {column.type}."
+                )
 
         # Construct a new table with casted columns
-        casted_table = pa.Table.from_arrays(casted_arrays, schema=schema)
+        casted_table = pa.Table.from_arrays(
+            casted_arrays, schema=pa.schema(result_fields)
+        )
 
         return casted_table
 
