@@ -8757,4 +8757,4 @@ tests = ["coverage", "moto", "pytest", "termcolor"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<3.13"
-content-hash = "874355a103c0c2335776e9d5c791ffff82a0ff938b20dbde14cd0c907aacb459"
+content-hash = "215ac5653d6f529d11f0dd5042ae5036f521603911d2d0eb6ca045f3fce4d73a"
