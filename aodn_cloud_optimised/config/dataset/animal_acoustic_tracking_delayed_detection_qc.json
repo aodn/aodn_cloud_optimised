@@ -1,0 +1,544 @@
+{
+  "dataset_name": "animal_acoustic_tracking_delayed_detection_qc",
+  "logger_name": "animal_acoustic_tracking_delayed_detection_qc",
+  "cloud_optimised_format": "parquet",
+  "run_settings": {
+    "paths": [
+      {
+        "type": "files",
+        "s3_uri": "s3://imos-data/IMOS/AATAMS/acoustic_detections_QC/",
+        "filter": [
+          ".*\\.csv$"
+        ],
+        "year_range": []
+      }
+    ],
+    "cluster": {
+      "mode": "coiled",
+      "restart_every_path": false
+    },
+    "clear_existing_data": true,
+    "raise_error": false,
+    "coiled_cluster_options": {
+      "n_workers": [
+        1,
+        20
+      ],
+      "scheduler_vm_types": "m7i-flex.large",
+      "worker_vm_types": "m7i-flex.large",
+      "allow_ingress_from": "me",
+      "compute_purchase_option": "spot_with_fallback",
+      "worker_options": {
+        "nthreads": 4,
+        "memory_limit": "8GB"
+      }
+    },
+    "batch_size": 5,
+    "force_previous_parquet_deletion": false
+  },
+  "metadata_uuid": "541d4f15-122a-443d-ab4e-2b5feb08d6a0",
+  "schema": {
+    "transmitter_id": {
+      "type": "string",
+      "standard_name": "",
+      "long_name": "",
+      "units": "",
+      "comments": ""
+    },
+    "tag_id": {
+      "type": "int32",
+      "standard_name": "",
+      "long_name": "",
+      "units": "",
+      "comments": "unique tag identifier in the IMOS Animal Tracking Acoustic Telemetry Database"
+    },
+    "transmitter_deployment_id": {
+      "type": "int32",
+      "standard_name": "",
+      "long_name": "",
+      "units": "",
+      "comments": "unique identifier for the deployment of the tag in the IMOS Animal Tracking Acoustic Telemetry Database"
+    },
+    "tag_deployment_project_name": {
+      "type": "string",
+      "standard_name": "",
+      "long_name": "",
+      "units": "",
+      "comments": "Project name which deployed the tag in the IMOS Animal Tracking Acoustic Telemetry Database"
+    },
+    "species_common_name": {
+      "type": "string",
+      "standard_name": "",
+      "long_name": "",
+      "units": "",
+      "comments": "Deployment animal common name"
+    },
+    "species_scientific_name": {
+      "type": "string",
+      "standard_name": "",
+      "long_name": "",
+      "units": "",
+      "comments": "Deployment animal scientific name"
+    },
+    "CAAB_species_id": {
+      "type": "int32",
+      "standard_name": "",
+      "long_name": "",
+      "units": "",
+      "comments": "Codes for Australian Aquatic Biota (CAAB) species identifier"
+    },
+    "WORMS_species_aphia_id": {
+      "type": "int32",
+      "standard_name": "",
+      "long_name": "",
+      "units": "",
+      "comments": "World Register of Marine Species (WoRMS) Aphia identifier"
+    },
+    "animal_sex": {
+      "type": "string",
+      "standard_name": "",
+      "long_name": "",
+      "units": "",
+      "comments": "Animal sex (e.g. m; f; NA)"
+    },
+    "detection_datetime": {
+      "type": "timestamp[ns]",
+      "standard_name": "",
+      "long_name": "",
+      "units": "",
+      "comments": "Timestamp of the detection in UTC"
+    },
+    "receiver_deployment_longitude": {
+      "type": "double",
+      "standard_name": "",
+      "long_name": "",
+      "units": "degrees_east",
+      "comments": "Receiver deployment longitude (WGS 84 datum)"
+    },
+    "receiver_deployment_latitude": {
+      "type": "double",
+      "standard_name": "",
+      "long_name": "",
+      "units": "degrees_north",
+      "comments": "Receiver deployment latitude (WGS 84 datum)"
+    },
+    "receiver_project_name": {
+      "type": "string",
+      "standard_name": "",
+      "long_name": "",
+      "units": "",
+      "comments": "Project name which deployed the receiver in the IMOS Animal Tracking Acoustic Telemetry Database"
+    },
+    "installation_name": {
+      "type": "string",
+      "standard_name": "",
+      "long_name": "",
+      "units": "",
+      "comments": "Installation name where the receiver was deployed in the IMOS Animal Tracking Acoustic Telemetry Database"
+    },
+    "station_name": {
+      "type": "string",
+      "standard_name": "",
+      "long_name": "",
+      "units": "",
+      "comments": "Station name within the installation where the receiver was deployed in the IMOS Animal Tracking Acoustic Telemetry Database"
+    },
+    "receiver_name": {
+      "type": "string",
+      "standard_name": "",
+      "long_name": "",
+      "units": "",
+      "comments": "Receiver name combines the receiver model and the receiver serial number"
+    },
+    "receiver_id": {
+      "type": "int32",
+      "standard_name": "",
+      "long_name": "",
+      "units": "",
+      "comments": "Unique receiver identifier in the IMOS Animal Tracking Acoustic Telemetry Database"
+    },
+    "receiver_deployment_id": {
+      "type": "int32",
+      "standard_name": "",
+      "long_name": "",
+      "units": "",
+      "comments": "Unique identifier for the deployment of the receiver in the IMOS Animal Tracking Acoustic Telemetry Database"
+    },
+    "receiver_depth": {
+      "type": "double",
+      "standard_name": "",
+      "long_name": "",
+      "units": "m",
+      "comments": "Depth of the receiver deployment"
+    },
+    "purchasing_organisation": {
+      "type": "string",
+      "standard_name": "",
+      "long_name": "",
+      "units": "",
+      "comments": "Organisation owning the receiver"
+    },
+    "receiver_status": {
+      "type": "string",
+      "standard_name": "",
+      "long_name": "",
+      "units": "",
+      "comments": "Status of the receiver (e.g. deployed, recovered, lost, etc.) in the IMOS Animal Tracking Acoustic Telemetry Database"
+    },
+    "receiver_deployment_datetime": {
+      "type": "string",
+      "standard_name": "",
+      "long_name": "",
+      "units": "",
+      "comments": "Timestamp of the receiver deployment in UTC"
+    },
+    "receiver_recovery_datetime": {
+      "type": "string",
+      "standard_name": "",
+      "long_name": "",
+      "units": "",
+      "comments": "Timestamp of the receiver recovery in UTC"
+    },
+    "receiver_recovery_longitude": {
+      "type": "double",
+      "standard_name": "",
+      "long_name": "",
+      "units": "degrees_east",
+      "comments": "Receiver recovery longitude (WGS 84 datum)"
+    },
+    "receiver_recovery_latitude": {
+      "type": "double",
+      "standard_name": "",
+      "long_name": "",
+      "units": "degrees_north",
+      "comments": "Receiver recovery latitude (WGS 84 datum)"
+    },
+    "tag_device_project_name": {
+      "type": "string",
+      "standard_name": "",
+      "long_name": "",
+      "units": "",
+      "comments": "Project name which deployed the tag device in the IMOS Animal Tracking Acoustic Telemetry Database"
+    },
+    "transmitter_sensor_type": {
+      "type": "string",
+      "standard_name": "",
+      "long_name": "",
+      "units": "",
+      "comments": "Type of sensor on the transmitter (e.g. temperature, pressure, etc.)"
+    },
+    "transmitter_sensor_raw_value": {
+      "type": "double",
+      "standard_name": "",
+      "long_name": "",
+      "units": "",
+      "comments": "Raw sensor values (unitless numbers, usually between 1 and 255) that require an equation for conversion into familiar units: sensor_value = (transmitter_sensor_raw_value * transmitter_sensor_slope) + transmitter_sensor_intercept"
+    },
+    "transmitter_sensor_unit": {
+      "type": "string",
+      "standard_name": "",
+      "long_name": "",
+      "units": "",
+      "comments": "Unit corresponding to the sensor on the transmitter"
+    },
+    "transmitter_sensor_slope": {
+      "type": "double",
+      "standard_name": "",
+      "long_name": "",
+      "units": "",
+      "comments": "Transmitter sensor slope used to convert raw sensor values into familiar units: sensor_value = (transmitter_sensor_raw_value * transmitter_sensor_slope) + transmitter_sensor_intercept"
+    },
+    "transmitter_sensor_intercept": {
+      "type": "double",
+      "standard_name": "",
+      "long_name": "",
+      "units": "",
+      "comments": "Transmitter sensor intercept used to convert raw sensor values into familiar units: sensor_value = (transmitter_sensor_raw_value * transmitter_sensor_slope) + transmitter_sensor_intercept"
+    },
+    "transmitter_type": {
+      "type": "string",
+      "standard_name": "",
+      "long_name": "",
+      "units": "",
+      "comments": "Tag model (e.g. V9, V13, V16, etc.) of the transmitter in the IMOS Animal Tracking Acoustic Telemetry Database"
+    },
+    "transmitter_serial_number": {
+      "type": "string",
+      "standard_name": "",
+      "long_name": "",
+      "units": "",
+      "comments": ""
+    },
+    "transmitter_estimated_battery_life": {
+      "type": "int32",
+      "standard_name": "",
+      "long_name": "",
+      "units": "days",
+      "comments": ""
+    },
+    "transmitter_status": {
+      "type": "string",
+      "standard_name": "",
+      "long_name": "",
+      "units": "",
+      "comments": "Status of the transmitter in the IMOS Animal Tracking Acoustic Telemetry Database"
+    },
+    "transmitter_deployment_longitude": {
+      "type": "double",
+      "standard_name": "",
+      "long_name": "",
+      "units": "degrees_east",
+      "comments": "Transmitter deployment longitude (WGS 84 datum)"
+    },
+    "transmitter_deployment_latitude": {
+      "type": "double",
+      "standard_name": "",
+      "long_name": "",
+      "units": "degrees_north",
+      "comments": "Transmitter deployment latitude (WGS 84 datum)"
+    },
+    "transmitter_deployment_datetime": {
+      "type": "string",
+      "standard_name": "",
+      "long_name": "",
+      "units": "",
+      "comments": "Timestamp of the transmitter deployment in UTC"
+    },
+    "transmitter_dual_sensor": {
+      "type": "bool",
+      "standard_name": "",
+      "long_name": "",
+      "units": "",
+      "comments": "TRUE if the transmitter has two sensors, FALSE if it has one sensor"
+    },
+    "active": {
+      "type": "string",
+      "standard_name": "",
+      "long_name": "",
+      "units": "",
+      "comments": "True if the transmitter is still active, FALSE if it is inactive"
+    },
+    "placement": {
+      "type": "string",
+      "standard_name": "",
+      "long_name": "",
+      "units": "",
+      "comments": "Surgery placement of the transmitter (e.g. internal, external, etc.)"
+    },
+    "transmitter_deployment_locality": {
+      "type": "string",
+      "standard_name": "",
+      "long_name": "",
+      "units": "",
+      "comments": "Transmitter deployment locality"
+    },
+    "transmitter_deployment_comments": {
+      "type": "string",
+      "standard_name": "",
+      "long_name": "",
+      "units": "",
+      "comments": "Transmitter deployment comments"
+    },
+    "transmitter_recovery_datetime": {
+      "type": "string",
+      "standard_name": "",
+      "long_name": "",
+      "units": "",
+      "comments": "Timestamp of the transmitter recovery in UTC if recovered, otherwise NULL"
+    },
+    "transmitter_recovery_latitude": {
+      "type": "double",
+      "standard_name": "",
+      "long_name": "",
+      "units": "degrees_north",
+      "comments": "Transmitter recovery latitude (WGS 84 datum) if recovered, otherwise NULL"
+    },
+    "transmitter_recovery_longitude": {
+      "type": "double",
+      "standard_name": "",
+      "long_name": "",
+      "units": "degrees_east",
+      "comments": "Transmitter recovery longitude (WGS 84 datum) if recovered, otherwise NULL"
+    },
+    "measurement": {
+      "type": "string",
+      "standard_name": "",
+      "long_name": "",
+      "units": "",
+      "comments": "Measurement type of the animal tagged with its value and unit"
+    },
+    "FDA_QC": {
+      "type": "int32",
+      "standard_name": "",
+      "long_name": "False Detection Algorithm test",
+      "units": "",
+      "comments": "detection fails this test (\u2018FDA_QC\u2019 = 2) if tag detected only once or if there were more long (> 12 hours) than short periods (< 30 minutes) between detections at a given installation. Quality Control Flag Values: ## 0: no qc performed ## 1: good data ## 2: likely invalid data ## 3: missing data"
+    },
+    "Velocity_QC": {
+      "type": "int32",
+      "standard_name": "",
+      "long_name": "Velocity test",
+      "units": "",
+      "comments": "a given detection failed this test if the velocity with the previous and next receiver was greater than 10 m.s-1 (\u2018Velocity_QC\u2019 = 2). Quality Control Flag Values: ## 0: no qc performed ## 1: good data ## 2: likely invalid data ## 3: missing data"
+    },
+    "Distance_QC": {
+      "type": "int32",
+      "standard_name": "",
+      "long_name": "Distance test",
+      "units": "",
+      "comments": "a given detection failed this test if the distance with the previous and next receiver was greater than 1000 km (\u2018Distance_QC\u2019 = 2). Quality Control Flag Values: ## 0: no qc performed ## 1: good data ## 2: likely invalid data ## 3: missing data"
+    },
+    "DetectionDistribution_QC": {
+      "type": "int32",
+      "standard_name": "",
+      "long_name": "Detection distribution test",
+      "units": "",
+      "comments": "detections failed this test if they occurred outside of a species known occurrence area (\u2018DetectionDistribution_QC\u2019 = 2), allowing for uncertainties in compiled distributions and climate-induced species range shifts by extending the original area\u2019s latitudinal range by 500 km. Quality Control Flag Values: ## 0: no qc performed ## 1: good data ## 2: likely invalid data ## 3: missing data"
+    },
+    "DistanceRelease_QC": {
+      "type": "int32",
+      "standard_name": "",
+      "long_name": "Distance from release",
+      "units": "",
+      "comments": "a given detection passed this test (\u2018DistanceRelease_QC\u2019 = 1) if it occurred within a 500 km radius of where the tagged animal was released. Quality Control Flag Values: ## 0: no qc performed ## 1: good data ## 2: likely invalid data ## 3: missing data"
+    },
+    "ReleaseDate_QC": {
+      "type": "int32",
+      "standard_name": "",
+      "long_name": "Release date before detection date",
+      "units": "",
+      "comments": "detections failed this test (\u2018ReleaseDate_QC\u2019 = 2) if they occurred before a tag\u2019s release date. Quality Control Flag Values: ## 0: no qc performed ## 1: good data ## 2: likely invalid data ## 3: missing data"
+    },
+    "ReleaseLocation_QC": {
+      "type": "int32",
+      "standard_name": "",
+      "long_name": "Release location test",
+      "units": "",
+      "comments": "tag's release coordinates failed this test (\u2018ReleaseLocation\u2019 = 2) if falling outside of a species distribution area and/or farther than 500 km of the first detection. Quality Control Flag Values: ## 0: no qc performed ## 1: good data ## 2: likely invalid data ## 3: missing data"
+    },
+    "Detection_QC": {
+      "type": "int32",
+      "standard_name": "",
+      "long_name": "Final Flag Values For 'Detection_QC'",
+      "units": "",
+      "comments": "this field summarises the output of the five first tests, i.e. \u2018FDA_QC\u2019, \u2018Distance_QC\u2019, \u2018Velocity_QC\u2019, \u2018DetectionDistribution_QC\u2019, and \u2018DistanceRelease_QC\u2019: ## 1: valid detection - All five tests passed ## 2: probably valid detection - Four tests passed ## 3: probably bad detection - Three tests passed ## 4: bad detection - Two or less tests passed "
+    }
+  },
+  "aws_opendata_registry": {
+    "Name": "IMOS - Animal Tracking Facility - Acoustic Tracking - Quality Controlled Detections (2007 - ongoing)",
+    "Description": "Since 2007, the Integrated Marine Observing System\u2019s Animal Tracking Facility (formerly known as the Australian Animal Tracking And Monitoring System (AATAMS)) has established a permanent array of acoustic receivers around Australia to detect the movements of tagged marine animals in coastal waters. Simultaneously, the Animal Tracking Facility developed a centralised national database (https://animaltracking.aodn.org.au/) to encourage collaborative research across the Australian research community and provide unprecedented opportunities to monitor broad-scale animal movements. The resulting dataset comprises observations of tagged animals in Australian waters collected by IMOS infrastructure as well as receivers operated by independent research projects and  organisations. This dataset constitutes a valuable resource facilitating meta-analysis of animal movement, distributions, and habitat use, and is important for relating species distribution shifts with environmental covariates.\n\nThis dataset comprises all available (2007 \u2013 ongoing) quality-controlled and publicly accessible animal detections collected across the collaborative, continental IMOS network for a range of aquatic species (fish, sharks, rays, reptiles, and mammals). Here, raw animal detections collated via the IMOS Australian Animal Acoustic Telemetry Database have been quality-controlled as per Hoenner et al. (2018). This dataset is updated on a six-monthly basis.\n\nNote - There is a static snapshot of the database (up until 2017) (http://dx.doi.org/10.4225/69/5979810a7dd6f), and this has been documented in a Scientific Data Publication (Hoenner et al. 2018).",
+    "Documentation": "https://catalogue-imos.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/541d4f15-122a-443d-ab4e-2b5feb08d6a0",
+    "Contact": "info@aodn.org.au",
+    "ManagedBy": "AODN",
+    "UpdateFrequency": "As Needed",
+    "Tags": [
+      "oceans",
+      "marine mammals",
+      "biology"
+    ],
+    "License": "http://creativecommons.org/licenses/by/4.0/",
+    "Resources": [
+      {
+        "Description": "Cloud Optimised AODN dataset of IMOS - Animal Tracking Facility - Acoustic Tracking - Quality Controlled Detections (2007 - ongoing)",
+        "ARN": "arn:aws:s3:::aodn-cloud-optimised/animal_acoustic_tracking_delayed_detection_qc.parquet",
+        "Region": "ap-southeast-2",
+        "Type": "S3 Bucket"
+      }
+    ],
+    "DataAtWork": {
+      "Tutorials": [
+        {
+          "Title": "Accessing IMOS - Animal Tracking Facility - Acoustic Tracking - Quality Controlled Detections (2007 - ongoing)",
+          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/animal_acoustic_tracking_delayed_detection_qc.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/animal_acoustic_tracking_delayed_detection_qc.ipynb",
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
+        },
+        {
+          "Title": "Accessing and search for any AODN dataset",
+          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
+        }
+      ]
+    },
+    "Citation": "IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access]"
+  },
+  "csv_config": {
+    "pandas_read_csv_config": {
+      "delimiter": ",",
+      "header": 0,
+      "index_col": "detection_datetime",
+      "parse_dates": [
+        "detection_datetime"
+      ],
+      "na_values": [
+        "",
+        " ",
+        "NA"
+      ],
+      "encoding": "utf-8"
+    }
+  },
+  "schema_transformation": {
+    "drop_variables": [
+      "index"
+    ],
+    "add_variables": {
+      "filename": {
+        "source": "@filename",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "long_name": "Filename of the source file"
+        }
+      },
+      "timestamp": {
+        "source": "@partitioning:time_extent",
+        "schema": {
+          "type": "int64",
+          "units": "1",
+          "long_name": "Partition timestamp"
+        }
+      },
+      "polygon": {
+        "source": "@partitioning:spatial_extent",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "long_name": "Spatial partition polygon"
+        }
+      }
+    },
+    "partitioning": [
+      {
+        "source_variable": "timestamp",
+        "type": "time_extent",
+        "time_extent": {
+          "time_varname": "detection_datetime",
+          "partition_period": "M"
+        }
+      },
+      {
+        "source_variable": "polygon",
+        "type": "spatial_extent",
+        "spatial_extent": {
+          "lat_varname": "receiver_deployment_latitude",
+          "lon_varname": "receiver_deployment_longitude",
+          "spatial_resolution": 5
+        }
+      }
+    ],
+    "global_attributes": {
+      "delete": [
+        "geospatial_lat_max",
+        "geospatial_lat_min",
+        "geospatial_lon_max",
+        "geospatial_lon_min",
+        "date_created"
+      ],
+      "set": {}
+    }
+  }
+}

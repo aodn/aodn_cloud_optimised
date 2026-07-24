@@ -10,6 +10,7 @@ import boto3
 import pandas as pd
 import pyarrow as pa
 import s3fs
+import xarray as xr
 from moto import mock_aws
 from moto.moto_server.threaded_moto_server import ThreadedMotoServer
 from shapely import wkb
@@ -315,6 +316,58 @@ class TestGenericHandler(unittest.TestCase):
 
         self.server.stop()
 
+    def test_add_columns_df_missing_variable_attribute_uses_fillvalue(self):
+        handler = GenericHandler.__new__(GenericHandler)
+        handler.logger = logging.getLogger(__name__)
+        handler.uuid_log = "test-uuid"
+        handler.dataset_config = {
+            "schema_transformation": {
+                "add_variables": {
+                    "wmo": {
+                        "source": "@variable_attribute:PLATFORM.wmo",
+                        "schema": {"type": "string", "units": "1", "_FillValue": ""},
+                    }
+                }
+            }
+        }
+
+        df = pd.DataFrame({"TEMP": [1.0, 2.0]})
+        ds = xr.Dataset({"PLATFORM": ("obs", [1])})
+
+        class DummyFile:
+            path = "dummy.nc"
+
+        result_df = handler._add_columns_df(df, ds, DummyFile())
+
+        self.assertIn("wmo", result_df.columns)
+        self.assertTrue((result_df["wmo"] == "").all())
+
+    def test_add_columns_df_missing_variable_uses_fillvalue(self):
+        handler = GenericHandler.__new__(GenericHandler)
+        handler.logger = logging.getLogger(__name__)
+        handler.uuid_log = "test-uuid"
+        handler.dataset_config = {
+            "schema_transformation": {
+                "add_variables": {
+                    "wmo": {
+                        "source": "@variable_attribute:PLATFORM.wmo",
+                        "schema": {"type": "string", "units": "1", "_FillValue": ""},
+                    }
+                }
+            }
+        }
+
+        df = pd.DataFrame({"TEMP": [1.0, 2.0]})
+        ds = xr.Dataset({"TEMP": ("obs", [1.0, 2.0])})
+
+        class DummyFile:
+            path = "dummy.nc"
+
+        result_df = handler._add_columns_df(df, ds, DummyFile())
+
+        self.assertIn("wmo", result_df.columns)
+        self.assertTrue((result_df["wmo"] == "").all())
+
     def test_parquet_nc_fishsoop(self):
         nc_obj_ls = s3_ls("imos-data", "fishsoop")
 
@@ -333,7 +386,7 @@ class TestGenericHandler(unittest.TestCase):
         # Validate logs
         self.assertTrue(
             any(
-                "The dataframe is now empty after removing out of range" in log
+                "The dataframe is now empty after removing invalid spatial data" in log
                 for log in captured_logs
             )
         )

@@ -7,7 +7,7 @@ build-backend = "poetry.core.masonry.api"
 # Pinning to <3.13 to avoid source builds; stable wheels for h5py and netCDF4 are not yet available for 3.13.
 requires-python = ">=3.11,<3.13"
 name = "aodn-cloud-optimised"
-version = "1.3.2"
+version = "1.3.9"
 description = "Cloud optimised data formats for IMOS NetCDF files and CSVs."
 authors = [
   { name = "Laurent Besnard (AODN)", email = "laurent.besnard@utas.edu.au" },
@@ -33,7 +33,7 @@ dependencies = [
   "h5netcdf>=1.3.0",
   "scipy>=1.16.3",
   "boto3>=1.34.162",
-  "pyarrow==22.0.0",
+  "pyarrow",
   "rechunker>=0.5.2",
   "s3fs>=2025.12.0",
   "fsspec>=2025.12.0",
@@ -138,7 +138,9 @@ mcp = ["mcp>=1.26.0,<2.0.0", "nbformat>=5.0.0", "nbconvert>=7.0.0"]
 [project.scripts]
 #cloud_optimised_srs_oc_ljco_to_parquet = "aodn_cloud_optimised.bin.srs_oc_ljco_to_parquet:main"
 aodn-mcp-server = "aodn_cloud_optimised.mcp.server:main"
+cloud_optimised_animal_acoustic_tracking_delayed_detection_qc = "aodn_cloud_optimised.bin.datasets.animal_acoustic_tracking_delayed_detection_qc:main"
 cloud_optimised_animal_acoustic_tracking_delayed_qc = "aodn_cloud_optimised.bin.datasets.animal_acoustic_tracking_delayed_qc:main"
+cloud_optimised_animal_acoustic_tracking_delayed_summarised_detection_qc = "aodn_cloud_optimised.bin.datasets.animal_acoustic_tracking_delayed_summarised_detection_qc:main"
 cloud_optimised_animal_ctd_satellite_relay_tagging_delayed_qc = "aodn_cloud_optimised.bin.datasets.animal_ctd_satellite_relay_tagging_delayed_qc:main"
 cloud_optimised_animal_ctd_satellite_relay_tagging_location_qc_realtime_qc = "aodn_cloud_optimised.bin.datasets.animal_ctd_satellite_relay_tagging_location_qc_realtime_qc:main"
 cloud_optimised_animal_diag_satellite_relay_tagging_location_qc_realtime_qc = "aodn_cloud_optimised.bin.datasets.animal_diag_satellite_relay_tagging_location_qc_realtime_qc:main"
@@ -260,7 +262,8 @@ cloud_optimised_satellite_picoplankton_fraction_oc3_1day_aqua = "aodn_cloud_opti
 cloud_optimised_satellite_sst_1day_aqua = "aodn_cloud_optimised.bin.datasets.satellite_sst_1day_aqua:main"
 cloud_optimised_satellite_sst_1day_snpp = "aodn_cloud_optimised.bin.datasets.satellite_sst_1day_snpp:main"
 cloud_optimised_satellite_wind_altimeter_delayed_qc = "aodn_cloud_optimised.bin.datasets.satellite_wind_altimeter_delayed_qc:main"
-cloud_optimised_slocum_glider_delayed_qc = "aodn_cloud_optimised.bin.datasets.slocum_glider_delayed_qc:main"
+cloud_optimised_ocean_glider_delayed_qc = "aodn_cloud_optimised.bin.datasets.ocean_glider_delayed_qc:main"
+cloud_optimised_ocean_glider_realtime_nonqc = "aodn_cloud_optimised.bin.datasets.ocean_glider_realtime_nonqc:main"
 cloud_optimised_station_lucinda_jetty_daily_satlantic_hyperocr = "aodn_cloud_optimised.bin.datasets.station_lucinda_jetty_daily_satlantic_hyperocr:main"
 cloud_optimised_station_lucinda_jetty_daily_satlantic_hyperocr_derived_product = "aodn_cloud_optimised.bin.datasets.station_lucinda_jetty_daily_satlantic_hyperocr_derived_product:main"
 cloud_optimised_station_lucinda_jetty_daily_wetlabs_acs = "aodn_cloud_optimised.bin.datasets.station_lucinda_jetty_daily_wetlabs_acs:main"
@@ -285,6 +288,7 @@ cloud_optimised_vessel_bio_optical_backscattering_delayed_qc = "aodn_cloud_optim
 cloud_optimised_vessel_bio_optical_pigment_delayed_qc = "aodn_cloud_optimised.bin.datasets.vessel_bio_optical_pigment_delayed_qc:main"
 cloud_optimised_vessel_bio_optical_suspended_matter_delayed_qc = "aodn_cloud_optimised.bin.datasets.vessel_bio_optical_suspended_matter_delayed_qc:main"
 cloud_optimised_vessel_co2_delayed_qc = "aodn_cloud_optimised.bin.datasets.vessel_co2_delayed_qc:main"
+cloud_optimised_vessel_co2_realtime_nonqc = "aodn_cloud_optimised.bin.datasets.vessel_co2_realtime_nonqc:main"
 cloud_optimised_vessel_fishsoop_realtime_qc = "aodn_cloud_optimised.bin.datasets.vessel_fishsoop_realtime_qc:main"
 cloud_optimised_vessel_nrs_ctd_profiles_delayed_qc = "aodn_cloud_optimised.bin.datasets.vessel_nrs_ctd_profiles_delayed_qc:main"
 cloud_optimised_vessel_satellite_radiance_delayed_qc = "aodn_cloud_optimised.bin.datasets.vessel_satellite_radiance_delayed_qc:main"
@@ -300,7 +304,7 @@ pydantic_precommit_hook = "aodn_cloud_optimised.bin.pydantic_precommit_hook:main
 
 
 [tool.pre_commit]
-version = "1.3.2"
+version = "1.3.9"
 config = ".pre-commit-config.yaml"
 
 [tool.pytest.ini_options]
