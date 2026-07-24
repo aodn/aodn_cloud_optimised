@@ -134,6 +134,12 @@ dev = [
 
 mcp = ["mcp>=1.26.0,<2.0.0", "nbformat>=5.0.0", "nbconvert>=7.0.0"]
 
+flows = [
+  "prefect>=3.0.0",
+  "prefect-aws>=0.5.0",
+  "cloudpathlib[s3]>=0.20.0",
+]
+
 
 [project.scripts]
 #cloud_optimised_srs_oc_ljco_to_parquet = "aodn_cloud_optimised.bin.srs_oc_ljco_to_parquet:main"
