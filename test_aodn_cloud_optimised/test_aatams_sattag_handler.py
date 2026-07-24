@@ -18,13 +18,14 @@ from aodn_cloud_optimised.lib.AatamsSatelliteTaggingHandler import (
 )
 
 
-def _make_handler(pyarrow_schema=None, schema=None):
+def _make_handler(pyarrow_schema=None, schema=None, raise_error=False):
     handler = AatamsSatelliteTaggingHandler.__new__(AatamsSatelliteTaggingHandler)
     handler.logger = logging.getLogger("test_aatams")
     handler.logger.addHandler(logging.NullHandler())
     handler.uuid_log = "test-uuid"
     handler.pyarrow_schema = pyarrow_schema or pa.schema([])
     handler.schema = schema or {}
+    handler.raise_error = raise_error
     return handler
 
 
@@ -136,6 +137,39 @@ class TestCastTableTolerance(unittest.TestCase):
 
     def test_all_castable_columns_follow_schema(self):
         handler = _make_handler()
+        table = pa.table(
+            {
+                "max_dbar": pa.array([10, 15], pa.int64()),
+                "n_temp": pa.array([10.0, 12.0], pa.float64()),
+                "n_sal": pa.array([9, 11], pa.int64()),
+                "fluoro_vals": pa.array([0.1, 0.2], pa.float64()),
+            }
+        )
+
+        out = handler.cast_table_by_schema(table, self._schema())
+        self.assertEqual(out.schema, self._schema())
+
+    def test_raises_when_raise_error_is_set(self):
+        """With raise_error, an un-castable column fails the file loudly."""
+        handler = _make_handler(raise_error=True)
+        table = pa.table(
+            {
+                "max_dbar": pa.array([10, 15], pa.int64()),
+                "n_temp": pa.array([10.0, 12.0], pa.float64()),
+                "n_sal": pa.array([9, 11], pa.int64()),
+                "fluoro_vals": pa.array(["4,10,12", "8,9"], pa.large_string()),
+            }
+        )
+
+        with self.assertRaises(ValueError) as ctx:
+            handler.cast_table_by_schema(table, self._schema())
+
+        # The message must name the offending column, unlike the bare
+        # "ArrowInvalid" it replaces.
+        self.assertIn("fluoro_vals", str(ctx.exception))
+
+    def test_does_not_raise_when_all_columns_cast(self):
+        handler = _make_handler(raise_error=True)
         table = pa.table(
             {
                 "max_dbar": pa.array([10, 15], pa.int64()),

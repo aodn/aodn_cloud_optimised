@@ -417,10 +417,17 @@ class GenericHandler(CommonHandler):
             pyarrow.Table: A table whose columns follow *schema* wherever the
                 cast succeeded, keeping the original type for any column that
                 could not be cast.
+
+        Raises:
+            ValueError: If any column could not be cast and ``self.raise_error``
+                is set. Tolerating the failure means publishing data that does
+                not match the configured schema, so a run that asked for errors
+                to be fatal must not silently succeed.
         """
         # Cast each column of the table individually according to the schema
         casted_arrays = []
         result_fields = []
+        failed_columns = []
         for field in schema:
             column = table.column(field.name)
             try:
@@ -435,6 +442,7 @@ class GenericHandler(CommonHandler):
                 # Keep this one column as-is rather than failing the whole file
                 casted_arrays.append(column)
                 result_fields.append(pa.field(field.name, column.type))
+                failed_columns.append(f"'{field.name}' ({column.type} -> {field.type})")
                 self.logger.error(
                     f"{self.uuid_log}: Could not cast column '{field.name}' to "
                     f"{field.type} ({type(e).__name__}: {e}). Keeping original "
@@ -445,6 +453,16 @@ class GenericHandler(CommonHandler):
         casted_table = pa.Table.from_arrays(
             casted_arrays, schema=pa.schema(result_fields)
         )
+
+        # The per-column logger.error above is only fatal when self.logger is an
+        # ExitOnErrorLogger. Callers running under an external logger (e.g. a
+        # Prefect run logger) would otherwise publish mistyped data and report
+        # success, so honour raise_error explicitly.
+        if failed_columns and self.raise_error:
+            raise ValueError(
+                f"{self.uuid_log}: {len(failed_columns)} column(s) could not be cast "
+                f"to the configured schema: {', '.join(failed_columns)}"
+            )
 
         return casted_table
 
@@ -1198,7 +1216,15 @@ class GenericHandler(CommonHandler):
                 # df.cast fails complaining that the schemas are different while they're arent. different order is often the case
                 pdf = self.cast_table_by_schema(pdf, subset_schema)
             except ValueError as e:
-                self.logger.error(f"{filename}: {type(e).__name__}")
+                # Log the full exception, not just its class name: a bare
+                # "ArrowInvalid" gives no way to tell which column or value
+                # broke the cast.
+                self.logger.error(
+                    f"{self.uuid_log}: {filename}: could not cast to the configured "
+                    f"schema: {type(e).__name__}: {e}\n{traceback.format_exc()}"
+                )
+                if self.raise_error:
+                    raise
 
         # Part B: Create NaN arrays for missing columns in the pyarrow table by comparing the self.pyarrow_schema variable
         if self.pyarrow_schema is not None:
