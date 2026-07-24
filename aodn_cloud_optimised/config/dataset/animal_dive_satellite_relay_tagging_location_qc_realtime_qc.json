@@ -1,0 +1,609 @@
+{
+  "dataset_name": "animal_dive_satellite_relay_tagging_location_qc_realtime_qc",
+  "logger_name": "animal_dive_satellite_relay_tagging_location_qc_realtime_qc",
+  "cloud_optimised_format": "parquet",
+  "run_settings": {
+    "paths": [
+      {
+        "s3_uri": "s3://imos-data/IMOS/AATAMS/satellite_tagging/ATF_Location_QC_NRT",
+        "filter": [
+          ".*_dive_.*_nrt\\.csv$"
+        ],
+        "year_range": []
+      }
+    ],
+    "cluster": {
+      "mode": "local",
+      "restart_every_path": false
+    },
+    "clear_existing_data": true,
+    "raise_error": false,
+    "coiled_cluster_options": {
+      "n_workers": [
+        1,
+        20
+      ],
+      "scheduler_vm_types": "m7i-flex.large",
+      "worker_vm_types": "m7i-flex.large",
+      "allow_ingress_from": "me",
+      "compute_purchase_option": "spot_with_fallback",
+      "worker_options": {
+        "nthreads": 4,
+        "memory_limit": "8GB"
+      }
+    },
+    "batch_size": 5,
+    "force_previous_parquet_deletion": false
+  },
+  "metadata_uuid": "b2548767-514f-4a31-b65e-36bb894382d5",
+  "schema": {
+    "ref": {
+      "type": "string",
+      "long_name": "reference",
+      "comment": "A three-part code (e.g. rs3-Fred-07) : The first part identifies the batch of tags, the second part is the name or number of the animal, the third part is the year"
+    },
+    "ptt": {
+      "type": "int32",
+      "long_name": "Platform Transmitter Terminal",
+      "comment": "Argos PTT number is used"
+    },
+    "cnt": {
+      "type": "int32",
+      "comment": "The number of times that this record was received"
+    },
+    "de_date": {
+      "type": "timestamp[ns]",
+      "long_name": "Dive end date",
+      "comment": "Dive end: the time (UTC) at which the depth crossed the threshold on the return to the surface"
+    },
+    "surf_dur": {
+      "type": "int32",
+      "long_name": "Surface duration",
+      "units": "s",
+      "comment": "Surface duration (seconds): the length of time following DE_DATE before the next dive or other event began."
+    },
+    "dive_dur": {
+      "type": "int32",
+      "long_name": "Dive duration",
+      "units": "s",
+      "comment": "Dive duration (seconds): the length of time between the crossing of the dive-start threshold on the descent and DE_DATE"
+    },
+    "max_dep": {
+      "type": "double",
+      "units": "m",
+      "comment": "The maximum dive depth recorded"
+    },
+    "d1": {
+      "type": "double",
+      "units": "m",
+      "comment": "Intermediate depth points (metres) in the dive. For most deployments one of these is guaranteed to be the maximum depth (so MAX_DEP is not transmitted)"
+    },
+    "d2": {
+      "type": "double",
+      "units": "m",
+      "comment": "Intermediate depth points (metres) in the dive. For most deployments one of these is guaranteed to be the maximum depth (so MAX_DEP is not transmitted)"
+    },
+    "d3": {
+      "type": "double",
+      "units": "m",
+      "comment": "Intermediate depth points (metres) in the dive. For most deployments one of these is guaranteed to be the maximum depth (so MAX_DEP is not transmitted)"
+    },
+    "d4": {
+      "type": "double",
+      "units": "m",
+      "comment": "Intermediate depth points (metres) in the dive. For most deployments one of these is guaranteed to be the maximum depth (so MAX_DEP is not transmitted)"
+    },
+    "v1": {
+      "type": "double",
+      "units": "m/s",
+      "comment": "Speeds (metres/second) in each section of the dive. If there is one more Vvalue than D- values then V1 is the speed up to D1, V2 between D1 and D2, etc. The last V- value is the speed between the last D- value and the surface. If there are three V- values then V1 is the speed from the surface to the D1 point, V3 is the speed from the last depth point to the surface, and V2 is the speed over the remainder of the dive between D1 and the last depth point."
+    },
+    "v2": {
+      "type": "double",
+      "units": "m/s",
+      "comment": "Speeds (metres/second) in each section of the dive. If there is one more Vvalue than D- values then V1 is the speed up to D1, V2 between D1 and D2, etc. The last V- value is the speed between the last D- value and the surface. If there are three V- values then V1 is the speed from the surface to the D1 point, V3 is the speed from the last depth point to the surface, and V2 is the speed over the remainder of the dive between D1 and the last depth point."
+    },
+    "v3": {
+      "type": "double",
+      "units": "m/s",
+      "comment": "Speeds (metres/second) in each section of the dive. If there is one more Vvalue than D- values then V1 is the speed up to D1, V2 between D1 and D2, etc. The last V- value is the speed between the last D- value and the surface. If there are three V- values then V1 is the speed from the surface to the D1 point, V3 is the speed from the last depth point to the surface, and V2 is the speed over the remainder of the dive between D1 and the last depth point."
+    },
+    "v4": {
+      "type": "double",
+      "units": "m/s",
+      "comment": "Speeds (metres/second) in each section of the dive. If there is one more Vvalue than D- values then V1 is the speed up to D1, V2 between D1 and D2, etc. The last V- value is the speed between the last D- value and the surface. If there are three V- values then V1 is the speed from the surface to the D1 point, V3 is the speed from the last depth point to the surface, and V2 is the speed over the remainder of the dive between D1 and the last depth point."
+    },
+    "v5": {
+      "type": "double",
+      "units": "m/s",
+      "comment": "Speeds (metres/second) in each section of the dive. If there is one more Vvalue than D- values then V1 is the speed up to D1, V2 between D1 and D2, etc. The last V- value is the speed between the last D- value and the surface. If there are three V- values then V1 is the speed from the surface to the D1 point, V3 is the speed from the last depth point to the surface, and V2 is the speed over the remainder of the dive between D1 and the last depth point."
+    },
+    "travel_r": {
+      "type": "double",
+      "long_name": "estimate of speed-over-ground",
+      "units": "m/s",
+      "comment": " An estimate of speed-over-ground, based only on filtered Argos locations not the turbine speed (metres/second)"
+    },
+    "homedist": {
+      "type": "double",
+      "comment": "Great-circle distance from the home point in the metadata table"
+    },
+    "bottom": {
+      "type": "double",
+      "units": "m",
+      "comment": "An estimate of the ocean depth derived from the Smith and Sandwell gridded dataset (metres)"
+    },
+    "t1": {
+      "type": "double",
+      "comment": "The percentage of DIVE_DUR elapsed since the beginning of the dive at each of the intermediate depth points"
+    },
+    "t2": {
+      "type": "double",
+      "comment": "The percentage of DIVE_DUR elapsed since the beginning of the dive at each of the intermediate depth points"
+    },
+    "t3": {
+      "type": "double",
+      "comment": "The percentage of DIVE_DUR elapsed since the beginning of the dive at each of the intermediate depth points"
+    },
+    "t4": {
+      "type": "double",
+      "comment": "The percentage of DIVE_DUR elapsed since the beginning of the dive at each of the intermediate depth points"
+    },
+    "d_speed": {
+      "type": "double",
+      "units": "m/s",
+      "comment": "The average speed recorded in the dive (metres/second)"
+    },
+    "n_depths": {
+      "type": "int32",
+      "comment": "The number of intermediate dive points present"
+    },
+    "n_speeds": {
+      "type": "int32",
+      "comment": "The number of intermediate speeds present"
+    },
+    "depth_str": {
+      "type": "string",
+      "comment": "The D1,D2,D3, values as a comma-separated string"
+    },
+    "speed_str": {
+      "type": "string",
+      "comment": "The V1,V2,V3, values as a comma-separated string"
+    },
+    "propn_str": {
+      "type": "string",
+      "comment": "The T1,T2,T3, values as a comma-separated string"
+    },
+    "percent_area": {
+      "type": "double",
+      "comment": "Used to calculate the TAD dive index"
+    },
+    "residual": {
+      "type": "int32"
+    },
+    "grp_number": {
+      "type": "int32",
+      "comment": "Shows which dives were sent in the same transmission"
+    },
+    "d5": {
+      "type": "double",
+      "units": "m",
+      "comment": "Intermediate depth points (metres) in the dive. For most deployments one of these is guaranteed to be the maximum depth (so MAX_DEP is not transmitted)"
+    },
+    "t5": {
+      "type": "double",
+      "comment": "The percentage of DIVE_DUR elapsed since the beginning of the dive at each of the intermediate depth points"
+    },
+    "degc_str": {
+      "type": "double"
+    },
+    "illum_str": {
+      "type": "double"
+    },
+    "pca_desc": {
+      "type": "double"
+    },
+    "pca_btm": {
+      "type": "double"
+    },
+    "pca_asc": {
+      "type": "double"
+    },
+    "pca_max_desc": {
+      "type": "double"
+    },
+    "pca_max_btm": {
+      "type": "double"
+    },
+    "pca_max_asc": {
+      "type": "double"
+    },
+    "pca_mean_desc": {
+      "type": "double"
+    },
+    "pca_mean_btm": {
+      "type": "double"
+    },
+    "pca_mean_asc": {
+      "type": "double"
+    },
+    "swim_eff_desc": {
+      "type": "double"
+    },
+    "swim_eff_btm": {
+      "type": "double"
+    },
+    "swim_eff_asc": {
+      "type": "double"
+    },
+    "swim_eff_whole": {
+      "type": "double"
+    },
+    "secs_desc": {
+      "type": "double"
+    },
+    "secs_btm": {
+      "type": "double"
+    },
+    "secs_asc": {
+      "type": "double"
+    },
+    "pitch_desc": {
+      "type": "double"
+    },
+    "pitch_btm": {
+      "type": "double"
+    },
+    "pitch_asc": {
+      "type": "double"
+    },
+    "pitch_str": {
+      "type": "double"
+    },
+    "tagging_id": {
+      "type": "double"
+    },
+    "de_date_tag": {
+      "type": "string"
+    },
+    "qc": {
+      "type": "double"
+    },
+    "d6": {
+      "type": "double",
+      "units": "m",
+      "comment": "Intermediate depth points (metres) in the dive. For most deployments one of these is guaranteed to be the maximum depth (so MAX_DEP is not transmitted)"
+    },
+    "d7": {
+      "type": "double",
+      "units": "m",
+      "comment": "Intermediate depth points (metres) in the dive. For most deployments one of these is guaranteed to be the maximum depth (so MAX_DEP is not transmitted)"
+    },
+    "d8": {
+      "type": "double",
+      "units": "m",
+      "comment": "Intermediate depth points (metres) in the dive. For most deployments one of these is guaranteed to be the maximum depth (so MAX_DEP is not transmitted)"
+    },
+    "d9": {
+      "type": "double",
+      "units": "m",
+      "comment": "Intermediate depth points (metres) in the dive. For most deployments one of these is guaranteed to be the maximum depth (so MAX_DEP is not transmitted)"
+    },
+    "d10": {
+      "type": "double",
+      "units": "m",
+      "comment": "Intermediate depth points (metres) in the dive. For most deployments one of these is guaranteed to be the maximum depth (so MAX_DEP is not transmitted)"
+    },
+    "d11": {
+      "type": "double",
+      "units": "m",
+      "comment": "Intermediate depth points (metres) in the dive. For most deployments one of these is guaranteed to be the maximum depth (so MAX_DEP is not transmitted)"
+    },
+    "d12": {
+      "type": "double",
+      "units": "m",
+      "comment": "Intermediate depth points (metres) in the dive. For most deployments one of these is guaranteed to be the maximum depth (so MAX_DEP is not transmitted)"
+    },
+    "d13": {
+      "type": "double",
+      "units": "m",
+      "comment": "Intermediate depth points (metres) in the dive. For most deployments one of these is guaranteed to be the maximum depth (so MAX_DEP is not transmitted)"
+    },
+    "d14": {
+      "type": "double",
+      "units": "m",
+      "comment": "Intermediate depth points (metres) in the dive. For most deployments one of these is guaranteed to be the maximum depth (so MAX_DEP is not transmitted)"
+    },
+    "d15": {
+      "type": "double",
+      "units": "m",
+      "comment": "Intermediate depth points (metres) in the dive. For most deployments one of these is guaranteed to be the maximum depth (so MAX_DEP is not transmitted)"
+    },
+    "d16": {
+      "type": "double",
+      "units": "m",
+      "comment": "Intermediate depth points (metres) in the dive. For most deployments one of these is guaranteed to be the maximum depth (so MAX_DEP is not transmitted)"
+    },
+    "d17": {
+      "type": "double",
+      "units": "m",
+      "comment": "Intermediate depth points (metres) in the dive. For most deployments one of these is guaranteed to be the maximum depth (so MAX_DEP is not transmitted)"
+    },
+    "d18": {
+      "type": "double",
+      "units": "m",
+      "comment": "Intermediate depth points (metres) in the dive. For most deployments one of these is guaranteed to be the maximum depth (so MAX_DEP is not transmitted)"
+    },
+    "d19": {
+      "type": "double",
+      "units": "m",
+      "comment": "Intermediate depth points (metres) in the dive. For most deployments one of these is guaranteed to be the maximum depth (so MAX_DEP is not transmitted)"
+    },
+    "d20": {
+      "type": "double",
+      "units": "m",
+      "comment": "Intermediate depth points (metres) in the dive. For most deployments one of these is guaranteed to be the maximum depth (so MAX_DEP is not transmitted)"
+    },
+    "d21": {
+      "type": "double",
+      "units": "m",
+      "comment": "Intermediate depth points (metres) in the dive. For most deployments one of these is guaranteed to be the maximum depth (so MAX_DEP is not transmitted)"
+    },
+    "d22": {
+      "type": "double",
+      "units": "m",
+      "comment": "Intermediate depth points (metres) in the dive. For most deployments one of these is guaranteed to be the maximum depth (so MAX_DEP is not transmitted)"
+    },
+    "d23": {
+      "type": "double",
+      "units": "m",
+      "comment": "Intermediate depth points (metres) in the dive. For most deployments one of these is guaranteed to be the maximum depth (so MAX_DEP is not transmitted)"
+    },
+    "d24": {
+      "type": "double",
+      "units": "m",
+      "comment": "Intermediate depth points (metres) in the dive. For most deployments one of these is guaranteed to be the maximum depth (so MAX_DEP is not transmitted)"
+    },
+    "d25": {
+      "type": "double",
+      "units": "m",
+      "comment": "Intermediate depth points (metres) in the dive. For most deployments one of these is guaranteed to be the maximum depth (so MAX_DEP is not transmitted)"
+    },
+    "t6": {
+      "type": "double",
+      "comment": "The percentage of DIVE_DUR elapsed since the beginning of the dive at each of the intermediate depth points"
+    },
+    "t7": {
+      "type": "double",
+      "comment": "The percentage of DIVE_DUR elapsed since the beginning of the dive at each of the intermediate depth points"
+    },
+    "t8": {
+      "type": "double",
+      "comment": "The percentage of DIVE_DUR elapsed since the beginning of the dive at each of the intermediate depth points"
+    },
+    "t9": {
+      "type": "double",
+      "comment": "The percentage of DIVE_DUR elapsed since the beginning of the dive at each of the intermediate depth points"
+    },
+    "t10": {
+      "type": "double",
+      "comment": "The percentage of DIVE_DUR elapsed since the beginning of the dive at each of the intermediate depth points"
+    },
+    "t11": {
+      "type": "double",
+      "comment": "The percentage of DIVE_DUR elapsed since the beginning of the dive at each of the intermediate depth points"
+    },
+    "t12": {
+      "type": "double",
+      "comment": "The percentage of DIVE_DUR elapsed since the beginning of the dive at each of the intermediate depth points"
+    },
+    "t13": {
+      "type": "double",
+      "comment": "The percentage of DIVE_DUR elapsed since the beginning of the dive at each of the intermediate depth points"
+    },
+    "t14": {
+      "type": "double",
+      "comment": "The percentage of DIVE_DUR elapsed since the beginning of the dive at each of the intermediate depth points"
+    },
+    "t15": {
+      "type": "double",
+      "comment": "The percentage of DIVE_DUR elapsed since the beginning of the dive at each of the intermediate depth points"
+    },
+    "t16": {
+      "type": "double",
+      "comment": "The percentage of DIVE_DUR elapsed since the beginning of the dive at each of the intermediate depth points"
+    },
+    "t17": {
+      "type": "double",
+      "comment": "The percentage of DIVE_DUR elapsed since the beginning of the dive at each of the intermediate depth points"
+    },
+    "t18": {
+      "type": "double",
+      "comment": "The percentage of DIVE_DUR elapsed since the beginning of the dive at each of the intermediate depth points"
+    },
+    "t19": {
+      "type": "double",
+      "comment": "The percentage of DIVE_DUR elapsed since the beginning of the dive at each of the intermediate depth points"
+    },
+    "t20": {
+      "type": "double",
+      "comment": "The percentage of DIVE_DUR elapsed since the beginning of the dive at each of the intermediate depth points"
+    },
+    "t21": {
+      "type": "double",
+      "comment": "The percentage of DIVE_DUR elapsed since the beginning of the dive at each of the intermediate depth points"
+    },
+    "t22": {
+      "type": "double",
+      "comment": "The percentage of DIVE_DUR elapsed since the beginning of the dive at each of the intermediate depth points"
+    },
+    "t23": {
+      "type": "double",
+      "comment": "The percentage of DIVE_DUR elapsed since the beginning of the dive at each of the intermediate depth points"
+    },
+    "t24": {
+      "type": "double",
+      "comment": "The percentage of DIVE_DUR elapsed since the beginning of the dive at each of the intermediate depth points"
+    },
+    "t25": {
+      "type": "double",
+      "comment": "The percentage of DIVE_DUR elapsed since the beginning of the dive at each of the intermediate depth points"
+    },
+    "ds_date": {
+      "type": "string"
+    },
+    "start_lat": {
+      "type": "double",
+      "comment": "The approximate position of the SRDL at the start of the deployment"
+    },
+    "start_lon": {
+      "type": "double",
+      "comment": "The approximate position of the SRDL at the start of the deployment"
+    },
+    "lat": {
+      "type": "double",
+      "long_name": "Latitude",
+      "units": "degrees_north",
+      "comment": "Position estimate (WGS 84 datum)"
+    },
+    "lon": {
+      "type": "double",
+      "long_name": "Longitude",
+      "units": "degrees_east",
+      "comment": "Position estimate (WGS 84 datum)"
+    },
+    "ssm_lon": {
+      "type": "double"
+    },
+    "ssm_lat": {
+      "type": "double"
+    },
+    "ssm_x": {
+      "type": "double"
+    },
+    "ssm_y": {
+      "type": "double"
+    },
+    "ssm_x_se": {
+      "type": "double"
+    },
+    "ssm_y_se": {
+      "type": "double"
+    },
+    "cid": {
+      "type": "string",
+      "comment": "SMRU campaign name "
+    }
+  },
+  "aws_opendata_registry": {
+    "Name": "IMOS - Animal Tracking Facility - Satellite Relay Tagging Program - Near real-time data with quality-controlled locations",
+    "Description": "The Animal Tagging Sub-Facility of the IMOS Animal Tracking Facility (formerly known as the Australian Animal Tracking And Monitoring System (AATAMS)) is a coordinated marine animal satellite-tracking project. Satellite Relay Data Loggers (SRDL) (most with Conductivity-Temperature-Depth (CTD) sensors, and some with CTD/fluorometers) are used to explore how marine animals (e.g. mammals) interact with their oceanic environment. The primary focus of this program is to collect CTD data from marine mammals, such as southern elephant seals (Mirounga leonina) and Weddell seals (Leptonychotes weddellii), in the southern Indian Ocean and along the East Antarctic coast. This is achieved through international collaborations with the French national polar program's long-term National Observatory Services: Mammals as Ocean Bio-Samplers (SNO-MEMO), the National Institute of Water and Atmospheric Research as part of the Ross Sea Research and Monitoring Programme, and the CNES (Centre National d'Etudes Spatiales) TOSCA programme (Phoques de Weddell bio-oceanographes de la banquise antarctique et outils satellites) in Terre Adelie. SRDL loggers developed at the Sea Mammal Research Unit (SMRU, University of St Andrews, UK) transmit data in near real time via the Argos satellite system. This metadata record, represents several different datasets listed hereafter, which can all be accessed through a multi-WFS service. \nThe data represented by this record are presented in near real-time. \nCTD - parameters measured by the instruments include time, depth, conductivity (salinity), temperature, speed and fluorescence (available in some deployments). \nDiving - parameters measured by the instruments include individual dive start and end time, longitude/latitude at dive end time, post-dive surface duration, dive duration, maximum dive depth, intermediate dive depths and times. \nHaulout - a haulout begins when the SRDL has been continuously dry for a specified length of time (usually 10 minutes). It ends when continuously wet for another interval (usually 40 seconds). Haulout data parameters measured by the instruments include haulout start and end dates and longitude/latitude, and haulout number. \nArgos Locations - location data parameters measured by the instruments include time, longitude, latitude, location quality, along with other diagnostic information provided by Argos (http://www.argos-system.org/). \nSummary Statistics - as well as sending records of individual events such as dives and haulouts, the SRDL also calculates summary statistics of those events over a specified time period (usually 3, 4 or 6 hours). Summary statistics computed by the instruments include the proportion of time spent diving, at the surface and hauled-out, the number of dives, and the average, standard deviation and maximum dive duration and dive depth during each summary period. These statistics are based on all the data recorded by the SRDL and thus are not prone to distortion by variations in the efficiency of transmission via Argos. \nSSM QC Locations - SSM-predicted locations and uncertainty at 6-h intervals from the location quality-control process. SSM-predicted locations are also appended to records in the CTD, Diving, Haulout, Argos Locations, and Summary Statistics datasets. See Jonsen et al. 2020 for further details on the SSM used for location quality control",
+    "Documentation": "https://catalogue-imos.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/b2548767-514f-4a31-b65e-36bb894382d5",
+    "Contact": "info@aodn.org.au",
+    "ManagedBy": "AODN",
+    "UpdateFrequency": "As Needed",
+    "Tags": [
+      "FILL UP MANUALLY - CHECK DOCUMENTATION"
+    ],
+    "License": "http://creativecommons.org/licenses/by/4.0/",
+    "Resources": [
+      {
+        "Description": "Cloud Optimised AODN dataset of IMOS - Animal Tracking Facility - Satellite Relay Tagging Program - Near real-time data with quality-controlled locations",
+        "ARN": "arn:aws:s3:::aodn-cloud-optimised/animal_dive_satellite_relay_tagging_location_qc_realtime_qc.parquet",
+        "Region": "ap-southeast-2",
+        "Type": "S3 Bucket"
+      }
+    ],
+    "DataAtWork": {
+      "Tutorials": [
+        {
+          "Title": "Accessing IMOS - Animal Tracking Facility - Satellite Relay Tagging Program - Near real-time data with quality-controlled locations",
+          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/animal_dive_satellite_relay_tagging_location_qc_realtime_qc.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/animal_dive_satellite_relay_tagging_location_qc_realtime_qc.ipynb",
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
+        },
+        {
+          "Title": "Accessing and search for any AODN dataset",
+          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
+        }
+      ]
+    },
+    "Citation": "IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access]"
+  },
+  "csv_config": {
+    "pandas_read_csv_config": {
+      "na_values": [
+        "N/A",
+        "NaN"
+      ],
+      "encoding": "utf-8",
+      "index_col": "de_date",
+      "parse_dates": [
+        "de_date"
+      ]
+    }
+  },
+  "schema_transformation": {
+    "drop_variables": [],
+    "add_variables": {
+      "filename": {
+        "source": "@filename",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "long_name": "Filename of the source file"
+        }
+      },
+      "timestamp": {
+        "source": "@partitioning:time_extent",
+        "schema": {
+          "type": "int64",
+          "units": "1",
+          "long_name": "Partition timestamp"
+        }
+      },
+      "polygon": {
+        "source": "@partitioning:spatial_extent",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "long_name": "Spatial partition polygon"
+        }
+      }
+    },
+    "partitioning": [
+      {
+        "source_variable": "timestamp",
+        "type": "time_extent",
+        "time_extent": {
+          "time_varname": "de_date",
+          "partition_period": "Y"
+        }
+      },
+      {
+        "source_variable": "polygon",
+        "type": "spatial_extent",
+        "spatial_extent": {
+          "lat_varname": "lat",
+          "lon_varname": "lon",
+          "spatial_resolution": 20
+        }
+      }
+    ],
+    "global_attributes": {
+      "delete": [
+        "geospatial_lat_max",
+        "geospatial_lat_min",
+        "geospatial_lon_max",
+        "geospatial_lon_min",
+        "date_created"
+      ],
+      "set": {}
+    }
+  },
+  "handler_class": "AatamsSatelliteTaggingHandler"
+}
