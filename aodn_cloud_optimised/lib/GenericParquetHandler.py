@@ -1381,41 +1381,42 @@ class GenericHandler(CommonHandler):
             )
 
     def list_dataset_bucket(self) -> tuple[str, list[str]]:
-        """
-        Return (bucket, keys) for the dataset.
+        """List all Parquet file keys and identify the S3 bucket for the dataset.
 
-        `keys` are S3 object keys (no scheme and no bucket prefix).
+        Inspects the dataset at :attr:`cloud_optimised_output_path` using PyArrow
+        and extracts the S3 bucket along with the full key paths.
+
+        :return: A tuple containing:
+            - **bucket** (*str*): The name of the S3 bucket.
+            - **keys** (*list[str]*): List of file keys.
+        :rtype: tuple[str, list[str]]
+
+        :raises FileNotFoundError: If the target path does not exist or contains no Parquet files.
+        :raises OSError: If there is an issue accessing the storage filesystem or reading metadata.
+        :raises IndexError: If the dataset files list is empty when extracting the bucket name.
         """
         self.logger.info("Listing parquet keys for dataset...")
-        bucket, _ = split_s3_path(self.cloud_optimised_output_path)
-        if not bucket:
-            bucket = self.optimised_bucket_name
-
         try:
             ds = pds.dataset(
                 source=self.cloud_optimised_output_path,
                 partitioning="hive",
                 filesystem=self.s3_fs_output,
             )
-        except Exception as e:
-            self.logger.info(f"No Parquet files to list. Reason: {e}")
-            return bucket, []
+        except OSError as e:
+            self.logger.info(
+                f"could not list parquet files for `{self.cloud_optimised_output_path}`: {e}"
+            )
+        except FileNotFoundError as e:
+            self.logger.info(
+                f"could not list parquet files for `{self.cloud_optimised_output_path}`: {e}"
+            )
+        if len(ds.files) < 1:
+            raise IndexError(
+                f"no parquet files found for `{self.cloud_optimised_output_path}`"
+            )
 
-        if not ds.files:
-            self.logger.info("Found `0` keys.")
-            return bucket, []
-
-        keys: list[str] = []
-        for file in ds.files:
-            if file.startswith("s3://"):
-                _, key = split_s3_path(file)
-            elif file.startswith(f"{bucket}/"):
-                key = file[len(bucket) + 1 :]
-            else:
-                key = file.lstrip("/")
-            keys.append(key)
-
-        self.logger.info(f"Found `{len(keys)}` keys.")
+        bucket = ds.files[0].split("/")[0]
+        keys = ["/".join(file.split("/")) for file in ds.files]
         return bucket, keys
 
     def find_matched_keys(
@@ -1536,7 +1537,7 @@ class GenericHandler(CommonHandler):
 
     @overload
     def delete_existing_matching_parquet(
-        self, filename: None = None, filenames: list[str] | None = None
+        self, filenames: list[str] | None = None
     ) -> None: ...
 
     def delete_existing_matching_parquet(
@@ -1561,15 +1562,20 @@ class GenericHandler(CommonHandler):
             None
         """
 
-        # Resolve `filesname` -> `filenames`
-        if filename:
-            filenames = [filename]
+        # Check both filename and filenames are not both set
+        if (filename is None) == (filenames is None):
+            raise ValueError(
+                "Exactly one of 'filename' or 'filenames' must be provided."
+            )
+
+        # Resolve `filenames`
+        filenames = filenames or [filename]
 
         # Get all the keys
         bucket, keys = self.list_dataset_bucket()
 
         # Find all the matched keys
-        matched_keys = self.find_matched_delete_s3_paths(keys=keys, filenames=filenames)
+        matched_keys = self.find_matched_keys(keys=keys, filenames=filenames)
         if not matched_keys:
             return
 
