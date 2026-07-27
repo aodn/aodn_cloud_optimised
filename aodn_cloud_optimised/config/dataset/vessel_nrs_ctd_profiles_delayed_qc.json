@@ -379,32 +379,32 @@
       "quality_control_global": "A"
     },
     "DOX": {
-    "type": "float",
-    "ancillary_variables": "DOX_quality_control",
-    "long_name": "volume_concentration_of_dissolved_molecular_oxygen_in_sea_water",
-    "units": "ml l-1",
-    "valid_max": 200.0,
-    "valid_min": 0.0
+      "type": "float",
+      "ancillary_variables": "DOX_quality_control",
+      "long_name": "volume_concentration_of_dissolved_molecular_oxygen_in_sea_water",
+      "units": "ml l-1",
+      "valid_max": 200.0,
+      "valid_min": 0.0
     },
     "DOX_quality_control": {
-    "type": "float",
-    "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
-    "flag_values": [
-      0,
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-      9
-    ],
-    "long_name": "quality flag for volume_concentration_of_dissolved_molecular_oxygen_in_sea_water",
-    "quality_control_conventions": "IMOS standard flags",
-    "quality_control_global": "A",
-    "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)"
+      "type": "float",
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "long_name": "quality flag for volume_concentration_of_dissolved_molecular_oxygen_in_sea_water",
+      "quality_control_conventions": "IMOS standard flags",
+      "quality_control_global": "A",
+      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)"
     },
     "DENS_quality_control": {
       "type": "float",
@@ -803,7 +803,6 @@
       "valid_max": 900000.0,
       "_FillValue": 999999.0,
       "ancillary_variables": "DOX1_quality_control",
-      "_ChunkSizes": [44, 1],
       "_Unsigned": false
     },
     "DOX1_quality_control": {
@@ -830,7 +829,6 @@
       "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
       "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
       "quality_control_global": "A",
-      "_ChunkSizes": [44, 1],
       "comment": "Originally expressed in mg/l, assuming O2 density = 1.429kg/m3, 1ml/l = 44.660umol/l and using density computed from Temperature, Salinity and Pressure with the CSIRO SeaWater library (EOS-80) v1.1."
     },
     "DOX2": {
@@ -845,7 +843,6 @@
       "valid_max": 880000.0,
       "_FillValue": 999999.0,
       "ancillary_variables": "DOX2_quality_control",
-      "_ChunkSizes": [44, 1],
       "_Unsigned": false
     },
     "DOX2_quality_control": {
@@ -872,7 +869,6 @@
       "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
       "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
       "quality_control_global": "A",
-      "_ChunkSizes": [44, 1],
       "comment": "Originally expressed in mg/l, assuming O2 density = 1.429kg/m3, 1ml/l = 44.660umol/l and using density computed from Temperature, Salinity and Pressure with the CSIRO SeaWater library (EOS-80) v1.1."
     }
   },

@@ -84,4 +84,4 @@ repos:
         language: system
         types: [json]
         pass_filenames: false
-        always_run: true
+        exclude: ^aodn_cloud_optimised/config/dataset/.*\.json$
