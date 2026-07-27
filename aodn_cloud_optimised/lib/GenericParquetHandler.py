@@ -1402,11 +1402,7 @@ class GenericHandler(CommonHandler):
                 partitioning="hive",
                 filesystem=self.s3_fs_output,
             )
-        except OSError as e:
-            self.logger.info(
-                f"could not list parquet files for `{self.cloud_optimised_output_path}`: {e}"
-            )
-        except FileNotFoundError as e:
+        except (OSError, FileNotFoundError) as e:
             self.logger.info(
                 f"could not list parquet files for `{self.cloud_optimised_output_path}`: {e}"
             )
@@ -1429,12 +1425,12 @@ class GenericHandler(CommonHandler):
         Filters dataset S3 paths for files matching targeted file names and regex patterns.
 
         Args:
-            dataset_s3_paths: List of candidate S3Path instances to evaluate.
+            keys: List of candidate S3Path instances to evaluate.
             delete_file_names: List of target file base names or identifiers to match.
             pattern_template: Regex pattern applied alongside base names to identify matches.
 
         Returns:
-            A list of S3Path instances matching the deletion criteria.
+            A list of matching string keys
         """
 
         self.logger.info("Searching for matching Parquet objects to delete...")
@@ -1563,7 +1559,7 @@ class GenericHandler(CommonHandler):
         """
 
         # Check both filename and filenames are not both set
-        if (filename is None) == (filenames is None):
+        if (filename is None) == (filenames is None or filenames == []):
             raise ValueError(
                 "Exactly one of 'filename' or 'filenames' must be provided."
             )
