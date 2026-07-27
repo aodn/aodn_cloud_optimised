@@ -713,6 +713,14 @@
           "units": "1",
           "long_name": "site code"
         }
+      },
+      "project": {
+        "source": "@global_attribute:project",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "long_name": "project"
+        }
       }
     },
     "partitioning": [

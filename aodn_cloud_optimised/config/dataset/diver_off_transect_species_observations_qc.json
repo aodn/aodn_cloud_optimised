@@ -126,7 +126,7 @@
       "type": "string",
       "long_name": "identification of the biotic elements to the scientific classification group"
     },
-    "class_": {
+    "class": {
       "type": "string",
       "long_name": "identification of the biotic elements to the scientific classification group"
     },
