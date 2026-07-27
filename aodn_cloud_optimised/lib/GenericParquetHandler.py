@@ -1380,21 +1380,41 @@ class GenericHandler(CommonHandler):
                 f"Dataset {self.dataset_name} does not exist yet - cannot update metadata"
             )
 
-    def list_dataset_bucket(self):
+    def list_dataset_bucket(self) -> tuple[str, list[str]]:
         """
-        Returns objects in format:
-        ```python
-        ["<bucket>/<key>"...]
-        ```
+        Return (bucket, keys) for the dataset.
+
+        `keys` are S3 object keys (no scheme and no bucket prefix).
         """
         self.logger.info("Listing parquet keys for dataset...")
-        ds = pds.dataset(
-            source=self.cloud_optimised_output_path,
-            partitioning="hive",
-            filesystem=self.s3_fs_output,
-        )
-        bucket = ds.files[0].split("/")[0]
-        keys = ["/".join(file.split("/")) for file in ds.files]
+        bucket, _ = split_s3_path(self.cloud_optimised_output_path)
+        if not bucket:
+            bucket = self.optimised_bucket_name
+
+        try:
+            ds = pds.dataset(
+                source=self.cloud_optimised_output_path,
+                partitioning="hive",
+                filesystem=self.s3_fs_output,
+            )
+        except Exception as e:
+            self.logger.info(f"No Parquet files to list. Reason: {e}")
+            return bucket, []
+
+        if not ds.files:
+            self.logger.info("Found `0` keys.")
+            return bucket, []
+
+        keys: list[str] = []
+        for file in ds.files:
+            if file.startswith("s3://"):
+                _, key = split_s3_path(file)
+            elif file.startswith(f"{bucket}/"):
+                key = file[len(bucket) + 1 :]
+            else:
+                key = file.lstrip("/")
+            keys.append(key)
+
         self.logger.info(f"Found `{len(keys)}` keys.")
         return bucket, keys
 
@@ -1438,7 +1458,7 @@ class GenericHandler(CommonHandler):
             self.logger.info("Found no matches!")
         else:
             self.logger.info(
-                f"Found `{len(matched_keys)}` matching parquet objects to delete from `{keys}` source files."
+                f"Found `{len(matched_keys)}` matching parquet objects to delete from `{len(keys)}` candidate keys."
             )
 
         return matched_keys
@@ -1512,15 +1532,17 @@ class GenericHandler(CommonHandler):
         )
 
     @overload
-    def delete_existing_matching_parquet(self, *, filename: str) -> None: ...
+    def delete_existing_matching_parquet(self, filename: str) -> None: ...
 
     @overload
-    def delete_existing_matching_parquet(self, *, filename: str) -> None: ...
+    def delete_existing_matching_parquet(
+        self, filename: None = None, filenames: list[str] | None = None
+    ) -> None: ...
 
     def delete_existing_matching_parquet(
         self,
-        filename: str | None,
-        filenames: list[str] | None,
+        filename: str | None = None,
+        filenames: list[str] | None = None,
     ) -> None:
         """
         Delete unmatched Parquet files.
