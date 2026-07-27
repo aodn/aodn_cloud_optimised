@@ -1396,9 +1396,22 @@ class GenericHandler(CommonHandler):
         :raises IndexError: If the dataset files list is empty when extracting the bucket name.
         """
         self.logger.info("Listing parquet keys for dataset...")
+        bucket, prefix = split_s3_path(self.cloud_optimised_output_path)
+        fallback_source = f"{bucket}/{prefix}".rstrip("/")
         try:
             ds = pds.dataset(
                 source=self.cloud_optimised_output_path,
+                partitioning="hive",
+                filesystem=self.s3_fs_output,
+            )
+        except pa.ArrowInvalid as e:
+            # On some S3-compatible backends (including moto), pyarrow can report
+            # files as "bucket/prefix/..." while base dir is "s3://bucket/prefix".
+            # Retry once with a path-only source to keep a stable listing contract.
+            if "outside base dir" not in str(e):
+                raise
+            ds = pds.dataset(
+                source=fallback_source,
                 partitioning="hive",
                 filesystem=self.s3_fs_output,
             )
@@ -1406,12 +1419,12 @@ class GenericHandler(CommonHandler):
             self.logger.info(
                 f"could not list parquet files for `{self.cloud_optimised_output_path}`: {e}"
             )
+            raise
         if len(ds.files) < 1:
             raise IndexError(
                 f"no parquet files found for `{self.cloud_optimised_output_path}`"
             )
 
-        bucket = ds.files[0].split("/")[0]
         keys = ["/".join(file.split("/")) for file in ds.files]
         return bucket, keys
 
@@ -1568,7 +1581,13 @@ class GenericHandler(CommonHandler):
         filenames = filenames or [filename]
 
         # Get all the keys
-        bucket, keys = self.list_dataset_bucket()
+        try:
+            bucket, keys = self.list_dataset_bucket()
+        except FileNotFoundError:
+            self.logger.info(
+                f"No existing parquet dataset at `{self.cloud_optimised_output_path}`; skipping deletion."
+            )
+            return
 
         # Find all the matched keys
         matched_keys = self.find_matched_keys(keys=keys, filenames=filenames)
