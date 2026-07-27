@@ -1466,7 +1466,7 @@ class GenericHandler(CommonHandler):
 
     def delete_matched_keys(
         self,
-        dataset_s3_path: str,
+        bucket: str,
         matched_keys: list[str],
         dryrun: bool = True,
     ):
@@ -1512,7 +1512,7 @@ class GenericHandler(CommonHandler):
             }
 
             response = client.delete_objects(
-                Bucket=dataset_s3_path.bucket,
+                Bucket=bucket,
                 Delete=delete_payload,
             )
 
@@ -1520,16 +1520,16 @@ class GenericHandler(CommonHandler):
             errors = response.get("Errors", [])
             if errors:
                 self.logger.error(
-                    f"Failed to delete {len(errors)} objects in bucket '{dataset_s3_path.bucket}': {errors}"
+                    f"Failed to delete {len(errors)} objects in bucket '{bucket}': {errors}"
                 )
                 raise RuntimeError(
-                    f"S3 Batch deletion encountered errors in bucket '{dataset_s3_path.bucket}'."
+                    f"S3 Batch deletion encountered errors in bucket '{bucket}'."
                 )
 
             total_deleted += len(batch_keys)
 
         self.logger.info(
-            f"Successfully deleted {total_deleted} files from bucket '{dataset_s3_path.bucket}'."
+            f"Successfully deleted {total_deleted} files from bucket '{bucket}'."
         )
 
     @overload
