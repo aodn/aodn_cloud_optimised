@@ -378,6 +378,34 @@
       "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
       "quality_control_global": "A"
     },
+    "DOX": {
+    "type": "float",
+    "ancillary_variables": "DOX_quality_control",
+    "long_name": "volume_concentration_of_dissolved_molecular_oxygen_in_sea_water",
+    "units": "ml l-1",
+    "valid_max": 200.0,
+    "valid_min": 0.0
+    },
+    "DOX_quality_control": {
+    "type": "float",
+    "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+    "flag_values": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "long_name": "quality flag for volume_concentration_of_dissolved_molecular_oxygen_in_sea_water",
+    "quality_control_conventions": "IMOS standard flags",
+    "quality_control_global": "A",
+    "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)"
+    },
     "DENS_quality_control": {
       "type": "float",
       "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
@@ -767,12 +795,16 @@
       "type": "float",
       "name": "DOX1",
       "comment": "Originally expressed in mg/l, O2 density = 1.429kg/m3 and 1ml/l = 44.660umol/l were assumed.",
+      "coordinates": "TIME DEPTH LATITUDE LONGITUDE",
       "standard_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water",
       "long_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water",
       "units": "umol l-1",
       "valid_min": 0.0,
       "valid_max": 900000.0,
-      "ancillary_variables": "DOX1_quality_control"
+      "_FillValue": 999999.0,
+      "ancillary_variables": "DOX1_quality_control",
+      "_ChunkSizes": [44, 1],
+      "_Unsigned": false
     },
     "DOX1_quality_control": {
       "type": "float",
@@ -780,6 +812,7 @@
       "standard_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water status_flag",
       "valid_min": 0,
       "valid_max": 9,
+      "_FillValue": 99,
       "quality_control_set": 1.0,
       "quality_control_conventions": "IMOS standard set using the IODE flags",
       "flag_values": [
@@ -796,18 +829,24 @@
       ],
       "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
       "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
-      "quality_control_global": "A"
+      "quality_control_global": "A",
+      "_ChunkSizes": [44, 1],
+      "comment": "Originally expressed in mg/l, assuming O2 density = 1.429kg/m3, 1ml/l = 44.660umol/l and using density computed from Temperature, Salinity and Pressure with the CSIRO SeaWater library (EOS-80) v1.1."
     },
     "DOX2": {
       "type": "float",
       "comment": "Originally expressed in mg/l, assuming O2 density = 1.429kg/m3, 1ml/l = 44.660umol/l and using density computed from Temperature, Salinity and Pressure with the CSIRO SeaWater library (EOS-80) v1.1.",
       "name": "DOX2",
+      "coordinates": "TIME DEPTH LATITUDE LONGITUDE",
       "standard_name": "moles_of_oxygen_per_unit_mass_in_sea_water",
       "long_name": "moles_of_oxygen_per_unit_mass_in_sea_water",
       "units": "umol kg-1",
       "valid_min": 0.0,
       "valid_max": 880000.0,
-      "ancillary_variables": "DOX2_quality_control"
+      "_FillValue": 999999.0,
+      "ancillary_variables": "DOX2_quality_control",
+      "_ChunkSizes": [44, 1],
+      "_Unsigned": false
     },
     "DOX2_quality_control": {
       "type": "float",
@@ -815,6 +854,7 @@
       "standard_name": "moles_of_oxygen_per_unit_mass_in_sea_water status_flag",
       "valid_min": 0,
       "valid_max": 9,
+      "_FillValue": 99,
       "quality_control_set": 1.0,
       "quality_control_conventions": "IMOS standard set using the IODE flags",
       "flag_values": [
@@ -831,7 +871,9 @@
       ],
       "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
       "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
-      "quality_control_global": "A"
+      "quality_control_global": "A",
+      "_ChunkSizes": [44, 1],
+      "comment": "Originally expressed in mg/l, assuming O2 density = 1.429kg/m3, 1ml/l = 44.660umol/l and using density computed from Temperature, Salinity and Pressure with the CSIRO SeaWater library (EOS-80) v1.1."
     }
   },
   "aws_opendata_registry": {
