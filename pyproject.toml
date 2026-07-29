@@ -7,7 +7,7 @@ build-backend = "poetry.core.masonry.api"
 # Pinning to <3.13 to avoid source builds; stable wheels for h5py and netCDF4 are not yet available for 3.13.
 requires-python = ">=3.11,<3.13"
 name = "aodn-cloud-optimised"
-version = "1.3.10"
+version = "1.3.12"
 description = "Cloud optimised data formats for IMOS NetCDF files and CSVs."
 authors = [
   { name = "Laurent Besnard (AODN)", email = "laurent.besnard@utas.edu.au" },
@@ -142,13 +142,14 @@ cloud_optimised_animal_acoustic_tracking_delayed_detection_qc = "aodn_cloud_opti
 cloud_optimised_animal_acoustic_tracking_delayed_qc = "aodn_cloud_optimised.bin.datasets.animal_acoustic_tracking_delayed_qc:main"
 cloud_optimised_animal_acoustic_tracking_delayed_summarised_detection_qc = "aodn_cloud_optimised.bin.datasets.animal_acoustic_tracking_delayed_summarised_detection_qc:main"
 cloud_optimised_animal_ctd_satellite_relay_tagging_delayed_qc = "aodn_cloud_optimised.bin.datasets.animal_ctd_satellite_relay_tagging_delayed_qc:main"
-cloud_optimised_animal_ctd_satellite_relay_tagging_realtime_qc = "aodn_cloud_optimised.bin.datasets.animal_ctd_satellite_relay_tagging_realtime_qc:main"
-cloud_optimised_animal_diag_satellite_relay_tagging_realtime_qc = "aodn_cloud_optimised.bin.datasets.animal_diag_satellite_relay_tagging_realtime_qc:main"
-cloud_optimised_animal_dive_satellite_relay_tagging_realtime_qc = "aodn_cloud_optimised.bin.datasets.animal_dive_satellite_relay_tagging_realtime_qc:main"
-cloud_optimised_animal_haulout_satellite_relay_tagging_realtime_qc = "aodn_cloud_optimised.bin.datasets.animal_haulout_satellite_relay_tagging_realtime_qc:main"
-cloud_optimised_animal_metadata_satellite_relay_tagging_realtime_qc = "aodn_cloud_optimised.bin.datasets.animal_metadata_satellite_relay_tagging_realtime_qc:main"
-cloud_optimised_animal_ssmoutputs_satellite_relay_tagging_realtime_qc = "aodn_cloud_optimised.bin.datasets.animal_ssmoutputs_satellite_relay_tagging_realtime_qc:main"
-cloud_optimised_animal_summary_satellite_relay_tagging_realtime_qc = "aodn_cloud_optimised.bin.datasets.animal_summary_satellite_relay_tagging_realtime_qc:main"
+cloud_optimised_animal_ctd_satellite_relay_tagging_location_qc_realtime_qc = "aodn_cloud_optimised.bin.datasets.animal_ctd_satellite_relay_tagging_location_qc_realtime_qc:main"
+cloud_optimised_animal_diag_satellite_relay_tagging_location_qc_realtime_qc = "aodn_cloud_optimised.bin.datasets.animal_diag_satellite_relay_tagging_location_qc_realtime_qc:main"
+cloud_optimised_animal_dive_satellite_relay_tagging_location_qc_realtime_qc = "aodn_cloud_optimised.bin.datasets.animal_dive_satellite_relay_tagging_location_qc_realtime_qc:main"
+cloud_optimised_animal_gps_satellite_relay_tagging_location_qc_realtime_qc = "aodn_cloud_optimised.bin.datasets.animal_gps_satellite_relay_tagging_location_qc_realtime_qc:main"
+cloud_optimised_animal_haulout_satellite_relay_tagging_location_qc_realtime_qc = "aodn_cloud_optimised.bin.datasets.animal_haulout_satellite_relay_tagging_location_qc_realtime_qc:main"
+cloud_optimised_animal_metadata_satellite_relay_tagging_location_qc_realtime_qc = "aodn_cloud_optimised.bin.datasets.animal_metadata_satellite_relay_tagging_location_qc_realtime_qc:main"
+cloud_optimised_animal_ssmoutputs_satellite_relay_tagging_location_qc_realtime_qc = "aodn_cloud_optimised.bin.datasets.animal_ssmoutputs_satellite_relay_tagging_location_qc_realtime_qc:main"
+cloud_optimised_animal_summary_satellite_relay_tagging_location_qc_realtime_qc = "aodn_cloud_optimised.bin.datasets.animal_summary_satellite_relay_tagging_location_qc_realtime_qc:main"
 cloud_optimised_argo = "aodn_cloud_optimised.bin.datasets.argo:main"
 cloud_optimised_autonomous_underwater_vehicle = "aodn_cloud_optimised.bin.datasets.autonomous_underwater_vehicle:main"
 cloud_optimised_create_aws_registry_dataset = "aodn_cloud_optimised.bin.create_aws_registry_dataset:main"
@@ -303,7 +304,7 @@ pydantic_precommit_hook = "aodn_cloud_optimised.bin.pydantic_precommit_hook:main
 
 
 [tool.pre_commit]
-version = "1.3.10"
+version = "1.3.12"
 config = ".pre-commit-config.yaml"
 
 [tool.pytest.ini_options]
