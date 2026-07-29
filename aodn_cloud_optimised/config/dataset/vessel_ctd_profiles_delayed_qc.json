@@ -1,69 +1,13 @@
 {
-  "dataset_name": "vessel_nrs_ctd_profiles_delayed_qc",
-  "logger_name": "vessel_nrs_ctd_profiles_delayed_qc",
+  "dataset_name": "vessel_ctd_profiles_delayed_qc",
+  "logger_name": "vessel_ctd_profiles_delayed_qc",
   "cloud_optimised_format": "parquet",
   "run_settings": {
     "paths": [
       {
-        "s3_uri": "s3://imos-data/IMOS/ANMN/NRS/NRSROT/Biogeochem_profiles",
+        "s3_uri": "s3://imos-data/IMOS/ANMN",
         "filter": [
-          ".*\\.nc$"
-        ],
-        "year_range": []
-      },
-      {
-        "s3_uri": "s3://imos-data/IMOS/ANMN/NRS/NRSESP/Biogeochem_profiles",
-        "filter": [
-          ".*\\.nc$"
-        ],
-        "year_range": []
-      },
-      {
-        "s3_uri": "s3://imos-data/IMOS/ANMN/NRS/NRSNIN/Biogeochem_profiles",
-        "filter": [
-          ".*\\.nc$"
-        ],
-        "year_range": []
-      },
-      {
-        "s3_uri": "s3://imos-data/IMOS/ANMN/NRS/NRSKAI/Biogeochem_profiles",
-        "filter": [
-          ".*\\.nc$"
-        ],
-        "year_range": []
-      },
-      {
-        "s3_uri": "s3://imos-data/IMOS/ANMN/NRS/NRSDAR/Biogeochem_profiles",
-        "filter": [
-          ".*\\.nc$"
-        ],
-        "year_range": []
-      },
-      {
-        "s3_uri": "s3://imos-data/IMOS/ANMN/NRS/NRSMAI/Biogeochem_profiles",
-        "filter": [
-          ".*\\.nc$"
-        ],
-        "year_range": []
-      },
-      {
-        "s3_uri": "s3://imos-data/IMOS/ANMN/NRS/NRSNSI/Biogeochem_profiles",
-        "filter": [
-          ".*\\.nc$"
-        ],
-        "year_range": []
-      },
-      {
-        "s3_uri": "s3://imos-data/IMOS/ANMN/NRS/NRSPHB/Biogeochem_profiles",
-        "filter": [
-          ".*\\.nc$"
-        ],
-        "year_range": []
-      },
-      {
-        "s3_uri": "s3://imos-data/IMOS/ANMN/NRS/NRSYON/Biogeochem_profiles",
-        "filter": [
-          ".*\\.nc$"
+          ".*/Biogeochem_profiles/.*\\.nc$"
         ],
         "year_range": []
       }
@@ -377,34 +321,6 @@
       "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
       "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
       "quality_control_global": "A"
-    },
-    "DOX": {
-      "type": "float",
-      "ancillary_variables": "DOX_quality_control",
-      "long_name": "volume_concentration_of_dissolved_molecular_oxygen_in_sea_water",
-      "units": "ml l-1",
-      "valid_max": 200.0,
-      "valid_min": 0.0
-    },
-    "DOX_quality_control": {
-      "type": "float",
-      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
-      "flag_values": [
-        0,
-        1,
-        2,
-        3,
-        4,
-        5,
-        6,
-        7,
-        8,
-        9
-      ],
-      "long_name": "quality flag for volume_concentration_of_dissolved_molecular_oxygen_in_sea_water",
-      "quality_control_conventions": "IMOS standard flags",
-      "quality_control_global": "A",
-      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)"
     },
     "DENS_quality_control": {
       "type": "float",
@@ -795,15 +711,12 @@
       "type": "float",
       "name": "DOX1",
       "comment": "Originally expressed in mg/l, O2 density = 1.429kg/m3 and 1ml/l = 44.660umol/l were assumed.",
-      "coordinates": "TIME DEPTH LATITUDE LONGITUDE",
       "standard_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water",
       "long_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water",
       "units": "umol l-1",
       "valid_min": 0.0,
       "valid_max": 900000.0,
-      "_FillValue": 999999.0,
-      "ancillary_variables": "DOX1_quality_control",
-      "_Unsigned": false
+      "ancillary_variables": "DOX1_quality_control"
     },
     "DOX1_quality_control": {
       "type": "float",
@@ -811,7 +724,6 @@
       "standard_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water status_flag",
       "valid_min": 0,
       "valid_max": 9,
-      "_FillValue": 99,
       "quality_control_set": 1.0,
       "quality_control_conventions": "IMOS standard set using the IODE flags",
       "flag_values": [
@@ -828,22 +740,18 @@
       ],
       "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
       "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
-      "quality_control_global": "A",
-      "comment": "Originally expressed in mg/l, assuming O2 density = 1.429kg/m3, 1ml/l = 44.660umol/l and using density computed from Temperature, Salinity and Pressure with the CSIRO SeaWater library (EOS-80) v1.1."
+      "quality_control_global": "A"
     },
     "DOX2": {
       "type": "float",
       "comment": "Originally expressed in mg/l, assuming O2 density = 1.429kg/m3, 1ml/l = 44.660umol/l and using density computed from Temperature, Salinity and Pressure with the CSIRO SeaWater library (EOS-80) v1.1.",
       "name": "DOX2",
-      "coordinates": "TIME DEPTH LATITUDE LONGITUDE",
       "standard_name": "moles_of_oxygen_per_unit_mass_in_sea_water",
       "long_name": "moles_of_oxygen_per_unit_mass_in_sea_water",
       "units": "umol kg-1",
       "valid_min": 0.0,
       "valid_max": 880000.0,
-      "_FillValue": 999999.0,
-      "ancillary_variables": "DOX2_quality_control",
-      "_Unsigned": false
+      "ancillary_variables": "DOX2_quality_control"
     },
     "DOX2_quality_control": {
       "type": "float",
@@ -851,7 +759,6 @@
       "standard_name": "moles_of_oxygen_per_unit_mass_in_sea_water status_flag",
       "valid_min": 0,
       "valid_max": 9,
-      "_FillValue": 99,
       "quality_control_set": 1.0,
       "quality_control_conventions": "IMOS standard set using the IODE flags",
       "flag_values": [
@@ -868,8 +775,7 @@
       ],
       "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
       "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
-      "quality_control_global": "A",
-      "comment": "Originally expressed in mg/l, assuming O2 density = 1.429kg/m3, 1ml/l = 44.660umol/l and using density computed from Temperature, Salinity and Pressure with the CSIRO SeaWater library (EOS-80) v1.1."
+      "quality_control_global": "A"
     }
   },
   "aws_opendata_registry": {
@@ -887,7 +793,7 @@
     "Resources": [
       {
         "Description": "Cloud Optimised AODN dataset of IMOS - National Mooring Network - CTD Profiles",
-        "ARN": "arn:aws:s3:::imos-data-lab-optimised/vessel_nrs_ctd_profiles_delayed_qc.parquet",
+        "ARN": "arn:aws:s3:::imos-data-lab-optimised/vessel_ctd_profiles_delayed_qc.parquet",
         "Region": "ap-southeast-2",
         "Type": "S3 Bucket"
       }
@@ -896,8 +802,8 @@
       "Tutorials": [
         {
           "Title": "Accessing IMOS - National Mooring Network - CTD Profiles",
-          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/vessel_nrs_ctd_profiles_delayed_qc.ipynb",
-          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/vessel_nrs_ctd_profiles_delayed_qc.ipynb",
+          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/vessel_ctd_profiles_delayed_qc.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/vessel_ctd_profiles_delayed_qc.ipynb",
           "AuthorName": "Laurent Besnard",
           "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
         },
@@ -942,101 +848,10 @@
       "qc_level": {
         "source": "@function:qc_level_extract",
         "schema": {
-          "type": "int32",
+          "type": "int64",
           "units": "1",
-          "long_name": "Quality control level (0=raw, 1=QCed)"
+          "long_name": "Quality control level"
         }
-      },
-      "site_code": {
-        "source": "@global_attribute:site_code",
-        "schema": {
-          "type": "string",
-          "units": "1",
-          "long_name": "site code"
-        }
-      },
-      "instrument_nominal_depth": {
-        "source": "@global_attribute:instrument_nominal_depth",
-        "schema": {
-          "type": "float32",
-          "units": "m",
-          "long_name": "instrument nominal depth"
-        }
-      },
-      "site_nominal_depth": {
-        "source": "@global_attribute:site_nominal_depth",
-        "schema": {
-          "type": "float32",
-          "units": "m",
-          "long_name": "site nominal depth"
-        }
-      },
-      "site_depth_at_station": {
-        "source": "@global_attribute:site_depth_at_station",
-        "schema": {
-          "type": "float32",
-          "units": "m",
-          "long_name": "site depth at station"
-        }
-      },
-      "instrument": {
-        "source": "@global_attribute:instrument",
-        "schema": {
-          "type": "string",
-          "units": "m",
-          "long_name": "instrument"
-        }
-      },
-      "cruise": {
-        "source": "@global_attribute:cruise",
-        "schema": {
-          "type": "string",
-          "units": "m",
-          "long_name": "cruise"
-        }
-      }
-    },
-    "functions": {
-      "qc_level_extract": {
-        "extract_method": "object_key",
-        "method": {
-          "key_pattern": ".*_(FV\\d{2}).*\\.nc$",
-          "extraction_code": "def extract_info_from_key(key):\n    import re\n    match = re.search(r'_FV(\\d{2})_', key)\n    if match:\n        qc_level = int(match.group(1))\n        return {'qc_level': qc_level}\n    return {'qc_level': None}"
-        }
-      }
-    },
-    "partitioning": [
-      {
-        "source_variable": "site_code"
-      },
-      {
-        "source_variable": "timestamp",
-        "type": "time_extent",
-        "time_extent": {
-          "time_varname": "TIME",
-          "partition_period": "Y"
-        }
-      },
-      {
-        "source_variable": "polygon",
-        "type": "spatial_extent",
-        "spatial_extent": {
-          "lat_varname": "LATITUDE",
-          "lon_varname": "LONGITUDE",
-          "spatial_resolution": 2
-        }
-      }
-    ],
-    "global_attributes": {
-      "delete": [
-        "geospatial_lat_max",
-        "geospatial_lat_min",
-        "geospatial_lon_max",
-        "geospatial_lon_min",
-        "date_created"
-      ],
-      "set": {
-        "title": "IMOS - National Mooring Network - CTD Profiles"
       }
     }
   }
