@@ -1425,7 +1425,7 @@ class GenericHandler(CommonHandler):
                 f"no parquet files found for `{self.cloud_optimised_output_path}`"
             )
 
-        keys = ["/".join(file.split("/")) for file in ds.files]
+        keys = ["/".join(file.split("/")[1:]) for file in ds.files]
         return bucket, keys
 
     def find_matched_keys(
