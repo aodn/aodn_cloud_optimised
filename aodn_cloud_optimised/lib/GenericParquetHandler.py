@@ -9,11 +9,12 @@ import traceback
 import uuid
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
-from typing import Generator, Tuple
+from typing import Generator, Tuple, overload
 
 import boto3
 import cftime
 import pandas as pd
+import polars
 import polars as pl
 import pyarrow as pa
 import pyarrow.compute as pc
@@ -1439,7 +1440,180 @@ class GenericHandler(CommonHandler):
                 f"Dataset {self.dataset_name} does not exist yet - cannot update metadata"
             )
 
-    def delete_existing_matching_parquet(self, filename) -> None:
+    def list_dataset_bucket(self) -> tuple[str, list[str]]:
+        """List all Parquet file keys and identify the S3 bucket for the dataset.
+
+        Inspects the dataset at :attr:`cloud_optimised_output_path` using PyArrow
+        and extracts the S3 bucket along with the full key paths.
+
+        :return: A tuple containing:
+            - **bucket** (*str*): The name of the S3 bucket.
+            - **keys** (*list[str]*): List of file keys.
+        :rtype: tuple[str, list[str]]
+
+        :raises FileNotFoundError: If the target path does not exist or contains no Parquet files.
+        :raises OSError: If there is an issue accessing the storage filesystem or reading metadata.
+        :raises IndexError: If the dataset files list is empty when extracting the bucket name.
+        """
+        self.logger.info("Listing parquet keys for dataset...")
+        bucket, prefix = split_s3_path(self.cloud_optimised_output_path)
+        fallback_source = f"{bucket}/{prefix}".rstrip("/")
+        try:
+            ds = pds.dataset(
+                source=self.cloud_optimised_output_path,
+                partitioning="hive",
+                filesystem=self.s3_fs_output,
+            )
+        except pa.ArrowInvalid as e:
+            # On some S3-compatible backends (including moto), pyarrow can report
+            # files as "bucket/prefix/..." while base dir is "s3://bucket/prefix".
+            # Retry once with a path-only source to keep a stable listing contract.
+            if "outside base dir" not in str(e):
+                raise
+            ds = pds.dataset(
+                source=fallback_source,
+                partitioning="hive",
+                filesystem=self.s3_fs_output,
+            )
+        except (OSError, FileNotFoundError) as e:
+            self.logger.info(
+                f"could not list parquet files for `{self.cloud_optimised_output_path}`: {e}"
+            )
+            raise
+        if len(ds.files) < 1:
+            raise IndexError(
+                f"no parquet files found for `{self.cloud_optimised_output_path}`"
+            )
+
+        keys = ["/".join(file.split("/")[1:]) for file in ds.files]
+        return bucket, keys
+
+    def find_matched_keys(
+        self,
+        keys: list[str],
+        filenames: list[str],
+        pattern_template: str = r"-\d+\.parquet$",
+    ) -> list[str]:
+        """
+        Filters dataset S3 paths for files matching targeted file names and regex patterns.
+
+        Args:
+            keys: List of candidate S3Path instances to evaluate.
+            delete_file_names: List of target file base names or identifiers to match.
+            pattern_template: Regex pattern applied alongside base names to identify matches.
+
+        Returns:
+            A list of matching string keys
+        """
+
+        self.logger.info("Searching for matching Parquet objects to delete...")
+
+        # Safely escape input file names for regex
+        escaped_names = [re.escape(name) for name in filenames]
+
+        # Build a single combined regex OR pattern
+        # e.g., "(file1|file2|file3)-\d+\.parquet$"
+        combined_pattern = f"({'|'.join(escaped_names)}){pattern_template}"
+
+        # Filter S3 URIs using Polars
+        df = polars.DataFrame(
+            data={
+                "key": keys,
+            }
+        )
+        matched_df = df.filter(polars.col("key").str.contains(pattern=combined_pattern))
+        matched_keys = matched_df["key"].to_list()
+
+        if not matched_keys:
+            self.logger.info("Found no matches!")
+        else:
+            self.logger.info(
+                f"Found `{len(matched_keys)}` matching parquet objects to delete from `{len(keys)}` candidate keys."
+            )
+
+        return matched_keys
+
+    def delete_matched_keys(
+        self,
+        bucket: str,
+        matched_keys: list[str],
+        dryrun: bool = True,
+    ):
+        """
+        Deletes matched S3 objects in batches of up to 1,000 using the underlying S3 client.
+
+        Extracts the bucket name and Boto3 client directly from the target dataset path.
+        If `dryrun` is True, logs the planned deletions without modifying S3.
+
+        Args:
+            dataset_s3_path: The primary S3 path defining the target bucket and client.
+            matched_delete_s3_paths: List of S3Path instances to delete from the bucket.
+            dryrun: If True, previews items to delete without performing API deletions.
+        """
+
+        # Exit if no matches
+        if not matched_keys:
+            self.logger.info("No files matched for deletion.")
+            return
+
+        # Exit if dryrun
+        if dryrun:
+            self.logger.info("`dryrun` mode active; exiting without deletion!")
+            return
+
+        # Get the client
+        client = boto3.client("s3")
+
+        # Extract object keys from S3Path instances
+        total_deleted = 0
+
+        def chunked(iterable, size: int):
+            """Yield successive n-sized chunks from iterable."""
+            for i in range(0, len(iterable), size):
+                yield iterable[i : i + size]
+
+        # S3 delete_objects API takes maximum 1,000 keys per request
+        for batch_keys in chunked(matched_keys, size=1000):
+
+            delete_payload = {
+                "Objects": [{"Key": key} for key in batch_keys],
+                "Quiet": True,  # Suppresses verbose success responses
+            }
+
+            response = client.delete_objects(
+                Bucket=bucket,
+                Delete=delete_payload,
+            )
+
+            # Check for batch-level errors returned in the XML body
+            errors = response.get("Errors", [])
+            if errors:
+                self.logger.error(
+                    f"Failed to delete {len(errors)} objects in bucket '{bucket}': {errors}"
+                )
+                raise RuntimeError(
+                    f"S3 Batch deletion encountered errors in bucket '{bucket}'."
+                )
+
+            total_deleted += len(batch_keys)
+
+        self.logger.info(
+            f"Successfully deleted {total_deleted} files from bucket '{bucket}'."
+        )
+
+    @overload
+    def delete_existing_matching_parquet(self, filename: str) -> None: ...
+
+    @overload
+    def delete_existing_matching_parquet(
+        self, filenames: list[str] | None = None
+    ) -> None: ...
+
+    def delete_existing_matching_parquet(
+        self,
+        filename: str | None = None,
+        filenames: list[str] | None = None,
+    ) -> None:
         """
         Delete unmatched Parquet files.
 
@@ -1457,53 +1631,35 @@ class GenericHandler(CommonHandler):
             None
         """
 
-        self.logger.info(
-            f"{self.uuid_log}: Searching for matching Parquet objects to delete."
-        )
-
-        # could be slow if there are too many objects to list
-        # remote test on local machine shows 15 sec for 50k objects
-
-        try:
-            # TODO: with moto and unittests, we get the following error:
-            #       GetFileInfo() yielded path 'imos-data-lab-optimised/testing/anmn_ctd_ts_fv01.parquet/site_code=SYD140/timestamp=1625097600/polygon=01030000000100000005000000000000000020624000000000008041C0000000000060634000000000008041C0000000000060634000000000000039C0000000000020624000000000000039C0000000000020624000000000008041C0/IMOS_ANMN-NSW_CDSTZ_20210429T015500Z_SYD140_FV01_SYD140-2104-SBE37SM-RS232-128_END-20210812T011500Z_C-20210827T074819Z.nc-0.parquet', which is outside base dir 's3://imos-data-lab-optimised/testing/anmn_ctd_ts_fv01.parquet/'
-            #       obviously the file to delete is found with the unittests, but there is an issue, maybe with the way filesystem is set. Reading with pandas works, but we don't have the same capabilities
-            parquet_files = pq.ParquetDataset(
-                self.cloud_optimised_output_path,
-                partitioning="hive",
-                filesystem=self.s3_fs_output,
+        # Check both filename and filenames are not both set
+        if (filename is None) == (filenames is None or filenames == []):
+            raise ValueError(
+                "Exactly one of 'filename' or 'filenames' must be provided."
             )
-        except Exception as e:
+
+        # Resolve `filenames`
+        filenames = filenames or [filename]
+
+        # Get all the keys
+        try:
+            bucket, keys = self.list_dataset_bucket()
+        except FileNotFoundError:
             self.logger.info(
-                f"{self.uuid_log}: No Parquet files to delete. Reason: {e}"
+                f"No existing parquet dataset at `{self.cloud_optimised_output_path}`; skipping deletion."
             )
             return
 
-        # Define the regex pattern to match existing parquet files
-        pattern = rf"\/{filename}"
+        # Find all the matched keys
+        matched_keys = self.find_matched_keys(keys=keys, filenames=filenames)
+        if not matched_keys:
+            return
 
-        # Find files matching the pattern using list comprehension and regex
-        matching_files = [
-            file_path
-            for file_path in parquet_files.files
-            if re.search(pattern, file_path)
-        ]
-
-        # The matching files returns also the bucket name. We need to strip it out of the array
-        object_keys = [
-            file[len(self.optimised_bucket_name) :].lstrip("/")
-            for file in matching_files
-        ]
-        if object_keys != []:
-            objects_to_delete = [{"Key": key} for key in object_keys]
-
-            s3 = boto3.client("s3")
-            response = s3.delete_objects(
-                Bucket=self.optimised_bucket_name, Delete={"Objects": objects_to_delete}
-            )
-            self.logger.info(
-                f"{self.uuid_log}: Successfully deleted previous Parquet objects: {response}"
-            )
+        # Delete all matched keys
+        self.delete_matched_keys(
+            bucket=bucket,
+            matched_keys=matched_keys,
+            dryrun=False,
+        )
 
     def to_cloud_optimised_single(self, s3_file_uri) -> None:
         """

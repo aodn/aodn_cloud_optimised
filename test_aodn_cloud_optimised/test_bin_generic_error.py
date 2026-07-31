@@ -1,8 +1,6 @@
 import json
-import logging
 import os
 import unittest
-from io import StringIO
 from unittest.mock import MagicMock, patch
 
 import boto3
@@ -189,22 +187,13 @@ class TestGenericCloudOptimisedCreation(unittest.TestCase):
                 ),
             )
 
-            log_stream = StringIO()
-            log_handler = logging.StreamHandler(log_stream)
-            logger = logging.getLogger()
-            logger.addHandler(log_handler)
-
             with self.assertRaises(Exception) as context:
                 main()
                 mock_sys_exit.assert_called_with(0)
 
-            log_handler.flush()
-            captured_logs = log_stream.getvalue().strip().split("\n")
-
-            assert any(
-                "Exception: Error in Cloud Optimised process. Forcing script exit"
-                in log
-                for log in captured_logs
+            self.assertIn(
+                "Error in Cloud Optimised process. Forcing script exit",
+                str(context.exception),
             )
 
 
