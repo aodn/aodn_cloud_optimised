@@ -5,7 +5,35 @@
   "run_settings": {
     "paths": [
       {
-        "s3_uri": "s3://imos-data/IMOS/ANMN",
+        "s3_uri": "s3://imos-data/IMOS/ANMN/NRS/",
+        "filter": [
+          ".*/Biogeochem_profiles/.*FV01.*\\.nc$"
+        ],
+        "year_range": []
+      },
+      {
+        "s3_uri": "s3://imos-data/IMOS/ANMN/NSW/",
+        "filter": [
+          ".*/Biogeochem_profiles/.*FV01.*\\.nc$"
+        ],
+        "year_range": []
+      },
+      {
+        "s3_uri": "s3://imos-data/IMOS/ANMN/QLD/",
+        "filter": [
+          ".*/Biogeochem_profiles/.*FV01.*\\.nc$"
+        ],
+        "year_range": []
+      },
+      {
+        "s3_uri": "s3://imos-data/IMOS/ANMN/SA/",
+        "filter": [
+          ".*/Biogeochem_profiles/.*FV01.*\\.nc$"
+        ],
+        "year_range": []
+      },
+      {
+        "s3_uri": "s3://imos-data/IMOS/ANMN/WA/",
         "filter": [
           ".*/Biogeochem_profiles/.*FV01.*\\.nc$"
         ],
@@ -70,9 +98,7 @@
         8,
         9
       ],
-      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
-      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
-      "quality_control_global": "A"
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value"
     },
     "INSTANCE": {
       "type": "int32",
@@ -110,9 +136,7 @@
         8,
         9
       ],
-      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
-      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
-      "quality_control_global": "A"
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value"
     },
     "DIRECTION": {
       "type": "string",
@@ -140,9 +164,7 @@
         8,
         9
       ],
-      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
-      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
-      "quality_control_global": " "
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value"
     },
     "LATITUDE": {
       "type": "double",
@@ -176,9 +198,7 @@
         8,
         9
       ],
-      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
-      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
-      "quality_control_global": "A"
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value"
     },
     "LONGITUDE": {
       "type": "double",
@@ -212,9 +232,7 @@
         8,
         9
       ],
-      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
-      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
-      "quality_control_global": "A"
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value"
     },
     "PROFILE": {
       "type": "int32",
@@ -248,8 +266,6 @@
       ],
       "long_name": "quality flag for sea_water_pressure_due_to_sea_water",
       "quality_control_conventions": "IMOS standard flags",
-      "quality_control_global": "A",
-      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
       "standard_name": "sea_water_pressure_due_to_sea_water status_flag"
     },
     "DESC": {
@@ -276,9 +292,7 @@
         9
       ],
       "long_name": "quality flag for profiling_descent_rate_of_instrument",
-      "quality_control_conventions": "IMOS standard flags",
-      "quality_control_global": " ",
-      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)"
+      "quality_control_conventions": "IMOS standard flags"
     },
     "CHLF": {
       "type": "float",
@@ -318,9 +332,7 @@
         8,
         9
       ],
-      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
-      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
-      "quality_control_global": "A"
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value"
     },
     "DENS_quality_control": {
       "type": "float",
@@ -339,8 +351,6 @@
       ],
       "long_name": "quality flag for sea_water_density",
       "quality_control_conventions": "IMOS standard flags",
-      "quality_control_global": " ",
-      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
       "standard_name": "sea_water_density status_flag"
     },
     "PAR": {
@@ -368,8 +378,6 @@
       ],
       "long_name": "quality flag for downwelling_photosynthetic_photon_flux_in_sea_water",
       "quality_control_conventions": "IMOS standard flags",
-      "quality_control_global": " ",
-      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
       "standard_name": "downwelling_photosynthetic_photon_flux_in_sea_water status_flag"
     },
     "BOT_DEPTH": {
@@ -402,9 +410,7 @@
         8,
         9
       ],
-      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
-      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
-      "quality_control_global": " "
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value"
     },
     "CNDC": {
       "type": "float",
@@ -436,9 +442,7 @@
         8,
         9
       ],
-      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
-      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
-      "quality_control_global": " "
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value"
     },
     "TEMP": {
       "type": "float",
@@ -470,9 +474,7 @@
         8,
         9
       ],
-      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
-      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
-      "quality_control_global": "A"
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value"
     },
     "PRES": {
       "type": "float",
@@ -504,9 +506,7 @@
         8,
         9
       ],
-      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
-      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
-      "quality_control_global": "A"
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value"
     },
     "CPHL": {
       "type": "float",
@@ -539,9 +539,7 @@
         8,
         9
       ],
-      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
-      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
-      "quality_control_global": "A"
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value"
     },
     "TURB": {
       "type": "float",
@@ -571,9 +569,7 @@
         8,
         9
       ],
-      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
-      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
-      "quality_control_global": " "
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value"
     },
     "DOX": {
       "type": "float",
@@ -585,7 +581,6 @@
     },
     "DOX_quality_control": {
       "type": "float",
-      "comment": "Data values at DEPTH from 1.988 to 1.988m manually flagged as Bad_data_that_are_potentially_correctable : unexpected sensor data - significant time difference",
       "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
       "flag_values": [
         0,
@@ -600,9 +595,7 @@
         9
       ],
       "long_name": "quality flag for volume_concentration_of_dissolved_molecular_oxygen_in_sea_water",
-      "quality_control_conventions": "IMOS standard flags",
-      "quality_control_global": "B",
-      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)"
+      "quality_control_conventions": "IMOS standard flags"
     },
     "DOXS": {
       "type": "float",
@@ -632,9 +625,7 @@
         8,
         9
       ],
-      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
-      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
-      "quality_control_global": " "
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value"
     },
     "PSAL": {
       "type": "float",
@@ -666,9 +657,7 @@
         8,
         9
       ],
-      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
-      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
-      "quality_control_global": "A"
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value"
     },
     "SPEC_CNDC": {
       "type": "float",
@@ -698,9 +687,7 @@
         8,
         9
       ],
-      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
-      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
-      "quality_control_global": " "
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value"
     },
     "SSPD": {
       "type": "float",
@@ -732,9 +719,7 @@
         8,
         9
       ],
-      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
-      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
-      "quality_control_global": " "
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value"
     },
     "DOX1": {
       "type": "float",
@@ -767,9 +752,7 @@
         8,
         9
       ],
-      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
-      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
-      "quality_control_global": "A"
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value"
     },
     "DOX2": {
       "type": "float",
@@ -802,9 +785,7 @@
         8,
         9
       ],
-      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
-      "quality_control_global_conventions": "Argo reference table 2a (see http://www.cmar.csiro.au/argo/dmqc/user_doc/QC_flags.html), applied on data in position only (between global attributes time_deployment_start and time_deployment_end)",
-      "quality_control_global": "A"
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value"
     }
   },
   "aws_opendata_registry": {
@@ -877,19 +858,78 @@
       "qc_level": {
         "source": "@function:qc_level_extract",
         "schema": {
-          "type": "int64",
+          "type": "int32",
           "units": "1",
           "long_name": "Quality control level"
+        }
+      },
+      "site_code": {
+        "source": "@global_attribute:site_code",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "long_name": "site code"
+        }
+      },
+      "instrument_serial_number": {
+        "source": "@global_attribute:instrument_serial_number",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "long_name": "instrument serial number"
+        }
+      },
+      "site_nominal_depth": {
+        "source": "@global_attribute:site_nominal_depth",
+        "schema": {
+          "type": "float32",
+          "units": "m",
+          "long_name": "site nominal depth"
+        }
+      },
+      "site_depth_at_station": {
+        "source": "@global_attribute:site_depth_at_station",
+        "schema": {
+          "type": "float32",
+          "units": "m",
+          "long_name": "site depth at station"
+        }
+      },
+      "station": {
+        "source": "@global_attribute:station",
+        "schema": {
+          "type": "int32",
+          "units": "1",
+          "long_name": "station"
+        }
+      },
+      "instrument": {
+        "source": "@global_attribute:instrument",
+        "schema": {
+          "type": "string",
+          "units": "m",
+          "long_name": "instrument"
+        }
+      },
+      "cruise": {
+        "source": "@global_attribute:cruise",
+        "schema": {
+          "type": "string",
+          "units": "m",
+          "long_name": "cruise"
         }
       }
     },
     "partitioning": [
       {
+        "source_variable": "site_code"
+      },
+      {
         "source_variable": "timestamp",
         "type": "time_extent",
         "time_extent": {
           "time_varname": "TIME",
-          "partition_period": "M"
+          "partition_period": "Y"
         }
       },
       {
@@ -898,7 +938,7 @@
         "spatial_extent": {
           "lat_varname": "LATITUDE",
           "lon_varname": "LONGITUDE",
-          "spatial_resolution": 5
+          "spatial_resolution": 2
         }
       }
     ],
@@ -909,10 +949,18 @@
           "extraction_code": "def extract_info_from_key(key):\n    return {'qc_level': 1}"
         }
       }
-    },
-    "global_attributes": {
-      "delete": [],
-      "set": {}
+    }
+  },
+  "global_attributes": {
+    "delete": [
+      "geospatial_lat_max",
+      "geospatial_lat_min",
+      "geospatial_lon_max",
+      "geospatial_lon_min",
+      "date_created"
+    ],
+    "set": {
+      "title": "IMOS - National Mooring Network - CTD Profiles"
     }
   }
 }
