@@ -698,7 +698,9 @@ class TestGenericHandlerPostprocessLifecycle(unittest.TestCase):
         handler.postprocess.assert_called_once_with(ds)
 
     @patch("aodn_cloud_optimised.lib.GenericParquetHandler.create_fileset")
-    def test_postprocess_not_called_twice_on_subsequent_error(self, mock_create_fileset):
+    def test_postprocess_not_called_twice_on_subsequent_error(
+        self, mock_create_fileset
+    ):
         handler = self._build_handler()
         s3_file_uri = "s3://imos-data/example.nc"
         s3_file_handle = MagicMock()
@@ -735,7 +737,10 @@ class TestGenericHandlerPostprocessLifecycle(unittest.TestCase):
                 (pd.DataFrame({"x": [2]}), ds_2),
             ]
         )
-        handler.publish_cloud_optimised.side_effect = [None, RuntimeError("publish failed")]
+        handler.publish_cloud_optimised.side_effect = [
+            None,
+            RuntimeError("publish failed"),
+        ]
 
         with self.assertRaises(RuntimeError):
             handler.to_cloud_optimised_single(s3_file_uri)
