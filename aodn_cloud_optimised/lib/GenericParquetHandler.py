@@ -343,6 +343,7 @@ class GenericHandler(CommonHandler):
                 )
 
         df = table.to_pandas()
+        del table  # release PyArrow Table; df is a full in-memory copy
         df = df.drop(columns=self.drop_variables, errors="ignore")
         ds = xr.Dataset.from_dataframe(df)
 
@@ -1223,6 +1224,7 @@ class GenericHandler(CommonHandler):
             df_var_list = list(df.columns) + [df.index.name]
 
         pdf = pa.Table.from_pandas(df)  # Convert pandas DataFrame to PyArrow Table
+        del df  # df is no longer needed; release it before further pa.Table operations
 
         # Part A: casting existing columns to correct type
         # In the following part, we have to create a hugly hack which highlights the immaturity of pyarrow. Basically if some
@@ -1700,6 +1702,8 @@ class GenericHandler(CommonHandler):
         if self.delete_pq_unmatch_enable:
             self.delete_existing_matching_parquet(filename)
 
+        ds_for_error_postprocess = None
+
         try:
             start_time = timeit.default_timer()
 
@@ -1709,6 +1713,7 @@ class GenericHandler(CommonHandler):
 
             generator = self.preprocess_data(s3_file_handle)
             for df, ds in generator:
+                ds_for_error_postprocess = ds
                 if df.empty:
                     raise ValueError(
                         f"{self.uuid_log}: {filename} Data corruption, Empty dataframe detected: {df}"
@@ -1718,6 +1723,11 @@ class GenericHandler(CommonHandler):
                 # self.push_metadata_aws_registry()  # Deprecated
 
                 self.postprocess(ds)
+                ds_for_error_postprocess = None
+                del (
+                    df,
+                    ds,
+                )  # drop local refs for this iteration; allows GC when no other refs remain
 
                 time_spent = timeit.default_timer() - start_time
                 self.logger.info(
@@ -1729,8 +1739,8 @@ class GenericHandler(CommonHandler):
                 f"{self.uuid_log}: Issue encountered while creating Cloud Optimised file: {type(e).__name__}: {e} \n {traceback.format_exc()}"
             )
 
-            if "ds" in locals():
-                self.postprocess(ds)
+            if ds_for_error_postprocess is not None:
+                self.postprocess(ds_for_error_postprocess)
 
             raise e
 
