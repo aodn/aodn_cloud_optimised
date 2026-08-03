@@ -8,7 +8,7 @@
         "type": "files",
         "s3_uri": "s3://imos-data/IMOS/OceanCurrent/GSLA/DM/",
         "filter": [
-          ".*\\.nc$"
+          ".*FV02_DM03\\.nc$"
         ],
         "year_range": []
       }
@@ -33,8 +33,7 @@
         "memory_limit": "7GB"
       }
     },
-    "batch_size": 100,
-    "exclude": "yearfiles"
+    "batch_size": 100
   },
   "metadata_uuid": "663be14d-bb88-4e84-a34c-6c84a0196e2e",
   "schema_transformation": {
