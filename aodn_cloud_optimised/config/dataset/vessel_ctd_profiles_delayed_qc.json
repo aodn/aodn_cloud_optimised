@@ -949,18 +949,18 @@
           "extraction_code": "def extract_info_from_key(key):\n    return {'qc_level': 1}"
         }
       }
-    }
-  },
-  "global_attributes": {
-    "delete": [
-      "geospatial_lat_max",
-      "geospatial_lat_min",
-      "geospatial_lon_max",
-      "geospatial_lon_min",
-      "date_created"
-    ],
-    "set": {
-      "title": "IMOS - National Mooring Network - CTD Profiles"
+    },
+    "global_attributes": {
+      "delete": [
+        "geospatial_lat_max",
+        "geospatial_lat_min",
+        "geospatial_lon_max",
+        "geospatial_lon_min",
+        "date_created"
+      ],
+      "set": {
+        "title": "IMOS - National Mooring Network - CTD Profiles"
+      }
     }
   }
 }
