@@ -9,11 +9,12 @@ import traceback
 import uuid
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
-from typing import Generator, Tuple
+from typing import Generator, Tuple, overload
 
 import boto3
 import cftime
 import pandas as pd
+import polars
 import polars as pl
 import pyarrow as pa
 import pyarrow.compute as pc
@@ -342,6 +343,7 @@ class GenericHandler(CommonHandler):
                 )
 
         df = table.to_pandas()
+        del table  # release PyArrow Table; df is a full in-memory copy
         df = df.drop(columns=self.drop_variables, errors="ignore")
         ds = xr.Dataset.from_dataframe(df)
 
@@ -398,35 +400,83 @@ class GenericHandler(CommonHandler):
                     f"files with suffix `{file_suffix}` not yet implemented in preprocess_data"
                 )
 
-    @staticmethod
-    def cast_table_by_schema(table, schema) -> pa.Table:
+    def cast_table_by_schema(self, table, schema) -> pa.Table:
         """
-        Cast each column of a PyArrow table individually according to a provided schema.
+        Cast each column of a PyArrow table individually to a provided schema,
+        tolerating per-column failures.
+
+        Columns are cast one at a time. If a column cannot be cast to its
+        schema type (e.g. a value that does not parse), that single column
+        keeps its original type and the failure is logged, instead of the
+        exception propagating and dropping the *entire* table back to its
+        pandas-inferred dtypes. A single bad column dragging a whole file back
+        to pandas dtypes is the root cause of cross-file schema conflicts
+        (e.g. ``double`` in one file, ``int64`` in another) in the resulting
+        parquet dataset.
 
         Args:
             table (pyarrow.Table): The PyArrow table to be casted.
             schema (pyarrow.Schema): The schema to cast the table to.
 
         Returns:
-            pyarrow.Table: The casted PyArrow table.
+            pyarrow.Table: A table whose columns follow *schema* wherever the
+                cast succeeded, keeping the original type for any column that
+                could not be cast.
 
+        Raises:
+            ValueError: If any column could not be cast and ``self.raise_error``
+                is set. Tolerating the failure means publishing data that does
+                not match the configured schema, so a run that asked for errors
+                to be fatal must not silently succeed.
         """
-        field_names = [field.name for field in schema]
+        # Under raise_error, per-column failures are reported at warning level so
+        # that the aggregated ValueError below is what actually surfaces: an
+        # ExitOnErrorLogger turns logger.error into a bare "Forcing script exit"
+        # Exception on the first bad column, hiding which column broke and
+        # bypassing the ValueError callers catch.
+        log_column_failure = (
+            self.logger.warning if self.raise_error else self.logger.error
+        )
 
         # Cast each column of the table individually according to the schema
         casted_arrays = []
-        for name in field_names:
-            # Get the data type of the field in the schema
-            data_type = schema.field(name).type
-
-            # Cast the column to the desired data type
-            casted_array = table.column(name).cast(data_type)
-
-            # Append the casted column to the list of casted arrays
-            casted_arrays.append(casted_array)
+        result_fields = []
+        failed_columns = []
+        for field in schema:
+            column = table.column(field.name)
+            try:
+                # Cast the column to the desired data type
+                casted_arrays.append(column.cast(field.type))
+                result_fields.append(field)
+            except (
+                pa.ArrowInvalid,
+                pa.ArrowNotImplementedError,
+                pa.ArrowTypeError,
+            ) as e:
+                # Keep this one column as-is rather than failing the whole file
+                casted_arrays.append(column)
+                result_fields.append(pa.field(field.name, column.type))
+                failed_columns.append(f"'{field.name}' ({column.type} -> {field.type})")
+                log_column_failure(
+                    f"{self.uuid_log}: Could not cast column '{field.name}' to "
+                    f"{field.type} ({type(e).__name__}: {e}). Keeping original "
+                    f"type {column.type}."
+                )
 
         # Construct a new table with casted columns
-        casted_table = pa.Table.from_arrays(casted_arrays, schema=schema)
+        casted_table = pa.Table.from_arrays(
+            casted_arrays, schema=pa.schema(result_fields)
+        )
+
+        # Tolerating a failed cast means publishing data that does not match the
+        # configured schema, so a run that asked for errors to be fatal must not
+        # silently succeed — regardless of whether self.logger is an
+        # ExitOnErrorLogger or an external one (e.g. a Prefect run logger).
+        if failed_columns and self.raise_error:
+            raise ValueError(
+                f"{self.uuid_log}: {len(failed_columns)} column(s) could not be cast "
+                f"to the configured schema: {', '.join(failed_columns)}"
+            )
 
         return casted_table
 
@@ -1174,6 +1224,7 @@ class GenericHandler(CommonHandler):
             df_var_list = list(df.columns) + [df.index.name]
 
         pdf = pa.Table.from_pandas(df)  # Convert pandas DataFrame to PyArrow Table
+        del df  # df is no longer needed; release it before further pa.Table operations
 
         # Part A: casting existing columns to correct type
         # In the following part, we have to create a hugly hack which highlights the immaturity of pyarrow. Basically if some
@@ -1201,7 +1252,19 @@ class GenericHandler(CommonHandler):
                 # df.cast fails complaining that the schemas are different while they're arent. different order is often the case
                 pdf = self.cast_table_by_schema(pdf, subset_schema)
             except ValueError as e:
-                self.logger.error(f"{filename}: {type(e).__name__}")
+                # Log the full exception, not just its class name: a bare
+                # "ArrowInvalid" gives no way to tell which column or value
+                # broke the cast. Under raise_error, log at warning level so the
+                # original exception is what propagates: an ExitOnErrorLogger
+                # would otherwise replace it with a bare "Forcing script exit".
+                message = (
+                    f"{self.uuid_log}: {filename}: could not cast to the configured "
+                    f"schema: {type(e).__name__}: {e}\n{traceback.format_exc()}"
+                )
+                if self.raise_error:
+                    self.logger.warning(message)
+                    raise
+                self.logger.error(message)
 
         # Part B: Create NaN arrays for missing columns in the pyarrow table by comparing the self.pyarrow_schema variable
         if self.pyarrow_schema is not None:
@@ -1379,7 +1442,180 @@ class GenericHandler(CommonHandler):
                 f"Dataset {self.dataset_name} does not exist yet - cannot update metadata"
             )
 
-    def delete_existing_matching_parquet(self, filename) -> None:
+    def list_dataset_bucket(self) -> tuple[str, list[str]]:
+        """List all Parquet file keys and identify the S3 bucket for the dataset.
+
+        Inspects the dataset at :attr:`cloud_optimised_output_path` using PyArrow
+        and extracts the S3 bucket along with the full key paths.
+
+        :return: A tuple containing:
+            - **bucket** (*str*): The name of the S3 bucket.
+            - **keys** (*list[str]*): List of file keys.
+        :rtype: tuple[str, list[str]]
+
+        :raises FileNotFoundError: If the target path does not exist or contains no Parquet files.
+        :raises OSError: If there is an issue accessing the storage filesystem or reading metadata.
+        :raises IndexError: If the dataset files list is empty when extracting the bucket name.
+        """
+        self.logger.info("Listing parquet keys for dataset...")
+        bucket, prefix = split_s3_path(self.cloud_optimised_output_path)
+        fallback_source = f"{bucket}/{prefix}".rstrip("/")
+        try:
+            ds = pds.dataset(
+                source=self.cloud_optimised_output_path,
+                partitioning="hive",
+                filesystem=self.s3_fs_output,
+            )
+        except pa.ArrowInvalid as e:
+            # On some S3-compatible backends (including moto), pyarrow can report
+            # files as "bucket/prefix/..." while base dir is "s3://bucket/prefix".
+            # Retry once with a path-only source to keep a stable listing contract.
+            if "outside base dir" not in str(e):
+                raise
+            ds = pds.dataset(
+                source=fallback_source,
+                partitioning="hive",
+                filesystem=self.s3_fs_output,
+            )
+        except (OSError, FileNotFoundError) as e:
+            self.logger.info(
+                f"could not list parquet files for `{self.cloud_optimised_output_path}`: {e}"
+            )
+            raise
+        if len(ds.files) < 1:
+            raise IndexError(
+                f"no parquet files found for `{self.cloud_optimised_output_path}`"
+            )
+
+        keys = ["/".join(file.split("/")[1:]) for file in ds.files]
+        return bucket, keys
+
+    def find_matched_keys(
+        self,
+        keys: list[str],
+        filenames: list[str],
+        pattern_template: str = r"-\d+\.parquet$",
+    ) -> list[str]:
+        """
+        Filters dataset S3 paths for files matching targeted file names and regex patterns.
+
+        Args:
+            keys: List of candidate S3Path instances to evaluate.
+            delete_file_names: List of target file base names or identifiers to match.
+            pattern_template: Regex pattern applied alongside base names to identify matches.
+
+        Returns:
+            A list of matching string keys
+        """
+
+        self.logger.info("Searching for matching Parquet objects to delete...")
+
+        # Safely escape input file names for regex
+        escaped_names = [re.escape(name) for name in filenames]
+
+        # Build a single combined regex OR pattern
+        # e.g., "(file1|file2|file3)-\d+\.parquet$"
+        combined_pattern = f"({'|'.join(escaped_names)}){pattern_template}"
+
+        # Filter S3 URIs using Polars
+        df = polars.DataFrame(
+            data={
+                "key": keys,
+            }
+        )
+        matched_df = df.filter(polars.col("key").str.contains(pattern=combined_pattern))
+        matched_keys = matched_df["key"].to_list()
+
+        if not matched_keys:
+            self.logger.info("Found no matches!")
+        else:
+            self.logger.info(
+                f"Found `{len(matched_keys)}` matching parquet objects to delete from `{len(keys)}` candidate keys."
+            )
+
+        return matched_keys
+
+    def delete_matched_keys(
+        self,
+        bucket: str,
+        matched_keys: list[str],
+        dryrun: bool = True,
+    ):
+        """
+        Deletes matched S3 objects in batches of up to 1,000 using the underlying S3 client.
+
+        Extracts the bucket name and Boto3 client directly from the target dataset path.
+        If `dryrun` is True, logs the planned deletions without modifying S3.
+
+        Args:
+            dataset_s3_path: The primary S3 path defining the target bucket and client.
+            matched_delete_s3_paths: List of S3Path instances to delete from the bucket.
+            dryrun: If True, previews items to delete without performing API deletions.
+        """
+
+        # Exit if no matches
+        if not matched_keys:
+            self.logger.info("No files matched for deletion.")
+            return
+
+        # Exit if dryrun
+        if dryrun:
+            self.logger.info("`dryrun` mode active; exiting without deletion!")
+            return
+
+        # Get the client
+        client = boto3.client("s3")
+
+        # Extract object keys from S3Path instances
+        total_deleted = 0
+
+        def chunked(iterable, size: int):
+            """Yield successive n-sized chunks from iterable."""
+            for i in range(0, len(iterable), size):
+                yield iterable[i : i + size]
+
+        # S3 delete_objects API takes maximum 1,000 keys per request
+        for batch_keys in chunked(matched_keys, size=1000):
+
+            delete_payload = {
+                "Objects": [{"Key": key} for key in batch_keys],
+                "Quiet": True,  # Suppresses verbose success responses
+            }
+
+            response = client.delete_objects(
+                Bucket=bucket,
+                Delete=delete_payload,
+            )
+
+            # Check for batch-level errors returned in the XML body
+            errors = response.get("Errors", [])
+            if errors:
+                self.logger.error(
+                    f"Failed to delete {len(errors)} objects in bucket '{bucket}': {errors}"
+                )
+                raise RuntimeError(
+                    f"S3 Batch deletion encountered errors in bucket '{bucket}'."
+                )
+
+            total_deleted += len(batch_keys)
+
+        self.logger.info(
+            f"Successfully deleted {total_deleted} files from bucket '{bucket}'."
+        )
+
+    @overload
+    def delete_existing_matching_parquet(self, filename: str) -> None: ...
+
+    @overload
+    def delete_existing_matching_parquet(
+        self, filenames: list[str] | None = None
+    ) -> None: ...
+
+    def delete_existing_matching_parquet(
+        self,
+        filename: str | None = None,
+        filenames: list[str] | None = None,
+    ) -> None:
         """
         Delete unmatched Parquet files.
 
@@ -1397,53 +1633,35 @@ class GenericHandler(CommonHandler):
             None
         """
 
-        self.logger.info(
-            f"{self.uuid_log}: Searching for matching Parquet objects to delete."
-        )
-
-        # could be slow if there are too many objects to list
-        # remote test on local machine shows 15 sec for 50k objects
-
-        try:
-            # TODO: with moto and unittests, we get the following error:
-            #       GetFileInfo() yielded path 'imos-data-lab-optimised/testing/anmn_ctd_ts_fv01.parquet/site_code=SYD140/timestamp=1625097600/polygon=01030000000100000005000000000000000020624000000000008041C0000000000060634000000000008041C0000000000060634000000000000039C0000000000020624000000000000039C0000000000020624000000000008041C0/IMOS_ANMN-NSW_CDSTZ_20210429T015500Z_SYD140_FV01_SYD140-2104-SBE37SM-RS232-128_END-20210812T011500Z_C-20210827T074819Z.nc-0.parquet', which is outside base dir 's3://imos-data-lab-optimised/testing/anmn_ctd_ts_fv01.parquet/'
-            #       obviously the file to delete is found with the unittests, but there is an issue, maybe with the way filesystem is set. Reading with pandas works, but we don't have the same capabilities
-            parquet_files = pq.ParquetDataset(
-                self.cloud_optimised_output_path,
-                partitioning="hive",
-                filesystem=self.s3_fs_output,
+        # Check both filename and filenames are not both set
+        if (filename is None) == (filenames is None or filenames == []):
+            raise ValueError(
+                "Exactly one of 'filename' or 'filenames' must be provided."
             )
-        except Exception as e:
+
+        # Resolve `filenames`
+        filenames = filenames or [filename]
+
+        # Get all the keys
+        try:
+            bucket, keys = self.list_dataset_bucket()
+        except FileNotFoundError:
             self.logger.info(
-                f"{self.uuid_log}: No Parquet files to delete. Reason: {e}"
+                f"No existing parquet dataset at `{self.cloud_optimised_output_path}`; skipping deletion."
             )
             return
 
-        # Define the regex pattern to match existing parquet files
-        pattern = rf"\/{filename}"
+        # Find all the matched keys
+        matched_keys = self.find_matched_keys(keys=keys, filenames=filenames)
+        if not matched_keys:
+            return
 
-        # Find files matching the pattern using list comprehension and regex
-        matching_files = [
-            file_path
-            for file_path in parquet_files.files
-            if re.search(pattern, file_path)
-        ]
-
-        # The matching files returns also the bucket name. We need to strip it out of the array
-        object_keys = [
-            file[len(self.optimised_bucket_name) :].lstrip("/")
-            for file in matching_files
-        ]
-        if object_keys != []:
-            objects_to_delete = [{"Key": key} for key in object_keys]
-
-            s3 = boto3.client("s3")
-            response = s3.delete_objects(
-                Bucket=self.optimised_bucket_name, Delete={"Objects": objects_to_delete}
-            )
-            self.logger.info(
-                f"{self.uuid_log}: Successfully deleted previous Parquet objects: {response}"
-            )
+        # Delete all matched keys
+        self.delete_matched_keys(
+            bucket=bucket,
+            matched_keys=matched_keys,
+            dryrun=False,
+        )
 
     def to_cloud_optimised_single(self, s3_file_uri) -> None:
         """
@@ -1484,6 +1702,8 @@ class GenericHandler(CommonHandler):
         if self.delete_pq_unmatch_enable:
             self.delete_existing_matching_parquet(filename)
 
+        ds_for_error_postprocess = None
+
         try:
             start_time = timeit.default_timer()
 
@@ -1493,6 +1713,7 @@ class GenericHandler(CommonHandler):
 
             generator = self.preprocess_data(s3_file_handle)
             for df, ds in generator:
+                ds_for_error_postprocess = ds
                 if df.empty:
                     raise ValueError(
                         f"{self.uuid_log}: {filename} Data corruption, Empty dataframe detected: {df}"
@@ -1502,6 +1723,11 @@ class GenericHandler(CommonHandler):
                 # self.push_metadata_aws_registry()  # Deprecated
 
                 self.postprocess(ds)
+                ds_for_error_postprocess = None
+                del (
+                    df,
+                    ds,
+                )  # drop local refs for this iteration; allows GC when no other refs remain
 
                 time_spent = timeit.default_timer() - start_time
                 self.logger.info(
@@ -1513,8 +1739,8 @@ class GenericHandler(CommonHandler):
                 f"{self.uuid_log}: Issue encountered while creating Cloud Optimised file: {type(e).__name__}: {e} \n {traceback.format_exc()}"
             )
 
-            if "ds" in locals():
-                self.postprocess(ds)
+            if ds_for_error_postprocess is not None:
+                self.postprocess(ds_for_error_postprocess)
 
             raise e
 

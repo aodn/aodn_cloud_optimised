@@ -345,7 +345,6 @@ _PLACEHOLDER_CONFIGS = {
     # dataset_template.json uses // comments and is a human-readable template,
     # not a loadable dataset config.
     "dataset_template.json",
-    "diver_photoquadrat_score_qc.json",
     "mooring_wave_timeseries_delayed_qc.json",
     "radar_wave_delayed_qc_no_I_J_version_main.json",
     "satellite_ghrsst_l3c_4hour_himawari8.json",
