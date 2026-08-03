@@ -1,6 +1,6 @@
 {
-  "dataset_name": "satellite_austemp_sst_8day",
-  "logger_name": "satellite_austemp_sst_8day",
+  "dataset_name": "satellite_austemp_sst_14day",
+  "logger_name": "satellite_austemp_sst_14day",
   "cloud_optimised_format": "zarr",
   "run_settings": {
     "paths": [
@@ -201,7 +201,7 @@
     "Resources": [
       {
         "Description": "Cloud Optimised AODN dataset of IMOS - AusTemp - Sea Surface Temperature",
-        "ARN": "arn:aws:s3:::aodn-cloud-optimised/satellite_austemp_sst_8day.zarr",
+        "ARN": "arn:aws:s3:::aodn-cloud-optimised/satellite_austemp_sst_14day.zarr",
         "Region": "ap-southeast-2",
         "Type": "S3 Bucket"
       }
@@ -210,8 +210,8 @@
       "Tutorials": [
         {
           "Title": "Accessing IMOS - AusTemp - Sea Surface Temperature",
-          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_austemp_sst_8day.ipynb",
-          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_austemp_sst_8day.ipynb",
+          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_austemp_sst_14day.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_austemp_sst_14day.ipynb",
           "AuthorName": "Laurent Besnard",
           "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
         },
