@@ -55,6 +55,7 @@ dependencies = [
   "numcodecs<0.16",
   # "requests>=2.33.1",
   "pydantic>=2.12.5",
+  "cloudpathlib[s3] (>=0.24.0,<0.25.0)",
 
 ]
 
