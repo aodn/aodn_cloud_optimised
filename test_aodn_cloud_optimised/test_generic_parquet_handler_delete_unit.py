@@ -3,8 +3,6 @@ import unittest
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
-import pyarrow as pa
-
 from aodn_cloud_optimised.lib.GenericParquetHandler import GenericHandler
 
 
@@ -29,9 +27,15 @@ class TestGenericParquetDeleteHelpers(unittest.TestCase):
             bucket, keys = self.handler.list_dataset_bucket()
 
         self.assertEqual(bucket, "optimised-bucket")
-        self.assertEqual(keys, files)
+        self.assertEqual(
+            keys,
+            [
+                "prefix/dataset.parquet/a.nc-0.parquet",
+                "prefix/dataset.parquet/b.nc-1.parquet",
+            ],
+        )
         mock_dataset.assert_called_once_with(
-            source=self.handler.cloud_optimised_output_path,
+            source="optimised-bucket/prefix/dataset.parquet",
             partitioning="hive",
             filesystem=self.handler.s3_fs_output,
         )
@@ -51,25 +55,6 @@ class TestGenericParquetDeleteHelpers(unittest.TestCase):
         ):
             with self.assertRaises(FileNotFoundError):
                 self.handler.list_dataset_bucket()
-
-    def test_list_dataset_bucket_retries_when_pyarrow_base_dir_mismatch(self):
-        files = ["optimised-bucket/prefix/dataset.parquet/a.nc-0.parquet"]
-        with patch(
-            "aodn_cloud_optimised.lib.GenericParquetHandler.pds.dataset",
-            side_effect=[
-                pa.ArrowInvalid("outside base dir"),
-                SimpleNamespace(files=files),
-            ],
-        ) as mock_dataset:
-            bucket, keys = self.handler.list_dataset_bucket()
-
-        self.assertEqual(bucket, "optimised-bucket")
-        self.assertEqual(keys, files)
-        self.assertEqual(mock_dataset.call_count, 2)
-        first_source = mock_dataset.call_args_list[0].kwargs["source"]
-        second_source = mock_dataset.call_args_list[1].kwargs["source"]
-        self.assertEqual(first_source, "s3://optimised-bucket/prefix/dataset.parquet")
-        self.assertEqual(second_source, "optimised-bucket/prefix/dataset.parquet")
 
     def test_find_matched_keys_matches_single_filename_default_pattern(self):
         keys = [

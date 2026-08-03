@@ -13,6 +13,7 @@ from typing import Generator, Tuple, overload
 
 import boto3
 import cftime
+import cloudpathlib
 import pandas as pd
 import polars
 import polars as pl
@@ -1458,25 +1459,18 @@ class GenericHandler(CommonHandler):
         :raises IndexError: If the dataset files list is empty when extracting the bucket name.
         """
         self.logger.info("Listing parquet keys for dataset...")
-        bucket, prefix = split_s3_path(self.cloud_optimised_output_path)
-        fallback_source = f"{bucket}/{prefix}".rstrip("/")
+        output_s3_path = cloudpathlib.S3Path.from_uri(self.cloud_optimised_output_path)
+
         try:
+
+            # The dataset requires a source without `s3://` when a
+            # filesystem is specified.
             ds = pds.dataset(
-                source=self.cloud_optimised_output_path,
+                source=f"{output_s3_path.bucket}/{output_s3_path.key}",
                 partitioning="hive",
                 filesystem=self.s3_fs_output,
             )
-        except pa.ArrowInvalid as e:
-            # On some S3-compatible backends (including moto), pyarrow can report
-            # files as "bucket/prefix/..." while base dir is "s3://bucket/prefix".
-            # Retry once with a path-only source to keep a stable listing contract.
-            if "outside base dir" not in str(e):
-                raise
-            ds = pds.dataset(
-                source=fallback_source,
-                partitioning="hive",
-                filesystem=self.s3_fs_output,
-            )
+
         except (OSError, FileNotFoundError) as e:
             self.logger.info(
                 f"could not list parquet files for `{self.cloud_optimised_output_path}`: {e}"
@@ -1487,8 +1481,8 @@ class GenericHandler(CommonHandler):
                 f"no parquet files found for `{self.cloud_optimised_output_path}`"
             )
 
-        keys = ["/".join(file.split("/")[1:]) for file in ds.files]
-        return bucket, keys
+        keys = [cloudpathlib.S3Path.from_uri(f"s3://{file}").key for file in ds.files]
+        return output_s3_path.bucket, keys
 
     def find_matched_keys(
         self,
