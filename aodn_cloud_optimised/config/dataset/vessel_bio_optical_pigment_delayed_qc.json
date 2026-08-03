@@ -444,7 +444,7 @@
       "mode": "coiled",
       "restart_every_path": true
     },
-    "clear_existing_data": true,
+    "clear_existing_data": false,
     "raise_error": false,
     "force_previous_parquet_deletion": true,
     "batch_size": 50,

@@ -21,7 +21,7 @@
       "mode": "coiled",
       "restart_every_path": true
     },
-    "clear_existing_data": true,
+    "clear_existing_data": false,
     "raise_error": false,
     "coiled_cluster_options": {
       "n_workers": [

@@ -16,7 +16,7 @@
       "mode": "local",
       "restart_every_path": false
     },
-    "clear_existing_data": true,
+    "clear_existing_data": false,
     "raise_error": false,
     "coiled_cluster_options": {
       "n_workers": [
@@ -33,7 +33,7 @@
       }
     },
     "batch_size": 5,
-    "force_previous_parquet_deletion": false
+    "force_previous_parquet_deletion": true
   },
   "metadata_uuid": "b2548767-514f-4a31-b65e-36bb894382d5",
   "schema": {

@@ -36,7 +36,7 @@
     "s3_fs_common_opts": {
       "default_cache_type": "readahead"
     },
-    "clear_existing_data": true,
+    "clear_existing_data": false,
     "coiled_cluster_options": {
       "n_workers": [
         2,

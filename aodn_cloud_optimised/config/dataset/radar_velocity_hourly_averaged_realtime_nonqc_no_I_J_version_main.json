@@ -160,7 +160,7 @@
         "year_range": []
       }
     ],
-    "clear_existing_data": true,
+    "clear_existing_data": false,
     "raise_error": false
   },
   "schema_transformation": {
