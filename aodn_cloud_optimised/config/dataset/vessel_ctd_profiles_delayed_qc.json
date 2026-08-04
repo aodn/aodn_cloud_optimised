@@ -242,11 +242,7 @@
     "TYPE": {
       "type": "string",
       "long_name": "measurement type (equilibrator, standard or atmosphere)",
-      "units": "categorical",
-      "DODS": {
-        "strlen": 10,
-        "dimName": "string_10"
-      }
+      "units": "categorical"
     },
     "PRES_REL": {
       "type": "float",
