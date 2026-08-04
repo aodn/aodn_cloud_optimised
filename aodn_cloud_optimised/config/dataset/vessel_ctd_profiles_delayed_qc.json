@@ -239,6 +239,15 @@
       "cf_role": "profile_id",
       "long_name": "unique_identifier_for_each_profile_feature_instance_in_this_file"
     },
+    "TYPE": {
+      "type": "string",
+      "long_name": "measurement type (equilibrator, standard or atmosphere)",
+      "units": "categorical",
+      "DODS": {
+        "strlen": 10,
+        "dimName": "string_10"
+      }
+    },
     "PRES_REL": {
       "type": "float",
       "ancillary_variables": "PRES_REL_quality_control",
