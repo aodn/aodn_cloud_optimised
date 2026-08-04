@@ -521,6 +521,12 @@ def preprocess_xarray(ds, dataset_config):
 
             ds[variable_name] = ds[variable_name].astype(datatype)
 
+            # Preserve variable attributes defined in the schema.
+            # Exclude orchestration keys which are not CF metadata.
+            for attr_key, attr_val in var_required[variable_name].items():
+                if attr_key not in {"type", "dims", "dimensions"}:
+                    ds[variable_name].attrs[attr_key] = attr_val
+
         # if variable already exists
         else:
             if (datatype == "timestamp[ns]") or (
