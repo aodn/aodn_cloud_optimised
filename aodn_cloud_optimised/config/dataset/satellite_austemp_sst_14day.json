@@ -195,7 +195,8 @@
     "ManagedBy": "AODN",
     "UpdateFrequency": "As Needed",
     "Tags": [
-      "FILL UP MANUALLY - CHECK DOCUMENTATION"
+      "oceans",
+      "satellite imagery"
     ],
     "License": "http://creativecommons.org/licenses/by/4.0/",
     "Resources": [
