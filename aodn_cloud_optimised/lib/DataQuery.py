@@ -3,6 +3,7 @@ A currated list of functions used to facilitate reading AODN parquet files. Thes
 Notebooks
 """
 
+import ast
 import calendar
 import hashlib
 import json
@@ -56,7 +57,7 @@ from shapely.geometry import MultiPolygon, Polygon
 from tqdm.notebook import tqdm
 from windrose import WindroseAxes
 
-__version__ = "0.3.27"
+__version__ = "0.3.28"
 
 REGION: Final[str] = "ap-southeast-2"
 ENDPOINT_URL = "https://s3.ap-southeast-2.amazonaws.com"
@@ -2110,37 +2111,132 @@ def get_schema_metadata(dname: str, s3_fs_opts=None) -> dict:
     return decoded_meta
 
 
-def decode_and_load_json(metadata: dict[bytes, bytes]) -> dict[str, Any]:
-    """Decodes keys and JSON-encoded values from Parquet metadata.
+def decode_and_load_json(
+    metadata: dict[bytes, bytes] | dict[str, Any],
+) -> dict[str, Any]:
+    """Decodes keys and JSON-encoded or Python-literal values from Parquet metadata.
 
-    Iterates through a dictionary where keys and values are bytes (as obtained
-    from PyArrow schema metadata). It decodes keys to UTF-8 strings and attempts
-    to decode values as UTF-8 strings, replace single quotes with double quotes
-    (common issue), and then parse them as JSON. Logs errors for values that
-    fail decoding or JSON parsing.
+    Iterates through a metadata dictionary where keys and values can be bytes, strings,
+    or already-decoded structures. It handles standard JSON strings, single-quoted
+    Python dictionary literals, and malformed strings containing unescaped internal quotes.
+
+    Includes dataset name context extraction for clear asynchronous logging traces.
 
     Args:
-        metadata: A dictionary with bytes keys and bytes values, typically
-            from `pyarrow.Schema.metadata`.
+        metadata: A dictionary with bytes/string keys and bytes/string/dict values,
+            typically sourced from `pyarrow.Schema.metadata` or dataset metadata.
 
     Returns:
         A dictionary with decoded string keys and parsed Python objects as values.
-        Keys or values that failed decoding/parsing are omitted.
+        Unrecoverable parsing errors are logged and omitted from the output.
     """
     logger = _get_or_create_logger()
-    decoded_metadata = {}
-    for key, value in metadata.items():
-        try:
-            # Decode bytes to string
-            value_str = value.decode("utf-8")
-            value_str = value_str.replace("'", '"')
 
-            decoded_metadata[key.decode("utf-8")] = json.loads(value_str)
-        except json.JSONDecodeError as e:
-            logger.error(f"Error decoding JSON for key {key}: {e}")
-            logger.error(f"Problematic JSON string: {value_str}")
+    # 1. Extract the dataset name safely for context-aware async logging
+    dataset_name = "unknown_dataset"
+    try:
+        raw_global = metadata.get(b"global_attributes") or metadata.get(
+            "global_attributes"
+        )
+        if raw_global:
+            if isinstance(raw_global, bytes):
+                raw_global_str = raw_global.decode("utf-8")
+            else:
+                raw_global_str = str(raw_global)
+
+            parsed_global = (
+                ast.literal_eval(raw_global_str)
+                if not isinstance(raw_global, dict)
+                else raw_global
+            )
+            if isinstance(parsed_global, dict):
+                dataset_name = parsed_global.get("dataset_name", "unknown_dataset")
+    except Exception:
+        pass
+
+    decoded_metadata = {}
+
+    # 2. Iterate through each metadata entry
+    for key, value in metadata.items():
+        # Safely decode the dictionary key to a string
+        try:
+            key_str = key.decode("utf-8") if isinstance(key, bytes) else str(key)
         except Exception as e:
-            logger.error(f"Unexpected error for key {key}: {e}")
+            logger.error(f"[{dataset_name}] Unexpected error decoding key {key}: {e}")
+            continue
+
+        # If the value is already a parsed dictionary, pass it through directly
+        if isinstance(value, dict):
+            decoded_metadata[key_str] = value
+            continue
+
+        value_str = ""
+        try:
+            # Convert raw bytes to a string using UTF-8 with a Latin1 fallback
+            if isinstance(value, bytes):
+                try:
+                    value_str = value.decode("utf-8")
+                except UnicodeDecodeError:
+                    value_str = value.decode("latin1")
+            else:
+                value_str = str(value)
+
+            # Strategy A: Try standard JSON parsing first
+            try:
+                decoded_metadata[key_str] = json.loads(value_str)
+                continue
+            except json.JSONDecodeError:
+                pass
+
+            # Strategy B: Try Python literal evaluation for single-quoted dicts/lists
+            # (common pattern in certain upstream dataset schemas)
+            try:
+                evaluated = ast.literal_eval(value_str)
+                if isinstance(evaluated, (dict, list)):
+                    decoded_metadata[key_str] = evaluated
+                    continue
+            except (ValueError, SyntaxError):
+                pass
+
+            # Strategy C: Pass plain scalar strings straight through without modification
+            stripped = value_str.strip()
+            if not (
+                stripped.startswith(("{", "[", "("))
+                and stripped.endswith(("}", "]", ")"))
+            ):
+                decoded_metadata[key_str] = value_str
+                continue
+
+            # Strategy D: Fallback repair handler for true schema corruption
+            # (e.g., unescaped internal double quotes like vessel"s)
+            fixed_str = value_str
+            success = False
+            for _ in range(10):
+                try:
+                    decoded_metadata[key_str] = json.loads(fixed_str)
+                    logger.warning(
+                        f"[{dataset_name}] Key '{key_str}' required quote-escaping fix to parse successfully."
+                    )
+                    success = True
+                    break
+                except json.JSONDecodeError as initial_error:
+                    err_pos = initial_error.pos
+                    if err_pos < len(fixed_str):
+                        fixed_str = fixed_str[:err_pos] + "\\" + fixed_str[err_pos:]
+                    else:
+                        break
+
+            # Log an error if all parsing and recovery attempts fail
+            if not success:
+                logger.error(
+                    f"[{dataset_name}] Error decoding JSON for key {key}: unrecoverable format"
+                )
+                logger.error(f"[{dataset_name}] Problematic JSON string: {value_str}")
+
+        except Exception as e:
+            logger.error(f"[{dataset_name}] Unexpected error for key {key}: {e}")
+            logger.error(f"[{dataset_name}] Problematic JSON string: {value_str}")
+
     return decoded_metadata
 
 
