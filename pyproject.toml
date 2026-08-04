@@ -296,6 +296,7 @@ cloud_optimised_vessel_sst_realtime_nonqc = "aodn_cloud_optimised.bin.datasets.v
 cloud_optimised_vessel_trv_realtime_qc = "aodn_cloud_optimised.bin.datasets.vessel_trv_realtime_qc:main"
 cloud_optimised_vessel_xbt_delayed_qc = "aodn_cloud_optimised.bin.datasets.vessel_xbt_delayed_qc:main"
 cloud_optimised_vessel_xbt_realtime_nonqc = "aodn_cloud_optimised.bin.datasets.vessel_xbt_realtime_nonqc:main"
+cloud_optimised_wave_buoy_delayed_qc = "aodn_cloud_optimised.bin.datasets.wave_buoy_delayed_qc:main"
 cloud_optimised_wave_buoy_realtime_nonqc = "aodn_cloud_optimised.bin.datasets.wave_buoy_realtime_nonqc:main"
 generic_cloud_optimised_creation = "aodn_cloud_optimised.bin.generic_cloud_optimised_creation:main"
 pydantic_precommit_hook = "aodn_cloud_optimised.bin.pydantic_precommit_hook:main"
