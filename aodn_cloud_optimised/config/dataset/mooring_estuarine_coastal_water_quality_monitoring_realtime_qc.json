@@ -42,7 +42,7 @@
     "batch_size": 5,
     "force_previous_parquet_deletion": true
   },
-  "metadata_uuid": "a8f5c736-6eaa-47fb-a9eb-d778beb71701",
+  "metadata_uuid": "613cd7ce-0677-4c3b-8cc7-6d22ff1f4120",
   "schema": {
     "TEMP": {
       "type": "float",
