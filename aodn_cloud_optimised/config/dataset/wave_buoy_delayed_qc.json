@@ -1,0 +1,567 @@
+{
+  "dataset_name": "wave_buoy_delayed_qc",
+  "logger_name": "wave_buoy_delayed_qc",
+  "cloud_optimised_format": "parquet",
+  "run_settings": {
+    "paths": [
+      {
+        "filter": [
+          ".*\\.nc$"
+        ],
+        "s3_uri": "s3://imos-data/UWA/WAVE-BUOYS/DELAYED/WAVE-PARAMETERS/",
+        "year_range": []
+      },
+      {
+        "filter": [
+          ".*\\.nc$"
+        ],
+        "s3_uri": "s3://imos-data/Deakin_University/WAVE-BUOYS/DELAYED/WAVE-PARAMETERS/",
+        "year_range": []
+      },
+      {
+        "filter": [
+          ".*\\.nc$"
+        ],
+        "s3_uri": "s3://imos-data/Department_of_Planning_and_Environment-New_South_Wales/WAVE-BUOYS/DELAYED/WAVE-PARAMETERS/",
+        "year_range": []
+      },
+      {
+        "filter": [
+          ".*\\.nc$"
+        ],
+        "s3_uri": "s3://imos-data/Department_of_Planning_and_Environment-New_South_Wales/Manly_Hydraulics_Laboratory/WAVE-BUOYS/DELAYED/WAVE-PARAMETERS/",
+        "year_range": []
+      },
+      {
+        "filter": [
+          ".*\\.nc$"
+        ],
+        "s3_uri": "s3://imos-data/Department_for_Environment_and_Water-South_Australia/WAVE-BUOYS/DELAYED/WAVE-PARAMETERS/",
+        "year_range": []
+      },
+      {
+        "filter": [
+          ".*\\.nc$"
+        ],
+        "s3_uri": "s3://imos-data/IMOS/COASTAL-WAVE-BUOYS/WAVE-BUOYS/DELAYED/WAVE-PARAMETERS/",
+        "year_range": []
+      },
+      {
+        "filter": [
+          ".*\\.nc$"
+        ],
+        "s3_uri": "s3://imos-data/IMOS/NTP/Low_Cost_Wave_Buoy_Technology/WAVE-BUOYS/DELAYED/WAVE-PARAMETERS/",
+        "year_range": []
+      },
+      {
+        "filter": [
+          ".*\\.nc$"
+        ],
+        "s3_uri": "s3://imos-data/Bureau_of_Meteorology/WAVE-BUOYS/DELAYED/WAVE-PARAMETERS/",
+        "year_range": []
+      },
+      {
+        "filter": [
+          ".*\\.nc$"
+        ],
+        "s3_uri": "s3://imos-data/Department_of_Transport-Western_Australia/WAVE-BUOYS/DELAYED/WAVE-PARAMETERS/",
+        "year_range": []
+      },
+      {
+        "filter": [
+          ".*\\.nc$"
+        ],
+        "s3_uri": "s3://imos-data/Department_of_Environment_and_Science-Queensland/WAVE-BUOYS/DELAYED/WAVE-PARAMETERS/",
+        "year_range": []
+      },
+      {
+        "filter": [
+          ".*\\.nc$"
+        ],
+        "s3_uri": "s3://imos-data/Gippsland-Ports-Victoria/WAVE-BUOYS/DELAYED/WAVE-PARAMETERS/",
+        "year_range": []
+      },
+      {
+        "filter": [
+          ".*\\.nc$"
+        ],
+        "s3_uri": "s3://imos-data/Flinders_University/WAVE-BUOYS/DELAYED/WAVE-PARAMETERS/",
+        "year_range": []
+      },
+      {
+        "filter": [
+          ".*\\.nc$"
+        ],
+        "s3_uri": "s3://imos-data/Pilbara_Ports_Authority/WAVE-BUOYS/DELAYED/WAVE-PARAMETERS/",
+        "year_range": []
+      },
+      {
+        "filter": [
+          ".*\\.nc$"
+        ],
+        "s3_uri": "s3://imos-data/CSIRO/WAVE-BUOYS/DELAYED/WAVE-PARAMETERS/",
+        "year_range": []
+      },
+      {
+        "filter": [
+          ".*\\.nc$"
+        ],
+        "s3_uri": "s3://imos-data/IMOS/ANMN/Wave_Buoys/WAVE-BUOYS/DELAYED/WAVE-PARAMETERS/",
+        "year_range": []
+      }
+    ],
+    "prefect": {
+      "job_variables": {
+        "env.PREFECT_TASK_RUNNER_THREAD_POOL_MAX_WORKERS": "20"
+      }
+    },
+    "cluster": {
+      "mode": "coiled",
+      "restart_every_path": false
+    },
+    "clear_existing_data": false,
+    "raise_error": false,
+    "s3_fs_common_opts": {
+      "default_cache_type": "readahead"
+    },
+    "coiled_cluster_options": {
+      "n_workers": [
+        8,
+        20
+      ],
+      "scheduler_vm_types": "m7i-flex.xlarge",
+      "worker_vm_types": "m7i-flex.2xlarge",
+      "allow_ingress_from": "me",
+      "compute_purchase_option": "spot_with_fallback",
+      "worker_options": {
+        "nthreads": 8,
+        "memory_limit": "28GB"
+      }
+    },
+    "batch_size": 50,
+    "force_previous_parquet_deletion": true
+  },
+  "metadata_uuid": "2807f3aa-4db0-4924-b64b-354ae8c10b58",
+  "schema": {
+    "TIME": {
+      "axis": "T",
+      "type": "timestamp[ns]",
+      "long_name": "time",
+      "standard_name": "time"
+    },
+    "WMDS": {
+      "type": "float",
+      "units": "degree",
+      "method": "Spectral analysis method",
+      "positive": "clockwise",
+      "long_name": "spectral sea surface wave mean directional spread",
+      "valid_max": 360,
+      "valid_min": 0,
+      "standard_name": "sea_surface_wave_directional_spread",
+      "reference_datum": "true north",
+      "ancillary_variables": "WAVE_quality_control"
+    },
+    "WPDI": {
+      "type": "float",
+      "units": "degree",
+      "method": "Spectral analysis method. Direction (related to the true north direct from instrument) from which the peak period waves are coming from",
+      "positive": "clockwise",
+      "long_name": "spectral peak wave direction",
+      "valid_max": 360,
+      "valid_min": 0,
+      "standard_name": "sea_surface_wave_from_direction_at_variance_spectral_density_maximum",
+      "reference_datum": "true north",
+      "ancillary_variables": "WAVE_quality_control"
+    },
+    "WPDS": {
+      "type": "float",
+      "units": "degree",
+      "method": "Spectral analysis method",
+      "positive": "clockwise",
+      "long_name": "spectral sea surface wave peak directional spread",
+      "valid_max": 360,
+      "valid_min": 0,
+      "standard_name": "sea_surface_wave_directional_spread_at_variance_spectral_density_maximum",
+      "reference_datum": "true north",
+      "ancillary_variables": "WAVE_quality_control"
+    },
+    "WPSM": {
+      "type": "double",
+      "units": "s",
+      "long_name": "sea surface wave mean period from variance spectral density second frequency moment",
+      "standard_name": "sea_surface_wave_mean_period_from_variance_spectral_density_second_frequency_moment",
+      "valid_min": 0.0,
+      "valid_max": 50.0,
+      "ancillary_variables": "WAVE_quality_control",
+      "method": "Spectral analysis method",
+      "ancillary_variable": "WAVE_quality_control"
+    },
+    "WPFM": {
+      "type": "float",
+      "units": "s",
+      "method": "Spectral analysis method. The first wave period is calculated as m0/m1 where m0 and m1 are the zeroth order and first order moments of the wave spectrum",
+      "long_name": "sea surface wave spectral mean period",
+      "valid_max": 30,
+      "valid_min": 0,
+      "standard_name": "sea_surface_wave_mean_period_from_variance_spectral_density_first_frequency_moment",
+      "ancillary_variables": "WAVE_quality_control"
+    },
+    "WHTH": {
+      "type": "float",
+      "units": "m",
+      "long_name": "sea surface wave significant height from time domain analysis",
+      "standard_name": "sea_surface_wave_significant_height",
+      "valid_min": 0.0,
+      "valid_max": 100.0,
+      "ancillary_variables": "WAVE_quality_control",
+      "method": "Time domain analysis method",
+      "ancillary_variable": "WAVE_quality_control"
+    },
+    "WPMH": {
+      "type": "float",
+      "standard_name": "sea_surface_wave_zero_upcrossing_period",
+      "long_name": "average upcross wave period",
+      "units": "s",
+      "valid_min": 0.0,
+      "valid_max": 50.0,
+      "method": "Time domain analysis method",
+      "ancillary_variables": "WAVE_quality_control"
+    },
+    "WMXH": {
+      "type": "float",
+      "units": "m",
+      "long_name": "maximum height of waves on the water body",
+      "standard_name": "sea_surface_wave_maximum_height",
+      "comment": "Analysed by zero crossing method. The maximum wave height in the record.",
+      "valid_min": 0.0,
+      "valid_max": 100.0,
+      "ancillary_variables": "WAVE_quality_control"
+    },
+    "WPTH": {
+      "type": "double",
+      "units": "s",
+      "long_name": "wave period of H1/3",
+      "standard_name": "sea_surface_wave_significant_period",
+      "valid_min": 0.0,
+      "valid_max": 100.0,
+      "ancillary_variables": "WAVE_quality_control",
+      "method": "Time domain analysis method",
+      "ancillary_variable": "WAVE_quality_control"
+    },
+    "WPTE": {
+      "type": "float",
+      "ancillary_variable": "WAVE_quality_control",
+      "comment": "The average period of the highest 1/10 of waves from time domain analysis.",
+      "long_name": "sea surface wave mean period of highest tenth",
+      "method": "Time domain analysis method",
+      "standard_name": "sea_surface_wave_mean_period_of_highest_tenth",
+      "units": "s",
+      "valid_max": 50.0,
+      "valid_min": 0.0
+    },
+    "SSWMD_MAG": {
+      "type": "float",
+      "ancillary_variable": "WAVE_quality_control",
+      "comment": "Direction (related to the magnetic north) from which the mean period waves are coming from",
+      "compass_correction_applied": "",
+      "long_name": "spectral sea surface wave mean direction",
+      "magnetic_declination": "",
+      "method": "Spectral analysis method",
+      "positive": "clockwise",
+      "reference_datum": "true north",
+      "standard_name": "sea_surface_wave_from_direction",
+      "units": "degree",
+      "valid_max": 360.0,
+      "valid_min": 0.0
+    },
+    "WATCH_CIRCLE_flag": {
+      "type": "float",
+      "long_name": "primary Quality Control flag for positioning",
+      "valid_min": 1,
+      "valid_max": 9,
+      "flag_values": [
+        1,
+        2,
+        3,
+        4,
+        9
+      ],
+      "flag_meanings": "good not_evaluated questionable bad missing",
+      "comment": "flags as suspect/questionable datapoints where the distance between current position and site location is greater than watch_circle (see global attributes). The same applies to fail/bad flags, but using a slighly increased watch_circle (multiplied by an error factor)."
+    },
+    "THMAX": {
+      "type": "double",
+      "units": "s",
+      "long_name": "period of the highest wave",
+      "standard_name": "sea_surface_wave_period_of_highest_wave",
+      "valid_min": 0.0,
+      "valid_max": 50.0,
+      "ancillary_variables": "WAVE_quality_control",
+      "method": "Time domain analysis method",
+      "ancillary_variable": "WAVE_quality_control"
+    },
+    "WPPE": {
+      "type": "float",
+      "units": "s",
+      "method": "Spectral analysis method. Period of the peak of the energy spectrum",
+      "long_name": "peak wave spectral period",
+      "valid_max": 30,
+      "valid_min": 0,
+      "standard_name": "sea_surface_wave_period_at_variance_spectral_density_maximum",
+      "ancillary_variables": "WAVE_quality_control"
+    },
+    "WSSH": {
+      "type": "float",
+      "units": "m",
+      "method": "Spectral analysis method",
+      "long_name": "sea surface wave spectral significant height",
+      "valid_max": 20,
+      "valid_min": 0,
+      "standard_name": "sea_surface_wave_significant_height",
+      "ancillary_variables": "WAVE_quality_control"
+    },
+    "SSWMD": {
+      "type": "float",
+      "units": "degree",
+      "method": "Spectral analysis method. Direction (related to the true north direct from instrument) from which the mean period waves are coming from",
+      "positive": "clockwise",
+      "long_name": "spectral sea surface wave mean direction",
+      "valid_max": 360,
+      "valid_min": 0,
+      "standard_name": "sea_surface_wave_from_direction",
+      "reference_datum": "true north",
+      "ancillary_variables": "WAVE_quality_control"
+    },
+    "LATITUDE": {
+      "axis": "Y",
+      "type": "double",
+      "units": "degrees_north",
+      "long_name": "latitude",
+      "valid_max": 90,
+      "valid_min": -90,
+      "standard_name": "latitude",
+      "reference_datum": "WGS84 coordinate reference system; EPSG:4326"
+    },
+    "LONGITUDE": {
+      "axis": "X",
+      "type": "double",
+      "units": "degrees_east",
+      "long_name": "longitude",
+      "valid_max": 180,
+      "valid_min": -180,
+      "standard_name": "longitude",
+      "reference_datum": "WGS84 coordinate reference system; EPSG:4326"
+    },
+    "XDIS": {
+      "type": "float",
+      "long_name": "sea surface east displacement",
+      "units": "m",
+      "valid_min": -50.0,
+      "valid_max": 50.0
+    },
+    "YDIS": {
+      "type": "float",
+      "long_name": "sea surface north displacement",
+      "units": "m",
+      "valid_min": -50.0,
+      "valid_max": 50.0
+    },
+    "ZDIS": {
+      "type": "float",
+      "long_name": "sea surface vertical displacement",
+      "units": "m",
+      "valid_min": -50.0,
+      "valid_max": 50.0
+    },
+    "TimeSeries": {
+      "type": "int32",
+      "cf_role": "timeseries_id",
+      "long_name": "Unique identifier for each feature instance"
+    },
+    "timeSeries": {
+      "type": "int32",
+      "cf_role": "timeseries_id",
+      "long_name": "Unique identifier for each feature instance"
+    },
+    "FREQUENCY": {
+      "type": "float",
+      "long_name": "frequency",
+      "units": "Hz",
+      "min": 0.0,
+      "max": 1.23046875
+    },
+    "TIME_LOCATION": {
+      "axis": "T",
+      "type": "timestamp[ns]",
+      "comment": "This is the time at which location information is sampled",
+      "long_name": "location measurement time",
+      "standard_name": "time"
+    },
+    "WAVE_quality_control": {
+      "type": "float",
+      "long_name": "primary Quality Control flag for wave variables",
+      "valid_max": 9,
+      "valid_min": 1,
+      "flag_values": [
+        1,
+        2,
+        3,
+        4,
+        9
+      ],
+      "flag_meanings": "good not_evaluated questionable bad missing",
+      "quality_control_convention": "Ocean Data Standards: UNESCO 2013 - IOC Manuals and Guides: 54: Volume 3 Version 1"
+    },
+    "A1": {
+      "type": "float",
+      "long_name": "first term of the Fourier cosine series",
+      "units": "1",
+      "valid_min": -1.0,
+      "valid_max": 1.0
+    },
+    "A2": {
+      "type": "float",
+      "long_name": "second term of the Fourier cosine series",
+      "units": "1",
+      "valid_min": -1.0,
+      "valid_max": 1.0
+    },
+    "B1": {
+      "type": "float",
+      "long_name": "first term of the Fourier sine series",
+      "units": "1",
+      "valid_min": -1.0,
+      "valid_max": 1.0
+    },
+    "B2": {
+      "type": "float",
+      "long_name": "second term of the Fourier sine series",
+      "units": "1",
+      "valid_min": -1.0,
+      "valid_max": 1.0
+    },
+    "ENERGY": {
+      "type": "float",
+      "long_name": "energy density",
+      "units": "m2 Hz",
+      "valid_min": 0.0,
+      "valid_max": 2000000.0
+    },
+    "TP2": {
+      "type": "float",
+      "long_name": "sea_surface_wave_period_at_second_largest_peak_of_variance_spectral_density",
+      "units": "s",
+      "valid_min": 0.0,
+      "valid_max": 100.0,
+      "method": "Spectral analysis method",
+      "ancillary_variables": "WAVE_quality_control",
+      "comment": "Period corresponding to the second biggest peak of the energy spectrum."
+    }
+  },
+  "aws_opendata_registry": {
+    "Name": "Wave buoys Observations - Australia - delayed (National Wave Archive)",
+    "Description": "Buoys provide integral wave parameters. Buoy data from the following organisations contribute to the National Wave Archive: Manly Hydraulics Laboratory (part of the NSW Department of Climate Change, Energy, the Environment and Water (DCCEEW), which has assumed function of the former NSW Office of Environment and Heritage (OEH)); Bureau of Meteorology; Western Australia Department of Transport (DOT); the Queensland Department of Environment and Science (DES); the Defence Technology Agency (DTA), New Zealand Defence Force (NZDF); the Integrated Marine Observing System (IMOS), the University of Western Australia (UWA), Deakin University; and the NSW Nearshore Wave Data Program from the NSW Department of Climate Change, Energy, the Environment and Water (DCCEEW). \n\nThe data (aside from IMOS, the NSW Nearshore Wave Data Program, Deakin University and some of the buoys from UWA) is gathered by the Waverider system developed by the Dutch company, Datawell. Some older wave data were collected using non-directional Waverider buoys. As technology advanced and directional measuring capabilities were developed in wave buoys, wave buoy networks were gradually upgraded to directional Waverider buoys. Therefore, some older datasets do not have directional information whereas newer datasets have directional information. \n\nThe data from IMOS, the NSW Nearshore Wave Data Program, Deakin University and some of the buoys from UWA, comes from Spotter Wave Buoys, developed by Sofar Ocean Technologies, which collect data similarly to the Waverider system.\n\nThe buoy data from the Manly Hydraulics Laboratory replaces data (has been re-formatted) from the following specific collection - https://catalogue-imos.aodn.org.au:443/geonetwork/srv/api/records/bb7e9d82-3b9c-44c6-8e93-1ee9fd30bf21.",
+    "Documentation": "https://catalogue-imos.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/2807f3aa-4db0-4924-b64b-354ae8c10b58",
+    "Contact": "info@aodn.org.au",
+    "ManagedBy": "AODN",
+    "UpdateFrequency": "As Needed",
+    "Tags": [
+      "oceans"
+    ],
+    "License": "http://creativecommons.org/licenses/by/4.0/",
+    "Resources": [
+      {
+        "Description": "Cloud Optimised AODN dataset of Wave buoys Observations - Australia - delayed (National Wave Archive)",
+        "ARN": "arn:aws:s3:::imos-optimised-nonproduction/wave_buoy_delayed_qc.parquet",
+        "Region": "ap-southeast-2",
+        "Type": "S3 Bucket"
+      }
+    ],
+    "DataAtWork": {
+      "Tutorials": [
+        {
+          "Title": "Accessing Wave buoys Observations - Australia - delayed (National Wave Archive)",
+          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/wave_buoy_delayed_qc.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/wave_buoy_delayed_qc.ipynb",
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
+        },
+        {
+          "Title": "Accessing and search for any AODN dataset",
+          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
+        }
+      ]
+    },
+    "Citation": "The citation in a list of references is: \"Department of Planning and Environment (DPE), New South Wales Government; Australian Bureau of Meteorology; Department of Transport [W.A]; State of Queensland, Department of Environment and Science; Defence Technology Agency (DTA), New Zealand Defence Force (NZDF), Integrated Marine Observing System (IMOS), The University of Western Australia (UWA), Deakin University [year-of-data-downloaded], [Title], Downloaded from [url] on [date-of-download]\". When using NZ buoy data, please also acknowledge the following: \"McComb et al. Directional wave buoy data measured near Campbell Island, New Zealand (submitted)\", Downloaded from [url] on [date-of-download]."
+  },
+  "schema_transformation": {
+    "drop_variables": [
+      "index",
+      "TEMP",
+      "TEMP_quality_control",
+      "TIME_TEMP"
+    ],
+    "add_variables": {
+      "filename": {
+        "source": "@filename",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "long_name": "Filename of the source file"
+        }
+      },
+      "timestamp": {
+        "source": "@partitioning:time_extent",
+        "schema": {
+          "type": "int64",
+          "units": "1",
+          "long_name": "Partition timestamp"
+        }
+      },
+      "polygon": {
+        "source": "@partitioning:spatial_extent",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "long_name": "Spatial partition polygon"
+        }
+      }
+    },
+    "partitioning": [
+      {
+        "source_variable": "timestamp",
+        "type": "time_extent",
+        "time_extent": {
+          "time_varname": "TIME",
+          "partition_period": "M"
+        }
+      },
+      {
+        "source_variable": "polygon",
+        "type": "spatial_extent",
+        "spatial_extent": {
+          "lat_varname": "LATITUDE",
+          "lon_varname": "LONGITUDE",
+          "spatial_resolution": 5
+        }
+      }
+    ],
+    "global_attributes": {
+      "delete": [
+        "geospatial_lat_max",
+        "geospatial_lat_min",
+        "geospatial_lon_max",
+        "geospatial_lon_min",
+        "date_created"
+      ],
+      "set": {
+        "featureType": "timeSeries",
+        "standard_name_vocabulary": "CF Standard Name Table v79",
+        "title": "ARDC"
+      }
+    }
+  }
+}
