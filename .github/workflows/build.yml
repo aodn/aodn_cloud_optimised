@@ -61,7 +61,10 @@ jobs:
         with:
           timeout_minutes: 10
           max_attempts: 3
+          retry_on: error
+          shell: bash
           command: |
+            set -euo pipefail
             poetry run pip install pytest-xdist
             poetry run coverage run -m pytest
             poetry run coverage report --fail-under=60
