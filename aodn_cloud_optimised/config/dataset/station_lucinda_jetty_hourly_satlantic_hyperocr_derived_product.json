@@ -31,7 +31,7 @@
         "year_range": []
       }
     ],
-    "clear_existing_data": true,
+    "clear_existing_data": false,
     "raise_error": false
   },
   "metadata_uuid": "4ac6bf81-cd37-4611-8da8-4d5ae5e2bda3",

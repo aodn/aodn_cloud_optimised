@@ -30,7 +30,7 @@
     "paths": [],
     "raise_error": false,
     "clear_existing_data": false,
-    "force_previous_parquet_deletion": false,
+    "force_previous_parquet_deletion": true,
     "coiled_cluster_options": {
       "n_workers": [
         30,
