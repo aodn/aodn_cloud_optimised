@@ -4,14 +4,16 @@
 Update All Metadata Script
 ==========================
 
-``cloud_optimised_update_all_metadata`` is a command-line utility for validating dataset configuration files and updating metadata directly in cloud-optimised formats (Zarr or Parquet) without having to process new data.
+``cloud_optimised_update_metadata`` is a command-line utility for validating dataset configuration files and updating metadata directly in cloud-optimised formats (Zarr or Parquet) without having to process new data.
 
 Usage
 -----
 
 .. code-block:: bash
 
-    cloud_optimised_update_all_metadata
+    cloud_optimised_update_metadata -h
+    cloud_optimised_update_metadata # updates ALL dataset
+    cloud_optimised_update_metadata argo.json
 
 This script will:
 

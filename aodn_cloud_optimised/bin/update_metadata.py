@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-
+import argparse
 from typing import Optional
 
 from pydantic import (
@@ -111,5 +111,32 @@ def main(
             raise ValueError(f"{cloud_optimised_format} not supported")
 
 
+def cli_main():
+    parser = argparse.ArgumentParser(
+        description="Validate and apply metadata updates to cloud-optimised datasets."
+    )
+    parser.add_argument(
+        "dataset_name",
+        nargs="?",
+        default=None,
+        help="Optional dataset name (must finish with .json and exist).",
+    )
+    args = parser.parse_args()
+
+    if args.dataset_name is not None:
+        if not args.dataset_name.endswith(".json"):
+            parser.error("The dataset name must finish with '.json'")
+
+        valid_datasets = list_dataset_config()
+        if args.dataset_name not in valid_datasets:
+            parser.error(
+                f"'{args.dataset_name}' is not within the available dataset configurations."
+            )
+
+        main(json_files=[args.dataset_name])
+    else:
+        main(json_files=None)
+
+
 if __name__ == "__main__":
-    main()
+    cli_main()
