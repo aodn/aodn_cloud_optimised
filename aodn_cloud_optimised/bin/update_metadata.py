@@ -24,6 +24,8 @@ from aodn_cloud_optimised.lib.GenericZarrHandler import GenericHandler as ZarrHa
 
 def main(
     json_files: Optional[list[str]] = None,
+    optimised_bucket_name: Optional[str] = None,
+    root_prefix_cloud_optimised_path: Optional[str] = None,
 ):
     """
     Validate and apply metadata updates to cloud-optimised datasets (Zarr or Parquet).
@@ -36,6 +38,12 @@ def main(
     json_files : list[str] or None, optional
         Specific JSON files to process. If None, all config files in `config_dir` are used.
         example ["satellite_ghrsst_l4_ramssa_1day_multi_sensor_australia.json"]
+    optimised_bucket_name : str or None, optional
+        Bucket containing the cloud-optimised datasets. Uses the configured default
+        when omitted.
+    root_prefix_cloud_optimised_path : str or None, optional
+        Root prefix containing the cloud-optimised datasets. Uses the configured
+        default when omitted.
 
     Returns
     -------
@@ -57,6 +65,13 @@ def main(
     if not json_files:
         print(f"ℹ️ No JSON files")
         return 0
+
+    if optimised_bucket_name is None:
+        optimised_bucket_name = load_variable_from_config("BUCKET_OPTIMISED_DEFAULT")
+    if root_prefix_cloud_optimised_path is None:
+        root_prefix_cloud_optimised_path = load_variable_from_config(
+            "ROOT_PREFIX_CLOUD_OPTIMISED_PATH"
+        )
 
     for json_file in json_files:
         try:
@@ -80,12 +95,8 @@ def main(
 
         if cloud_optimised_format == "parquet":
             parquetHandler = ParquetHandler(
-                optimised_bucket_name=load_variable_from_config(
-                    "BUCKET_OPTIMISED_DEFAULT"
-                ),
-                root_prefix_cloud_optimised_path=load_variable_from_config(
-                    "ROOT_PREFIX_CLOUD_OPTIMISED_PATH"
-                ),
+                optimised_bucket_name=optimised_bucket_name,
+                root_prefix_cloud_optimised_path=root_prefix_cloud_optimised_path,
                 dataset_config=dataset_config,
             )
             try:
@@ -95,12 +106,8 @@ def main(
 
         elif cloud_optimised_format == "zarr":
             zarrHandler = ZarrHandler(
-                optimised_bucket_name=load_variable_from_config(
-                    "BUCKET_OPTIMISED_DEFAULT"
-                ),
-                root_prefix_cloud_optimised_path=load_variable_from_config(
-                    "ROOT_PREFIX_CLOUD_OPTIMISED_PATH"
-                ),
+                optimised_bucket_name=optimised_bucket_name,
+                root_prefix_cloud_optimised_path=root_prefix_cloud_optimised_path,
                 dataset_config=dataset_config,
             )
             try:
