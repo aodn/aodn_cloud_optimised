@@ -1,5 +1,5 @@
 {
-  "dataset_name": "testing",
+  "dataset_name": "satellite_ghrsst_l4_gamssa_1day_multi_sensor_world",
   "logger_name": "satellite_ghrsst_l4_gamssa_1day_multi_sensor_world",
   "cloud_optimised_format": "zarr",
   "metadata_uuid": "2d496463-600c-465a-84a1-8a4ab76bd505",
@@ -172,7 +172,11 @@
   "schema_transformation": {
     "global_attributes": {
       "set": {
-        "title": "I added this as a test for a zarr dataset"
+        "title": "Metadata update test - GAMSSA Zarr - 2026-08-07",
+        "metadata_update_test": "zarr-metadata-update-2026-08-07",
+        "metadata_update_status": "zarr update requested",
+        "metadata_update_version": 2,
+        "metadata_update_note": "Added by the Prefect metadata update flow test"
       }
     },
     "var_template_shape": "analysed_sst",
