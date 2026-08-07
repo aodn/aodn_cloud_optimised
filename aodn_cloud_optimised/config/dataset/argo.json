@@ -479,6 +479,16 @@
     "Citation": "The citation in a list of references is: \"IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access].\""
   },
   "run_settings": {
+    "s3_fs_common_opts": {
+      "default_cache_type": "readahead"
+    },
+    "prefect": {
+      "job_variables": {
+        "memory": 4096,
+        "cpu": 1024,
+        "env.PREFECT_TASK_RUNNER_THREAD_POOL_MAX_WORKERS": 8
+      }
+    },
     "coiled_cluster_options": {
       "n_workers": [
         2,
