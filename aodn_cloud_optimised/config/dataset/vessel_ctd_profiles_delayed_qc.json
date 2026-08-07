@@ -1,5 +1,5 @@
 {
-  "dataset_name": "vessel_ctd_profiles_delayed_qc",
+  "dataset_name": "testing",
   "logger_name": "vessel_ctd_profiles_delayed_qc",
   "cloud_optimised_format": "parquet",
   "run_settings": {

@@ -1,5 +1,5 @@
 {
-  "dataset_name": "satellite_ghrsst_l4_gamssa_1day_multi_sensor_world",
+  "dataset_name": "testing",
   "logger_name": "satellite_ghrsst_l4_gamssa_1day_multi_sensor_world",
   "cloud_optimised_format": "zarr",
   "metadata_uuid": "2d496463-600c-465a-84a1-8a4ab76bd505",
