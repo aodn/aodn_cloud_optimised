@@ -172,7 +172,7 @@
   "schema_transformation": {
     "global_attributes": {
       "set": {
-        "title": ""
+        "title": "I added this as a test for a zarr dataset"
       }
     },
     "var_template_shape": "analysed_sst",
