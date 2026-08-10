@@ -16,6 +16,7 @@ from aodn_cloud_optimised.lib.config import (
     load_variable_from_config,
     load_variable_from_file,
 )
+from test_aodn_cloud_optimised.conftest import PLACEHOLDER_DATASET_CONFIG_FILES
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -339,25 +340,6 @@ class TestDatasetConfigLoadFromCloudOptimisedDirectory(unittest.TestCase):
         self.assertEqual(config.cloud_optimised_format, "zarr")
 
 
-# Config files that intentionally contain "FILL UP MANUALLY" placeholders and
-# are expected to fail DatasetConfig validation — excluded from the compat sweep.
-_PLACEHOLDER_CONFIGS = {
-    # dataset_template.json uses // comments and is a human-readable template,
-    # not a loadable dataset config.
-    "dataset_template.json",
-    "mooring_wave_timeseries_delayed_qc.json",
-    "radar_wave_delayed_qc_no_I_J_version_main.json",
-    "satellite_ghrsst_l3c_4hour_himawari8.json",
-    "satellite_ghrsst_l3s_1day_daynighttime_multi_sensor_southernocean.json",
-    "satellite_nanoplankton_fraction_oc3_1day_aqua.json",
-    "satellite_optical_water_type_1day_snpp.json",
-    "satellite_picoplankton_fraction_oc3_1day_aqua.json",
-    "satellite_sst_1day_aqua.json",
-    "satellite_sst_1day_snpp.json",
-    "station_wireless_sensor_network_delayec_qc.json",
-}
-
-
 class TestDatasetConfigBackwardCompatibility(unittest.TestCase):
     """Smoke-tests every production config file in the module's dataset config
     directory.  For each loadable config we verify that:
@@ -390,7 +372,7 @@ class TestDatasetConfigBackwardCompatibility(unittest.TestCase):
         return sorted(
             config_path
             for config_path in self.config_dir.glob("*.json")
-            if config_path.name not in _PLACEHOLDER_CONFIGS
+            if config_path.name not in PLACEHOLDER_DATASET_CONFIG_FILES
             and config_path.name not in self.parent_config_filenames
         )
 
