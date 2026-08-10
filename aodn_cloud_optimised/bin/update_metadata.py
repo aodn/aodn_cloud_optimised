@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+import importlib
 from typing import Optional
 
 from pydantic import (
@@ -12,14 +13,11 @@ from aodn_cloud_optimised.bin.generic_cloud_optimised_creation import (
     resolve_dataset_config_path,
 )
 from aodn_cloud_optimised.lib.common import list_dataset_config
+from aodn_cloud_optimised.lib.CommonHandler import _get_generic_handler_class
 from aodn_cloud_optimised.lib.config import (
     load_dataset_config,
     load_variable_from_config,
 )
-from aodn_cloud_optimised.lib.GenericParquetHandler import (
-    GenericHandler as ParquetHandler,
-)
-from aodn_cloud_optimised.lib.GenericZarrHandler import GenericHandler as ZarrHandler
 
 
 def main(
@@ -93,25 +91,34 @@ def main(
 
         cloud_optimised_format = dataset_config.get("cloud_optimised_format")
 
+        handler_class_name = dataset_config.get("handler_class", None)
+        if handler_class_name is not None:
+            module = importlib.import_module(
+                f"aodn_cloud_optimised.lib.{handler_class_name}"
+            )
+            handler_class = getattr(module, handler_class_name)
+        else:
+            handler_class = _get_generic_handler_class(dataset_config)
+
         if cloud_optimised_format == "parquet":
-            parquetHandler = ParquetHandler(
+            handler = handler_class(
                 optimised_bucket_name=optimised_bucket_name,
                 root_prefix_cloud_optimised_path=root_prefix_cloud_optimised_path,
                 dataset_config=dataset_config,
             )
             try:
-                parquetHandler._add_metadata_sidecar()
+                handler._add_metadata_sidecar()
             except Exception as err:
                 print(f"{json_file} - Error while updating metadata.\n{err}")
 
         elif cloud_optimised_format == "zarr":
-            zarrHandler = ZarrHandler(
+            handler = handler_class(
                 optimised_bucket_name=optimised_bucket_name,
                 root_prefix_cloud_optimised_path=root_prefix_cloud_optimised_path,
                 dataset_config=dataset_config,
             )
             try:
-                zarrHandler._update_metadata()
+                handler._update_metadata()
             except Exception as err:
                 print(f"{json_file} - Error while updating metadata.\n{err}")
         else:
