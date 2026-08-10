@@ -42,9 +42,6 @@
         }
       },
       {
-        "source_variable": "PLATFORM_NUMBER"
-      },
-      {
         "source_variable": "polygon",
         "type": "spatial_extent",
         "spatial_extent": {
@@ -52,6 +49,9 @@
           "lon_varname": "LONGITUDE",
           "spatial_resolution": 5
         }
+      },
+      {
+        "source_variable": "PLATFORM_NUMBER"
       }
     ],
     "global_attributes": {
