@@ -172,7 +172,11 @@
   "schema_transformation": {
     "global_attributes": {
       "set": {
-        "title": ""
+        "title": "Metadata update test - GAMSSA Zarr - 2026-08-07",
+        "metadata_update_test": "zarr-metadata-update-2026-08-07",
+        "metadata_update_status": "zarr update requested",
+        "metadata_update_version": 2,
+        "metadata_update_note": "Added by the Prefect metadata update flow test"
       }
     },
     "var_template_shape": "analysed_sst",
