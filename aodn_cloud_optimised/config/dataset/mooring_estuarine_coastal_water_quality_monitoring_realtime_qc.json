@@ -557,7 +557,7 @@
       "units": "rfu",
       "valid_min": 0.0,
       "valid_max": 100.0,
-      "comment": "Phycoerythrin in rfu (Relative Fluorescence Units). ",
+      "comment": "I am testing",
       "sensor_serial_number": "24L003340",
       "accuracy": "Linearity r2 >= 0.999 for Rhodamine WT across full range",
       "ancillary_variables": "PHYCOE_rfu_quality_control"
