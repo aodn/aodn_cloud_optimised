@@ -15,11 +15,12 @@ class TestZarrChunksParam(unittest.TestCase):
         ds.sortby.return_value = ds
         open_zarr_mock.return_value = ds
 
-        with patch(
-            "aodn_cloud_optimised.lib.DataQuery.s3fs.S3FileSystem"
-        ) as s3_cls, patch(
-            "aodn_cloud_optimised.lib.DataQuery.find_coord_var",
-            return_value="TIME",
+        with (
+            patch("aodn_cloud_optimised.lib.DataQuery.s3fs.S3FileSystem") as s3_cls,
+            patch(
+                "aodn_cloud_optimised.lib.DataQuery.find_coord_var",
+                return_value="TIME",
+            ),
         ):
             s3_cls.return_value.get_mapper.return_value = MagicMock(name="mapper")
             return ZarrDataSource(
