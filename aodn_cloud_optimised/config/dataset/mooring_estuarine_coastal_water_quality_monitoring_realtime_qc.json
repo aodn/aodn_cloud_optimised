@@ -638,20 +638,21 @@
     }
   },
   "aws_opendata_registry": {
-    "Name": "IMOS - Estuarine and Coastal Moorings Facility",
+    "Name": "IMOS - Estuarine and Coastal Moorings Facility (TEST - Cloud Optimised)",
     "Description": "The Estuarine and Coastal Moorings Facility provides a national, standardised network of estuarine and coastal moorings with a primary focus on water quality observations. This Facility will be undertaken in two phases and will begin with the development and coordination of an expansion of IMOS observations into estuarine environments. The second phase will focus on further expanding the estuarine network and establishing a network of coastal moorings to monitor near-real time, near-shore oceanographic processes and environmental parameters in regions of high-significance. Initial mooring deployments focused on the interface between land and sea, in typical estuarine environments, within the tidal incursion zone. In the first phase, the Estuarine Moorings Network consists of 2 moorings in each State and Territory (aside from the ACT), monitoring surface conditions. Small to medium sized buoys are deployed in shallow waters and anchored securely to the seabed or to fixed infrastructure. These moorings are from the Xylem DB platform range. The DB range of telemetered data buoys allow for easy deployment, maintenance and provide future monitoring flexibility in various types of environmental conditions. Each mooring measures 5-7 essential ocean variables, such as temperature, salinity, chlorophyll-a fluorescence, dissolved oxygen, turbidity, and fDOM, with the option to include additional sensors to measure currents, pH, or nutrients. Moorings are serviced every two to three months to clean and re-calibrate sensors, replace components, and collect in-situ water samples for sensor validation. Complementary CTD profiles are taken at servicing intervals to assist with sensor validation. Near real-time data are processed by SARDI and quality controlled in accordance with the Integrated Ocean Observing System's QARTOD protocols (http://www.ioos.noaa.gov/qartod/, https://www.ioccp.org/images/D4standards/IOC-OceanDataStandards54-3-2013.pdf). These data are made available through the AODN Portal and IMOS Live. Delayed-mode data will be published through the AODN Portal upon availability.",
     "Documentation": "https://catalogue-imos.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/613cd7ce-0677-4c3b-8cc7-6d22ff1f4120",
-    "Contact": "info@aodn.org.au",
+    "Contact": "test@aodn.org.au",
     "ManagedBy": "AODN",
-    "UpdateFrequency": "As Needed",
+    "UpdateFrequency": "As Needed - Testing Cloud Optimised Processing",
     "Tags": [
       "oceans",
-      "chemistry"
+      "chemistry",
+      "testing"
     ],
     "License": "http://creativecommons.org/licenses/by/4.0/",
     "Resources": [
       {
-        "Description": "Cloud Optimised AODN dataset of IMOS - Estuarine and Coastal Moorings Water Quality Monitoring - Near real-time data",
+        "Description": "Cloud Optimised AODN dataset of IMOS - Estuarine and Coastal Moorings Water Quality Monitoring - Near real-time data (TESTING)",
         "ARN": "arn:aws:s3:::imos-data-lab-optimised/mooring_estuarine_coastal_water_quality_monitoring_realtime_qc.parquet",
         "Region": "ap-southeast-2",
         "Type": "S3 Bucket"
