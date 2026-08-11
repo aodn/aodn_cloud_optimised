@@ -964,8 +964,8 @@
         "date_created"
       ],
       "set": {
-        "title": "Metadata update test - vessel CTD Parquet - 2026-08-07",
-        "metadata_update_test": "parquet-metadata-update-2026-08-07",
+        "title": "Metadata update test - vessel CTD Parquet - 2026-08-11",
+        "metadata_update_test": "parquet-metadata-update-2026-08-11",
         "metadata_update_status": "parquet update requested",
         "metadata_update_version": 2,
         "metadata_update_note": "Added by the Prefect metadata update flow test"
