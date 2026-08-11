@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
 import argparse
+import importlib
+import logging
 from typing import Optional
 
 from pydantic import (
@@ -12,18 +14,31 @@ from aodn_cloud_optimised.bin.generic_cloud_optimised_creation import (
     resolve_dataset_config_path,
 )
 from aodn_cloud_optimised.lib.common import list_dataset_config
+from aodn_cloud_optimised.lib.CommonHandler import _get_generic_handler_class
 from aodn_cloud_optimised.lib.config import (
     load_dataset_config,
     load_variable_from_config,
 )
-from aodn_cloud_optimised.lib.GenericParquetHandler import (
-    GenericHandler as ParquetHandler,
-)
-from aodn_cloud_optimised.lib.GenericZarrHandler import GenericHandler as ZarrHandler
+
+# Configure logger
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
+# Add console handler if not already present
+if not logger.handlers:
+    stream_handler = logging.StreamHandler()
+    stream_handler.setLevel(logging.DEBUG)
+    formatter = logging.Formatter(
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    )
+    stream_handler.setFormatter(formatter)
+    logger.addHandler(stream_handler)
 
 
 def main(
     json_files: Optional[list[str]] = None,
+    optimised_bucket_name: Optional[str] = None,
+    root_prefix_cloud_optimised_path: Optional[str] = None,
 ):
     """
     Validate and apply metadata updates to cloud-optimised datasets (Zarr or Parquet).
@@ -36,6 +51,12 @@ def main(
     json_files : list[str] or None, optional
         Specific JSON files to process. If None, all config files in `config_dir` are used.
         example ["satellite_ghrsst_l4_ramssa_1day_multi_sensor_australia.json"]
+    optimised_bucket_name : str or None, optional
+        Bucket containing the cloud-optimised datasets. Uses the configured default
+        when omitted.
+    root_prefix_cloud_optimised_path : str or None, optional
+        Root prefix containing the cloud-optimised datasets. Uses the configured
+        default when omitted.
 
     Returns
     -------
@@ -55,59 +76,89 @@ def main(
         json_files = list_dataset_config()
 
     if not json_files:
-        print(f"ℹ️ No JSON files")
+        logger.info("ℹ️ No JSON files found")
         return 0
 
+    if optimised_bucket_name is None:
+        optimised_bucket_name = load_variable_from_config("BUCKET_OPTIMISED_DEFAULT")
+    if root_prefix_cloud_optimised_path is None:
+        root_prefix_cloud_optimised_path = load_variable_from_config(
+            "ROOT_PREFIX_CLOUD_OPTIMISED_PATH"
+        )
+
     for json_file in json_files:
+        logger.info(f"\nProcessing: {json_file}")
         try:
+            logger.debug(f"Validating config: {json_file}")
             load_config_and_validate(json_file)
         except ValidationError as e:
-            print(f"\n❌ Validation failed in: {json_file}")
-            print("─" * 80)
-            print(e)
-            print("─" * 80)
+            logger.error(f"❌ Validation failed in: {json_file}")
+            logger.error("─" * 80)
+            logger.error(str(e))
+            logger.error("─" * 80)
             continue
         except Exception as e:
-            print(f"\n❌ Error reading {json_file}: {e}")
+            logger.error(f"❌ Error reading {json_file}: {e}", exc_info=True)
             continue
 
         dataset_config_path = resolve_dataset_config_path(json_file)
+        logger.debug(f"Loading dataset config from: {dataset_config_path}")
         dataset_config = load_dataset_config(
             dataset_config_path
         )  # not using config.model_dump() as it retains only the validated objects.
 
         cloud_optimised_format = dataset_config.get("cloud_optimised_format")
+        logger.info(f"Cloud optimised format: {cloud_optimised_format}")
+
+        handler_class_name = dataset_config.get("handler_class", None)
+        logger.debug(f"Handler class name: {handler_class_name}")
+        if handler_class_name is not None:
+            module = importlib.import_module(
+                f"aodn_cloud_optimised.lib.{handler_class_name}"
+            )
+            handler_class = getattr(module, handler_class_name)
+        else:
+            handler_class = _get_generic_handler_class(dataset_config)
 
         if cloud_optimised_format == "parquet":
-            parquetHandler = ParquetHandler(
-                optimised_bucket_name=load_variable_from_config(
-                    "BUCKET_OPTIMISED_DEFAULT"
-                ),
-                root_prefix_cloud_optimised_path=load_variable_from_config(
-                    "ROOT_PREFIX_CLOUD_OPTIMISED_PATH"
-                ),
+            logger.info(f"Handling parquet format for {json_file}")
+            logger.debug(
+                f"Bucket: {optimised_bucket_name}, Prefix: {root_prefix_cloud_optimised_path}"
+            )
+            handler = handler_class(
+                optimised_bucket_name=optimised_bucket_name,
+                root_prefix_cloud_optimised_path=root_prefix_cloud_optimised_path,
                 dataset_config=dataset_config,
             )
             try:
-                parquetHandler._add_metadata_sidecar()
+                logger.info(f"Adding metadata sidecar for {json_file}...")
+                handler._add_metadata_sidecar()
+                logger.info(f"✓ Successfully added metadata sidecar for {json_file}")
             except Exception as err:
-                print(f"{json_file} - Error while updating metadata.\n{err}")
+                logger.error(
+                    f"{json_file} - Error while updating metadata: {err}", exc_info=True
+                )
 
         elif cloud_optimised_format == "zarr":
-            zarrHandler = ZarrHandler(
-                optimised_bucket_name=load_variable_from_config(
-                    "BUCKET_OPTIMISED_DEFAULT"
-                ),
-                root_prefix_cloud_optimised_path=load_variable_from_config(
-                    "ROOT_PREFIX_CLOUD_OPTIMISED_PATH"
-                ),
+            logger.info(f"Handling zarr format for {json_file}")
+            logger.debug(
+                f"Bucket: {optimised_bucket_name}, Prefix: {root_prefix_cloud_optimised_path}"
+            )
+            handler = handler_class(
+                optimised_bucket_name=optimised_bucket_name,
+                root_prefix_cloud_optimised_path=root_prefix_cloud_optimised_path,
                 dataset_config=dataset_config,
             )
             try:
-                zarrHandler._update_metadata()
+                logger.info(f"Updating metadata for {json_file}...")
+                handler._update_metadata()
+                logger.info(f"✓ Successfully updated metadata for {json_file}")
             except Exception as err:
-                print(f"{json_file} - Error while updating metadata.\n{err}")
+                logger.error(
+                    f"{json_file} - Error while updating metadata: {err}", exc_info=True
+                )
         else:
+            logger.error(f"Unsupported format: {cloud_optimised_format}")
             raise ValueError(f"{cloud_optimised_format} not supported")
 
 
