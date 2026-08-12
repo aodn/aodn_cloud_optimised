@@ -3071,10 +3071,23 @@ class ZarrDataSource(DataSource):
         prefix: str,
         dataset_name: str,
         s3_fs_opts: dict | None = None,
+        chunks: dict | str | int | None = "auto",
     ):
-        """Initialises the ZarrDataSource with optional S3 filesystem overrides."""
+        """Initialises the ZarrDataSource with optional S3 filesystem overrides.
+
+        Args:
+            bucket_name: The S3 bucket name.
+            prefix: The S3 prefix (folder path) within the bucket.
+            dataset_name: Dataset name including ``.zarr`` extension.
+            s3_fs_opts: Optional overrides for the underlying ``s3fs`` client.
+            chunks: Passed to ``xarray.open_zarr``. Default ``"auto"`` uses dask
+                with automatic chunking. Pass ``chunks=None`` to disable dask
+                entirely (useful when building a dask graph is too expensive for
+                fine-grained Zarr stores and reads are single-slice / eager).
+        """
         self.s3_fs_opts = _build_effective_s3_fs_opts(s3_fs_opts)
         self.s3 = s3fs.S3FileSystem(**self.s3_fs_opts)
+        self.chunks = chunks
 
         super().__init__(bucket_name, prefix, dataset_name)
         self.zarr_store = self._open_zarr_store()
@@ -3091,11 +3104,13 @@ class ZarrDataSource(DataSource):
         """
         try:
             mapper = self.s3.get_mapper(self.dname)
-            # Open with 'auto' chunks so it stays lazy
-            # ds = xr.open_zarr(mapper, chunks=None, consolidated=True)
-            ds = xr.open_zarr(mapper, chunks="auto", consolidated=True)
-            # Fix the inconsistent chunks instantly in-memory
-            ds = ds.unify_chunks()
+            # chunks="auto" (default): dask-backed lazy arrays.
+            # chunks=None: no dask — xarray still indexes Zarr lazily and only
+            # fetches native chunks on .load()/.compute()/.values.
+            ds = xr.open_zarr(mapper, chunks=self.chunks, consolidated=True)
+            # unify_chunks only applies when data is dask-backed
+            if self.chunks is not None:
+                ds = ds.unify_chunks()
 
             # Find the time variable name to sort by
             try:
@@ -4542,7 +4557,11 @@ class GetAodn:
 
         return sorted(list(set(datasets)))  # Sort and ensure uniqueness
 
-    def get_dataset(self, dataset_name_with_ext: str) -> DataSource:
+    def get_dataset(
+        self,
+        dataset_name_with_ext: str,
+        chunks: dict | str | int | None = "auto",
+    ) -> DataSource:
         """Retrieves a DataSource object for the specified dataset.
 
         Infers the data format (Parquet or Zarr) from the file extension
@@ -4552,6 +4571,10 @@ class GetAodn:
         Args:
             dataset_name_with_ext: The name of the dataset including its
                 extension (e.g., "my_data.parquet", "my_data.zarr").
+            chunks: For Zarr datasets only, forwarded to
+                ``xarray.open_zarr``. Default ``"auto"`` keeps dask
+                auto-chunking. Pass ``chunks=None`` to disable dask.
+                Ignored for Parquet datasets.
 
         Returns:
             An instance of `ParquetDataSource` or `ZarrDataSource`.
@@ -4572,6 +4595,7 @@ class GetAodn:
                 self.prefix,
                 dataset_name_with_ext,
                 s3_fs_opts=self.s3_fs_opts,
+                chunks=chunks,
             )
         else:
             raise ValueError(
