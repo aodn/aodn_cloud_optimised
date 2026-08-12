@@ -914,7 +914,7 @@ def main():
         "worker_options": {"nthreads": 4, "memory_limit": "8GB"},
     }
     dataset_config["run_settings"]["batch_size"] = 5
-    dataset_config["run_settings"]["clear_existing_data"] = True
+    dataset_config["run_settings"]["clear_existing_data"] = False
     dataset_config["run_settings"]["raise_error"] = False
     dataset_config["run_settings"]["cluster"] = {
         "mode": f"{TO_REPLACE_PLACEHOLDER}",
@@ -1060,7 +1060,7 @@ def main():
         # default partition keys
         dataset_config["schema_transformation"] = schema_transformation_parquet
 
-        dataset_config["run_settings"]["force_previous_parquet_deletion"] = False
+        dataset_config["run_settings"]["force_previous_parquet_deletion"] = True
 
     module_path = get_module_path()
 
