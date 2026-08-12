@@ -204,6 +204,7 @@ More information available [here](https://github.com/conda-forge/miniforge?tab=r
 - [satellite_net_primary_productivity_gsm_1day_aqua.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_net_primary_productivity_gsm_1day_aqua.ipynb)
 - [satellite_net_primary_productivity_oc3_1day_aqua.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_net_primary_productivity_oc3_1day_aqua.ipynb)
 - [satellite_optical_water_type_1day_aqua.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_optical_water_type_1day_aqua.ipynb)
+- [satellite_optical_water_type_1day_noaa20.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_optical_water_type_1day_noaa20.ipynb)
 - [satellite_optical_water_type_1day_snpp.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_optical_water_type_1day_snpp.ipynb)
 - [satellite_picoplankton_fraction_oc3_1day_aqua.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_picoplankton_fraction_oc3_1day_aqua.ipynb)
 - [satellite_sst_1day_aqua.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_sst_1day_aqua.ipynb)
