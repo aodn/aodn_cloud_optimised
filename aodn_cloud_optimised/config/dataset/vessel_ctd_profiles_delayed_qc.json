@@ -40,7 +40,6 @@
         "year_range": []
       }
     ],
-    "suffix": ".nc",
     "cluster": {
       "mode": "coiled",
       "restart_every_path": false
