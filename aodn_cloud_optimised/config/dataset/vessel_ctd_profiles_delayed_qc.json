@@ -44,23 +44,31 @@
       "mode": "coiled",
       "restart_every_path": false
     },
-    "clear_existing_data": false,
+    "prefect": {
+      "job_variables": {
+        "env.PREFECT_TASK_RUNNER_THREAD_POOL_MAX_WORKERS": 16
+      }
+    },
+    "batch_size": 300,
     "raise_error": false,
+    "s3_fs_common_opts": {
+      "default_cache_type": "readahead"
+    },
+    "clear_existing_data": false,
     "coiled_cluster_options": {
       "n_workers": [
         1,
         30
       ],
-      "scheduler_vm_types": "m7i-flex.large",
-      "worker_vm_types": "m7i-flex.xlarge",
-      "allow_ingress_from": "me",
-      "compute_purchase_option": "spot_with_fallback",
       "worker_options": {
         "nthreads": 16,
         "memory_limit": "14GB"
-      }
+      },
+      "worker_vm_types": "m7i-flex.xlarge",
+      "allow_ingress_from": "me",
+      "scheduler_vm_types": "m7i-flex.large",
+      "compute_purchase_option": "spot_with_fallback"
     },
-    "batch_size": 300,
     "force_previous_parquet_deletion": true
   },
   "metadata_uuid": "7b901002-b1dc-46c3-89f2-b4951cedca48",
