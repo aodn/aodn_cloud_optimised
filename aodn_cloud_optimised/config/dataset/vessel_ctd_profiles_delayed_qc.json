@@ -45,7 +45,6 @@
       "mode": "coiled",
       "restart_every_path": false
     },
-    "exclude": null,
     "prefect": {
       "job_variables": {
         "env.PREFECT_TASK_RUNNER_THREAD_POOL_MAX_WORKERS": 16
@@ -53,14 +52,10 @@
     },
     "batch_size": 300,
     "raise_error": false,
-    "s3_bucket_opts": null,
-    "ec2_adapt_options": null,
     "s3_fs_common_opts": {
       "default_cache_type": "readahead"
     },
     "clear_existing_data": false,
-    "ec2_cluster_options": null,
-    "optimised_bucket_name": null,
     "coiled_cluster_options": {
       "n_workers": [
         1,
@@ -75,9 +70,7 @@
       "scheduler_vm_types": "m7i-flex.large",
       "compute_purchase_option": "spot_with_fallback"
     },
-    "bucket_raw_default_name": null,
-    "force_previous_parquet_deletion": true,
-    "root_prefix_cloud_optimised_path": null
+    "force_previous_parquet_deletion": true
   },
   "metadata_uuid": "7b901002-b1dc-46c3-89f2-b4951cedca48",
   "schema": {
