@@ -43,7 +43,7 @@
     "dimensions": {
       "time": {
         "name": "time",
-        "chunk": 1,
+        "chunk": 7,
         "rechunk": false,
         "append_dim": true
       },
