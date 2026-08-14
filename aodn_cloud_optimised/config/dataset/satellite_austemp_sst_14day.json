@@ -18,7 +18,7 @@
     ],
     "clear_existing_data": false,
     "raise_error": false,
-    "batch_size": 90
+    "batch_size": 91
   },
   "metadata_uuid": "62f6b449-90dc-45bf-8acb-ae52e8a58c5c",
   "schema_transformation": {
