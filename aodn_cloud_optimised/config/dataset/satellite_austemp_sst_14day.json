@@ -97,7 +97,7 @@
       "valid_min": -180.0
     },
     "sst": {
-      "type": "float",
+      "type": "float32",
       "dims": [
         "time",
         "lat",
@@ -110,7 +110,7 @@
       "valid_max": 100.0
     },
     "sst_mosaic": {
-      "type": "float",
+      "type": "float32",
       "dims": [
         "time",
         "lat",
@@ -123,7 +123,7 @@
       "valid_max": 100.0
     },
     "sst_mosaic_age": {
-      "type": "float",
+      "type": "float32",
       "dims": [
         "time",
         "lat",
@@ -136,7 +136,7 @@
       "valid_max": 500.0
     },
     "sst_anom": {
-      "type": "float",
+      "type": "float32",
       "dims": [
         "time",
         "lat",
@@ -149,7 +149,7 @@
       "valid_max": 50.0
     },
     "sst_anom_mosaic": {
-      "type": "float",
+      "type": "float32",
       "dims": [
         "time",
         "lat",
