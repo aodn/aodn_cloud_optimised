@@ -16,26 +16,8 @@
         ]
       }
     ],
-    "cluster": {
-      "mode": "coiled",
-      "restart_every_path": true
-    },
     "clear_existing_data": false,
     "raise_error": false,
-    "coiled_cluster_options": {
-      "n_workers": [
-        1,
-        20
-      ],
-      "scheduler_vm_types": "m7i-flex.large",
-      "worker_vm_types": "m7i-flex.2xlarge",
-      "allow_ingress_from": "me",
-      "compute_purchase_option": "spot_with_fallback",
-      "worker_options": {
-        "nthreads": 1,
-        "memory_limit": "28GB"
-      }
-    },
     "batch_size": 90
   },
   "metadata_uuid": "62f6b449-90dc-45bf-8acb-ae52e8a58c5c",
