@@ -389,7 +389,7 @@
     }
   },
   "aws_opendata_registry": {
-    "Name": "Satellite - Ocean Colour - Bio-Optical Database",
+    "Name": "Satellite - Ocean Colour - Bio-Optical Database - pigment",
     "Description": "HPLC pigment concentrations from the Bio-Optical Database of Australian Waters (BODBAW) programme. Data collected at discrete depth profiles across multiple field campaigns around Australia. Variables include chlorophylls, carotenoids, and other HPLC-derived pigments.",
     "Documentation": "https://catalogue-imos.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/97b9fe73-ee44-437f-b2ae-5b8613f81042",
     "Contact": "info@aodn.org.au",
