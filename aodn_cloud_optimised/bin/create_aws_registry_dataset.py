@@ -156,9 +156,9 @@ def update_nested_dict_key(dataset_config, keys, new_value):
             f"{Fore.GREEN}{target_key} was empty, set to: {new_value}{Style.RESET_ALL}"
         )
     else:
-        print(f"{Fore.YELLOW}Current {target_key}:{Style.RESET_ALL}")
+        print(f'{Fore.RED}Current value for "{target_key}":{Style.RESET_ALL}')
         print(current_value)
-        print(f"{Fore.CYAN}New {target_key}:{Style.RESET_ALL}")
+        print(f'{Fore.GREEN}Proposed value for "{target_key}":{Style.RESET_ALL}')
         print(new_value)
 
         # Compute the diff between current and new value using difflib
@@ -166,6 +166,8 @@ def update_nested_dict_key(dataset_config, keys, new_value):
             current_value_str.splitlines(), new_value_str.splitlines(), lineterm=""
         )
 
+        print()
+        print()
         print(
             f"{Fore.MAGENTA}Difference between current and new {target_key}:{Style.RESET_ALL}"
         )
@@ -205,9 +207,18 @@ def populate_dataset_config_with_metadata_from_csv(json_file, csv_path):
         na_filter=False,
     )
 
+    # Remove leading/trailing whitespace from all CSV string values
+    csv_data = csv_data.apply(lambda column: column.str.strip())
+
     dataset_name = dataset_config["dataset_name"]
 
-    print(f'{Fore.BLUE}Opening dataset: "{dataset_name}": ')
+    print()
+    print(f"{Fore.CYAN}{'=' * 80}{Style.RESET_ALL}")
+    print(f"{Fore.CYAN}{f'{dataset_name}':^80}{Style.RESET_ALL}")
+    print(f"{Fore.CYAN}{'=' * 80}{Style.RESET_ALL}")
+    print(f'{Fore.BLUE}Opening dataset config: "{dataset_name}"{Style.RESET_ALL}')
+    print()
+
     try:
         csv_dataset = csv_data.loc[dataset_name]
     except Exception as err:
