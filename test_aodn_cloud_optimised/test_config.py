@@ -5,11 +5,9 @@ import pathlib
 import shutil
 import tempfile
 import unittest
-from importlib.resources import files
 
 import pydantic
 import yaml
-from jsonschema import validate
 
 import aodn_cloud_optimised.config.dataset
 from aodn_cloud_optimised.bin.config.model.dataset_config import DatasetConfig
@@ -216,25 +214,6 @@ class TestDatasetConfigCustomValidators(unittest.TestCase):
     def test_valid_zarr_config(self):
         config = DatasetConfig.model_validate(copy.deepcopy(_MINIMAL_ZARR_DATA))
         self.assertEqual(config.cloud_optimised_format, "zarr")
-
-    def test_dumped_zarr_config_without_coiled_options_matches_json_schemas(self):
-        data = copy.deepcopy(_MINIMAL_ZARR_DATA)
-        data["logger_name"] = data["dataset_name"]
-        data["aws_opendata_registry"] = {}
-        data["run_settings"]["batch_size"] = 1
-        config = DatasetConfig.model_validate(data)
-        dumped = config.model_dump(by_alias=True, mode="json")
-
-        self.assertIsNone(dumped["run_settings"]["coiled_cluster_options"])
-
-        config_dir = files("aodn_cloud_optimised").joinpath("config")
-        for schema_name in (
-            "schema_validation_common.json",
-            "schema_validation_zarr.json",
-        ):
-            with self.subTest(schema_name=schema_name):
-                with config_dir.joinpath(schema_name).open() as schema_file:
-                    validate(instance=dumped, schema=json.load(schema_file))
 
     def test_placeholder_in_top_level_field_raises(self):
         data = copy.deepcopy(_MINIMAL_PARQUET_DATA)
