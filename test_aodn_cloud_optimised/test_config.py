@@ -227,7 +227,7 @@ class TestDatasetConfigCustomValidators(unittest.TestCase):
 
         self.assertIsNone(dumped["run_settings"]["coiled_cluster_options"])
 
-        config_dir = files("aodn_cloud_optimised.config")
+        config_dir = files("aodn_cloud_optimised").joinpath("config")
         for schema_name in (
             "schema_validation_common.json",
             "schema_validation_zarr.json",
