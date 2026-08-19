@@ -196,7 +196,7 @@ def update_nested_dict_key(dataset_config, keys, new_value):
     return dataset_config
 
 
-def populate_dataset_config_with_default_values(json_file):
+def populate_dataset_config_with_default_values(json_file, error_tracker=None):
     """ """
 
     json_path = str(files("aodn_cloud_optimised.config.dataset").joinpath(json_file))
@@ -204,9 +204,11 @@ def populate_dataset_config_with_default_values(json_file):
 
     uuid = dataset_config.get("metadata_uuid", None)
     if uuid is None:
-        raise ValueError(
-            "No metadata UUID found in the given JSON file. Process Aborted"
-        )
+        error_msg = "No metadata UUID found in the given JSON file"
+        print(f"{Fore.RED}{error_msg} - Skipping dataset{Style.RESET_ALL}")
+        if error_tracker is not None:
+            error_tracker[json_file] = error_msg
+        return False
 
     dataset_config = update_nested_dict_key(
         dataset_config,
@@ -281,6 +283,7 @@ def populate_dataset_config_with_default_values(json_file):
         json.dump(dataset_config_child, f, indent=2)
 
     print(f"Updated JSON file saved at: {json_path}")
+    return True
 
 
 def opening_print_msg(json_file):
@@ -395,7 +398,7 @@ def populate_dataset_config_with_metadata_from_csv(json_file, csv_path):
         return False
 
 
-def populate_dataset_config_with_geonetwork_metadata(json_file):
+def populate_dataset_config_with_geonetwork_metadata(json_file, error_tracker=None):
     """ """
 
     json_path = str(files("aodn_cloud_optimised.config.dataset").joinpath(json_file))
@@ -403,9 +406,11 @@ def populate_dataset_config_with_geonetwork_metadata(json_file):
 
     uuid = dataset_config.get("metadata_uuid", None)
     if uuid is None:
-        raise ValueError(
-            "No metadata UUID found in the given JSON file. Process Aborted"
-        )
+        error_msg = "No metadata UUID found in the given JSON file"
+        print(f"{Fore.RED}{error_msg} - Skipping metadata retrieval{Style.RESET_ALL}")
+        if error_tracker is not None:
+            error_tracker[json_file] = error_msg
+        return False
 
     gn3_metadata = retrieve_geonetwork_metadata(uuid)
 
@@ -445,6 +450,7 @@ def populate_dataset_config_with_geonetwork_metadata(json_file):
         json.dump(dataset_config_child, f, indent=2)
 
     print(f"Updated JSON file saved at: {json_path}")
+    return True
 
 
 def convert_to_opendata_registry(json_file, output_directory):
@@ -508,6 +514,28 @@ def parse_args(arg_list: list[str] | None):
     return args
 
 
+def print_error_summary(error_tracker):
+    """
+    Print a summary of all datasets that failed processing.
+
+    Args:
+        error_tracker (dict): Dictionary mapping dataset filenames to error messages
+    """
+    if not error_tracker:
+        return
+
+    print("\n" + "=" * 70)
+    print(f"{Fore.RED}Processing Summary - Errors Encountered{Style.RESET_ALL}")
+    print("=" * 70)
+    print(f"Total datasets with errors: {len(error_tracker)}\n")
+
+    for filename, error_msg in error_tracker.items():
+        print(f"  {Fore.RED}✗{Style.RESET_ALL} {filename}")
+        print(f"    └─ {error_msg}\n")
+
+    print("=" * 70)
+
+
 def main(arg_list: list[str] | None = None):
     """
     Main function to convert JSON files to AWS OpenData Registry format.
@@ -534,6 +562,7 @@ def main(arg_list: list[str] | None = None):
     json_directory = str(files("aodn_cloud_optimised.config.dataset")._paths[0])
 
     args = parse_args(sys.argv[1:])
+    error_tracker = {}
 
     if args.all:
         json_files = list_json_files(json_directory)
@@ -541,9 +570,15 @@ def main(arg_list: list[str] | None = None):
             output_dir = args.directory or tempfile.mkdtemp()
             for file in json_files:
                 opening_print_msg(file)
-                populate_dataset_config_with_default_values(file)
+
+                # Try to populate with default values
+                if not populate_dataset_config_with_default_values(file, error_tracker):
+                    continue
+
                 if args.geonetwork:
-                    populate_dataset_config_with_geonetwork_metadata(file)
+                    populate_dataset_config_with_geonetwork_metadata(
+                        file, error_tracker
+                    )
 
                 if args.csv_path:
                     if os.path.exists(args.csv_path):
@@ -561,15 +596,20 @@ def main(arg_list: list[str] | None = None):
                     convert_to_opendata_registry(
                         file, output_dir
                     )  # if no csv_path provided, we assume that all records need to be con
+
+            print_error_summary(error_tracker)
         else:
             print(f"No JSON files found in {json_directory}.")
     elif args.file:
         output_dir = args.directory or tempfile.mkdtemp()
         opening_print_msg(args.file)
-        populate_dataset_config_with_default_values(args.file)
+
+        if not populate_dataset_config_with_default_values(args.file, error_tracker):
+            print_error_summary(error_tracker)
+            return
 
         if args.geonetwork:
-            populate_dataset_config_with_geonetwork_metadata(args.file)
+            populate_dataset_config_with_geonetwork_metadata(args.file, error_tracker)
         if args.csv_path:
             if os.path.exists(args.csv_path):
                 populate_dataset_config_with_metadata_from_csv(args.file, args.csv_path)
@@ -589,10 +629,18 @@ def main(arg_list: list[str] | None = None):
                 if 0 <= choice_idx < len(json_files):
                     output_dir = args.directory or tempfile.mkdtemp()
                     json_file = json_files[choice_idx]
-                    if args.geonetwork:
 
-                        opening_print_msg(json_file)
-                        populate_dataset_config_with_geonetwork_metadata(json_file)
+                    opening_print_msg(json_file)
+                    if not populate_dataset_config_with_default_values(
+                        json_file, error_tracker
+                    ):
+                        print_error_summary(error_tracker)
+                        return
+
+                    if args.geonetwork:
+                        populate_dataset_config_with_geonetwork_metadata(
+                            json_file, error_tracker
+                        )
 
                     if args.csv_path:
                         if os.path.exists(args.csv_path):
