@@ -2936,8 +2936,14 @@ class ParquetDataSource(DataSource):
 
         df = _append_metadata_to_dataframe(self.get_metadata(), df)
 
-        time_col = next(
-            (c for c in VARIABLE_CANDIDATES["PARQUET"]["TIME"] if c in df.columns), None
+        # Follow time_varname if exist, time_varname may not defined in the VARIABLE_CANDIDATES
+        time_col = (
+            time_varname
+            if time_varname and time_varname in df.columns
+            else next(
+                (c for c in VARIABLE_CANDIDATES["PARQUET"]["TIME"] if c in df.columns),
+                None,
+            )
         )
 
         if time_col:
