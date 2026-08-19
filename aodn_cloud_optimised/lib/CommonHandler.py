@@ -578,6 +578,9 @@ class CommonHandler:
             target_directory = tempfile.gettempdir()
             file_path = os.path.join(target_directory, f"aodn_{self.dataset_name}.yaml")
 
+        # Ensure output directory exists
+        os.makedirs(target_directory, exist_ok=True)
+
         # Write the YAML data to the file
         with open(file_path.lower(), "w") as file:
             file.write(yaml_data)
