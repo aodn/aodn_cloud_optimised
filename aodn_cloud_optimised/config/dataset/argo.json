@@ -452,7 +452,7 @@
     "License": "http://creativecommons.org/licenses/by/4.0/",
     "Resources": [
       {
-        "Description": "Cloud Optimised AODN dataset of Argo Core",
+        "Description": "Cloud Optimised AODN dataset of Argo Floats - Core profiles",
         "ARN": "arn:aws:s3:::aodn-cloud-optimised/argo.parquet",
         "Region": "ap-southeast-2",
         "Type": "S3 Bucket"
@@ -461,7 +461,7 @@
     "DataAtWork": {
       "Tutorials": [
         {
-          "Title": "Accessing Argo Core",
+          "Title": "Accessing Argo Floats - Core profiles",
           "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/argo.ipynb",
           "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/argo.ipynb",
           "AuthorName": "Laurent Besnard",

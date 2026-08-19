@@ -536,6 +536,43 @@ def print_error_summary(error_tracker):
     print("=" * 70)
 
 
+def process_dataset(json_file, output_dir, args, error_tracker):
+    """
+    Process a single dataset through all configured steps.
+
+    Args:
+        json_file (str): Name of the JSON file to process
+        output_dir (str): Output directory for converted files
+        args: Parsed command-line arguments
+        error_tracker (dict): Dictionary to track errors
+
+    Returns:
+        bool: True if processing succeeded, False if it failed or was skipped
+    """
+    opening_print_msg(json_file)
+
+    # Step 1: Populate with default values (required, has UUID check)
+    if not populate_dataset_config_with_default_values(json_file, error_tracker):
+        return False
+
+    # Step 2: Optionally populate with GeoNetwork metadata
+    if args.geonetwork:
+        populate_dataset_config_with_geonetwork_metadata(json_file, error_tracker)
+
+    # Step 3: Optionally populate with CSV metadata
+    if args.csv_path:
+        if not os.path.exists(args.csv_path):
+            raise ValueError(f"{args.csv_path} does not exist")
+        res = populate_dataset_config_with_metadata_from_csv(json_file, args.csv_path)
+        # If CSV validation fails, don't proceed to conversion
+        if not res:
+            return False
+
+    # Step 4: Convert to OpenData Registry format
+    convert_to_opendata_registry(json_file, output_dir)
+    return True
+
+
 def main(arg_list: list[str] | None = None):
     """
     Main function to convert JSON files to AWS OpenData Registry format.
@@ -563,94 +600,39 @@ def main(arg_list: list[str] | None = None):
 
     args = parse_args(sys.argv[1:])
     error_tracker = {}
+    output_dir = args.directory or tempfile.mkdtemp()
 
     if args.all:
+        # Batch mode: process all files
         json_files = list_json_files(json_directory)
         if json_files:
-            output_dir = args.directory or tempfile.mkdtemp()
             for file in json_files:
-                opening_print_msg(file)
-
-                # Try to populate with default values
-                if not populate_dataset_config_with_default_values(file, error_tracker):
-                    continue
-
-                if args.geonetwork:
-                    populate_dataset_config_with_geonetwork_metadata(
-                        file, error_tracker
-                    )
-
-                if args.csv_path:
-                    if os.path.exists(args.csv_path):
-                        res = populate_dataset_config_with_metadata_from_csv(
-                            file, args.csv_path
-                        )
-
-                        if res:
-                            convert_to_opendata_registry(
-                                file, output_dir
-                            )  # if res is True, it means the metadata record has been checked by Metadata Expert and ready to be published
-                    else:
-                        raise ValueError(f"{args.csv_path} does not exist")
-                else:
-                    convert_to_opendata_registry(
-                        file, output_dir
-                    )  # if no csv_path provided, we assume that all records need to be con
-
+                process_dataset(file, output_dir, args, error_tracker)
             print_error_summary(error_tracker)
         else:
             print(f"No JSON files found in {json_directory}.")
-    elif args.file:
-        output_dir = args.directory or tempfile.mkdtemp()
-        opening_print_msg(args.file)
 
-        if not populate_dataset_config_with_default_values(args.file, error_tracker):
+    elif args.file:
+        # Single file mode: process specified file
+        if not process_dataset(args.file, output_dir, args, error_tracker):
             print_error_summary(error_tracker)
             return
 
-        if args.geonetwork:
-            populate_dataset_config_with_geonetwork_metadata(args.file, error_tracker)
-        if args.csv_path:
-            if os.path.exists(args.csv_path):
-                populate_dataset_config_with_metadata_from_csv(args.file, args.csv_path)
-            else:
-                raise ValueError(f"{args.csv_path} does not exist")
-
-        convert_to_opendata_registry(args.file, output_dir)
     else:
+        # Interactive mode: let user choose
         json_files = list_json_files(json_directory)
         if json_files:
             print("Available dataset configuration files:")
             for idx, file in enumerate(json_files, start=1):
                 print(f"{idx}. {file}")
+
             choice = input("Enter the number of the dataset to convert: ")
             try:
                 choice_idx = int(choice) - 1
                 if 0 <= choice_idx < len(json_files):
-                    output_dir = args.directory or tempfile.mkdtemp()
                     json_file = json_files[choice_idx]
-
-                    opening_print_msg(json_file)
-                    if not populate_dataset_config_with_default_values(
-                        json_file, error_tracker
-                    ):
+                    if not process_dataset(json_file, output_dir, args, error_tracker):
                         print_error_summary(error_tracker)
-                        return
-
-                    if args.geonetwork:
-                        populate_dataset_config_with_geonetwork_metadata(
-                            json_file, error_tracker
-                        )
-
-                    if args.csv_path:
-                        if os.path.exists(args.csv_path):
-                            populate_dataset_config_with_metadata_from_csv(
-                                json_file, args.csv_path
-                            )
-                        else:
-                            raise ValueError(f"{args.csv_path} does not exist")
-
-                    convert_to_opendata_registry(json_file, output_dir)
                 else:
                     print("Invalid choice. Aborting.")
             except ValueError:

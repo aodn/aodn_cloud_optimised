@@ -203,7 +203,7 @@
     "License": "http://creativecommons.org/licenses/by/4.0/",
     "Resources": [
       {
-        "Description": "Cloud Optimised AODN dataset of IMOS - AusTemp - Degree Heating Days product",
+        "Description": "Cloud Optimised AODN dataset of AusTemp - Degree heating days",
         "ARN": "arn:aws:s3:::aodn-cloud-optimised/satellite_austemp_dhd_14day.zarr",
         "Region": "ap-southeast-2",
         "Type": "S3 Bucket"
@@ -212,7 +212,7 @@
     "DataAtWork": {
       "Tutorials": [
         {
-          "Title": "Accessing IMOS - AusTemp - Degree Heating Days product",
+          "Title": "Accessing AusTemp - Degree heating days",
           "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_austemp_dhd_14day.ipynb",
           "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_austemp_dhd_14day.ipynb",
           "AuthorName": "Laurent Besnard",

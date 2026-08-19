@@ -110,7 +110,7 @@
     "License": "http://creativecommons.org/licenses/by/4.0/",
     "Resources": [
       {
-        "Description": "Cloud Optimised AODN dataset of IMOS - SRS - SST - L4 - GAMSSA - World",
+        "Description": "Cloud Optimised AODN dataset of Satellite - Sea surface temperature - Level 4 - Multi sensor - Global Australian",
         "ARN": "arn:aws:s3:::aodn-cloud-optimised/satellite_ghrsst_l4_gamssa_1day_multi_sensor_world.zarr",
         "Region": "ap-southeast-2",
         "Type": "S3 Bucket"
@@ -119,7 +119,7 @@
     "DataAtWork": {
       "Tutorials": [
         {
-          "Title": "Accessing IMOS - SRS - SST - L4 - GAMSSA - World",
+          "Title": "Accessing Satellite - Sea surface temperature - Level 4 - Multi sensor - Global Australian",
           "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_ghrsst_l4_gamssa_1day_multi_sensor_world.ipynb",
           "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_ghrsst_l4_gamssa_1day_multi_sensor_world.ipynb",
           "AuthorName": "Laurent Besnard",

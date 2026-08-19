@@ -240,7 +240,7 @@
     "License": "http://creativecommons.org/licenses/by/4.0/",
     "Resources": [
       {
-        "Description": "Cloud Optimised AODN dataset of IMOS - Autonomous Underwater Vehicle (AUV) Facility",
+        "Description": "Cloud Optimised AODN dataset of Autonomous underwater vehicles",
         "ARN": "arn:aws:s3:::aodn-cloud-optimised/autonomous_underwater_vehicle.parquet",
         "Region": "ap-southeast-2",
         "Type": "S3 Bucket"
@@ -249,7 +249,7 @@
     "DataAtWork": {
       "Tutorials": [
         {
-          "Title": "Accessing IMOS - Autonomous Underwater Vehicle (AUV) Facility",
+          "Title": "Accessing Autonomous underwater vehicles",
           "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/autonomous_underwater_vehicle.ipynb",
           "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/autonomous_underwater_vehicle.ipynb",
           "AuthorName": "Laurent Besnard",

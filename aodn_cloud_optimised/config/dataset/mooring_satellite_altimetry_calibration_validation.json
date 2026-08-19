@@ -357,7 +357,7 @@
     "License": "http://creativecommons.org/licenses/by/4.0/",
     "Resources": [
       {
-        "Description": "Cloud Optimised AODN dataset of IMOS - SRS Satellite Altimetry Calibration and Validation Sub-Facility",
+        "Description": "Cloud Optimised AODN dataset of Satellite - Altimetry calibration and validation",
         "ARN": "arn:aws:s3:::aodn-cloud-optimised/mooring_satellite_altimetry_calibration_validation.parquet",
         "Region": "ap-southeast-2",
         "Type": "S3 Bucket"
@@ -366,7 +366,7 @@
     "DataAtWork": {
       "Tutorials": [
         {
-          "Title": "Accessing IMOS - SRS Satellite Altimetry Calibration and Validation Sub-Facility",
+          "Title": "Accessing Satellite - Altimetry calibration and validation",
           "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/mooring_satellite_altimetry_calibration_validation.ipynb",
           "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/mooring_satellite_altimetry_calibration_validation.ipynb",
           "AuthorName": "Laurent Besnard",

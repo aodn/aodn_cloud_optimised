@@ -181,7 +181,7 @@
     "License": "http://creativecommons.org/licenses/by/4.0/",
     "Resources": [
       {
-        "Description": "Cloud Optimised AODN dataset of IMOS - Animal Tracking Facility - Satellite Relay Tagging Program - Near real-time data with quality-controlled locations",
+        "Description": "Cloud Optimised AODN dataset of Animal Tracking - Satellite Relay Tagging - Real time - GPS",
         "ARN": "arn:aws:s3:::aodn-cloud-optimised/animal_gps_satellite_relay_tagging_location_qc_realtime_qc.parquet",
         "Region": "ap-southeast-2",
         "Type": "S3 Bucket"
@@ -190,7 +190,7 @@
     "DataAtWork": {
       "Tutorials": [
         {
-          "Title": "Accessing IMOS - Animal Tracking Facility - Satellite Relay Tagging Program - Near real-time data with quality-controlled locations",
+          "Title": "Accessing Animal Tracking - Satellite Relay Tagging - Real time - GPS",
           "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/animal_gps_satellite_relay_tagging_location_qc_realtime_qc.ipynb",
           "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/animal_gps_satellite_relay_tagging_location_qc_realtime_qc.ipynb",
           "AuthorName": "Laurent Besnard",

@@ -54,7 +54,7 @@
     "License": "http://creativecommons.org/licenses/by/4.0/",
     "Resources": [
       {
-        "Description": "Cloud Optimised AODN dataset of IMOS - Satellite Remote Sensing - SST - L3S - Multi Sensor - 1 month - day and night time - Australia",
+        "Description": "Cloud Optimised AODN dataset of Satellite - Sea surface temperature - Level 3 - Multi sensor - 1 month - Day and night time",
         "ARN": "arn:aws:s3:::aodn-cloud-optimised/satellite_ghrsst_l3s_1month_daynighttime_multi_sensor_australia.zarr",
         "Region": "ap-southeast-2",
         "Type": "S3 Bucket"
@@ -63,7 +63,7 @@
     "DataAtWork": {
       "Tutorials": [
         {
-          "Title": "Accessing IMOS - Satellite Remote Sensing - SST - L3S - Multi Sensor - 1 month - day and night time - Australia",
+          "Title": "Accessing Satellite - Sea surface temperature - Level 3 - Multi sensor - 1 month - Day and night time",
           "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_ghrsst_l3s_1month_daynighttime_multi_sensor_australia.ipynb",
           "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_ghrsst_l3s_1month_daynighttime_multi_sensor_australia.ipynb",
           "AuthorName": "Laurent Besnard",

@@ -1001,7 +1001,7 @@
     "License": "http://creativecommons.org/licenses/by/4.0/",
     "Resources": [
       {
-        "Description": "Cloud Optimised AODN dataset of IMOS - SOOP-Air Sea Flux (ASF) sub-facility - Meteorological and SST Observations",
+        "Description": "Cloud Optimised AODN dataset of Ships of Opportunity - Air-sea fluxes - Meteorological and sea surface temperature - Real time",
         "ARN": "arn:aws:s3:::aodn-cloud-optimised/vessel_air_sea_flux_sst_meteo_realtime.parquet",
         "Region": "ap-southeast-2",
         "Type": "S3 Bucket"
@@ -1010,7 +1010,7 @@
     "DataAtWork": {
       "Tutorials": [
         {
-          "Title": "Accessing IMOS - SOOP-Air Sea Flux (ASF) sub-facility - Meteorological and SST Observations",
+          "Title": "Accessing Ships of Opportunity - Air-sea fluxes - Meteorological and sea surface temperature - Real time",
           "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/vessel_air_sea_flux_sst_meteo_realtime.ipynb",
           "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/vessel_air_sea_flux_sst_meteo_realtime.ipynb",
           "AuthorName": "Laurent Besnard",

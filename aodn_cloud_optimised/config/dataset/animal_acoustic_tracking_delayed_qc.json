@@ -217,7 +217,7 @@
     "License": "http://creativecommons.org/licenses/by/4.0/",
     "Resources": [
       {
-        "Description": "Cloud Optimised AODN dataset of IMOS - Animal Tracking Facility - Acoustic Tracking - Quality Controlled Detections (2007 - 2017) (SUPERSEDED BY ONGOING COLLECTION)",
+        "Description": "Cloud Optimised AODN dataset of Animal Tracking - Acoustic Telemetry - Quality controlled detections",
         "ARN": "arn:aws:s3:::aodn-cloud-optimised/animal_acoustic_tracking_delayed_qc.parquet",
         "Region": "ap-southeast-2",
         "Type": "S3 Bucket"
@@ -226,7 +226,7 @@
     "DataAtWork": {
       "Tutorials": [
         {
-          "Title": "Accessing IMOS - Animal Tracking Facility - Acoustic Tracking - Quality Controlled Detections (2007 - 2017) (SUPERSEDED BY ONGOING COLLECTION)",
+          "Title": "Accessing Animal Tracking - Acoustic Telemetry - Quality controlled detections",
           "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/animal_acoustic_tracking_delayed_qc.ipynb",
           "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/animal_acoustic_tracking_delayed_qc.ipynb",
           "AuthorName": "Laurent Besnard",

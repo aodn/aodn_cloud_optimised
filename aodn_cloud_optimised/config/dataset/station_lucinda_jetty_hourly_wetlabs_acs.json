@@ -453,8 +453,8 @@
     "License": "http://creativecommons.org/licenses/by/4.0/",
     "Resources": [
       {
-        "Description": "Cloud Optimised AODN dataset of IMOS - Satellite Remote Sensing - Ocean Colour Sub-Facility - Lucinda Jetty Coastal Observatory (LJCO)",
-        "ARN": "arn:aws:s3:::aodn-cloud-optimised/station_lucinda_jetty_hourly_wetlabs-acs.zarr",
+        "Description": "Cloud Optimised AODN dataset of Satellite - Ocean Colour - Lucinda Jetty Coastal Observatory - WetLabs - ac-s - hourly",
+        "ARN": "arn:aws:s3:::aodn-cloud-optimised/station_lucinda_jetty_hourly_wetlabs_acs.zarr",
         "Region": "ap-southeast-2",
         "Type": "S3 Bucket"
       }
@@ -462,9 +462,9 @@
     "DataAtWork": {
       "Tutorials": [
         {
-          "Title": "Accessing IMOS - Satellite Remote Sensing - Ocean Colour Sub-Facility - Lucinda Jetty Coastal Observatory (LJCO)",
-          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/station_lucinda_jetty_hourly_wetlabs-acs.ipynb",
-          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/station_lucinda_jetty_hourly_wetlabs-acs.ipynb",
+          "Title": "Accessing Satellite - Ocean Colour - Lucinda Jetty Coastal Observatory - WetLabs - ac-s - hourly",
+          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/station_lucinda_jetty_hourly_wetlabs_acs.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/station_lucinda_jetty_hourly_wetlabs_acs.ipynb",
           "AuthorName": "Laurent Besnard",
           "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
         },

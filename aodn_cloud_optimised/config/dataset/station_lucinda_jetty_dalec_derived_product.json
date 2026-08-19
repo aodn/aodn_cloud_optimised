@@ -258,7 +258,7 @@
     "License": "http://creativecommons.org/licenses/by/4.0/",
     "Resources": [
       {
-        "Description": "Cloud Optimised AODN dataset of IMOS - Satellite Remote Sensing - Ocean Colour Sub-Facility - Lucinda Jetty Coastal Observatory (LJCO)",
+        "Description": "Cloud Optimised AODN dataset of Satellite - Ocean Colour - Lucinda Jetty Coastal Observatory - DALEC - daily product",
         "ARN": "arn:aws:s3:::aodn-cloud-optimised/station_lucinda_jetty_dalec_derived_product.zarr",
         "Region": "ap-southeast-2",
         "Type": "S3 Bucket"
@@ -267,7 +267,7 @@
     "DataAtWork": {
       "Tutorials": [
         {
-          "Title": "Accessing IMOS - Satellite Remote Sensing - Ocean Colour Sub-Facility - Lucinda Jetty Coastal Observatory (LJCO)",
+          "Title": "Accessing Satellite - Ocean Colour - Lucinda Jetty Coastal Observatory - DALEC - daily product",
           "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/station_lucinda_jetty_dalec_derived_product.ipynb",
           "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/station_lucinda_jetty_dalec_derived_product.ipynb",
           "AuthorName": "Laurent Besnard",

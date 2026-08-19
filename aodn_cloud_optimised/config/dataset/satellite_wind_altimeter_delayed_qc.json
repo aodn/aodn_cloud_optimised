@@ -215,7 +215,7 @@
     "License": "http://creativecommons.org/licenses/by/4.0/",
     "Resources": [
       {
-        "Description": "Cloud Optimised AODN dataset of IMOS - Satellite Remote Sensing - Surface Waves Sub-Facility - SAR wind - Delayed mode data",
+        "Description": "Cloud Optimised AODN dataset of Satellite - Surface Waves - Synthetic Aperture Radar - Wind - Gridded Delayed mode",
         "ARN": "arn:aws:s3:::aodn-cloud-optimised/satellite_wind_altimeter_delayed_qc.zarr",
         "Region": "ap-southeast-2",
         "Type": "S3 Bucket"
@@ -224,7 +224,7 @@
     "DataAtWork": {
       "Tutorials": [
         {
-          "Title": "Accessing IMOS - Satellite Remote Sensing - Surface Waves Sub-Facility - SAR wind - Delayed mode data",
+          "Title": "Accessing Satellite - Surface Waves - Synthetic Aperture Radar - Wind - Gridded Delayed mode",
           "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_wind_altimeter_delayed_qc.ipynb",
           "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_wind_altimeter_delayed_qc.ipynb",
           "AuthorName": "Laurent Besnard",

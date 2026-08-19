@@ -170,7 +170,7 @@
     "License": "http://creativecommons.org/licenses/by/4.0/",
     "Resources": [
       {
-        "Description": "Cloud Optimised AODN dataset of IMOS - National Reef Monitoring Network Sub-Facility - Global benthic cover data (photoquadrat image annotations)",
+        "Description": "Cloud Optimised AODN dataset of National Reef Monitoring Network - Global benthic cover data (photoquadrat image annotations)",
         "ARN": "arn:aws:s3:::aodn-cloud-optimised/diver_photoquadrat_score_qc.parquet",
         "Region": "ap-southeast-2",
         "Type": "S3 Bucket"
@@ -179,7 +179,7 @@
     "DataAtWork": {
       "Tutorials": [
         {
-          "Title": "Accessing IMOS - National Reef Monitoring Network Sub-Facility - Global benthic cover data (photoquadrat image annotations)",
+          "Title": "Accessing National Reef Monitoring Network - Global benthic cover data (photoquadrat image annotations)",
           "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/diver_photoquadrat_score_qc.ipynb",
           "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/diver_photoquadrat_score_qc.ipynb",
           "AuthorName": "Laurent Besnard",

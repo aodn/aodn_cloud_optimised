@@ -17,7 +17,7 @@
     "Citation": "The citation in a list of references is: \"IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access].\" If using data from gliders deployed from Onslow, Western Australia, please add to the citation - \"Department of Jobs, Tourism, Science and Innovation (DJTSI), Western Australian Government\".",
     "Resources": [
       {
-        "Description": "Cloud Optimised AODN dataset of Ocean Gliders - delayed mode glider deployments",
+        "Description": "Cloud Optimised AODN dataset of Ocean Gliders - Delayed mode",
         "ARN": "arn:aws:s3:::aodn-cloud-optimised/ocean_glider_delayed_qc.parquet",
         "Region": "ap-southeast-2",
         "Type": "S3 Bucket"
@@ -26,7 +26,7 @@
     "DataAtWork": {
       "Tutorials": [
         {
-          "Title": "Accessing Ocean Gliders - delayed mode glider deployments",
+          "Title": "Accessing Ocean Gliders - Delayed mode",
           "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/ocean_glider_delayed_qc.ipynb",
           "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/ocean_glider_delayed_qc.ipynb",
           "AuthorName": "Laurent Besnard",

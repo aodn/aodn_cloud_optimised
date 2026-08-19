@@ -18,7 +18,7 @@
     "License": "http://creativecommons.org/licenses/by/4.0/",
     "Resources": [
       {
-        "Description": "Cloud Optimised AODN dataset of IMOS - ACORN - Newcastle HF ocean radar site (New South Wales, Australia) - Delayed mode sea water velocity",
+        "Description": "Cloud Optimised AODN dataset of Ocean Radar - Newcastle site - Sea water velocity - Delayed mode",
         "ARN": "arn:aws:s3:::aodn-cloud-optimised/radar_Newcastle_velocity_hourly_averaged_delayed_qc.zarr",
         "Region": "ap-southeast-2",
         "Type": "S3 Bucket"
@@ -27,7 +27,7 @@
     "DataAtWork": {
       "Tutorials": [
         {
-          "Title": "Accessing IMOS - ACORN - Newcastle HF ocean radar site (New South Wales, Australia) - Delayed mode sea water velocity",
+          "Title": "Accessing Ocean Radar - Newcastle site - Sea water velocity - Delayed mode",
           "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/radar_Newcastle_velocity_hourly_averaged_delayed_qc.ipynb",
           "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/radar_Newcastle_velocity_hourly_averaged_delayed_qc.ipynb",
           "AuthorName": "Laurent Besnard",

@@ -1235,8 +1235,8 @@
     "License": "http://creativecommons.org/licenses/by/4.0/",
     "Resources": [
       {
-        "Description": "Cloud Optimised AODN dataset of IMOS - National Mooring Network - National Reference Stations - Darwin and Yongala - Near real-time meteorology and oceanographical data",
-        "ARN": "arn:aws:s3:::imos-data-lab-optimised/station_nrs_wireless_sensor_network_realtime_qc.parquet",
+        "Description": "Cloud Optimised AODN dataset of National Mooring Network - National Reference Stations - Darwin and Yongala -  Real time",
+        "ARN": "arn:aws:s3:::aodn-cloud-optimised/station_nrs_wireless_sensor_network_realtime_qc.parquet",
         "Region": "ap-southeast-2",
         "Type": "S3 Bucket"
       }
@@ -1244,7 +1244,7 @@
     "DataAtWork": {
       "Tutorials": [
         {
-          "Title": "Accessing IMOS - National Mooring Network - National Reference Stations - Darwin and Yongala - Near real-time meteorology and oceanographical data",
+          "Title": "Accessing National Mooring Network - National Reference Stations - Darwin and Yongala -  Real time",
           "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/station_nrs_wireless_sensor_network_realtime_qc.ipynb",
           "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/station_nrs_wireless_sensor_network_realtime_qc.ipynb",
           "AuthorName": "Laurent Besnard",

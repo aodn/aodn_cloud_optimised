@@ -54,7 +54,7 @@
     "License": "http://creativecommons.org/licenses/by/4.0/",
     "Resources": [
       {
-        "Description": "Cloud Optimised AODN dataset of IMOS - Satellite Remote Sensing - SST - L3C - NOAA 19 - 1 day - day time - Southern Ocean",
+        "Description": "Cloud Optimised AODN dataset of Satellite - Sea surface temperature - Level 3 - Single sensor - NOAA 19 - 1 day - Day time (Southern Ocean)",
         "ARN": "arn:aws:s3:::aodn-cloud-optimised/satellite_ghrsst_l3c_1day_daytime_noaa19_southern_ocean.zarr",
         "Region": "ap-southeast-2",
         "Type": "S3 Bucket"
@@ -63,7 +63,7 @@
     "DataAtWork": {
       "Tutorials": [
         {
-          "Title": "Accessing IMOS - Satellite Remote Sensing - SST - L3C - NOAA 19 - 1 day - day time - Southern Ocean",
+          "Title": "Accessing Satellite - Sea surface temperature - Level 3 - Single sensor - NOAA 19 - 1 day - Day time (Southern Ocean)",
           "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_ghrsst_l3c_1day_daytime_noaa19_southern_ocean.ipynb",
           "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_ghrsst_l3c_1day_daytime_noaa19_southern_ocean.ipynb",
           "AuthorName": "Laurent Besnard",

@@ -459,7 +459,7 @@
     }
   },
   "aws_opendata_registry": {
-    "Name": "Wave buoys Observations - Australia - delayed (National Wave Archive)",
+    "Name": "Wave buoys observations (National Wave Archive) - Delayed mode",
     "Description": "Buoys provide integral wave parameters. Buoy data from the following organisations contribute to the National Wave Archive: Manly Hydraulics Laboratory (part of the NSW Department of Climate Change, Energy, the Environment and Water (DCCEEW), which has assumed function of the former NSW Office of Environment and Heritage (OEH)); Bureau of Meteorology; Western Australia Department of Transport (DOT); the Queensland Department of Environment and Science (DES); the Defence Technology Agency (DTA), New Zealand Defence Force (NZDF); the Integrated Marine Observing System (IMOS), the University of Western Australia (UWA), Deakin University; and the NSW Nearshore Wave Data Program from the NSW Department of Climate Change, Energy, the Environment and Water (DCCEEW). \n\nThe data (aside from IMOS, the NSW Nearshore Wave Data Program, Deakin University and some of the buoys from UWA) is gathered by the Waverider system developed by the Dutch company, Datawell. Some older wave data were collected using non-directional Waverider buoys. As technology advanced and directional measuring capabilities were developed in wave buoys, wave buoy networks were gradually upgraded to directional Waverider buoys. Therefore, some older datasets do not have directional information whereas newer datasets have directional information. \n\nThe data from IMOS, the NSW Nearshore Wave Data Program, Deakin University and some of the buoys from UWA, comes from Spotter Wave Buoys, developed by Sofar Ocean Technologies, which collect data similarly to the Waverider system.\n\nThe buoy data from the Manly Hydraulics Laboratory replaces data (has been re-formatted) from the following specific collection - https://catalogue-imos.aodn.org.au:443/geonetwork/srv/api/records/bb7e9d82-3b9c-44c6-8e93-1ee9fd30bf21.",
     "Documentation": "https://catalogue-imos.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/2807f3aa-4db0-4924-b64b-354ae8c10b58",
     "Contact": "info@aodn.org.au",
@@ -471,8 +471,8 @@
     "License": "http://creativecommons.org/licenses/by/4.0/",
     "Resources": [
       {
-        "Description": "Cloud Optimised AODN dataset of Wave buoys Observations - Australia - delayed (National Wave Archive)",
-        "ARN": "arn:aws:s3:::imos-optimised-nonproduction/wave_buoy_delayed_qc.parquet",
+        "Description": "Cloud Optimised AODN dataset of Wave buoys observations (National Wave Archive) - Delayed mode",
+        "ARN": "arn:aws:s3:::aodn-cloud-optimised/wave_buoy_delayed_qc.parquet",
         "Region": "ap-southeast-2",
         "Type": "S3 Bucket"
       }
@@ -480,7 +480,7 @@
     "DataAtWork": {
       "Tutorials": [
         {
-          "Title": "Accessing Wave buoys Observations - Australia - delayed (National Wave Archive)",
+          "Title": "Accessing Wave buoys observations (National Wave Archive) - Delayed mode",
           "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/wave_buoy_delayed_qc.ipynb",
           "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/wave_buoy_delayed_qc.ipynb",
           "AuthorName": "Laurent Besnard",
@@ -495,7 +495,7 @@
         }
       ]
     },
-    "Citation": "The citation in a list of references is: \"Department of Planning and Environment (DPE), New South Wales Government; Australian Bureau of Meteorology; Department of Transport [W.A]; State of Queensland, Department of Environment and Science; Defence Technology Agency (DTA), New Zealand Defence Force (NZDF), Integrated Marine Observing System (IMOS), The University of Western Australia (UWA), Deakin University [year-of-data-downloaded], [Title], Downloaded from [url] on [date-of-download]\". When using NZ buoy data, please also acknowledge the following: \"McComb et al. Directional wave buoy data measured near Campbell Island, New Zealand (submitted)\", Downloaded from [url] on [date-of-download]."
+    "Citation": "The citation in a list of references is: \"Department of Planning and Environment (DPE), New South Wales Government; Australian Bureau of Meteorology; Department of Transport [W.A]; State of Queensland, Department of Environment and Science; Defence Technology Agency (DTA), New Zealand Defence Force (NZDF), Integrated Marine Observing System (IMOS), The University of Western Australia (UWA), Deakin University [year-of-data-downloaded], [Title], Downloaded from [url] on [date-of-download]\". When using NZ buoy data, please also acknowledge the following: \"McComb et al. Directional wave buoy data measured near Campbell Island, New Zealand (submitted)\", Downloaded from [url] on [date-of-download].\""
   },
   "schema_transformation": {
     "drop_variables": [

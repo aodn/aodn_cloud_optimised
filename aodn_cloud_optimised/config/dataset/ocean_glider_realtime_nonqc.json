@@ -16,7 +16,7 @@
     "Documentation": "https://catalogue-imos.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/a681fdba-c6d9-44ab-90b9-113b0ed03536",
     "Resources": [
       {
-        "Description": "Cloud Optimised AODN dataset of Ocean Gliders - Real-time glider deployments",
+        "Description": "Cloud Optimised AODN dataset of Ocean Gliders - Real time",
         "ARN": "arn:aws:s3:::aodn-cloud-optimised/ocean_glider_realtime_nonqc.parquet",
         "Region": "ap-southeast-2",
         "Type": "S3 Bucket"
@@ -25,7 +25,7 @@
     "DataAtWork": {
       "Tutorials": [
         {
-          "Title": "Accessing Ocean Gliders - Real-time glider deployments",
+          "Title": "Accessing Ocean Gliders - Real time",
           "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/ocean_glider_realtime_nonqc.ipynb",
           "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/ocean_glider_realtime_nonqc.ipynb",
           "AuthorName": "Laurent Besnard",

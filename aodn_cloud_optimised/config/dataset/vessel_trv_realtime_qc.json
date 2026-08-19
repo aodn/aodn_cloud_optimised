@@ -295,7 +295,7 @@
     "License": "http://creativecommons.org/licenses/by/4.0/",
     "Resources": [
       {
-        "Description": "Cloud Optimised AODN dataset of Sensors on Tropical Research Vessels: Enhanced Measurements from Ships of Opportunity (SOOP)",
+        "Description": "Cloud Optimised AODN dataset of Ships of Opportunity - Tropical research vessels - Real time",
         "ARN": "arn:aws:s3:::aodn-cloud-optimised/vessel_trv_realtime_qc.parquet",
         "Region": "ap-southeast-2",
         "Type": "S3 Bucket"
@@ -304,7 +304,7 @@
     "DataAtWork": {
       "Tutorials": [
         {
-          "Title": "Accessing Sensors on Tropical Research Vessels: Enhanced Measurements from Ships of Opportunity (SOOP)",
+          "Title": "Accessing Ships of Opportunity - Tropical research vessels - Real time",
           "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/vessel_trv_realtime_qc.ipynb",
           "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/vessel_trv_realtime_qc.ipynb",
           "AuthorName": "Laurent Besnard",

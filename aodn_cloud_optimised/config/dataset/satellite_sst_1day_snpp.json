@@ -96,7 +96,7 @@
     "License": "http://creativecommons.org/licenses/by/4.0/",
     "Resources": [
       {
-        "Description": "Cloud Optimised AODN dataset of IMOS - Satellite Remote Sensing - SNPP - 01 day - Ocean Colour - SST",
+        "Description": "Cloud Optimised AODN dataset of Satellite - Ocean Colour - SNPP - 1 day - Sea surface temperature",
         "ARN": "arn:aws:s3:::aodn-cloud-optimised/satellite_sst_1day_snpp.zarr",
         "Region": "ap-southeast-2",
         "Type": "S3 Bucket"
@@ -105,7 +105,7 @@
     "DataAtWork": {
       "Tutorials": [
         {
-          "Title": "Accessing IMOS - Satellite Remote Sensing - SNPP - 01 day - Ocean Colour - SST",
+          "Title": "Accessing Satellite - Ocean Colour - SNPP - 1 day - Sea surface temperature",
           "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_sst_1day_snpp.ipynb",
           "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_sst_1day_snpp.ipynb",
           "AuthorName": "Laurent Besnard",
