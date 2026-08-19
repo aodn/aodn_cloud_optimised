@@ -67,7 +67,6 @@ def install_requirements():
             "cftime",
             "gsw",
             "fuzzywuzzy",
-            "polars-h3",
             "s3path",
             "windrose",
             "s3fs",
@@ -79,6 +78,8 @@ def install_requirements():
                 run_command(f"uv pip install {pkg}")
             except Exception as e:
                 print(f"⚠️ Failed to install '{pkg}' with uv: {e}")
+
+        run_command(f"uv pip install -r {requirements_path}")
 
         # Important
         # with google colab, we've encountered many issues to install the correct env.
