@@ -196,6 +196,107 @@ def update_nested_dict_key(dataset_config, keys, new_value):
     return dataset_config
 
 
+def populate_dataset_config_with_default_values(json_file):
+    """ """
+
+    json_path = str(files("aodn_cloud_optimised.config.dataset").joinpath(json_file))
+    dataset_config = load_dataset_config(json_path)
+
+    uuid = dataset_config.get("metadata_uuid", None)
+    if uuid is None:
+        raise ValueError(
+            "No metadata UUID found in the given JSON file. Process Aborted"
+        )
+
+    dataset_config = update_nested_dict_key(
+        dataset_config,
+        ["aws_opendata_registry", "Documentation"],
+        f"https://catalogue-imos.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/{uuid}",
+    )
+
+    dataset_config = update_nested_dict_key(
+        dataset_config, ["aws_opendata_registry", "Contact"], "info@aodn.org.au"
+    )
+    dataset_config = update_nested_dict_key(
+        dataset_config, ["aws_opendata_registry", "ManagedBy"], "AODN"
+    )
+    dataset_config = update_nested_dict_key(
+        dataset_config, ["aws_opendata_registry", "UpdateFrequency"], "As Needed"
+    )
+    dataset_config = update_nested_dict_key(
+        dataset_config,
+        ["aws_opendata_registry", "License"],
+        "http://creativecommons.org/licenses/by/4.0/",
+    )
+    data_at_work = {
+        "Tutorials": [
+            {
+                "Title": f"Accessing {dataset_config['aws_opendata_registry']['Name']}",
+                "URL": f"https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/{dataset_config['dataset_name']}.ipynb",
+                "NotebookURL": f"https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/{dataset_config['dataset_name']}.ipynb",
+                "AuthorName": "Laurent Besnard",
+                "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised",
+            },
+            {
+                "Title": f"Accessing and search for any AODN dataset",
+                "URL": f"https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+                "NotebookURL": f"https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
+                "AuthorName": "Laurent Besnard",
+                "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised",
+            },
+        ]
+    }
+
+    dataset_path_arn = os.path.join(
+        load_variable_from_config("BUCKET_OPTIMISED_DEFAULT"),
+        load_variable_from_config("ROOT_PREFIX_CLOUD_OPTIMISED_PATH"),
+        dataset_config["dataset_name"] + "." + dataset_config["cloud_optimised_format"],
+    )
+
+    dataset_location = [
+        {
+            "Description": f"Cloud Optimised AODN dataset of {dataset_config['aws_opendata_registry']['Name']}",
+            "ARN": f"arn:aws:s3:::{dataset_path_arn}",
+            "Region": "ap-southeast-2",
+            "Type": "S3 Bucket",
+        },
+    ]
+
+    dataset_config = update_nested_dict_key(
+        dataset_config, ["aws_opendata_registry", "DataAtWork"], data_at_work
+    )
+
+    dataset_config = update_nested_dict_key(
+        dataset_config, ["aws_opendata_registry", "Resources"], dataset_location
+    )
+
+    # dataset config coming from load_dataset_config is the result of parent and child configuration. When writing back
+    # the configuration, we only want to write the child data back
+    dataset_config_child = load_config(json_path)
+    # Overwrite the original JSON file with the modified dataset_config
+    with open(json_path, "w") as f:
+        dataset_config_child["aws_opendata_registry"] = dataset_config[
+            "aws_opendata_registry"
+        ]
+        json.dump(dataset_config_child, f, indent=2)
+
+    print(f"Updated JSON file saved at: {json_path}")
+
+
+def opening_print_msg(json_file):
+
+    json_path = str(files("aodn_cloud_optimised.config.dataset").joinpath(json_file))
+    dataset_config = load_dataset_config(json_path)
+    dataset_name = dataset_config["dataset_name"]
+
+    print()
+    print(f"{Fore.CYAN}{'=' * 80}{Style.RESET_ALL}")
+    print(f"{Fore.CYAN}{f'{dataset_name}':^80}{Style.RESET_ALL}")
+    print(f"{Fore.CYAN}{'=' * 80}{Style.RESET_ALL}")
+    print(f'{Fore.BLUE}Opening dataset config: "{dataset_name}"{Style.RESET_ALL}')
+    print()
+
+
 def populate_dataset_config_with_metadata_from_csv(json_file, csv_path):
     json_path = str(files("aodn_cloud_optimised.config.dataset").joinpath(json_file))
     dataset_config = load_dataset_config(json_path)
@@ -212,13 +313,13 @@ def populate_dataset_config_with_metadata_from_csv(json_file, csv_path):
 
     dataset_name = dataset_config["dataset_name"]
 
-    print()
-    print(f"{Fore.CYAN}{'=' * 80}{Style.RESET_ALL}")
-    print(f"{Fore.CYAN}{f'{dataset_name}':^80}{Style.RESET_ALL}")
-    print(f"{Fore.CYAN}{'=' * 80}{Style.RESET_ALL}")
-    print(f'{Fore.BLUE}Opening dataset config: "{dataset_name}"{Style.RESET_ALL}')
-    print()
-
+    # print()
+    # print(f"{Fore.CYAN}{'=' * 80}{Style.RESET_ALL}")
+    # print(f"{Fore.CYAN}{f'{dataset_name}':^80}{Style.RESET_ALL}")
+    # print(f"{Fore.CYAN}{'=' * 80}{Style.RESET_ALL}")
+    # print(f'{Fore.BLUE}Opening dataset config: "{dataset_name}"{Style.RESET_ALL}')
+    # print()
+    #
     try:
         csv_dataset = csv_data.loc[dataset_name]
     except Exception as err:
@@ -309,7 +410,8 @@ def populate_dataset_config_with_geonetwork_metadata(json_file):
     gn3_metadata = retrieve_geonetwork_metadata(uuid)
 
     if gn3_metadata is None:
-        print("No Geonetwork metadata available")
+        print(f"{Fore.RED} No Geonetwork metadata available.{Style.RESET_ALL}")
+        print("")
         return
 
     dataset_config = update_nested_dict_key(
@@ -327,65 +429,9 @@ def populate_dataset_config_with_geonetwork_metadata(json_file):
     )
 
     dataset_config = update_nested_dict_key(
-        dataset_config, ["aws_opendata_registry", "Contact"], "info@aodn.org.au"
-    )
-    dataset_config = update_nested_dict_key(
-        dataset_config, ["aws_opendata_registry", "ManagedBy"], "AODN"
-    )
-    dataset_config = update_nested_dict_key(
-        dataset_config, ["aws_opendata_registry", "UpdateFrequency"], "As Needed"
-    )
-    dataset_config = update_nested_dict_key(
-        dataset_config,
-        ["aws_opendata_registry", "License"],
-        "http://creativecommons.org/licenses/by/4.0/",
-    )
-    dataset_config = update_nested_dict_key(
         dataset_config,
         ["aws_opendata_registry", "Citation"],
         "IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access]",
-    )
-
-    data_at_work = {
-        "Tutorials": [
-            {
-                "Title": f"Accessing {dataset_config['aws_opendata_registry']['Name']}",
-                "URL": f"https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/{dataset_config['dataset_name']}.ipynb",
-                "NotebookURL": f"https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/{dataset_config['dataset_name']}.ipynb",
-                "AuthorName": "Laurent Besnard",
-                "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised",
-            },
-            {
-                "Title": f"Accessing and search for any AODN dataset",
-                "URL": f"https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
-                "NotebookURL": f"https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/GetAodnData.ipynb",
-                "AuthorName": "Laurent Besnard",
-                "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised",
-            },
-        ]
-    }
-
-    dataset_path_arn = os.path.join(
-        load_variable_from_config("BUCKET_OPTIMISED_DEFAULT"),
-        load_variable_from_config("ROOT_PREFIX_CLOUD_OPTIMISED_PATH"),
-        dataset_config["dataset_name"] + "." + dataset_config["cloud_optimised_format"],
-    )
-
-    dataset_location = [
-        {
-            "Description": f"Cloud Optimised AODN dataset of {dataset_config['aws_opendata_registry']['Name']}",
-            "ARN": f"arn:aws:s3:::{dataset_path_arn}",
-            "Region": "ap-southeast-2",
-            "Type": "S3 Bucket",
-        },
-    ]
-
-    dataset_config = update_nested_dict_key(
-        dataset_config, ["aws_opendata_registry", "DataAtWork"], data_at_work
-    )
-
-    dataset_config = update_nested_dict_key(
-        dataset_config, ["aws_opendata_registry", "Resources"], dataset_location
     )
 
     # dataset config coming from load_dataset_config is the result of parent and child configuration. When writing back
@@ -494,6 +540,8 @@ def main(arg_list: list[str] | None = None):
         if json_files:
             output_dir = args.directory or tempfile.mkdtemp()
             for file in json_files:
+                opening_print_msg(file)
+                populate_dataset_config_with_default_values(file)
                 if args.geonetwork:
                     populate_dataset_config_with_geonetwork_metadata(file)
 
@@ -517,6 +565,9 @@ def main(arg_list: list[str] | None = None):
             print(f"No JSON files found in {json_directory}.")
     elif args.file:
         output_dir = args.directory or tempfile.mkdtemp()
+        opening_print_msg(args.file)
+        populate_dataset_config_with_default_values(args.file)
+
         if args.geonetwork:
             populate_dataset_config_with_geonetwork_metadata(args.file)
         if args.csv_path:
@@ -537,20 +588,21 @@ def main(arg_list: list[str] | None = None):
                 choice_idx = int(choice) - 1
                 if 0 <= choice_idx < len(json_files):
                     output_dir = args.directory or tempfile.mkdtemp()
+                    json_file = json_files[choice_idx]
                     if args.geonetwork:
-                        populate_dataset_config_with_geonetwork_metadata(
-                            json_files[choice_idx]
-                        )
+
+                        opening_print_msg(json_file)
+                        populate_dataset_config_with_geonetwork_metadata(json_file)
 
                     if args.csv_path:
                         if os.path.exists(args.csv_path):
                             populate_dataset_config_with_metadata_from_csv(
-                                json_files[choice_idx], args.csv_path
+                                json_file, args.csv_path
                             )
                         else:
                             raise ValueError(f"{args.csv_path} does not exist")
 
-                    convert_to_opendata_registry(json_files[choice_idx], output_dir)
+                    convert_to_opendata_registry(json_file, output_dir)
                 else:
                     print("Invalid choice. Aborting.")
             except ValueError:
