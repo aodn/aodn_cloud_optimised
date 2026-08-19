@@ -61,44 +61,23 @@ def install_requirements():
 
         xr.set_options(display_style="text")
 
-        packages = [
-            "boto3",
-            "cartopy",
-            "cftime",
-            "gsw",
-            "fuzzywuzzy",
-            "s3path",
-            "windrose",
-            "s3fs",
-            "zarr",
-        ]
+        # 1. Install missing system C-libraries required by geospatial packages (like cartopy)
+        print("⚙️ Installing system C libraries for Colab...")
+        run_command(
+            "apt-get update -qq && apt-get install -y -qq "
+            "libgeos-dev libproj-dev proj-data proj-bin "
+            "libhdf5-dev libnetcdf-dev libsqlite3-dev "
+            "libsnappy-dev liblz4-dev"
+        )
 
-        for pkg in packages:
-            try:
-                run_command(f"uv pip install {pkg}")
-            except Exception as e:
-                print(f"⚠️ Failed to install '{pkg}' with uv: {e}")
-
-        # Important
-        # with google colab, we've encountered many issues to install the correct env.
-        # The requirements.txt file stopped being compatible first quarter of 2025
-
-        # run_command(f"uv pip install --system -r {requirements_path}")
-        # run_command("uv pip install --system pyopenssl --upgrade")
-        # run_command("uv pip install numpy --force-reinstall")
-        # run_command("uv pip install pyarrow --force-reinstall --upgrade")
-
-        # get_ipython().kernel.do_shutdown(restart=True)
-    elif is_nectar():
+    # 2. Use requirements.txt universally across environments via uv
+    if is_colab() or is_nectar():
         run_command(f"uv pip install --system -r {requirements_path}")
     else:
-        # Only create the venv if the .venv directory doesn't exist
         if not Path(".venv").exists():
             run_command("uv venv")
         else:
             print("✅ Virtual environment already exists, skipping creation.")
-
-        # This will install/update packages in the existing venv
         run_command(f"uv pip install -r {requirements_path}")
 
 
