@@ -513,6 +513,23 @@
           "long_name": "Filename of the source file"
         }
       },
+      "site_name": {
+        "source": "@global_attribute:site_name",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": "",
+          "long_name": "site name"
+        }
+      },
+      "water_depth": {
+        "source": "@global_attribute:water_depth",
+        "schema": {
+          "type": "int64",
+          "units": "meters",
+          "long_name": "water depth"
+        }
+      },
       "timestamp": {
         "source": "@partitioning:time_extent",
         "schema": {
@@ -531,6 +548,9 @@
       }
     },
     "partitioning": [
+      {
+        "source_variable": "site_name"
+      },
       {
         "source_variable": "timestamp",
         "type": "time_extent",
@@ -560,7 +580,7 @@
       "set": {
         "featureType": "timeSeries",
         "standard_name_vocabulary": "CF Standard Name Table v79",
-        "title": "ARDC"
+        "title": "Wave buoys observations (National Wave Archive) - Delayed mode"
       }
     }
   }
