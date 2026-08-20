@@ -57,7 +57,7 @@ from shapely.geometry import MultiPolygon, Polygon
 from tqdm.notebook import tqdm
 from windrose import WindroseAxes
 
-__version__ = "0.3.28"
+__version__ = "0.3.29"
 
 REGION: Final[str] = "ap-southeast-2"
 ENDPOINT_URL = "https://s3.ap-southeast-2.amazonaws.com"
@@ -2936,8 +2936,14 @@ class ParquetDataSource(DataSource):
 
         df = _append_metadata_to_dataframe(self.get_metadata(), df)
 
-        time_col = next(
-            (c for c in VARIABLE_CANDIDATES["PARQUET"]["TIME"] if c in df.columns), None
+        # Follow time_varname if exist, time_varname may not defined in the VARIABLE_CANDIDATES
+        time_col = (
+            time_varname
+            if time_varname and time_varname in df.columns
+            else next(
+                (c for c in VARIABLE_CANDIDATES["PARQUET"]["TIME"] if c in df.columns),
+                None,
+            )
         )
 
         if time_col:
