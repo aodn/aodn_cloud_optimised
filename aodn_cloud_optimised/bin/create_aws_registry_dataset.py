@@ -316,13 +316,6 @@ def populate_dataset_config_with_metadata_from_csv(json_file, csv_path):
 
     dataset_name = dataset_config["dataset_name"]
 
-    # print()
-    # print(f"{Fore.CYAN}{'=' * 80}{Style.RESET_ALL}")
-    # print(f"{Fore.CYAN}{f'{dataset_name}':^80}{Style.RESET_ALL}")
-    # print(f"{Fore.CYAN}{'=' * 80}{Style.RESET_ALL}")
-    # print(f'{Fore.BLUE}Opening dataset config: "{dataset_name}"{Style.RESET_ALL}')
-    # print()
-    #
     try:
         csv_dataset = csv_data.loc[dataset_name]
     except Exception as err:
