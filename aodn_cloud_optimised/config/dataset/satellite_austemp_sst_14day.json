@@ -163,7 +163,7 @@
     }
   },
   "aws_opendata_registry": {
-    "Name": "IMOS - AusTemp - Sea Surface Temperature",
+    "Name": "AusTemp - Sea surface temperature",
     "Description": "This dataset contains the summer Sea Surface Water Temperature anomalies (SSTa) from the 1st of December to the 30th of April since 2012 by comparing the current SST to long-term averages (1993-2003, the \u201cCSIRO Legacy climatology\u201d or 2002-2011, the \u201cIMOS climatology\u201d). The magnitude and duration of anomalously warm sea temperatures correlate well with past coral bleaching events. In cases where SST cannot be calculated due to cloud cover, the grid cell is left blank (white in web plots, transparent in Google Earth) to indicate missing data.\n\nThe ReefTemp Next Generation (RTNG) system was implemented and declared operational in the Bureau National Operations Centre (BNOC, formerly National Meteorological and\nOceanographic Centre) on 22 October 2013. The system is based on a new state-of-the-art Integrated Marine Observing System (IMOS)  1-day L3S night-only Sea Surface Temperature (SST)\nproduct, which produces high-resolution satellite-based nowcasts of SST, thermal stress and associated coral bleaching risk over the Great Barrier Reef.\n\nThis product follows on from the decommissioned ReefTemp Next Generation a high resolution mapping product that provided information on coral bleaching risk for the Great Barrier Reef region. The ReefTemp Next Generation system was developed by the Bureau of Meteorology for eReefs, under the National Plan for Environmental Information (NPEI) initiative. A research Version 1 (V1) system, available from 2007, was the result of a collaborative project between the Bureau of Meteorology, CSIRO Marine and Atmospheric Research and the Great Barrier Reef Marine Park Authority.",
     "Documentation": "https://catalogue-imos.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/62f6b449-90dc-45bf-8acb-ae52e8a58c5c",
     "Contact": "info@aodn.org.au",
@@ -176,7 +176,7 @@
     "License": "http://creativecommons.org/licenses/by/4.0/",
     "Resources": [
       {
-        "Description": "Cloud Optimised AODN dataset of IMOS - AusTemp - Sea Surface Temperature",
+        "Description": "Cloud Optimised AODN dataset of AusTemp - Sea surface temperature",
         "ARN": "arn:aws:s3:::aodn-cloud-optimised/satellite_austemp_sst_14day.zarr",
         "Region": "ap-southeast-2",
         "Type": "S3 Bucket"
@@ -185,7 +185,7 @@
     "DataAtWork": {
       "Tutorials": [
         {
-          "Title": "Accessing IMOS - AusTemp - Sea Surface Temperature",
+          "Title": "Accessing AusTemp - Sea surface temperature",
           "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_austemp_sst_14day.ipynb",
           "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_austemp_sst_14day.ipynb",
           "AuthorName": "Laurent Besnard",
@@ -200,6 +200,6 @@
         }
       ]
     },
-    "Citation": "IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access]"
+    "Citation": "The citation in a list of references is: \"IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access].\""
   }
 }

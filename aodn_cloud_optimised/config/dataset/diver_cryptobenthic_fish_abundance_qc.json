@@ -187,7 +187,7 @@
     "License": "http://creativecommons.org/licenses/by/4.0/",
     "Resources": [
       {
-        "Description": "Cloud Optimised AODN dataset of IMOS - National Reef Monitoring Network Sub-Facility - Global cryptobenthic fish abundance",
+        "Description": "Cloud Optimised AODN dataset of National Reef Monitoring Network - Global cryptobenthic fish abundance",
         "ARN": "arn:aws:s3:::aodn-cloud-optimised/diver_cryptobenthic_fish_abundance_qc.parquet",
         "Region": "ap-southeast-2",
         "Type": "S3 Bucket"
@@ -196,7 +196,7 @@
     "DataAtWork": {
       "Tutorials": [
         {
-          "Title": "Accessing IMOS - National Reef Monitoring Network Sub-Facility - Global cryptobenthic fish abundance",
+          "Title": "Accessing National Reef Monitoring Network - Global cryptobenthic fish abundance",
           "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/diver_cryptobenthic_fish_abundance_qc.ipynb",
           "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/diver_cryptobenthic_fish_abundance_qc.ipynb",
           "AuthorName": "Laurent Besnard",

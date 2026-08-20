@@ -959,7 +959,7 @@
     "License": "http://creativecommons.org/licenses/by/4.0/",
     "Resources": [
       {
-        "Description": "Cloud Optimised AODN dataset of IMOS-SOOP-Air Sea Flux",
+        "Description": "Cloud Optimised AODN dataset of Ships of Opportunity - Air-sea fluxes - Meteorological and flux - Delayed mode",
         "ARN": "arn:aws:s3:::aodn-cloud-optimised/vessel_air_sea_flux_product_delayed.parquet",
         "Region": "ap-southeast-2",
         "Type": "S3 Bucket"
@@ -968,7 +968,7 @@
     "DataAtWork": {
       "Tutorials": [
         {
-          "Title": "Accessing IMOS-SOOP-Air Sea Flux: Flux product",
+          "Title": "Accessing Ships of Opportunity - Air-sea fluxes - Meteorological and flux - Delayed mode",
           "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/vessel_air_sea_flux_product_delayed.ipynb",
           "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/vessel_air_sea_flux_product_delayed.ipynb",
           "AuthorName": "Laurent Besnard",

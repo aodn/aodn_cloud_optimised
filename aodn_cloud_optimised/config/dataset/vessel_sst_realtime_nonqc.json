@@ -571,8 +571,8 @@
     "License": "http://creativecommons.org/licenses/by/4.0/",
     "Resources": [
       {
-        "Description": "Cloud Optimised AODN dataset of IMOS - SOOP-Sea Surface Temperature (SST) Sub-facility - Near real-time data",
-        "ARN": "arn:aws:s3:::imos-data-lab-optimised/vessel_sst_realtime_nonqc.parquet",
+        "Description": "Cloud Optimised AODN dataset of Ships of Opportunity - Sea surface temperature - Real time",
+        "ARN": "arn:aws:s3:::aodn-cloud-optimised/vessel_sst_realtime_nonqc.parquet",
         "Region": "ap-southeast-2",
         "Type": "S3 Bucket"
       }
@@ -580,7 +580,7 @@
     "DataAtWork": {
       "Tutorials": [
         {
-          "Title": "Accessing IMOS - SOOP-Sea Surface Temperature (SST) Sub-facility - Near real-time data",
+          "Title": "Accessing Ships of Opportunity - Sea surface temperature - Real time",
           "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/vessel_sst_realtime_nonqc.ipynb",
           "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/vessel_sst_realtime_nonqc.ipynb",
           "AuthorName": "Laurent Besnard",

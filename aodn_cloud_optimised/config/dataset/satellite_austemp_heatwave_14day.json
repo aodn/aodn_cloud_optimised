@@ -342,7 +342,7 @@
     }
   },
   "aws_opendata_registry": {
-    "Name": "IMOS - AusTemp - Heat stress and marine heatwave and cold-spell monitoring metrics for the Australian Coast",
+    "Name": "AusTemp - Marine heatwave",
     "Description": "This dataset contains the marine heatwave (MHW) and marine cold spell (MCS) categories from the 1st of January 2012. The SST Atlas of Australian Regional Seas (SSTAARS) daily climatology (Wijffels et al., 2018) is used as the baseline for developing heat-stress monitoring metrics. SSTAARS daily 90th-, 50th-, and 10th-percentile thresholds are applied to classify MHW and MCS according to established Hobday definitions. The dataset also contains the Sea Surface Temperature anomalies (SSTa), calculated by comparing the current SST to a monthly SSTAARS climatology, and the Degree Heating-Days (DHD) metrics, calculated by accumulating the daily positive Sea Surface Temperature anomalies (SSTa). When SST cannot be calculated due to cloud cover, the grid cell is left blank (white in web plots, transparent in Google Earth) to indicate missing data.\n\nThis product follows on from the Bureau of Meteorology's (Bureau) decommissioned ReefTemp Next Generation, a high resolution mapping product that provided information on coral bleaching risk for the Great Barrier Reef region for 2012-2024. In the first stage of operational deployment of AusTemp, the current operational satellite-derived, night-time-only MultiSensor Level 3 Super-collated (MS L3S, Govekar et al 2022) sea surface temperature (SST) product is being used to define heat stress and MHW/MCS monitoring metrics. A new GeoPolar MultiSensor L3S adds geostationary Himawari-8/9 data to the polar-orbiting satellites. It provides significantly improved spatial coverage, due to Himawari's 10 minute sampling period filling in SST gaps caused by fast moving cloud, with an additional 20% data on average over the MS L3S product (Govekar et al 2024).\n\nThe improved spatial and temporal resolution of AusTemp allows for high-detail mapping of MHWs across Australian waters, supporting accurate assessments of local ecological impacts, including coral bleaching and mortality in marine species. These tools are valuable for conservation, reef management, aquaculture, and fisheries, helping stakeholders manage the growing risks associated with marine heatwaves in a warming ocean.",
     "Documentation": "https://catalogue-imos.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/2ffccdad-1197-4e41-b412-a9033517cfb2",
     "Contact": "info@aodn.org.au",
@@ -355,7 +355,7 @@
     "License": "http://creativecommons.org/licenses/by/4.0/",
     "Resources": [
       {
-        "Description": "Cloud Optimised AODN dataset of IMOS - AusTemp - Heat stress and marine heatwave and cold-spell monitoring metrics for the Australian Coast",
+        "Description": "Cloud Optimised AODN dataset of AusTemp - Marine heatwave",
         "ARN": "arn:aws:s3:::aodn-cloud-optimised/satellite_austemp_heatwave_14day.zarr",
         "Region": "ap-southeast-2",
         "Type": "S3 Bucket"
@@ -364,7 +364,7 @@
     "DataAtWork": {
       "Tutorials": [
         {
-          "Title": "Accessing IMOS - AusTemp - Heat stress and marine heatwave and cold-spell monitoring metrics for the Australian Coast",
+          "Title": "Accessing AusTemp - Marine heatwave",
           "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_austemp_heatwave_14day.ipynb",
           "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_austemp_heatwave_14day.ipynb",
           "AuthorName": "Laurent Besnard",
@@ -379,6 +379,6 @@
         }
       ]
     },
-    "Citation": "IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access]"
+    "Citation": "The citation in a list of references is: \"IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access].\""
   }
 }

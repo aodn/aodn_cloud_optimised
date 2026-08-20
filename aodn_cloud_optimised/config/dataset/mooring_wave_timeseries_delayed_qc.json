@@ -1005,19 +1005,20 @@
     }
   },
   "aws_opendata_registry": {
-    "Name": "IMOS - National Mooring Network - Wave time-series",
+    "Name": "National Mooring Network - Wave time-series",
     "Description": "The National Mooring Network Facility (formerly known as the Australian National Mooring Network (ANMN)), is a series of national reference stations and regional moorings designed to monitor particular oceanographic phenomena in Australian coastal ocean waters. This collection contains wavetime-series observations from moorings deployed by the facility at the Darwin and Yongala National Reference Stations and the following regional moorings: Beagle Gulf (DARBGF), Heron Island South (GBRHIS) and One Tree East (GBROTE). The primary parameters are temperature, pressure and depth of the instrument, and many wave related parameters. The observations were made using either an acoustic Doppler current profiler (ADCP) or an AWAC ADCP (Acoustic Wave And Current Profiler).",
     "Documentation": "https://catalogue-imos.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/aaebf991-b79d-4670-a1c5-a0de9bf649ce",
     "Contact": "info@aodn.org.au",
     "ManagedBy": "AODN",
     "UpdateFrequency": "As Needed",
     "Tags": [
-      "FILL UP MANUALLY - CHECK DOCUMENTATION"
+      "oceans",
+      "meteorological"
     ],
-    "License": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+    "License": "http://creativecommons.org/licenses/by/4.0/",
     "Resources": [
       {
-        "Description": "Cloud Optimised AODN dataset of IMOS - National Mooring Network - Wave time-series",
+        "Description": "Cloud Optimised AODN dataset of National Mooring Network - Wave time-series",
         "ARN": "arn:aws:s3:::aodn-cloud-optimised/mooring_wave_timeseries_delayed_qc.zarr",
         "Region": "ap-southeast-2",
         "Type": "S3 Bucket"
@@ -1026,7 +1027,7 @@
     "DataAtWork": {
       "Tutorials": [
         {
-          "Title": "Accessing IMOS - National Mooring Network - Wave time-series",
+          "Title": "Accessing National Mooring Network - Wave time-series",
           "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/mooring_wave_timeseries_delayed_qc.ipynb",
           "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/mooring_wave_timeseries_delayed_qc.ipynb",
           "AuthorName": "Laurent Besnard",
@@ -1041,6 +1042,6 @@
         }
       ]
     },
-    "Citation": "IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access]"
+    "Citation": "The citation in a list of references is: \"IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access].\""
   }
 }

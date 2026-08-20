@@ -46,7 +46,7 @@
     "License": "http://creativecommons.org/licenses/by/4.0/",
     "Resources": [
       {
-        "Description": "Cloud Optimised AODN dataset of IMOS - SRS - MODIS - 01 day - Chlorophyll-a concentration (OC3 model)",
+        "Description": "Cloud Optimised AODN dataset of Satellite - Ocean Colour -  MODIS - 1 day - Chlorophyll-a concentration (OC3 model)",
         "ARN": "arn:aws:s3:::aodn-cloud-optimised/satellite_chlorophylla_oc3_1day_aqua.zarr",
         "Region": "ap-southeast-2",
         "Type": "S3 Bucket"
@@ -55,7 +55,7 @@
     "DataAtWork": {
       "Tutorials": [
         {
-          "Title": "Accessing IMOS - SRS - MODIS - 01 day - Chlorophyll-a concentration (OC3 model)",
+          "Title": "Accessing Satellite - Ocean Colour -  MODIS - 1 day - Chlorophyll-a concentration (OC3 model)",
           "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_chlorophylla_oc3_1day_aqua.ipynb",
           "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_chlorophylla_oc3_1day_aqua.ipynb",
           "AuthorName": "Laurent Besnard",

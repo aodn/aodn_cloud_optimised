@@ -813,7 +813,7 @@
     "License": "http://creativecommons.org/licenses/by/4.0/",
     "Resources": [
       {
-        "Description": "Cloud Optimised AODN dataset of IMOS - Moorings - Hourly time-series product",
+        "Description": "Cloud Optimised AODN dataset of Moorings - Hourly time-series product",
         "ARN": "arn:aws:s3:::aodn-cloud-optimised/mooring_hourly_timeseries_delayed_qc.parquet",
         "Region": "ap-southeast-2",
         "Type": "S3 Bucket"
@@ -822,7 +822,7 @@
     "DataAtWork": {
       "Tutorials": [
         {
-          "Title": "Accessing IMOS - Moorings - Hourly time-series product",
+          "Title": "Accessing Moorings - Hourly time-series product",
           "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/mooring_hourly_timeseries_delayed_qc.ipynb",
           "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/mooring_hourly_timeseries_delayed_qc.ipynb",
           "AuthorName": "Laurent Besnard",
@@ -837,7 +837,7 @@
         }
       ]
     },
-    "Citation": "The citation in a list of references is: \"IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access].\" If using data from the Ningaloo (TAN100) mooring, please add to the citation - \"Department of Jobs, Tourism, Science and Innovation (DJTSI), Western Australian Government\". "
+    "Citation": "The citation in a list of references is: \"IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access].\" If using data from the Ningaloo (TAN100) mooring, please add to the citation - \"Department of Jobs, Tourism, Science and Innovation (DJTSI), Western Australian Government\"."
   },
   "run_settings": {
     "coiled_cluster_options": {

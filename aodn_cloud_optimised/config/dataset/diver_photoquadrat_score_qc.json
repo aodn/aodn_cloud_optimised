@@ -154,7 +154,7 @@
     }
   },
   "aws_opendata_registry": {
-    "Name": "IMOS - National Reef Monitoring Network Sub-Facility - Global benthic cover data (photoquadrat image annotations)",
+    "Name": "National Reef Monitoring Network - Global benthic cover data (photoquadrat image annotations)",
     "Description": "The National Reef Monitoring Network brings together shallow reef surveys conducted around Australia into a centralised database. The IMOS National Reef Monitoring Network sub-Facility collates, cleans, stores and makes this data rapidly available from contributors including: Reef Life Survey, Parks Australia, Department of Biodiversity, Conservation and Attractions (Western Australia), Department of Environment, Water and Natural Resources (South Australia), Department of Primary Industries (New South Wales), Tasmanian Parks and Wildlife Service and Parks Victoria.\n\nThe data provided by the National Reef Monitoring Network contributes to establishing and supporting national marine baselines, and assisting with the management of Commonwealth and State marine reserves. \n\nReef Life Survey (RLS) and the Australian Temperate Reef Network (ATRC) aims to improve biodiversity conservation and the sustainable management of marine resources by coordinating surveys of rocky and coral reefs using scientific methods, with the ultimate goal to improve coastal stewardship. Our activities depend on the skills of marine scientists, experienced and motivated recreational SCUBA divers, partnerships with management agencies and university researchers, and active input from the ATRC partners and RLS Advisory Committee.\n\nRLS and ATRC data are freely available to the public for non-profit purposes, so not only managers, but also groups such as local dive clubs or schools may use these data to look at changes over time in their own local reefs. By making data freely available and through public outputs, RLS and ATRC aims to raise broader community awareness of the status of Australia's marine biodiversity and associated conservation issues.\n\nThis dataset contains data on the habitat composition scored from photoquadrats taken by Reef Life Survey (RLS) and Australian Temperate Reef Collaboration (ATRC) divers and partners along 50m transects on shallow rocky and coral reefs. 20 images are taken along each 50 m transect line at 2.5 m intervals, and images were annotated using a point-overlay approach (usually with 5 points per image overlaid and labelled using standardised schemes of habitat categories). The data are generated using two different methodologies: full-biodiversity (comprehensive labelling of all habitat components) and targeted (labelling of target taxa only, eg. habitat-forming corals).  Values are given as percent coverage for each 50 m transect-analysis, as denoted by it's unique dataset_id.  \n\nImages, annotation statistics, the RLS standardised label scheme and associated exemplar images, can be viewed online at squidle.org.  Image and annotation statistics are also available in the related IMOS collections:\n- IMOS - Understanding of Marine Imagery (UMI) Sub-Facility - Squidle+ Annotation counts by Campaign (https://catalogue-imos.aodn.org.au/geonetwork/srv/api/records/5a94a2cf-0810-44ea-a28d-cc8a5c30fbd7) \n- IMOS - Understanding of Marine Imagery (UMI) Sub-Facility - Squidle+ Imagery and Tracks by Deployment (https://catalogue-imos.aodn.org.au/geonetwork/srv/api/records/0c9bdfd6-2760-4bde-8230-241132790701)\n\nThis dataset supersedes the RLS specific \"Reef Life Survey (RLS): Habitat Quadrats \" collection that was available at https://catalogue-rls.imas.utas.edu.au/geonetwork/srv/en/metadata.show?uuid=6e9c4980-1005-11dd-b28e-00188b4c0af8 (provision of data was stopped in June 2021).",
     "Documentation": "https://catalogue-imos.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/0a65be6d-1c76-49ac-a151-80acf123612c",
     "Contact": "info@aodn.org.au",
@@ -170,7 +170,7 @@
     "License": "http://creativecommons.org/licenses/by/4.0/",
     "Resources": [
       {
-        "Description": "Cloud Optimised AODN dataset of IMOS - National Reef Monitoring Network Sub-Facility - Global benthic cover data (photoquadrat image annotations)",
+        "Description": "Cloud Optimised AODN dataset of National Reef Monitoring Network - Global benthic cover data (photoquadrat image annotations)",
         "ARN": "arn:aws:s3:::aodn-cloud-optimised/diver_photoquadrat_score_qc.parquet",
         "Region": "ap-southeast-2",
         "Type": "S3 Bucket"
@@ -179,7 +179,7 @@
     "DataAtWork": {
       "Tutorials": [
         {
-          "Title": "Accessing IMOS - National Reef Monitoring Network Sub-Facility - Global benthic cover data (photoquadrat image annotations)",
+          "Title": "Accessing National Reef Monitoring Network - Global benthic cover data (photoquadrat image annotations)",
           "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/diver_photoquadrat_score_qc.ipynb",
           "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/diver_photoquadrat_score_qc.ipynb",
           "AuthorName": "Laurent Besnard",

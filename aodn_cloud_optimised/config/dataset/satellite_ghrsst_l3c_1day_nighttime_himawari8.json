@@ -195,7 +195,7 @@
     "License": "http://creativecommons.org/licenses/by/4.0/",
     "Resources": [
       {
-        "Description": "Cloud Optimised AODN dataset of IMOS - SRS - SST - L3C - Himawari-8 - 1 day - night time - Australia",
+        "Description": "Cloud Optimised AODN dataset of Satellite - Sea surface temperature - Level 3 - Single sensor - Himawari-8 - 1 day - Night time",
         "ARN": "arn:aws:s3:::aodn-cloud-optimised/satellite_ghrsst_l3c_1day_nighttime_himawari8.zarr",
         "Region": "ap-southeast-2",
         "Type": "S3 Bucket"
@@ -204,7 +204,7 @@
     "DataAtWork": {
       "Tutorials": [
         {
-          "Title": "Accessing IMOS - SRS - SST - L3C - Himawari-8 - 1 day - night time - Australia",
+          "Title": "Accessing Satellite - Sea surface temperature - Level 3 - Single sensor - Himawari-8 - 1 day - Night time",
           "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_ghrsst_l3c_1day_nighttime_himawari8.ipynb",
           "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_ghrsst_l3c_1day_nighttime_himawari8.ipynb",
           "AuthorName": "Laurent Besnard",

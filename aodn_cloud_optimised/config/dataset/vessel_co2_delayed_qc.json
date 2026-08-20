@@ -549,7 +549,7 @@
     "License": "http://creativecommons.org/licenses/by/4.0/",
     "Resources": [
       {
-        "Description": "Cloud Optimised AODN dataset of IMOS - SOOP Underway CO2 Measurements Research Group - delayed mode data",
+        "Description": "Cloud Optimised AODN dataset of Ships of Opportunity - Biogeochemical sensors - Delayed mode",
         "ARN": "arn:aws:s3:::aodn-cloud-optimised/vessel_co2_delayed_qc.parquet",
         "Region": "ap-southeast-2",
         "Type": "S3 Bucket"
@@ -558,7 +558,7 @@
     "DataAtWork": {
       "Tutorials": [
         {
-          "Title": "Accessing IMOS - SOOP Underway CO2 Measurements Research Group - delayed mode data",
+          "Title": "Accessing Ships of Opportunity - Biogeochemical sensors - Delayed mode",
           "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/vessel_co2_delayed_qc.ipynb",
           "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/vessel_co2_delayed_qc.ipynb",
           "AuthorName": "Laurent Besnard",

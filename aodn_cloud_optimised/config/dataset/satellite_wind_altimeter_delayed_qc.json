@@ -201,7 +201,7 @@
     }
   },
   "aws_opendata_registry": {
-    "Name": "Satellite - Surface Waves - Synthetic Aperture Radar - Wind - Delayed mode",
+    "Name": "Satellite - Surface Waves - Synthetic Aperture Radar - Wind - Gridded Delayed mode",
     "Description": "Sentinel-1 A, B and C satellites are part of Europe's Copernicus Earth Observation program and carry identical C-band Synthetic Aperture Radar (SAR) instruments. This dataset contains 10m neutral stability wind speed and direction derived from Sentinel-1 A, B and C SARs in the wider Australian coastal regions. In these regions, the satellites normally operate in interferometric wide (IW) swath mode. The winds are derived using a consistent geophysical model function (gmf), CMOD5N, and variational Bayesian inversion approach as proposed in Portabella et al. (2002) and Sentinel-1 Ocean wind (owi) algorithm definition document. The input SAR and model (ECMWF) data used in the inversion are sourced from owi level-2 product, and the resulting derived winds are approximately at 1km horizontal spatial resolution as in the source product but derived using a consistent gmf over time (unlike the source product). Wind speeds are also calibrated against Metop-A and B scatterometer wind database of Ribal and Young, 2020 (JTECH).\n\nThis data has also been combined and interpolated to a nominal 0.01 x 0.01-degree regular grid (available as a separate gridded product: IMOS - Satellite Remote Sensing - Surface Waves Sub-Facility - Gridded SAR wind - Delayed mode data). \n\nThe data represented by this record, are presented in delayed mode.",
     "Documentation": "https://catalogue-imos.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/b02b929f-2caf-45d4-ac60-d4632b7ca0ca",
     "Contact": "info@aodn.org.au",
@@ -215,7 +215,7 @@
     "License": "http://creativecommons.org/licenses/by/4.0/",
     "Resources": [
       {
-        "Description": "Cloud Optimised AODN dataset of IMOS - Satellite Remote Sensing - Surface Waves Sub-Facility - SAR wind - Delayed mode data",
+        "Description": "Cloud Optimised AODN dataset of Satellite - Surface Waves - Synthetic Aperture Radar - Wind - Gridded Delayed mode",
         "ARN": "arn:aws:s3:::aodn-cloud-optimised/satellite_wind_altimeter_delayed_qc.zarr",
         "Region": "ap-southeast-2",
         "Type": "S3 Bucket"
@@ -224,7 +224,7 @@
     "DataAtWork": {
       "Tutorials": [
         {
-          "Title": "Accessing IMOS - Satellite Remote Sensing - Surface Waves Sub-Facility - SAR wind - Delayed mode data",
+          "Title": "Accessing Satellite - Surface Waves - Synthetic Aperture Radar - Wind - Gridded Delayed mode",
           "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_wind_altimeter_delayed_qc.ipynb",
           "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_wind_altimeter_delayed_qc.ipynb",
           "AuthorName": "Laurent Besnard",

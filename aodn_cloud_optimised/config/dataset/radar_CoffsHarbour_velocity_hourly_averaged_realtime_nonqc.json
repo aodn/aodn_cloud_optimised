@@ -18,7 +18,7 @@
     "License": "http://creativecommons.org/licenses/by/4.0/",
     "Resources": [
       {
-        "Description": "Cloud Optimised AODN dataset of IMOS - Ocean Radar - Coffs Harbour HF ocean radar site (New South Wales, Australia) - Real-time sea water velocity",
+        "Description": "Cloud Optimised AODN dataset of Ocean Radar - Coffs Harbour site - Sea water velocity - Real time",
         "ARN": "arn:aws:s3:::aodn-cloud-optimised/radar_CoffsHarbour_velocity_hourly_averaged_realtime_nonqc.zarr",
         "Region": "ap-southeast-2",
         "Type": "S3 Bucket"
@@ -27,7 +27,7 @@
     "DataAtWork": {
       "Tutorials": [
         {
-          "Title": "Accessing IMOS - Ocean Radar - Coffs Harbour HF ocean radar site (New South Wales, Australia) - Real-time sea water velocity",
+          "Title": "Accessing Ocean Radar - Coffs Harbour site - Sea water velocity - Real time",
           "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/radar_CoffsHarbour_velocity_hourly_averaged_realtime_nonqc.ipynb",
           "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/radar_CoffsHarbour_velocity_hourly_averaged_realtime_nonqc.ipynb",
           "AuthorName": "Laurent Besnard",

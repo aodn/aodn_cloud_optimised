@@ -136,19 +136,22 @@
     }
   },
   "aws_opendata_registry": {
-    "Name": "IMOS - SRS - Bio-Optical Database of Australian Waters (BODBAW) - Backscattering",
+    "Name": "Satellite - Ocean Colour - Bio-Optical Database - backscattering",
     "Description": "Spectral backscattering coefficients from the Bio-Optical Database of Australian Waters (BODBAW) programme. Data collected at discrete depth profiles across multiple field campaigns around Australia. Variables include corrected (bb_corr) and uncorrected (bb_uncorr) volume total backwards scattering coefficients at up to 6 wavelengths. Data are in long format with one row per (observation, wavelength) combination.",
     "Documentation": "https://catalogue-imos.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/97b9fe73-ee44-437f-b2ae-5b8613f81042",
     "Contact": "info@aodn.org.au",
     "ManagedBy": "AODN",
     "UpdateFrequency": "As Needed",
     "Tags": [
-      "FILL UP MANUALLY - CHECK DOCUMENTATION"
+      "oceans",
+      "satellite imagery",
+      "chemistry",
+      "biology"
     ],
     "License": "http://creativecommons.org/licenses/by/4.0/",
     "Resources": [
       {
-        "Description": "Cloud Optimised AODN dataset of IMOS - SRS - Bio-Optical Database of Australian Waters (BODBAW) - Backscattering",
+        "Description": "Cloud Optimised AODN dataset of Satellite - Ocean Colour - Bio-Optical Database - backscattering",
         "ARN": "arn:aws:s3:::aodn-cloud-optimised/vessel_bio_optical_backscattering_delayed_qc.parquet",
         "Region": "ap-southeast-2",
         "Type": "S3 Bucket"
@@ -157,7 +160,7 @@
     "DataAtWork": {
       "Tutorials": [
         {
-          "Title": "Accessing IMOS - SRS - Bio-Optical Database of Australian Waters (BODBAW) - Backscattering",
+          "Title": "Accessing Satellite - Ocean Colour - Bio-Optical Database - backscattering",
           "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/vessel_bio_optical_backscattering_delayed_qc.ipynb",
           "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/vessel_bio_optical_backscattering_delayed_qc.ipynb",
           "AuthorName": "Laurent Besnard",
@@ -172,7 +175,7 @@
         }
       ]
     },
-    "Citation": "IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access]"
+    "Citation": "The citation in a list of references is: \"IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access].\""
   },
   "run_settings": {
     "paths": [

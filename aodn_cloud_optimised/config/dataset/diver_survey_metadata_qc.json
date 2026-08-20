@@ -169,7 +169,7 @@
     "License": "http://creativecommons.org/licenses/by/4.0/",
     "Resources": [
       {
-        "Description": "Cloud Optimised AODN dataset of IMOS - National Reef Monitoring Network Sub-Facility - Survey metadata",
+        "Description": "Cloud Optimised AODN dataset of National Reef Monitoring Network - Survey metadata",
         "ARN": "arn:aws:s3:::aodn-cloud-optimised/diver_survey_metadata_qc.parquet",
         "Region": "ap-southeast-2",
         "Type": "S3 Bucket"
@@ -178,7 +178,7 @@
     "DataAtWork": {
       "Tutorials": [
         {
-          "Title": "Accessing IMOS - National Reef Monitoring Network Sub-Facility - Survey metadata",
+          "Title": "Accessing National Reef Monitoring Network - Survey metadata",
           "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/diver_survey_metadata_qc.ipynb",
           "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/diver_survey_metadata_qc.ipynb",
           "AuthorName": "Laurent Besnard",
