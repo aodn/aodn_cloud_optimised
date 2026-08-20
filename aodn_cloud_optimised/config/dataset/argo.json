@@ -484,9 +484,9 @@
     },
     "prefect": {
       "job_variables": {
-        "memory": 4096,
-        "cpu": 1024,
-        "env.PREFECT_TASK_RUNNER_THREAD_POOL_MAX_WORKERS": 8
+        "memory": 12288,
+        "cpu": 4096,
+        "env.PREFECT_TASK_RUNNER_THREAD_POOL_MAX_WORKERS": 6
       }
     },
     "coiled_cluster_options": {
@@ -503,7 +503,7 @@
         "memory_limit": "12GB"
       }
     },
-    "batch_size": 5000,
+    "batch_size": 512,
     "cluster": {
       "mode": "coiled",
       "restart_every_path": false
