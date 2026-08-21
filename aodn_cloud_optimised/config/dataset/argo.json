@@ -480,13 +480,15 @@
   },
   "run_settings": {
     "s3_fs_common_opts": {
-      "default_cache_type": "readahead"
+      "default_block_size": 104857600,
+      "default_cache_type": "blockcache",
+      "default_fill_cache": true
     },
     "prefect": {
       "job_variables": {
-        "memory": 12288,
-        "cpu": 4096,
-        "env.PREFECT_TASK_RUNNER_THREAD_POOL_MAX_WORKERS": 6
+        "memory": 8192,
+        "cpu": 2048,
+        "env.PREFECT_TASK_RUNNER_THREAD_POOL_MAX_WORKERS": 1
       }
     },
     "coiled_cluster_options": {
@@ -589,6 +591,6 @@
     ],
     "clear_existing_data": false,
     "raise_error": false,
-    "force_previous_parquet_deletion": true
+    "force_previous_parquet_deletion": false
   }
 }
