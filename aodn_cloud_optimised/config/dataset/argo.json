@@ -480,7 +480,7 @@
   },
   "run_settings": {
     "s3_fs_common_opts": {
-      "default_block_size": 107374182400,
+      "default_block_size": 104857600,
       "default_cache_type": "blockcache",
       "default_fill_cache": true
     },
