@@ -480,7 +480,9 @@
   },
   "run_settings": {
     "s3_fs_common_opts": {
-      "default_cache_type": "readahead"
+      "default_block_size": 107374182400,
+      "default_cache_type": "blockcache",
+      "default_fill_cache": true
     },
     "prefect": {
       "job_variables": {
