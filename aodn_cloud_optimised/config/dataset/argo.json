@@ -486,7 +486,7 @@
     },
     "prefect": {
       "job_variables": {
-        "memory": 9182,
+        "memory": 8192,
         "cpu": 2048,
         "env.PREFECT_TASK_RUNNER_THREAD_POOL_MAX_WORKERS": 1
       }
