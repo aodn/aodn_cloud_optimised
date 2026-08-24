@@ -14,38 +14,228 @@
           "long_name": "Filename of the source file"
         }
       },
-      "XBT_line": {
-        "source": "@global_attribute:XBT_line",
+      "SOOP_line_label": {
+        "source": "@variable_attribute:SOOP_line.SOOP_line_label",
         "schema": {
           "type": "string",
           "units": "1",
-          "_FillValue": "",
-          "long_name": "XBT_line"
+          "_FillValue": ""
         }
       },
-      "ship_name": {
-        "source": "@global_attribute:ship_name",
+      "SOOP_line_description": {
+        "source": "@variable_attribute:SOOP_line.SOOP_line_description",
         "schema": {
           "type": "string",
           "units": "1",
-          "_FillValue": "",
-          "long_name": "ship name"
+          "_FillValue": ""
         }
       },
-      "Callsign": {
-        "source": "@global_attribute:Callsign",
-        "schema": {
-          "type": "string",
-          "units": "1",
-          "long_name": "vessel callsign"
-        }
-      },
-      "imo_number": {
-        "source": "@global_attribute:imo_number",
+      "SOOP_sequence_number": {
+        "source": "@variable_attribute:SOOP_line.SOOP_sequence_number",
         "schema": {
           "type": "int32",
           "units": "1",
-          "long_name": "IMO number"
+          "_FillValue": -9
+        }
+      },
+      "Ship_name": {
+        "source": "@variable_attribute:Ship.Ship_name",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "Ship_IMO": {
+        "source": "@variable_attribute:Ship.Ship_IMO",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "Callsign": {
+        "source": "@variable_attribute:Ship.Callsign",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "Platform_code": {
+        "source": "@variable_attribute:Ship.Platform_code",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "SOT_ID": {
+        "source": "@variable_attribute:Ship.SOT_ID",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "WIGOS_ID": {
+        "source": "@variable_attribute:Ship.WIGOS_ID",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "Cruise_ID": {
+        "source": "@variable_attribute:Ship.Cruise_ID",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "Height_launch_above_water_meters": {
+        "source": "@variable_attribute:Ship.Height_launch_above_water_meters",
+        "schema": {
+          "type": "float",
+          "units": "m",
+          "_FillValue": -9999.0
+        }
+      },
+      "Launcher_type": {
+        "source": "@variable_attribute:Ship.Launcher_type",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "PROBE_TYPE": {
+        "source": "@variable_attribute:PROBE.PROBE_TYPE",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "PROBE_TYPE_name": {
+        "source": "@variable_attribute:PROBE.PROBE_TYPE_name",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "PROBE_TYPE_coefficient_a": {
+        "source": "@variable_attribute:PROBE.PROBE_TYPE_coefficient_a",
+        "schema": {
+          "type": "float",
+          "units": "1",
+          "_FillValue": -9999.0
+        }
+      },
+      "PROBE_TYPE_coefficient_b": {
+        "source": "@variable_attribute:PROBE.PROBE_TYPE_coefficient_b",
+        "schema": {
+          "type": "float",
+          "units": "1",
+          "_FillValue": -9999.0
+        }
+      },
+      "PROBE_manufacture_date_YYYYMMDD": {
+        "source": "@variable_attribute:PROBE.PROBE_manufacture_date_YYYYMMDD",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "PROBE_serial_number": {
+        "source": "@variable_attribute:PROBE.PROBE_serial_number",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "PROBE_box_number": {
+        "source": "@variable_attribute:PROBE.PROBE_box_number",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "PROBE_calibration_OFFSET": {
+        "source": "@variable_attribute:PROBE.PROBE_calibration_OFFSET",
+        "schema": {
+          "type": "float",
+          "units": "1",
+          "_FillValue": -9999.0
+        }
+      },
+      "PROBE_calibration_SCALE": {
+        "source": "@variable_attribute:PROBE.PROBE_calibration_SCALE",
+        "schema": {
+          "type": "float",
+          "units": "1",
+          "_FillValue": -9999.0
+        }
+      },
+      "RECORDER_TYPE": {
+        "source": "@variable_attribute:RECORDER.RECORDER_TYPE",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "RECORDER_TYPE_name": {
+        "source": "@variable_attribute:RECORDER.RECORDER_TYPE_name",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "RECORDER_serial_number": {
+        "source": "@variable_attribute:RECORDER.RECORDER_serial_number",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "RECORDER_software_version": {
+        "source": "@variable_attribute:RECORDER.RECORDER_software_version",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "RECORDER_firmware_version": {
+        "source": "@variable_attribute:RECORDER.RECORDER_firmware_version",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "RECORDER_hardware_version": {
+        "source": "@variable_attribute:RECORDER.RECORDER_hardware_version",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
+        }
+      },
+      "RECORDER_GUI_version": {
+        "source": "@variable_attribute:RECORDER.RECORDER_GUI_version",
+        "schema": {
+          "type": "string",
+          "units": "1",
+          "_FillValue": ""
         }
       },
       "timestamp": {
@@ -67,14 +257,14 @@
     },
     "partitioning": [
       {
-        "source_variable": "XBT_line"
+        "source_variable": "SOOP_line_label"
       },
       {
         "source_variable": "timestamp",
         "type": "time_extent",
         "time_extent": {
           "time_varname": "TIME",
-          "partition_period": "M"
+          "partition_period": "Y"
         }
       },
       {
@@ -96,8 +286,8 @@
         "date_created"
       ],
       "set": {
-        "title": "Upper Ocean Thermal Data collected using XBT (expendable bathythermographs)",
-        "principal_investigator": "Cowley, Rebecca",
+        "title": "Ocean Temperature profile data from XBT (expendable bathythermographs)",
+        "principal_investigator": "Rebecca Cowley, CSIRO",
         "principal_investigator_email": "rebecca.cowley@csiro.au",
         "featureType": "profile"
       }
@@ -110,11 +300,22 @@
       "axis": "T",
       "long_name": "time",
       "standard_name": "time",
+      "calendar": "gregorian",
+      "units": "days since 1950-01-01 00:00:00 UTC",
+      "valid_max": 90000.0,
+      "valid_min": 0.0
+    },
+    "TIME_RAW": {
+      "type": "timestamp[ns]",
+      "long_name": "time_raw",
+      "standard_name": "time",
+      "calendar": "gregorian",
+      "units": "days since 1950-01-01 00:00:00 UTC",
       "valid_max": 90000.0,
       "valid_min": 0.0
     },
     "TIME_quality_control": {
-      "type": "float",
+      "type": "int32",
       "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
       "flag_values": [
         0,
@@ -128,7 +329,7 @@
         8,
         9
       ],
-      "long_name": "quality flags for time",
+      "long_name": "time quality_flag",
       "quality_control_conventions": "IMOS standard flags",
       "standard_name": "time status_flag",
       "valid_max": 9,
@@ -145,8 +346,17 @@
       "valid_max": 90.0,
       "valid_min": -90.0
     },
-    "LATITUDE_quality_control": {
+    "LATITUDE_RAW": {
       "type": "float",
+      "long_name": "latitude_raw",
+      "reference_datum": "geographical coordinates, WGS84 projection",
+      "standard_name": "latitude",
+      "units": "degrees_north",
+      "valid_max": 90.0,
+      "valid_min": -90.0
+    },
+    "LATITUDE_quality_control": {
+      "type": "int32",
       "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
       "flag_values": [
         0,
@@ -160,7 +370,7 @@
         8,
         9
       ],
-      "long_name": "quality flags for latitude",
+      "long_name": "latitude quality_flag",
       "quality_control_conventions": "IMOS standard flags",
       "standard_name": "latitude status_flag",
       "valid_max": 9,
@@ -177,42 +387,16 @@
       "valid_max": 180.0,
       "valid_min": -180.0
     },
+    "LONGITUDE_RAW": {
+      "type": "float",
+      "long_name": "longitude_raw",
+      "reference_datum": "geographical coordinates, WGS84 projection",
+      "standard_name": "longitude",
+      "units": "degrees_east",
+      "valid_max": 180.0,
+      "valid_min": -180.0
+    },
     "LONGITUDE_quality_control": {
-      "type": "float",
-      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
-      "flag_values": [
-        0,
-        1,
-        2,
-        3,
-        4,
-        5,
-        6,
-        7,
-        8,
-        9
-      ],
-      "long_name": "quality flags for longitude",
-      "quality_control_conventions": "IMOS standard flags",
-      "standard_name": "longitude status_flag",
-      "valid_max": 9,
-      "valid_min": 0
-    },
-    "DEPTH_RAW": {
-      "type": "float",
-      "ancillary_variables": "DEPTH_RAW_quality_control",
-      "axis": "Z",
-      "fallrate_equation_coefficient_a": 6.691,
-      "fallrate_equation_coefficient_b": -2.25,
-      "long_name": "depth_raw",
-      "positive": "down",
-      "reference_datum": "sea surface",
-      "standard_name": "depth",
-      "units": "m",
-      "valid_max": 12000.0,
-      "valid_min": -5.0
-    },
-    "DEPTH_RAW_quality_control": {
       "type": "int32",
       "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
       "flag_values": [
@@ -227,20 +411,38 @@
         8,
         9
       ],
-      "long_name": "quality flags for depth raw",
+      "long_name": "longitude quality_flag",
       "quality_control_conventions": "IMOS standard flags",
-      "standard_name": "depth status_flag",
+      "standard_name": "longitude status_flag",
       "valid_max": 9,
       "valid_min": 0
     },
+    "DEPTH_RAW": {
+      "type": "float",
+      "axis": "Z",
+      "coordinates": "TIME LATITUDE LONGITUDE DEPTH",
+      "long_name": "depth_raw",
+      "positive": "down",
+      "reference_datum": "sea surface",
+      "standard_name": "depth",
+      "units": "m",
+      "valid_max": 12000.0,
+      "valid_min": -5.0
+    },
+    "DEPTH_uncertainty": {
+      "type": "float",
+      "long_name": "depth uncertainty_estimate",
+      "reference_datum": "sea surface",
+      "standard_name": "depth standard_error",
+      "units": "m",
+      "valid_max": 12000.0,
+      "valid_min": -5.0
+    },
     "DEPTH": {
       "type": "float",
-      "ancillary_variables": "DEPTH_quality_control",
+      "ancillary_variables": "DEPTH_quality_control DEPTH_uncertainty",
       "axis": "Z",
-      "fallrate_equation_coefficient_a": 6.691,
-      "fallrate_equation_coefficient_b": -2.25,
       "long_name": "depth",
-      "longname": "depth",
       "positive": "down",
       "reference_datum": "sea surface",
       "standard_name": "depth",
@@ -263,7 +465,7 @@
         8,
         9
       ],
-      "long_name": "quality flags for depth",
+      "long_name": "depth quality_flag",
       "quality_control_conventions": "IMOS standard flags",
       "standard_name": "depth status_flag",
       "valid_max": 9,
@@ -271,16 +473,16 @@
     },
     "TEMP_RAW": {
       "type": "float",
-      "ancillary_variables": "TEMP_RAW_quality_control",
-      "axis": "Z",
-      "long_name": "sea_water_temperature_raw",
-      "positive": "down",
+      "ancillary_variables": "TEMP_RAW_quality_control TEMP_uncertainty",
+      "coordinates": "TIME LATITUDE LONGITUDE DEPTH",
+      "long_name": "sea_water_temperature",
+      "standard_name": "sea_water_temperature",
       "units": "Celsius",
       "valid_max": 40.0,
       "valid_min": -2.5
     },
     "TEMP_RAW_quality_control": {
-      "type": "float",
+      "type": "int32",
       "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
       "flag_values": [
         0,
@@ -294,25 +496,32 @@
         8,
         9
       ],
-      "long_name": "quality flag for sea_water_temperature_raw",
+      "long_name": "sea_water_temperature quality_flag",
       "quality_control_conventions": "IMOS standard flags",
       "standard_name": "sea_water_temperature status_flag",
       "valid_max": 9,
       "valid_min": 0
     },
+    "TEMP_uncertainty": {
+      "type": "float",
+      "long_name": "sea_water_temperature uncertainty_estimate",
+      "standard_name": "sea_water_temperature standard_error",
+      "units": "Celsius",
+      "valid_max": 40.0,
+      "valid_min": -2.5
+    },
     "TEMP": {
       "type": "float",
-      "ancillary_variables": "TEMP_quality_control",
-      "axis": "Z",
+      "ancillary_variables": "TEMP_quality_control TEMP_uncertainty",
+      "coordinates": "TIME LATITUDE LONGITUDE DEPTH",
       "long_name": "sea_water_temperature",
-      "positive": "down",
       "standard_name": "sea_water_temperature",
       "units": "Celsius",
       "valid_max": 40.0,
       "valid_min": -2.5
     },
     "TEMP_quality_control": {
-      "type": "float",
+      "type": "int32",
       "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
       "flag_values": [
         0,
@@ -326,69 +535,159 @@
         8,
         9
       ],
-      "long_name": "quality flag for sea_water_temperature",
+      "long_name": "sea_water_temperature quality_flag",
       "quality_control_conventions": "IMOS standard flags",
       "standard_name": "sea_water_temperature status_flag",
       "valid_max": 9,
       "valid_min": 0
     },
+    "TEMP_RECORDING_SYSTEM": {
+      "type": "float",
+      "ancillary_variables": "TEMP_RECORDING_SYSTEM_quality_control",
+      "coordinates": "TIME LATITUDE LONGITUDE DEPTH",
+      "long_name": "sea_water_temperature",
+      "standard_name": "sea_water_temperature",
+      "units": "Celsius",
+      "valid_max": 40.0,
+      "valid_min": -2.5
+    },
+    "TEMP_RECORDING_SYSTEM_quality_control": {
+      "type": "int32",
+      "flag_meanings": "out_of_range spikes_bad no_qc_applied qc_applied_good_data suspect_data_out_of_climatology suspect_surface_data spike_filtered",
+      "flag_values": [
+        -119,
+        -86,
+        -64,
+        0,
+        73,
+        79,
+        106
+      ],
+      "long_name": "sea_water_temperature quality_flag",
+      "quality_control_conventions": "Data Quality Control Flags, Lindsay Pender, 2000,  https://www.marine.csiro.au/data/trawler/download.cfm?file_id=4716",
+      "standard_name": "sea_water_temperature status_flag"
+    },
+    "QC_accept_code": {
+      "type": "int64",
+      "flag_codes": "QC WS LE EI HF RE IV PI TO EF ST PS DO CT TE LA LO PR",
+      "flag_masks": [
+        1,
+        2,
+        4,
+        8,
+        16,
+        32,
+        64,
+        128,
+        256,
+        512,
+        1024,
+        2048,
+        4096,
+        8192,
+        16384,
+        32768,
+        65536,
+        131072
+      ],
+      "flag_meanings": "scientific_qc_applied wire_stretch leakage electrical_interference_interpolated high_frequency_noise_filtered repeat_profile temperature_inversion_confirmed temperature_inversion_unconfirmed temperature_offset temperature_eddy_or_front temperature_steps_or_structure_confirmed temperature_steps_or_structure_unconfirmed depth_offset constant_temperature time_error_corrected latitude_error_corrected longitude_error_corrected probe_type_changed",
+      "long_name": "accept_code",
+      "valid_max": 262143
+    },
+    "QC_reject_code": {
+      "type": "int64",
+      "flag_codes": "CS WB WS HB LE EI HF NG TO DO CT TE PE DU TP PR",
+      "flag_masks": [
+        1,
+        2,
+        4,
+        8,
+        16,
+        32,
+        64,
+        128,
+        256,
+        512,
+        1024,
+        2048,
+        4096,
+        8192,
+        16384,
+        32768
+      ],
+      "flag_meanings": "surface_transient wire_break wire_stretch hit_bottom leakage electrical_interference high_frequency_noise no_good temperature_offset depth_offset constant_temperature time_error position_error duplicate_profile test_probe probe_type",
+      "long_name": "reject_code",
+      "valid_max": 65535
+    },
+    "RESISTANCE": {
+      "type": "float",
+      "coordinates": "TIME LATITUDE LONGITUDE DEPTH",
+      "long_name": "PROBE_thermistor_resistance",
+      "units": "Ohms"
+    },
+    "SAMPLE_TIME": {
+      "type": "timestamp[ns]",
+      "coordinates": "TIME LATITUDE LONGITUDE DEPTH",
+      "long_name": "RECORDER_sample_time",
+      "standard_name": "time"
+    },
     "HISTORY_INSTITUTION": {
       "type": "string",
-      "Conventions": "GTSPP IDENT_CODE table",
-      "long_name": "Institution which performed action"
-    },
-    "HISTORY_STEP": {
-      "type": "string",
-      "Conventions": "GTSPP PRC_CODE table",
-      "long_name": "Step in data processing"
+      "long_name": "Institution_which_performed_qc_action"
     },
     "HISTORY_SOFTWARE": {
       "type": "string",
-      "Conventions": "Institution dependent",
-      "long_name": "Name of software which performed action"
+      "long_name": "Name_of_software_which_performed_qc_action"
     },
     "HISTORY_SOFTWARE_RELEASE": {
       "type": "string",
-      "Conventions": "Institution dependent",
-      "long_name": "Version/Release of software which performed action"
+      "long_name": "Version_of_software_which_performed_qc_action"
     },
     "HISTORY_DATE": {
       "type": "timestamp[ns]",
-      "axis": "T",
-      "long_name": "Date the history record was created"
+      "long_name": "Date_qc_history_record_created",
+      "calendar": "gregorian",
+      "units": "days since 1950-01-01 00:00:00 UTC",
+      "valid_max": 90000.0,
+      "valid_min": 0.0
     },
     "HISTORY_PARAMETER": {
       "type": "string",
-      "Conventions": "GTSPP PC_PROF table",
-      "long_name": "Parameter that action is performed on"
+      "long_name": "Parameter_that_qc_action_applied_to"
     },
     "HISTORY_START_DEPTH": {
       "type": "float",
-      "axis": "Z",
-      "long_name": "Start depth action applied to",
-      "positive": "down",
-      "units": "m"
+      "long_name": "Shallowest_depth_qc_action_applied_to",
+      "units": "m",
+      "valid_max": 12000.0,
+      "valid_min": -5.0
     },
-    "HISTORY_STOP_DEPTH": {
-      "type": "float",
-      "axis": "Z",
-      "long_name": "End depth action applied to",
-      "positive": "down",
-      "units": "m"
-    },
-    "HISTORY_PREVIOUS_VALUE": {
+    "HISTORY_QC_CODE": {
       "type": "string",
-      "long_name": "Parameter previous value before action"
+      "ancillary_variables": "HISTORY_QC_CODE_VALUE",
+      "long_name": "QC_code_applied"
     },
-    "HISTORY_QC_FLAG": {
+    "HISTORY_QC_CODE_DESCRIPTION": {
       "type": "string",
-      "Conventions": "GTSPP ACT_CODE table and CSIRO XBT Cookbook",
-      "long_name": "QC flag applied"
+      "long_name": "QC_code_description"
     },
-    "HISTORY_QC_FLAG_DESCRIPTION": {
-      "type": "string",
-      "Conventions": "GTSPP ACT_CODE table and CSIRO XBT Cookbook",
-      "long_name": "Description of HISTORY_QC_FLAG"
+    "HISTORY_QC_CODE_VALUE": {
+      "type": "int32",
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "long_name": "QC_code_value",
+      "quality_control_conventions": "IMOS standard flags"
     }
   },
   "aws_opendata_registry": {
@@ -445,16 +744,24 @@
         "memory_limit": "14GB"
       }
     },
-    "batch_size": 150,
+    "batch_size": 300,
     "cluster": {
       "mode": "coiled",
       "restart_every_path": false
+    },
+    "prefect": {
+      "job_variables": {
+        "env.PREFECT_TASK_RUNNER_THREAD_POOL_MAX_WORKERS": 16
+      }
+    },
+    "s3_fs_common_opts": {
+      "default_cache_type": "readahead"
     },
     "paths": [
       {
         "s3_uri": "s3://imos-data/IMOS/SOOP/SOOP-XBT/DELAYED/",
         "filter": [
-          ".*\\.nc$"
+          ".*_FV01_.*\\.nc$"
         ],
         "year_range": []
       }
