@@ -14,40 +14,36 @@
           "long_name": "Filename of the source file"
         }
       },
-      "XBT_line": {
+      "SOOP_line_label": {
         "source": "@variable_attribute:SOOP_line.SOOP_line_label",
         "schema": {
           "type": "string",
           "units": "1",
-          "_FillValue": "",
-          "long_name": "XBT line label"
+          "_FillValue": ""
         }
       },
-      "XBT_line_description": {
+      "SOOP_line_description": {
         "source": "@variable_attribute:SOOP_line.SOOP_line_description",
         "schema": {
           "type": "string",
           "units": "1",
-          "_FillValue": "",
-          "long_name": "XBT line description"
+          "_FillValue": ""
         }
       },
-      "XBT_line_sequence_number": {
+      "SOOP_sequence_number": {
         "source": "@variable_attribute:SOOP_line.SOOP_sequence_number",
         "schema": {
           "type": "int32",
           "units": "1",
-          "_FillValue": -9,
-          "long_name": "XBT line sequence number"
+          "_FillValue": -9
         }
       },
-      "ship_name": {
+      "Ship_name": {
         "source": "@variable_attribute:Ship.Ship_name",
         "schema": {
           "type": "string",
           "units": "1",
-          "_FillValue": "",
-          "long_name": "ship name"
+          "_FillValue": ""
         }
       },
       "Ship_IMO": {
@@ -55,8 +51,7 @@
         "schema": {
           "type": "string",
           "units": "1",
-          "_FillValue": "",
-          "long_name": "ship IMO number"
+          "_FillValue": ""
         }
       },
       "Callsign": {
@@ -64,8 +59,7 @@
         "schema": {
           "type": "string",
           "units": "1",
-          "_FillValue": "",
-          "long_name": "vessel callsign"
+          "_FillValue": ""
         }
       },
       "Platform_code": {
@@ -73,8 +67,7 @@
         "schema": {
           "type": "string",
           "units": "1",
-          "_FillValue": "",
-          "long_name": "platform code"
+          "_FillValue": ""
         }
       },
       "SOT_ID": {
@@ -82,8 +75,7 @@
         "schema": {
           "type": "string",
           "units": "1",
-          "_FillValue": "",
-          "long_name": "SOT identifier"
+          "_FillValue": ""
         }
       },
       "WIGOS_ID": {
@@ -91,8 +83,7 @@
         "schema": {
           "type": "string",
           "units": "1",
-          "_FillValue": "",
-          "long_name": "WIGOS station identifier"
+          "_FillValue": ""
         }
       },
       "Cruise_ID": {
@@ -100,8 +91,7 @@
         "schema": {
           "type": "string",
           "units": "1",
-          "_FillValue": "",
-          "long_name": "cruise identifier"
+          "_FillValue": ""
         }
       },
       "Height_launch_above_water_meters": {
@@ -109,8 +99,7 @@
         "schema": {
           "type": "float",
           "units": "m",
-          "_FillValue": -9999.0,
-          "long_name": "height of launch above water"
+          "_FillValue": -9999.0
         }
       },
       "Launcher_type": {
@@ -118,8 +107,7 @@
         "schema": {
           "type": "string",
           "units": "1",
-          "_FillValue": "",
-          "long_name": "launcher type"
+          "_FillValue": ""
         }
       },
       "PROBE_TYPE": {
@@ -127,8 +115,7 @@
         "schema": {
           "type": "string",
           "units": "1",
-          "_FillValue": "",
-          "long_name": "probe type WMO code"
+          "_FillValue": ""
         }
       },
       "PROBE_TYPE_name": {
@@ -136,8 +123,7 @@
         "schema": {
           "type": "string",
           "units": "1",
-          "_FillValue": "",
-          "long_name": "probe type name"
+          "_FillValue": ""
         }
       },
       "PROBE_TYPE_coefficient_a": {
@@ -145,8 +131,7 @@
         "schema": {
           "type": "float",
           "units": "1",
-          "_FillValue": -9999.0,
-          "long_name": "probe fall rate equation coefficient a"
+          "_FillValue": -9999.0
         }
       },
       "PROBE_TYPE_coefficient_b": {
@@ -154,17 +139,15 @@
         "schema": {
           "type": "float",
           "units": "1",
-          "_FillValue": -9999.0,
-          "long_name": "probe fall rate equation coefficient b"
+          "_FillValue": -9999.0
         }
       },
-      "PROBE_manufacture_date": {
+      "PROBE_manufacture_date_YYYYMMDD": {
         "source": "@variable_attribute:PROBE.PROBE_manufacture_date_YYYYMMDD",
         "schema": {
           "type": "string",
           "units": "1",
-          "_FillValue": "",
-          "long_name": "probe manufacture date (YYYYMMDD)"
+          "_FillValue": ""
         }
       },
       "PROBE_serial_number": {
@@ -172,8 +155,7 @@
         "schema": {
           "type": "string",
           "units": "1",
-          "_FillValue": "",
-          "long_name": "probe serial number"
+          "_FillValue": ""
         }
       },
       "PROBE_box_number": {
@@ -181,8 +163,7 @@
         "schema": {
           "type": "string",
           "units": "1",
-          "_FillValue": "",
-          "long_name": "probe box number"
+          "_FillValue": ""
         }
       },
       "PROBE_calibration_OFFSET": {
@@ -190,8 +171,7 @@
         "schema": {
           "type": "float",
           "units": "1",
-          "_FillValue": -9999.0,
-          "long_name": "probe calibration offset"
+          "_FillValue": -9999.0
         }
       },
       "PROBE_calibration_SCALE": {
@@ -199,8 +179,7 @@
         "schema": {
           "type": "float",
           "units": "1",
-          "_FillValue": -9999.0,
-          "long_name": "probe calibration scale"
+          "_FillValue": -9999.0
         }
       },
       "RECORDER_TYPE": {
@@ -208,8 +187,7 @@
         "schema": {
           "type": "string",
           "units": "1",
-          "_FillValue": "",
-          "long_name": "recorder type WMO code"
+          "_FillValue": ""
         }
       },
       "RECORDER_TYPE_name": {
@@ -217,8 +195,7 @@
         "schema": {
           "type": "string",
           "units": "1",
-          "_FillValue": "",
-          "long_name": "recorder type name"
+          "_FillValue": ""
         }
       },
       "RECORDER_serial_number": {
@@ -226,8 +203,7 @@
         "schema": {
           "type": "string",
           "units": "1",
-          "_FillValue": "",
-          "long_name": "recorder serial number"
+          "_FillValue": ""
         }
       },
       "RECORDER_software_version": {
@@ -235,8 +211,7 @@
         "schema": {
           "type": "string",
           "units": "1",
-          "_FillValue": "",
-          "long_name": "recorder software version"
+          "_FillValue": ""
         }
       },
       "RECORDER_firmware_version": {
@@ -244,8 +219,7 @@
         "schema": {
           "type": "string",
           "units": "1",
-          "_FillValue": "",
-          "long_name": "recorder firmware version"
+          "_FillValue": ""
         }
       },
       "RECORDER_hardware_version": {
@@ -253,8 +227,7 @@
         "schema": {
           "type": "string",
           "units": "1",
-          "_FillValue": "",
-          "long_name": "recorder hardware version"
+          "_FillValue": ""
         }
       },
       "RECORDER_GUI_version": {
@@ -262,8 +235,7 @@
         "schema": {
           "type": "string",
           "units": "1",
-          "_FillValue": "",
-          "long_name": "recorder GUI version"
+          "_FillValue": ""
         }
       },
       "timestamp": {
@@ -285,14 +257,14 @@
     },
     "partitioning": [
       {
-        "source_variable": "XBT_line"
+        "source_variable": "SOOP_line_label"
       },
       {
         "source_variable": "timestamp",
         "type": "time_extent",
         "time_extent": {
           "time_varname": "TIME",
-          "partition_period": "M"
+          "partition_period": "Y"
         }
       },
       {
@@ -314,8 +286,8 @@
         "date_created"
       ],
       "set": {
-        "title": "Upper Ocean Thermal Data collected using XBT (expendable bathythermographs)",
-        "principal_investigator": "Cowley, Rebecca",
+        "title": "Ocean Temperature profile data from XBT (expendable bathythermographs)",
+        "principal_investigator": "Rebecca Cowley, CSIRO",
         "principal_investigator_email": "rebecca.cowley@csiro.au",
         "featureType": "profile"
       }
@@ -328,6 +300,8 @@
       "axis": "T",
       "long_name": "time",
       "standard_name": "time",
+      "calendar": "gregorian",
+      "units": "days since 1950-01-01 00:00:00 UTC",
       "valid_max": 90000.0,
       "valid_min": 0.0
     },
@@ -335,6 +309,8 @@
       "type": "timestamp[ns]",
       "long_name": "time_raw",
       "standard_name": "time",
+      "calendar": "gregorian",
+      "units": "days since 1950-01-01 00:00:00 UTC",
       "valid_max": 90000.0,
       "valid_min": 0.0
     },
@@ -565,24 +541,6 @@
       "valid_max": 9,
       "valid_min": 0
     },
-    "PROBE": {
-      "type": "int32",
-      "long_name": "probe_information",
-      "reference_datum": "WMO code table 1770"
-    },
-    "RECORDER": {
-      "type": "int32",
-      "long_name": "recorder_system_information",
-      "reference_datum": "WMO code table 4770"
-    },
-    "SOOP_line": {
-      "type": "int32",
-      "long_name": "SOOP_line_information"
-    },
-    "Ship": {
-      "type": "int32",
-      "long_name": "Platform_vessel_information"
-    },
     "TEMP_RECORDING_SYSTEM": {
       "type": "float",
       "ancillary_variables": "TEMP_RECORDING_SYSTEM_quality_control",
@@ -688,6 +646,8 @@
     "HISTORY_DATE": {
       "type": "timestamp[ns]",
       "long_name": "Date_qc_history_record_created",
+      "calendar": "gregorian",
+      "units": "days since 1950-01-01 00:00:00 UTC",
       "valid_max": 90000.0,
       "valid_min": 0.0
     },
@@ -784,10 +744,18 @@
         "memory_limit": "14GB"
       }
     },
-    "batch_size": 150,
+    "batch_size": 300,
     "cluster": {
       "mode": "coiled",
       "restart_every_path": false
+    },
+    "prefect": {
+      "job_variables": {
+        "env.PREFECT_TASK_RUNNER_THREAD_POOL_MAX_WORKERS": 16
+      }
+    },
+    "s3_fs_common_opts": {
+      "default_cache_type": "readahead"
     },
     "paths": [
       {
