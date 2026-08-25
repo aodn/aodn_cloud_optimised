@@ -46,7 +46,7 @@
     },
     "prefect": {
       "job_variables": {
-        "env.PREFECT_TASK_RUNNER_THREAD_POOL_MAX_WORKERS": 16
+        "env.PREFECT_TASK_RUNNER_THREAD_POOL_MAX_WORKERS": 1
       }
     },
     "batch_size": 300,
