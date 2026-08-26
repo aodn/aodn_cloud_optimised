@@ -216,7 +216,8 @@
       "encoding": "utf-8",
       "index_col": "d_date",
       "parse_dates": [
-        "d_date"
+        "d_date",
+        "submitted"
       ]
     }
   },
