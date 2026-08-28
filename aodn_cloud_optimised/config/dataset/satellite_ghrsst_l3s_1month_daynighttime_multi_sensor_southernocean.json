@@ -33,25 +33,25 @@
         "memory_limit": "8GB"
       }
     },
-    "batch_size": 5
+    "batch_size": 6
   },
   "metadata_uuid": "579fc1ac-6ee5-40e2-9170-6a857e9b40da",
   "schema_transformation": {
     "dimensions": {
       "time": {
         "name": "time",
-        "chunk": 0,
+        "chunk": 3,
         "rechunk": false,
         "append_dim": true
       },
       "latitude": {
         "name": "lat",
-        "chunk": 0,
+        "chunk": 900,
         "size": 0
       },
       "longitude": {
         "name": "lon",
-        "chunk": 0,
+        "chunk": 1000,
         "size": 0
       }
     },
