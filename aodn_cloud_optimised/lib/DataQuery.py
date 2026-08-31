@@ -57,7 +57,7 @@ from shapely.geometry import MultiPolygon, Polygon
 from tqdm.notebook import tqdm
 from windrose import WindroseAxes
 
-__version__ = "0.3.29"
+__version__ = "0.3.30"
 
 REGION: Final[str] = "ap-southeast-2"
 ENDPOINT_URL = "https://s3.ap-southeast-2.amazonaws.com"
@@ -2323,11 +2323,11 @@ class TimeSeriesResult:
         if resample is None:
             median_diff = df.index.to_series().diff().median()
             if median_diff < pd.Timedelta(hours=1):
-                resample = "H"
+                resample = "h"
             elif median_diff < pd.Timedelta(days=1):
                 resample = "D"
             else:
-                resample = "M"
+                resample = "ME"
 
         plt.figure(figsize=figsize)
 
