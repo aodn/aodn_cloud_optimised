@@ -7836,9 +7836,10 @@ test = ["pytest", "tornado (>=4.5)", "typeguard"]
 name = "termcolor"
 version = "2.5.0"
 description = "ANSI color formatting for output in terminal"
-optional = false
+optional = true
 python-versions = ">=3.9"
 groups = ["main"]
+markers = "extra == \"tests\""
 files = [
     {file = "termcolor-2.5.0-py3-none-any.whl", hash = "sha256:37b17b5fc1e604945c2642c872a3764b5d547a48009871aea3edd3afa180afb8"},
     {file = "termcolor-2.5.0.tar.gz", hash = "sha256:998d8d27da6d48442e8e1f016119076b690d962507531df4890fcd2db2ef8a6f"},
@@ -8430,9 +8431,10 @@ test = ["pytest"]
 name = "xmltodict"
 version = "1.0.2"
 description = "Makes working with XML feel like you are working with JSON"
-optional = false
+optional = true
 python-versions = ">=3.9"
 groups = ["main"]
+markers = "extra == \"tests\""
 files = [
     {file = "xmltodict-1.0.2-py3-none-any.whl", hash = "sha256:62d0fddb0dcbc9f642745d8bbf4d81fd17d6dfaec5a15b5c1876300aad92af0d"},
     {file = "xmltodict-1.0.2.tar.gz", hash = "sha256:54306780b7c2175a3967cad1db92f218207e5bc1aba697d887807c0fb68b7649"},
@@ -8771,9 +8773,9 @@ dev = ["ipdb", "poetry", "poetry-plugin-freeze", "poetry-pre-commit-plugin", "pr
 docs = ["asciinema", "sphinx", "sphinx-rtd-theme", "sphinxcontrib-asciinema"]
 mcp = ["mcp", "nbconvert", "nbformat"]
 notebooks = ["cartopy", "folium", "fuzzywuzzy", "gsw", "ipython", "matplotlib", "nbformat", "notebook", "papermill", "polars-h3", "pydeck", "python-levenshtein", "seaborn", "tabulate", "tqdm", "windrose"]
-tests = ["coverage", "moto", "pytest"]
+tests = ["coverage", "moto", "pytest", "termcolor", "xmltodict"]
 
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<3.13"
-content-hash = "903d82d5df0135381118647deead7595f3dfccedfbdc0fdbb440db1a05f502e5"
+content-hash = "64547a3d0dda88a7a761b18204b71e95b75085ce95a94b1962ebd0101e8dc18d"
