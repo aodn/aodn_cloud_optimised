@@ -122,7 +122,7 @@ points by 895 longitude points uses approximately 15.05 MiB:
 
    7 * 630 * 895 * 4 bytes = 15,783,600 bytes = 15.05 MiB
 
-Aim for **10--150 MB per uncompressed chunk**.
+Aim for **10--150 MiB per uncompressed chunk**.
 
 * Below the range, the store can contain millions of small objects, increasing S3
   and metadata overhead.
