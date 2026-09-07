@@ -203,6 +203,60 @@ class TestPathConfigFilter(unittest.TestCase):
             )
         self.assertEqual(result, all_files)
 
+    def test_collect_files_preserves_trailing_slash_in_prefix(self):
+        """Regression: a trailing slash in s3_uri must be kept on the S3 prefix.
+
+        list_objects_v2 does a plain string-prefix match, so listing
+        '.../acoustic_detections_QC' (no slash) would also return the sibling
+        '.../acoustic_detections_QC_summary/...'. Keeping the slash the user
+        typed scopes the listing to that directory only.
+        """
+        from aodn_cloud_optimised.bin.generic_cloud_optimised_creation import (
+            collect_files,
+        )
+
+        path_cfg = PathConfig(
+            s3_uri="s3://imos-data/IMOS/AATAMS/acoustic_detections_QC/",
+            filter=[".*\\.csv$"],
+        )
+        with patch(
+            "aodn_cloud_optimised.bin.generic_cloud_optimised_creation.s3_ls",
+            return_value=[],
+        ) as mock_s3_ls:
+            collect_files(
+                path_cfg,
+                suffix=None,
+                exclude=None,
+                bucket_raw=None,
+                s3_client_opts={},
+            )
+        called_prefix = mock_s3_ls.call_args.args[1]
+        self.assertEqual(called_prefix, "IMOS/AATAMS/acoustic_detections_QC/")
+
+    def test_collect_files_no_trailing_slash_kept_as_is(self):
+        """Without a trailing slash the prefix is left as a partial-match prefix."""
+        from aodn_cloud_optimised.bin.generic_cloud_optimised_creation import (
+            collect_files,
+        )
+
+        path_cfg = PathConfig(
+            s3_uri="s3://imos-data/IMOS/AATAMS/acoustic_detections_QC",
+            filter=[".*\\.csv$"],
+        )
+        with patch(
+            "aodn_cloud_optimised.bin.generic_cloud_optimised_creation.s3_ls",
+            return_value=[],
+        ) as mock_s3_ls:
+            collect_files(
+                path_cfg,
+                suffix=None,
+                exclude=None,
+                bucket_raw=None,
+                s3_client_opts={},
+            )
+        called_prefix = mock_s3_ls.call_args.args[1]
+        self.assertEqual(called_prefix, "IMOS/AATAMS/acoustic_detections_QC")
+
 
 if __name__ == "__main__":
     unittest.main()

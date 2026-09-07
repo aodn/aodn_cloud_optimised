@@ -140,6 +140,32 @@ class TestPreprocessXarrayDimHandling:
         result = preprocess_xarray(ds, config)
         assert result["SCALAR_FLAG"].dims == (), "Scalar variable should keep zero dims"
 
+    def test_missing_variable_preserves_schema_attrs(
+        self, sample_ds_with_gdop_no_time, dataset_config_with_dims
+    ):
+        """Missing variables recreated with NaNs must keep schema attrs (issue #299)."""
+        config = dataset_config_with_dims
+        config["schema"]["VCUR"] = {
+            "type": "float32",
+            "dims": ["TIME", "I", "J"],
+            "units": "m s-1",
+            "long_name": "sea water velocity northward",
+            "valid_min": -10.0,
+            "valid_max": 10.0,
+        }
+
+        ds = preprocess_xarray(sample_ds_with_gdop_no_time, config)
+
+        assert "VCUR" in ds
+        assert np.isnan(ds["VCUR"].values).all()
+        assert ds["VCUR"].attrs["units"] == "m s-1"
+        assert ds["VCUR"].attrs["long_name"] == "sea water velocity northward"
+        assert ds["VCUR"].attrs["valid_min"] == -10.0
+        assert ds["VCUR"].attrs["valid_max"] == 10.0
+        # orchestration keys must not leak into attrs
+        assert "type" not in ds["VCUR"].attrs
+        assert "dims" not in ds["VCUR"].attrs
+
 
 class TestValidateAndFixDims:
     """Tests for the _validate_and_fix_dims method."""

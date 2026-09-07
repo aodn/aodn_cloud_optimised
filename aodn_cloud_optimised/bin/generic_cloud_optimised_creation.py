@@ -83,6 +83,7 @@ def collect_files(
         List of dataset paths (files or root URIs) as strings.
     """
     dataset_type = getattr(path_cfg, "type", "files")  # default value
+    had_trailing_slash = path_cfg.s3_uri.endswith("/")
     s3_uri = path_cfg.s3_uri.rstrip("/")
 
     # ---------------------------------------------------------------------
@@ -102,6 +103,14 @@ def collect_files(
             prefix = s3_uri
 
         prefix = str(PurePosixPath(prefix))  # normalise path
+
+        # Preserve the trailing slash the user provided so the S3 prefix only
+        # matches objects *inside* this directory. list_objects_v2 does a plain
+        # string-prefix match, so without the slash a prefix like
+        # ".../acoustic_detections_QC" would also return sibling directories
+        # that share the name, e.g. ".../acoustic_detections_QC_summary/...".
+        if had_trailing_slash and prefix not in ("", ".") and not prefix.endswith("/"):
+            prefix += "/"
 
         matching_files = s3_ls(
             bucket,

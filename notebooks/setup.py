@@ -67,6 +67,8 @@ def install_requirements():
             "cftime",
             "gsw",
             "fuzzywuzzy",
+            "polars-h3",
+            "pydeck",
             "s3path",
             "windrose",
             "s3fs",

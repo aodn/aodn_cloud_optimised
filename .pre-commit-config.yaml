@@ -82,6 +82,5 @@ repos:
         name: Validate DataQuery.py
         entry: poetry run python aodn_cloud_optimised/bin/validate_data_query.py
         language: system
-        types: [json]
         pass_filenames: false
         always_run: true

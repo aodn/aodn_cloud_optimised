@@ -35,7 +35,10 @@
                 ]
               },
               "year_range": {
-                "type": "array",
+                "type": [
+                  "array",
+                  "null"
+                ],
                 "items": {
                   "type": "integer"
                 }

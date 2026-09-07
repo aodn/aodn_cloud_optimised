@@ -242,7 +242,8 @@
           "AuthorName": "FILL UP MANUALLY - CHECK DOCUMENTATION"
         }
       ]
-    }
+    },
+    "Citation": "The citation in a list of references is: \"IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access].\""
   },
   "run_settings": {
     "coiled_cluster_options": {
@@ -274,7 +275,7 @@
         ]
       }
     ],
-    "clear_existing_data": true,
+    "clear_existing_data": false,
     "raise_error": false
   },
   "schema_transformation": {

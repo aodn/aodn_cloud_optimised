@@ -4,12 +4,13 @@ import logging
 import os
 import unittest
 from io import StringIO
-from unittest.mock import patch
+from unittest.mock import MagicMock, call, patch
 
 import boto3
 import pandas as pd
 import pyarrow as pa
 import s3fs
+import xarray as xr
 from moto import mock_aws
 from moto.moto_server.threaded_moto_server import ThreadedMotoServer
 from shapely import wkb
@@ -315,6 +316,58 @@ class TestGenericHandler(unittest.TestCase):
 
         self.server.stop()
 
+    def test_add_columns_df_missing_variable_attribute_uses_fillvalue(self):
+        handler = GenericHandler.__new__(GenericHandler)
+        handler.logger = logging.getLogger(__name__)
+        handler.uuid_log = "test-uuid"
+        handler.dataset_config = {
+            "schema_transformation": {
+                "add_variables": {
+                    "wmo": {
+                        "source": "@variable_attribute:PLATFORM.wmo",
+                        "schema": {"type": "string", "units": "1", "_FillValue": ""},
+                    }
+                }
+            }
+        }
+
+        df = pd.DataFrame({"TEMP": [1.0, 2.0]})
+        ds = xr.Dataset({"PLATFORM": ("obs", [1])})
+
+        class DummyFile:
+            path = "dummy.nc"
+
+        result_df = handler._add_columns_df(df, ds, DummyFile())
+
+        self.assertIn("wmo", result_df.columns)
+        self.assertTrue((result_df["wmo"] == "").all())
+
+    def test_add_columns_df_missing_variable_uses_fillvalue(self):
+        handler = GenericHandler.__new__(GenericHandler)
+        handler.logger = logging.getLogger(__name__)
+        handler.uuid_log = "test-uuid"
+        handler.dataset_config = {
+            "schema_transformation": {
+                "add_variables": {
+                    "wmo": {
+                        "source": "@variable_attribute:PLATFORM.wmo",
+                        "schema": {"type": "string", "units": "1", "_FillValue": ""},
+                    }
+                }
+            }
+        }
+
+        df = pd.DataFrame({"TEMP": [1.0, 2.0]})
+        ds = xr.Dataset({"TEMP": ("obs", [1.0, 2.0])})
+
+        class DummyFile:
+            path = "dummy.nc"
+
+        result_df = handler._add_columns_df(df, ds, DummyFile())
+
+        self.assertIn("wmo", result_df.columns)
+        self.assertTrue((result_df["wmo"] == "").all())
+
     def test_parquet_nc_fishsoop(self):
         nc_obj_ls = s3_ls("imos-data", "fishsoop")
 
@@ -333,7 +386,7 @@ class TestGenericHandler(unittest.TestCase):
         # Validate logs
         self.assertTrue(
             any(
-                "The dataframe is now empty after removing out of range" in log
+                "The dataframe is now empty after removing invalid spatial data" in log
                 for log in captured_logs
             )
         )
@@ -664,6 +717,89 @@ class TestGenericHandler(unittest.TestCase):
 
         # Check values are the same
         assert co_df.equals(og_df)
+
+
+class TestGenericHandlerPostprocessLifecycle(unittest.TestCase):
+    @staticmethod
+    def _build_handler():
+        # Bypass full __init__ (S3/cluster setup) to isolate to_cloud_optimised_single control flow.
+        handler = GenericHandler.__new__(GenericHandler)
+        handler.uuid_log = None
+        handler.delete_pq_unmatch_enable = False
+        handler.s3_fs_input = object()
+        handler.logger = MagicMock()
+        handler.publish_cloud_optimised = MagicMock()
+        handler.postprocess = MagicMock()
+        handler.preprocess_data = MagicMock()
+        return handler
+
+    @patch("aodn_cloud_optimised.lib.GenericParquetHandler.create_fileset")
+    def test_postprocess_called_on_publish_error(self, mock_create_fileset):
+        handler = self._build_handler()
+        s3_file_uri = "s3://imos-data/example.nc"
+        s3_file_handle = MagicMock()
+        s3_file_handle.path = s3_file_uri
+        mock_create_fileset.return_value = [s3_file_handle]
+
+        ds = MagicMock(name="dataset_publish_error")
+        handler.preprocess_data.return_value = iter([(pd.DataFrame({"x": [1]}), ds)])
+        handler.publish_cloud_optimised.side_effect = RuntimeError("publish failed")
+
+        with self.assertRaises(RuntimeError):
+            handler.to_cloud_optimised_single(s3_file_uri)
+
+        handler.postprocess.assert_called_once_with(ds)
+
+    @patch("aodn_cloud_optimised.lib.GenericParquetHandler.create_fileset")
+    def test_postprocess_not_called_twice_on_subsequent_error(
+        self, mock_create_fileset
+    ):
+        handler = self._build_handler()
+        s3_file_uri = "s3://imos-data/example.nc"
+        s3_file_handle = MagicMock()
+        s3_file_handle.path = s3_file_uri
+        mock_create_fileset.return_value = [s3_file_handle]
+
+        ds = MagicMock(name="dataset_subsequent_error")
+        handler.preprocess_data.return_value = iter([(pd.DataFrame({"x": [1]}), ds)])
+
+        with patch(
+            "aodn_cloud_optimised.lib.GenericParquetHandler.timeit.default_timer",
+            side_effect=[0.0, RuntimeError("timer failed")],
+        ):
+            with self.assertRaises(RuntimeError):
+                handler.to_cloud_optimised_single(s3_file_uri)
+
+        handler.postprocess.assert_called_once_with(ds)
+
+    @patch("aodn_cloud_optimised.lib.GenericParquetHandler.create_fileset")
+    def test_postprocess_tracks_correct_dataset_across_multiple_iterations(
+        self, mock_create_fileset
+    ):
+        handler = self._build_handler()
+        s3_file_uri = "s3://imos-data/example.nc"
+        s3_file_handle = MagicMock()
+        s3_file_handle.path = s3_file_uri
+        mock_create_fileset.return_value = [s3_file_handle]
+
+        ds_1 = MagicMock(name="dataset_first_iteration")
+        ds_2 = MagicMock(name="dataset_second_iteration")
+        handler.preprocess_data.return_value = iter(
+            [
+                (pd.DataFrame({"x": [1]}), ds_1),
+                (pd.DataFrame({"x": [2]}), ds_2),
+            ]
+        )
+        handler.publish_cloud_optimised.side_effect = [
+            None,
+            RuntimeError("publish failed"),
+        ]
+
+        with self.assertRaises(RuntimeError):
+            handler.to_cloud_optimised_single(s3_file_uri)
+
+        self.assertEqual(handler.postprocess.call_count, 2)
+        handler.postprocess.assert_has_calls([call(ds_1), call(ds_2)])
 
 
 if __name__ == "__main__":
