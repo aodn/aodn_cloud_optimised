@@ -12,6 +12,7 @@ import numpy as np
 import s3fs
 import xarray as xr
 import zarr
+from dask import annotate
 from dask import array as da
 from dask.distributed import Lock
 from distributed.client import FutureCancelledError
@@ -2813,7 +2814,11 @@ class GenericHandler(CommonHandler):
             else:
                 self.cluster_id = "local_execution"
 
-            self.publish_cloud_optimised_fileset_batch(s3_file_uri_list)
+            if self.scheduler:
+                with annotate(resources=self.scheduler.resources):
+                    self.publish_cloud_optimised_fileset_batch(s3_file_uri_list)
+            else:
+                self.publish_cloud_optimised_fileset_batch(s3_file_uri_list)
 
             if self.cluster_mode:
                 self.cluster_manager.close_cluster(self.client, self.cluster)
