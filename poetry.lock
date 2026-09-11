@@ -8773,9 +8773,9 @@ dev = ["ipdb", "poetry", "poetry-plugin-freeze", "poetry-pre-commit-plugin", "pr
 docs = ["asciinema", "sphinx", "sphinx-rtd-theme", "sphinxcontrib-asciinema"]
 mcp = ["mcp", "nbconvert", "nbformat"]
 notebooks = ["cartopy", "folium", "fuzzywuzzy", "gsw", "ipython", "matplotlib", "nbformat", "notebook", "papermill", "polars-h3", "pydeck", "python-levenshtein", "seaborn", "tabulate", "tqdm", "windrose"]
-tests = ["coverage", "moto", "pytest", "termcolor"]
+tests = ["coverage", "moto", "pytest", "termcolor", "xmltodict"]
 
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<3.13"
-content-hash = "99e24c77ad99bc8db88a9f0f897680cb01ec369e0314674ea4a4d43887dfe159"
+content-hash = "64547a3d0dda88a7a761b18204b71e95b75085ce95a94b1962ebd0101e8dc18d"

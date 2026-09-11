@@ -12,6 +12,7 @@ installed the package (:ref:`getting-started`).
 
    query-datasets
    dataset-configuration
+   tune-zarr
    clustering
    notebooks
    mcp-server
@@ -21,6 +22,7 @@ installed the package (:ref:`getting-started`).
 
 - **Query and analyze cloud-optimized data**: :ref:`query-cloud-data`
 - **Create a cloud-optimized dataset from NetCDF/CSV files**: :ref:`dataset-config-doc`
+- **Tune a Zarr dataset for efficient processing**: :ref:`tune-zarr`
 - **Process large datasets in parallel**: :ref:`clustering-guide`
 - **Write and share a Jupyter notebook for data analysis**: :ref:`notebooks`
 - **Set up the MCP (Model Context Protocol) server**: :ref:`mcp-server`
