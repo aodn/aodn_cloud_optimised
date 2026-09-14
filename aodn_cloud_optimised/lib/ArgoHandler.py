@@ -78,7 +78,7 @@ class ArgoHandler(GenericHandler):
         )
 
     @staticmethod
-    def _to_xarray(df: pd.DataFrame) -> xr.Dataset:
+    def _to_xarray_dataset(df: pd.DataFrame) -> xr.Dataset:
         """Convert the flattened dataframe back to a Dataset, restoring attributes.
 
         ``DataFrame.to_xarray()`` drops both the global and the variable
