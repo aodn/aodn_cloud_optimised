@@ -136,4 +136,4 @@ class ArgoHandler(GenericHandler):
             for name in df.columns:
                 df[name].attrs = dict(ds[name].attrs)
 
-            yield df, self._to_xarray(df)
+            yield df, self._to_xarray_dataset(df)
