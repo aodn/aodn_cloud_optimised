@@ -2815,7 +2815,7 @@ class GenericHandler(CommonHandler):
                 self.cluster_id = "local_execution"
 
             if self.scheduler:
-                with annotate(resources=self.scheduler.resources):
+                with annotate(resources=getattr(self.scheduler, "resources", None)):
                     self.publish_cloud_optimised_fileset_batch(s3_file_uri_list)
             else:
                 self.publish_cloud_optimised_fileset_batch(s3_file_uri_list)
