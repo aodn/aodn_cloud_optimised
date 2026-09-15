@@ -11,6 +11,7 @@ import numpy as np
 import pytest
 import s3fs
 import xarray as xr
+import zarr
 from moto import mock_aws
 from moto.moto_server.threaded_moto_server import ThreadedMotoServer
 
@@ -413,6 +414,35 @@ class TestGenericZarrHandler(unittest.TestCase):
         assert np.isnan(
             ucur_selected
         ).all(), f"UCUR for {filenames_acorn_nwa[1]} not fully NaN"
+
+    def test_update_store_varattrs_includes_generated_filename_when_not_in_schema(self):
+        dataset_config = copy.deepcopy(self.handler_nc_acorn_nwa_file.dataset_config)
+        dataset_config["schema"].pop("filename", None)
+        dataset_config["schema_transformation"].get("add_variables", {}).pop(
+            "filename", None
+        )
+
+        handler = GenericHandler(
+            optimised_bucket_name=self.BUCKET_OPTIMISED_NAME,
+            root_prefix_cloud_optimised_path=self.ROOT_PREFIX_CLOUD_OPTIMISED_PATH,
+            dataset_config=dataset_config,
+            cluster_mode="local",
+            s3_client_opts_common=self.s3_client_opts_common,
+            s3_fs_common_session=self.s3_fs,
+        )
+
+        zarr_store = zarr.open_group(store=zarr.storage.MemoryStore(), mode="w")
+        zarr_store.create_dataset("filename", shape=(1,), dtype="i4")
+        zarr_store["filename"].attrs["long_name"] = "stale long name"
+
+        self.assertNotIn("filename", handler.full_schema)
+
+        handler.update_store_varattrs_from_schema(zarr_store, handler.full_schema)
+
+        self.assertEqual(zarr_store["filename"].attrs["units"], "1")
+        self.assertEqual(
+            zarr_store["filename"].attrs["long_name"], "Filename of the source file"
+        )
 
 
 if __name__ == "__main__":

@@ -966,7 +966,28 @@ class GenericHandler(CommonHandler):
             "grid_mapping",
         }
 
-        for var, attrs in schema.items():
+        schema_to_apply = dict(schema)
+
+        # `filename` is always generated for Zarr during preprocessing, but some
+        # dataset configs intentionally omit it from schema/add_variables.
+        # Ensure update_metadata still applies expected metadata to that variable.
+        if "filename" in store and "filename" not in schema_to_apply:
+            filename_schema = (
+                self.dataset_config.get("schema_transformation", {})
+                .get("add_variables", {})
+                .get("filename", {})
+                .get("schema")
+            ) or self.dataset_config.get("schema", {}).get("filename") or {
+                "type": "object",
+                "units": "1",
+                "long_name": "Filename of the source file",
+            }
+            schema_to_apply["filename"] = filename_schema
+            self.logger.info(
+                f"{self.uuid_log}: Added fallback schema for generated variable 'filename' before metadata update."
+            )
+
+        for var, attrs in schema_to_apply.items():
             if var in store:
                 var_array = store[var]
                 current_attrs = dict(var_array.attrs)
