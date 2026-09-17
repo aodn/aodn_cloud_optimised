@@ -3,7 +3,7 @@
   "logger_name": "station_lucinda_jetty_daily_wetlabs_ecotriplet",
   "cloud_optimised_format": "parquet",
   "run_settings": {
-    "batch_size": 300,
+    "batch_size": 100,
     "cluster": {
       "mode": "local"
     },
