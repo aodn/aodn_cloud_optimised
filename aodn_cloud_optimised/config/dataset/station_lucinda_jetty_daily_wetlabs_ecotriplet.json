@@ -135,6 +135,210 @@
       "long_name": "volumn scattering coefficient at 532 nm: number of valid observations",
       "units": "1"
     },
+    "cal_data_beta_p_470": {
+      "type": "float",
+      "description": "particle volume scattering function at 117 deg: mean",
+      "long_name": "particle volume scattering function at 117 deg: mean",
+      "cell_methods": "TIME: mean",
+      "units": "1/m-sr"
+    },
+    "cal_data_beta_p_470_min": {
+      "type": "float",
+      "description": "particle volume scattering function at 117 deg: minimum",
+      "long_name": "particle volume scattering function at 117 deg: minimum",
+      "cell_methods": "TIME: minimum",
+      "units": "1/m-sr"
+    },
+    "cal_data_beta_p_470_max": {
+      "type": "float",
+      "description": "particle volume scattering function at 117 deg: maximum",
+      "long_name": "particle volume scattering function at 117 deg: maximum",
+      "cell_methods": "TIME: maximum",
+      "units": "1/m-sr"
+    },
+    "cal_data_beta_p_470_sd": {
+      "type": "float",
+      "description": "particle volume scattering function at 117 deg: standard deviation",
+      "long_name": "particle volume scattering function at 117 deg: standard deviation",
+      "cell_methods": "TIME: standard_deviation",
+      "units": "1/m-sr"
+    },
+    "cal_data_beta_p_470_num_obs": {
+      "type": "double",
+      "description": "particle volume scattering function at 117 deg: number of valid observations",
+      "long_name": "particle volume scattering function at 117 deg: number of valid observations",
+      "units": "1"
+    },
+    "cal_data_beta_p_532": {
+      "type": "float",
+      "description": "particle volume scattering function at 117 deg: mean",
+      "long_name": "particle volume scattering function at 117 deg: mean",
+      "cell_methods": "TIME: mean",
+      "units": "1/m-sr"
+    },
+    "cal_data_beta_p_532_min": {
+      "type": "float",
+      "description": "particle volume scattering function at 117 deg: minimum",
+      "long_name": "particle volume scattering function at 117 deg: minimum",
+      "cell_methods": "TIME: minimum",
+      "units": "1/m-sr"
+    },
+    "cal_data_beta_p_532_max": {
+      "type": "float",
+      "description": "particle volume scattering function at 117 deg: maximum",
+      "long_name": "particle volume scattering function at 117 deg: maximum",
+      "cell_methods": "TIME: maximum",
+      "units": "1/m-sr"
+    },
+    "cal_data_beta_p_532_sd": {
+      "type": "float",
+      "description": "particle volume scattering function at 117 deg: standard deviation",
+      "long_name": "particle volume scattering function at 117 deg: standard deviation",
+      "cell_methods": "TIME: standard_deviation",
+      "units": "1/m-sr"
+    },
+    "cal_data_beta_p_532_num_obs": {
+      "type": "double",
+      "description": "particle volume scattering function at 117 deg: number of valid observations",
+      "long_name": "particle volume scattering function at 117 deg: number of valid observations",
+      "units": "1"
+    },
+    "cal_data_bbp_470": {
+      "type": "float",
+      "description": "particle backscattering coefficient: mean",
+      "long_name": "particle backscattering coefficient: mean",
+      "cell_methods": "TIME: mean",
+      "units": "1/m"
+    },
+    "cal_data_bbp_470_min": {
+      "type": "float",
+      "description": "particle backscattering coefficient: minimum",
+      "long_name": "particle backscattering coefficient: minimum",
+      "cell_methods": "TIME: minimum",
+      "units": "1/m"
+    },
+    "cal_data_bbp_470_max": {
+      "type": "float",
+      "description": "particle backscattering coefficient: maximum",
+      "long_name": "particle backscattering coefficient: maximum",
+      "cell_methods": "TIME: maximum",
+      "units": "1/m"
+    },
+    "cal_data_bbp_470_sd": {
+      "type": "float",
+      "description": "particle backscattering coefficient: standard deviation",
+      "long_name": "particle backscattering coefficient: standard deviation",
+      "cell_methods": "TIME: standard_deviation",
+      "units": "1/m"
+    },
+    "cal_data_bbp_470_num_obs": {
+      "type": "double",
+      "description": "particle backscattering coefficient: number of valid observations",
+      "long_name": "particle backscattering coefficient: number of valid observations",
+      "units": "1"
+    },
+    "cal_data_bbp_532": {
+      "type": "float",
+      "description": "particle backscattering coefficient: mean",
+      "long_name": "particle backscattering coefficient: mean",
+      "cell_methods": "TIME: mean",
+      "units": "1/m"
+    },
+    "cal_data_bbp_532_min": {
+      "type": "float",
+      "description": "particle backscattering coefficient: minimum",
+      "long_name": "particle backscattering coefficient: minimum",
+      "cell_methods": "TIME: minimum",
+      "units": "1/m"
+    },
+    "cal_data_bbp_532_max": {
+      "type": "float",
+      "description": "particle backscattering coefficient: maximum",
+      "long_name": "particle backscattering coefficient: maximum",
+      "cell_methods": "TIME: maximum",
+      "units": "1/m"
+    },
+    "cal_data_bbp_532_sd": {
+      "type": "float",
+      "description": "particle backscattering coefficient: standard deviation",
+      "long_name": "particle backscattering coefficient: standard deviation",
+      "cell_methods": "TIME: standard_deviation",
+      "units": "1/m"
+    },
+    "cal_data_bbp_532_num_obs": {
+      "type": "double",
+      "description": "particle backscattering coefficient: number of valid observations",
+      "long_name": "particle backscattering coefficient: number of valid observations",
+      "units": "1"
+    },
+    "cal_data_bb_470": {
+      "type": "float",
+      "description": "total backscattering coefficient: mean",
+      "long_name": "total backscattering coefficient: mean",
+      "cell_methods": "TIME: mean",
+      "units": "1/m"
+    },
+    "cal_data_bb_470_min": {
+      "type": "float",
+      "description": "total backscattering coefficient: minimum",
+      "long_name": "total backscattering coefficient: minimum",
+      "cell_methods": "TIME: minimum",
+      "units": "1/m"
+    },
+    "cal_data_bb_470_max": {
+      "type": "float",
+      "description": "total backscattering coefficient: maximum",
+      "long_name": "total backscattering coefficient: maximum",
+      "cell_methods": "TIME: maximum",
+      "units": "1/m"
+    },
+    "cal_data_bb_470_sd": {
+      "type": "float",
+      "description": "total backscattering coefficient: standard deviation",
+      "long_name": "total backscattering coefficient: standard deviation",
+      "cell_methods": "TIME: standard_deviation",
+      "units": "1/m"
+    },
+    "cal_data_bb_470_num_obs": {
+      "type": "double",
+      "description": "total backscattering coefficient: number of valid observations",
+      "long_name": "total backscattering coefficient: number of valid observations",
+      "units": "1"
+    },
+    "cal_data_bb_532": {
+      "type": "float",
+      "description": "total backscattering coefficient: mean",
+      "long_name": "total backscattering coefficient: mean",
+      "cell_methods": "TIME: mean",
+      "units": "1/m"
+    },
+    "cal_data_bb_532_min": {
+      "type": "float",
+      "description": "total backscattering coefficient: minimum",
+      "long_name": "total backscattering coefficient: minimum",
+      "cell_methods": "TIME: minimum",
+      "units": "1/m"
+    },
+    "cal_data_bb_532_max": {
+      "type": "float",
+      "description": "total backscattering coefficient: maximum",
+      "long_name": "total backscattering coefficient: maximum",
+      "cell_methods": "TIME: maximum",
+      "units": "1/m"
+    },
+    "cal_data_bb_532_sd": {
+      "type": "float",
+      "description": "total backscattering coefficient: standard deviation",
+      "long_name": "total backscattering coefficient: standard deviation",
+      "cell_methods": "TIME: standard_deviation",
+      "units": "1/m"
+    },
+    "cal_data_bb_532_num_obs": {
+      "type": "double",
+      "description": "total backscattering coefficient: number of valid observations",
+      "long_name": "total backscattering coefficient: number of valid observations",
+      "units": "1"
+    },
     "cal_data_cdom": {
       "type": "float",
       "description": "cdom measured by EcoTriplet: mean",
@@ -168,6 +372,16 @@
       "description": "cdom measured by EcoTriplet: number of valid observations",
       "long_name": "cdom measured by EcoTriplet: number of valid observations",
       "units": "1"
+    },
+    "band_failure_470": {
+      "type": "int64",
+      "description": "Band failure test result:\n    0: No band failure detected\n    1: Band failure detected\n    2: One of the bands failed, but unable to perform further test due to WQM data unavailable or WQM data is also potentially failed",
+      "long_name": "Band failure detection for band 470 nm"
+    },
+    "band_failure_532": {
+      "type": "int64",
+      "description": "Band failure test result:\n    0: No band failure detected\n    1: Band failure detected\n    2: One of the bands failed, but unable to perform further test due to WQM data unavailable or WQM data is also potentially failed",
+      "long_name": "Band failure detection for band 532 nm"
     }
   },
   "aws_opendata_registry": {
