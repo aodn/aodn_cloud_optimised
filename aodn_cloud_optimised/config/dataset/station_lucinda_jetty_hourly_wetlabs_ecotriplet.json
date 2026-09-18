@@ -306,6 +306,231 @@
         9
       ],
       "long_name": "quality flag for CDOM (Quinine Sulfate Dihydrate Equivalent) concentration expressed in ppb"
+    },
+    "cor_data_cdom": {
+      "type": "float",
+      "description": "cdom measured by EcoTriplet",
+      "long_name": "CDOM (Quinine Sulfate Dihydrate Equivalent) concentration expressed in ppb",
+      "units": "1e-9",
+      "ancillary_variables": "cor_data_cdom_quality_control"
+    },
+    "cor_data_cdom_quality_control": {
+      "type": "int32",
+      "quality_control_conventions": "IMOS standard flags",
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "long_name": "quality flag for CDOM (Quinine Sulfate Dihydrate Equivalent) concentration expressed in ppb"
+    },
+    "cor_data_beta_470": {
+      "type": "float",
+      "description": "total (particle and water) volume scattering function at 117 deg",
+      "long_name": "total (particle and water) volume scattering function at 117 deg",
+      "units": "1/m-sr",
+      "ancillary_variables": "cor_data_beta_470_quality_control"
+    },
+    "cor_data_beta_470_quality_control": {
+      "type": "int32",
+      "quality_control_conventions": "IMOS standard flags",
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "long_name": "quality flag for total (particle and water) volume scattering function at 117 deg"
+    },
+    "cor_data_beta_532": {
+      "type": "float",
+      "description": "total (particle and water) volume scattering function at 117 deg",
+      "long_name": "total (particle and water) volume scattering function at 117 deg",
+      "units": "1/m-sr",
+      "ancillary_variables": "cor_data_beta_532_quality_control"
+    },
+    "cor_data_beta_532_quality_control": {
+      "type": "int32",
+      "quality_control_conventions": "IMOS standard flags",
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "long_name": "quality flag for total (particle and water) volume scattering function at 117 deg"
+    },
+    "cor_data_beta_p_470": {
+      "type": "float",
+      "description": "particle volume scattering function at 117 deg",
+      "long_name": "particle volume scattering function at 117 deg",
+      "units": "1/m-sr",
+      "ancillary_variables": "cor_data_beta_p_470_quality_control"
+    },
+    "cor_data_beta_p_470_quality_control": {
+      "type": "int32",
+      "quality_control_conventions": "IMOS standard flags",
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "long_name": "quality flag for particle volume scattering function at 117 deg"
+    },
+    "cor_data_beta_p_532": {
+      "type": "float",
+      "description": "particle volume scattering function at 117 deg",
+      "long_name": "particle volume scattering function at 117 deg",
+      "units": "1/m-sr",
+      "ancillary_variables": "cor_data_beta_p_532_quality_control"
+    },
+    "cor_data_beta_p_532_quality_control": {
+      "type": "int32",
+      "quality_control_conventions": "IMOS standard flags",
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "long_name": "quality flag for particle volume scattering function at 117 deg"
+    },
+    "cor_data_bbp_470": {
+      "type": "float",
+      "description": "particle backscattering coefficient",
+      "long_name": "particle backscattering coefficient",
+      "units": "1/m",
+      "ancillary_variables": "cor_data_bbp_470_quality_control"
+    },
+    "cor_data_bbp_470_quality_control": {
+      "type": "int32",
+      "quality_control_conventions": "IMOS standard flags",
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "long_name": "quality flag for particle backscattering coefficient"
+    },
+    "cor_data_bbp_532": {
+      "type": "float",
+      "description": "particle backscattering coefficient",
+      "long_name": "particle backscattering coefficient",
+      "units": "1/m",
+      "ancillary_variables": "cor_data_bbp_532_quality_control"
+    },
+    "cor_data_bbp_532_quality_control": {
+      "type": "int32",
+      "quality_control_conventions": "IMOS standard flags",
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "long_name": "quality flag for particle backscattering coefficient"
+    },
+    "cor_data_bb_470": {
+      "type": "float",
+      "description": "total backscattering coefficient",
+      "long_name": "total backscattering coefficient",
+      "units": "1/m",
+      "ancillary_variables": "cor_data_bb_470_quality_control"
+    },
+    "cor_data_bb_470_quality_control": {
+      "type": "int32",
+      "quality_control_conventions": "IMOS standard flags",
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "long_name": "quality flag for total backscattering coefficient"
+    },
+    "cor_data_bb_532": {
+      "type": "float",
+      "description": "total backscattering coefficient",
+      "long_name": "total backscattering coefficient",
+      "units": "1/m",
+      "ancillary_variables": "cor_data_bb_532_quality_control"
+    },
+    "cor_data_bb_532_quality_control": {
+      "type": "int32",
+      "quality_control_conventions": "IMOS standard flags",
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "long_name": "quality flag for total backscattering coefficient"
     }
   },
   "aws_opendata_registry": {
