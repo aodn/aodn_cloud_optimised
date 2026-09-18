@@ -379,6 +379,30 @@
         "filter": [
           ".*/(2024|2025|2026)/.*\\.nc$"
         ]
+      },
+      {
+        "s3_uri": "s3://imos-data/Department_of_Transport-Western_Australia/WAVE-BUOYS/REALTIME/WAVE-PARAMETERS/",
+        "filter": [
+          ".*/(2024|2025|2026)/.*\\.nc$"
+        ]
+      },
+      {
+        "s3_uri": "s3://imos-data/Bureau_of_Meteorology/WAVE-BUOYS/REALTIME/WAVE-PARAMETERS/",
+        "filter": [
+          ".*/(2024|2025|2026)/.*\\.nc$"
+        ]
+      },
+      {
+        "s3_uri": "s3://imos-data/Deakin_University/WAVE-BUOYS/REALTIME/WAVE-PARAMETERS/",
+        "filter": [
+          ".*/(2024|2025|2026)/.*\\.nc$"
+        ]
+      },
+      {
+        "s3_uri": "s3://imos-data/Department_of_Environment_and_Science-Queensland/WAVE-BUOYS/REALTIME/WAVE-PARAMETERS/",
+        "filter": [
+          ".*/(2024|2025|2026)/.*\\.nc$"
+        ]
       }
     ],
     "clear_existing_data": false,
