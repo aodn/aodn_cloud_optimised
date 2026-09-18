@@ -86,9 +86,9 @@
     },
     "cal_data_beta_470": {
       "type": "float",
-      "description": "volume scattering coefficient",
-      "long_name": "volumn scattering coefficient at 470 nm",
-      "units": "1/m",
+      "description": "total (particle and water) volume scattering function at 117 deg",
+      "long_name": "total (particle and water) volume scattering function at 117 deg",
+      "units": "1/m-sr",
       "ancillary_variables": "cal_data_beta_470_quality_control"
     },
     "cal_data_beta_470_quality_control": {
@@ -107,13 +107,13 @@
         8,
         9
       ],
-      "long_name": "quality flag for volumn scattering coefficient at 470 nm"
+      "long_name": "quality flag for total (particle and water) volume scattering function at 117 deg"
     },
     "cal_data_beta_532": {
       "type": "float",
-      "description": "volume scattering coefficient",
-      "long_name": "volumn scattering coefficient at 532 nm",
-      "units": "1/m",
+      "description": "total (particle and water) volume scattering function at 117 deg",
+      "long_name": "total (particle and water) volume scattering function at 117 deg",
+      "units": "1/m-sr",
       "ancillary_variables": "cal_data_beta_532_quality_control"
     },
     "cal_data_beta_532_quality_control": {
@@ -132,7 +132,7 @@
         8,
         9
       ],
-      "long_name": "quality flag for volumn scattering coefficient at 532 nm"
+      "long_name": "quality flag for total (particle and water) volume scattering function at 117 deg"
     },
     "cal_data_beta_p_470": {
       "type": "float",
