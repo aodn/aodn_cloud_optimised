@@ -19,6 +19,7 @@
     },
     "batch_size": 3000,
     "prefect": {
+      "max_concurrent_subflows": 3,
       "job_variables": {
         "env.PREFECT_TASK_RUNNER_THREAD_POOL_MAX_WORKERS": 1
       }
