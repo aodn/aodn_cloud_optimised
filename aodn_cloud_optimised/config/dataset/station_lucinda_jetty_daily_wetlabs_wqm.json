@@ -119,7 +119,7 @@
       "original_name": "Cond\\(S/m\\)",
       "standard_name": "sea_water_electrical_conductivity",
       "units": "S m-1",
-      "valid_max": 50000.0,
+      "valid_max": 9.0,
       "valid_min": 0.0
     },
     "CNDC_max": {
@@ -197,8 +197,8 @@
       "reference_datum": "sea surface",
       "standard_name": "depth",
       "units": "metres",
-      "valid_max": 12000.0,
-      "valid_min": -5.0
+      "valid_max": 100.0,
+      "valid_min": 0.0
     },
     "DEPTH_max": {
       "type": "double",
@@ -208,8 +208,8 @@
       "reference_datum": "sea surface",
       "standard_name": "depth",
       "units": "metres",
-      "valid_max": 12000.0,
-      "valid_min": -5.0
+      "valid_max": 100.0,
+      "valid_min": 0.0
     },
     "DEPTH_min": {
       "type": "double",
@@ -219,8 +219,8 @@
       "reference_datum": "sea surface",
       "standard_name": "depth",
       "units": "metres",
-      "valid_max": 12000.0,
-      "valid_min": -5.0
+      "valid_max": 100.0,
+      "valid_min": 0.0
     },
     "DEPTH_num_obs": {
       "type": "double",
@@ -244,7 +244,7 @@
       "original_name": "DO\\(m[mi]ol/m\\^3\\)",
       "standard_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water",
       "units": "umol l-1",
-      "valid_max": 900000.0,
+      "valid_max": 581.02,
       "valid_min": 0.0
     },
     "DOX1_1_max": {
@@ -283,7 +283,7 @@
       "original_name": "DO\\(ml/l\\)",
       "standard_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water",
       "units": "umol l-1",
-      "valid_max": 900000.0,
+      "valid_max": 581.02,
       "valid_min": 0.0
     },
     "DOX1_2_max": {
@@ -322,7 +322,7 @@
       "original_name": "(DO\\(mg/l\\))|(\\\\04O\\(mg/l\\))",
       "standard_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water",
       "units": "umol l-1",
-      "valid_max": 900000.0,
+      "valid_max": 581.02,
       "valid_min": 0.0
     },
     "DOX1_3_max": {
@@ -390,40 +390,6 @@
       "long_name": "Standard deviation of moles_of_oxygen_per_unit_mass_in_sea_water in time bin, after rejection of flagged data",
       "standard_name": "moles_of_oxygen_per_unit_mass_in_sea_water standard_error",
       "units": "umol kg-1"
-    },
-    "FLU2": {
-      "type": "double",
-      "Dark_Counts": 52.0,
-      "Scale_Factor": 0.0121,
-      "ancillary_variables": "FLU2_num_obs FLU2_sd FLU2_min FLU2_max Total_num_obs",
-      "cell_methods": "TIME: mean",
-      "comment": "fluorescence_in_sea_water digital count. To convert to chlorophyll concentration CHL(ug/l) = Scale_Factor X (Raw_Counts - Dark_Counts)",
-      "long_name": "Mean of fluorescence_in_sea_water values in time bin, after rejection of flagged data",
-      "original_name": "(RawCHL\\(Counts\\))|(RawCHL\\(cts\\))|(CHLA\\(COUNTS\\))",
-      "units": "counts"
-    },
-    "FLU2_max": {
-      "type": "double",
-      "cell_methods": "TIME: maximum",
-      "long_name": "Maximum fluorescence_in_sea_water value in time bin, after rejection of flagged data",
-      "units": "counts"
-    },
-    "FLU2_min": {
-      "type": "double",
-      "cell_methods": "TIME: minimum",
-      "long_name": "Minimum fluorescence_in_sea_water value in time bin, after rejection of flagged data",
-      "units": "counts"
-    },
-    "FLU2_num_obs": {
-      "type": "double",
-      "long_name": "Number of observations in time bin included in time bin average",
-      "units": "1"
-    },
-    "FLU2_sd": {
-      "type": "double",
-      "cell_methods": "TIME: standard_deviation",
-      "long_name": "Standard deviation of fluorescence_in_sea_water in time bin, after rejection of flagged data",
-      "units": "counts"
     },
     "PRES_REL": {
       "type": "double",
@@ -515,8 +481,8 @@
       "sensor_serial_number": "12345",
       "standard_name": "sea_water_temperature",
       "units": "Celsius",
-      "valid_max": 40.0,
-      "valid_min": -2.5
+      "valid_max": 35.0,
+      "valid_min": -5.0
     },
     "TEMP_max": {
       "type": "double",
@@ -553,42 +519,8 @@
       "original_name": "(NTU)|(TURBIDITY\\(NTU\\))|(TUR\\\\02IDITY\\(NTU\\))",
       "rate_change_nstd": 2.0,
       "units": "1",
-      "valid_max": 24.0,
+      "valid_max": 25.0,
       "valid_min": 0.0
-    },
-    "TURB_RAW_COUNT": {
-      "type": "double",
-      "Dark_Counts": 52.0,
-      "Scale_Factor": 0.006,
-      "ancillary_variables": "TURB_RAW_COUNT_num_obs TURB_RAW_COUNT_sd TURB_RAW_COUNT_min TURB_RAW_COUNT_max Total_num_obs",
-      "cell_methods": "TIME: mean",
-      "comments": "turbidity digital count. To convert to concentration NTU = Scale_Factor X (Raw_Counts - Dark_Counts)",
-      "long_name": "Mean of turbidity digital count values in time bin, after rejection of flagged data",
-      "original_name": "(RawTurbidity\\(Counts\\))|(RawTurbidity\\(cts\\))|(TURBIDIT[YQ]\\(COUNTS[!\\)])",
-      "units": "counts"
-    },
-    "TURB_RAW_COUNT_max": {
-      "type": "double",
-      "cell_methods": "TIME: maximum",
-      "long_name": "Maximum turbidity digital count value in time bin, after rejection of flagged data",
-      "units": "counts"
-    },
-    "TURB_RAW_COUNT_min": {
-      "type": "double",
-      "cell_methods": "TIME: minimum",
-      "long_name": "Minimum turbidity digital count value in time bin, after rejection of flagged data",
-      "units": "counts"
-    },
-    "TURB_RAW_COUNT_num_obs": {
-      "type": "double",
-      "long_name": "Number of observations in time bin included in time bin average",
-      "units": "1"
-    },
-    "TURB_RAW_COUNT_sd": {
-      "type": "double",
-      "cell_methods": "TIME: standard_deviation",
-      "long_name": "Standard deviation of turbidity digital count in time bin, after rejection of flagged data",
-      "units": "counts"
     },
     "TURB_max": {
       "type": "double",

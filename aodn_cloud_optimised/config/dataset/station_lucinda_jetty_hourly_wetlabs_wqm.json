@@ -113,7 +113,7 @@
       "original_name": "Cond\\(S/m\\)",
       "standard_name": "sea_water_electrical_conductivity",
       "units": "S m-1",
-      "valid_max": 50000.0,
+      "valid_max": 9.0,
       "valid_min": 0.0
     },
     "CNDC_quality_control": {
@@ -177,8 +177,8 @@
       "reference_datum": "sea surface",
       "standard_name": "depth",
       "units": "metres",
-      "valid_max": 12000.0,
-      "valid_min": -5.0
+      "valid_max": 100.0,
+      "valid_min": 0.0
     },
     "DEPTH_quality_control": {
       "type": "float",
@@ -209,7 +209,7 @@
       "original_name": "DO\\(m[mi]ol/m\\^3\\)",
       "standard_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water",
       "units": "umol l-1",
-      "valid_max": 900000.0,
+      "valid_max": 581.02,
       "valid_min": 0.0
     },
     "DOX1_1_quality_control": {
@@ -241,7 +241,7 @@
       "original_name": "DO\\(ml/l\\)",
       "standard_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water",
       "units": "umol l-1",
-      "valid_max": 900000.0,
+      "valid_max": 581.02,
       "valid_min": 0.0
     },
     "DOX1_2_quality_control": {
@@ -273,7 +273,7 @@
       "original_name": "(DO\\(mg/l\\))|(\\\\04O\\(mg/l\\))",
       "standard_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water",
       "units": "umol l-1",
-      "valid_max": 900000.0,
+      "valid_max": 581.02,
       "valid_min": 0.0
     },
     "DOX1_3_quality_control": {
@@ -404,8 +404,8 @@
       "sensor_serial_number": "12345",
       "standard_name": "sea_water_temperature",
       "units": "Celsius",
-      "valid_max": 40.0,
-      "valid_min": -2.5
+      "valid_max": 35.0,
+      "valid_min": -5.0
     },
     "TEMP_quality_control": {
       "type": "float",
@@ -435,7 +435,7 @@
       "original_name": "(NTU)|(TURBIDITY\\(NTU\\))|(TUR\\\\02IDITY\\(NTU\\))",
       "rate_change_nstd": 2.0,
       "units": "1",
-      "valid_max": 24.0,
+      "valid_max": 25.0,
       "valid_min": 0.0
     },
     "TURB_quality_control": {
