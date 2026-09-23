@@ -1738,9 +1738,149 @@ class GenericHandler(CommonHandler):
 
             raise e
 
-    def to_cloud_optimised(self, s3_file_uri_list) -> None:
+    def to_cloud_optimised_batch(self, s3_file_uri_list) -> None:
         """
         Process a list of NetCDF files from S3 URIs, converting them into Parquet format in batches.
+
+        Args:
+            s3_file_uri_list (list): List of S3 URIs of NetCDF files to process.
+        Returns:
+            None
+        """
+
+        # Capture only the count — NOT the full list — to avoid cloudpickle serializing
+        # the list into every Dask task closure.  The real leak is via `self`: task()
+        # captures `self` because it calls self.to_cloud_optimised_single(), and
+        # cloudpickle serialises the entire handler instance with every client.submit().
+        # self.s3_file_uri_list is set AFTER the batch loop so that self is lean
+        # (~7 KB) rather than carrying the 19k-path list (~694 KB × batch_size).
+        total_files = len(s3_file_uri_list)
+
+        def task(f, i):
+            try:
+                self.to_cloud_optimised_single(f)
+            except Exception as e:
+                self.logger.error(
+                    f"Issue {i}/{total_files} with {f}: {type(e).__name__}: {e}"
+                )
+
+        client, cluster = self.create_cluster()
+
+        if self.cluster_mode:
+            if self.cluster_mode == "coiled":
+                self.cluster_id = cluster.cluster_id
+            else:
+                self.cluster_id = cluster.name
+        else:
+            self.cluster_id = "local_execution"
+
+        batch_size = self.get_batch_size(client=client)
+
+        # Do it in batches. maybe more efficient
+        ii = 0
+        total_batches = math.ceil(len(s3_file_uri_list) / batch_size)
+
+        for i in range(0, len(s3_file_uri_list), batch_size):
+            self.uuid_log = str(uuid.uuid4())  # value per batch
+
+            self.logger.info(
+                f"{self.uuid_log}: Processing batch {ii + 1}/{total_batches}..."
+            )
+
+            batch = s3_file_uri_list[i : i + batch_size]
+
+            self.logger.info(f"{self.uuid_log}: Files in batch {ii + 1}:\n {batch}")
+
+            if client:
+                max_retries = 3
+                retry_count = 0
+                batch_done = False
+
+                while not batch_done:
+                    try:
+                        # Use Dask client for distributed processing
+                        batch_tasks = [
+                            client.submit(task, f, idx + 1, pure=False)
+                            for idx, f in enumerate(batch)
+                            # pure=False avoids GIL contention in multiprocessing
+                        ]
+
+                        done, not_done = wait(batch_tasks, return_when="ALL_COMPLETED")
+                        batch_done = True
+
+                    except (
+                        FutureCancelledError,
+                        FuturesCancelledError,
+                        CommClosedError,
+                        StreamClosedError,
+                    ) as e:
+                        # FuturesCancelledError is the primary exception: raised by wait() when
+                        # the Dask scheduler dies and _reconnect() cancels all pending futures.
+                        # CommClosedError / StreamClosedError are safety nets for edge cases where
+                        # the connection error surfaces synchronously.
+                        retry_count += 1
+                        self.logger.error(
+                            f"{self.uuid_log}: Scheduler connection lost during batch "
+                            f"{ii + 1} (attempt {retry_count}/{max_retries}): {e}. "
+                            f"Recreating Dask cluster and retrying batch..."
+                        )
+                        self.run_summary.record_batch_retry(ii + 1)
+                        if retry_count > max_retries:
+                            self.logger.error(
+                                f"{self.uuid_log}: Batch {ii + 1} exceeded retry limit "
+                                f"({max_retries}). Skipping to next batch."
+                            )
+                            self.run_summary.record_batch_outcome(ii + 1, "skipped")
+                            batch_done = True
+                        else:
+                            try:
+                                self.cluster_manager.close_cluster(client, cluster)
+                            except Exception:
+                                pass
+                            client, cluster = self.create_cluster()
+                            self.logger.info(
+                                f"{self.uuid_log}: New cluster created. Retrying batch {ii + 1}."
+                            )
+            else:
+                # Fall back to local processing with ThreadPoolExecutor
+                self.logger.info(
+                    f"{self.uuid_log}: No client detected; using local processing."
+                )
+                with ThreadPoolExecutor() as executor:
+                    batch_tasks = [
+                        executor.submit(task, f, idx + 1) for idx, f in enumerate(batch)
+                    ]
+                    for future in as_completed(batch_tasks):
+                        try:
+                            future.result()
+                        except Exception as e:
+                            self.logger.error(f"Error processing task: {e}")
+
+            self.logger.info(f"{self.uuid_log}: batch {ii + 1} processing completed.")
+            self.run_summary.record_batch_outcome(ii + 1, "success")
+            ii += 1
+
+            # Cleanup memory
+            if "batch_tasks" in locals():
+                del batch_tasks
+
+            # Trigger garbage collection
+            gc.collect()
+
+            if client:
+                client.run_on_scheduler(gc.collect)  # GC!
+
+        if hasattr(self, "cluster_manager") and self.cluster_manager:
+            self.cluster_manager.close_cluster(client, cluster)
+
+        try:
+            self.logger.handlers.clear()
+        except AttributeError:
+            pass
+
+    def to_cloud_optimised(self, s3_file_uri_list) -> None:
+        """
+        Process a list of NetCDF files from S3 URIs
 
         Args:
             s3_file_uri_list (list): List of S3 URIs of NetCDF files to process.
@@ -1775,148 +1915,12 @@ class GenericHandler(CommonHandler):
                     bucket_name, prefix, self.s3_client_opts_output
                 )
 
-        if self.scheduler is None:
-
-            # If a scheduler is not provided then use the aodn CO provided schedulers
-
-            # Capture only the count — NOT the full list — to avoid cloudpickle serializing
-            # the list into every Dask task closure.  The real leak is via `self`: task()
-            # captures `self` because it calls self.to_cloud_optimised_single(), and
-            # cloudpickle serialises the entire handler instance with every client.submit().
-            # self.s3_file_uri_list is set AFTER the batch loop so that self is lean
-            # (~7 KB) rather than carrying the 19k-path list (~694 KB × batch_size).
-            total_files = len(s3_file_uri_list)
-
-            def task(f, i):
-                try:
-                    self.to_cloud_optimised_single(f)
-                except Exception as e:
-                    self.logger.error(
-                        f"Issue {i}/{total_files} with {f}: {type(e).__name__}: {e}"
-                    )
-
-            client, cluster = self.create_cluster()
-
-            if self.cluster_mode:
-                if self.cluster_mode == "coiled":
-                    self.cluster_id = cluster.cluster_id
-                else:
-                    self.cluster_id = cluster.name
-            else:
-                self.cluster_id = "local_execution"
-
-            batch_size = self.get_batch_size(client=client)
-
-            # Do it in batches. maybe more efficient
-            ii = 0
-            total_batches = math.ceil(len(s3_file_uri_list) / batch_size)
-
-            for i in range(0, len(s3_file_uri_list), batch_size):
-                self.uuid_log = str(uuid.uuid4())  # value per batch
-
-                self.logger.info(
-                    f"{self.uuid_log}: Processing batch {ii + 1}/{total_batches}..."
-                )
-
-                batch = s3_file_uri_list[i : i + batch_size]
-
-                self.logger.info(f"{self.uuid_log}: Files in batch {ii + 1}:\n {batch}")
-
-                if client:
-                    max_retries = 3
-                    retry_count = 0
-                    batch_done = False
-
-                    while not batch_done:
-                        try:
-                            # Use Dask client for distributed processing
-                            batch_tasks = [
-                                client.submit(task, f, idx + 1, pure=False)
-                                for idx, f in enumerate(batch)
-                                # pure=False avoids GIL contention in multiprocessing
-                            ]
-
-                            done, not_done = wait(
-                                batch_tasks, return_when="ALL_COMPLETED"
-                            )
-                            batch_done = True
-
-                        except (
-                            FutureCancelledError,
-                            FuturesCancelledError,
-                            CommClosedError,
-                            StreamClosedError,
-                        ) as e:
-                            # FuturesCancelledError is the primary exception: raised by wait() when
-                            # the Dask scheduler dies and _reconnect() cancels all pending futures.
-                            # CommClosedError / StreamClosedError are safety nets for edge cases where
-                            # the connection error surfaces synchronously.
-                            retry_count += 1
-                            self.logger.error(
-                                f"{self.uuid_log}: Scheduler connection lost during batch "
-                                f"{ii + 1} (attempt {retry_count}/{max_retries}): {e}. "
-                                f"Recreating Dask cluster and retrying batch..."
-                            )
-                            self.run_summary.record_batch_retry(ii + 1)
-                            if retry_count > max_retries:
-                                self.logger.error(
-                                    f"{self.uuid_log}: Batch {ii + 1} exceeded retry limit "
-                                    f"({max_retries}). Skipping to next batch."
-                                )
-                                self.run_summary.record_batch_outcome(ii + 1, "skipped")
-                                batch_done = True
-                            else:
-                                try:
-                                    self.cluster_manager.close_cluster(client, cluster)
-                                except Exception:
-                                    pass
-                                client, cluster = self.create_cluster()
-                                self.logger.info(
-                                    f"{self.uuid_log}: New cluster created. Retrying batch {ii + 1}."
-                                )
-                else:
-                    # Fall back to local processing with ThreadPoolExecutor
-                    self.logger.info(
-                        f"{self.uuid_log}: No client detected; using local processing."
-                    )
-                    with ThreadPoolExecutor() as executor:
-                        batch_tasks = [
-                            executor.submit(task, f, idx + 1)
-                            for idx, f in enumerate(batch)
-                        ]
-                        for future in as_completed(batch_tasks):
-                            try:
-                                future.result()
-                            except Exception as e:
-                                self.logger.error(f"Error processing task: {e}")
-
-                self.logger.info(
-                    f"{self.uuid_log}: batch {ii + 1} processing completed."
-                )
-                self.run_summary.record_batch_outcome(ii + 1, "success")
-                ii += 1
-
-                # Cleanup memory
-                if "batch_tasks" in locals():
-                    del batch_tasks
-
-                # Trigger garbage collection
-                gc.collect()
-
-                if client:
-                    client.run_on_scheduler(gc.collect)  # GC!
-
-            if hasattr(self, "cluster_manager") and self.cluster_manager:
-                self.cluster_manager.close_cluster(client, cluster)
-
-            try:
-                self.logger.handlers.clear()
-            except AttributeError:
-                pass
-
-        else:
+        if self.scheduler:
             # This is where we call the injected scheduler
             self.scheduler.schedule(handler=self, files=s3_file_uri_list)
+        else:
+            # If a scheduler is not provided then use the aodn CO provided schedulers
+            self.to_cloud_optimised_batch(s3_file_uri_list)
 
         self.logger.info("All batches processed.")
         # Set only after all tasks are submitted so self is not carrying the full list
