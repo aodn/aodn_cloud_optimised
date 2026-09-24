@@ -1740,10 +1740,28 @@ class GenericHandler(CommonHandler):
 
     def to_cloud_optimised_batch(self, s3_file_uri_list) -> None:
         """
-        Process a list of NetCDF files from S3 URIs, converting them into Parquet format in batches.
+        Convert a list of NetCDF files from S3 URIs into Parquet format, processing them in
+        fixed-size batches on a Dask cluster (or, if no cluster/client is available, locally
+        via a ThreadPoolExecutor).
+
+        For each batch:
+        - Submits one task per file (calling `self.to_cloud_optimised_single`) and waits for
+          all tasks in the batch to complete before moving to the next batch.
+        - If the Dask scheduler connection is lost mid-batch (e.g. scheduler death), the
+          cluster is recreated and the batch is retried, up to a fixed number of retries,
+          before being recorded as skipped.
+        - Records per-batch outcomes (success/retry/skipped) via `self.run_summary`.
+        - Runs garbage collection locally and on the scheduler after each batch to limit
+          memory growth across long-running batch jobs.
+
+        Note that only the count of files (not the full list) is captured in the per-task
+        closure, and `self.s3_file_uri_list` is intentionally left unset until after this
+        method returns, to avoid cloudpickle serializing the full URI list (and the rest of
+        `self`) into every Dask task submission.
 
         Args:
             s3_file_uri_list (list): List of S3 URIs of NetCDF files to process.
+
         Returns:
             None
         """
@@ -1880,20 +1898,23 @@ class GenericHandler(CommonHandler):
 
     def to_cloud_optimised(self, s3_file_uri_list) -> None:
         """
-        Process a list of NetCDF files from S3 URIs
+        Entry point to convert a list of NetCDF files from S3 URIs into Parquet cloud-optimised
+        format.
+
+        This method:
+        - Deletes any existing Parquet objects under `self.cloud_optimised_output_path` if
+          `self.clear_existing_data` is True (i.e. a fresh dataset creation).
+        - Delegates processing of `s3_file_uri_list` to `self.scheduler.schedule()` if an
+          external scheduler has been injected, otherwise falls back to the built-in
+          `self.to_cloud_optimised_batch()` (Dask-cluster/ThreadPoolExecutor batching).
+        - Sets `self.s3_file_uri_list` only after processing has been dispatched, so the full
+          file list is not captured by `self` when tasks are serialised with cloudpickle.
 
         Args:
             s3_file_uri_list (list): List of S3 URIs of NetCDF files to process.
 
         Returns:
             None
-
-        This method processes a list of NetCDF files located at `s3_file_uri_list`:
-        - Deletes existing Parquet files if `self.clear_existing_data` is set to True.
-        - Logs deletion of existing Parquet files if they exist.
-        - Creates a Dask cluster and submits tasks to process each file URI in batches.
-        - Waits for batch tasks to complete using a timeout of 10 minutes.
-        - Closes the Dask cluster after all tasks are completed.
 
         Note:
         - Uses the logger defined in `self.logger`.
@@ -1919,7 +1940,7 @@ class GenericHandler(CommonHandler):
             # This is where we call the injected scheduler
             self.scheduler.schedule(handler=self, files=s3_file_uri_list)
         else:
-            # If a scheduler is not provided then use the aodn CO provided schedulers
+            # If a scheduler is not provided, then use the aodn CO provided schedulers
             self.to_cloud_optimised_batch(s3_file_uri_list)
 
         self.logger.info("All batches processed.")
