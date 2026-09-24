@@ -1738,75 +1738,59 @@ class GenericHandler(CommonHandler):
 
             raise e
 
-    def to_cloud_optimised(self, s3_file_uri_list) -> None:
+    def to_cloud_optimised_batch(self, s3_file_uri_list) -> None:
         """
-        Process a list of NetCDF files from S3 URIs, converting them into Parquet format in batches.
+        Convert a list of NetCDF files from S3 URIs into Parquet format, processing them in
+        fixed-size batches on a Dask cluster (or, if no cluster/client is available, locally
+        via a ThreadPoolExecutor).
+
+        For each batch:
+        - Submits one task per file (calling `self.to_cloud_optimised_single`) and waits for
+          all tasks in the batch to complete before moving to the next batch.
+        - If the Dask scheduler connection is lost mid-batch (e.g. scheduler death), the
+          cluster is recreated and the batch is retried, up to a fixed number of retries,
+          before being recorded as skipped.
+        - Records per-batch outcomes (success/retry/skipped) via `self.run_summary`.
+        - Runs garbage collection locally and on the scheduler after each batch to limit
+          memory growth across long-running batch jobs.
+
+        Note that only the count of files (not the full list) is captured in the per-task
+        closure, and `self.s3_file_uri_list` is intentionally left unset until after this
+        method returns, to avoid cloudpickle serializing the full URI list (and the rest of
+        `self`) into every Dask task submission.
 
         Args:
             s3_file_uri_list (list): List of S3 URIs of NetCDF files to process.
 
         Returns:
             None
-
-        This method processes a list of NetCDF files located at `s3_file_uri_list`:
-        - Deletes existing Parquet files if `self.clear_existing_data` is set to True.
-        - Logs deletion of existing Parquet files if they exist.
-        - Creates a Dask cluster and submits tasks to process each file URI in batches.
-        - Waits for batch tasks to complete using a timeout of 10 minutes.
-        - Closes the Dask cluster after all tasks are completed.
-
-        Note:
-        - Uses the logger defined in `self.logger`.
-        - Uses configurations and settings from `self.dataset_config`.
         """
-        if self.clear_existing_data:
-            self.logger.info(
-                "Creating new Parquet dataset - DELETING existing all Parquet objects if exist"
-            )
-            if prefix_exists(
-                self.cloud_optimised_output_path,
-                s3_client_opts=self.s3_client_opts_output,
-            ):
-                bucket_name, prefix = split_s3_path(self.cloud_optimised_output_path)
-                self.logger.info(
-                    f"Deleting existing Parquet objects from {self.cloud_optimised_output_path}."
+
+        # Capture only the count — NOT the full list — to avoid cloudpickle serializing
+        # the list into every Dask task closure.  The real leak is via `self`: task()
+        # captures `self` because it calls self.to_cloud_optimised_single(), and
+        # cloudpickle serialises the entire handler instance with every client.submit().
+        # self.s3_file_uri_list is set AFTER the batch loop so that self is lean
+        # (~7 KB) rather than carrying the 19k-path list (~694 KB × batch_size).
+        total_files = len(s3_file_uri_list)
+
+        def task(f, i):
+            try:
+                self.to_cloud_optimised_single(f)
+            except Exception as e:
+                self.logger.error(
+                    f"Issue {i}/{total_files} with {f}: {type(e).__name__}: {e}"
                 )
-                delete_objects_in_prefix(
-                    bucket_name, prefix, self.s3_client_opts_output
-                )
 
-        if self.scheduler is None:
+        client, cluster = self.create_cluster()
 
-            # If a scheduler is not provided then use the aodn CO provided schedulers
-
-            # Capture only the count — NOT the full list — to avoid cloudpickle serializing
-            # the list into every Dask task closure.  The real leak is via `self`: task()
-            # captures `self` because it calls self.to_cloud_optimised_single(), and
-            # cloudpickle serialises the entire handler instance with every client.submit().
-            # self.s3_file_uri_list is set AFTER the batch loop so that self is lean
-            # (~7 KB) rather than carrying the 19k-path list (~694 KB × batch_size).
-            total_files = len(s3_file_uri_list)
-
-            def task(f, i):
-                try:
-                    self.to_cloud_optimised_single(f)
-                except Exception as e:
-                    self.logger.error(
-                        f"Issue {i}/{total_files} with {f}: {type(e).__name__}: {e}"
-                    )
-
-            client, cluster = self.create_cluster()
-
-            if self.cluster_mode:
-                if self.cluster_mode == "coiled":
-                    self.cluster_id = cluster.cluster_id
-                else:
-                    self.cluster_id = cluster.name
+        if self.cluster_mode:
+            if self.cluster_mode == "coiled":
+                self.cluster_id = cluster.cluster_id
             else:
-                self.cluster_id = "local_execution"
+                self.cluster_id = cluster.name
         else:
-            client = None
-            cluster = None
+            self.cluster_id = "local_execution"
 
         batch_size = self.get_batch_size(client=client)
 
@@ -1875,9 +1859,6 @@ class GenericHandler(CommonHandler):
                             self.logger.info(
                                 f"{self.uuid_log}: New cluster created. Retrying batch {ii + 1}."
                             )
-            elif self.scheduler:
-                # This is where we call the injected scheduler
-                self.scheduler.schedule(handler=self, files=batch)
             else:
                 # Fall back to local processing with ThreadPoolExecutor
                 self.logger.info(
@@ -1907,13 +1888,62 @@ class GenericHandler(CommonHandler):
             if client:
                 client.run_on_scheduler(gc.collect)  # GC!
 
-        self.logger.info("All batches processed.")
         if hasattr(self, "cluster_manager") and self.cluster_manager:
             self.cluster_manager.close_cluster(client, cluster)
-        # Set only after all tasks are submitted so self is not carrying the full list
-        # during cloudpickle serialisation of each Dask task closure (saves ~3 GB/batch).
-        self.s3_file_uri_list = s3_file_uri_list
+
         try:
             self.logger.handlers.clear()
         except AttributeError:
             pass
+
+    def to_cloud_optimised(self, s3_file_uri_list) -> None:
+        """
+        Entry point to convert a list of NetCDF files from S3 URIs into Parquet cloud-optimised
+        format.
+
+        This method:
+        - Deletes any existing Parquet objects under `self.cloud_optimised_output_path` if
+          `self.clear_existing_data` is True (i.e. a fresh dataset creation).
+        - Delegates processing of `s3_file_uri_list` to `self.scheduler.schedule()` if an
+          external scheduler has been injected, otherwise falls back to the built-in
+          `self.to_cloud_optimised_batch()` (Dask-cluster/ThreadPoolExecutor batching).
+        - Sets `self.s3_file_uri_list` only after processing has been dispatched, so the full
+          file list is not captured by `self` when tasks are serialised with cloudpickle.
+
+        Args:
+            s3_file_uri_list (list): List of S3 URIs of NetCDF files to process.
+
+        Returns:
+            None
+
+        Note:
+        - Uses the logger defined in `self.logger`.
+        - Uses configurations and settings from `self.dataset_config`.
+        """
+        if self.clear_existing_data:
+            self.logger.info(
+                "Creating new Parquet dataset - DELETING existing all Parquet objects if exist"
+            )
+            if prefix_exists(
+                self.cloud_optimised_output_path,
+                s3_client_opts=self.s3_client_opts_output,
+            ):
+                bucket_name, prefix = split_s3_path(self.cloud_optimised_output_path)
+                self.logger.info(
+                    f"Deleting existing Parquet objects from {self.cloud_optimised_output_path}."
+                )
+                delete_objects_in_prefix(
+                    bucket_name, prefix, self.s3_client_opts_output
+                )
+
+        if self.scheduler:
+            # This is where we call the injected scheduler
+            self.scheduler.schedule(handler=self, files=s3_file_uri_list)
+        else:
+            # If a scheduler is not provided, then use the aodn CO provided schedulers
+            self.to_cloud_optimised_batch(s3_file_uri_list)
+
+        self.logger.info("All batches processed.")
+        # Set only after all tasks are submitted so self is not carrying the full list
+        # during cloudpickle serialisation of each Dask task closure (saves ~3 GB/batch).
+        self.s3_file_uri_list = s3_file_uri_list
