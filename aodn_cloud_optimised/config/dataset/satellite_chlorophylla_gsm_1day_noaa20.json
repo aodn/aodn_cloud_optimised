@@ -83,10 +83,7 @@
         "filter": [
           ".*chl_gsm\\.nc$"
         ],
-        "year_range": [
-          2023,
-          2025
-        ]
+        "year_range": []
       }
     ],
     "clear_existing_data": false,
