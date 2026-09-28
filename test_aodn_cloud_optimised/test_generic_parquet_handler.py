@@ -802,5 +802,39 @@ class TestGenericHandlerPostprocessLifecycle(unittest.TestCase):
         handler.postprocess.assert_has_calls([call(ds_1), call(ds_2)])
 
 
+class TestToCloudOptimisedSchedulerDelegation(unittest.TestCase):
+    @staticmethod
+    def _build_handler():
+        # Bypass full __init__ (S3/cluster setup) to isolate to_cloud_optimised control flow.
+        handler = GenericHandler.__new__(GenericHandler)
+        handler.logger = MagicMock()
+        handler.clear_existing_data = False
+        handler.cloud_optimised_output_path = (
+            "s3://imos-data-lab-optimised/dummy.parquet"
+        )
+        handler.s3_client_opts_output = {}
+        handler.scheduler = MagicMock()
+        handler.to_cloud_optimised_batch = MagicMock()
+        handler.create_cluster = MagicMock()
+        return handler
+
+    def test_injected_scheduler_is_called_once_with_full_file_list(self):
+        handler = self._build_handler()
+        s3_file_uri_list = [
+            "s3://imos-data/file1.nc",
+            "s3://imos-data/file2.nc",
+            "s3://imos-data/file3.nc",
+        ]
+
+        handler.to_cloud_optimised(s3_file_uri_list)
+
+        handler.scheduler.schedule.assert_called_once_with(
+            handler=handler, files=s3_file_uri_list
+        )
+        handler.to_cloud_optimised_batch.assert_not_called()
+        handler.create_cluster.assert_not_called()
+        self.assertEqual(handler.s3_file_uri_list, s3_file_uri_list)
+
+
 if __name__ == "__main__":
     unittest.main()
