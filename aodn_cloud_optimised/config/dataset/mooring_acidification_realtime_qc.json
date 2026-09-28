@@ -7,7 +7,7 @@
       {
         "s3_uri": "s3://imos-data/IMOS/ANMN/AM/",
         "filter": [
-          ".*\\/CO2\\/real-time\\/.*_FV0[0-1].*\\.nc$"
+          ".*\\/CO2\\/real-time\\/.*_FV01.*\\.nc$"
         ],
         "year_range": []
       }
@@ -64,45 +64,6 @@
       "valid_max": 180.0,
       "axis": "X",
       "reference_datum": "geographical coordinates, WGS84 projection"
-    },
-    "XCO2_WATER": {
-      "type": "float",
-      "long_name": "mole_fraction_of_carbon_dioxide_in_sea_water",
-      "units": "ppm",
-      "ancillary_variables": "XCO2_WATER_standard_deviation"
-    },
-    "XCO2_WATER_standard_deviation": {
-      "type": "double",
-      "long_name": "mole_fraction_of_carbon_dioxide_in_sea_water standard_deviation",
-      "units": "ppm"
-    },
-    "XCO2_AIR": {
-      "type": "float",
-      "standard_name": "mole_fraction_of_carbon_dioxide_in_air",
-      "long_name": "mole_fraction_of_carbon_dioxide_in_air",
-      "units": "ppm",
-      "ancillary_variables": "XCO2_AIR_standard_deviation"
-    },
-    "XCO2_AIR_standard_deviation": {
-      "type": "double",
-      "long_name": "mole_fraction_of_carbon_dioxide_in_air standard_deviation",
-      "units": "ppm"
-    },
-    "SSTI": {
-      "type": "float",
-      "standard_name": "sea_surface_temperature",
-      "long_name": "sea_surface_temperature",
-      "units": "Celsius",
-      "valid_min": -2.5,
-      "valid_max": 40.0
-    },
-    "SSS": {
-      "type": "float",
-      "standard_name": "sea_surface_salinity",
-      "long_name": "sea_surface_salinity",
-      "units": "1e-3",
-      "valid_min": 2.0,
-      "valid_max": 41.0
     },
     "TEMP": {
       "type": "float",
@@ -184,16 +145,6 @@
       "valid_max": 1000.0,
       "ancillary_variables": "DOX1_quality_control",
       "sensor": "Aanderaa Optode"
-    },
-    "TPH": {
-      "type": "float",
-      "standard_name": "sea_water_ph_reported_on_total_scale",
-      "long_name": "sea_water_ph_reported_on_total_scale",
-      "units": "1",
-      "valid_min": 5.0,
-      "valid_max": 10.0,
-      "ancillary_variables": "TPH_quality_control",
-      "sensor": "SeapHOx-Scripps Institution of Oceanography"
     },
     "TIME_quality_control": {
       "type": "float",
@@ -337,21 +288,6 @@
       "type": "float",
       "standard_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water status_flag",
       "long_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water status_flag",
-      "quality_control_conventions": "WOCE quality control procedure",
-      "quality_control_set": 4.0,
-      "valid_min": 2,
-      "valid_max": 4,
-      "flag_values": [
-        2,
-        3,
-        4
-      ],
-      "flag_meanings": "good questionable bad"
-    },
-    "TPH_quality_control": {
-      "type": "float",
-      "standard_name": "sea_water_ph_reported_on_total_scale status_flag",
-      "long_name": "sea_water_ph_reported_on_total_scale status_flag",
       "quality_control_conventions": "WOCE quality control procedure",
       "quality_control_set": 4.0,
       "valid_min": 2,
