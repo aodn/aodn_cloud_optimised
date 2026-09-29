@@ -19,6 +19,7 @@ ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Specify the filename relative to the current directory
 TEST_FILE_NC = os.path.join(ROOT_DIR, "resources", "2902093_prof.nc")
+TEST_FILE_NAN_LATLON_NC = os.path.join(ROOT_DIR, "resources", "2902089_prof.nc")
 TEST_FILE_BAD_GEOM_NC = os.path.join(ROOT_DIR, "resources", "5905017_prof.nc")
 
 DATASET_CONFIG = os.path.join(ROOT_DIR, "resources", "argo.json")
@@ -97,6 +98,12 @@ class TestArgoHandler(unittest.TestCase):
             "imos-data",
             f"bad_geom_argo/{os.path.basename(TEST_FILE_BAD_GEOM_NC)}",
             TEST_FILE_BAD_GEOM_NC,
+        )
+
+        self._upload_to_s3(
+            "imos-data",
+            f"nan_lat_lon_argo/{os.path.basename(TEST_FILE_NAN_LATLON_NC)}",
+            TEST_FILE_NAN_LATLON_NC,
         )
 
         self.dataset_argo_netcdf_config = load_dataset_config(DATASET_CONFIG)
@@ -199,6 +206,25 @@ class TestArgoHandler(unittest.TestCase):
         # Assert the expected values in the Parquet dataset
         self.assertIn("PSAL_ADJUSTED", parquet_dataset.columns)
         self.assertIn("TEMP_ADJUSTED", parquet_dataset.columns)
+
+    def test_parquet_nc_argo_nan_lat_lon_handler(self):
+        """A file where every profile is unpositioned (LATITUDE/LONGITUDE are all
+        fill values) must be rejected early rather than silently producing an
+        empty parquet dataset."""
+        nc_obj_ls = s3_ls("imos-data", "nan_lat_lon_argo")
+
+        with self.assertRaisesRegex(ValueError, "has no valid position"):
+            self.handler_nc_argo_file.to_cloud_optimised_single(nc_obj_ls[0])
+
+        # nothing should have been written to the optimised bucket
+        dataset_name = self.dataset_argo_netcdf_config["dataset_name"]
+        objects = self.s3.list_objects_v2(
+            Bucket=self.BUCKET_OPTIMISED_NAME,
+            Prefix=f"{self.ROOT_PREFIX_CLOUD_OPTIMISED_PATH}/{dataset_name}.parquet/",
+        ).get("Contents", [])
+        self.assertEqual(
+            [obj["Key"] for obj in objects if obj["Key"].endswith(".parquet")], []
+        )
 
 
 if __name__ == "__main__":
