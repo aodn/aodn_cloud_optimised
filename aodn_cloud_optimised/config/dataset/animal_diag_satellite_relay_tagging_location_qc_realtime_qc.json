@@ -134,16 +134,24 @@
       "comment": "When a single SRDL is programmed to use several different PTT numbers, the SMRU system overrides the PTT field to present all the data as if it had been transmitted under a single PTT number. This field records the true PTT number associated with this location."
     },
     "error_radius": {
-      "type": "int32"
+      "type": "int32",
+      "long_name": "Argos circular error radius",
+      "units": "m"
     },
     "semi_major_axis": {
-      "type": "int32"
+      "type": "int32",
+      "long-name": "Argos error ellipse long axis",
+      "units": "m"
     },
     "semi_minor_axis": {
-      "type": "int32"
+      "type": "int32",
+      "long-name": "Argos error ellipse short axis",
+      "units": "m"
     },
     "ellipse_orientation": {
-      "type": "int32"
+      "type": "int32",
+      "long-name": "Argos error ellipse orientation from North",
+      "units": "degrees"
     },
     "hdop": {
       "type": "double"
@@ -155,22 +163,38 @@
       "type": "int32"
     },
     "ssm_lon": {
-      "type": "double"
+      "type": "double",
+      "long_name": "State-space model-estimated longitude",
+      "units": "degrees_east",
+      "comment": "position estimate (WGS84 datum)"
     },
     "ssm_lat": {
-      "type": "double"
+      "type": "double",
+      "long_name": "State-space model-estimated latitude",
+      "units": "degrees_north",
+      "comment": "position estimate (WGS84 datum)"
     },
     "ssm_x": {
-      "type": "double"
+      "type": "double",
+      "long_name": "State-space model-estimated X coordinate (E-W)",
+      "units": "km",
+      "comment": "projection for ssm_x,ssm_y coordinates is given in the metadata: `qc_proj4string`"
     },
     "ssm_y": {
-      "type": "double"
+      "type": "double",
+      "long_name": "State-space model-estimated Y coordinate (N-S)",
+      "units": "km",
+      "comment": "projection for ssm_x,ssm_y coordinates is given in the metadata: `qc_proj4string`"
     },
     "ssm_x_se": {
-      "type": "double"
+      "type": "double",
+      "long_name": "State-space model-estimated X standard error",
+      "units": "km"
     },
     "ssm_y_se": {
-      "type": "double"
+      "type": "double",
+      "long_name": "State-space model-estimated Y standard error",
+      "units": "km"
     },
     "cid": {
       "type": "string",
