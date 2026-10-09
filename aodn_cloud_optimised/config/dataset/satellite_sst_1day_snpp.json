@@ -11,10 +11,7 @@
         "filter": [
           ".*\\.aust\\.sst\\.nc$"
         ],
-        "year_range": [
-          2022,
-          2026
-        ]
+        "year_range": []
       }
     ],
     "cluster": {
