@@ -118,7 +118,10 @@
           ]
         },
         "batch_size": {
-          "type": "integer"
+          "type": [
+            "integer",
+            "null"
+          ]
         }
       }
     },

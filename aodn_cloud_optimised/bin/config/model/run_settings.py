@@ -87,7 +87,7 @@ class RunSettings(pydantic.BaseModel):
     )
     batch_size: int | None = pydantic.Field(
         default=None,
-        description="Maximum number of files to process in a batch (must be a positive integer).",
+        description="Maximum number of files to process in a batch (must be a positive integer or None).",
         ge=1,
     )
     coiled_cluster_options: CoiledClusterOptions | None = pydantic.Field(
