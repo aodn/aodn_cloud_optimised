@@ -57,7 +57,7 @@ from shapely.geometry import MultiPolygon, Polygon
 from tqdm.notebook import tqdm
 from windrose import WindroseAxes
 
-__version__ = "0.3.30"
+__version__ = "0.3.31"
 
 REGION: Final[str] = "ap-southeast-2"
 ENDPOINT_URL = "https://s3.ap-southeast-2.amazonaws.com"
@@ -110,16 +110,25 @@ VARIABLE_CANDIDATES: Final[dict[str, dict[str, tuple[str, ...]]]] = {
             "detection_timestamp",
             # NESP products
             "eventDate",
-            # Animal Tracking datasets below
+            # Animal Tracking sattag datasets below
             "end_date",
             "s_date",
             "d_date",
             "de_date",
             "qc_start_date",
             "date",
+            # Animal Tracking Acoustic
+            "detection_datetime",
+            "date_hour_UTC",
         ),
-        "LAT": ("LATITUDE", "latitude", "LAT", "lat"),
-        "LON": ("LONGITUDE", "longitude", "LON", "lon"),
+        "LAT": ("LATITUDE", "latitude", "LAT", "lat", "receiver_deployment_latitude"),
+        "LON": (
+            "LONGITUDE",
+            "longitude",
+            "LON",
+            "lon",
+            "receiver_deployment_longitude",
+        ),
         "DEPTH": (
             "DEPTH",
             "depth",

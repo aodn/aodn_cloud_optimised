@@ -68,7 +68,7 @@ TEST_CSV_FILE = os.path.join(
     ROOT_DIR, "resources", "A69-1105-135_107799906_130722039.csv"
 )
 DATASET_CONFIG_CSV_AATAMS_JSON = os.path.join(
-    ROOT_DIR, "resources", "animal_acoustic_tracking_delayed_qc.json"
+    ROOT_DIR, "resources", "animal_acoustic_tracking_delayed_detection_qc.json"
 )
 
 DATASET_CONFIG_NC_ANMN_JSON = os.path.join(
