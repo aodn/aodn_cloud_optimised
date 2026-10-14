@@ -140,17 +140,17 @@
     },
     "semi_major_axis": {
       "type": "int32",
-      "long-name": "Argos error ellipse long axis",
+      "long_name": "Argos error ellipse long axis",
       "units": "m"
     },
     "semi_minor_axis": {
       "type": "int32",
-      "long-name": "Argos error ellipse short axis",
+      "long_name": "Argos error ellipse short axis",
       "units": "m"
     },
     "ellipse_orientation": {
       "type": "int32",
-      "long-name": "Argos error ellipse orientation from North",
+      "long_name": "Argos error ellipse orientation from North",
       "units": "degrees"
     },
     "hdop": {
