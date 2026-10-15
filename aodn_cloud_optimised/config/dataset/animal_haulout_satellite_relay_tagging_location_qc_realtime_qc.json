@@ -103,22 +103,38 @@
       "type": "double"
     },
     "ssm_lon": {
-      "type": "double"
+      "type": "double",
+      "long_name": "State-space model-estimated longitude",
+      "units": "degrees_east",
+      "comment": "position estimate (WGS84 datum)"
     },
     "ssm_lat": {
-      "type": "double"
+      "type": "double",
+      "long_name": "State-space model-estimated latitude",
+      "units": "degrees_north",
+      "comment": "position estimate (WGS84 datum)"
     },
     "ssm_x": {
-      "type": "double"
+      "type": "double",
+      "long_name": "State-space model-estimated X coordinate (E-W)",
+      "units": "km",
+      "comment": "projection for ssm_x,ssm_y coordinates is given in the metadata: `qc_proj4string`"
     },
     "ssm_y": {
-      "type": "double"
+      "type": "double",
+      "long_name": "State-space model-estimated Y coordinate (N-S)",
+      "units": "km",
+      "comment": "projection for ssm_x,ssm_y coordinates is given in the metadata: `qc_proj4string`"
     },
     "ssm_x_se": {
-      "type": "double"
+      "type": "double",
+      "long_name": "State-space model-estimated X standard error",
+      "units": "km"
     },
     "ssm_y_se": {
-      "type": "double"
+      "type": "double",
+      "long_name": "State-space model-estimated Y standard error",
+      "units": "km"
     },
     "cid": {
       "type": "string",

@@ -66,7 +66,7 @@
       "comment": "The number of (pressure,temperature) pairs "
     },
     "n_cond": {
-      "type": "double",
+      "type": "int32",
       "comment": "The number of (pressure,conductivity) pairs "
     },
     "n_sal": {
@@ -106,28 +106,35 @@
     "sal_vals": {
       "type": "double",
       "long_name": "Salinity profile",
-      "units": " ",
+      "units": "psu (Practical Salinity Units)",
       "comment": "A comma-separated list of the salinity coordinates of the (pressure,salinity) profile"
     },
     "n_fluoro": {
-      "type": "double"
+      "type": "int32",
+      "comment": "The number of (pressure,fluorescence) pairs "
     },
     "fluoro_dbar": {
       "type": "double",
       "units": "decibars"
     },
     "fluoro_vals": {
-      "type": "double"
+      "type": "double",
+      "long_name": "fluorescence profile",
+      "units": "ug/L",
+      "comment": "Measured as Chlorophyll-a in micrograms per litre"
     },
     "n_oxy": {
-      "type": "double"
+      "type": "int32",
+      "comment": "The number of (pressure,dissolved oxygen) pairs "
     },
     "oxy_dbar": {
       "type": "double",
       "units": "decibars"
     },
     "oxy_vals": {
-      "type": "double"
+      "type": "double",
+      "long_name": "dissolved oxygen profile",
+      "units": "umol/L"
     },
     "qc_profile": {
       "type": "int32"
@@ -139,7 +146,8 @@
       "type": "double"
     },
     "sal_corrected_vals": {
-      "type": "double"
+      "type": "double",
+      "units": "psu (Practical Salinity Units)"
     },
     "created": {
       "type": "string",
@@ -150,13 +158,16 @@
       "long_name": "Date of update of this file (UTC)"
     },
     "n_photo": {
-      "type": "double"
+      "type": "int32",
+      "comment": "The number of (pressure,light) pairs "
     },
     "photo_dbar": {
       "type": "double"
     },
     "photo_vals": {
-      "type": "double"
+      "type": "double",
+      "long_name": "Light profile",
+      "units": "mol/m^2"
     },
     "lat": {
       "type": "double",
@@ -171,22 +182,38 @@
       "comment": "Position estimate (WGS 84 datum)"
     },
     "ssm_lon": {
-      "type": "double"
+      "type": "double",
+      "long_name": "State-space model-estimated longitude",
+      "units": "degrees_east",
+      "comment": "position estimate (WGS84 datum)"
     },
     "ssm_lat": {
-      "type": "double"
+      "type": "double",
+      "long_name": "State-space model-estimated latitude",
+      "units": "degrees_north",
+      "comment": "position estimate (WGS84 datum)"
     },
     "ssm_x": {
-      "type": "double"
+      "type": "double",
+      "long_name": "State-space model-estimated X coordinate (E-W)",
+      "units": "km",
+      "comment": "projection for ssm_x,ssm_y coordinates is given in the metadata: `qc_proj4string`"
     },
     "ssm_y": {
-      "type": "double"
+      "type": "double",
+      "long_name": "State-space model-estimated Y coordinate (N-S)",
+      "units": "km",
+      "comment": "projection for ssm_x,ssm_y coordinates is given in the metadata: `qc_proj4string`"
     },
     "ssm_x_se": {
-      "type": "double"
+      "type": "double",
+      "long_name": "State-space model-estimated X standard error",
+      "units": "km"
     },
     "ssm_y_se": {
-      "type": "double"
+      "type": "double",
+      "long_name": "State-space model-estimated Y standard error",
+      "units": "km"
     },
     "cid": {
       "type": "string",

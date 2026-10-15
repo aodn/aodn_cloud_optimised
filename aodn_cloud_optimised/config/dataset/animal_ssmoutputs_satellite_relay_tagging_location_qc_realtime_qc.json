@@ -58,34 +58,54 @@
       "comment": "Position estimate (WGS 84 datum)"
     },
     "x": {
-      "type": "double"
+      "type": "double",
+      "units": "km",
+      "comment": "The state-space model-estimated X coordinate (projection given by metadata:qc_proj4string)"
     },
     "y": {
-      "type": "double"
+      "type": "double",
+      "units": "km",
+      "comment": "The state-space model-estimated Y coordinate (projection given by metadata:qc_proj4string)"
     },
     "x_se": {
-      "type": "double"
+      "type": "double",
+      "units": "km",
+      "comment": "The state-space model-estimated X standard error"
     },
     "y_se": {
-      "type": "double"
+      "type": "double",
+      "units": "km",
+      "comment": "The state-space model-estimated Y standard error"
     },
     "u": {
-      "type": "double"
+      "type": "double",
+      "units": "km/h",
+      "comment": "The state-space model-estimated velocity in the X direction"
     },
     "v": {
-      "type": "double"
+      "type": "double",
+      "units": "km/h",
+      "comment": "The state-space model-estimated velocity in the Y direction"
     },
     "u_se": {
-      "type": "double"
+      "type": "double",
+      "units": "km/h",
+      "comment": "The state-space model-estimated velocity standard error in the X direction"
     },
     "v_se": {
-      "type": "double"
+      "type": "double",
+      "units": "km/h",
+      "comment": "The state-space model-estimated velocity standard error in the Y direction"
     },
     "s": {
-      "type": "double"
+      "type": "double",
+      "units": "km/h",
+      "comment": "The state-space model-estimated along-track speed"
     },
     "s_se": {
-      "type": "double"
+      "type": "double",
+      "units": "km/h",
+      "comment": "The state-space model-estimated along-track speed standard error"
     },
     "cid": {
       "type": "string",
