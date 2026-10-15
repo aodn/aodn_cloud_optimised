@@ -210,6 +210,7 @@ More information available [here](https://github.com/conda-forge/miniforge?tab=r
 - [satellite_picoplankton_fraction_oc3_1day_aqua.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_picoplankton_fraction_oc3_1day_aqua.ipynb)
 - [satellite_sst_1day_aqua.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_sst_1day_aqua.ipynb)
 - [satellite_sst_1day_snpp.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_sst_1day_snpp.ipynb)
+- [satellite_wave_cfosat_swim_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_wave_cfosat_swim_qc.ipynb)
 - [satellite_wind_altimeter_delayed_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_wind_altimeter_delayed_qc.ipynb)
 - [station_lucinda_jetty_daily_satlantic_hyperocr.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/station_lucinda_jetty_daily_satlantic_hyperocr.ipynb)
 - [station_lucinda_jetty_daily_satlantic_hyperocr_derived_product.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/station_lucinda_jetty_daily_satlantic_hyperocr_derived_product.ipynb)
