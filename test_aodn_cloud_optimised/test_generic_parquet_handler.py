@@ -65,7 +65,7 @@ TEST_FILE_PARQUET_SEABIRD_V1 = os.path.join(
 DUMMY_FILE = os.path.join(ROOT_DIR, "resources", "DUMMY.nan")
 DUMMY_NC_FILE = os.path.join(ROOT_DIR, "resources", "DUMMY.nc")
 TEST_CSV_FILE = os.path.join(
-    ROOT_DIR, "resources", "A69-1105-135_107799906_130722039.csv"
+    ROOT_DIR, "resources", "IMOS_ATF-ACOUSTIC_TAGID_A69-1105-11_110520933_128840427.csv"
 )
 DATASET_CONFIG_CSV_AATAMS_JSON = os.path.join(
     ROOT_DIR, "resources", "animal_acoustic_tracking_delayed_detection_qc.json"
