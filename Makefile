@@ -1,6 +1,8 @@
-.PHONY: core tests notebooks dev clean docs mcp setup-sys-deps
+.PHONY: check-poetry core tests notebooks dev clean docs mcp setup-sys-deps
 
 GLOBAL_POETRY := $(shell which -a poetry | grep -v ".venv" | head -n 1)
+# Avoid poetry hanging on keyring lookups in headless/SSH sessions (no private indexes used)
+export PYTHON_KEYRING_BACKEND ?= keyring.backends.null.Keyring
 SAFE_RUN := env -u VIRTUAL_ENV
 
 # OS Detection
@@ -45,27 +47,40 @@ ifeq ($(UNAME_S),Linux)
 endif
 
 
+check-poetry:
+	@if [ -z "$(GLOBAL_POETRY)" ]; then \
+		echo "----------------------------------------------------------"; \
+		echo "ERROR: poetry is not installed (outside of .venv)."; \
+		echo "Install it with one of:"; \
+		echo "  curl -sSL https://install.python-poetry.org | python3 -"; \
+		echo "  pipx install poetry"; \
+		echo "See https://python-poetry.org/docs/#installation"; \
+		echo "Then re-run make."; \
+		echo "----------------------------------------------------------"; \
+		exit 1; \
+	fi
+
 # Core sync
-core: setup-sys-deps
+core: check-poetry setup-sys-deps
 	$(SAFE_RUN) $(GLOBAL_POETRY) sync
 
 # Sync including specific extras
-tests:
+tests: check-poetry
 	$(SAFE_RUN) $(GLOBAL_POETRY) sync --extras "tests notebooks"
 
-mcp:
+mcp: check-poetry
 	$(SAFE_RUN) $(GLOBAL_POETRY) sync --extras "notebooks mcp"
 
-notebooks:
+notebooks: check-poetry
 	$(SAFE_RUN) $(GLOBAL_POETRY) sync --extras notebooks
 
-dev: setup-sys-deps
+dev: check-poetry setup-sys-deps
 	$(SAFE_RUN) $(GLOBAL_POETRY) sync --extras "notebooks tests docs dev mcp"
 	$(SAFE_RUN) $(GLOBAL_POETRY) run pre-commit install
 	# Plugin management is global, so it doesn't need SAFE_RUN
 	$(GLOBAL_POETRY) self add poetry-plugin-export
 
-docs:
+docs: check-poetry
 	$(SAFE_RUN) $(GLOBAL_POETRY) sync --extras docs
 
 clean:

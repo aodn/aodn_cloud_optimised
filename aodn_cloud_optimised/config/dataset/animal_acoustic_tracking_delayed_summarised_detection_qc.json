@@ -46,7 +46,7 @@
       "comments": "Unique identifier for the animal carrying the transmitter. This is a combination of the transmitter ID(s), the animal ID and the deployment ID in the IMOS Australian Animal Acoustic Telemetry Database."
     },
     "date_hour_UTC": {
-      "type": "string",
+      "type": "timestamp[ns]",
       "standard_name": "",
       "long_name": "Hourly timestamp in UTC",
       "units": "",
@@ -62,16 +62,16 @@
     "species_common_name": {
       "type": "string",
       "standard_name": "",
-      "long_name": "",
+      "long_name": "Species Common Name",
       "units": "",
-      "comments": "Deployment animal common name"
+      "comments": ""
     },
     "species_scientific_name": {
       "type": "string",
       "standard_name": "",
-      "long_name": "",
+      "long_name": "Species Scientific Name",
       "units": "",
-      "comments": "Deployment animal scientific name"
+      "comments": ""
     },
     "CAAB_species_id": {
       "type": "int32",
@@ -302,7 +302,8 @@
         "schema": {
           "type": "string",
           "units": "1",
-          "long_name": "Filename of the source file"
+          "long_name": "Filename of the source file",
+          "comments": "This variable is added to the dataset to keep track of the source file from which the data was read. Each filename corresponds to a specific species."
         }
       },
       "timestamp": {

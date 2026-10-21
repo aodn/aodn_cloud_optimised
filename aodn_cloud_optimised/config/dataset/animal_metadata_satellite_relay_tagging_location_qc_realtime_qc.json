@@ -127,16 +127,20 @@
       "comment": "Time of last data record included in QC (UTC)"
     },
     "qc_method": {
-      "type": "string"
+      "type": "string",
+      "comment": "The approach used to quality control the location data (for IMOS data this is always ArgosQC)"
     },
     "qc_method_version": {
-      "type": "string"
+      "type": "string",
+      "comment": "The ArgosQC R package version number used to conduct the QC"
     },
     "qc_proj4string": {
-      "type": "string"
+      "type": "string",
+      "comment": "The proj4string ArgosQC used when estimating X,Y location coordinates (differs depending on species & general deployment location)"
     },
     "qc_run_date": {
-      "type": "string"
+      "type": "string",
+      "comment": "The last date (UTC) when the QC was run on the associated data."
     }
   },
   "aws_opendata_registry": {
