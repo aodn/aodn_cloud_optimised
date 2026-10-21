@@ -1116,7 +1116,7 @@ class GenericHandler(CommonHandler):
         """
         # Iterate over s3_file_handle_list in batches
         if s3_file_uri_list is None:
-            raise ValueError("input_objects is not defined")
+            raise ValueError("s3_file_uri_list is not defined")
 
         drop_vars_list = [
             var_name
