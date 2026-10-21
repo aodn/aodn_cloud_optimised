@@ -1,3 +1,4 @@
+import contextvars
 import importlib.resources
 import os
 import re
@@ -129,6 +130,39 @@ def get_var_template_shape(ds, var_template_shape):
             return var
 
     return None
+
+
+def apply_resources_annotation(ds, resources):
+    """Apply a dask ``resources`` annotation to every graph layer of a dataset.
+
+    ``dask.annotate`` only tags layers created in the current context. Layers
+    created on workers (e.g. by ``open_mfdataset(parallel=True)``, which runs
+    ``open_dataset`` and the preprocess function inside ``dask.delayed``) come
+    back un-annotated and could be scheduled on any worker.
+
+    Args:
+        ds (xr.Dataset): Dataset whose dask-backed variables are annotated in place.
+        resources (dict | None): Worker resources, e.g. ``{"cpu_pool": 1}``.
+
+    Returns:
+        xr.Dataset: The same dataset.
+    """
+    if not resources:
+        return ds
+    seen = set()
+    for var in list(ds.variables.values()):
+        data = var.data
+        if not hasattr(data, "__dask_graph__"):
+            continue
+        graph = data.__dask_graph__()
+        for name, layer in getattr(graph, "layers", {}).items():
+            if id(layer) in seen:
+                continue
+            seen.add(id(layer))
+            annotations = dict(layer.annotations or {})
+            annotations.setdefault("resources", dict(resources))
+            layer.annotations = annotations
+    return ds
 
 
 def preprocess_xarray(ds, dataset_config):
@@ -1588,7 +1622,12 @@ class GenericHandler(CommonHandler):
 
         with ThreadPoolExecutor(max_workers=50) as executor:
             future_to_file = {
-                executor.submit(_open_one, file, engine): (file, engine)
+                executor.submit(
+                    contextvars.copy_context().run, _open_one, file, engine
+                ): (
+                    file,
+                    engine,
+                )
                 for file, engine in file_engine_pairs
             }
             for future in as_completed(future_to_file):
@@ -2420,6 +2459,8 @@ class GenericHandler(CommonHandler):
         }
 
         ds = xr.open_mfdataset(batch_files, **open_mfdataset_params)
+        # Layers built on workers by parallel=True are not annotated by dask.annotate
+        ds = apply_resources_annotation(ds, self._scheduler_resources)
         self.logger.info(
             f"{self.uuid_log}: Engine {engine} used to open the batch of files"
         )
@@ -2498,7 +2539,11 @@ class GenericHandler(CommonHandler):
 
         ds = preprocess_xarray(ds, self.dataset_config)
 
-        return ds
+        return apply_resources_annotation(ds, self._scheduler_resources)
+
+    @property
+    def _scheduler_resources(self):
+        return getattr(self.scheduler, "resources", None) or {}
 
     def _find_duplicated_values(self, ds_org):
         """Checks for duplicate self.append_dim_varname values in the existing Zarr store.
