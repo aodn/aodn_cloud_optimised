@@ -415,5 +415,51 @@ class TestGenericZarrHandler(unittest.TestCase):
         ).all(), f"UCUR for {filenames_acorn_nwa[1]} not fully NaN"
 
 
+def test_apply_resources_annotation_after_parallel_open_mfdataset(tmp_path):
+    from dask import annotate
+    from dask.distributed import Client, LocalCluster, Worker
+
+    from aodn_cloud_optimised.lib.GenericZarrHandler import (
+        apply_resources_annotation,
+    )
+
+    for i in range(3):
+        xr.Dataset(
+            {"v": ("t", np.arange(4.0))}, coords={"t": np.arange(4) + 4 * i}
+        ).to_netcdf(tmp_path / f"f{i}.nc", engine="h5netcdf")
+
+    cluster = LocalCluster(n_workers=0, processes=False, dashboard_address=None)
+    client = Client(cluster)
+    try:
+
+        async def add_worker():
+            return await Worker(
+                cluster.scheduler_address, resources={"X": 1}, nthreads=1
+            )
+
+        worker = client.sync(add_worker)
+        resources = {"X": 1}
+        with annotate(resources=resources):
+            ds = xr.open_mfdataset(
+                sorted(str(p) for p in tmp_path.glob("*.nc")),
+                engine="h5netcdf",
+                parallel=True,
+                preprocess=lambda d: d.assign(x=d["v"] * 2),
+                combine="by_coords",
+            )
+
+        def layers():
+            return ds["x"].data.__dask_graph__().layers.values()
+
+        assert any(not (l.annotations or {}).get("resources") for l in layers())
+        apply_resources_annotation(ds, resources)
+        assert all(l.annotations["resources"] == resources for l in layers())
+        assert ds["x"].values.shape == (12,)
+    finally:
+        client.sync(worker.close)
+        client.close()
+        cluster.close()
+
+
 if __name__ == "__main__":
     unittest.main()
