@@ -148,7 +148,7 @@
         "memory_limit": "14GB"
       }
     },
-    "batch_size": 6000,
+    "batch_size": 300,
     "cluster": {
       "mode": "coiled",
       "restart_every_path": false
