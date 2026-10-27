@@ -11,10 +11,7 @@
         "filter": [
           ".*aust\\.owtd_csiro\\.nc$"
         ],
-        "year_range": [
-          2025,
-          2026
-        ]
+        "year_range": []
       }
     ],
     "cluster": {
