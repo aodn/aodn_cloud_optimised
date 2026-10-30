@@ -315,10 +315,6 @@
       "long_name": "calculated relative humidity at 2.0 meters",
       "units": "percent",
       "observation_type": "calculated"
-    },
-    "history": {
-      "type": "string",
-      "long_name": "file history information"
     }
   },
   "aws_opendata_registry": {
@@ -364,7 +360,9 @@
     "Citation": "The citation in a list of references is: \"IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access].\""
   },
   "schema_transformation": {
-    "drop_variables": [],
+    "drop_variables": [
+      "history"
+    ],
     "add_variables": {
       "filename": {
         "source": "@filename",
@@ -400,9 +398,6 @@
       }
     },
     "partitioning": [
-      {
-        "source_variable": "deployment_number"
-      },
       {
         "source_variable": "timestamp",
         "type": "time_extent",
