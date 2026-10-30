@@ -1013,7 +1013,7 @@ class GenericHandler(CommonHandler):
         )
 
     def create_sync_lock(self):
-        if self.cluster_mode or self.scheduler:
+        if self.cluster_mode:
             self.lock = Lock(
                 "zarr-append-lock"
             )  # Use a consistent name for locking access across all workers
