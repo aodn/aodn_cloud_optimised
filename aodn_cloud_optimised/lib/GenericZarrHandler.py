@@ -1254,16 +1254,6 @@ class GenericHandler(CommonHandler):
                             self._reset_cluster()
                             batch_is_processed = False
 
-                # except MergeError as e:
-                #     self.logger.error(
-                #         f"{self.uuid_log}: Failed to merge datasets for batch {idx + 1}: {e}"
-                #     )
-                #     if "ds" in locals():
-                #         self.postprocess(ds)
-                #
-                #     # TODO: what do do in this case? could just enter an infinit loop
-                #     batch_is_processed = False  # Loop again
-
                 except MergeError as e:
                     retry_count += 1
                     self.logger.error(
