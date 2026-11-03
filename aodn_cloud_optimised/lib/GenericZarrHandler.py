@@ -1264,6 +1264,11 @@ class GenericHandler(CommonHandler):
                         self.run_summary.record_batch_outcome(
                             idx + 1, "individual_fallback"
                         )
+                        self.fallback_to_individual_processing(
+                            batch_files, partial_preprocess, drop_vars_list, idx
+                        )
+                        if "ds" in locals():
+                            self.postprocess(ds)
                         batch_is_processed = True
                     else:
                         self.logger.info(
