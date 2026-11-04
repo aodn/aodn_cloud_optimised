@@ -1255,14 +1255,29 @@ class GenericHandler(CommonHandler):
                             batch_is_processed = False
 
                 except MergeError as e:
+                    retry_count += 1
                     self.logger.error(
-                        f"{self.uuid_log}: Failed to merge datasets for batch {idx + 1}: {e}"
+                        f"{self.uuid_log}: Failed to merge datasets for batch {idx + 1} "
+                        f"(attempt {retry_count}/{max_retries}): {e}\n{traceback.format_exc()}"
                     )
-                    if "ds" in locals():
-                        self.postprocess(ds)
-
-                    # TODO: what do do in this case? could just enter an infinit loop
-                    batch_is_processed = False  # Loop again
+                    if retry_count >= max_retries:
+                        self.run_summary.record_batch_outcome(
+                            idx + 1, "individual_fallback"
+                        )
+                        self.fallback_to_individual_processing(
+                            batch_files, partial_preprocess, drop_vars_list, idx
+                        )
+                        if "ds" in locals():
+                            self.postprocess(ds)
+                        batch_is_processed = True
+                    else:
+                        self.logger.info(
+                            f"{self.uuid_log}: Retry {retry_count} of {max_retries} for batch {idx + 1} after MergeError..."
+                        )
+                        self.run_summary.record_batch_retry(idx + 1)
+                        if "ds" in locals():
+                            self.postprocess(ds)
+                        batch_is_processed = False
 
                 except GridSizeMismatchError as e:
                     # All files in this batch have a spatial grid incompatible with the
