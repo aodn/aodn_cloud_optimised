@@ -22,20 +22,20 @@ See :ref:`install` for full installation options. For development, use:
 
    make dev
 
-This creates a Poetry-managed virtual environment with all tools for testing, documentation, linting, and debugging.
+This creates a uv-managed virtual environment (``.venv``) with all tools for testing, documentation, linting, and debugging.
 
 After setup, install pre-commit hooks:
 
 .. code-block:: bash
 
-   poetry run pre-commit install
+   uv run pre-commit install
 
 .. note:: Important Note
    :class: custom-note
    :name: make-dev
 
    Run ``make dev`` once after cloning and after every ``git pull`` that
-   changes ``poetry.lock`` or ``pyproject.toml``.
+   changes ``uv.lock`` or ``pyproject.toml``.
 
 Pre-commit Hooks
 ----------------
@@ -46,7 +46,7 @@ YAML/JSON validation, code quality, and dependency management.
 .. code-block:: bash
 
    # After make dev:
-   pre-commit install      # or: poetry run pre-commit install
+   pre-commit install      # or: uv run pre-commit install
 
 .. note:: Important Note
    :class: custom-note
@@ -68,22 +68,22 @@ Example: pre-commit catching a badly indented JSON file:
 Managing Dependencies
 ---------------------
 
-Poetry Commands and Their Use Cases
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+uv Commands and Their Use Cases
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- **``make dev``** (or ``poetry sync --extras "notebooks tests docs dev"``):
+- **``make dev``** (or ``uv sync --extra notebooks --extra tests --extra docs --extra dev --extra mcp``):
   Full re-sync of the development environment after any change to
-  ``pyproject.toml`` or ``poetry.lock``.
+  ``pyproject.toml`` or ``uv.lock``.
 
-- **``poetry lock``**:
-  Update ``poetry.lock`` after modifying ``pyproject.toml``.
+- **``uv lock``**:
+  Update ``uv.lock`` after modifying ``pyproject.toml`` (keeps existing pins where possible).
 
-- **``poetry lock --regenerate``**:
-  Fully regenerate ``poetry.lock`` from scratch.
+- **``uv lock --upgrade``** (or ``--upgrade-package <name>``):
+  Re-resolve to the latest allowed versions, all packages or just one.
 
 .. note:: Important Note
    :class: custom-note
-   :name: poetry-lock
+   :name: uv-lock
 
     Ensure every commit triggers pre-commit hooks. If hooks do not trigger,
     reinstall with ``pre-commit install`` after reactivating your environment.
@@ -96,18 +96,19 @@ then run:
 
 .. code-block:: bash
 
-   poetry lock
+   uv lock
    make dev        # re-sync your local environment
 
 .. note:: Important Note
    :class: custom-note
-   :name: poetry-lock-commit
+   :name: uv-lock-commit
 
-    Don't forget to commit ``poetry.lock``.
+    Don't forget to commit ``uv.lock``. The ``uv-lock`` pre-commit hook and CI
+    fail if it is out of date.
 
 .. note:: Important Note
    :class: custom-note
-   :name: poetry-requirements
+   :name: uv-requirements
 
     When core dependencies change, update ``requirements.txt`` (used by the
     mamba environment and Coiled clusters). Stale ``requirements.txt`` can
@@ -115,24 +116,8 @@ then run:
 
     .. code-block:: bash
 
-        poetry export -f requirements.txt --without-hashes -o requirements.txt
-        poetry export -f requirements.txt --without-hashes --extras notebooks -o notebooks/requirements.txt
-
-Regenerating poetry.lock
-~~~~~~~~~~~~~~~~~~~~~~~~
-
-Differences in ``poetry.lock`` can occur between local and CI environments
-due to platform-specific metadata. A helper script at the repository root
-runs ``poetry lock`` inside a Docker container for platform-agnostic
-lock-file generation.
-
-.. note:: Important Note
-   :class: custom-note
-   :name: poetry-lock-issue
-
-    Platform-specific differences in ``poetry.lock`` can cause CI failures.
-    Use the Docker-based helper script (see ``poetry_lock_helper.sh``) for
-    platform-agnostic regeneration.
+        uv export --no-dev --no-hashes --no-emit-project -o requirements.txt
+        uv export --no-dev --no-hashes --no-emit-project --extra notebooks -o notebooks/requirements.txt
 
 Running Tests
 -------------

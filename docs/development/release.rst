@@ -43,13 +43,13 @@ What the workflow does
 The workflow executes the following steps automatically:
 
 1. **Checkout** — full history (``fetch-depth: 0``) so the tag push works.
-2. **Install dependencies** — Poetry is installed at the version pinned in
-   :file:`.poetry-version`; project deps are installed via ``make tests``
-   (equivalent to ``poetry sync --extras "tests notebooks"``).
+2. **Install dependencies** — uv is installed via ``astral-sh/setup-uv``; project
+   deps are installed from :file:`uv.lock` via ``make tests``
+   (equivalent to ``uv sync --extra tests --extra notebooks``).
 3. **Run tests** — full pytest suite must pass before any release artefact is built.
 4. **Bump version** — the ``version`` field in :file:`pyproject.toml` is updated
-   in-place by a small Python script.
-5. **Build wheels** — two artefacts are produced in ``dist-artifacts/``:
+   in-place by a small Python script, and :file:`uv.lock` is refreshed.
+5. **Build wheel** — ``uv build`` produces the following artefacts in ``dist-artifacts/``:
 
    .. list-table::
       :header-rows: 1
@@ -58,33 +58,28 @@ The workflow executes the following steps automatically:
       * - File
         - Description
       * - ``aodn_cloud_optimised-<ver>-py3-none-any.whl``
-        - **Frozen wheel** — all dependency versions pinned in wheel metadata via
-          `poetry-plugin-freeze <https://github.com/poetry-plugins/poetry-plugin-freeze>`_.
-          Use this for reproducible installs.
-      * - ``aodn_cloud_optimised-<ver>.unfrozen.whl``
-        - **Unfrozen wheel** — standard wheel with flexible dependency ranges
-          (as declared in :file:`pyproject.toml`).  Use this when you want pip
-          to resolve the latest compatible versions.
+        - Standard wheel with flexible dependency ranges (as declared in
+          :file:`pyproject.toml`).  pip resolves the latest compatible versions.
+      * - ``aodn_cloud_optimised-<ver>-py3-none-any.unfrozen.whl``
+        - Identical copy of the wheel, kept under this name for downstream
+          consumers that install the ``.unfrozen.whl`` asset.
       * - ``aodn_cloud_optimised-<ver>.tar.gz``
         - Source distribution (sdist).
 
-6. **Verify** — the frozen wheel is installed into the Poetry venv with
-   ``--no-deps --force-reinstall`` and a smoke-import is run.
-
    .. note::
 
-      ``--no-deps`` is required because the project uses a custom Git fork of
-      ``xarray`` that is not available on PyPI.  All dependency resolution happens
-      via :file:`poetry.lock`.
+      Frozen wheels (pinned dependency versions) are no longer produced.
+      Reproducible dev/CI environments come from :file:`uv.lock`.
 
-7. **Commit & tag** — the workflow commits the updated :file:`pyproject.toml`,
-   creates the ``v<version>`` Git tag, and pushes both to the target branch.
-8. **GitHub Release** — ``gh release create`` publishes a new release with
-   auto-generated notes and all three artefacts attached.
+6. **Commit & tag** — the workflow commits the updated :file:`pyproject.toml` and
+   :file:`uv.lock`, creates the ``v<version>`` Git tag, and pushes both to the
+   target branch.
+7. **GitHub Release** — ``gh release create`` publishes a new release with
+   auto-generated notes and all artefacts attached.
 
 .. tip::
 
-   Steps 7 and 8 are guarded with ``if: ${{ !env.ACT }}``, so they are
+   Steps 6 and 7 are guarded with ``if: ${{ !env.ACT }}``, so they are
    **skipped automatically** when testing the workflow locally with
    `act <https://github.com/nektos/act>`_.  You can test the full pipeline
    (everything except the push and release) with:

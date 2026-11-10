@@ -1,8 +1,6 @@
-.PHONY: check-poetry core tests notebooks dev clean docs mcp setup-sys-deps
+.PHONY: check-uv core tests notebooks dev clean docs mcp setup-sys-deps
 
-GLOBAL_POETRY := $(shell which -a poetry | grep -v ".venv" | head -n 1)
-# Avoid poetry hanging on keyring lookups in headless/SSH sessions (no private indexes used)
-export PYTHON_KEYRING_BACKEND ?= keyring.backends.null.Keyring
+UV := $(shell command -v uv)
 SAFE_RUN := env -u VIRTUAL_ENV
 
 # OS Detection
@@ -47,41 +45,39 @@ ifeq ($(UNAME_S),Linux)
 endif
 
 
-check-poetry:
-	@if [ -z "$(GLOBAL_POETRY)" ]; then \
+check-uv:
+	@if [ -z "$(UV)" ]; then \
 		echo "----------------------------------------------------------"; \
-		echo "ERROR: poetry is not installed (outside of .venv)."; \
+		echo "ERROR: uv is not installed."; \
 		echo "Install it with one of:"; \
-		echo "  curl -sSL https://install.python-poetry.org | python3 -"; \
-		echo "  pipx install poetry"; \
-		echo "See https://python-poetry.org/docs/#installation"; \
+		echo "  curl -LsSf https://astral.sh/uv/install.sh | sh"; \
+		echo "  pipx install uv"; \
+		echo "See https://docs.astral.sh/uv/getting-started/installation/"; \
 		echo "Then re-run make."; \
 		echo "----------------------------------------------------------"; \
 		exit 1; \
 	fi
 
 # Core sync
-core: check-poetry setup-sys-deps
-	$(SAFE_RUN) $(GLOBAL_POETRY) sync
+core: check-uv setup-sys-deps
+	$(SAFE_RUN) $(UV) sync
 
 # Sync including specific extras
-tests: check-poetry
-	$(SAFE_RUN) $(GLOBAL_POETRY) sync --extras "tests notebooks"
+tests: check-uv
+	$(SAFE_RUN) $(UV) sync --extra tests --extra notebooks
 
-mcp: check-poetry
-	$(SAFE_RUN) $(GLOBAL_POETRY) sync --extras "notebooks mcp"
+mcp: check-uv
+	$(SAFE_RUN) $(UV) sync --extra notebooks --extra mcp
 
-notebooks: check-poetry
-	$(SAFE_RUN) $(GLOBAL_POETRY) sync --extras notebooks
+notebooks: check-uv
+	$(SAFE_RUN) $(UV) sync --extra notebooks
 
-dev: check-poetry setup-sys-deps
-	$(SAFE_RUN) $(GLOBAL_POETRY) sync --extras "notebooks tests docs dev mcp"
-	$(SAFE_RUN) $(GLOBAL_POETRY) run pre-commit install
-	# Plugin management is global, so it doesn't need SAFE_RUN
-	$(GLOBAL_POETRY) self add poetry-plugin-export
+dev: check-uv setup-sys-deps
+	$(SAFE_RUN) $(UV) sync --extra notebooks --extra tests --extra docs --extra dev --extra mcp
+	$(SAFE_RUN) $(UV) run pre-commit install
 
-docs: check-poetry
-	$(SAFE_RUN) $(GLOBAL_POETRY) sync --extras docs
+docs: check-uv
+	$(SAFE_RUN) $(UV) sync --extra docs
 
 clean:
 	rm -rf .venv

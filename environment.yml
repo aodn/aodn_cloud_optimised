@@ -12,7 +12,5 @@ dependencies:
   - h5py
   - scipy
   - pip
-  - virtualenv==20.30.0 # https://github.com/python-poetry/poetry/issues/10378#issuecomment-285540959
   - udunits2=2.2.20
-  - pip:
-      - poetry==2.3.3  # SYNC: see .poetry-version for all locations to update
+  - uv

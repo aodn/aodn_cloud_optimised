@@ -17,20 +17,20 @@ BASE_NAME="AodnCloudOptimised"
 ALL_MODES=("core" "tests" "notebooks" "docs" "dev")
 
 # 2. Logic for Dependency Mapping
-get_poetry_cmd() {
+get_uv_cmd() {
   local MODE=$1
   if [ "$MODE" == "core" ]; then
-    echo "poetry install"
+    echo "uv sync"
   elif [ "$MODE" == "tests" ]; then
     # DataQuery tests require both extras
-    echo "poetry install --extras \"tests notebooks\""
+    echo "uv sync --extra tests --extra notebooks"
   elif [ "$MODE" == "notebooks" ]; then
-    echo "poetry install --extras notebooks"
+    echo "uv sync --extra notebooks"
   elif [ "$MODE" == "docs" ]; then
-    echo "poetry install --extras docs"
+    echo "uv sync --extra docs"
   elif [ "$MODE" == "dev" ]; then
     # Full contributor install
-    echo "poetry install --extras \"notebooks tests docs dev\""
+    echo "uv sync --extra notebooks --extra tests --extra docs --extra dev"
   fi
 }
 
@@ -38,11 +38,11 @@ get_poetry_cmd() {
 build_env() {
   local MODE=$1
   local ENV_NAME="${BASE_NAME}_${MODE}"
-  local POETRY_CMD=$(get_poetry_cmd "$MODE")
+  local UV_CMD=$(get_uv_cmd "$MODE")
 
   echo "------------------------------------------------"
   echo "SETTING UP: $ENV_NAME"
-  echo "COMMAND: $POETRY_CMD"
+  echo "COMMAND: $UV_CMD"
   echo "------------------------------------------------"
 
   # Create/Update Mamba or Conda env
@@ -52,9 +52,8 @@ build_env() {
     $BIN env update -n "$ENV_NAME" -f environment.yml --yes
   fi
 
-  # Configure Poetry to stay inside the prefix
-  $BIN run -n "$ENV_NAME" poetry config virtualenvs.create false --local
-  eval "$BIN run -n \"$ENV_NAME\" $POETRY_CMD"
+  # Install into the conda env itself rather than a project .venv
+  $BIN run -n "$ENV_NAME" sh -c "UV_PROJECT_ENVIRONMENT=\"\$CONDA_PREFIX\" $UV_CMD"
 }
 
 # 4. Execution

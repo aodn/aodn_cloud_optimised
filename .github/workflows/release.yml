@@ -36,30 +36,14 @@ jobs:
       - name: Install system dependencies
         run: sudo apt-get update && sudo apt-get install -y libudunits2-dev
 
-      - name: Read Poetry version
-        id: poetry-version
-        run: echo "version=$(cat .poetry-version | tail -1)" >> $GITHUB_OUTPUT
-
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
         with:
-          virtualenvs-create: true
-          virtualenvs-in-project: true
-          installer-parallel: true
-          version: ${{ steps.poetry-version.outputs.version }}
+          enable-cache: true
+          cache-dependency-glob: uv.lock
 
       #----------------------------------------------
-      #       load cached venv if cache exists
-      #----------------------------------------------
-      - name: Load cached venv
-        id: cached-poetry-dependencies
-        uses: actions/cache@v4
-        with:
-          path: .venv
-          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
-
-      #----------------------------------------------
-      # install dependencies (make tests = poetry sync --extras "tests notebooks")
+      # install dependencies (make tests = uv sync --extra tests --extra notebooks)
       # includes DataQuery tests (test_aodn_data_queries.py needs notebooks extra)
       #----------------------------------------------
       - name: Install project with tests
@@ -76,7 +60,7 @@ jobs:
           timeout_minutes: 10
           max_attempts: 3
           command: |
-            poetry run pytest
+            uv run pytest
 
       #----------------------------------------------
       #        bump version in pyproject.toml
@@ -117,59 +101,22 @@ jobs:
           ")
           echo "new_version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
 
-      #----------------------------------------------
-      #        build frozen + unfrozen wheels
-      #----------------------------------------------
-      - name: Build frozen and unfrozen wheels
-        run: |
-          # Build unfrozen wheel + sdist first
-          poetry build
+          # uv.lock records the project version, keep it in sync with the bump
+          uv lock
 
-          # Save unfrozen wheel under a distinct name
+      #----------------------------------------------
+      #        build wheel + sdist
+      #----------------------------------------------
+      - name: Build wheel and sdist
+        run: |
+          uv build
+
+          # Keep the ".unfrozen.whl" name: downstream consumers install that asset
           mkdir -p dist-artifacts
           for f in dist/*.whl; do
             cp "$f" "dist-artifacts/$(basename "${f%.whl}").unfrozen.whl"
           done
-          cp dist/*.tar.gz dist-artifacts/
-
-          # Freeze the wheel in-place (pins all deps into wheel metadata)
-          # see https://github.com/python-poetry/poetry/issues/2778
-          poetry self add poetry-plugin-freeze
-          poetry freeze-wheel
-
-          # Copy frozen wheel (standard filename, deps pinned)
-          cp dist/*.whl dist-artifacts/
-
-      #----------------------------------------------
-      #        verify the wheels
-      #----------------------------------------------
-      #
-      # TODO: find a faster way to do this; it is too slow/stalling completely in CICD
-      # - name: Verify Unfrozen Wheel
-      #   run: |
-      #     python -m venv test_env_unfrozen
-      #     source test_env_unfrozen/bin/activate
-      #     # Install the unfrozen wheel. This WILL trigger dependency downloads.
-      #     poetry run pip install dist-artifacts/*unfrozen.whl
-      #     python -c "import aodn_cloud_optimised; print('Unfrozen wheel verification successful')"
-      #     deactivate
-      #     rm -rf test_env_unfrozen
-
-      - name: Verify Frozen Wheel
-        run: |
-          python -m venv test_env_frozen
-          source test_env_frozen/bin/activate
-
-          # We provide the URL that the freeze plugin had to strip to satisfy PEP 440
-          # This allows Pip to find your custom Hobart-developed fork.
-          pip install "xarray @ git+https://github.com/lbesnard/xarray.git@2025.06.01.dev2"
-
-          # Note: We do NOT use --no-deps here because we want to
-          # ensure the pinned dependencies in the frozen wheel actually resolve.
-          pip install dist-artifacts/aodn_cloud_optimised-${{ steps.bump.outputs.new_version }}-py3-none-any.whl
-          python -c "import aodn_cloud_optimised; print('Frozen wheel verification successful')"
-          deactivate
-          rm -rf test_env_frozen
+          cp dist/*.whl dist/*.tar.gz dist-artifacts/
 
       #----------------------------------------------
       #        commit bump + tag + release
@@ -181,7 +128,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add pyproject.toml
+          git add pyproject.toml uv.lock
           git commit -m "chore: bump version to v${{ steps.bump.outputs.new_version }}"
           git tag "v${{ steps.bump.outputs.new_version }}"
           git push origin HEAD

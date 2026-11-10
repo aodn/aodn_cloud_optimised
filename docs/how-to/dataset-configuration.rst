@@ -1388,7 +1388,7 @@ See :ref:`dataset-config-script` for a semi-automatic tool that generates a vali
 
     1) Activate the virtual env
 
-    2) run    ```poetry install --with dev```
+    2) run    ```make dev```
 
     3) re-activate the virtual env
 
