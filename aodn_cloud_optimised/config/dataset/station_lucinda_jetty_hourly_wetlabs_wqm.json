@@ -113,7 +113,7 @@
       "original_name": "Cond\\(S/m\\)",
       "standard_name": "sea_water_electrical_conductivity",
       "units": "S m-1",
-      "valid_max": 50000.0,
+      "valid_max": 9.0,
       "valid_min": 0.0
     },
     "CNDC_quality_control": {
@@ -177,8 +177,8 @@
       "reference_datum": "sea surface",
       "standard_name": "depth",
       "units": "metres",
-      "valid_max": 12000.0,
-      "valid_min": -5.0
+      "valid_max": 100.0,
+      "valid_min": 0.0
     },
     "DEPTH_quality_control": {
       "type": "float",
@@ -209,7 +209,7 @@
       "original_name": "DO\\(m[mi]ol/m\\^3\\)",
       "standard_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water",
       "units": "umol l-1",
-      "valid_max": 900000.0,
+      "valid_max": 581.02,
       "valid_min": 0.0
     },
     "DOX1_1_quality_control": {
@@ -241,7 +241,7 @@
       "original_name": "DO\\(ml/l\\)",
       "standard_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water",
       "units": "umol l-1",
-      "valid_max": 900000.0,
+      "valid_max": 581.02,
       "valid_min": 0.0
     },
     "DOX1_2_quality_control": {
@@ -273,7 +273,7 @@
       "original_name": "(DO\\(mg/l\\))|(\\\\04O\\(mg/l\\))",
       "standard_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water",
       "units": "umol l-1",
-      "valid_max": 900000.0,
+      "valid_max": 581.02,
       "valid_min": 0.0
     },
     "DOX1_3_quality_control": {
@@ -326,36 +326,6 @@
       "long_name": "quality flag for moles_of_oxygen_per_unit_mass_in_sea_water",
       "quality_control_conventions": "IMOS standard flags",
       "standard_name": "moles_of_oxygen_per_unit_mass_in_sea_water status_flag",
-      "valid_max": 9,
-      "valid_min": 0
-    },
-    "FLU2": {
-      "type": "double",
-      "Dark_Counts": 52.0,
-      "Scale_Factor": 0.0121,
-      "ancillary_variables": "FLU2_quality_control",
-      "comment": "fluorescence_in_sea_water digital count. To convert to chlorophyll concentration CHL(ug/l) = Scale_Factor X (Raw_Counts - Dark_Counts)",
-      "long_name": "fluorescence_in_sea_water",
-      "original_name": "(RawCHL\\(Counts\\))|(RawCHL\\(cts\\))|(CHLA\\(COUNTS\\))",
-      "units": "counts"
-    },
-    "FLU2_quality_control": {
-      "type": "float",
-      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
-      "flag_values": [
-        0,
-        1,
-        2,
-        3,
-        4,
-        5,
-        6,
-        7,
-        8,
-        9
-      ],
-      "long_name": "quality flag for fluorescence_in_sea_water",
-      "quality_control_conventions": "IMOS standard flags",
       "valid_max": 9,
       "valid_min": 0
     },
@@ -434,8 +404,8 @@
       "sensor_serial_number": "12345",
       "standard_name": "sea_water_temperature",
       "units": "Celsius",
-      "valid_max": 40.0,
-      "valid_min": -2.5
+      "valid_max": 35.0,
+      "valid_min": -5.0
     },
     "TEMP_quality_control": {
       "type": "float",
@@ -465,38 +435,8 @@
       "original_name": "(NTU)|(TURBIDITY\\(NTU\\))|(TUR\\\\02IDITY\\(NTU\\))",
       "rate_change_nstd": 2.0,
       "units": "1",
-      "valid_max": 24.0,
+      "valid_max": 25.0,
       "valid_min": 0.0
-    },
-    "TURB_RAW_COUNT": {
-      "type": "double",
-      "Dark_Counts": 52.0,
-      "Scale_Factor": 0.006,
-      "ancillary_variables": "TURB_RAW_COUNT_quality_control",
-      "comments": "turbidity digital count. To convert to concentration NTU = Scale_Factor X (Raw_Counts - Dark_Counts)",
-      "long_name": "turbidity digital count",
-      "original_name": "(RawTurbidity\\(Counts\\))|(RawTurbidity\\(cts\\))|(TURBIDIT[YQ]\\(COUNTS[!\\)])",
-      "units": "counts"
-    },
-    "TURB_RAW_COUNT_quality_control": {
-      "type": "float",
-      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
-      "flag_values": [
-        0,
-        1,
-        2,
-        3,
-        4,
-        5,
-        6,
-        7,
-        8,
-        9
-      ],
-      "long_name": "quality flag for turbidity digital count",
-      "quality_control_conventions": "IMOS standard flags",
-      "valid_max": 9,
-      "valid_min": 0
     },
     "TURB_quality_control": {
       "type": "float",
