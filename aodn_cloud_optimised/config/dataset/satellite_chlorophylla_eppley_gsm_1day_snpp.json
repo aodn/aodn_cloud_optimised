@@ -1,0 +1,116 @@
+{
+  "dataset_name": "satellite_chlorophylla_eppley_gsm_1day_snpp",
+  "logger_name": "satellite_chlorophylla_eppley_gsm_1day_snpp",
+  "parent_config": "satellite_ocean_colour_1day_snpp_main.json",
+  "cloud_optimised_format": "zarr",
+  "run_settings": {
+    "paths": [
+      {
+        "type": "files",
+        "s3_uri": "s3://imos-data/IMOS/SRS/OC/gridded/snpp/P1D/",
+        "filter": [
+          ".*npp_vgpm_eppley_chl_gsm.*\\.nc$"
+        ],
+        "year_range": []
+      }
+    ],
+    "cluster": {
+      "mode": "coiled",
+      "restart_every_path": false
+    },
+    "clear_existing_data": false,
+    "raise_error": false
+  },
+  "metadata_uuid": null,
+  "schema_transformation": {
+    "var_template_shape": "npp_vgpm_eppley_chl_gsm",
+    "vars_incompatible_with_region": [],
+    "target_dimension_grids": {},
+    "global_attributes": {
+      "delete": [],
+      "set": {}
+    }
+  },
+  "schema": {
+    "time": {
+      "type": "timestamp[ns]",
+      "long_name": "time",
+      "standard_name": "time",
+      "axis": "T"
+    },
+    "latitude": {
+      "type": "double",
+      "long_name": "latitude",
+      "standard_name": "latitude",
+      "units": "degrees_north",
+      "axis": "Y"
+    },
+    "longitude": {
+      "type": "double",
+      "long_name": "longitude",
+      "standard_name": "longitude",
+      "units": "degrees_east",
+      "axis": "X"
+    },
+    "npp_vgpm_eppley_chl_gsm": {
+      "type": "float",
+      "dims": [
+        "time",
+        "latitude",
+        "longitude"
+      ],
+      "units": "[mgC/m2/d]",
+      "long_name": "MODIS_Epply_VGPM Net Primary Productivity using chl_gsm",
+      "flag_applied": "HISATZEN LAND CLDICE NAVFAIL HIGLINT"
+    }
+  },
+  "aws_opendata_registry": {
+    "Name": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+    "Description": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+    "Documentation": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+    "Contact": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+    "ManagedBy": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+    "UpdateFrequency": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+    "Tags": [
+      "FILL UP MANUALLY - CHECK DOCUMENTATION"
+    ],
+    "License": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+    "Resources": [
+      {
+        "Description": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+        "ARN": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+        "Region": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+        "Type": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+        "Explore": [
+          "FILL UP MANUALLY - CHECK DOCUMENTATION"
+        ]
+      }
+    ],
+    "DataAtWork": {
+      "Tutorials": [
+        {
+          "Title": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+          "URL": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+          "Services": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+          "AuthorName": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+          "AuthorURL": "FILL UP MANUALLY - CHECK DOCUMENTATION"
+        }
+      ],
+      "Tools & Applications": [
+        {
+          "Title": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+          "URL": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+          "AuthorName": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+          "AuthorURL": "FILL UP MANUALLY - CHECK DOCUMENTATION"
+        }
+      ],
+      "Publications": [
+        {
+          "Title": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+          "URL": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+          "AuthorName": "FILL UP MANUALLY - CHECK DOCUMENTATION"
+        }
+      ]
+    }
+  }
+}
