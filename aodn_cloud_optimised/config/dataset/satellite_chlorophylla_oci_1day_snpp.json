@@ -124,10 +124,7 @@
         "filter": [
           ".*chl_oci\\.nc$"
         ],
-        "year_range": [
-          2022,
-          2025
-        ]
+        "year_range": []
       }
     ],
     "clear_existing_data": false,
