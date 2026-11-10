@@ -99,14 +99,14 @@ jobs:
       #----------------------------------------------
       - name: Verify Wheel
         run: |
-          python -m venv test_env_unfrozen
+          uv venv test_env_unfrozen --python "${{ matrix.python-version }}"
           source test_env_unfrozen/bin/activate
 
-          # This proves the Unfrozen wheel is self-contained.
+          # This proves the wheel is self-contained.
           # It should find the xarray git URL in the metadata and install it automatically.
-          # We use a wildcard because the version in pyproject.toml is our current truth.
-          pip install dist-artifacts/*.unfrozen.whl
+          # uv resolves the loose dependency ranges much faster than pip.
+          uv pip install dist-artifacts/*.unfrozen.whl
 
-          python -c "import aodn_cloud_optimised; print('Unfrozen wheel (URL-based) OK')"
+          python -c "import aodn_cloud_optimised; print('Wheel (URL-based) OK')"
           deactivate
           rm -rf test_env_unfrozen
