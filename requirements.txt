@@ -1,129 +1,417 @@
-aiobotocore==2.26.0 ; python_version >= "3.11" and python_version < "3.13"
-aiohappyeyeballs==2.6.1 ; python_version >= "3.11" and python_version < "3.13"
-aiohttp==3.13.2 ; python_version >= "3.11" and python_version < "3.13"
-aioitertools==0.13.0 ; python_version >= "3.11" and python_version < "3.13"
-aiosignal==1.4.0 ; python_version >= "3.11" and python_version < "3.13"
-anyio==4.12.0 ; python_version >= "3.11" and python_version < "3.13"
-appnope==0.1.4 ; python_version >= "3.11" and python_version < "3.13" and sys_platform == "darwin"
-asciitree==0.3.3 ; python_version >= "3.11" and python_version < "3.13"
-attrs==25.4.0 ; python_version >= "3.11" and python_version < "3.13"
-backcall==0.2.0 ; python_version >= "3.11" and python_version < "3.13"
-backoff==2.2.1 ; python_version >= "3.11" and python_version < "3.13"
-bcrypt==5.0.0 ; python_version >= "3.11" and python_version < "3.13"
-bokeh==3.8.1 ; python_version >= "3.11" and python_version < "3.13"
-boto3==1.41.5 ; python_version >= "3.11" and python_version < "3.13"
-botocore==1.41.5 ; python_version >= "3.11" and python_version < "3.13"
-certifi==2025.11.12 ; python_version >= "3.11" and python_version < "3.13"
-cffi==2.0.0 ; python_version >= "3.11" and python_version < "3.13" and (platform_python_implementation != "PyPy" or implementation_name == "pypy" or sys_platform == "darwin")
-cftime==1.6.5 ; python_version >= "3.11" and python_version < "3.13"
-cfunits==3.3.7 ; python_version >= "3.11" and python_version < "3.13"
-click==8.3.1 ; python_version >= "3.11" and python_version < "3.13"
-cloudpickle==3.1.2 ; python_version >= "3.11" and python_version < "3.13"
-coiled==1.130.0 ; python_version >= "3.11" and python_version < "3.13"
-colorama==0.4.6 ; python_version >= "3.11" and python_version < "3.13"
-comm==0.2.3 ; python_version >= "3.11" and python_version < "3.13"
-contourpy==1.3.3 ; python_version >= "3.11" and python_version < "3.13"
-cryptography==46.0.3 ; python_version >= "3.11" and python_version < "3.13"
-dask-cloudprovider==2025.9.0 ; python_version >= "3.11" and python_version < "3.13"
-dask-expr==2.0.0 ; python_version >= "3.11" and python_version < "3.13"
-dask==2025.12.0 ; python_version >= "3.11" and python_version < "3.13"
-decorator==5.2.1 ; python_version >= "3.11" and python_version < "3.13"
-deprecated==1.3.1 ; python_version >= "3.11" and python_version < "3.13"
-distributed==2025.12.0 ; python_version >= "3.11" and python_version < "3.13"
-fabric==3.2.2 ; python_version >= "3.11" and python_version < "3.13"
-fasteners==0.20 ; python_version >= "3.11" and python_version < "3.13" and sys_platform != "emscripten"
-filelock==3.20.1 ; python_version >= "3.11" and python_version < "3.13"
-frozenlist==1.8.0 ; python_version >= "3.11" and python_version < "3.13"
-fsspec==2025.12.0 ; python_version >= "3.11" and python_version < "3.13"
-geopandas==1.1.1 ; python_version >= "3.11" and python_version < "3.13"
-gilknocker==0.4.2 ; python_version >= "3.11" and python_version < "3.13"
-h11==0.16.0 ; python_version >= "3.11" and python_version < "3.13"
-h2==4.3.0 ; python_version >= "3.11" and python_version < "3.13"
-h5netcdf==1.7.3 ; python_version >= "3.11" and python_version < "3.13"
-h5py==3.11.0 ; python_version >= "3.11" and python_version < "3.13"
-hpack==4.1.0 ; python_version >= "3.11" and python_version < "3.13"
-httpcore==1.0.9 ; python_version >= "3.11" and python_version < "3.13"
-httpx==0.28.1 ; python_version >= "3.11" and python_version < "3.13"
-hyperframe==6.1.0 ; python_version >= "3.11" and python_version < "3.13"
-idna==3.11 ; python_version >= "3.11" and python_version < "3.13"
-importlib-metadata==8.7.0 ; python_version == "3.11"
-invoke==2.2.1 ; python_version >= "3.11" and python_version < "3.13"
-ipython==7.34.0 ; python_version >= "3.11" and python_version < "3.13"
-ipywidgets==8.1.8 ; python_version >= "3.11" and python_version < "3.13"
-jedi==0.19.2 ; python_version >= "3.11" and python_version < "3.13"
-jinja2==3.1.6 ; python_version >= "3.11" and python_version < "3.13"
-jmespath==1.0.1 ; python_version >= "3.11" and python_version < "3.13"
-jsondiff==2.2.1 ; python_version >= "3.11" and python_version < "3.13"
-jsonschema-specifications==2025.9.1 ; python_version >= "3.11" and python_version < "3.13"
-jsonschema==4.25.1 ; python_version >= "3.11" and python_version < "3.13"
-jupyterlab-widgets==3.0.16 ; python_version >= "3.11" and python_version < "3.13"
-locket==1.0.0 ; python_version >= "3.11" and python_version < "3.13"
-markdown-it-py==4.0.0 ; python_version >= "3.11" and python_version < "3.13"
-markupsafe==3.0.3 ; python_version >= "3.11" and python_version < "3.13"
-matplotlib-inline==0.2.1 ; python_version >= "3.11" and python_version < "3.13"
-mdurl==0.1.2 ; python_version >= "3.11" and python_version < "3.13"
-msgpack==1.1.2 ; python_version >= "3.11" and python_version < "3.13"
-multidict==6.7.0 ; python_version >= "3.11" and python_version < "3.13"
-mypy-extensions==1.1.0 ; python_version >= "3.11" and python_version < "3.13"
-narwhals==2.14.0 ; python_version >= "3.11" and python_version < "3.13"
-netcdf4==1.6.5 ; python_version >= "3.11" and python_version < "3.13"
-numcodecs==0.15.1 ; python_version >= "3.11" and python_version < "3.13"
-numpy==1.26.4 ; python_version >= "3.11" and python_version < "3.13"
-packaging==25.0 ; python_version >= "3.11" and python_version < "3.13"
-pandas==2.3.3 ; python_version >= "3.11" and python_version < "3.13"
-paramiko==4.0.0 ; python_version >= "3.11" and python_version < "3.13"
-parso==0.8.5 ; python_version >= "3.11" and python_version < "3.13"
-partd==1.4.2 ; python_version >= "3.11" and python_version < "3.13"
-pexpect==4.9.0 ; python_version >= "3.11" and python_version < "3.13" and sys_platform != "win32"
-pickleshare==0.7.5 ; python_version >= "3.11" and python_version < "3.13"
-pillow==12.0.0 ; python_version >= "3.11" and python_version < "3.13"
-pip-requirements-parser==32.0.1 ; python_version >= "3.11" and python_version < "3.13"
-pip==25.3 ; python_version >= "3.11" and python_version < "3.13"
-polars-runtime-32==1.36.1 ; python_version >= "3.11" and python_version < "3.13"
-polars==1.36.1 ; python_version >= "3.11" and python_version < "3.13"
-prometheus-client==0.23.1 ; python_version >= "3.11" and python_version < "3.13"
-prompt-toolkit==3.0.52 ; python_version >= "3.11" and python_version < "3.13"
-propcache==0.4.1 ; python_version >= "3.11" and python_version < "3.13"
-psutil==7.1.3 ; python_version >= "3.11" and python_version < "3.13"
-ptyprocess==0.7.0 ; python_version >= "3.11" and python_version < "3.13" and sys_platform != "win32"
-pyarrow
-pycparser==2.23 ; python_version >= "3.11" and python_version < "3.13" and (platform_python_implementation != "PyPy" or implementation_name == "pypy" or sys_platform == "darwin") and implementation_name != "PyPy"
-pygments==2.19.2 ; python_version >= "3.11" and python_version < "3.13"
-pynacl==1.6.1 ; python_version >= "3.11" and python_version < "3.13"
-pyogrio==0.12.1 ; python_version >= "3.11" and python_version < "3.13"
-pyparsing==3.2.5 ; python_version >= "3.11" and python_version < "3.13"
-pyproj==3.7.2 ; python_version >= "3.11" and python_version < "3.13"
-python-dateutil==2.9.0.post0 ; python_version >= "3.11" and python_version < "3.13"
-pytz==2025.2 ; python_version >= "3.11" and python_version < "3.13"
-pyyaml==6.0.3 ; python_version >= "3.11" and python_version < "3.13"
-rechunker==0.5.4 ; python_version >= "3.11" and python_version < "3.13"
-referencing==0.36.2 ; python_version >= "3.11" and python_version < "3.13"
-rich==14.2.0 ; python_version >= "3.11" and python_version < "3.13"
-rpds-py==0.30.0 ; python_version >= "3.11" and python_version < "3.13"
-s3fs==2025.12.0 ; python_version >= "3.11" and python_version < "3.13"
-s3path==0.6.4 ; python_version >= "3.11" and python_version < "3.13"
-s3transfer==0.15.0 ; python_version >= "3.11" and python_version < "3.13"
-scipy==1.16.3 ; python_version >= "3.11" and python_version < "3.13"
-setuptools==80.9.0 ; python_version >= "3.11" and python_version < "3.13"
-shapely==2.1.2 ; python_version >= "3.11" and python_version < "3.13"
-six==1.17.0 ; python_version >= "3.11" and python_version < "3.13"
-smart-open==7.5.0 ; python_version >= "3.11" and python_version < "3.13"
-sortedcontainers==2.4.0 ; python_version >= "3.11" and python_version < "3.13"
-tblib==3.2.2 ; python_version >= "3.11" and python_version < "3.13"
-toml==0.10.2 ; python_version >= "3.11" and python_version < "3.13"
-toolz==1.1.0 ; python_version >= "3.11" and python_version < "3.13"
-tornado==6.5.4 ; python_version >= "3.11" and python_version < "3.13"
-traitlets==5.14.3 ; python_version >= "3.11" and python_version < "3.13"
-typing-extensions==4.15.0 ; python_version >= "3.11" and python_version < "3.13"
-tzdata==2025.3 ; python_version >= "3.11" and python_version < "3.13"
-urllib3==2.6.2 ; python_version >= "3.11" and python_version < "3.13"
-wcwidth==0.2.14 ; python_version >= "3.11" and python_version < "3.13"
-wheel==0.45.1 ; python_version >= "3.11" and python_version < "3.13"
-widgetsnbextension==4.0.15 ; python_version >= "3.11" and python_version < "3.13"
-wrapt==1.17.3 ; python_version >= "3.11" and python_version < "3.13"
-xarray @ git+https://github.com/lbesnard/xarray.git@2c873ac4ed5b5cb4266e5718fbcfa2f72ecab773 ; python_version >= "3.11" and python_version < "3.13"
-xyzservices==2025.11.0 ; python_version >= "3.11" and python_version < "3.13"
-yarl==1.22.0 ; python_version >= "3.11" and python_version < "3.13"
-zarr==2.18.7 ; python_version >= "3.11" and python_version < "3.13"
-zict==3.0.0 ; python_version >= "3.11" and python_version < "3.13"
-zipp==3.23.0 ; python_version == "3.11"
+# This file was autogenerated by uv via the following command:
+#    uv export --no-dev --no-hashes --no-emit-project -o requirements.txt
+aiobotocore==2.26.0
+    # via s3fs
+aiohappyeyeballs==2.6.1
+    # via aiohttp
+aiohttp==3.13.2
+    # via
+    #   aiobotocore
+    #   coiled
+    #   dask-cloudprovider
+    #   s3fs
+aioitertools==0.13.0
+    # via aiobotocore
+aiosignal==1.4.0
+    # via aiohttp
+annotated-types==0.7.0
+    # via pydantic
+anyio==4.12.0
+    # via httpx
+appnope==0.1.4 ; sys_platform == 'darwin'
+    # via ipython
+asciitree==0.3.3
+    # via zarr
+attrs==25.4.0
+    # via
+    #   aiohttp
+    #   jsonschema
+    #   referencing
+backcall==0.2.0
+    # via ipython
+backoff==2.2.1
+    # via coiled
+bcrypt==5.0.0
+    # via paramiko
+bokeh==3.8.1
+    # via dask
+boto3==1.41.5
+    # via
+    #   aodn-cloud-optimised
+    #   cloudpathlib
+    #   coiled
+    #   s3path
+botocore==1.41.5
+    # via
+    #   aiobotocore
+    #   boto3
+    #   s3transfer
+certifi==2025.11.12
+    # via
+    #   coiled
+    #   httpcore
+    #   httpx
+    #   netcdf4
+    #   pyogrio
+    #   pyproj
+cffi==2.0.0 ; platform_python_implementation != 'PyPy'
+    # via
+    #   cryptography
+    #   pynacl
+cftime==1.6.5
+    # via
+    #   aodn-cloud-optimised
+    #   cfunits
+    #   netcdf4
+cfunits==3.3.7
+    # via aodn-cloud-optimised
+click==8.3.1
+    # via
+    #   coiled
+    #   dask
+    #   distributed
+cloudpathlib==0.24.0
+    # via aodn-cloud-optimised
+cloudpickle==3.1.2
+    # via
+    #   dask
+    #   distributed
+coiled==1.130.0
+    # via aodn-cloud-optimised
+colorama==0.4.6
+    # via
+    #   aodn-cloud-optimised
+    #   click
+    #   ipython
+comm==0.2.3
+    # via ipywidgets
+contourpy==1.3.3
+    # via bokeh
+cryptography==46.0.3
+    # via paramiko
+dask==2025.12.0
+    # via
+    #   aodn-cloud-optimised
+    #   coiled
+    #   dask-cloudprovider
+    #   dask-expr
+    #   distributed
+    #   rechunker
+dask-cloudprovider==2025.9.0
+    # via aodn-cloud-optimised
+dask-expr==2.0.0
+    # via aodn-cloud-optimised
+decorator==5.2.1
+    # via
+    #   fabric
+    #   ipython
+deprecated==1.3.1
+    # via
+    #   fabric
+    #   numcodecs
+distributed==2025.12.0
+    # via
+    #   coiled
+    #   dask-cloudprovider
+fabric==3.2.2
+    # via coiled
+fasteners==0.20 ; sys_platform != 'emscripten'
+    # via zarr
+filelock==3.20.1
+    # via coiled
+frozenlist==1.8.0
+    # via
+    #   aiohttp
+    #   aiosignal
+fsspec==2025.12.0
+    # via
+    #   aodn-cloud-optimised
+    #   dask
+    #   s3fs
+geopandas==1.1.1
+    # via aodn-cloud-optimised
+gilknocker==0.4.2
+    # via coiled
+h11==0.16.0
+    # via httpcore
+h2==4.3.0
+    # via httpx
+h5netcdf==1.7.3
+    # via aodn-cloud-optimised
+h5py==3.11.0
+    # via
+    #   aodn-cloud-optimised
+    #   h5netcdf
+hpack==4.1.0
+    # via h2
+httpcore==1.0.9
+    # via httpx
+httpx==0.28.1
+    # via coiled
+hyperframe==6.1.0
+    # via h2
+idna==3.11
+    # via
+    #   anyio
+    #   httpx
+    #   yarl
+importlib-metadata==8.7.0 ; python_full_version < '3.12'
+    # via dask
+invoke==2.2.1
+    # via
+    #   coiled
+    #   fabric
+    #   paramiko
+ipython==7.34.0
+    # via ipywidgets
+ipywidgets==8.1.8
+    # via coiled
+jedi==0.19.2
+    # via ipython
+jinja2==3.1.6
+    # via
+    #   bokeh
+    #   dask
+    #   dask-cloudprovider
+    #   distributed
+jmespath==1.0.1
+    # via
+    #   aiobotocore
+    #   boto3
+    #   botocore
+    #   coiled
+jsondiff==2.2.1
+    # via coiled
+jsonschema==4.25.1
+    # via aodn-cloud-optimised
+jsonschema-specifications==2025.9.1
+    # via jsonschema
+jupyterlab-widgets==3.0.16
+    # via ipywidgets
+locket==1.0.0
+    # via
+    #   distributed
+    #   partd
+markdown-it-py==4.0.0
+    # via rich
+markupsafe==3.0.3
+    # via jinja2
+matplotlib-inline==0.2.1
+    # via ipython
+mdurl==0.1.2
+    # via markdown-it-py
+msgpack==1.1.2
+    # via distributed
+multidict==6.7.0
+    # via
+    #   aiobotocore
+    #   aiohttp
+    #   yarl
+mypy-extensions==1.1.0
+    # via rechunker
+narwhals==2.14.0
+    # via bokeh
+netcdf4==1.6.5
+    # via aodn-cloud-optimised
+numcodecs==0.15.1
+    # via
+    #   aodn-cloud-optimised
+    #   zarr
+numpy==1.26.4
+    # via
+    #   aodn-cloud-optimised
+    #   bokeh
+    #   cftime
+    #   cfunits
+    #   contourpy
+    #   dask
+    #   geopandas
+    #   h5py
+    #   netcdf4
+    #   numcodecs
+    #   pandas
+    #   pyogrio
+    #   scipy
+    #   shapely
+    #   xarray
+    #   zarr
+packaging==25.0
+    # via
+    #   bokeh
+    #   cfunits
+    #   coiled
+    #   dask
+    #   distributed
+    #   geopandas
+    #   h5netcdf
+    #   pip-requirements-parser
+    #   pyogrio
+    #   rechunker
+    #   xarray
+pandas==2.3.3
+    # via
+    #   aodn-cloud-optimised
+    #   bokeh
+    #   geopandas
+    #   xarray
+paramiko==4.0.0
+    # via
+    #   coiled
+    #   fabric
+parso==0.8.5
+    # via jedi
+partd==1.4.2
+    # via dask
+pexpect==4.9.0 ; sys_platform != 'win32'
+    # via ipython
+pickleshare==0.7.5
+    # via ipython
+pillow==12.0.0
+    # via bokeh
+pip==25.3
+    # via coiled
+pip-requirements-parser==32.0.1
+    # via coiled
+polars==1.40.1
+    # via aodn-cloud-optimised
+polars-runtime-32==1.40.1
+    # via polars
+prometheus-client==0.23.1
+    # via coiled
+prompt-toolkit==3.0.52
+    # via ipython
+propcache==0.4.1
+    # via
+    #   aiohttp
+    #   yarl
+psutil==7.1.3
+    # via distributed
+ptyprocess==0.7.0 ; sys_platform != 'win32'
+    # via pexpect
+pyarrow==22.0.0
+    # via aodn-cloud-optimised
+pycparser==2.23 ; implementation_name != 'PyPy' and platform_python_implementation != 'PyPy'
+    # via cffi
+pydantic==2.12.5
+    # via aodn-cloud-optimised
+pydantic-core==2.41.5
+    # via pydantic
+pygments==2.19.2
+    # via
+    #   ipython
+    #   rich
+pynacl==1.6.1
+    # via paramiko
+pyogrio==0.12.1
+    # via geopandas
+pyparsing==3.2.5
+    # via pip-requirements-parser
+pyproj==3.7.2
+    # via geopandas
+python-dateutil==2.9.0.post0
+    # via
+    #   aiobotocore
+    #   aodn-cloud-optimised
+    #   botocore
+    #   pandas
+pytz==2025.2
+    # via pandas
+pyyaml==6.0.3
+    # via
+    #   bokeh
+    #   dask
+    #   distributed
+    #   jsondiff
+rechunker==0.5.4
+    # via aodn-cloud-optimised
+referencing==0.36.2
+    # via
+    #   jsonschema
+    #   jsonschema-specifications
+rich==14.2.0
+    # via coiled
+rpds-py==0.30.0
+    # via
+    #   jsonschema
+    #   referencing
+s3fs==2025.12.0
+    # via aodn-cloud-optimised
+s3path==0.6.4
+    # via aodn-cloud-optimised
+s3transfer==0.15.0
+    # via boto3
+scipy==1.16.3
+    # via aodn-cloud-optimised
+setuptools==80.9.0
+    # via ipython
+shapely==2.1.2
+    # via
+    #   aodn-cloud-optimised
+    #   geopandas
+six==1.17.0
+    # via python-dateutil
+smart-open==7.5.0
+    # via s3path
+sortedcontainers==2.4.0
+    # via distributed
+tblib==3.2.2
+    # via distributed
+toml==0.10.2
+    # via coiled
+toolz==1.1.0
+    # via
+    #   dask
+    #   distributed
+    #   partd
+tornado==6.5.4
+    # via
+    #   bokeh
+    #   dask-cloudprovider
+    #   distributed
+traitlets==5.14.3
+    # via
+    #   ipython
+    #   ipywidgets
+    #   matplotlib-inline
+typing-extensions==4.15.0
+    # via
+    #   aiosignal
+    #   anyio
+    #   coiled
+    #   pydantic
+    #   pydantic-core
+    #   referencing
+    #   typing-inspection
+typing-inspection==0.4.2
+    # via pydantic
+tzdata==2025.3
+    # via pandas
+urllib3==2.6.2
+    # via
+    #   botocore
+    #   distributed
+wcwidth==0.2.14
+    # via prompt-toolkit
+wheel==0.45.1
+    # via coiled
+widgetsnbextension==4.0.15
+    # via ipywidgets
+wrapt==1.17.3
+    # via
+    #   aiobotocore
+    #   deprecated
+    #   smart-open
+xarray @ git+https://github.com/lbesnard/xarray.git@2c873ac4ed5b5cb4266e5718fbcfa2f72ecab773
+    # via aodn-cloud-optimised
+xyzservices==2025.11.0
+    # via bokeh
+yarl==1.22.0
+    # via aiohttp
+zarr==2.18.7
+    # via
+    #   aodn-cloud-optimised
+    #   rechunker
+zict==3.0.0
+    # via distributed
+zipp==3.23.0 ; python_full_version < '3.12'
+    # via importlib-metadata

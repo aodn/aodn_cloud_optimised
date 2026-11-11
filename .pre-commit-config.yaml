@@ -61,6 +61,18 @@ repos:
 
   - repo: local
     hooks:
+      - id: uv-export-requirements
+        name: uv export requirements.txt
+        entry: uv export --no-dev --no-hashes --no-emit-project -o requirements.txt
+        language: system
+        files: ^(pyproject\.toml|uv\.lock)$
+        pass_filenames: false
+      - id: uv-export-notebooks-requirements
+        name: uv export notebooks/requirements.txt
+        entry: uv export --no-dev --no-hashes --no-emit-project --extra notebooks -o notebooks/requirements.txt
+        language: system
+        files: ^(pyproject\.toml|uv\.lock)$
+        pass_filenames: false
       - id: validate-json-configs
         name: Validate dataset JSON configs with Pydantic
         entry: uv run python aodn_cloud_optimised/bin/pydantic_precommit_hook.py --validate-configs aodn_cloud_optimised/config/dataset
