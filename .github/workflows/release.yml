@@ -60,7 +60,7 @@ jobs:
           timeout_minutes: 10
           max_attempts: 3
           command: |
-            uv run pytest
+            uv run pytest -n auto
 
       #----------------------------------------------
       #        bump version in pyproject.toml
