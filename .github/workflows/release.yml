@@ -119,6 +119,18 @@ jobs:
           cp dist/*.whl dist/*.tar.gz dist-artifacts/
 
       #----------------------------------------------
+      #        verify the wheel (Clean Venv)
+      #----------------------------------------------
+      - name: Verify wheel
+        run: |
+          uv venv test_env --python 3.11.9
+          source test_env/bin/activate
+          uv pip install dist-artifacts/*.unfrozen.whl
+          python -c "import aodn_cloud_optimised; print('Wheel OK')"
+          deactivate
+          rm -rf test_env
+
+      #----------------------------------------------
       #        commit bump + tag + release
       #----------------------------------------------
       - name: Commit version bump and create tag
