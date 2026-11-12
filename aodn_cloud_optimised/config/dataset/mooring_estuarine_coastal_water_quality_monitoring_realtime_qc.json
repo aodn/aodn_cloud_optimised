@@ -49,13 +49,21 @@
       "ancillary_variables": "TEMP_quality_control",
       "standard_name": "sea_water_temperature",
       "long_name": "sea_water_temperature",
-      "units": "degC",
-      "valid_min": -2.5,
-      "valid_max": 40.0
+      "units": "degrees_Celsius",
+      "valid_min": -5,
+      "valid_max": 50.0,
+      "sensor_serial_number": "Please refer to the NetCDF file for serial number",
+      "accuracy_note": "Please refer to the NetCDF file for accuracy note",
+      "calibration_equation": "Please refer to the NetCDF file for calibration equation",
+      "calibration_coefficient_A": "Please refer to the NetCDF file for calibration coefficient A",
+      "calibration_coefficient_B": "Please refer to the NetCDF file for calibration coefficient B",
+      "calibration_coefficient_C": "Please refer to the NetCDF file for calibration coefficient C",
+      "calibration_coefficient_D": "Please refer to the NetCDF file for calibration coefficient D",
+      "calibration_date": "Please refer to the NetCDF file for calibration date"
     },
     "TEMP_quality_control": {
       "type": "float",
-      "flag_meanings": "pass not_evaluated questionable bad missing",
+      "flag_meanings": "pass not_evaluated questionable fail missing",
       "flag_values": [
         1,
         2,
@@ -73,14 +81,15 @@
       "positive": "down",
       "reference_datum": "sea surface",
       "standard_name": "depth",
-      "comment": "Depth computed using the Gibbs-SeaWater toolbox (TEOS-10) from latitude and relative pressure measurements (calibration offset usually performed to balance current atmospheric pressure and acute sensor precision at a deployed depth).",
       "units": "m",
       "valid_max": 12000.0,
-      "valid_min": -5.0
+      "valid_min": -5.0,
+      "sensor_serial_number": "Please refer to the NetCDF file for serial number",
+      "accuracy_note": "Please refer to the NetCDF file for accuracy note"
     },
     "DEPTH_quality_control": {
       "type": "float",
-      "flag_meanings": "pass not_evaluated questionable bad missing",
+      "flag_meanings": "pass not_evaluated questionable fail missing",
       "flag_values": [
         1,
         2,
@@ -99,11 +108,13 @@
       "standard_name": "sea_water_practical_salinity",
       "units": "1",
       "valid_max": 41.0,
-      "valid_min": 2.0
+      "valid_min": 2.0,
+      "sensor_serial_number": "Please refer to the NetCDF file for serial number",
+      "accuracy_note": "Please refer to the NetCDF file for accuracy note"
     },
     "PSAL_quality_control": {
       "type": "float",
-      "flag_meanings": "pass not_evaluated questionable bad missing",
+      "flag_meanings": "pass not_evaluated questionable fail missing",
       "flag_values": [
         1,
         2,
@@ -117,20 +128,20 @@
     },
     "LATITUDE_GPS": {
       "type": "double",
-      "long_name": "latitude at most recent GPS fix",
+      "long_name": "GPS latitude",
       "reference_datum": "WGS84 geographic coordinate system",
       "standard_name": "latitude",
-      "comment": "coordinates are carried forward to fill gaps between recorded fixes.",
+      "comment": "Last observation carried forward until new GPS ping.",
       "units": "degrees_north",
       "valid_max": 90.0,
       "valid_min": -90.0
     },
     "LONGITUDE_GPS": {
       "type": "double",
-      "long_name": "longitude at most recent GPS fix",
+      "long_name": "GPS longitude",
       "reference_datum": "WGS84 geographic coordinate system",
       "standard_name": "longitude",
-      "comment": "coordinates are carried forward to fill gaps between recorded fixes.",
+      "comment": "Last observation carried forward until new GPS ping.",
       "units": "degrees_east",
       "valid_max": 180.0,
       "valid_min": -180.0
@@ -140,6 +151,8 @@
       "axis": "T",
       "long_name": "time",
       "standard_name": "time",
+      "units": "days since 1950-01-01 00:00:00 UTC",
+      "calendar": "gregorian",
       "valid_max": 90000.0,
       "valid_min": 0.0
     },
@@ -181,8 +194,8 @@
       "valid_min": 0.0,
       "valid_max": 100.0,
       "comment": "Instrument units rfu: Relative Fluorescence Units",
-      "sensor_serial_number": "24L003340",
-      "accuracy_note": "Linearity r2 >= 0.999 for Rhodamine WT across full range",
+      "sensor_serial_number": "Please refer to the NetCDF file for serial number",
+      "accuracy_note": "Please refer to the NetCDF file for accuracy note",
       "ancillary_variables": "CPHL_RFU_quality_control"
     },
     "CPHL_RFU_quality_control": {
@@ -208,13 +221,13 @@
       "units": "1",
       "valid_min": 0.0,
       "valid_max": 15.0,
-      "sensor_serial_number": "0GZY010",
-      "accuracy_note": "Reproducibility \u00b10.05 (0-200 ppb)",
+      "sensor_serial_number": "Please refer to the NetCDF file for serial number",
+      "accuracy_note": "Please refer to the NetCDF file for accuracy note",
       "ancillary_variables": "FLUSI_quality_control",
-      "calibration_equation": "FLUSI = C x (FLU690 / FLU670) + D",
-      "calibration_coefficient_C": 0.80429,
-      "calibration_coefficient_D": 0.27239,
-      "calibration_date": "07-11-2025"
+      "calibration_equation": "Please refer to the NetCDF file for calibration equation",
+      "calibration_coefficient_C": "Please refer to the NetCDF file for calibration coefficient C",
+      "calibration_coefficient_D": "Please refer to the NetCDF file for calibration coefficient D",
+      "calibration_date": "Please refer to the NetCDF file for calibration date"
     },
     "FLUSI_quality_control": {
       "type": "float",
@@ -233,17 +246,6 @@
       "quality_control_comment": "The IOOS QARTOD Quality Control tests were used to derive the quality flags.",
       "references": "http://www.ioos.noaa.gov/qartod/, https://www.ioccp.org/images/D4standards/IOC-OceanDataStandards54-3-2013.pdf"
     },
-    "CPHL_rfu": {
-      "type": "float",
-      "long_name": "relative_fluorescence_optical_signal_associated_with_chlorophyll-a",
-      "units": "rfu",
-      "valid_min": 0.0,
-      "valid_max": 100.0,
-      "comment": "rfu: relative fluorescence units",
-      "sensor_serial_number": "24L003340",
-      "accuracy": "Linearity r2 >= 0.999 for Rhodamine WT across full range",
-      "ancillary_variables": "CPHL_rfu_quality_control"
-    },
     "CPHL": {
       "type": "float",
       "long_name": "mass_concentration_of_inferred_chlorophyll_from_relative_fluorescence_units_in_sea_water",
@@ -251,8 +253,8 @@
       "valid_min": 0.0,
       "valid_max": 400.0,
       "comment": "Factory calibration against Rhodamine WT dye",
-      "sensor_serial_number": "24L003340",
-      "accuracy": "Linearity r2 >= 0.999 for Rhodamine WT across full range",
+      "sensor_serial_number": "Please refer to the NetCDF file for serial number",
+      "accuracy_note": "Please refer to the NetCDF file for accuracy note",
       "ancillary_variables": "CPHL_quality_control"
     },
     "CPHL_quality_control": {
@@ -279,17 +281,17 @@
       "valid_min": 0.0,
       "valid_max": 400.0,
       "comment": "Fluorescence Measurement calibrated with Uranine reference",
-      "sensor_serial_number": "0GZY010",
-      "accuracy_note": "Non-linearity \u00b11% FS (0-200 ppb)",
+      "sensor_serial_number": "Please refer to the NetCDF file for serial number",
+      "accuracy_note": "Please refer to the NetCDF file for accuracy note",
       "ancillary_variables": "CPHL_PPB_quality_control",
-      "calibration_equation": "Instrument uranine concentration[ppb] = A + B x N  (N: A/D value)",
-      "calibration_coefficient_A": -5.935,
-      "calibration_coefficient_B": 0.009159,
-      "calibration_date": "07-11-2025"
+      "calibration_equation": "Please refer to the NetCDF file for calibration equation",
+      "calibration_coefficient_A": "Please refer to the NetCDF file for calibration coefficient A",
+      "calibration_coefficient_B": "Please refer to the NetCDF file for calibration coefficient B",
+      "calibration_date": "Please refer to the NetCDF file for calibration date"
     },
-    "CPHL_rfu_quality_control": {
+    "CPHL_PPB_quality_control": {
       "type": "float",
-      "long_name": "quality flag for relative_fluorescence_optical_signal_associated_with_chlorophyll-a",
+      "long_name": "quality flag for mass_concentration_of_inferred_chlorophyll_from_relative_fluorescence_units_in_sea_water",
       "flag_values": [
         1,
         2,
@@ -311,26 +313,9 @@
       "units": "mg l-1",
       "valid_min": 0.0,
       "valid_max": 50.0,
-      "sensor_serial_number": "25J103408",
-      "accuracy": "\u00b11% of reading or 0.1 mg/L, whichever is greater (0-20 mg/L); \u00b15% of reading (20-50 mg/L)",
+      "sensor_serial_number": "Please refer to the NetCDF file for serial number",
+      "accuracy_note": "Please refer to the NetCDF file for accuracy note",
       "ancillary_variables": "DOXY_quality_control"
-    },
-    "CPHL_PPB_quality_control": {
-      "type": "float",
-      "long_name": "quality flag for mass_concentration_of_inferred_chlorophyll_from_relative_fluorescence_units_in_sea_water",
-      "flag_values": [
-        1,
-        2,
-        3,
-        4,
-        9
-      ],
-      "flag_meanings": "pass not_evaluated questionable fail missing",
-      "valid_min": 1,
-      "valid_max": 9,
-      "quality_control_conventions": "Ocean Data Standards, UNESCO 2013 - IOC Manuals and Guides, 54, Volume 3 Version 1",
-      "quality_control_comment": "The IOOS QARTOD Quality Control tests were used to derive the quality flags.",
-      "references": "http://www.ioos.noaa.gov/qartod/, https://www.ioccp.org/images/D4standards/IOC-OceanDataStandards54-3-2013.pdf"
     },
     "DOXY_quality_control": {
       "type": "float",
@@ -356,12 +341,29 @@
       "units": "ppb",
       "valid_min": 0.0,
       "valid_max": 200.0,
-      "sensor_serial_number": "0GZY010",
+      "sensor_serial_number": "Please refer to the NetCDF file for serial number",
       "ancillary_variables": "FLU670_quality_control",
-      "calibration_equation": "FLU670 fluorescence intensity = A + B x [AD value]",
-      "calibration_coefficient_A": -0.55965,
-      "calibration_coefficient_B": 0.00086366,
-      "calibration_date": "07-11-2025"
+      "calibration_equation": "Please refer to the NetCDF file for calibration equation",
+      "calibration_coefficient_A": "Please refer to the NetCDF file for calibration coefficient A",
+      "calibration_coefficient_B": "Please refer to the NetCDF file for calibration coefficient B",
+      "calibration_date": "Please refer to the NetCDF file for calibration date"
+    },
+    "FLU670_quality_control": {
+      "type": "float",
+      "long_name": "quality flag for 670_nm_fluorescence_intensity",
+      "flag_values": [
+        1,
+        2,
+        3,
+        4,
+        9
+      ],
+      "flag_meanings": "pass not_evaluated questionable fail missing",
+      "valid_min": 1,
+      "valid_max": 9,
+      "quality_control_conventions": "Ocean Data Standards, UNESCO 2013 - IOC Manuals and Guides, 54, Volume 3 Version 1",
+      "quality_control_comment": "The IOOS QARTOD Quality Control tests were used to derive the quality flags.",
+      "references": "http://www.ioos.noaa.gov/qartod/, https://www.ioccp.org/images/D4standards/IOC-OceanDataStandards54-3-2013.pdf"
     },
     "DOXS": {
       "type": "float",
@@ -370,8 +372,8 @@
       "units": "percent",
       "valid_min": 0.0,
       "valid_max": 500.0,
-      "sensor_serial_number": "25J103408",
-      "accuracy": "\u00b11% of reading or 1% sat., whichever is greater (0-200%); \u00b15% of reading (200-500%)",
+      "sensor_serial_number": "Please refer to the NetCDF file for serial number",
+      "accuracy_note": "Please refer to the NetCDF file for accuracy note",
       "ancillary_variables": "DOXS_quality_control"
     },
     "DOXS_quality_control": {
@@ -392,46 +394,16 @@
       "references": "http://www.ioos.noaa.gov/qartod/, https://www.ioccp.org/images/D4standards/IOC-OceanDataStandards54-3-2013.pdf",
       "standard_name": "fractional_saturation_of_oxygen_in_sea_water status_flag"
     },
-    "FLU670_quality_control": {
-      "type": "float",
-      "long_name": "quality flag for 670_nm_fluorescence_intensity",
-      "flag_values": [
-        1,
-        2,
-        3,
-        4,
-        9
-      ],
-      "flag_meanings": "pass not_evaluated questionable fail missing",
-      "valid_min": 1,
-      "valid_max": 9,
-      "quality_control_conventions": "Ocean Data Standards, UNESCO 2013 - IOC Manuals and Guides, 54, Volume 3 Version 1",
-      "quality_control_comment": "The IOOS QARTOD Quality Control tests were used to derive the quality flags.",
-      "references": "http://www.ioos.noaa.gov/qartod/, https://www.ioccp.org/images/D4standards/IOC-OceanDataStandards54-3-2013.pdf"
-    },
     "FDOM": {
       "type": "float",
       "long_name": "fluorescent_dissolved_organic_matter_in_sea_water",
-      "units": "qsu",
+      "units": "1",
       "valid_min": 0.0,
       "valid_max": 300.0,
-      "comment": "qsu: Quinine Sulfate Units. ",
-      "sensor_serial_number": "25K104246",
-      "accuracy": "Linearity r2 >= 0.999 for 0-300 qsu; MDL 0.016 qsu",
+      "comment": "Instrument units qsu: Quinine Sulfate Units",
+      "sensor_serial_number": "Please refer to the NetCDF file for serial number",
+      "accuracy_note": "Please refer to the NetCDF file for accuracy note",
       "ancillary_variables": "FDOM_quality_control"
-    },
-    "FLU690": {
-      "type": "float",
-      "long_name": "690_nm_fluorescence_intensity",
-      "units": "ppb",
-      "valid_min": 0.0,
-      "valid_max": 200.0,
-      "sensor_serial_number": "0GZY010",
-      "ancillary_variables": "FLU690_quality_control",
-      "calibration_equation": "FLU690 fluorescence intensity = A + B x [AD value]",
-      "calibration_coefficient_A": -0.45635,
-      "calibration_coefficient_B": 0.00070425,
-      "calibration_date": "07-11-2025"
     },
     "FDOM_quality_control": {
       "type": "float",
@@ -449,6 +421,19 @@
       "quality_control_conventions": "Ocean Data Standards, UNESCO 2013 - IOC Manuals and Guides, 54, Volume 3 Version 1",
       "quality_control_comment": "The IOOS QARTOD Quality Control tests were used to derive the quality flags.",
       "references": "http://www.ioos.noaa.gov/qartod/, https://www.ioccp.org/images/D4standards/IOC-OceanDataStandards54-3-2013.pdf"
+    },
+    "FLU690": {
+      "type": "float",
+      "long_name": "690_nm_fluorescence_intensity",
+      "units": "ppb",
+      "valid_min": 0.0,
+      "valid_max": 200.0,
+      "sensor_serial_number": "Please refer to the NetCDF file for serial number",
+      "ancillary_variables": "FLU690_quality_control",
+      "calibration_equation": "Please refer to the NetCDF file for calibration equation",
+      "calibration_coefficient_A": "Please refer to the NetCDF file for calibration coefficient A",
+      "calibration_coefficient_B": "Please refer to the NetCDF file for calibration coefficient B",
+      "calibration_date": "Please refer to the NetCDF file for calibration date"
     },
     "FLU690_quality_control": {
       "type": "float",
@@ -474,8 +459,8 @@
       "valid_min": 0.0,
       "valid_max": 100.0,
       "comment": "Instrument units rfu: Relative Fluorescence Units",
-      "sensor_serial_number": "24L003340",
-      "accuracy_note": "Linearity r2 >= 0.999 for Rhodamine WT across full range",
+      "sensor_serial_number": "Please refer to the NetCDF file for serial number",
+      "accuracy_note": "Please refer to the NetCDF file for accuracy note",
       "ancillary_variables": "PHYCO_RFU_quality_control"
     },
     "PHYCO_RFU_quality_control": {
@@ -502,8 +487,8 @@
       "valid_min": 0.0,
       "valid_max": 280.0,
       "comment": "Factory calibration against Rhodamine WT dye only.",
-      "sensor_serial_number": "24L003340",
-      "accuracy_note": "Linearity r2 >= 0.999 for Rhodamine WT across full range",
+      "sensor_serial_number": "Please refer to the NetCDF file for serial number",
+      "accuracy_note": "Please refer to the NetCDF file for accuracy note",
       "ancillary_variables": "PHYCO_quality_control"
     },
     "PHYCO_quality_control": {
@@ -530,8 +515,8 @@
       "valid_min": 0.0,
       "valid_max": 10.0,
       "comment": "Converted from uS/cm (Eagle) to S m-1 (IMOS) by factor 1e-4",
-      "sensor_serial_number": "25H106877",
-      "accuracy": "\u00b11% of reading or 2 uS/cm, whichever is greater",
+      "sensor_serial_number": "Please refer to the NetCDF file for serial number",
+      "accuracy_note": "Please refer to the NetCDF file for accuracy note",
       "ancillary_variables": "SPEC_CNDC_quality_control"
     },
     "SPEC_CNDC_quality_control": {
@@ -551,17 +536,6 @@
       "quality_control_comment": "The IOOS QARTOD Quality Control tests were used to derive the quality flags.",
       "references": "http://www.ioos.noaa.gov/qartod/, https://www.ioccp.org/images/D4standards/IOC-OceanDataStandards54-3-2013.pdf"
     },
-    "PHYCOE_rfu": {
-      "type": "float",
-      "long_name": "phycoerythrin_in_sea_water",
-      "units": "rfu",
-      "valid_min": 0.0,
-      "valid_max": 100.0,
-      "comment": "Phycoerythrin in rfu (Relative Fluorescence Units). ",
-      "sensor_serial_number": "24L003340",
-      "accuracy": "Linearity r2 >= 0.999 for Rhodamine WT across full range",
-      "ancillary_variables": "PHYCOE_rfu_quality_control"
-    },
     "TURB": {
       "type": "float",
       "standard_name": "sea_water_turbidity",
@@ -569,26 +543,9 @@
       "units": "fnu",
       "valid_min": 0.0,
       "valid_max": 4000.0,
-      "sensor_serial_number": "25K100295",
-      "accuracy": "\u00b13% of reading (0-999 fnu); \u00b15% of reading (1000-4000 fnu)",
+      "sensor_serial_number": "Please refer to the NetCDF file for serial number",
+      "accuracy_note": "Please refer to the NetCDF file for accuracy note",
       "ancillary_variables": "TURB_quality_control"
-    },
-    "PHYCOE_rfu_quality_control": {
-      "type": "float",
-      "long_name": "quality flag for phycoerythrin_in_sea_water",
-      "flag_values": [
-        1,
-        2,
-        3,
-        4,
-        9
-      ],
-      "flag_meanings": "pass not_evaluated questionable fail missing",
-      "valid_min": 1,
-      "valid_max": 9,
-      "quality_control_conventions": "Ocean Data Standards, UNESCO 2013 - IOC Manuals and Guides, 54, Volume 3 Version 1",
-      "quality_control_comment": "The IOOS QARTOD Quality Control tests were used to derive the quality flags.",
-      "references": "http://www.ioos.noaa.gov/qartod/, https://www.ioccp.org/images/D4standards/IOC-OceanDataStandards54-3-2013.pdf"
     },
     "TURB_quality_control": {
       "type": "float",
@@ -607,34 +564,6 @@
       "quality_control_comment": "The IOOS QARTOD Quality Control tests were used to derive the quality flags.",
       "references": "http://www.ioos.noaa.gov/qartod/, https://www.ioccp.org/images/D4standards/IOC-OceanDataStandards54-3-2013.pdf",
       "standard_name": "sea_water_turbidity status_flag"
-    },
-    "PHYCOE": {
-      "type": "float",
-      "long_name": "mass_concentration_of_phycoerythrin_in_sea_water",
-      "units": "mg m-3",
-      "valid_min": 0.0,
-      "valid_max": 280.0,
-      "comment": "Factory calibration against Rhodamine WT dye only.",
-      "sensor_serial_number": "24L003340",
-      "accuracy": "Linearity r2 >= 0.999 for Rhodamine WT across full range",
-      "ancillary_variables": "PHYCOE_quality_control"
-    },
-    "PHYCOE_quality_control": {
-      "type": "float",
-      "long_name": "quality flag for mass_concentration_of_phycoerythrin_in_sea_water",
-      "flag_values": [
-        1,
-        2,
-        3,
-        4,
-        9
-      ],
-      "flag_meanings": "pass not_evaluated questionable fail missing",
-      "valid_min": 1,
-      "valid_max": 9,
-      "quality_control_conventions": "Ocean Data Standards, UNESCO 2013 - IOC Manuals and Guides, 54, Volume 3 Version 1",
-      "quality_control_comment": "The IOOS QARTOD Quality Control tests were used to derive the quality flags.",
-      "references": "http://www.ioos.noaa.gov/qartod/, https://www.ioccp.org/images/D4standards/IOC-OceanDataStandards54-3-2013.pdf"
     }
   },
   "aws_opendata_registry": {
