@@ -19,23 +19,23 @@ There are two supported ways to set up a local environment for running these not
 
 ---
 
-## Option 1 — Poetry (recommended if you already have the repository)
+## Option 1 — uv (recommended if you already have the repository)
 
-Requires [Poetry](https://python-poetry.org/) installed (version pinned in `.poetry-version`).
+Requires [uv](https://docs.astral.sh/uv/) installed.
 
 ```bash
 # Clone the repository
 git clone https://github.com/aodn/aodn_cloud_optimised.git
 cd aodn_cloud_optimised
 
-# Install the notebooks extra into a Poetry-managed virtual environment
+# Install the notebooks extra into a uv-managed virtual environment
 make notebooks
 ```
 
 Then start Jupyter:
 
 ```bash
-poetry run jupyter notebook --ip=0.0.0.0 --port=8888 notebooks/
+uv run jupyter notebook --ip=0.0.0.0 --port=8888 notebooks/
 ```
 
 ---

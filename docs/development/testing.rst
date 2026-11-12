@@ -29,8 +29,8 @@ Install the ``mcp`` optional dependency group before running:
 .. code-block:: bash
 
     pip install -e ".[mcp]"
-    # or with poetry:
-    poetry install --extras mcp
+    # or with uv:
+    uv sync --extra mcp
 
 Test Tiers and CLI Flags
 ------------------------

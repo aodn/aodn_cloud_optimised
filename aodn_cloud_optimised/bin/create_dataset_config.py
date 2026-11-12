@@ -268,13 +268,13 @@ def create_dataset_script(dataset_name, dataset_json, nc_file_path, bucket):
 
 def update_pyproject_toml(dataset_name):
     """
-    Update the `pyproject.toml` file to include a new script entry under the `[tool.poetry.scripts]` section.
+    Update the `pyproject.toml` file to include a new script entry under the `[project.scripts]` section.
 
     Args:
         dataset_name (str): The name of the dataset to be used for the new script entry.
 
     Notes:
-        - If the `[tool.poetry.scripts]` section is not present in the `pyproject.toml`, it will be created.
+        - If the `[project.scripts]` section is not present in the `pyproject.toml`, it will be created.
         - If the script entry already exists, no changes will be made.
         - The script entries will be sorted alphabetically.
     """
@@ -339,9 +339,9 @@ def update_pyproject_toml(dataset_name):
             elif not in_scripts_section:
                 pyproject_file.write(line)
 
-        # If the [tool.poetry.scripts] section was not found, add it at the end
+        # If the [project.scripts] section was not found, add it at the end
         if not section_found:
-            pyproject_file.write("\n[tool.poetry.scripts]\n")
+            pyproject_file.write("\n[project.scripts]\n")
             for script in sorted_scripts[1:]:
                 pyproject_file.write(script)
 

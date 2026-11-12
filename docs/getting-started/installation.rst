@@ -26,7 +26,7 @@ Requirements
 ------------
 
 - Python >= 3.11
-- `miniforge3 <https://github.com/conda-forge/miniforge>`_ **or** Poetry (see installation options below)
+- `miniforge3 <https://github.com/conda-forge/miniforge>`_ **or** `uv <https://docs.astral.sh/uv/>`_ (see installation options below)
 
 Recommended: Data Processing (Core Only)
 ========================================
@@ -74,7 +74,7 @@ For full development setup (recommended for contributors):
    gh repo clone aodn/aodn_cloud_optimised
    cd aodn_cloud_optimised
 
-**2. Install using Makefile (Poetry venv)**
+**2. Install using Makefile (uv venv)**
 
 The **Makefile** is the primary recommended workflow for contributors:
 
@@ -82,20 +82,20 @@ The **Makefile** is the primary recommended workflow for contributors:
 
    make dev
 
-This creates a Poetry-managed virtual environment with all tools: testing, documentation, linting, and debugging.
+This creates a uv-managed virtual environment (``.venv``) with all tools: testing, documentation, linting, and debugging.
 
 After setup, install pre-commit hooks:
 
 .. code-block:: bash
 
-   poetry run pre-commit install
+   uv run pre-commit install
 
 .. note:: Important Note
    :class: custom-note
    :name: make-dev
 
    Run ``make dev`` once after cloning and after every ``git pull`` that
-   changes ``poetry.lock`` or ``pyproject.toml``.
+   changes ``uv.lock`` or ``pyproject.toml``.
 
 **Alternative: Mamba/Conda named environments**
 
@@ -149,10 +149,10 @@ so you only install what you need:
      - core + MCP server dependencies
      - Running the Model Context Protocol server
    * - ``dev``
-     - All of the above + poetry, pre-commit, ipdb
+     - All of the above + pre-commit, ipdb
      - Full contributor setup (recommended)
 
-Direct Installation (pip / Poetry)
+Direct Installation (pip / uv)
 ==================================
 
 If you're not using the Makefile, you can install directly:
@@ -165,12 +165,12 @@ If you're not using the Makefile, you can install directly:
    pip install aodn-cloud-optimised[notebooks]   # core + notebooks
    pip install aodn-cloud-optimised[dev]         # full dev setup
 
-**Using Poetry directly**:
+**Using uv directly**:
 
 .. code-block:: bash
 
-   poetry install --with dev
-   poetry run pre-commit install
+   uv sync --extra notebooks --extra tests --extra docs --extra dev
+   uv run pre-commit install
 
 DataQuery Import Note
 ---------------------

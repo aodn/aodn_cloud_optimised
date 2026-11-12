@@ -94,7 +94,7 @@ no notebook or test dependencies needed:
 ```bash
 git clone https://github.com/aodn/aodn_cloud_optimised.git
 cd aodn_cloud_optimised
-make core   # installs core deps via Poetry venv
+make core   # installs core deps via a uv-managed venv
 ```
 
 ### Automatic installation of the latest wheel release
@@ -112,9 +112,9 @@ Full contributor setup (notebooks + tests + docs + tooling):
 ```bash
 git clone https://github.com/aodn/aodn_cloud_optimised.git
 cd aodn_cloud_optimised
-make dev                         # Poetry venv — recommended
+make dev                         # uv venv — recommended
 # or: ./setup_miniforge_venvs.sh dev   # named mamba env alternative
-poetry run pre-commit install
+uv run pre-commit install
 ```
 
 See [ReadTheDocs - Dev](https://aodn-cloud-optimised.readthedocs.io/en/latest/development/setup.html) for full details.

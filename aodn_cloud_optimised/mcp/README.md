@@ -20,8 +20,8 @@ make mcp
 # From the repo root, install with the mcp extra:
 pip install -e ".[mcp]"
 
-# or with Poetry:
-poetry install --extras mcp
+# or with uv:
+uv sync --extra mcp
 ```
 
 This installs the `aodn-mcp-server` entry point and its dependencies
