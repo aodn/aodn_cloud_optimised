@@ -1,0 +1,699 @@
+{
+  "dataset_name": "satellite_wave_cfosat_swim_qc",
+  "logger_name": "satellite_wave_cfosat_swim_qc",
+  "cloud_optimised_format": "zarr",
+  "run_settings": {
+    "paths": [
+      {
+        "type": "files",
+        "s3_uri": "s3://imos-data/IMOS/SRS/Surface-Waves/CFOSAT-SWIM/",
+        "filter": [
+          ".*\\.nc$"
+        ],
+        "year_range": []
+      }
+    ],
+    "cluster": {
+      "mode": "coiled",
+      "restart_every_path": false
+    },
+    "clear_existing_data": false,
+    "raise_error": false,
+    "coiled_cluster_options": {
+      "n_workers": [
+        25,
+        100
+      ],
+      "scheduler_vm_types": "m7i-flex.large",
+      "worker_vm_types": "m7i-flex.large",
+      "allow_ingress_from": "me",
+      "compute_purchase_option": "spot_with_fallback",
+      "worker_options": {
+        "nthreads": 4,
+        "memory_limit": "8GB"
+      }
+    },
+    "batch_size": 234
+  },
+  "metadata_uuid": "ee76e8ea-c48e-4580-92ef-e36b867ed6b0",
+  "schema_transformation": {
+    "dimensions": {
+      "time": {
+        "name": "TIME",
+        "chunk": 6994,
+        "rechunk": false,
+        "append_dim": true
+      },
+      "wavenumber": {
+        "name": "WAVENUMBER",
+        "chunk": 32,
+        "size": 0
+      },
+      "direction": {
+        "name": "DIRECTION",
+        "chunk": 12,
+        "size": 0
+      }
+    },
+    "var_template_shape": "MSS",
+    "vars_incompatible_with_region": [
+      "WAVENUMBER",
+      "DIRECTION"
+    ],
+    "target_dimension_grids": {},
+    "global_attributes": {
+      "delete": [
+        "date_created",
+        "date_modified",
+        "geospatial_lat_max",
+        "geospatial_lat_min",
+        "geospatial_lon_max",
+        "geospatial_lon_min",
+        "time_coverage_start",
+        "time_coverage_end"
+      ],
+      "set": {
+        "title": ""
+      }
+    },
+    "add_variables": {
+      "filename": {
+        "source": "@filename",
+        "schema": {
+          "type": "object",
+          "units": "1",
+          "long_name": "Filename of the source file",
+          "dimensions": "TIME"
+        }
+      }
+    }
+  },
+  "schema": {
+    "TIME": {
+      "type": "timestamp[ns]",
+      "long_name": "time",
+      "standard_name": "time",
+      "axis": "T",
+      "valid_min": 2.2250738585072014e-308,
+      "valid_max": 1.7976931348623157e+308
+    },
+    "LATITUDE": {
+      "type": "float",
+      "long_name": "Mean latitude of box area",
+      "standard_name": "latitude",
+      "units": "degrees_north",
+      "axis": "Y",
+      "valid_min": -90.0,
+      "valid_max": 90.0,
+      "reference_datum": "geographical coordinates, WGS84 projection"
+    },
+    "LONGITUDE": {
+      "type": "float",
+      "long_name": "Mean longitude of box area",
+      "standard_name": "longitude",
+      "units": "degrees_east",
+      "axis": "X",
+      "valid_min": 0.0,
+      "valid_max": 360.0,
+      "reference_datum": "geographical coordinates, WGS84 projection"
+    },
+    "SWH": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "long_name": "Sea surface wave significant height from SWIM (10-degree beam)",
+      "standard_name": "sea_surface_wave_significant_height",
+      "units": "m",
+      "valid_min": 0,
+      "valid_max": 30000,
+      "coverage_content_type": "physicalMeasurement",
+      "ancillary_variables": "SWH_quality_control"
+    },
+    "SWH_CALIBRATED_NDBC": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "long_name": "Sea surface wave significant height from SWIM (10-degree beam) calibrated against NDBC",
+      "standard_name": "sea_surface_wave_significant_height",
+      "units": "m",
+      "valid_min": 0,
+      "valid_max": 30000,
+      "coverage_content_type": "physicalMeasurement",
+      "ancillary_variables": "SWH_CALIBRATED_NDBC_quality_control"
+    },
+    "Lp": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "long_name": "Sea surface wave dominant wavelength from SWIM (10-degree beam)",
+      "units": "m",
+      "valid_min": 0.0,
+      "valid_max": 50000.0,
+      "coverage_content_type": "physicalMeasurement",
+      "ancillary_variables": "Lp_quality_control"
+    },
+    "Lp_CALIBRATED_NDBC": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "long_name": "Sea surface wave dominant wavelength from SWIM (10-degree beam) calibrated against NDBC",
+      "units": "m",
+      "valid_min": 0.0,
+      "valid_max": 50000.0,
+      "coverage_content_type": "physicalMeasurement",
+      "ancillary_variables": "Lp_CALIBRATED_NDBC_quality_control"
+    },
+    "Dp": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "long_name": "Sea surface wave dominant direction from SWIM (10-degree beam)",
+      "standard_name": "sea_surface_wave_from_direction",
+      "units": "degree",
+      "valid_min": -18000,
+      "valid_max": 18000,
+      "coverage_content_type": "physicalMeasurement",
+      "ancillary_variables": "Dp_quality_control"
+    },
+    "MWP": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "long_name": "SWIM mean wave period at 10-degree beam based on Jiang et al. (2022)",
+      "standard_name": "sea_surface_wave_mean_period",
+      "units": "s",
+      "valid_min": 0,
+      "valid_max": 30000,
+      "coverage_content_type": "modelResult",
+      "ancillary_variables": "MWP_quality_control"
+    },
+    "MWP_CALIBRATED_NDBC": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "long_name": "SWIM mean wave period at 10-degree beam based on Jiang et al. (2022) calibrated against NDBC",
+      "standard_name": "sea_surface_wave_mean_period",
+      "units": "s",
+      "valid_min": 0,
+      "valid_max": 30000,
+      "coverage_content_type": "modelResult",
+      "ancillary_variables": "MWP_CALIBRATED_NDBC_quality_control"
+    },
+    "MSS_COMBINED": {
+      "type": "float",
+      "dims": [
+        "TIME",
+        "WAVENUMBER",
+        "DIRECTION"
+      ],
+      "long_name": "Mean wave slope spectrum combining all incidence beams",
+      "units": "m",
+      "valid_min": 0.0,
+      "valid_max": 3.4028234663852886e+38,
+      "coverage_content_type": "physicalMeasurement",
+      "ancillary_variables": "MSS_COMBINED_quality_control"
+    },
+    "MSS": {
+      "type": "float",
+      "dims": [
+        "TIME",
+        "WAVENUMBER",
+        "DIRECTION"
+      ],
+      "long_name": "2D wave slope spectrum from SWIM (10-degree beam)",
+      "units": "m2",
+      "valid_min": -10.0,
+      "valid_max": 3.4028234663852886e+38,
+      "coverage_content_type": "physicalMeasurement",
+      "ancillary_variables": "MSS_quality_control"
+    },
+    "SWH_WW3": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "long_name": "Sea surface wave significant height from WW3 Hindcast",
+      "standard_name": "sea_surface_wave_significant_height",
+      "units": "m",
+      "valid_min": 0,
+      "valid_max": 30000,
+      "coverage_content_type": "modelResult",
+      "ancillary_variables": "SWH_WW3_quality_control",
+      "comment": "more information about the source data available at http://hdl.handle.net/102.100.100/137152?index=1"
+    },
+    "Dp_WW3": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "long_name": "Sea surface wave direction at spectral maximum from WW3 Hindcast ",
+      "standard_name": "sea_surface_wave_to_direction",
+      "units": "degree",
+      "valid_min": -18000,
+      "valid_max": 18000,
+      "coverage_content_type": "modelResult",
+      "ancillary_variables": "Dp_WW3_quality_control",
+      "comment": "more information about the source data available at http://hdl.handle.net/102.100.100/137152?index=1"
+    },
+    "Lp_WW3": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "long_name": "Sea surface wave dominant wavelength from WW3 Hindcast",
+      "units": "m",
+      "valid_min": 0.0,
+      "valid_max": 50000.0,
+      "coverage_content_type": "modelResult",
+      "ancillary_variables": "Lp_WW3_quality_control",
+      "comment": "more information about the source data available at http://hdl.handle.net/102.100.100/137152?index=1"
+    },
+    "MWP_WW3": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "long_name": "Sea surface wave mean period from WW3 Hindcast",
+      "standard_name": "sea_surface_wave_mean_period",
+      "units": "s",
+      "valid_min": 0,
+      "valid_max": 30000,
+      "coverage_content_type": "modelResult",
+      "ancillary_variables": "MWP_WW3_quality_control",
+      "comment": "more information about the source data available at http://hdl.handle.net/102.100.100/137152?index=1"
+    },
+    "LAND_COVERAGE_COMBINED": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "long_name": "Land-sea average flag in each box combining each spectral beam together",
+      "units": "percent",
+      "valid_min": 0,
+      "valid_max": 10000,
+      "coverage_content_type": "auxiliaryInformation"
+    },
+    "SEA_ICE_COVERAGE_COMBINED": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "long_name": "Sea-ice average flag in each box combining each spectral beam together",
+      "units": "percent",
+      "valid_min": 0,
+      "valid_max": 10000,
+      "coverage_content_type": "auxiliaryInformation"
+    },
+    "NADIR_RAIN_PERCENTAGE": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "long_name": "Percentage of rain flag from nadir processing by box",
+      "units": "percent",
+      "valid_min": 0,
+      "valid_max": 10000,
+      "coverage_content_type": "auxiliaryInformation"
+    },
+    "WAVENUMBER": {
+      "type": "float",
+      "long_name": "Wavenumber vector of the wave spectrum",
+      "units": "m-1",
+      "valid_min": 0.0,
+      "valid_max": 1.0
+    },
+    "DIRECTION": {
+      "type": "float",
+      "long_name": "Direction (from) vector of the wave spectrum (clockwise from the geographic North, centre of the bin)",
+      "units": "degrees",
+      "valid_min": 0.0,
+      "valid_max": 180.0
+    },
+    "SWH_quality_control": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "standard_name": "sea_surface_wave_significant_height status_flag",
+      "long_name": "Sea surface wave significant height from SWIM (10-degree beam) quality flag",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "quality_control_conventions": "IMOS standard flags"
+    },
+    "MWP_quality_control": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "standard_name": "sea_surface_wave_mean_period status_flag",
+      "long_name": "SWIM mean wave period at 10-degree beam based on Jiang et al. (2022) quality flag",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "quality_control_conventions": "IMOS standard flags"
+    },
+    "Lp_quality_control": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "long_name": "Sea surface wave dominant wavelength from SWIM (10-degree beam) quality flag",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "quality_control_conventions": "IMOS standard flags"
+    },
+    "Dp_quality_control": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "standard_name": "sea_surface_wave_from_direction status_flag",
+      "long_name": "Sea surface wave dominant direction from SWIM (10-degree beam) quality flag",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "quality_control_conventions": "IMOS standard flags"
+    },
+    "SWH_WW3_quality_control": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "standard_name": "sea_surface_wave_significant_height status_flag",
+      "long_name": "Sea surface wave significant height from WW3 Hindcast (model doi) quality flag",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "quality_control_conventions": "IMOS standard flags"
+    },
+    "MWP_WW3_quality_control": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "standard_name": "sea_surface_wave_mean_period status_flag",
+      "long_name": "Sea surface wave mean period from WW3 Hindcast quality flag",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "quality_control_conventions": "IMOS standard flags"
+    },
+    "Dp_WW3_quality_control": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "standard_name": "sea_surface_wave_to_direction status_flag",
+      "long_name": "Sea surface wave direction at spectral maximum from WW3 Hindcast quality flag",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "quality_control_conventions": "IMOS standard flags"
+    },
+    "Lp_WW3_quality_control": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "long_name": "Sea surface wave dominant wavelength from WW3 Hindcast quality flag",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "quality_control_conventions": "IMOS standard flags"
+    },
+    "SWH_CALIBRATED_NDBC_quality_control": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "standard_name": "sea_surface_wave_significant_height status_flag",
+      "long_name": "Sea surface wave significant height from SWIM (10-degree beam) calibrated against NDBC quality flag",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "quality_control_conventions": "IMOS standard flags"
+    },
+    "MWP_CALIBRATED_NDBC_quality_control": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "standard_name": "sea_surface_wave_mean_period status_flag",
+      "long_name": "SWIM mean wave period at 10-degree beam based on Jiang et al. (2022) calibrated against NDBC quality flag",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "quality_control_conventions": "IMOS standard flags"
+    },
+    "Lp_CALIBRATED_NDBC_quality_control": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "long_name": "Sea surface wave dominant wavelength from SWIM (10-degree beam) calibrated against NDBC quality flag",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "quality_control_conventions": "IMOS standard flags"
+    },
+    "MSS_COMBINED_quality_control": {
+      "type": "float",
+      "dims": [
+        "TIME",
+        "WAVENUMBER",
+        "DIRECTION"
+      ],
+      "long_name": "Mean wave slope spectrum combining all incidence beams quality flag",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "quality_control_conventions": "IMOS standard flags"
+    },
+    "MSS_quality_control": {
+      "type": "float",
+      "dims": [
+        "TIME",
+        "WAVENUMBER",
+        "DIRECTION"
+      ],
+      "long_name": "2D wave slope spectrum from SWIM (10-degree beam) quality flag",
+      "flag_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "flag_meanings": "No_QC_performed Good_data Probably_good_data Bad_data_that_are_potentially_correctable Bad_data Value_changed Not_used Not_used Not_used Missing_value",
+      "quality_control_conventions": "IMOS standard flags"
+    },
+    "DIST2COAST": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "comment": "source dist2coast_1deg_ocean.nc, 0.01-degree ocean grid, distributor PacIOOS, creator NASA/GSFC Ocean Color Group ",
+      "long_name": "distance to nearest coastline",
+      "units": "km",
+      "valid_max": 2700,
+      "valid_min": 0
+    },
+    "BOT_DEPTH_NEW": {
+      "type": "float",
+      "dims": [
+        "TIME"
+      ],
+      "comment": "source GEBCO 2019 grid with 15 arcsec resolution, DOI: 10.5285/836f016a-33be-6ddc-e053-6c86abc0788e",
+      "long_name": "sea_floor_depth_below_mean_sea_level",
+      "positive": "up",
+      "reference_datum": "Mean Sea Level (MSL)",
+      "standard_name": "sea_floor_depth_below_mean_sea_level",
+      "units": "m",
+      "valid_max": 8845.0,
+      "valid_min": -10924.0
+    }
+  },
+  "aws_opendata_registry": {
+    "Name": "Satellite - Surface Waves - CFOSAT SWIM off-nadir wave spectra - Delayed mode",
+    "Description": "This dataset contains global daily wave observations from the Surface Wave Investigation and Monitoring (SWIM) instrument onboard the China-France Oceanography Satellite (CFOSAT), a joint mission of the French (CNES) and Chinese (CNSA) space agencies launched in October 2018. SWIM is a Ku-band real-aperture wave scatterometer with six rotating beams at incidence angles from 0\u00b0 to 10\u00b0. Because its footprint rotates around the nadir, SWIM views the ocean surface from all azimuths and retrieves directional ocean wave spectra, in addition to integrated wave parameters.\n\nThe SWIM Level-2 data (source: CNES) have been aggregated into 1\u00b0 by 1\u00b0 geographical bins and homogenised into a consistent, easily usable format. Each record is one satellite pass over a bin and includes:\n- the 2D wave slope spectrum from the 10\u00b0 beam (MSS), and a mean wave slope spectrum combining all incidence beams (MSS_COMBINED), on 32 wavenumbers (wavelengths of about 23\u2013500 m) and 12 directions (0\u2013180\u00b0, with the inherent 180\u00b0 directional ambiguity)\n- SWIM Level-2 standard wave parameters from the 10\u00b0 beam: significant wave height (SWH), dominant wavelength (Lp) and dominant direction (Dp)\n- an improved mean wave period (MWP) estimate based on Jiang et al. (2022)\n- SWH, Lp and MWP calibrated against in-situ NDBC wave buoy observations (*_CALIBRATED_NDBC)\n- collocated WAVEWATCH III hindcast model outputs (SWH, Lp, MWP, Dp) for comparison\n- ancillary information: nadir rain flag percentage, land and sea-ice coverage, distance to coast and bathymetry (GEBCO 2019)\n\nAll variables carry IMOS standard quality control flags. The record covers April 2019 to October 2024.\n\nThis is a trial dataset, and its calibration and validation is an area of current active research.\n\nThe dataset is produced by CSIRO and distributed by the Australian Ocean Data Network (AODN) as part of the Integrated Marine Observing System (IMOS).",
+    "Documentation": "https://catalogue-imos.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/ee76e8ea-c48e-4580-92ef-e36b867ed6b0",
+    "Contact": "info@aodn.org.au",
+    "ManagedBy": "AODN",
+    "UpdateFrequency": "As Needed",
+    "Tags": [
+      "oceans"
+    ],
+    "License": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+    "Resources": [
+      {
+        "Description": "Cloud Optimised AODN dataset of Satellite - Surface Waves - CFOSAT SWIM off-nadir wave spectra - Delayed mode",
+        "ARN": "arn:aws:s3:::aodn-cloud-optimised/satellite_wave_cfosat_swim_qc.zarr",
+        "Region": "ap-southeast-2",
+        "Type": "S3 Bucket",
+        "Explore": [
+          "FILL UP MANUALLY - CHECK DOCUMENTATION"
+        ]
+      }
+    ],
+    "DataAtWork": {
+      "Tutorials": [
+        {
+          "Title": "Accessing Satellite - Surface Waves - CFOSAT SWIM off-nadir wave spectra - Delayed mode",
+          "URL": "https://github.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_wave_cfosat_swim_qc.ipynb",
+          "NotebookURL": "https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_wave_cfosat_swim_qc.ipynb",
+          "AuthorName": "Laurent Besnard",
+          "AuthorURL": "https://github.com/aodn/aodn_cloud_optimised"
+        }
+      ],
+      "Tools & Applications": [
+        {
+          "Title": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+          "URL": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+          "AuthorName": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+          "AuthorURL": "FILL UP MANUALLY - CHECK DOCUMENTATION"
+        }
+      ],
+      "Publications": [
+        {
+          "Title": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+          "URL": "FILL UP MANUALLY - CHECK DOCUMENTATION",
+          "AuthorName": "FILL UP MANUALLY - CHECK DOCUMENTATION"
+        }
+      ]
+    }
+  }
+}
