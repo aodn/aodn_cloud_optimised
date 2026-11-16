@@ -25,7 +25,7 @@
       "axis": "X"
     },
     "K_490": {
-      "type": "float",
+      "type": "float32",
       "units": "m^-1",
       "long_name": "Diffuse attenuation coefficient at 490 nm (OBPG)",
       "flag_applied": "HISATZEN HIGLINT LAND CLDICE NAVFAIL"
