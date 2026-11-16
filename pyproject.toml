@@ -53,9 +53,13 @@ dependencies = [
   # "requests>=2.33.1",
   "pydantic>=2.12.5",
   "cloudpathlib[s3] (>=0.24.0,<0.25.0)",
-  "pillow>=13.0.0",
+]
+
+[tool.uv]
+constraint-dependencies = [
   "jupyter-server>=2.20.0",
   "anyio>=4.14.2",
+  "pillow>=13.0.0",
 ]
 
 [project.urls]

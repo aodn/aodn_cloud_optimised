@@ -19,7 +19,6 @@ annotated-types==0.7.0
     # via pydantic
 anyio==4.16.0
     # via
-    #   aodn-cloud-optimised
     #   httpx
     #   jupyter-server
 appnope==0.1.4 ; sys_platform == 'darwin'
@@ -287,7 +286,6 @@ jupyter-lsp==2.3.0
     # via jupyterlab
 jupyter-server==2.21.1
     # via
-    #   aodn-cloud-optimised
     #   jupyter-lsp
     #   jupyterlab
     #   jupyterlab-server
@@ -446,7 +444,6 @@ pickleshare==0.7.5
     # via ipython
 pillow==13.0.0
     # via
-    #   aodn-cloud-optimised
     #   bokeh
     #   matplotlib
 pip==25.3
