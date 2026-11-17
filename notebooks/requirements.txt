@@ -17,7 +17,7 @@ aiosignal==1.4.0
     # via aiohttp
 annotated-types==0.7.0
     # via pydantic
-anyio==4.12.0
+anyio==4.16.0
     # via
     #   httpx
     #   jupyter-server
@@ -284,7 +284,7 @@ jupyter-events==0.12.0
     # via jupyter-server
 jupyter-lsp==2.3.0
     # via jupyterlab
-jupyter-server==2.17.0
+jupyter-server==2.21.1
     # via
     #   jupyter-lsp
     #   jupyterlab
@@ -442,7 +442,7 @@ pexpect==4.9.0 ; sys_platform != 'win32'
     # via ipython
 pickleshare==0.7.5
     # via ipython
-pillow==12.0.0
+pillow==13.0.0
     # via
     #   bokeh
     #   matplotlib
@@ -647,7 +647,7 @@ traitlets==5.14.3
     #   nbclient
     #   nbconvert
     #   nbformat
-typing-extensions==4.15.0
+typing-extensions==4.16.0
     # via
     #   aiosignal
     #   anyio
