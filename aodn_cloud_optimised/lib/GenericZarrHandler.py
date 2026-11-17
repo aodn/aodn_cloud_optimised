@@ -1,4 +1,5 @@
 import importlib.resources
+import io
 import os
 import re
 import traceback
@@ -1111,6 +1112,7 @@ class GenericHandler(CommonHandler):
             )
 
             batch_files = create_fileset(batch_uri_list, self.s3_fs_input)
+            self._prepare_workers_for_scipy_pickling()
 
             self.logger.info(
                 f"{self.uuid_log}: Processing batch {idx + 1} with files: {batch_files}"
@@ -1474,6 +1476,30 @@ class GenericHandler(CommonHandler):
                     )
             else:
                 raise
+
+    @staticmethod
+    def _register_scipy_pickle_class():
+        """Make xarray's lazily created scipy ``flush_only_netcdf_file`` class importable.
+
+        xarray (>=2026.4) only defines ``_PickleWorkaround.flush_only_netcdf_file`` the
+        first time a file-like object is opened with the scipy engine, in that process.
+        A process that never did so cannot unpickle a scipy-backed (NetCDF3) dataset.
+        """
+        buf = io.BytesIO(xr.Dataset().to_netcdf(engine="scipy"))
+        xr.open_dataset(buf, engine="scipy").close()
+
+    def _prepare_workers_for_scipy_pickling(self):
+        """Register the scipy pickle helper class on the client and all dask workers."""
+        client = getattr(self, "client", None)
+        if client is None:
+            return
+        try:
+            self._register_scipy_pickle_class()
+            client.run(self._register_scipy_pickle_class)
+        except Exception as e:
+            self.logger.warning(
+                f"{self.uuid_log}: Could not prepare workers for scipy pickling: {e}"
+            )
 
     # Magic-byte signatures used for fast format detection (no file open required).
     _HDF5_MAGIC = b"\x89HDF\r\n\x1a\n"  # NetCDF4 / HDF5
@@ -2054,7 +2080,7 @@ class GenericHandler(CommonHandler):
         ) as ds_zarr:
             ds_zarr = ds_zarr.unify_chunks()
             append_dim_values_org = ds_zarr[append_dim].values
-            ds_stored_org_dims = ds_zarr.dims
+            ds_stored_org_dims = dict(ds_zarr.sizes)
             common_values = np.intersect1d(append_dim_values_org, append_dim_values_new)
 
         if len(common_values) == 0:
@@ -2075,13 +2101,13 @@ class GenericHandler(CommonHandler):
         #
         # regions must be CONTIGIOUS!! very important. so looking for different regions
         # Define regions as slices for the common time values
-        start = common_indices[0]
+        start = int(common_indices[0])
         for i in range(1, len(common_indices)):
             if common_indices[i] != common_indices[i - 1] + 1:
-                end = common_indices[i - 1]
+                end = int(common_indices[i - 1])
                 break
         else:
-            end = common_indices[-1]
+            end = int(common_indices[-1])
 
         region_slice = slice(start, end + 1)
         region = {append_dim: region_slice}
@@ -2186,7 +2212,7 @@ class GenericHandler(CommonHandler):
             # ds_stored_zarr = ds_stored_zarr.align_chunks()
 
             for dim, size in ds_stored_org_dims.items():
-                updated_size = ds_stored_zarr.dims.get(dim)
+                updated_size = ds_stored_zarr.sizes.get(dim)
                 if updated_size is None:
                     self.logger.error(
                         f"{self.uuid_log}: Dimension '{dim}' is present in the incoming dataset but missing in the updated Zarr store."
@@ -2202,7 +2228,7 @@ class GenericHandler(CommonHandler):
                     )
 
             self.logger.debug(
-                f"{self.uuid_log}: Zarr dataset after region overwriting has the following definition: {ds_stored_zarr.dims}"
+                f"{self.uuid_log}: Zarr dataset after region overwriting has the following definition: {dict(ds_stored_zarr.sizes)}"
             )
 
         self.logger.info(
