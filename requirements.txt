@@ -46,7 +46,7 @@ botocore==1.41.5
     #   aiobotocore
     #   boto3
     #   s3transfer
-certifi==2025.11.12
+certifi==2026.10.23
     # via
     #   coiled
     #   httpcore
