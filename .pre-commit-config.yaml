@@ -73,6 +73,16 @@ repos:
         language: system
         files: ^(pyproject\.toml|uv\.lock)$
         pass_filenames: false
+      - id: uv-audit
+        # Report-only: as of 2026-11, this already flags ~270+ known advisories
+        # in existing pinned deps (OSV data), mostly in transitive packages.
+        # Not blocking yet until that backlog is triaged/ignored or upgraded;
+        # `|| true` keeps this informational rather than failing the commit/CI.
+        name: uv audit (report-only)
+        entry: bash -c 'uv audit || true'
+        language: system
+        files: ^(pyproject\.toml|uv\.lock)$
+        pass_filenames: false
       - id: validate-json-configs
         name: Validate dataset JSON configs with Pydantic
         entry: uv run python aodn_cloud_optimised/bin/pydantic_precommit_hook.py --validate-configs aodn_cloud_optimised/config/dataset

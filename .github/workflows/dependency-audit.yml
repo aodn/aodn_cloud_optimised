@@ -1,0 +1,29 @@
+name: dependency-audit
+
+# Report-only weekly scan of the locked dependency set for newly-disclosed
+# vulnerabilities (OSV), independent of any pyproject.toml/uv.lock change.
+# Dependabot security updates (enabled at the repo level) cover the "open a
+# PR to fix it" side for advisories in GitHub's database; this is a
+# supplementary net that doesn't require a dependency bump to trigger, and
+# never fails the run (see `uv audit (report-only)` in .pre-commit-config.yaml
+# for why it's informational rather than blocking today).
+on:
+  schedule:
+    - cron: "0 3 * * 1" # Monday 03:00 UTC
+  workflow_dispatch:
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+      - name: uv audit
+        run: |
+          echo '## uv audit' >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          uv audit >> "$GITHUB_STEP_SUMMARY" 2>&1 || true
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
