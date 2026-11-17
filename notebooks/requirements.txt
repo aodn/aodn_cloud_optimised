@@ -69,7 +69,7 @@ branca==0.8.2
     # via folium
 cartopy==0.25.0
     # via aodn-cloud-optimised
-certifi==2025.11.12
+certifi==2026.10.23
     # via
     #   coiled
     #   httpcore

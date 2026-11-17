@@ -60,6 +60,8 @@ constraint-dependencies = [
   "jupyter-server>=2.20.0",
   "anyio>=4.14.2",
   "pillow>=13.0.0",
+  "certifi>=2026.10.23",
+  "PyJWT>=2.15.0",
 ]
 
 [project.urls]
