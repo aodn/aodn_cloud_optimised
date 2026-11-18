@@ -125,7 +125,6 @@ More information available [here](https://github.com/conda-forge/miniforge?tab=r
 - [mooring_satellite_altimetry_calibration_validation.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/mooring_satellite_altimetry_calibration_validation.ipynb)
 - [mooring_southern_ocean_surface_fluxes_realtime_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/mooring_southern_ocean_surface_fluxes_realtime_qc.ipynb)
 - [mooring_southern_ocean_surface_properties_realtime_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/mooring_southern_ocean_surface_properties_realtime_qc.ipynb)
-- [mooring_temperature_logger_delayed_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/mooring_temperature_logger_delayed_qc.ipynb)
 - [mooring_timeseries_realtime_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/mooring_timeseries_realtime_qc.ipynb)
 - [mooring_wave_timeseries_delayed_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/mooring_wave_timeseries_delayed_qc.ipynb)
 - [ocean_glider_delayed_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/ocean_glider_delayed_qc.ipynb)
