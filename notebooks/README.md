@@ -119,7 +119,6 @@ More information available [here](https://github.com/conda-forge/miniforge?tab=r
 - [model_sea_level_anomaly_gridded_realtime.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/model_sea_level_anomaly_gridded_realtime.ipynb)
 - [mooring_acidification_delayed_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/mooring_acidification_delayed_qc.ipynb)
 - [mooring_acidification_realtime_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/mooring_acidification_realtime_qc.ipynb)
-- [mooring_ctd_delayed_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/mooring_ctd_delayed_qc.ipynb)
 - [mooring_estuarine_coastal_water_quality_monitoring_realtime_qc.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/mooring_estuarine_coastal_water_quality_monitoring_realtime_qc.ipynb)
 - [mooring_hourly_timeseries_delayed_qc](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/mooring_hourly_timeseries_delayed_qc.ipynb)
 - [mooring_satellite_altimetry_calibration_validation.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/mooring_satellite_altimetry_calibration_validation.ipynb)
