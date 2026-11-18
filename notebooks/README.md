@@ -160,6 +160,8 @@ More information available [here](https://github.com/conda-forge/miniforge?tab=r
 - [satellite_austemp_heatwave_14day.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_austemp_heatwave_14day.ipynb)
 - [satellite_austemp_sst_14day.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_austemp_sst_14day.ipynb)
 - [satellite_chlorophylla_carder_1day_aqua.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_chlorophylla_carder_1day_aqua.ipynb)
+- [satellite_chlorophylla_eppley_gsm_1day_snpp.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_chlorophylla_eppley_gsm_1day_snpp.ipynb)
+- [satellite_chlorophylla_eppley_oci_1day_snpp.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_chlorophylla_eppley_oci_1day_snpp.ipynb)
 - [satellite_chlorophylla_gsm_1day_aqua.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_chlorophylla_gsm_1day_aqua.ipynb)
 - [satellite_chlorophylla_gsm_1day_noaa20.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_chlorophylla_gsm_1day_noaa20.ipynb)
 - [satellite_chlorophylla_gsm_1day_snpp.ipynb](https://githubtocolab.com/aodn/aodn_cloud_optimised/blob/main/notebooks/satellite_chlorophylla_gsm_1day_snpp.ipynb)
