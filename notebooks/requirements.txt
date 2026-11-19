@@ -331,7 +331,7 @@ matplotlib-inline==0.2.1
     #   ipython
 mdurl==0.1.2
     # via markdown-it-py
-mistune==3.2.0
+mistune==3.3.4
     # via nbconvert
 msgpack==1.1.2
     # via distributed
