@@ -242,7 +242,7 @@
         }
       ]
     },
-    "Citation": "IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access]"
+    "Citation": "The citation in a list of references is: \"IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access].\" If data includes turtle data between January 2022 - June 2024, please cite as follows: \"IMOS, Department of Defence [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access].\""
   },
   "csv_config": {
     "pandas_read_csv_config": {

@@ -565,7 +565,7 @@
     }
   },
   "aws_opendata_registry": {
-    "Name": "IMOS - Estuarine and Coastal Moorings Facility",
+    "Name": "Estuarine and Coastal Moorings - Real time",
     "Description": "The Estuarine and Coastal Moorings Facility provides a national, standardised network of estuarine and coastal moorings with a primary focus on water quality observations. This Facility will be undertaken in two phases and will begin with the development and coordination of an expansion of IMOS observations into estuarine environments. The second phase will focus on further expanding the estuarine network and establishing a network of coastal moorings to monitor near-real time, near-shore oceanographic processes and environmental parameters in regions of high-significance. Initial mooring deployments focused on the interface between land and sea, in typical estuarine environments, within the tidal incursion zone. In the first phase, the Estuarine Moorings Network consists of 2 moorings in each State and Territory (aside from the ACT), monitoring surface conditions. Small to medium sized buoys are deployed in shallow waters and anchored securely to the seabed or to fixed infrastructure. These moorings are from the Xylem DB platform range. The DB range of telemetered data buoys allow for easy deployment, maintenance and provide future monitoring flexibility in various types of environmental conditions. Each mooring measures 5-7 essential ocean variables, such as temperature, salinity, chlorophyll-a fluorescence, dissolved oxygen, turbidity, and fDOM, with the option to include additional sensors to measure currents, pH, or nutrients. Moorings are serviced every two to three months to clean and re-calibrate sensors, replace components, and collect in-situ water samples for sensor validation. Complementary CTD profiles are taken at servicing intervals to assist with sensor validation. Near real-time data are processed by SARDI and quality controlled in accordance with the Integrated Ocean Observing System's QARTOD protocols (http://www.ioos.noaa.gov/qartod/, https://www.ioccp.org/images/D4standards/IOC-OceanDataStandards54-3-2013.pdf). These data are made available through the AODN Portal and IMOS Live. Delayed-mode data will be published through the AODN Portal upon availability.",
     "Documentation": "https://catalogue-imos.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/f3c16fdb-72fc-4b55-bff1-3b5b5722f38f",
     "Contact": "info@aodn.org.au",
@@ -573,7 +573,8 @@
     "UpdateFrequency": "As Needed",
     "Tags": [
       "oceans",
-      "chemistry"
+      "chemistry",
+      "biology"
     ],
     "License": "http://creativecommons.org/licenses/by/4.0/",
     "Resources": [
@@ -602,7 +603,7 @@
         }
       ]
     },
-    "Citation": "The citation in a list of references is: \"IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access].\""
+    "Citation": "The citation in a list of references is: \"IMOS, SARDI [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access].\""
   },
   "schema_transformation": {
     "drop_variables": [
