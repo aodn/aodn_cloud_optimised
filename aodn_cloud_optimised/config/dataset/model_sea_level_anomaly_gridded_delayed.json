@@ -172,7 +172,7 @@
     }
   },
   "aws_opendata_registry": {
-    "Name": "IMOS - OceanCurrent - Gridded sea level anomaly - Delayed mode - DM03",
+    "Name": "OceanCurrent - Gridded sea level anomaly - Delayed mode (DM03)",
     "Description": "Daily maps of gridded sea level anomaly (GSLA), gridded sea level (GSL) and geostrophic velocity (UCUR, VCUR) for the Australasian region. GSLA is mapped using optimal interpolation of de-tided, de-meaned, inverse-barometer-adjusted altimeter and coastal tide gauge estimates of sea level. The altimeter measurements were obtained from the RADS database (https://rads.tudelft.nl) and uses the most recent corrections (as of December 2025). Tide gauge data was obtained from the Australian National Collection of Homogenised Observations of Relative Sea Level (ANCHORS) dataset (Hague et al., 2022) and the Bureau of Meteorology\u2019s Australian Baseline Sea Level Monitoring Project. GSL is obtained by adding an estimate of the Mean Dynamic Height using the mean of an 18yr run of OFAM3 (Ocean Forecasting Australia Model version 3). UCUR and VCUR, are the total geostrophic surface velocities estimated from the GSL. UCUR_MEAN and VCUR_MEAN are the geostrophic surface velocities due to the Mean Dynamic Height. MASK is to be applied to exclude regions where the gridding approach and input data are not appropriate, such as gulfs and shallow shelf sHi Neas.\n\nThe altimeter data window for input to the Delayed Mode (DM) maps is symmetrical about the map date. The width of the window is dependent on the number of altimeters flying at the time and ranges from 20 days (1993-1997) to 10 days (1998-2025). The altimeter data is weighted by the difference between the analysis date of the map and the time of each altimeter observation.\nThe tide gauge data window for input is of 3 days centred on the map date.\n\nUpdates to DM03 relative to DM02:\n-\tRevised GSLA maps from 1993 to 2025\n-\tUses the latest altimetric corrections\n-\tApplies an along-track long-wavelength correction (LWC) to the altimeter data from non-reference missions (LWC files available on request)\n-\tUses ANCHORS tide gauge data from 1993-2023\n\nSince March 2026, this DM03 product has been available via the AODN Portal, and supersedes the DM02 product formerly provided. The DM02 data details are provided via https://catalogue-imos.aodn.org.au/geonetwork/srv/api/records/da30c0b8-4978-4a26-915e-b80c88bb4510.",
     "Documentation": "https://catalogue-imos.aodn.org.au/geonetwork/srv/eng/catalog.search#/metadata/663be14d-bb88-4e84-a34c-6c84a0196e2e",
     "Contact": "info@aodn.org.au",
@@ -210,6 +210,6 @@
         }
       ]
     },
-    "Citation": "IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access]"
+    "Citation": "The citation in a list of references is: \"IMOS [year-of-data-download], [Title], [data-access-URL], accessed [date-of-access].\""
   }
 }
