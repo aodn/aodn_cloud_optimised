@@ -109,6 +109,82 @@ class TestPackedExpansion(unittest.TestCase):
         # scalar text column is repeated, left untouched
         self.assertEqual(list(out["ref"]), ["rs3-Fred-07"] * 3)
 
+    def test_different_profile_groups_expand_with_independent_lengths(self):
+        """Temperature and fluorescence profiles may have different n_* counts."""
+        handler = _make_handler(
+            pa.schema(
+                [
+                    pa.field("n_temp", pa.int32()),
+                    pa.field("n_fluoro", pa.int32()),
+                    pa.field("temp_dbar", pa.float64()),
+                    pa.field("temp_vals", pa.float64()),
+                    pa.field("fluoro_dbar", pa.float64()),
+                    pa.field("fluoro_vals", pa.float64()),
+                ]
+            )
+        )
+        df = pd.DataFrame(
+            {
+                "n_temp": [3],
+                "n_fluoro": [2],
+                "temp_dbar": ["4,10,12"],
+                "temp_vals": ["5.4,5.3,5.1"],
+                "fluoro_dbar": ["4,10"],
+                "fluoro_vals": ["0.8,0.6"],
+            }
+        )
+
+        out = handler._expand_packed_string_columns(df)
+
+        self.assertEqual(len(out), 3)
+        self.assertEqual(out["temp_vals"].tolist(), [5.4, 5.3, 5.1])
+        self.assertEqual(out["fluoro_vals"].iloc[:2].tolist(), [0.8, 0.6])
+        self.assertTrue(pd.isna(out["fluoro_vals"].iloc[2]))
+
+    def test_mismatched_packed_group_length_against_n_count_is_rejected(self):
+        handler = _make_handler(
+            pa.schema(
+                [
+                    pa.field("n_temp", pa.int32()),
+                    pa.field("temp_dbar", pa.float64()),
+                    pa.field("temp_vals", pa.float64()),
+                ]
+            )
+        )
+        df = pd.DataFrame(
+            {
+                "n_temp": [2],
+                "temp_dbar": ["4,10,12"],
+                "temp_vals": ["5.4,5.3,5.1"],
+            }
+        )
+
+        with self.assertRaises(ValueError) as ctx:
+            handler._expand_packed_string_columns(df)
+
+        self.assertIn("n_temp", str(ctx.exception))
+
+    def test_packed_columns_within_one_profile_group_must_match(self):
+        handler = _make_handler(
+            pa.schema(
+                [
+                    pa.field("temp_dbar", pa.float64()),
+                    pa.field("temp_vals", pa.float64()),
+                ]
+            )
+        )
+        df = pd.DataFrame(
+            {
+                "temp_dbar": ["4,10"],
+                "temp_vals": ["5.4,5.3,5.1"],
+            }
+        )
+
+        with self.assertRaises(ValueError) as ctx:
+            handler._expand_packed_string_columns(df)
+
+        self.assertIn("n_temp", str(ctx.exception))
+
     def test_single_value_string_profile_coerced_to_numeric(self):
         """A lone string value (no comma) in a numeric column becomes float."""
         handler = _make_handler(

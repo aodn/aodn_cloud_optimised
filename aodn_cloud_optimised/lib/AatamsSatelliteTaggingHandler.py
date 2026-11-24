@@ -17,24 +17,40 @@ class AatamsSatelliteTaggingHandler(GenericHandler):
 
     This handler performs **String Column Expansion**: each source row containing
     N packed values is expanded into N output rows, with all scalar columns
-    repeated.  Packed-string columns are detected automatically — any
+    repeated. Packed-string columns are detected automatically — any
     ``object``-dtype column whose non-null values parse as comma-separated
     floats is treated as packed.
 
-    Validation: if any row has two or more non-null packed columns whose value
-    counts differ, the **entire file is rejected** with a logger error.  This is
-    consistent with how Data Provider Bugs are treated elsewhere in the pipeline.
+    Validation of these packed-string columns: Profile groups are validated independently
+    based on relevant values for each row. For example,
+    ``n_temp`` applies to ``temp_dbar``/``temp_vals``/``qc_temp``,
+    ``n_sal`` applies to ``sal_dbar``/``sal_vals``/ ``sal_corrected_vals`` / ``qc_sal``,
+    ``n_oxy`` applies to ``oxy_dbar``/``oxy_vals``,
+    ``n_photo`` applies to ``photo_dbar``/``photo_vals``,
+    ``n_fluoro`` applies to ``fluoro_dbar``/``fluoro_vals``.
+    Different groups may therefore have different lengths in the same source row.
+    For instance Fluoro is only measured until a certain depth and may have less data point than
+    temperature for the same profile.
 
-    The handler works for all seven AATAMS CSV types (ctd, dive, haulout,
-    metadata, diag, summary, ssmoutputs).  For flat CSV types that contain no
-    packed-string columns, auto-detection finds nothing to expand and the file
-    passes through unchanged.
+    The handler works for all eight animal tracking satellite tagging CSV types
+    (ctd, dive, gps, haulout, metadata, diag, summary, ssmoutputs).
+    For flat CSV types that contain no packed-string columns, auto-detection finds nothing
+    to expand and the file passes through unchanged.
 
     Note: after running ``cloud_optimised_create_dataset_config`` on a packed CSV,
     the generated schema will show ``string`` for columns that are actually
     numeric after expansion.  These types **must be manually corrected** in the
     JSON config before processing.
     """
+
+    PACKED_PROFILE_GROUPS = {
+        "n_temp": {"temp_dbar", "temp_vals", "qc_temp"},
+        "n_cond": {"cond_dbar", "cond_vals"},
+        "n_sal": {"sal_dbar", "sal_vals", "sal_corrected_vals", "qc_sal"},
+        "n_fluoro": {"fluoro_dbar", "fluoro_vals"},
+        "n_oxy": {"oxy_dbar", "oxy_vals"},
+        "n_photo": {"photo_dbar", "photo_vals"},
+    }
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -120,17 +136,29 @@ class AatamsSatelliteTaggingHandler(GenericHandler):
         parts = [x.strip() for x in value.split(",") if x.strip()]
         return [float(p) for p in parts]
 
+    @staticmethod
+    def _expected_packed_count(value) -> int | None:
+        """Return an integer profile count, or ``None`` if it is missing."""
+        if pd.isna(value):
+            return None
+        try:
+            count = float(value)
+        except (TypeError, ValueError):
+            return None
+        if not count.is_integer():
+            return None
+        return int(count)
+
     def _expand_packed_string_columns(self, df: pd.DataFrame) -> pd.DataFrame:
         """Detect and expand packed-string columns in *df*.
 
-        Steps:
-        1. Detect packed-string columns.
-        2. Parse string cells to lists of floats.
-        3. Validate per-row consistency (all non-null packed columns must have
-           the same length).
-        4. Fill NaN packed cells with ``[NaN] * n`` so ``pd.DataFrame.explode``
-           works correctly for rows where only some parameters are present.
-        5. Explode and reset the index.
+        Packed profile types are handled independently:
+
+        1. Parse and detect comma-packed columns.
+        2. Validate columns within each ``n_*`` profile group.
+        3. Check each actual group length against its ``n_*`` count.
+        4. Pad the profile groups in every row to the row's maximum length.
+        5. Explode all packed columns together and reset the index.
         """
         packed_cols = self._detect_packed_string_columns(df)
 
@@ -144,11 +172,11 @@ class AatamsSatelliteTaggingHandler(GenericHandler):
             f"{self.uuid_log}: Detected packed-string columns for expansion: {packed_cols}"
         )
 
-        # --- Step 2: parse strings → lists of floats ---
+        # --- Step 1: parse packed-string columns into lists of floats ---
         for col in packed_cols:
             df[col] = df[col].apply(self._parse_packed_value)
 
-        # --- Step 3: per-row length validation ---
+        # --- Step 2: determine profile lengths and validate each profile group ---
         length_df = pd.DataFrame(
             {
                 col: df[col].apply(lambda v: len(v) if isinstance(v, list) else None)
@@ -157,38 +185,133 @@ class AatamsSatelliteTaggingHandler(GenericHandler):
             index=df.index,
         )
 
-        def _unique_non_null_lengths(row: pd.Series):
-            non_null = row.dropna()
-            return set(non_null.astype(int)) if not non_null.empty else set()
+        mapped_columns = {
+            col
+            for _count_col, group_columns in self.PACKED_PROFILE_GROUPS.items()
+            for col in group_columns
+            if col in packed_cols
+        }
+        validation_errors = []
 
-        unique_per_row = length_df.apply(_unique_non_null_lengths, axis=1)
-        bad_mask = unique_per_row.apply(lambda s: len(s) > 1)
+        for idx in df.index:
+            row = df.loc[idx]
 
-        if bad_mask.any():
-            bad_info = length_df[bad_mask].to_dict(orient="index")
+            # Validate and collect the expected length of every mapped profile group.
+            for count_col, group_columns in self.PACKED_PROFILE_GROUPS.items():
+                group_cols = [col for col in group_columns if col in packed_cols]
+                if not group_cols:
+                    continue
+
+                actual_lengths = {
+                    int(length_df.at[idx, col])
+                    for col in group_cols
+                    if pd.notna(length_df.at[idx, col])
+                }
+
+                if len(actual_lengths) > 1:
+                    validation_errors.append(
+                        {
+                            "row": idx,
+                            "group": count_col,
+                            "reason": "packed columns have mismatched lengths",
+                            "lengths": {
+                                col: length_df.at[idx, col] for col in group_cols
+                            },
+                        }
+                    )
+                    continue
+
+                if count_col in df.columns:
+                    expected = self._expected_packed_count(row[count_col])
+                    if expected is not None and expected < 0:
+                        validation_errors.append(
+                            {"row": idx, "group": count_col, "reason": "negative count"}
+                        )
+                    elif expected is not None and actual_lengths:
+                        actual = next(iter(actual_lengths))
+                        if actual != expected:
+                            validation_errors.append(
+                                {
+                                    "row": idx,
+                                    "group": count_col,
+                                    "reason": f"actual length {actual} != count {expected}",
+                                }
+                            )
+
+            # Preserve validation for any packed numeric column not in the known groups.
+            unmapped_cols = [col for col in packed_cols if col not in mapped_columns]
+            if unmapped_cols:
+                unmapped_lengths = {
+                    int(length_df.at[idx, col])
+                    for col in unmapped_cols
+                    if pd.notna(length_df.at[idx, col])
+                }
+                if len(unmapped_lengths) > 1:
+                    validation_errors.append(
+                        {
+                            "row": idx,
+                            "group": "unmapped",
+                            "reason": "packed columns have mismatched lengths",
+                            "lengths": {
+                                col: length_df.at[idx, col] for col in unmapped_cols
+                            },
+                        }
+                    )
+
+        if validation_errors:
+            bad_count = len(validation_errors)
             msg = (
                 f"{self.uuid_log}: Packed-string column length mismatch detected in "
-                f"{bad_mask.sum()} row(s). File rejected. Row details: {bad_info}"
+                f"{bad_count} validation case(s). File rejected. Row details: {validation_errors}"
             )
             self.logger.error(msg)
             raise ValueError(msg)
 
-        # --- Step 4: fill NaN packed cells with [NaN] * n ---
-        row_n = length_df.max(axis=1)  # NaN if all packed cols are NaN for that row
+        # --- Step 3: pad every profile group to the row's maximum length ---
+        # Expand each row to the maximum of:
+        # - its declared n_* counts
+        # - its actual packed-list lengths
+        # This pads shorter profile groups with NaN so all lists can be exploded together.
+        row_n = []
+        for idx in df.index:
+            expected_lengths = {
+                int(length_df.at[idx, col])
+                for col in packed_cols
+                if pd.notna(length_df.at[idx, col])
+            }
+
+            for count_col, group_columns in self.PACKED_PROFILE_GROUPS.items():
+                if not any(col in packed_cols for col in group_columns):
+                    continue
+                if count_col not in df.columns:
+                    continue
+                expected = self._expected_packed_count(df.at[idx, count_col])
+                if expected is not None:
+                    expected_lengths.add(expected)
+
+            row_n.append(max(expected_lengths) if expected_lengths else None)
+
+        row_n_series = pd.Series(row_n, index=df.index, dtype="object")
 
         for col in packed_cols:
-            null_mask = df[col].apply(lambda v: not isinstance(v, list))
-            needs_fill = null_mask & row_n.notna()
-            if needs_fill.any():
-                df.loc[needs_fill, col] = row_n[needs_fill].apply(
-                    lambda n: [float("nan")] * int(n)
-                )
 
-        # --- Step 5: explode and reset index ---
+            def pad_or_keep(value, n):
+                if n is None:
+                    return value
+                if isinstance(value, list):
+                    if len(value) >= int(n):
+                        return value[: int(n)]
+                    return value + [float("nan")] * (int(n) - len(value))
+                return [float("nan")] * int(n)
+
+            df[col] = [
+                pad_or_keep(df.at[idx, col], row_n_series.at[idx]) for idx in df.index
+            ]
+
+        # --- Step 4: explode the padded lists and reset the DataFrame index ---
         df = df.explode(packed_cols).reset_index(drop=True)
 
-        # Convert float columns that look integer-valued back to numeric
-        # (explode leaves list items as Python objects; ensure proper dtype)
+        # --- Step 5: convert exploded values back to numeric types ---
         for col in packed_cols:
             try:
                 df[col] = pd.to_numeric(df[col])
